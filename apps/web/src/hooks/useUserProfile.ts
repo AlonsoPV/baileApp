@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tantml:react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./useAuth";
-import { pickDefined } from "../utils/patch";
+import { guardedPatch } from "../utils/safeUpdate";
 
-type ProfileUser = {
+export type ProfileUser = {
   user_id: string;
   display_name?: string | null;
   bio?: string | null;
@@ -13,9 +13,10 @@ type ProfileUser = {
   media?: any[]; // ⚠️ NO actualizar desde este hook
   onboarding_complete?: boolean; // ⚠️ NO actualizar desde este hook
   respuestas?: Record<string, any>;
+  redes_sociales?: Record<string, any>;
 };
 
-const KEY = (uid?: string) => ["profile","me", uid];
+const KEY = (uid?: string) => ["profile", "me", uid];
 
 export function useUserProfile() {
   const { user } = useAuth();
@@ -36,17 +37,35 @@ export function useUserProfile() {
   });
 
   const updateFields = useMutation({
-    mutationFn: async (patch: Partial<ProfileUser>) => {
+    mutationFn: async (next: Partial<ProfileUser>) => {
       if (!user?.id) throw new Error("No user");
+      
+      const prev = profile.data || {};
+      
       // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
-      const { media, onboarding_complete, ...rest } = patch;
-      const clean = pickDefined<ProfileUser>(rest);
-      if (Object.keys(clean).length === 0) return;
+      const { media, onboarding_complete, ...candidate } = next;
+
+      // Usar guardedPatch para evitar pérdida de datos accidental
+      const patch = guardedPatch<ProfileUser>(prev, candidate, {
+        allowEmptyArrays: ["ritmos", "zonas"], // permitir vaciar intencionalmente
+        blockEmptyStrings: ["display_name"],    // no permitir nombre vacío
+      });
+
+      if (Object.keys(patch).length === 0) {
+        console.log("[useUserProfile] No changes to save");
+        return;
+      }
+
+      // Diagnóstico en desarrollo
+      if (import.meta.env.MODE === "development") {
+        console.log("[useUserProfile] PATCH:", patch);
+      }
 
       const { error } = await supabase
         .from("profiles_user")
-        .update(clean)
+        .update(patch)
         .eq("user_id", user.id);
+      
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY(user?.id) }),
@@ -55,7 +74,7 @@ export function useUserProfile() {
   return {
     profile: profile.data,
     isLoading: profile.isLoading,
-    updateProfileFields: updateFields.mutateAsync, // usa este para nombre/bio/ritmos/zonas
+    updateProfileFields: updateFields.mutateAsync,
+    refetch: profile.refetch,
   };
 }
-

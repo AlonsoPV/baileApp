@@ -42,6 +42,9 @@ import ExploreListScreen from './screens/explore/ExploreListScreen';
 import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
 import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
 
+// Debug/Diagnostics
+import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
+
 // Additional Profile Types
 import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
 import SchoolProfileEditor from './screens/profile/SchoolProfileEditor';
@@ -138,6 +141,9 @@ export function AppRouter() {
         
         {/* Admin Routes */}
         <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
+        
+        {/* Debug Routes */}
+        <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
       </Route>
 
       {/* Public Routes (no authentication required) */}
