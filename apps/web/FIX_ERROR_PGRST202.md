@@ -1,12 +1,22 @@
 # 🚨 FIX: Error PGRST202 - merge_profiles_user
 
-## ❌ **Error que estás viendo:**
+## ❌ **Errores que podrías estar viendo:**
 
+### **Error 1: Función no encontrada (PGRST202)**
 ```
 [useUserProfile] Error updating profile: 
 code: "PGRST202"
 message: "Could not find the function public.merge_profiles_user(p_patch, p_user_id) in the schema cache"
 ```
+
+### **Error 2: Error de casting (42846)**
+```
+[useUserProfile] Error updating profile: 
+code: "42846"
+message: "cannot cast type jsonb to integer[]"
+```
+
+**Ambos errores se solucionan con el mismo script actualizado** ✅
 
 ---
 
@@ -20,12 +30,17 @@ message: "Could not find the function public.merge_profiles_user(p_patch, p_user
 
 ---
 
-### **PASO 2: Ejecutar Script**
-1. Abre el archivo **`SCRIPT_15_MERGE_PROFILES_USER_RPC.sql`**
+### **PASO 2: Ejecutar Script (Versión Actualizada)**
+1. Abre el archivo **`SCRIPT_15_MERGE_PROFILES_USER_RPC.sql`** (versión actualizada)
 2. Copia **TODO** el contenido
 3. Pégalo en el SQL Editor
 4. Click en **"Run"** o presiona `Ctrl + Enter`
 5. Espera el mensaje de éxito ✅
+
+**⚠️ Nota:** Si ya ejecutaste una versión anterior del script, este automáticamente:
+- Elimina la versión anterior con `DROP FUNCTION IF EXISTS`
+- Crea la nueva versión corregida
+- No hay conflictos ni necesitas hacer nada extra
 
 ---
 
@@ -70,8 +85,11 @@ La app necesita una función especial en Supabase llamada `merge_profiles_user` 
 - ✅ NO sobrescribe campos que no tocas
 - ✅ Previene pérdida de datos accidental
 - ✅ Maneja correctamente arrays y objetos JSON
+- ✅ Convierte JSONB arrays a PostgreSQL arrays correctamente
 
-Sin esta función, la app no puede guardar cambios en los perfiles.
+**El error 42846 "cannot cast type jsonb to integer[]"** ocurre porque PostgreSQL no puede convertir directamente un array JSON a un array de enteros de PostgreSQL. La versión actualizada del script usa `jsonb_array_elements_text()` para hacer la conversión correctamente.
+
+Sin esta función (o con una versión incorrecta), la app no puede guardar cambios en los perfiles.
 
 ---
 

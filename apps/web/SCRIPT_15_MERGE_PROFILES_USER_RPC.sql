@@ -20,17 +20,43 @@ SET search_path = public
 AS $$
 BEGIN
   -- Actualizar solo los campos presentes en p_patch
-  -- usando jsonb_each para iterar sobre las claves
+  -- Convertir JSONB arrays a PostgreSQL arrays correctamente
   UPDATE profiles_user
   SET 
-    display_name = COALESCE((p_patch->>'display_name')::TEXT, display_name),
-    bio = COALESCE((p_patch->>'bio')::TEXT, bio),
-    avatar_url = COALESCE((p_patch->>'avatar_url')::TEXT, avatar_url),
-    ritmos = COALESCE((p_patch->'ritmos')::INT[], ritmos),
-    zonas = COALESCE((p_patch->'zonas')::INT[], zonas),
-    redes_sociales = COALESCE((p_patch->'redes_sociales')::JSONB, redes_sociales),
-    media = COALESCE((p_patch->'media')::JSONB, media),
-    respuestas = COALESCE((p_patch->'respuestas')::JSONB, respuestas),
+    display_name = CASE 
+      WHEN p_patch ? 'display_name' THEN (p_patch->>'display_name')::TEXT
+      ELSE display_name
+    END,
+    bio = CASE 
+      WHEN p_patch ? 'bio' THEN (p_patch->>'bio')::TEXT
+      ELSE bio
+    END,
+    avatar_url = CASE 
+      WHEN p_patch ? 'avatar_url' THEN (p_patch->>'avatar_url')::TEXT
+      ELSE avatar_url
+    END,
+    ritmos = CASE 
+      WHEN p_patch ? 'ritmos' THEN 
+        ARRAY(SELECT jsonb_array_elements_text(p_patch->'ritmos')::INT)
+      ELSE ritmos
+    END,
+    zonas = CASE 
+      WHEN p_patch ? 'zonas' THEN 
+        ARRAY(SELECT jsonb_array_elements_text(p_patch->'zonas')::INT)
+      ELSE zonas
+    END,
+    redes_sociales = CASE 
+      WHEN p_patch ? 'redes_sociales' THEN (p_patch->'redes_sociales')::JSONB
+      ELSE redes_sociales
+    END,
+    media = CASE 
+      WHEN p_patch ? 'media' THEN (p_patch->'media')::JSONB
+      ELSE media
+    END,
+    respuestas = CASE 
+      WHEN p_patch ? 'respuestas' THEN (p_patch->'respuestas')::JSONB
+      ELSE respuestas
+    END,
     updated_at = NOW()
   WHERE user_id = p_user_id;
   
@@ -102,8 +128,9 @@ WHERE routine_schema = 'public'
 -- 3. Si p_patch tiene un campo con valor null, NO se actualiza
 --    gracias al COALESCE que preserva el valor actual.
 
--- 4. Los arrays (ritmos, zonas) y JSONB (media, redes_sociales, respuestas)
---    se manejan correctamente con casting explícito.
+-- 4. Los arrays (ritmos, zonas) se convierten de JSONB a PostgreSQL arrays
+--    usando jsonb_array_elements_text() para evitar errores de casting.
+--    Los JSONB (media, redes_sociales, respuestas) se manejan directamente.
 
 -- 5. updated_at siempre se actualiza a NOW() en cada merge.
 
