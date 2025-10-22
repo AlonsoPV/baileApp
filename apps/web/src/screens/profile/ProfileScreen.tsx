@@ -17,7 +17,8 @@ const colors = {
 
 export function ProfileScreen() {
   const { profile, isLoading } = useUserProfile();
-  const { role, mode } = useProfileMode();
+  const { mode } = useProfileMode(); // mode ahora es el rol actual
+  const isEditRoute = window.location.pathname.includes('/edit');
 
   if (isLoading) {
     return (
@@ -69,22 +70,16 @@ export function ProfileScreen() {
         padding: '24px 16px 120px',
       }}
     >
-      {/* Render based on role and mode */}
-      {role === 'usuario' && mode === 'live' && (
-        <UserProfileLive />
+      {/* Render based on current mode (role) */}
+      {mode === 'usuario' && (
+        isEditRoute ? <UserProfileEditor /> : <UserProfileLive />
       )}
 
-      {role === 'usuario' && mode === 'edit' && (
-        <UserProfileEditor />
+      {mode === 'organizador' && (
+        isEditRoute ? <OrganizerProfileEditor /> : <OrganizerProfileLive />
       )}
 
-      {role === 'organizador' && mode === 'live' && (
-        <OrganizerProfileLive />
-      )}
-
-      {role === 'organizador' && mode === 'edit' && (
-        <OrganizerProfileEditor />
-      )}
+      {/* Otros roles se manejan en sus propias rutas */}
     </div>
   );
 }

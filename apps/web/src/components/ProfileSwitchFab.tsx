@@ -12,7 +12,7 @@ import "./ProfileSwitchFab.css";
 function FabInner() {
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const { role, mode, toggleRole, toggleMode, setRole, setMode } = useProfileMode();
+  const { mode, setMode } = useProfileMode(); // mode ahora es el rol
   const { organizerId, loading } = useOrganizerStore();
   const { user } = useAuth();
   const { data: roleRequests } = useMyRoleRequests();
@@ -25,54 +25,42 @@ function FabInner() {
     r => r.role === 'organizador' && r.status === 'aprobado'
   );
 
-  const go = (nextMode = mode, nextRole = role) => {
-    if (nextRole === "organizador") {
-      nav(nextMode === "edit" ? "/profile/organizer/edit" : "/profile/organizer", { replace: false });
-    } else {
-      nav(nextMode === "edit" ? "/app/profile" : "/app/profile", { replace: false });
-    }
-  };
+  // Determinar si estamos en modo edición basado en la ruta
+  const isEditMode = pathname.includes('/edit');
 
-  const onToggleRole = () => {
-    if (role === "usuario") {
+  const handleToggleRole = () => {
+    if (mode === "usuario") {
       // Intentando cambiar a organizador
-      // Verificar si tiene el rol aprobado
       if (!organizadorApproved && !hasOrganizer) {
         showToast('Necesitas solicitar acceso como organizador primero', 'error');
         nav('/profile/roles');
         return;
       }
       
-      if (hasOrganizer) {
-        toggleRole();
-        go(mode, "organizador");
-      } else {
-        // crea/edita organizador
-        setRole("organizador");
-        setMode("edit");
-        nav("/profile/organizer/edit");
-      }
+      setMode("organizador");
+      nav(isEditMode ? "/profile/organizer/edit" : "/profile/organizer");
     } else {
-      // Volver a usuario (siempre permitido)
-      toggleRole();
-      go(mode, "usuario");
+      // Volver a usuario
+      setMode("usuario");
+      nav(isEditMode ? "/app/profile" : "/app/profile");
     }
   };
 
-  const onToggleMode = () => {
-    toggleMode();
-    const next = mode === "live" ? "edit" : "live";
-    go(next, role);
+  const handleToggleEditLive = () => {
+    if (mode === "organizador") {
+      nav(isEditMode ? "/profile/organizer" : "/profile/organizer/edit");
+    } else {
+      nav(isEditMode ? "/app/profile" : "/app/profile");
+    }
   };
 
   // Si entran manualmente a /profile/organizer y no tienen organizer, redirige a crear
   React.useEffect(() => {
     if (!loading && !hasOrganizer && pathname.startsWith("/profile/organizer")) {
-      setRole("organizador");
-      setMode("edit");
+      setMode("organizador");
       nav("/profile/organizer/edit", { replace: true });
     }
-  }, [loading, hasOrganizer, pathname, setRole, setMode, nav]);
+  }, [loading, hasOrganizer, pathname, setMode, nav]);
 
   // Ocultar si no hay sesión
   if (!user) return null;
@@ -97,61 +85,52 @@ function FabInner() {
           pointerEvents: "auto",
         }}
       >
+        {/* Botón Toggle Usuario ↔ Organizador */}
         <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={onToggleMode}
-          className="profile-switch-mode-btn"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleToggleRole}
+          className="fab-button"
           style={{
             padding: '12px 20px',
             borderRadius: '50px',
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(23, 23, 23, 0.8)',
-            backdropFilter: 'blur(10px)',
+            border: 'none',
+            background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
             color: 'white',
-            fontSize: '0.875rem',
-            fontWeight: '600',
+            fontSize: '0.9rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            boxShadow: '0 4px 16px rgba(255, 61, 87, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
-          title={mode === "live" ? "Cambiar a Edición" : "Ver Live"}
         >
-          {mode === "live" ? "✏️ Editar perfil" : "👁️ Ver live"}
+          {mode === "usuario" ? "🎤 Organizador" : "👤 Usuario"}
         </motion.button>
 
+        {/* Botón Toggle Edit ↔ Live */}
         <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={onToggleRole}
-          disabled={role === "usuario" && !hasOrganizer}
-          className={`profile-switch-role-btn ${
-            role === "usuario" 
-              ? (hasOrganizer ? "role-usuario-has-org" : "role-usuario-no-org")
-              : "role-organizador"
-          }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleToggleEditLive}
+          className="fab-button"
           style={{
             padding: '12px 20px',
             borderRadius: '50px',
-            border: role === "usuario" && !hasOrganizer ? '1px solid rgba(255,255,255,0.15)' : 'none',
-            background: role === "usuario"
-              ? (hasOrganizer 
-                  ? 'linear-gradient(135deg, rgb(59, 130, 246), rgb(236, 72, 153))' 
-                  : 'rgba(64, 64, 64, 0.8)')
-              : 'linear-gradient(135deg, rgb(236, 72, 153), rgb(250, 204, 21))',
+            border: 'none',
+            background: 'linear-gradient(135deg, #1E88E5, #667eea)',
             color: 'white',
-            fontSize: '0.875rem',
+            fontSize: '0.9rem',
             fontWeight: '700',
-            cursor: (role === "usuario" && !hasOrganizer) ? 'not-allowed' : 'pointer',
-            opacity: (role === "usuario" && !hasOrganizer) ? 0.6 : 1,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(30, 136, 229, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
-          title={
-            role === "usuario"
-              ? (hasOrganizer ? "Ir a Organizador" : "Crear Organizador")
-              : "Ir a Usuario"
-          }
         >
-          {role === "usuario" 
-            ? (hasOrganizer ? "🎤 Switch a Organizador" : "✨ Crear Organizador") 
-            : "👤 Switch a Usuario"}
+          {isEditMode ? "👁️ Ver" : "✏️ Editar"}
         </motion.button>
       </div>
     </div>
@@ -159,14 +138,5 @@ function FabInner() {
 }
 
 export default function ProfileSwitchFab() {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  const container = document.body;
-  return ReactDOM.createPortal(<FabInner />, container);
+  return ReactDOM.createPortal(<FabInner />, document.body);
 }
