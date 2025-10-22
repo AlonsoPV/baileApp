@@ -55,6 +55,8 @@ export function EventDateEditScreen() {
   }, [currentDate]);
 
   async function save() {
+    console.log('[EventDateEditScreen] Save called:', { isNew, parentId, id, form });
+
     if (!form.fecha) {
       showToast('La fecha es obligatoria', 'error');
       return;
@@ -67,7 +69,8 @@ export function EventDateEditScreen() {
 
     try {
       if (isNew) {
-        await create.mutateAsync({
+        console.log('[EventDateEditScreen] Creating new date with parentId:', parentId);
+        const result = await create.mutateAsync({
           parent_id: Number(parentId),
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
@@ -78,8 +81,10 @@ export function EventDateEditScreen() {
           requisitos: form.requisitos.trim() || null,
           estado_publicacion: form.estado_publicacion
         });
+        console.log('[EventDateEditScreen] Date created successfully:', result);
         showToast('Fecha creada ✅', 'success');
       } else {
+        console.log('[EventDateEditScreen] Updating date with id:', id);
         await update.mutateAsync({
           id: Number(id),
           fecha: form.fecha,
@@ -95,7 +100,8 @@ export function EventDateEditScreen() {
       }
       navigate('/profile/organizer/edit');
     } catch (err: any) {
-      showToast('Error al guardar fecha', 'error');
+      console.error('[EventDateEditScreen] Error saving date:', err);
+      showToast(`Error: ${err.message || 'Error al guardar fecha'}`, 'error');
     }
   }
 

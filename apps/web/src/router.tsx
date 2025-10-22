@@ -18,6 +18,7 @@ import { EventParentPublicScreen } from './screens/events/EventParentPublicScree
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import { EventDatePublicScreen } from './screens/events/EventDatePublicScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
+import { EventCreateWizard } from './screens/events/EventCreateWizard';
 
 // Sprint 3 - Profile editors
 import { EventEditor } from './screens/profile/EventEditor';
@@ -59,6 +60,9 @@ export function AppRouter() {
         {/* App Routes */}
         <Route path="/app/profile" element={<ProfileScreen />} />
         <Route path="/app/profile/edit" element={<Profile />} />
+        
+        {/* Event Creation Wizard */}
+        <Route path="/events/new" element={<EventCreateWizard />} />
 
         {/* Sprint 3 - New Profile Routes */}
         <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
