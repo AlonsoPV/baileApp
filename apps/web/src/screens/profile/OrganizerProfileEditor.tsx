@@ -340,34 +340,11 @@ export function OrganizerProfileEditor() {
         border: `1px solid ${colors.light}22`,
       }}>
         <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
           marginBottom: '16px',
-          flexWrap: 'wrap',
-          gap: '12px',
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0 }}>
             📅 Mis Eventos ({parents?.length || 0})
           </h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/profile/organizer/events/new')}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '50px',
-              border: 'none',
-              background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-              color: colors.light,
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: `0 4px 16px ${colors.coral}66`,
-            }}
-          >
-            + Crear Evento
-          </motion.button>
         </div>
 
         {parents && parents.length > 0 ? (
@@ -376,7 +353,7 @@ export function OrganizerProfileEditor() {
               <motion.div
                 key={parent.id}
                 whileHover={{ scale: 1.01, x: 4 }}
-                onClick={() => navigate(`/events/parent/${parent.id}`)}
+                onClick={() => navigate(`/events/parent/${parent.id}/edit`)}
                 style={{
                   padding: '16px',
                   background: `${colors.dark}aa`,
@@ -430,66 +407,15 @@ export function OrganizerProfileEditor() {
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', opacity: 0.5, padding: '32px' }}>
-            <p style={{ marginBottom: '16px' }}>No has creado eventos aún</p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/events/new')}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '50px',
-                border: 'none',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                color: colors.light,
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: `0 8px 24px ${colors.coral}66`,
-              }}
-            >
-              📅 Crear mi primer evento
-            </motion.button>
+          <div style={{ textAlign: 'center', opacity: 0.7, padding: '32px' }}>
+            <p style={{ marginBottom: '8px', fontSize: '1.1rem' }}>No tienes eventos creados</p>
+            <p style={{ fontSize: '0.9rem', opacity: 0.6 }}>
+              Para crear eventos, ve al wizard de creación desde el menú principal
+            </p>
           </div>
         )}
       </div>
 
-      {/* Botón Discreto: Crear Evento - Centro Abajo */}
-      <div style={{
-        position: 'fixed',
-        bottom: '32px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1000,
-        pointerEvents: 'auto',
-      }}>
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/events/new')}
-          style={{
-            padding: '12px 24px',
-            borderRadius: '25px',
-            border: 'none',
-            background: `${colors.dark}dd`,
-            backdropFilter: 'blur(10px)',
-            color: colors.light,
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            border: `1px solid ${colors.light}33`,
-          }}
-        >
-          <span style={{ fontSize: '1.1rem' }}>📅</span>
-          Crear Evento
-        </motion.button>
-      </div>
     </div>
   );
 }
