@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEventFullByDateId } from "../../hooks/useEventFull";
 import { useUpdateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useToast } from "../../components/Toast";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 export default function EventEditScreen() {
   const { dateId } = useParams();
@@ -176,18 +177,32 @@ export default function EventEditScreen() {
   }
 
   return (
-    <EventForm
-      mode="edit"
-      parent={parent}
-      date={date}
-      onChangeParent={(patch) => setParent(prev => ({ ...prev, ...patch }))}
-      onChangeDate={(patch) => setDate(prev => ({ ...prev, ...patch }))}
-      onSaveParent={onSaveParent}
-      onSaveDate={onSaveDate}
-      dateId={id}
-      onFinish={() => nav(`/events/date/${id}`)}
-      isLoading={isLoading}
-    />
+    <div>
+      {/* Breadcrumbs */}
+      <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem 0' }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', href: '/', icon: '🏠' },
+            { label: 'Organizador', href: '/profile/organizer/edit', icon: '🎤' },
+            { label: q.data?.parent?.nombre || 'Evento', href: `/events/parent/${q.data?.parent?.id}`, icon: '🎉' },
+            { label: 'Editar', icon: '✏️' },
+          ]}
+        />
+      </div>
+
+      <EventForm
+        mode="edit"
+        parent={parent}
+        date={date}
+        onChangeParent={(patch) => setParent(prev => ({ ...prev, ...patch }))}
+        onChangeDate={(patch) => setDate(prev => ({ ...prev, ...patch }))}
+        onSaveParent={onSaveParent}
+        onSaveDate={onSaveDate}
+        dateId={id}
+        onFinish={() => nav(`/events/date/${id}`)}
+        isLoading={isLoading}
+      />
+    </div>
   );
 }
 

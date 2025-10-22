@@ -4,6 +4,7 @@ import EventForm from "../../components/events/EventForm";
 import { useMyOrganizer, useUpsertMyOrganizer } from "../../hooks/useOrganizer";
 import { useCreateParent, useCreateDate } from "../../hooks/useEvents";
 import { useToast } from "../../components/Toast";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 export default function EventCreateScreen() {
   const nav = useNavigate();
@@ -132,18 +133,31 @@ export default function EventCreateScreen() {
   }
 
   return (
-    <EventForm
-      mode="create"
-      parent={parent}
-      date={date}
-      onChangeParent={(patch) => setParent(prev => ({ ...prev, ...patch }))}
-      onChangeDate={(patch) => setDate(prev => ({ ...prev, ...patch }))}
-      onSaveParent={onSaveParent}
-      onSaveDate={onSaveDate}
-      dateId={dateId}
-      onFinish={finish}
-      isLoading={isLoading}
-    />
+    <div>
+      {/* Breadcrumbs */}
+      <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1rem 1.5rem 0' }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', href: '/', icon: '🏠' },
+            { label: 'Organizador', href: '/profile/organizer/edit', icon: '🎤' },
+            { label: 'Crear Evento', icon: '✨' },
+          ]}
+        />
+      </div>
+
+      <EventForm
+        mode="create"
+        parent={parent}
+        date={date}
+        onChangeParent={(patch) => setParent(prev => ({ ...prev, ...patch }))}
+        onChangeDate={(patch) => setDate(prev => ({ ...prev, ...patch }))}
+        onSaveParent={onSaveParent}
+        onSaveDate={onSaveDate}
+        dateId={dateId}
+        onFinish={finish}
+        isLoading={isLoading}
+      />
+    </div>
   );
 }
 

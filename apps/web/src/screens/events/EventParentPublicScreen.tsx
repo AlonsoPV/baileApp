@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useDatesByParent } from '../../hooks/useEvents';
 import { useTags } from '../../hooks/useTags';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 
 const colors = {
   coral: '#FF3D57',
@@ -116,6 +117,16 @@ export function EventParentPublicScreen() {
 
   return (
     <div style={{ color: 'white', background: colors.dark, minHeight: '100vh' }}>
+      {/* Breadcrumbs */}
+      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1rem 1.5rem 0' }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', href: '/', icon: '🏠' },
+            { label: eventParent.nombre, icon: '🎉' },
+          ]}
+        />
+      </div>
+
       {/* Hero */}
       <div style={{
         position: 'relative',

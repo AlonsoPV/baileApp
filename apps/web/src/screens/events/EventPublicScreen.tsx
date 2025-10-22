@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEventFullByDateId } from "../../hooks/useEventFull";
 import { useTags } from "../../hooks/useTags";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 export default function EventPublicScreen() {
   const { id } = useParams();
@@ -83,6 +84,17 @@ export default function EventPublicScreen() {
 
   return (
     <div style={{ color: 'white', background: '#121212', minHeight: '100vh' }}>
+      {/* Breadcrumbs */}
+      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '1rem 1.5rem 0' }}>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', href: '/', icon: '🏠' },
+            { label: parent.nombre, href: `/events/parent/${parent.id}`, icon: '🎉' },
+            { label: date.fecha, icon: '📅' },
+          ]}
+        />
+      </div>
+
       {/* Hero */}
       <div style={{
         position: 'relative',
