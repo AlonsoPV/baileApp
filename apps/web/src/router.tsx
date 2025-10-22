@@ -77,7 +77,7 @@ export function AppRouter() {
       <Route element={<OnboardingGate />}>
         {/* App Routes */}
         <Route path="/app/profile" element={<ProfileScreen />} />
-        <Route path="/app/profile/edit" element={<Profile />} />
+        <Route path="/app/profile/edit" element={<ProfileScreen />} />
         
         {/* Event Creation Wizard */}
         <Route path="/events/new" element={<EventCreateWizard />} />

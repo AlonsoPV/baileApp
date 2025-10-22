@@ -50,7 +50,8 @@ function FabInner() {
     if (mode === "organizador") {
       nav(isEditMode ? "/profile/organizer" : "/profile/organizer/edit");
     } else {
-      nav(isEditMode ? "/app/profile" : "/app/profile");
+      // Usuario: alternar entre vista y edición
+      nav(isEditMode ? "/app/profile" : "/app/profile/edit");
     }
   };
 
