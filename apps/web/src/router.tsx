@@ -79,6 +79,10 @@ export function AppRouter() {
         <Route path="/app/profile" element={<ProfileScreen />} />
         <Route path="/app/profile/edit" element={<ProfileScreen />} />
         
+        {/* User Profile Routes (new unified) */}
+        <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/profile/edit" element={<ProfileScreen />} />
+        
         {/* Event Creation Wizard */}
         <Route path="/events/new" element={<EventCreateWizard />} />
         

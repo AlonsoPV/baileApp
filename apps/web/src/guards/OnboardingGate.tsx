@@ -70,7 +70,7 @@ export default function OnboardingGate() {
   const isOrganizerRoute = organizerRoutes.some(route => loc.pathname.startsWith(route));
   
   // Rutas públicas que tampoco requieren onboarding
-  const publicRoutes = ['/u/', '/events/parent/', '/events/date/'];
+  const publicRoutes = ['/u/', '/events/parent/', '/events/date/','/app/profile'];
   const isPublicRoute = publicRoutes.some(route => loc.pathname.includes(route) && !loc.pathname.includes('/edit'));
 
   // 🔹 3) Si ya está completo y estás en ruta onboarding → redirige a perfil

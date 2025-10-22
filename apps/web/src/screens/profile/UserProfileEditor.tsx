@@ -10,7 +10,7 @@ import { MediaGrid } from "../../components/MediaGrid";
 import { useToast } from "../../components/Toast";
 import { supabase, getBucketPublicUrl } from "../../lib/supabase";
 import { useAuth } from "../../hooks/useAuth";
-import ProfileRoleSwitch from "../../components/profile/ProfileRoleSwitch";
+import ProfileToolbar from "../../components/profile/ProfileToolbar";
 
 const colors = {
   coral: '#FF3D57',
@@ -141,8 +141,8 @@ export const UserProfileEditor: React.FC = () => {
         ✏️ Editar Perfil de Usuario
       </h1>
 
-      {/* Profile Role Switch */}
-      <ProfileRoleSwitch />
+      {/* Profile Toolbar */}
+      <ProfileToolbar />
 
       {/* Avatar Upload */}
       <div style={{ marginBottom: '24px' }}>

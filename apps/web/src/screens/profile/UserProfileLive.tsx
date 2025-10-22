@@ -7,6 +7,7 @@ import { useUserMedia } from "../../hooks/useUserMedia";
 import { useMyRSVPs } from "../../hooks/useMyRSVPs";
 import { MediaGrid } from "../../components/MediaGrid";
 import { EventInviteStrip } from "../../components/EventInviteStrip";
+import ProfileToolbar from "../../components/profile/ProfileToolbar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -66,6 +67,11 @@ export const UserProfileLive: React.FC = () => {
         color: colors.light,
       }}
     >
+      {/* Profile Toolbar */}
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
+        <ProfileToolbar />
+      </div>
+
       {/* Cover Image */}
       <div style={{ 
         position: 'relative', 
