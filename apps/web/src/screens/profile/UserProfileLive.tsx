@@ -339,36 +339,6 @@ export const UserProfileLive: React.FC = () => {
           </motion.section>
         )}
       </div>
-
-      {/* Botón Flotante: Crear Evento */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => navigate('/events/new')}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          padding: '16px 24px',
-          borderRadius: '50px',
-          border: 'none',
-          background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-          color: colors.light,
-          fontSize: '1rem',
-          fontWeight: '700',
-          cursor: 'pointer',
-          boxShadow: `0 8px 32px ${colors.coral}88`,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}
-      >
-        <span style={{ fontSize: '1.2rem' }}>📅</span>
-        Crear Evento
-      </motion.button>
     </div>
   );
 };

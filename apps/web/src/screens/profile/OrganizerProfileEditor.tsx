@@ -387,11 +387,61 @@ export function OrganizerProfileEditor() {
             ))}
           </div>
         ) : (
-          <p style={{ textAlign: 'center', opacity: 0.5, padding: '32px' }}>
-            No has creado eventos aún
-          </p>
+          <div style={{ textAlign: 'center', opacity: 0.5, padding: '32px' }}>
+            <p style={{ marginBottom: '16px' }}>No has creado eventos aún</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/events/new')}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '50px',
+                border: 'none',
+                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                color: colors.light,
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: `0 8px 24px ${colors.coral}66`,
+              }}
+            >
+              📅 Crear mi primer evento
+            </motion.button>
+          </div>
         )}
       </div>
+
+      {/* Botón Flotante: Crear Evento */}
+      {org && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/events/new')}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            padding: '16px 24px',
+            borderRadius: '50px',
+            border: 'none',
+            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+            color: colors.light,
+            fontSize: '1rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: `0 8px 32px ${colors.coral}88`,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '1.2rem' }}>📅</span>
+          Crear Evento
+        </motion.button>
+      )}
     </div>
   );
 }
