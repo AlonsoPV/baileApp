@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { useProfileMode } from '../state/profileMode';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -13,6 +14,11 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // 🎭 Resetear a usuario si no hay sesión
+      if (!session?.user) {
+        useProfileMode.getState().setMode("usuario");
+      }
     });
 
     // Listen to auth changes
@@ -21,6 +27,11 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // 🎭 Resetear a usuario si se cierra sesión
+      if (!session?.user) {
+        useProfileMode.getState().setMode("usuario");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -44,6 +55,9 @@ export function useAuth() {
       // 🔁 Invalida perfil justo después del login
       await qc.invalidateQueries({ queryKey: ["profile"] });
       await qc.invalidateQueries({ queryKey: ["profile", "me", data.user.id] });
+      
+      // 🎭 Resetear modo de perfil a "usuario" por defecto
+      useProfileMode.getState().setMode("usuario");
     }
     
     return { data, error };
@@ -55,6 +69,9 @@ export function useAuth() {
     if (!error) {
       // 🧹 Limpia toda la cache de React Query al hacer logout
       qc.clear();
+      
+      // 🎭 Resetear modo de perfil a "usuario"
+      useProfileMode.getState().setMode("usuario");
     }
     
     return { error };
