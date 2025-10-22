@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useIsAdmin } from '../hooks/useRoleRequests';
 import { theme } from '@theme/colors';
 
 interface NavbarProps {
@@ -9,6 +10,7 @@ interface NavbarProps {
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: isAdmin } = useIsAdmin();
 
   const handleLogout = async () => {
     await signOut();
@@ -111,6 +113,32 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             >
               Perfil 👤
             </Link>
+            
+            {/* Admin Link - Solo visible para admins */}
+            {isAdmin && (
+              <Link
+                to="/admin/roles"
+                style={{
+                  color: '#FFD166',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '700',
+                  padding: '0.5rem 1rem',
+                  borderRadius: theme.radius.md,
+                  transition: 'background 0.2s',
+                  border: '1px solid rgba(255, 214, 102, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 214, 102, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                Admin ⚙️
+              </Link>
+            )}
+            
             <button
               onClick={handleLogout}
               style={{

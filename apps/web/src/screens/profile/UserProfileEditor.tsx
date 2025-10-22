@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useTags } from "../../hooks/useTags";
 import { useUserMedia } from "../../hooks/useUserMedia";
+import { useIsAdmin } from "../../hooks/useRoleRequests";
 import { MediaUploader } from "../../components/MediaUploader";
 import { MediaGrid } from "../../components/MediaGrid";
 import { useToast } from "../../components/Toast";
@@ -26,6 +27,7 @@ export const UserProfileEditor: React.FC = () => {
   const { data: allTags } = useTags();
   const { media, addMedia, removeMedia } = useUserMedia();
   const { showToast } = useToast();
+  const { data: isAdmin } = useIsAdmin();
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -381,6 +383,54 @@ export const UserProfileEditor: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Admin Access Card */}
+      {isAdmin && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            marginBottom: '24px',
+            padding: '20px',
+            borderRadius: '16px',
+            border: `2px solid ${colors.yellow}`,
+            background: `linear-gradient(135deg, rgba(255, 214, 102, 0.1), rgba(255, 140, 66, 0.1))`,
+            boxShadow: `0 4px 16px ${colors.yellow}33`,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '2rem' }}>⚙️</span>
+            <div>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '4px' }}>
+                Panel de Administrador
+              </h3>
+              <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                Tienes acceso al panel de administración
+              </p>
+            </div>
+          </div>
+          
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/admin/roles')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '25px',
+              border: 'none',
+              background: `linear-gradient(135deg, ${colors.yellow}, ${colors.orange})`,
+              color: colors.dark,
+              fontSize: '0.9rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: `0 4px 12px ${colors.yellow}66`,
+            }}
+          >
+            ⚙️ Ver Solicitudes de Roles
+          </motion.button>
+        </motion.div>
+      )}
 
       {/* Save Button */}
       <motion.button
