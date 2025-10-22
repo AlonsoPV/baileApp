@@ -39,7 +39,7 @@ export function ProfileHero({
     >
       {/* Cover Image */}
       <img
-        src={coverUrl || "/default-cover.jpg"}
+        src={coverUrl || "https://placehold.co/800x360/121212/F5F5F5?text=Cover"}
         alt={title}
         style={{
           width: '100%',
@@ -48,7 +48,7 @@ export function ProfileHero({
           opacity: 0.7,
         }}
         onError={(e) => {
-          e.currentTarget.src = 'https://via.placeholder.com/800x360/121212/F5F5F5?text=Cover';
+          e.currentTarget.src = 'https://placehold.co/800x360/121212/F5F5F5?text=Cover';
         }}
       />
 

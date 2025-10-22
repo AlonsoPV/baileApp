@@ -64,17 +64,29 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (!error) {
-      // 🧹 Limpia toda la cache de React Query al hacer logout
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      
+      // 🧹 Limpiar cache SIEMPRE, incluso si hay error 403
+      // El error 403 puede ser de Supabase pero el logout local funciona
       qc.clear();
       
       // 🎭 Resetear modo de perfil a "usuario"
       useProfileMode.getState().setMode("usuario");
+      
+      // Si hay error, solo loguearlo pero no fallar
+      if (error) {
+        console.warn('[useAuth] Logout warning (puede ignorarse):', error);
+      }
+      
+      return { error: null }; // Siempre retornar success para el logout local
+    } catch (e: any) {
+      console.error('[useAuth] Logout error:', e);
+      // Limpiar cache de todas formas
+      qc.clear();
+      useProfileMode.getState().setMode("usuario");
+      return { error: e };
     }
-    
-    return { error };
   };
 
   return {

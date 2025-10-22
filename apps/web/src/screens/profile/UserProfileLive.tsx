@@ -82,7 +82,7 @@ export const UserProfileLive: React.FC = () => {
         borderRadius: '0 0 24px 24px',
       }}>
         <img
-          src={profile?.avatar_url || "/default-cover.jpg"}
+          src={profile?.avatar_url || "https://placehold.co/500x500/121212/F5F5F5?text=Avatar"}
           alt={profile?.display_name}
           style={{
             width: '100%',
@@ -91,7 +91,7 @@ export const UserProfileLive: React.FC = () => {
             opacity: 0.7,
           }}
           onError={(e) => {
-            e.currentTarget.src = 'https://via.placeholder.com/500x500/121212/F5F5F5?text=Avatar';
+            e.currentTarget.src = 'https://placehold.co/500x500/121212/F5F5F5?text=Avatar';
           }}
         />
 
