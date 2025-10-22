@@ -47,3 +47,26 @@ export type RSVPCount = {
   interesado: number; 
   no_voy: number; 
 };
+
+export type EventSchedule = {
+  id?: number;
+  event_date_id: number;
+  tipo: "clase" | "show" | "social" | "otro";
+  titulo: string;
+  descripcion?: string;
+  hora_inicio: string;
+  hora_fin?: string;
+  ritmo?: number;
+};
+
+export type EventPrice = {
+  id?: number;
+  event_date_id: number;
+  tipo: "preventa" | "taquilla" | "promo";
+  nombre: string;
+  monto?: number;
+  descripcion?: string;
+  hora_inicio?: string;
+  hora_fin?: string;
+  descuento?: number;
+};

@@ -20,6 +20,11 @@ import { EventDatePublicScreen } from './screens/events/EventDatePublicScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 import { EventCreateWizard } from './screens/events/EventCreateWizard';
 
+// New unified event screens
+import EventCreateScreen from './screens/events/EventCreateScreen';
+import EventEditScreen from './screens/events/EventEditScreen';
+import EventPublicScreen from './screens/events/EventPublicScreen';
+
 // Sprint 3 - Profile editors
 import { EventEditor } from './screens/profile/EventEditor';
 import { EventDateEditor } from './screens/profile/EventDateEditor';
@@ -63,6 +68,10 @@ export function AppRouter() {
         
         {/* Event Creation Wizard */}
         <Route path="/events/new" element={<EventCreateWizard />} />
+        
+        {/* New Unified Event Routes */}
+        <Route path="/events/create" element={<EventCreateScreen />} />
+        <Route path="/events/date/:dateId/edit" element={<EventEditScreen />} />
 
         {/* Sprint 3 - New Profile Routes */}
         <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
@@ -99,7 +108,9 @@ export function AppRouter() {
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
       <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
-      <Route path="/events/date/:id" element={<EventDatePublicScreen />} />
+      
+      {/* New unified public event view */}
+      <Route path="/events/date/:id" element={<EventPublicScreen />} />
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/app/profile" replace />} />

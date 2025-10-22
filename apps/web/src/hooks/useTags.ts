@@ -22,10 +22,16 @@ async function fetchTags(tipo?: 'ritmo' | 'zona'): Promise<Tag[]> {
 }
 
 export function useTags(tipo?: 'ritmo' | 'zona') {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['tags', tipo],
     queryFn: () => fetchTags(tipo),
   });
+
+  return {
+    ...query,
+    ritmos: tipo === 'ritmo' ? (query.data || []) : [],
+    zonas: tipo === 'zona' ? (query.data || []) : [],
+  };
 }
 
 // Convenience hooks for specific tag types
