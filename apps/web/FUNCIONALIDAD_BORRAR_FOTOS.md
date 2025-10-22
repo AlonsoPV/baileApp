@@ -20,6 +20,7 @@ Botón de eliminar mejorado:
 - 🛡️ **Stop propagation:** `e.stopPropagation()` para evitar clicks accidentales
 
 **Código del botón:**
+{% raw %}
 ```tsx
 <motion.button
   initial={{ opacity: 0.7 }}
@@ -40,13 +41,12 @@ Botón de eliminar mejorado:
     width: '32px',
     height: '32px',
     borderRadius: '50%',
-    border: `2px solid ${colors.light}`,
+    border: `2px solid ${colors.light}`, // usar backticks aquí es seguro dentro de raw
     boxShadow: '0 2px 12px rgba(0,0,0,0.6)',
-  }}
->
+  }}>
   🗑️
 </motion.button>
-```
+{% endraw %}
 
 ---
 
