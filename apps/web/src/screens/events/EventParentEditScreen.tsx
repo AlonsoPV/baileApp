@@ -27,11 +27,21 @@ export function EventParentEditScreen() {
 
   const currentEvent = isEdit ? parents?.find(p => p.id === parseInt(id!)) : null;
 
+  console.log('[EventParentEditScreen] Debug:', {
+    id,
+    isEdit,
+    parentsCount: parents?.length,
+    currentEvent,
+    organizerId: org?.id
+  });
+
   const [form, setForm] = useState({
     nombre: "",
     descripcion: "",
     sede_general: ""
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (currentEvent) {
@@ -44,6 +54,8 @@ export function EventParentEditScreen() {
   }, [currentEvent]);
 
   async function save() {
+    console.log('[EventParentEditScreen] Save called:', { isEdit, id, form });
+    
     if (!org?.id) {
       showToast('No tienes organizador creado', 'error');
       return;
@@ -54,17 +66,22 @@ export function EventParentEditScreen() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       if (!isEdit) {
+        console.log('[EventParentEditScreen] Creating new event');
         const p = await create.mutateAsync({
           organizer_id: org.id,
           nombre: form.nombre.trim(),
           descripcion: form.descripcion.trim() || null,
           sede_general: form.sede_general.trim() || null
         });
+        console.log('[EventParentEditScreen] Event created:', p);
         showToast('Evento creado ✅', 'success');
         navigate(`/events/parent/${p.id}/edit`);
       } else {
+        console.log('[EventParentEditScreen] Updating event:', id);
         await update.mutateAsync({
           id: Number(id),
           patch: {
@@ -73,11 +90,15 @@ export function EventParentEditScreen() {
             sede_general: form.sede_general.trim() || null
           }
         });
+        console.log('[EventParentEditScreen] Event updated successfully');
         showToast('Evento actualizado ✅', 'success');
         navigate('/profile/organizer/edit');
       }
     } catch (err: any) {
-      showToast('Error al guardar evento', 'error');
+      console.error('[EventParentEditScreen] Error saving event:', err);
+      showToast(`Error: ${err.message || 'Error al guardar evento'}`, 'error');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -206,24 +227,24 @@ export function EventParentEditScreen() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={save}
-          disabled={create.isPending || update.isPending}
+          disabled={isLoading}
           style={{
             flex: 1,
             minWidth: '200px',
             padding: '16px',
             borderRadius: '50px',
             border: 'none',
-            background: (create.isPending || update.isPending)
+            background: isLoading
               ? `${colors.light}33` 
               : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
             color: colors.light,
             fontSize: '1rem',
             fontWeight: '700',
-            cursor: (create.isPending || update.isPending) ? 'not-allowed' : 'pointer',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
             boxShadow: `0 8px 24px ${colors.blue}66`,
           }}
         >
-          {(create.isPending || update.isPending) ? 'Guardando...' : '💾 Guardar'}
+          {isLoading ? 'Guardando...' : '💾 Guardar'}
         </motion.button>
 
         <motion.button

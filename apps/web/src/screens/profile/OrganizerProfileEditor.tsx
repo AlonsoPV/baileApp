@@ -379,29 +379,47 @@ export function OrganizerProfileEditor() {
                       </p>
                     )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEvent(parent.id, parent.nombre);
-                      }}
-                      disabled={deleteParent.isPending}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        border: 'none',
-                        background: deleteParent.isPending ? '#666' : '#FF3D57',
-                        color: 'white',
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        cursor: deleteParent.isPending ? 'not-allowed' : 'pointer',
-                        opacity: deleteParent.isPending ? 0.7 : 1,
-                      }}
-                    >
-                      {deleteParent.isPending ? '⏳ Eliminando...' : '🗑️ Eliminar'}
-                    </button>
-                    <span style={{ fontSize: '1.5rem' }}>→</span>
-                  </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(parent.id, parent.nombre);
+                              }}
+                              disabled={deleteParent.isPending}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                background: deleteParent.isPending ? '#666' : '#FF3D57',
+                                color: 'white',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                cursor: deleteParent.isPending ? 'not-allowed' : 'pointer',
+                                opacity: deleteParent.isPending ? 0.7 : 1,
+                              }}
+                            >
+                              {deleteParent.isPending ? '⏳ Eliminando...' : '🗑️ Eliminar'}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/events/parent/${parent.id}/edit`);
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                background: colors.blue,
+                                color: 'white',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              ✏️ Editar
+                            </button>
+                            <span style={{ fontSize: '1.5rem' }}>→</span>
+                          </div>
                 </div>
               </motion.div>
             ))}
