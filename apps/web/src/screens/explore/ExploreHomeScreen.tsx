@@ -1,7 +1,11 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useExploreFilters, ExploreType } from '../../state/exploreFilters';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useExploreFilters } from "../../state/exploreFilters";
+import { useExploreQuery } from "../../hooks/useExploreQuery";
+import EventCard from "../../components/explore/cards/EventCard";
+import OrganizerCard from "../../components/explore/cards/OrganizerCard";
+import TeacherCard from "../../components/explore/cards/TeacherCard";
 
 const colors = {
   coral: '#FF3D57',
@@ -12,67 +16,72 @@ const colors = {
   light: '#F5F5F5',
 };
 
-type CategoryCard = {
-  type: ExploreType;
-  label: string;
-  icon: string;
-  gradient: string;
-  description: string;
-};
-
-const categories: CategoryCard[] = [
-  {
-    type: 'eventos',
-    label: 'Eventos',
-    icon: '📅',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    description: 'Sociales, clases y workshops'
-  },
-  {
-    type: 'organizadores',
-    label: 'Organizadores',
-    icon: '🎤',
-    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    description: 'Encuentra quién organiza eventos'
-  },
-  {
-    type: 'usuarios',
-    label: 'Bailarines',
-    icon: '💃',
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    description: 'Conecta con la comunidad'
-  },
-  {
-    type: 'maestros',
-    label: 'Maestros',
-    icon: '🎓',
-    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    description: 'Profesores y coreógrafos'
-  },
-  {
-    type: 'academias',
-    label: 'Academias',
-    icon: '🏫',
-    gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    description: 'Escuelas y studios de baile'
-  },
-  {
-    type: 'marcas',
-    label: 'Marcas',
-    icon: '🏷️',
-    gradient: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-    description: 'Ropa, zapatos y accesorios'
-  },
-];
+function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginBottom: '2rem' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '0.75rem'
+      }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>{title}</h2>
+        <Link
+          to={toAll}
+          style={{
+            fontSize: '0.875rem',
+            color: '#f093fb',
+            textDecoration: 'none',
+            fontWeight: '600'
+          }}
+        >
+          Ver todo →
+        </Link>
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default function ExploreHomeScreen() {
   const navigate = useNavigate();
-  const { set, reset } = useExploreFilters();
+  const { set } = useExploreFilters();
 
-  const handleSelectType = (type: ExploreType) => {
-    console.log('[ExploreHome] Selected type:', type);
-    reset(); // Limpiar filtros anteriores
-    set({ type }); // Establecer nuevo tipo
+  // Próximos eventos (next 30d)
+  const start = new Date();
+  const end = new Date();
+  end.setDate(end.getDate() + 30);
+  
+  const eventsQuery = useExploreQuery({
+    type: "eventos",
+    q: "",
+    ritmos: [],
+    zonas: [],
+    dateFrom: start.toISOString().slice(0, 10),
+    dateTo: end.toISOString().slice(0, 10),
+    pageSize: 6
+  });
+
+  // Organizadores destacados
+  const orgQuery = useExploreQuery({
+    type: "organizadores",
+    q: "",
+    ritmos: [],
+    zonas: [],
+    pageSize: 6
+  });
+
+  // Maestros recientes (placeholder)
+  const teachQuery = useExploreQuery({
+    type: "maestros",
+    q: "",
+    ritmos: [],
+    zonas: [],
+    pageSize: 6
+  });
+
+  const handleNavigateToAll = (type: string) => {
+    set({ type: type as any });
     navigate('/explore/list');
   };
 
@@ -81,10 +90,10 @@ export default function ExploreHomeScreen() {
       minHeight: '100vh',
       background: colors.dark,
       color: colors.light,
-      padding: '2rem 1.5rem'
+      padding: '1.5rem'
     }}>
-      {/* Header */}
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -111,95 +120,111 @@ export default function ExploreHomeScreen() {
           </p>
         </motion.div>
 
-        {/* Categories Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}>
-          {categories.map((cat, index) => (
-            <motion.div
-              key={cat.type}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.03, y: -4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelectType(cat.type)}
-              style={{
-                background: cat.gradient,
-                borderRadius: '1.5rem',
-                padding: '2rem',
-                cursor: 'pointer',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                transition: 'all 0.3s ease',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Icono */}
-              <div style={{
-                fontSize: '3rem',
-                marginBottom: '1rem',
-                textAlign: 'center'
-              }}>
-                {cat.icon}
-              </div>
+        {/* Sección: Próximos Eventos */}
+        <Section title="📅 Próximos Eventos" toAll="/explore/list">
+          {eventsQuery.isLoading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+              Cargando eventos...
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1rem'
+            }}>
+              {(eventsQuery.data?.pages?.[0]?.data || []).map((e: any, i: number) => (
+                <div
+                  key={e.id ?? i}
+                  onClick={() => navigate(`/events/date/${e.id}`)}
+                >
+                  <EventCard item={e} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
 
-              {/* Título */}
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                textAlign: 'center',
-                color: 'white',
-                textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-              }}>
-                {cat.label}
-              </h3>
+        {/* Sección: Organizadores Destacados */}
+        <Section title="🎤 Organizadores Destacados" toAll="/explore/list">
+          {orgQuery.isLoading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+              Cargando organizadores...
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1rem'
+            }}>
+              {(orgQuery.data?.pages?.[0]?.data || []).map((o: any, i: number) => (
+                <div
+                  key={o.id ?? i}
+                  onClick={() => navigate(`/organizer/${o.id}`)}
+                >
+                  <OrganizerCard item={o} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
 
-              {/* Descripción */}
-              <p style={{
-                fontSize: '0.875rem',
-                opacity: 0.95,
-                textAlign: 'center',
-                color: 'white'
-              }}>
-                {cat.description}
-              </p>
+        {/* Sección: Nuevos Maestros */}
+        <Section title="🎓 Nuevos Maestros" toAll="/explore/list">
+          {teachQuery.isLoading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+              Cargando maestros...
+            </div>
+          ) : teachQuery.data?.pages?.[0]?.data?.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              opacity: 0.6,
+              background: 'rgba(38, 38, 38, 0.6)',
+              borderRadius: '1rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              Próximamente: Perfiles de maestros
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1rem'
+            }}>
+              {(teachQuery.data?.pages?.[0]?.data || []).map((t: any, i: number) => (
+                <div key={t.id ?? i}>
+                  <TeacherCard item={t} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
 
-              {/* Efecto de brillo */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Footer hint */}
+        {/* CTA: ir a lista con filtros */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          style={{
-            marginTop: '3rem',
-            textAlign: 'center',
-            fontSize: '0.875rem',
-            opacity: 0.6
-          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          style={{ marginTop: '2rem', textAlign: 'center' }}
         >
-          💡 Tip: Selecciona una categoría para comenzar a explorar
+          <button
+            onClick={() => handleNavigateToAll("eventos")}
+            style={{
+              padding: '1rem 2rem',
+              borderRadius: '9999px',
+              border: 'none',
+              background: 'linear-gradient(to right, rgb(59, 130, 246), rgb(236, 72, 153))',
+              color: 'white',
+              fontSize: '1rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(236, 72, 153, 0.4)'
+            }}
+          >
+            🔍 Ver todos los eventos
+          </button>
         </motion.div>
       </div>
     </div>
   );
 }
-

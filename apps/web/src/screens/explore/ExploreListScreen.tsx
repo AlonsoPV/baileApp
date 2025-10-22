@@ -1,14 +1,14 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useExploreFilters } from '../../state/exploreFilters';
-import { useExploreQuery } from '../../hooks/useExploreQuery';
-import { Breadcrumbs } from '../../components/Breadcrumbs';
-import FilterChips from '../../components/explore/FilterChips';
-import InfiniteGrid from '../../components/explore/InfiniteGrid';
-import EventCard from '../../components/explore/cards/EventCard';
-import OrganizerCard from '../../components/explore/cards/OrganizerCard';
-import TeacherCard from '../../components/explore/cards/TeacherCard';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useExploreFilters } from "../../state/exploreFilters";
+import { useExploreQuery } from "../../hooks/useExploreQuery";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
+import FilterChips from "../../components/explore/FilterChips";
+import InfiniteGrid from "../../components/explore/InfiniteGrid";
+import EventCard from "../../components/explore/cards/EventCard";
+import OrganizerCard from "../../components/explore/cards/OrganizerCard";
+import TeacherCard from "../../components/explore/cards/TeacherCard";
 
 const colors = {
   coral: '#FF3D57',
@@ -19,6 +19,24 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const typeLabels: Record<string, string> = {
+  eventos: 'Eventos',
+  organizadores: 'Organizadores',
+  usuarios: 'Bailarines',
+  maestros: 'Maestros',
+  academias: 'Academias',
+  marcas: 'Marcas',
+};
+
+const typeIcons: Record<string, string> = {
+  eventos: '📅',
+  organizadores: '🎤',
+  usuarios: '💃',
+  maestros: '🎓',
+  academias: '🏫',
+  marcas: '🏷️',
+};
+
 export default function ExploreListScreen() {
   const navigate = useNavigate();
   const { filters } = useExploreFilters();
@@ -26,25 +44,7 @@ export default function ExploreListScreen() {
 
   const totalCount = query.data?.pages[0]?.count || 0;
 
-  const typeLabels: Record<string, string> = {
-    eventos: 'Eventos',
-    organizadores: 'Organizadores',
-    usuarios: 'Bailarines',
-    maestros: 'Maestros',
-    academias: 'Academias',
-    marcas: 'Marcas',
-  };
-
-  const typeIcons: Record<string, string> = {
-    eventos: '📅',
-    organizadores: '🎤',
-    usuarios: '💃',
-    maestros: '🎓',
-    academias: '🏫',
-    marcas: '🏷️',
-  };
-
-  const renderItem = (item: any, index: number) => {
+  const renderItem = (item: any, i: number) => {
     const handleClick = () => {
       if (filters.type === 'eventos') {
         navigate(`/events/date/${item.id}`);
@@ -53,14 +53,45 @@ export default function ExploreListScreen() {
       } else if (filters.type === 'usuarios') {
         navigate(`/u/${item.user_id}`);
       }
+      // maestros, academias, marcas - cuando estén las tablas
     };
 
-    const CardComponent = filters.type === 'eventos' ? EventCard
-      : filters.type === 'organizadores' ? OrganizerCard
-      : TeacherCard;
+    // Seleccionar card según tipo
+    let CardComponent;
+    let key;
+
+    switch (filters.type) {
+      case "eventos":
+        CardComponent = EventCard;
+        key = item.id ?? i;
+        break;
+      case "organizadores":
+        CardComponent = OrganizerCard;
+        key = item.id ?? i;
+        break;
+      case "maestros":
+        CardComponent = TeacherCard;
+        key = item.id ?? i;
+        break;
+      case "academias":
+        CardComponent = TeacherCard; // reutilizar por ahora
+        key = item.id ?? i;
+        break;
+      case "marcas":
+        CardComponent = OrganizerCard; // reutilizar por ahora
+        key = item.id ?? i;
+        break;
+      case "usuarios":
+        CardComponent = TeacherCard; // reutilizar por ahora
+        key = item.user_id ?? i;
+        break;
+      default:
+        CardComponent = EventCard;
+        key = item.id ?? i;
+    }
 
     return (
-      <div onClick={handleClick}>
+      <div key={key} onClick={handleClick}>
         <CardComponent item={item} />
       </div>
     );
