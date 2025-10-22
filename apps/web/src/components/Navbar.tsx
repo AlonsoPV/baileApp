@@ -72,6 +72,26 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         {user ? (
           <>
             <Link
+              to="/explore"
+              style={{
+                color: '#FFF',
+                textDecoration: 'none',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                padding: '0.5rem 1rem',
+                borderRadius: theme.radius.md,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              Explorar 🔍
+            </Link>
+            <Link
               to="/app/profile"
               style={{
                 color: '#FFF',
