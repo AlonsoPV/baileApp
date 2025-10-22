@@ -75,25 +75,37 @@ export function MediaGrid({ items, onRemove }:{
           
           {onRemove && (
             <motion.button
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-              onClick={() => onRemove(m.id)}
+              initial={{ opacity: 0.7 }}
+              whileHover={{ opacity: 1, scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm('¿Estás seguro de eliminar esta foto/video?')) {
+                  onRemove(m.id);
+                }
+              }}
               style={{
                 position: 'absolute',
                 top: '8px',
                 right: '8px',
-                background: `${colors.coral}ee`,
+                background: `${colors.coral}`,
                 color: colors.light,
-                fontSize: '0.75rem',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: 'none',
+                fontSize: '1.2rem',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                border: `2px solid ${colors.light}`,
                 cursor: 'pointer',
-                fontWeight: '600',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                fontWeight: '700',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.6)',
+                transition: 'all 0.2s ease',
               }}
+              title="Eliminar"
             >
-              Eliminar
+              🗑️
             </motion.button>
           )}
         </motion.div>

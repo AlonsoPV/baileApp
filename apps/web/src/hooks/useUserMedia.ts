@@ -24,11 +24,16 @@ export function useUserMedia() {
   });
 
   async function setMedia(list: MediaItem[]) {
-    const { error } = await supabase
-      .from("profiles_user")
-      .update({ media: list })
-      .eq("user_id", user!.id);
-    if (error) throw error;
+    console.log('[useUserMedia] Updating media array:', list.length, 'items');
+    const { error } = await supabase.rpc("merge_profiles_user", {
+      p_user_id: user!.id, 
+      p_patch: { media: list }
+    });
+    if (error) {
+      console.error('[useUserMedia] Error updating media:', error);
+      throw error;
+    }
+    console.log('[useUserMedia] Media updated successfully');
   }
 
   const addMedia = useMutation({
@@ -46,12 +51,25 @@ export function useUserMedia() {
 
   const removeMediaMut = useMutation({
     mutationFn: async (id: string) => {
-      await removeUserFile(id);
-      const next = (mediaQuery.data || []).filter(m => m.id !== id);
-      await setMedia(next);
-      return next;
+      console.log('[useUserMedia] Removing media:', id);
+      try {
+        // Primero eliminar de storage
+        await removeUserFile(id);
+        console.log('[useUserMedia] File removed from storage');
+        
+        // Luego actualizar la lista en DB
+        const next = (mediaQuery.data || []).filter(m => m.id !== id);
+        await setMedia(next);
+        console.log('[useUserMedia] Media list updated in DB');
+        
+        return next;
+      } catch (error) {
+        console.error('[useUserMedia] Error removing media:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log('[useUserMedia] Invalidating queries after media removal');
       qc.invalidateQueries({ queryKey: KEY(user?.id) });
       qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
     },

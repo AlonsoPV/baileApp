@@ -65,11 +65,16 @@ export function useOrganizerMedia() {
 
   const save = async (list: MediaItem[]) => {
     if (!orgId) return;
+    console.log('[useOrganizerMedia] Saving media array:', list.length, 'items');
     const { error } = await supabase
       .from("profiles_organizer")
       .update({ media: list })
       .eq("id", orgId);
-    if (error) throw error;
+    if (error) {
+      console.error('[useOrganizerMedia] Error saving media:', error);
+      throw error;
+    }
+    console.log('[useOrganizerMedia] Media saved successfully');
   };
 
   const add = useMutation({
@@ -108,15 +113,27 @@ export function useOrganizerMedia() {
     mutationFn: async (path: string) => {
       console.log('[useOrganizerMedia] Removing media:', path);
       
-      await removeOrgFile(path);
-      const next = (q.data || []).filter(m => m.id !== path);
-      await save(next);
-      
-      console.log('[useOrganizerMedia] Media removed successfully');
-      
-      return next;
+      try {
+        // Primero eliminar de storage
+        await removeOrgFile(path);
+        console.log('[useOrganizerMedia] File removed from storage');
+        
+        // Luego actualizar la lista en DB
+        const next = (q.data || []).filter(m => m.id !== path);
+        await save(next);
+        console.log('[useOrganizerMedia] Media list updated in DB');
+        
+        return next;
+      } catch (error) {
+        console.error('[useOrganizerMedia] Error removing media:', error);
+        throw error;
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] }),
+    onSuccess: () => {
+      console.log('[useOrganizerMedia] Invalidating queries after media removal');
+      qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] });
+      qc.invalidateQueries({ queryKey: ["organizer", "me", organizer?.user_id] });
+    },
     onError: (error: any) => {
       console.error('[useOrganizerMedia] Error removing media:', error);
     },
