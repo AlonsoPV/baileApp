@@ -38,14 +38,20 @@ export function useUserMedia() {
 
   const addMedia = useMutation({
     mutationFn: async (file: File) => {
+      console.log('[useUserMedia] Adding media file:', file.name);
       const item = await uploadUserFile(user!.id, file);
+      console.log('[useUserMedia] File uploaded to storage:', item.id);
+      
       const next = [item, ...(mediaQuery.data || [])];
       await setMedia(next);
+      console.log('[useUserMedia] Media list updated in DB');
+      
       return next;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEY(user?.id) });
-      qc.invalidateQueries({ queryKey: ["profile","me", user?.id] }); // refresca el perfil también
+    onSuccess: async () => {
+      console.log('[useUserMedia] Invalidating queries after media addition');
+      await qc.invalidateQueries({ queryKey: KEY(user?.id) });
+      await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
     },
   });
 
@@ -68,10 +74,10 @@ export function useUserMedia() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       console.log('[useUserMedia] Invalidating queries after media removal');
-      qc.invalidateQueries({ queryKey: KEY(user?.id) });
-      qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
+      await qc.invalidateQueries({ queryKey: KEY(user?.id) });
+      await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
     },
   });
 

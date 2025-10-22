@@ -61,14 +61,24 @@ export function useUserProfile() {
         console.log("[useUserProfile] PATCH:", patch);
       }
 
-      const { error } = await supabase
-        .from("profiles_user")
-        .update(patch)
-        .eq("user_id", user.id);
+      // Usar RPC merge para actualizaciones seguras
+      const { error } = await supabase.rpc("merge_profiles_user", {
+        p_user_id: user.id,
+        p_patch: patch,
+      });
       
-      if (error) throw error;
+      if (error) {
+        console.error("[useUserProfile] Error updating profile:", error);
+        throw error;
+      }
+      
+      console.log("[useUserProfile] Profile updated successfully");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY(user?.id) }),
+    onSuccess: async () => {
+      console.log("[useUserProfile] Invalidating profile cache");
+      await qc.invalidateQueries({ queryKey: KEY(user?.id) });
+      await qc.invalidateQueries({ queryKey: ["profile", "media", user?.id] });
+    },
   });
 
   return {

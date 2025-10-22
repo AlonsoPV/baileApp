@@ -42,9 +42,12 @@ export const UserProfileEditor: React.FC = () => {
     whatsapp: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [formTouched, setFormTouched] = useState(false);
 
+  // 🛡️ Prevenir rehidratación: solo cargar datos iniciales si el form no ha sido tocado
   useEffect(() => {
-    if (profile) {
+    if (profile && !formTouched) {
+      console.log('[UserProfileEditor] Hydrating form from profile');
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
       setSelectedRitmos(profile.ritmos || []);
@@ -56,12 +59,13 @@ export const UserProfileEditor: React.FC = () => {
         whatsapp: ''
       });
     }
-  }, [profile]);
+  }, [profile, formTouched]);
 
   const ritmos = allTags?.filter(t => t.tipo === 'ritmo') || [];
   const zonas = allTags?.filter(t => t.tipo === 'zona') || [];
 
   const toggleRitmo = (id: number) => {
+    setFormTouched(true);
     if (selectedRitmos.includes(id)) {
       setSelectedRitmos(selectedRitmos.filter(r => r !== id));
     } else {
@@ -70,6 +74,7 @@ export const UserProfileEditor: React.FC = () => {
   };
 
   const toggleZona = (id: number) => {
+    setFormTouched(true);
     if (selectedZonas.includes(id)) {
       setSelectedZonas(selectedZonas.filter(z => z !== id));
     } else {
@@ -120,6 +125,8 @@ export const UserProfileEditor: React.FC = () => {
         redes_sociales: redesSociales,
       });
 
+      // ✅ Resetear flag después de guardado exitoso
+      setFormTouched(false);
       showToast('Perfil actualizado exitosamente ✅', 'success');
     } catch (err: any) {
       showToast('Error al guardar el perfil', 'error');
@@ -186,7 +193,10 @@ export const UserProfileEditor: React.FC = () => {
         <input
           type="text"
           value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          onChange={(e) => {
+            setFormTouched(true);
+            setDisplayName(e.target.value);
+          }}
           style={{
             width: '100%',
             padding: '12px',
@@ -206,7 +216,10 @@ export const UserProfileEditor: React.FC = () => {
         </label>
         <textarea
           value={bio}
-          onChange={(e) => setBio(e.target.value)}
+          onChange={(e) => {
+            setFormTouched(true);
+            setBio(e.target.value);
+          }}
           rows={4}
           style={{
             width: '100%',
@@ -292,7 +305,10 @@ export const UserProfileEditor: React.FC = () => {
           <input
             type="text"
             value={redesSociales.instagram}
-            onChange={(e) => setRedesSociales({ ...redesSociales, instagram: e.target.value })}
+            onChange={(e) => {
+              setFormTouched(true);
+              setRedesSociales({ ...redesSociales, instagram: e.target.value });
+            }}
             placeholder="@usuario o URL"
             style={{
               width: '100%',
@@ -313,7 +329,10 @@ export const UserProfileEditor: React.FC = () => {
           <input
             type="text"
             value={redesSociales.facebook}
-            onChange={(e) => setRedesSociales({ ...redesSociales, facebook: e.target.value })}
+            onChange={(e) => {
+              setFormTouched(true);
+              setRedesSociales({ ...redesSociales, facebook: e.target.value });
+            }}
             placeholder="usuario o URL"
             style={{
               width: '100%',
@@ -334,7 +353,10 @@ export const UserProfileEditor: React.FC = () => {
           <input
             type="text"
             value={redesSociales.whatsapp}
-            onChange={(e) => setRedesSociales({ ...redesSociales, whatsapp: e.target.value })}
+            onChange={(e) => {
+              setFormTouched(true);
+              setRedesSociales({ ...redesSociales, whatsapp: e.target.value });
+            }}
             placeholder="+52 1234567890"
             style={{
               width: '100%',
