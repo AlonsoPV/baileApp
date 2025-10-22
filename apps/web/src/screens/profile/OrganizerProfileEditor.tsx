@@ -417,32 +417,29 @@ export function OrganizerProfileEditor() {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 1000,
+        zIndex: 9999,
+        pointerEvents: 'auto',
       }}>
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={() => navigate('/events/new')}
           style={{
-            padding: '20px 32px',
+            padding: '24px 40px',
             borderRadius: '50px',
             border: 'none',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light,
-            fontSize: '1.2rem',
+            background: '#FF3D57',
+            color: 'white',
+            fontSize: '1.4rem',
             fontWeight: '700',
             cursor: 'pointer',
-            boxShadow: `0 12px 48px ${colors.coral}88`,
+            boxShadow: '0 8px 32px rgba(255, 61, 87, 0.5)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '16px',
           }}
         >
-          <span style={{ fontSize: '1.5rem' }}>📅</span>
-          Crear Evento
-        </motion.button>
+          <span style={{ fontSize: '1.8rem' }}>📅</span>
+          CREAR EVENTO
+        </button>
       </div>
     </div>
   );
