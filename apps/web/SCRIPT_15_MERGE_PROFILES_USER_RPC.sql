@@ -8,7 +8,7 @@
 -- 1) Eliminar función si existe (para recrearla)
 DROP FUNCTION IF EXISTS public.merge_profiles_user(UUID, JSONB);
 
--- 2) Crear función RPC merge_profiles_user
+-- 2) Crear función RPC merge_profiles_user (versión robusta)
 CREATE OR REPLACE FUNCTION public.merge_profiles_user(
   p_user_id UUID,
   p_patch JSONB
@@ -18,46 +18,55 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_display_name TEXT;
+  v_bio          TEXT;
+  v_avatar_url   TEXT;
+  v_ritmos       INT[];
+  v_zonas        INT[];
+  v_respuestas   JSONB;
+  v_media        JSONB;
+  v_redes_sociales JSONB;
 BEGIN
-  -- Actualizar solo los campos presentes en p_patch
-  -- Convertir JSONB arrays a PostgreSQL arrays correctamente
+  -- Strings: si vienen en patch, se usan; si no, se conservan los actuales
+  v_display_name := COALESCE(p_patch->>'display_name', (SELECT display_name FROM profiles_user WHERE user_id = p_user_id));
+  v_bio          := COALESCE(p_patch->>'bio',          (SELECT bio          FROM profiles_user WHERE user_id = p_user_id));
+  v_avatar_url   := COALESCE(p_patch->>'avatar_url',   (SELECT avatar_url   FROM profiles_user WHERE user_id = p_user_id));
+
+  -- Arrays INT[]: si vienen como array JSON, se convierten; si no, se conservan
+  IF p_patch ? 'ritmos' THEN
+    SELECT COALESCE(ARRAY_AGG((x)::INT), '{}')
+    INTO v_ritmos
+    FROM jsonb_array_elements_text(p_patch->'ritmos') AS x;
+  ELSE
+    v_ritmos := (SELECT ritmos FROM profiles_user WHERE user_id = p_user_id);
+  END IF;
+
+  IF p_patch ? 'zonas' THEN
+    SELECT COALESCE(ARRAY_AGG((x)::INT), '{}')
+    INTO v_zonas
+    FROM jsonb_array_elements_text(p_patch->'zonas') AS x;
+  ELSE
+    v_zonas := (SELECT zonas FROM profiles_user WHERE user_id = p_user_id);
+  END IF;
+
+  -- JSONB: si viene, se usa; si no, se conserva
+  v_respuestas     := COALESCE(p_patch->'respuestas',     (SELECT respuestas     FROM profiles_user WHERE user_id = p_user_id));
+  v_media          := COALESCE(p_patch->'media',          (SELECT media          FROM profiles_user WHERE user_id = p_user_id));
+  v_redes_sociales := COALESCE(p_patch->'redes_sociales', (SELECT redes_sociales FROM profiles_user WHERE user_id = p_user_id));
+
+  -- Actualizar el perfil
   UPDATE profiles_user
   SET 
-    display_name = CASE 
-      WHEN p_patch ? 'display_name' THEN (p_patch->>'display_name')::TEXT
-      ELSE display_name
-    END,
-    bio = CASE 
-      WHEN p_patch ? 'bio' THEN (p_patch->>'bio')::TEXT
-      ELSE bio
-    END,
-    avatar_url = CASE 
-      WHEN p_patch ? 'avatar_url' THEN (p_patch->>'avatar_url')::TEXT
-      ELSE avatar_url
-    END,
-    ritmos = CASE 
-      WHEN p_patch ? 'ritmos' THEN 
-        ARRAY(SELECT jsonb_array_elements_text(p_patch->'ritmos')::INT)
-      ELSE ritmos
-    END,
-    zonas = CASE 
-      WHEN p_patch ? 'zonas' THEN 
-        ARRAY(SELECT jsonb_array_elements_text(p_patch->'zonas')::INT)
-      ELSE zonas
-    END,
-    redes_sociales = CASE 
-      WHEN p_patch ? 'redes_sociales' THEN (p_patch->'redes_sociales')::JSONB
-      ELSE redes_sociales
-    END,
-    media = CASE 
-      WHEN p_patch ? 'media' THEN (p_patch->'media')::JSONB
-      ELSE media
-    END,
-    respuestas = CASE 
-      WHEN p_patch ? 'respuestas' THEN (p_patch->'respuestas')::JSONB
-      ELSE respuestas
-    END,
-    updated_at = NOW()
+    display_name   = v_display_name,
+    bio            = v_bio,
+    avatar_url     = v_avatar_url,
+    ritmos         = v_ritmos,
+    zonas          = v_zonas,
+    respuestas     = v_respuestas,
+    media          = v_media,
+    redes_sociales = v_redes_sociales,
+    updated_at     = NOW()
   WHERE user_id = p_user_id;
   
   -- Si no existe el perfil, lanzar error
@@ -133,6 +142,36 @@ WHERE routine_schema = 'public'
 --    Los JSONB (media, redes_sociales, respuestas) se manejan directamente.
 
 -- 5. updated_at siempre se actualiza a NOW() en cada merge.
+
+-- =====================================================
+-- 5) TRIGGER: Proteger media de ser null accidentalmente
+-- =====================================================
+
+-- Crear función del trigger
+CREATE OR REPLACE FUNCTION public.keep_media_on_null()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Si el nuevo valor de media es null, mantener el antiguo
+  IF NEW.media IS NULL THEN
+    NEW.media := OLD.media;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Eliminar trigger si existe
+DROP TRIGGER IF EXISTS trg_profiles_user_keep_media ON public.profiles_user;
+
+-- Crear trigger
+CREATE TRIGGER trg_profiles_user_keep_media
+  BEFORE UPDATE ON public.profiles_user
+  FOR EACH ROW
+  EXECUTE FUNCTION public.keep_media_on_null();
+
+COMMENT ON FUNCTION public.keep_media_on_null() IS 
+'Trigger function que previene que el campo media sea establecido a null accidentalmente durante updates.';
 
 -- =====================================================
 -- FIN DEL SCRIPT

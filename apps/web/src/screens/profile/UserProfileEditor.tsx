@@ -43,11 +43,12 @@ export const UserProfileEditor: React.FC = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [formTouched, setFormTouched] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  // 🛡️ Prevenir rehidratación: solo cargar datos iniciales si el form no ha sido tocado
+  // 🛡️ Prevenir rehidratación: solo cargar datos iniciales una vez
   useEffect(() => {
-    if (profile && !formTouched) {
-      console.log('[UserProfileEditor] Hydrating form from profile');
+    if (!hydrated && profile) {
+      console.log('[UserProfileEditor] Hydrating form from profile (one-time)');
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
       setSelectedRitmos(profile.ritmos || []);
@@ -58,8 +59,9 @@ export const UserProfileEditor: React.FC = () => {
         facebook: '',
         whatsapp: ''
       });
+      setHydrated(true);
     }
-  }, [profile, formTouched]);
+  }, [profile, hydrated]);
 
   const ritmos = allTags?.filter(t => t.tipo === 'ritmo') || [];
   const zonas = allTags?.filter(t => t.tipo === 'zona') || [];
@@ -125,8 +127,9 @@ export const UserProfileEditor: React.FC = () => {
         redes_sociales: redesSociales,
       });
 
-      // ✅ Resetear flag después de guardado exitoso
+      // ✅ Resetear flags después de guardado exitoso
       setFormTouched(false);
+      setHydrated(false); // Permitir rehidratación después de guardar
       showToast('Perfil actualizado exitosamente ✅', 'success');
     } catch (err: any) {
       showToast('Error al guardar el perfil', 'error');

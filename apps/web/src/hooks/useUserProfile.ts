@@ -40,39 +40,44 @@ export function useUserProfile() {
     mutationFn: async (next: Partial<ProfileUser>) => {
       if (!user?.id) throw new Error("No user");
       
-      const prev = profile.data || {};
-      
-      // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
-      const { media, onboarding_complete, ...candidate } = next;
+      try {
+        const prev = profile.data || {};
+        
+        // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
+        const { media, onboarding_complete, ...candidate } = next;
 
-      // Usar guardedPatch para evitar pérdida de datos accidental
-      const patch = guardedPatch<ProfileUser>(prev, candidate, {
-        allowEmptyArrays: ["ritmos", "zonas"], // permitir vaciar intencionalmente
-        blockEmptyStrings: ["display_name"],    // no permitir nombre vacío
-      });
+        // Usar guardedPatch para evitar pérdida de datos accidental
+        const patch = guardedPatch<ProfileUser>(prev, candidate, {
+          allowEmptyArrays: ["ritmos", "zonas"], // permitir vaciar intencionalmente
+          blockEmptyStrings: ["display_name"],    // no permitir nombre vacío
+        });
 
-      if (Object.keys(patch).length === 0) {
-        console.log("[useUserProfile] No changes to save");
-        return;
+        if (Object.keys(patch).length === 0) {
+          console.log("[useUserProfile] No changes to save");
+          return;
+        }
+
+        // Diagnóstico en desarrollo
+        if (import.meta.env.MODE === "development") {
+          console.log("[useUserProfile] PATCH:", patch);
+        }
+
+        // Usar RPC merge para actualizaciones seguras
+        const { error } = await supabase.rpc("merge_profiles_user", {
+          p_user_id: user.id,
+          p_patch: patch,
+        });
+        
+        if (error) {
+          console.error("[useUserProfile] Error updating profile:", error);
+          throw error;
+        }
+        
+        console.log("[useUserProfile] Profile updated successfully");
+      } catch (e: any) {
+        console.error("[useUserProfile] Caught error:", e);
+        throw e;
       }
-
-      // Diagnóstico en desarrollo
-      if (import.meta.env.MODE === "development") {
-        console.log("[useUserProfile] PATCH:", patch);
-      }
-
-      // Usar RPC merge para actualizaciones seguras
-      const { error } = await supabase.rpc("merge_profiles_user", {
-        p_user_id: user.id,
-        p_patch: patch,
-      });
-      
-      if (error) {
-        console.error("[useUserProfile] Error updating profile:", error);
-        throw error;
-      }
-      
-      console.log("[useUserProfile] Profile updated successfully");
     },
     onSuccess: async () => {
       console.log("[useUserProfile] Invalidating profile cache");

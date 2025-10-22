@@ -24,16 +24,21 @@ export function useUserMedia() {
   });
 
   async function setMedia(list: MediaItem[]) {
-    console.log('[useUserMedia] Updating media array:', list.length, 'items');
-    const { error } = await supabase.rpc("merge_profiles_user", {
-      p_user_id: user!.id, 
-      p_patch: { media: list }
-    });
-    if (error) {
-      console.error('[useUserMedia] Error updating media:', error);
-      throw error;
+    try {
+      console.log('[useUserMedia] Updating media array:', list.length, 'items');
+      const { error } = await supabase.rpc("merge_profiles_user", {
+        p_user_id: user!.id, 
+        p_patch: { media: list }
+      });
+      if (error) {
+        console.error('[useUserMedia] RPC error:', error);
+        throw error;
+      }
+      console.log('[useUserMedia] Media updated successfully');
+    } catch (e: any) {
+      console.error('[useUserMedia] Caught error saving media:', e);
+      throw e;
     }
-    console.log('[useUserMedia] Media updated successfully');
   }
 
   const addMedia = useMutation({
