@@ -79,12 +79,20 @@ export function useCreateDate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Pick<EventDate, 'parent_id'|'fecha'> & Partial<EventDate>) => {
+      console.log('[useCreateDate] Creating date:', payload);
+      
       const { data, error } = await supabase
         .from("events_date")
         .insert(payload)
         .select("*")
         .single();
-      if (error) throw error; 
+      
+      if (error) {
+        console.error('[useCreateDate] Error:', error);
+        throw error;
+      }
+      
+      console.log('[useCreateDate] Success:', data);
       return data as EventDate;
     },
     onSuccess: (d) => {
@@ -96,17 +104,30 @@ export function useCreateDate() {
 export function useUpdateDate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, patch }: { id: number; patch: Partial<EventDate> }) => {
-      const { error } = await supabase
+    mutationFn: async (payload: { id: number } & Partial<EventDate>) => {
+      const { id, ...patch } = payload;
+      
+      console.log('[useUpdateDate] Updating date:', { id, patch });
+      
+      const { data, error } = await supabase
         .from("events_date")
         .update(patch)
-        .eq("id", id);
-      if (error) throw error; 
-      return id;
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('[useUpdateDate] Error:', error);
+        throw error;
+      }
+      
+      console.log('[useUpdateDate] Success:', data);
+      return data as EventDate;
     },
-    onSuccess: (id) => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["dates"] });
-      qc.invalidateQueries({ queryKey: ["date", id] });
+      qc.invalidateQueries({ queryKey: ["dates", data.parent_id] });
+      qc.invalidateQueries({ queryKey: ["date", data.id] });
     }
   });
 }
@@ -156,14 +177,35 @@ export function useRSVPCounts(parentId?: number) {
 
 export function useMyRSVP() {
   const { user } = useAuth();
+  const qc = useQueryClient();
+
   return {
     async set(event_date_id: number, status: RSVPStatus) {
+      if (!user?.id) throw new Error("User not authenticated");
+
+      // Usar upsert con onConflict explícito
       const { error } = await supabase
         .from("rsvp")
-        .insert({ user_id: user!.id, event_date_id, status })
-        .onConflict("user_id,event_date_id")
-        .merge();
-      if (error) throw error;
+        .upsert(
+          { 
+            user_id: user.id, 
+            event_date_id, 
+            status 
+          },
+          { 
+            onConflict: 'user_id,event_date_id',
+            ignoreDuplicates: false 
+          }
+        );
+
+      if (error) {
+        console.error('[useMyRSVP] Error upserting RSVP:', error);
+        throw error;
+      }
+
+      // Invalidar queries relacionadas
+      qc.invalidateQueries({ queryKey: ["rsvp"] });
+      qc.invalidateQueries({ queryKey: ["myRSVPs"] });
     }
   };
 }

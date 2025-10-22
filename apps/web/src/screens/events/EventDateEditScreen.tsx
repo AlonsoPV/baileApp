@@ -82,16 +82,14 @@ export function EventDateEditScreen() {
       } else {
         await update.mutateAsync({
           id: Number(id),
-          patch: {
-            fecha: form.fecha,
-            hora_inicio: form.hora_inicio || null,
-            hora_fin: form.hora_fin || null,
-            lugar: form.lugar.trim() || null,
-            direccion: form.direccion.trim() || null,
-            ciudad: form.ciudad.trim() || null,
-            requisitos: form.requisitos.trim() || null,
-            estado_publicacion: form.estado_publicacion
-          }
+          fecha: form.fecha,
+          hora_inicio: form.hora_inicio || null,
+          hora_fin: form.hora_fin || null,
+          lugar: form.lugar.trim() || null,
+          direccion: form.direccion.trim() || null,
+          ciudad: form.ciudad.trim() || null,
+          requisitos: form.requisitos.trim() || null,
+          estado_publicacion: form.estado_publicacion
         });
         showToast('Fecha actualizada ✅', 'success');
       }

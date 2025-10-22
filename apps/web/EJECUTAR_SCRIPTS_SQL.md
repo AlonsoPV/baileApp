@@ -2,12 +2,15 @@
 
 ## 🎯 **ORDEN DE EJECUCIÓN**
 
-Debes ejecutar los 4 scripts en este orden exacto:
+Debes ejecutar los scripts en este orden exacto:
 
 1. ✅ **SCRIPT_1_TABLAS_EVENTOS.sql** - Crea las tablas de eventos
 2. ✅ **SCRIPT_2_BUCKET_USER_MEDIA.sql** - Crea bucket para usuarios
 3. ✅ **SCRIPT_3_BUCKET_ORG_MEDIA.sql** - Crea bucket para organizadores
 4. ✅ **SCRIPT_4_PERFILES_PUBLICOS.sql** - Configura perfiles públicos
+5. ✅ **SCRIPT_5_TRIGGER_MEDIA.sql** - Previene pérdida de media
+6. ✅ **SCRIPT_7_ONBOARDING_FLAG.sql** - Agrega flag de onboarding
+7. ✅ **SCRIPT_8_CRONOGRAMAS_PRECIOS.sql** - Tablas de cronogramas y precios
 
 ---
 
@@ -217,6 +220,31 @@ Si tienes algún problema:
 2. Verifica que copiaste **TODO** el contenido del script
 3. Asegúrate de ejecutar los scripts **en orden**
 4. Verifica que tu proyecto de Supabase está activo
+
+### **PASO 8: Ejecutar SCRIPT 8 - Cronogramas y Precios**
+
+1. Abre el archivo **`SCRIPT_8_CRONOGRAMAS_PRECIOS.sql`**
+2. Copia **TODO** el contenido del archivo
+3. Pégalo en el SQL Editor de Supabase
+4. Haz clic en **"Run"** (Ejecutar) o presiona `Ctrl + Enter`
+5. Espera a que aparezca el mensaje de éxito ✅
+
+**Qué hace este script:**
+- ✅ Crea tabla `event_schedules` (cronogramas de actividades)
+- ✅ Crea tabla `event_prices` (precios y promociones)
+- ✅ Configura índices para búsquedas rápidas
+- ✅ Habilita RLS en ambas tablas
+- ✅ Crea políticas de seguridad para organizadores y público
+- ✅ Crea triggers para actualizar timestamps
+
+**Verificación:**
+```sql
+-- Verificar que las tablas existen
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+  AND table_name IN ('event_schedules', 'event_prices');
+```
 
 ---
 

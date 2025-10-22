@@ -61,9 +61,21 @@ export default function OnboardingGate() {
   }
 
   const isOnboardingRoute = loc.pathname.startsWith("/onboarding");
+  
+  // Rutas que NO requieren onboarding completo
+  const organizerRoutes = [
+    '/profile/organizer',
+    '/events/parent',
+    '/events/date'
+  ];
+  const isOrganizerRoute = organizerRoutes.some(route => loc.pathname.startsWith(route));
+  
+  // Rutas públicas que tampoco requieren onboarding
+  const publicRoutes = ['/u/', '/events/parent/', '/events/date/'];
+  const isPublicRoute = publicRoutes.some(route => loc.pathname.includes(route) && !loc.pathname.includes('/edit'));
 
-  // 3) Si NO completo -> fuerza a onboarding (evita saltos)
-  if (!complete && !isOnboardingRoute) {
+  // 3) Si NO completo -> fuerza a onboarding (EXCEPTO rutas de organizador o públicas)
+  if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
     return <Navigate to="/onboarding/basics" replace />;
   }
 
