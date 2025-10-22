@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMyOrganizer, useUpsertMyOrganizer } from "../../hooks/useOrganizer";
 import { useCreateParent, useCreateDate } from "../../hooks/useEvents";
 import { useTags } from "../../hooks/useTags";
+import { useAuth } from "../../hooks/useAuth";
 import EventScheduleEditor from "../../components/EventScheduleEditor";
 import EventPriceEditor from "../../components/EventPriceEditor";
 import AddToCalendarButton from "../../components/AddToCalendarButton";
@@ -22,6 +23,7 @@ type Step = 1 | 2 | 3 | 4;
 
 export function EventCreateWizard() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const { data: organizer } = useMyOrganizer();
   const upsertOrg = useUpsertMyOrganizer();
   const createParent = useCreateParent();
@@ -59,7 +61,7 @@ export function EventCreateWizard() {
   // Asegura organizador mínimo si no existe
   useEffect(() => {
     (async () => {
-      if (!organizer && !upsertOrg.isPending) {
+      if (user && !organizer && !upsertOrg.isPending) {
         try {
           console.log('[EventCreateWizard] Creating minimal organizer');
           await upsertOrg.mutateAsync({ nombre_publico: "Mi Social" });
@@ -70,7 +72,7 @@ export function EventCreateWizard() {
         }
       }
     })();
-  }, [organizer, upsertOrg, showToast]);
+  }, [user, organizer, upsertOrg, showToast]);
 
   function toggleEstilo(id: number) {
     setParent(p => {

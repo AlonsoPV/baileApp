@@ -11,6 +11,7 @@ Debes ejecutar los scripts en este orden exacto:
 5. ✅ **SCRIPT_5_TRIGGER_MEDIA.sql** - Previene pérdida de media
 6. ✅ **SCRIPT_7_ONBOARDING_FLAG.sql** - Agrega flag de onboarding
 7. ✅ **SCRIPT_8_CRONOGRAMAS_PRECIOS.sql** - Tablas de cronogramas y precios
+8. ✅ **SCRIPT_10_FIX_REQUISITOS.sql** - Fix columna requisitos
 
 ---
 

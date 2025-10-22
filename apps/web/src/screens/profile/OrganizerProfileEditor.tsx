@@ -411,8 +411,14 @@ export function OrganizerProfileEditor() {
         )}
       </div>
 
-      {/* Botón Flotante: Crear Evento */}
-      {org && (
+      {/* Botón Centrado: Crear Evento - SIEMPRE VISIBLE */}
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1000,
+      }}>
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -420,28 +426,24 @@ export function OrganizerProfileEditor() {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/events/new')}
           style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            padding: '16px 24px',
+            padding: '20px 32px',
             borderRadius: '50px',
             border: 'none',
             background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
             color: colors.light,
-            fontSize: '1rem',
+            fontSize: '1.2rem',
             fontWeight: '700',
             cursor: 'pointer',
-            boxShadow: `0 8px 32px ${colors.coral}88`,
-            zIndex: 1000,
+            boxShadow: `0 12px 48px ${colors.coral}88`,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '12px',
           }}
         >
-          <span style={{ fontSize: '1.2rem' }}>📅</span>
+          <span style={{ fontSize: '1.5rem' }}>📅</span>
           Crear Evento
         </motion.button>
-      )}
+      </div>
     </div>
   );
 }
