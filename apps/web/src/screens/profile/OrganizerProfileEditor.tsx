@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
-import { useParentsByOrganizer, useDeleteParent } from "../../hooks/useEvents";
+import { useParentsByOrganizer, useDeleteParent, useDatesByParent } from "../../hooks/useEvents";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { MediaUploader } from "../../components/MediaUploader";
 import { MediaGrid } from "../../components/MediaGrid";
@@ -17,6 +17,150 @@ const colors = {
   dark: '#121212',
   light: '#F5F5F5',
 };
+
+// Componente para mostrar un evento con sus fechas
+function EventParentCard({ parent, onDelete, isDeleting }: any) {
+  const navigate = useNavigate();
+  const { data: dates } = useDatesByParent(parent.id);
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        padding: '16px',
+        background: `${colors.dark}aa`,
+        borderRadius: '12px',
+        border: `1px solid ${colors.light}22`,
+      }}
+    >
+      {/* Header del evento */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+        <div style={{ flex: 1 }}>
+          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px' }}>
+            {parent.nombre}
+          </h4>
+          {parent.descripcion && (
+            <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: '0 0 8px 0' }}>
+              {parent.descripcion.slice(0, 100)}{parent.descripcion.length > 100 && '...'}
+            </p>
+          )}
+          {parent.sede_general && (
+            <p style={{ fontSize: '0.875rem', opacity: 0.6 }}>
+              📍 {parent.sede_general}
+            </p>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(parent.id, parent.nombre);
+            }}
+            disabled={isDeleting}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: 'none',
+              background: isDeleting ? '#666' : colors.coral,
+              color: 'white',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              cursor: isDeleting ? 'not-allowed' : 'pointer',
+              opacity: isDeleting ? 0.7 : 1,
+            }}
+          >
+            {isDeleting ? '⏳ Eliminando...' : '🗑️ Eliminar'}
+          </button>
+
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: 'none',
+              background: colors.blue,
+              color: 'white',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            {expanded ? '▲ Ocultar' : '▼ Ver Fechas'} ({dates?.length || 0})
+          </button>
+        </div>
+      </div>
+
+      {/* Fechas del evento */}
+      {expanded && dates && dates.length > 0 && (
+        <div style={{ 
+          marginTop: '12px',
+          paddingTop: '12px', 
+          borderTop: `1px solid ${colors.light}22`,
+          display: 'grid',
+          gap: '8px'
+        }}>
+          {dates.map((date) => (
+            <motion.div
+              key={date.id}
+              whileHover={{ scale: 1.01, x: 4 }}
+              style={{
+                padding: '12px',
+                background: `${colors.dark}66`,
+                borderRadius: '8px',
+                border: `1px solid ${colors.light}11`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => navigate(`/events/date/${date.id}/edit`)}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '4px' }}>
+                  📅 {date.fecha}
+                  {date.hora_inicio && ` • 🕒 ${date.hora_inicio}`}
+                  {date.hora_fin && `–${date.hora_fin}`}
+                </div>
+                {date.lugar && (
+                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                    📍 {date.lugar}
+                  </div>
+                )}
+                <div style={{ 
+                  fontSize: '0.7rem', 
+                  marginTop: '4px',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  background: date.estado_publicacion === 'publicado' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(148, 163, 184, 0.2)',
+                  color: date.estado_publicacion === 'publicado' ? '#10B981' : '#94A3B8',
+                  display: 'inline-block'
+                }}>
+                  {date.estado_publicacion === 'publicado' ? '✅ Publicado' : '📝 Borrador'}
+                </div>
+              </div>
+              <span style={{ fontSize: '1.25rem', opacity: 0.5 }}>✏️</span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {expanded && (!dates || dates.length === 0) && (
+        <div style={{ 
+          marginTop: '12px',
+          padding: '16px',
+          textAlign: 'center',
+          opacity: 0.6,
+          fontSize: '0.875rem'
+        }}>
+          No hay fechas para este evento
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 export function OrganizerProfileEditor() {
   const navigate = useNavigate();
@@ -350,78 +494,12 @@ export function OrganizerProfileEditor() {
         {parents && parents.length > 0 ? (
           <div style={{ display: 'grid', gap: '12px' }}>
             {parents.map((parent) => (
-              <motion.div
-                key={parent.id}
-                whileHover={{ scale: 1.01, x: 4 }}
-                onClick={() => navigate(`/events/parent/${parent.id}/edit`)}
-                style={{
-                  padding: '16px',
-                  background: `${colors.dark}aa`,
-                  borderRadius: '12px',
-                  border: `1px solid ${colors.light}22`,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px' }}>
-                      {parent.nombre}
-                    </h4>
-                    {parent.descripcion && (
-                      <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: '0 0 8px 0' }}>
-                        {parent.descripcion.slice(0, 100)}{parent.descripcion.length > 100 && '...'}
-                      </p>
-                    )}
-                    {parent.sede_general && (
-                      <p style={{ fontSize: '0.875rem', opacity: 0.6 }}>
-                        📍 {parent.sede_general}
-                      </p>
-                    )}
-                  </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteEvent(parent.id, parent.nombre);
-                              }}
-                              disabled={deleteParent.isPending}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                border: 'none',
-                                background: deleteParent.isPending ? '#666' : '#FF3D57',
-                                color: 'white',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
-                                cursor: deleteParent.isPending ? 'not-allowed' : 'pointer',
-                                opacity: deleteParent.isPending ? 0.7 : 1,
-                              }}
-                            >
-                              {deleteParent.isPending ? '⏳ Eliminando...' : '🗑️ Eliminar'}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/events/parent/${parent.id}/edit`);
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                border: 'none',
-                                background: colors.blue,
-                                color: 'white',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              ✏️ Editar
-                            </button>
-                            <span style={{ fontSize: '1.5rem' }}>→</span>
-                          </div>
-                </div>
-              </motion.div>
+              <EventParentCard 
+                key={parent.id} 
+                parent={parent} 
+                onDelete={handleDeleteEvent}
+                isDeleting={deleteParent.isPending}
+              />
             ))}
           </div>
         ) : (
