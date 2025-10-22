@@ -34,6 +34,10 @@ import { OrganizerProfileEditor } from './screens/profile/OrganizerProfileEditor
 import { OrganizerDashboardDates } from './screens/profile/OrganizerDashboardDates';
 import UserPublicProfile from './screens/profile/UserPublicProfile';
 
+// Sprint 3 - Explore/Search
+import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
+import ExploreListScreen from './screens/explore/ExploreListScreen';
+
 export function AppRouter() {
   return (
     <Routes>
@@ -101,6 +105,10 @@ export function AppRouter() {
 
         {/* My RSVPs Route */}
         <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
+
+        {/* Explore/Search Routes */}
+        <Route path="/explore" element={<ExploreHomeScreen />} />
+        <Route path="/explore/list" element={<ExploreListScreen />} />
       </Route>
 
       {/* Public Routes (no authentication required) */}
