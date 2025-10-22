@@ -269,7 +269,6 @@ export const EventEditor: React.FC = () => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  border: 'none',
                   background: estilosSeleccionados.includes(ritmo.id)
                     ? `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`
                     : `${colors.dark}cc`,

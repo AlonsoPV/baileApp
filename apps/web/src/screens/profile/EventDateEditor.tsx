@@ -311,7 +311,6 @@ export const EventDateEditor: React.FC = () => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  border: 'none',
                   background: zonaSeleccionada === zona.id
                     ? `linear-gradient(135deg, ${colors.yellow}, ${colors.orange})`
                     : `${colors.dark}cc`,
@@ -349,7 +348,6 @@ export const EventDateEditor: React.FC = () => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  border: 'none',
                   background: estilosSeleccionados.includes(ritmo.id)
                     ? `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`
                     : `${colors.dark}cc`,
@@ -412,7 +410,6 @@ export const EventDateEditor: React.FC = () => {
                 style={{
                   padding: '12px 24px',
                   borderRadius: '50px',
-                  border: 'none',
                   background: estadoPublicacion === estado
                     ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
                     : `${colors.dark}cc`,
