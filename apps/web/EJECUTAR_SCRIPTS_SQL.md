@@ -12,6 +12,7 @@ Debes ejecutar los scripts en este orden exacto:
 6. ✅ **SCRIPT_7_ONBOARDING_FLAG.sql** - Agrega flag de onboarding
 7. ✅ **SCRIPT_8_CRONOGRAMAS_PRECIOS.sql** - Tablas de cronogramas y precios
 8. ✅ **SCRIPT_10_FIX_REQUISITOS.sql** - Fix columna requisitos
+9. ⭐ **SCRIPT_11_AUTO_CREATE_USER_PROFILE.sql** - Crea automáticamente perfil al registrarse (IMPORTANTE)
 
 ---
 
@@ -246,6 +247,43 @@ FROM information_schema.tables
 WHERE table_schema = 'public' 
   AND table_name IN ('event_schedules', 'event_prices');
 ```
+
+---
+
+### **9️⃣ SCRIPT_11_AUTO_CREATE_USER_PROFILE.sql** ⭐
+
+**¿Qué hace?**
+- ✅ Crea automáticamente un perfil en `profiles_user` cuando un usuario se registra
+- ✅ Previene el error "No se encontró el perfil"
+- ✅ Establece `onboarding_complete = false` para nuevos usuarios
+- ✅ Usa un trigger en `auth.users` para ejecutarse automáticamente
+
+**Verificación:**
+```sql
+-- Verificar que el trigger existe
+SELECT trigger_name, event_manipulation, event_object_table 
+FROM information_schema.triggers 
+WHERE trigger_name = 'on_auth_user_created';
+
+-- Verificar la función
+SELECT routine_name, routine_type 
+FROM information_schema.routines 
+WHERE routine_name = 'handle_new_user';
+```
+
+**Prueba:**
+1. Registra un nuevo usuario desde la app
+2. Verifica que se creó automáticamente su perfil:
+```sql
+SELECT user_id, onboarding_complete, created_at 
+FROM profiles_user 
+ORDER BY created_at DESC 
+LIMIT 5;
+```
+
+**¿Por qué es importante?**
+- 🚫 **Antes**: Los usuarios nuevos obtenían error 404 al intentar acceder a su perfil
+- ✅ **Ahora**: Cada usuario tiene automáticamente un perfil desde el momento del registro
 
 ---
 
