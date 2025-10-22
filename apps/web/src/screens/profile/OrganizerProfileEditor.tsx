@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
-import { useParentsByOrganizer } from "../../hooks/useEvents";
+import { useParentsByOrganizer, useDeleteParent } from "../../hooks/useEvents";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { MediaUploader } from "../../components/MediaUploader";
 import { MediaGrid } from "../../components/MediaGrid";
@@ -24,6 +24,7 @@ export function OrganizerProfileEditor() {
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
   const { data: parents } = useParentsByOrganizer(org?.id);
+  const deleteParent = useDeleteParent();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
 
@@ -117,6 +118,19 @@ export function OrganizerProfileEditor() {
       showToast('Enviado a revisión ✅', 'success');
     } catch (err: any) {
       showToast('Error al enviar a revisión', 'error');
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number, eventName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el evento "${eventName}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await deleteParent.mutateAsync(eventId);
+      showToast('Evento eliminado correctamente', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar evento', 'error');
     }
   };
 
@@ -381,7 +395,29 @@ export function OrganizerProfileEditor() {
                       </p>
                     )}
                   </div>
-                  <span style={{ fontSize: '1.5rem' }}>→</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteEvent(parent.id, parent.nombre);
+                      }}
+                      disabled={deleteParent.isPending}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '20px',
+                        border: 'none',
+                        background: '#FF3D57',
+                        color: 'white',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: deleteParent.isPending ? 'not-allowed' : 'pointer',
+                        opacity: deleteParent.isPending ? 0.5 : 1,
+                      }}
+                    >
+                      🗑️ Eliminar
+                    </button>
+                    <span style={{ fontSize: '1.5rem' }}>→</span>
+                  </div>
                 </div>
               </motion.div>
             ))}

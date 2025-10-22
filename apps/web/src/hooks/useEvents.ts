@@ -56,6 +56,24 @@ export function useUpdateParent() {
   });
 }
 
+export function useDeleteParent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from("events_parent")
+        .delete()
+        .eq("id", id);
+      if (error) throw error; 
+      return id;
+    },
+    onSuccess: (id) => {
+      qc.invalidateQueries({ queryKey: ["parents"] });
+      qc.invalidateQueries({ queryKey: ["parent", id] });
+    }
+  });
+}
+
 export function useDatesByParent(parentId?: number, publishedOnly?: boolean) {
   return useQuery({
     queryKey: ["dates", parentId, publishedOnly],
@@ -128,6 +146,24 @@ export function useUpdateDate() {
       qc.invalidateQueries({ queryKey: ["dates"] });
       qc.invalidateQueries({ queryKey: ["dates", data.parent_id] });
       qc.invalidateQueries({ queryKey: ["date", data.id] });
+    }
+  });
+}
+
+export function useDeleteDate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from("events_date")
+        .delete()
+        .eq("id", id);
+      if (error) throw error; 
+      return id;
+    },
+    onSuccess: (id) => {
+      qc.invalidateQueries({ queryKey: ["dates"] });
+      qc.invalidateQueries({ queryKey: ["date", id] });
     }
   });
 }

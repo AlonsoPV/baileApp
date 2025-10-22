@@ -58,12 +58,13 @@ export function EventCreateWizard() {
 
   const ritmos = allTags?.filter(t => t.tipo === 'ritmo') || [];
 
-  // Asegura organizador mínimo si no existe
+  // Asegura organizador mínimo si no existe - SOLO UNA VEZ
   useEffect(() => {
     let isMounted = true;
     
     const createOrganizer = async () => {
-      if (user && !organizer && !upsertOrg.isPending && isMounted) {
+      // Solo crear si no hay organizador y no está en proceso
+      if (user?.id && !organizer?.id && !upsertOrg.isPending && isMounted) {
         try {
           console.log('[EventCreateWizard] Creating minimal organizer');
           await upsertOrg.mutateAsync({ nombre_publico: "Mi Social" });
@@ -79,12 +80,15 @@ export function EventCreateWizard() {
       }
     };
 
-    createOrganizer();
+    // Solo ejecutar si tenemos usuario pero no organizador
+    if (user?.id && !organizer?.id) {
+      createOrganizer();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [user?.id, organizer?.id]); // Solo depende de IDs, no de objetos completos
+  }, [user?.id]); // Solo depende del ID del usuario
 
   function toggleEstilo(id: number) {
     setParent(p => {
