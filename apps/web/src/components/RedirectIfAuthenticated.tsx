@@ -27,14 +27,17 @@ export function RedirectIfAuthenticated({ children }: RedirectIfAuthenticatedPro
   }
 
   if (user) {
+    // ONBOARDING DISABLED - Always redirect to app
+    return <Navigate to="/app/profile" replace />;
+    
     // Check if user has completed profile/onboarding
-    if (profile && profile.display_name && profile.ritmos?.length > 0 && profile.zonas?.length > 0) {
-      // Profile is complete, redirect to app
-      return <Navigate to="/app/profile" replace />;
-    } else {
-      // Profile is incomplete, redirect to onboarding
-      return <Navigate to="/onboarding/basics" replace />;
-    }
+    // if (profile && profile.display_name && profile.ritmos?.length > 0 && profile.zonas?.length > 0) {
+    //   // Profile is complete, redirect to app
+    //   return <Navigate to="/app/profile" replace />;
+    // } else {
+    //   // Profile is incomplete, redirect to onboarding
+    //   return <Navigate to="/onboarding/basics" replace />;
+    // }
   }
 
   return <>{children}</>;
