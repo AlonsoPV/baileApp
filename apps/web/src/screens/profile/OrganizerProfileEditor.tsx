@@ -416,6 +416,42 @@ export function OrganizerProfileEditor() {
         )}
       </div>
 
+      {/* Botón Discreto: Crear Evento - Centro Abajo */}
+      <div style={{
+        position: 'fixed',
+        bottom: '32px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        pointerEvents: 'auto',
+      }}>
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/events/new')}
+          style={{
+            padding: '12px 24px',
+            borderRadius: '25px',
+            border: 'none',
+            background: `${colors.dark}dd`,
+            backdropFilter: 'blur(10px)',
+            color: colors.light,
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            border: `1px solid ${colors.light}33`,
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>📅</span>
+          Crear Evento
+        </motion.button>
+      </div>
     </div>
   );
 }
