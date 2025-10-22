@@ -127,9 +127,16 @@ export function OrganizerProfileEditor() {
     }
 
     try {
+      console.log('[OrganizerProfileEditor] Deleting event:', eventId, eventName);
       await deleteParent.mutateAsync(eventId);
       showToast('Evento eliminado correctamente', 'success');
+      
+      // Forzar refetch de la lista de eventos
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err: any) {
+      console.error('[OrganizerProfileEditor] Error deleting event:', err);
       showToast(err.message || 'Error al eliminar evento', 'error');
     }
   };
@@ -406,15 +413,15 @@ export function OrganizerProfileEditor() {
                         padding: '6px 12px',
                         borderRadius: '20px',
                         border: 'none',
-                        background: '#FF3D57',
+                        background: deleteParent.isPending ? '#666' : '#FF3D57',
                         color: 'white',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         cursor: deleteParent.isPending ? 'not-allowed' : 'pointer',
-                        opacity: deleteParent.isPending ? 0.5 : 1,
+                        opacity: deleteParent.isPending ? 0.7 : 1,
                       }}
                     >
-                      🗑️ Eliminar
+                      {deleteParent.isPending ? '⏳ Eliminando...' : '🗑️ Eliminar'}
                     </button>
                     <span style={{ fontSize: '1.5rem' }}>→</span>
                   </div>

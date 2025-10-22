@@ -60,16 +60,27 @@ export function useDeleteParent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
+      console.log('[useDeleteParent] Deleting parent:', id);
       const { error } = await supabase
         .from("events_parent")
         .delete()
         .eq("id", id);
-      if (error) throw error; 
+      if (error) {
+        console.error('[useDeleteParent] Error:', error);
+        throw error;
+      }
+      console.log('[useDeleteParent] Successfully deleted:', id);
       return id;
     },
-    onSuccess: (id) => {
+    onSuccess: (id, variables, context) => {
+      console.log('[useDeleteParent] Invalidating queries after deletion');
+      // Invalidar todas las queries relacionadas con parents
       qc.invalidateQueries({ queryKey: ["parents"] });
       qc.invalidateQueries({ queryKey: ["parent", id] });
+      // También invalidar queries de fechas relacionadas
+      qc.invalidateQueries({ queryKey: ["dates"] });
+      // Forzar refetch inmediato
+      qc.refetchQueries({ queryKey: ["parents"] });
     }
   });
 }
