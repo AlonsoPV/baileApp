@@ -33,6 +33,7 @@ export function EventCreateWizard() {
 
   const [step, setStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Estado del evento padre
   const [parentId, setParentId] = useState<number | null>(null);
@@ -172,6 +173,35 @@ export function EventCreateWizard() {
     else nav(`/events/parent/${parentId}/dates`);
   }
 
+  function handleCancel() {
+    setShowCancelDialog(true);
+  }
+
+  function confirmCancel() {
+    // Limpiar estados si es necesario
+    setParent({ nombre: "", descripcion: "", sede_general: "", estilos: [] });
+    setDateForm({
+      fecha: "",
+      hora_inicio: "",
+      hora_fin: "",
+      lugar: "",
+      ciudad: "",
+      direccion: "",
+      requisitos: "",
+      estado_publicacion: false,
+    });
+    setParentId(null);
+    setEventDateId(null);
+    setStep(1);
+    
+    // Volver al perfil de organizador
+    nav('/profile/organizer/edit');
+  }
+
+  function dismissCancel() {
+    setShowCancelDialog(false);
+  }
+
   return (
     <div style={{
       maxWidth: '800px',
@@ -180,12 +210,43 @@ export function EventCreateWizard() {
       color: colors.light,
       minHeight: '100vh',
     }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '8px' }}>
-        Crear nuevo evento
-      </h1>
-      <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)', marginBottom: '24px' }}>
-        Completa los pasos para publicar tu edición.
-      </p>
+      {/* Header con botón de cancelar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+      }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '8px' }}>
+            Crear nuevo evento
+          </h1>
+          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
+            Completa los pasos para publicar tu edición.
+          </p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleCancel}
+          style={{
+            padding: '12px 24px',
+            borderRadius: '25px',
+            border: `1px solid ${colors.light}33`,
+            background: 'transparent',
+            color: colors.light,
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>❌</span>
+          Cancelar
+        </motion.button>
+      </div>
 
       {/* Indicador de pasos */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
@@ -301,7 +362,25 @@ export function EventCreateWizard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px' }}>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCancel}
+              style={{
+                padding: '12px 20px',
+                borderRadius: '50px',
+                border: `2px solid ${colors.coral}66`,
+                background: 'transparent',
+                color: colors.coral,
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              ❌ Cancelar
+            </motion.button>
+            
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -485,7 +564,7 @@ export function EventCreateWizard() {
             <span style={{ fontSize: '0.9rem' }}>Publicado (visible para todos)</span>
           </label>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px' }}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -503,25 +582,45 @@ export function EventCreateWizard() {
             >
               ← Atrás
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCreateDate}
-              disabled={isLoading}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '50px',
-                border: 'none',
-                background: isLoading ? 'rgba(255,255,255,0.2)' : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                color: colors.light,
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: `0 8px 24px ${colors.coral}66`,
-              }}
-            >
-              {isLoading ? 'Guardando...' : 'Guardar y continuar →'}
-            </motion.button>
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancel}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '50px',
+                  border: `2px solid ${colors.coral}66`,
+                  background: 'transparent',
+                  color: colors.coral,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                ❌ Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCreateDate}
+                disabled={isLoading}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '50px',
+                  border: 'none',
+                  background: isLoading ? 'rgba(255,255,255,0.2)' : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                  color: colors.light,
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: `0 8px 24px ${colors.coral}66`,
+                }}
+              >
+                {isLoading ? 'Guardando...' : 'Guardar y continuar →'}
+              </motion.button>
+            </div>
           </div>
         </motion.section>
       )}
@@ -555,7 +654,7 @@ export function EventCreateWizard() {
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px' }}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -573,24 +672,44 @@ export function EventCreateWizard() {
             >
               ← Atrás
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setStep(4)}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '50px',
-                border: 'none',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                color: colors.light,
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: `0 8px 24px ${colors.coral}66`,
-              }}
-            >
-              Continuar a costos →
-            </motion.button>
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancel}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '50px',
+                  border: `2px solid ${colors.coral}66`,
+                  background: 'transparent',
+                  color: colors.coral,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                ❌ Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setStep(4)}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '50px',
+                  border: 'none',
+                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                  color: colors.light,
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: `0 8px 24px ${colors.coral}66`,
+                }}
+              >
+                Continuar a costos →
+              </motion.button>
+            </div>
           </div>
         </motion.section>
       )}
@@ -611,7 +730,7 @@ export function EventCreateWizard() {
 
           <EventPriceEditor eventDateId={eventDateId} />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px' }}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -629,26 +748,119 @@ export function EventCreateWizard() {
             >
               ← Atrás
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={finish}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '50px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #10B981, #34D399)',
-                color: colors.light,
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
-              }}
-            >
-              ✅ Finalizar
-            </motion.button>
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancel}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '50px',
+                  border: `2px solid ${colors.coral}66`,
+                  background: 'transparent',
+                  color: colors.coral,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                ❌ Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={finish}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '50px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #10B981, #34D399)',
+                  color: colors.light,
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+                }}
+              >
+                ✅ Finalizar
+              </motion.button>
+            </div>
           </div>
         </motion.section>
+      )}
+
+      {/* Diálogo de confirmación de cancelación */}
+      {showCancelDialog && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+        }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{
+              background: colors.dark,
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '400px',
+              width: '90%',
+              border: `1px solid ${colors.light}33`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            }}
+          >
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: colors.light }}>
+              ¿Cancelar creación de evento?
+            </h3>
+            <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '24px', lineHeight: '1.5' }}>
+              Se perderán todos los datos ingresados hasta ahora. Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={dismissCancel}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '25px',
+                  border: `1px solid ${colors.light}33`,
+                  background: 'transparent',
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Continuar editando
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={confirmCancel}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '25px',
+                  border: 'none',
+                  background: colors.coral,
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Sí, cancelar
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
