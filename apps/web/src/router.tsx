@@ -42,6 +42,11 @@ import ExploreListScreen from './screens/explore/ExploreListScreen';
 import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
 import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
 
+// Additional Profile Types
+import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
+import SchoolProfileEditor from './screens/profile/SchoolProfileEditor';
+import BrandProfileEditor from './screens/profile/BrandProfileEditor';
+
 export function AppRouter() {
   return (
     <Routes>
@@ -116,6 +121,16 @@ export function AppRouter() {
 
         {/* Role Selection System */}
         <Route path="/profile/roles" element={<RoleSelectorScreen />} />
+        
+        {/* Additional Profile Types */}
+        <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
+        <Route path="/profile/teacher" element={<TeacherProfileEditor />} />
+        
+        <Route path="/profile/school/edit" element={<SchoolProfileEditor />} />
+        <Route path="/profile/school" element={<SchoolProfileEditor />} />
+        
+        <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
+        <Route path="/profile/brand" element={<BrandProfileEditor />} />
         
         {/* Admin Routes */}
         <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />

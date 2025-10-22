@@ -8,6 +8,7 @@ import { MediaUploader } from "../../components/MediaUploader";
 import { MediaGrid } from "../../components/MediaGrid";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
+import ProfileRoleSwitch from "../../components/profile/ProfileRoleSwitch";
 
 const colors = {
   coral: '#FF3D57',
@@ -335,6 +336,9 @@ export function OrganizerProfileEditor() {
       <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '32px' }}>
         🎤 Editar Organizador
       </h1>
+
+      {/* Profile Role Switch */}
+      <ProfileRoleSwitch />
 
       <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
         Nombre público *

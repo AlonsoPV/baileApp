@@ -94,7 +94,12 @@ export function useApproveRoleRequest() {
       console.log('[useApproveRoleRequest] Success');
     },
     onSuccess: () => {
+      // Invalidar queries de admin
       qc.invalidateQueries({ queryKey: ["admin-role-requests"] });
+      // Invalidar queries de roles aprobados (para que el switch se actualice)
+      qc.invalidateQueries({ queryKey: ["my-approved-roles"] });
+      // Invalidar queries de role requests del usuario
+      qc.invalidateQueries({ queryKey: ["role-requests"] });
     }
   });
 }
