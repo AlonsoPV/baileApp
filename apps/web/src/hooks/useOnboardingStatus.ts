@@ -16,18 +16,18 @@ export function useOnboardingStatus() {
         .maybeSingle();
       if (error) throw error;
       
-      // Fallback: Si onboarding_complete no existe, verificar datos manualmente
-      const computedComplete =
-        !!data?.onboarding_complete ||
-        (!!data?.display_name && 
-         (data?.ritmos?.length || 0) > 0 && 
-         (data?.zonas?.length || 0) > 0);
-      
-      return {
-        exists: !!data,
-        complete: computedComplete,
-        profile: data
-      };
+              // Fallback: Si onboarding_complete no existe, verificar datos manualmente
+              const computedComplete =
+                !!data?.onboarding_complete ||
+                (!!data?.display_name && 
+                 (data?.ritmos?.length || 0) > 0 && 
+                 (data?.zonas?.length || 0) > 0);
+              
+              return {
+                exists: !!data,
+                complete: true, // ONBOARDING DISABLED - Siempre completo
+                profile: data
+              };
     },
     staleTime: 0,
   });

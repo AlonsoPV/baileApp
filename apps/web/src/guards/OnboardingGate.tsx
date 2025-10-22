@@ -78,10 +78,10 @@ export default function OnboardingGate() {
     return <Navigate to="/app/profile" replace />;
   }
 
-  // 🔹 4) Si NO completo y no estás en ruta onboarding/organizador/pública → manda al onboarding
-  if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
-    return <Navigate to="/onboarding/basics" replace />;
-  }
+  // 🔹 4) ONBOARDING DISABLED - Permitir acceso sin onboarding completo
+  // if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
+  //   return <Navigate to="/onboarding/basics" replace />;
+  // }
 
   // 🔹 5) Todo OK → deja pasar
   return <Outlet />;
