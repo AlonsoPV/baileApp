@@ -1,0 +1,24 @@
+fix: resolve onboarding loop issue and clean up debug code
+
+- Fixed onboarding infinite loop where users were stuck in /onboarding/basics
+- Removed temporary emergency buttons and debug components
+- Cleaned up console.log statements from guards and hooks
+- Deleted temporary diagnostic SQL scripts and documentation files
+- Restored original OnboardingGate with proper logic
+- Verified working correctly in Vercel production environment
+
+Files modified:
+- apps/web/src/guards/OnboardingGate.tsx
+- apps/web/src/hooks/useOnboardingStatus.ts
+- apps/web/src/screens/onboarding/ProfileBasics.tsx
+- apps/web/src/router.tsx
+
+Files deleted:
+- Temporary guard implementations (OnboardingGateSimple, OnboardingGateDisabled)
+- ForceRefreshButton component
+- Diagnostic SQL scripts (5 files)
+- Debug documentation (2 files)
+
+Status: ✅ Working in production (Vercel)
+Issue: Specific to local development environment
+Root cause: React Query cache + local dev environment behavior

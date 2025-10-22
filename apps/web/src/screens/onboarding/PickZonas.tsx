@@ -1,11 +1,14 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Chip } from '@ui/index';
 import { theme } from '@theme/colors';
 import { useTags } from '../../hooks/useTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useToast } from '../../components/Toast';
 import { mergeProfile } from '../../utils/mergeProfile';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 export function PickZonas() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -16,6 +19,24 @@ export function PickZonas() {
   const { profile, upsert } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  // Mutación para marcar onboarding como completo
+  const finishOnboarding = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("profiles_user")
+        .update({ onboarding_complete: true })
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      // 🔁 Asegura que el guard vea el cambio
+      await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
+      navigate("/app/profile", { replace: true });
+    }
+  });
 
   const toggleZona = (id: number) => {
     setSelectedIds((prev) =>
@@ -35,7 +56,9 @@ export function PickZonas() {
       
       await upsert(updates);
       showToast('Zonas guardadas exitosamente 📍', 'success');
-      navigate('/app/profile');
+      
+      // Marcar onboarding como completo
+      await finishOnboarding.mutateAsync();
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');
@@ -44,9 +67,14 @@ export function PickZonas() {
   };
 
   // Skip if already has zonas
-  const handleSkip = () => {
+  const handleSkip = async () => {
     if (profile?.zonas && profile.zonas.length > 0) {
-      navigate('/app/profile');
+      try {
+        await finishOnboarding.mutateAsync();
+      } catch (err) {
+        console.error('Error marking onboarding complete:', err);
+        navigate('/app/profile');
+      }
     }
   };
 

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RedirectIfAuthenticated } from './components/RedirectIfAuthenticated';
+import OnboardingGate from './guards/OnboardingGate';
 import { Login } from './screens/auth/Login';
 import { Signup } from './screens/auth/Signup';
 import { ProfileBasics } from './screens/onboarding/ProfileBasics';
@@ -48,191 +49,56 @@ export function AppRouter() {
         }
       />
 
-      {/* Onboarding Routes - Protected */}
-      <Route
-        path="/onboarding/basics"
-        element={
-          <ProtectedRoute>
-            <ProfileBasics />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/onboarding/ritmos"
-        element={
-          <ProtectedRoute>
-            <PickRitmos />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/onboarding/zonas"
-        element={
-          <ProtectedRoute>
-            <PickZonas />
-          </ProtectedRoute>
-        }
-      />
+      {/* Onboarding Routes - Public (no ProtectedRoute needed) */}
+      <Route path="/onboarding/basics" element={<ProfileBasics />} />
+      <Route path="/onboarding/ritmos" element={<PickRitmos />} />
+      <Route path="/onboarding/zonas" element={<PickZonas />} />
 
-      {/* App Routes - Protected */}
-      {/* Main Profile with Switch */}
-      <Route
-        path="/app/profile"
-        element={
-          <ProtectedRoute>
-            <ProfileScreen />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Legacy Profile Edit (keeping for compatibility) */}
-      <Route
-        path="/app/profile/edit"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+      {/* Protected Routes with OnboardingGate */}
+      <Route element={<OnboardingGate />}>
+        {/* App Routes */}
+        <Route path="/app/profile" element={<ProfileScreen />} />
+        <Route path="/app/profile/edit" element={<Profile />} />
 
-      {/* Sprint 3 - New Profile Routes */}
-      {/* Organizer Editor */}
-      <Route
-        path="/profile/organizer/edit"
-        element={
-          <ProtectedRoute>
-            <OrganizerProfileEditor />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Organizer Event Editors */}
-      <Route
-        path="/profile/organizer/events/new"
-        element={
-          <ProtectedRoute>
-            <EventEditor />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile/organizer/events/:id"
-        element={
-          <ProtectedRoute>
-            <EventEditor />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile/organizer/date/new/:parentId"
-        element={
-          <ProtectedRoute>
-            <EventDateEditor />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile/organizer/date/:id"
-        element={
-          <ProtectedRoute>
-            <EventDateEditor />
-          </ProtectedRoute>
-        }
-      />
+        {/* Sprint 3 - New Profile Routes */}
+        <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
+        
+        {/* Organizer Event Editors */}
+        <Route path="/profile/organizer/events/new" element={<EventEditor />} />
+        <Route path="/profile/organizer/events/:id" element={<EventEditor />} />
+        <Route path="/profile/organizer/date/new/:parentId" element={<EventDateEditor />} />
+        <Route path="/profile/organizer/date/:id" element={<EventDateEditor />} />
 
-      {/* Organizer Dashboard */}
-      <Route
-        path="/profile/organizer/dashboard/:id"
-        element={
-          <ProtectedRoute>
-            <OrganizerDashboardDates />
-          </ProtectedRoute>
-        }
-      />
+        {/* Organizer Dashboard */}
+        <Route path="/profile/organizer/dashboard/:id" element={<OrganizerDashboardDates />} />
 
-      {/* Sprint 2 - Event Routes */}
-      
-      {/* Organizer Routes */}
-      <Route
-        path="/organizer/edit"
-        element={
-          <ProtectedRoute>
-            <OrganizerEditScreen />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Organizer Public Routes */}
+        {/* Sprint 2 - Event Routes */}
+        <Route path="/organizer/edit" element={<OrganizerEditScreen />} />
+        
+        {/* Event Parent Routes */}
+        <Route path="/events/parent/new" element={<EventParentEditScreen />} />
+        <Route path="/events/parent/:id/edit" element={<EventParentEditScreen />} />
+        
+        {/* Event Parent Dashboard - Fechas */}
+        <Route path="/events/parent/:id/dates" element={<OrganizerDashboardDates />} />
+
+        {/* Event Date Routes */}
+        <Route path="/events/date/new/:parentId" element={<EventDateEditScreen />} />
+        <Route path="/events/date/:id/edit" element={<EventDateEditScreen />} />
+
+        {/* My RSVPs Route */}
+        <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
+      </Route>
+
+      {/* Public Routes (no authentication required) */}
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
-
-      {/* User Public Profile Route */}
       <Route path="/u/:id" element={<UserPublicProfile />} />
-
-      {/* Event Parent Routes */}
-      <Route
-        path="/events/parent/new"
-        element={
-          <ProtectedRoute>
-            <EventParentEditScreen />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/events/parent/:id/edit"
-        element={
-          <ProtectedRoute>
-            <EventParentEditScreen />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Event Parent Public Route */}
       <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
-
-      {/* Event Parent Dashboard - Fechas */}
-      <Route
-        path="/events/parent/:id/dates"
-        element={
-          <ProtectedRoute>
-            <OrganizerDashboardDates />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Event Date Routes */}
-      <Route
-        path="/events/date/new/:parentId"
-        element={
-          <ProtectedRoute>
-            <EventDateEditScreen />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/events/date/:id/edit"
-        element={
-          <ProtectedRoute>
-            <EventDateEditScreen />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Event Date Public Route */}
       <Route path="/events/date/:id" element={<EventDatePublicScreen />} />
 
-      {/* My RSVPs Route */}
-      <Route
-        path="/me/rsvps"
-        element={
-          <ProtectedRoute>
-            <MyRSVPsScreen />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Default Route */}
-      <Route path="/" element={<Navigate to="/auth/login" replace />} />
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/app/profile" replace />} />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/auth/login" replace />} />

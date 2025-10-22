@@ -11,6 +11,7 @@ type ProfileUser = {
   ritmos?: number[];
   zonas?: number[];
   media?: any[]; // ⚠️ NO actualizar desde este hook
+  onboarding_complete?: boolean; // ⚠️ NO actualizar desde este hook
   respuestas?: Record<string, any>;
 };
 
@@ -37,8 +38,8 @@ export function useUserProfile() {
   const updateFields = useMutation({
     mutationFn: async (patch: Partial<ProfileUser>) => {
       if (!user?.id) throw new Error("No user");
-      // 🚫 Blindaje: JAMÁS mandar media desde aquí
-      const { media, ...rest } = patch;
+      // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
+      const { media, onboarding_complete, ...rest } = patch;
       const clean = pickDefined<ProfileUser>(rest);
       if (Object.keys(clean).length === 0) return;
 
