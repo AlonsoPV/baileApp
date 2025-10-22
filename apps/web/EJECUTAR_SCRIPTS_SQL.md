@@ -16,6 +16,7 @@ Debes ejecutar los scripts en este orden exacto:
 10. 🔧 **SCRIPT_12_FIX_MISSING_PROFILES.sql** - Corrige perfiles faltantes de usuarios existentes
 11. 🔓 **SCRIPT_13_FIX_EVENTS_PUBLIC_RLS.sql** - Permite que usuarios vean eventos públicos de otros organizadores
 12. 🎭 **SCRIPT_14_ROLE_REQUESTS_SYSTEM.sql** - Sistema completo de roles y aprobación por super admin
+13. 🔄 **SCRIPT_15_MERGE_PROFILES_USER_RPC.sql** - Función RPC para actualizar perfiles de forma segura (CRÍTICO)
 
 ---
 
@@ -420,6 +421,66 @@ Este script te dirá:
 - ✅ Cuántos tienen organizador aprobado
 - ✅ Qué políticas RLS están activas
 - ✅ Recomendaciones específicas para tu caso
+
+---
+
+### **PASO 15: Ejecutar SCRIPT 15 - RPC merge_profiles_user** ⚠️ **CRÍTICO**
+
+1. Abre el archivo **`SCRIPT_15_MERGE_PROFILES_USER_RPC.sql`**
+2. Copia **TODO** el contenido del archivo
+3. Pégalo en el SQL Editor de Supabase
+4. Haz clic en **"Run"** (Ejecutar)
+5. Espera a que aparezca el mensaje de éxito ✅
+
+**Qué hace este script:**
+- ✅ Crea función RPC `merge_profiles_user` para updates seguros
+- ✅ Solo actualiza campos presentes en el patch (no sobrescribe todo)
+- ✅ Usa `SECURITY DEFINER` para bypass de RLS cuando necesario
+- ✅ Maneja correctamente arrays (ritmos, zonas) y JSONB (media, redes_sociales)
+- ✅ Preserva valores actuales si el campo no está en el patch
+- ✅ Da permisos de ejecución a usuarios autenticados
+
+**Verificación:**
+```sql
+-- Verificar que la función existe
+SELECT routine_name, routine_type, security_type
+FROM information_schema.routines
+WHERE routine_schema = 'public' 
+  AND routine_name = 'merge_profiles_user';
+```
+
+**Resultado esperado:**
+```
+routine_name: merge_profiles_user
+routine_type: FUNCTION
+security_type: DEFINER
+```
+
+**⚠️ MUY IMPORTANTE:**
+- Esta función es **CRÍTICA** para el funcionamiento de la app
+- Sin ella, no se pueden actualizar perfiles de usuario
+- Verás errores `PGRST202` si no la ejecutas
+- La app no podrá guardar cambios en perfiles
+
+**Ejemplo de uso (desde la app):**
+```typescript
+// Solo actualizar nombre y bio
+await supabase.rpc('merge_profiles_user', {
+  p_user_id: user.id,
+  p_patch: { 
+    display_name: "Juan", 
+    bio: "Nueva bio" 
+  }
+});
+
+// Solo actualizar media
+await supabase.rpc('merge_profiles_user', {
+  p_user_id: user.id,
+  p_patch: { 
+    media: [{ id: "123", url: "...", type: "image" }] 
+  }
+});
+```
 
 ---
 
