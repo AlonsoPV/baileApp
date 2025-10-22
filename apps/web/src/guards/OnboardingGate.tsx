@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { useOnboardingStatus } from "../hooks/useOnboardingStatus";
+import { useAuthReady } from "../hooks/useAuthReady";
 
 const colors = {
   coral: '#FF3D57',
@@ -13,17 +12,12 @@ const colors = {
 };
 
 export default function OnboardingGate() {
-  const { user, loading: authLoading } = useAuth();
-  const { loading, complete, exists, profile } = useOnboardingStatus();
   const loc = useLocation();
+  const { ready, user, complete, authLoading, onboardingLoading } = useAuthReady();
 
-  // 1) Si no hay sesión, manda a login
-  if (!authLoading && !user) {
-    return <Navigate to="/auth/login" replace state={{ from: loc }} />;
-  }
-
-  // 2) Espera a que el perfil cargue ANTES de decidir
-  if (authLoading || loading) {
+  // 🔹 1) Mientras carga sesión o perfil: NO tomar decisiones
+  // Esto previene redirecciones prematuras al onboarding
+  if (!ready || authLoading || onboardingLoading) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -47,7 +41,7 @@ export default function OnboardingGate() {
             margin: '0 auto 16px'
           }} />
           <div style={{ fontSize: '1rem', opacity: 0.8 }}>
-            Cargando perfil...
+            {authLoading ? 'Verificando autenticación...' : 'Cargando perfil...'}
           </div>
         </div>
         <style>{`
@@ -58,6 +52,11 @@ export default function OnboardingGate() {
         `}</style>
       </div>
     );
+  }
+
+  // 🔹 2) Si no hay usuario autenticado, manda a login
+  if (!user) {
+    return <Navigate to="/auth/login" replace state={{ from: loc }} />;
   }
 
   const isOnboardingRoute = loc.pathname.startsWith("/onboarding");
@@ -74,15 +73,16 @@ export default function OnboardingGate() {
   const publicRoutes = ['/u/', '/events/parent/', '/events/date/'];
   const isPublicRoute = publicRoutes.some(route => loc.pathname.includes(route) && !loc.pathname.includes('/edit'));
 
-  // 3) Si NO completo -> fuerza a onboarding (EXCEPTO rutas de organizador o públicas)
-  if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
-    return <Navigate to="/onboarding/basics" replace />;
-  }
-
-  // 4) Si YA completo -> no dejes quedarse en onboarding
+  // 🔹 3) Si ya está completo y estás en ruta onboarding → redirige a perfil
   if (complete && isOnboardingRoute) {
     return <Navigate to="/app/profile" replace />;
   }
 
+  // 🔹 4) Si NO completo y no estás en ruta onboarding/organizador/pública → manda al onboarding
+  if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
+    return <Navigate to="/onboarding/basics" replace />;
+  }
+
+  // 🔹 5) Todo OK → deja pasar
   return <Outlet />;
 }

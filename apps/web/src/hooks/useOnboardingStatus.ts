@@ -16,10 +16,16 @@ export function useOnboardingStatus() {
         .maybeSingle();
       if (error) throw error;
       
-      // Si aún no existe fila, considéralo incompleto.
+      // Fallback: Si onboarding_complete no existe, verificar datos manualmente
+      const computedComplete =
+        !!data?.onboarding_complete ||
+        (!!data?.display_name && 
+         (data?.ritmos?.length || 0) > 0 && 
+         (data?.zonas?.length || 0) > 0);
+      
       return {
         exists: !!data,
-        complete: !!data?.onboarding_complete,
+        complete: computedComplete,
         profile: data
       };
     },

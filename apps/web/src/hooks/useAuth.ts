@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
 
   useEffect(() => {
     // Get initial session
@@ -37,11 +39,24 @@ export function useAuth() {
       email,
       password,
     });
+    
+    if (!error && data.user) {
+      // 🔁 Invalida perfil justo después del login
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      await qc.invalidateQueries({ queryKey: ["profile", "me", data.user.id] });
+    }
+    
     return { data, error };
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
+    
+    if (!error) {
+      // 🧹 Limpia toda la cache de React Query al hacer logout
+      qc.clear();
+    }
+    
     return { error };
   };
 
