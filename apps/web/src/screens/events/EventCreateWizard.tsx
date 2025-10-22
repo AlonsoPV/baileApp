@@ -60,19 +60,31 @@ export function EventCreateWizard() {
 
   // Asegura organizador mínimo si no existe
   useEffect(() => {
-    (async () => {
-      if (user && !organizer && !upsertOrg.isPending) {
+    let isMounted = true;
+    
+    const createOrganizer = async () => {
+      if (user && !organizer && !upsertOrg.isPending && isMounted) {
         try {
           console.log('[EventCreateWizard] Creating minimal organizer');
           await upsertOrg.mutateAsync({ nombre_publico: "Mi Social" });
-          showToast('Perfil de organizador creado', 'success');
+          if (isMounted) {
+            showToast('Perfil de organizador creado', 'success');
+          }
         } catch (err: any) {
           console.error('[EventCreateWizard] Error creating organizer:', err);
-          showToast('Error al crear organizador', 'error');
+          if (isMounted) {
+            showToast('Error al crear organizador', 'error');
+          }
         }
       }
-    })();
-  }, [user, organizer, upsertOrg, showToast]);
+    };
+
+    createOrganizer();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, organizer?.id]); // Solo depende de IDs, no de objetos completos
 
   function toggleEstilo(id: number) {
     setParent(p => {

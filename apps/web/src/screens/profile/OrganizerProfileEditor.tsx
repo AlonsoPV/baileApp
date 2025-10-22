@@ -411,35 +411,41 @@ export function OrganizerProfileEditor() {
         )}
       </div>
 
-      {/* Botón Centrado: Crear Evento - SIEMPRE VISIBLE */}
+      {/* Botón Discreto: Crear Evento - Centro Abajo */}
       <div style={{
         position: 'fixed',
-        top: '50%',
+        bottom: '32px',
         left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 9999,
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
         pointerEvents: 'auto',
       }}>
-        <button
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/events/new')}
           style={{
-            padding: '24px 40px',
-            borderRadius: '50px',
+            padding: '12px 24px',
+            borderRadius: '25px',
             border: 'none',
-            background: '#FF3D57',
-            color: 'white',
-            fontSize: '1.4rem',
-            fontWeight: '700',
+            background: `${colors.dark}dd`,
+            backdropFilter: 'blur(10px)',
+            color: colors.light,
+            fontSize: '0.9rem',
+            fontWeight: '600',
             cursor: 'pointer',
-            boxShadow: '0 8px 32px rgba(255, 61, 87, 0.5)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px',
+            gap: '8px',
+            border: `1px solid ${colors.light}33`,
           }}
         >
-          <span style={{ fontSize: '1.8rem' }}>📅</span>
-          CREAR EVENTO
-        </button>
+          <span style={{ fontSize: '1.1rem' }}>📅</span>
+          Crear Evento
+        </motion.button>
       </div>
     </div>
   );
