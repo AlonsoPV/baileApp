@@ -30,7 +30,7 @@ export default function TeacherProfileEditor() {
           🎓 Editar Perfil de Maestro
         </h1>
 
-        <ProfileRoleSwitch />
+        <ProfileToolbar />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

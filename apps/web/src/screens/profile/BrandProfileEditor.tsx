@@ -30,7 +30,7 @@ export default function BrandProfileEditor() {
           🏷️ Editar Perfil de Marca
         </h1>
 
-        <ProfileRoleSwitch />
+        <ProfileToolbar />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

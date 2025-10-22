@@ -10,6 +10,7 @@ import { useParentsByOrganizer, useDatesByParent, useRSVPCounts } from "../../ho
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
+import ProfileToolbar from "../../components/profile/ProfileToolbar";
 
 const colors = {
   coral: '#FF3D57',
@@ -125,14 +126,18 @@ export function OrganizerProfileLive() {
       background: colors.dark,
       color: colors.light,
     }}>
-      {/* Breadcrumbs */}
-      <div style={{ padding: '24px 24px 0' }}>
+      {/* Breadcrumbs & Toolbar */}
+      <div style={{ padding: '24px 24px 0', maxWidth: '800px', margin: '0 auto' }}>
         <Breadcrumbs
           items={[
             { label: 'Inicio', href: '/app/profile', icon: '🏠' },
             { label: 'Organizador', icon: '🎤' },
           ]}
         />
+        
+        <div style={{ marginTop: '16px' }}>
+          <ProfileToolbar />
+        </div>
       </div>
 
       {/* Hero Section */}

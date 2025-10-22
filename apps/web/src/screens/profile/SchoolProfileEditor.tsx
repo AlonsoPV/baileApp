@@ -30,7 +30,7 @@ export default function SchoolProfileEditor() {
           🏫 Editar Perfil de Academia
         </h1>
 
-        <ProfileRoleSwitch />
+        <ProfileToolbar />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
