@@ -1,7 +1,10 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useEventFullByDateId } from "../../hooks/useEventFull";
 import { useTags } from "../../hooks/useTags";
+import { useMyRSVP } from "../../hooks/useEvents";
+import { useToast } from "../../components/Toast";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 export default function EventPublicScreen() {
@@ -10,6 +13,20 @@ export default function EventPublicScreen() {
   const nav = useNavigate();
   const { data, isLoading } = useEventFullByDateId(dateId);
   const { ritmos } = useTags("ritmo");
+  const rsvp = useMyRSVP();
+  const { showToast } = useToast();
+
+  const handleRSVP = async (status: 'voy' | 'interesado' | 'no_voy') => {
+    if (!data?.date) return;
+    
+    try {
+      await rsvp.set(data.date.id, status);
+      showToast(`RSVP actualizado: ${status}`, 'success');
+    } catch (err: any) {
+      console.error('[EventPublicScreen] RSVP error:', err);
+      showToast('Error al actualizar RSVP', 'error');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -207,6 +224,95 @@ export default function EventPublicScreen() {
           )}
         </div>
       </div>
+
+      {/* RSVP Section */}
+      <section style={{
+        padding: '2rem 1.5rem',
+        maxWidth: '56rem',
+        margin: '0 auto'
+      }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '1rem',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <h3 style={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            marginBottom: '1rem',
+            color: 'white'
+          }}>
+            ¿Vas a asistir?
+          </h3>
+          
+          <div style={{
+            display: 'flex',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleRSVP('voy')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '50px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #10B981, #1E88E5)',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)'
+              }}
+            >
+              ✅ Voy
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleRSVP('interesado')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '50px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #FF8C42, #FFD166)',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(255, 140, 66, 0.4)'
+              }}
+            >
+              🤔 Interesado
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleRSVP('no_voy')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '50px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(255, 61, 87, 0.4)'
+              }}
+            >
+              ❌ No voy
+            </motion.button>
+          </div>
+        </div>
+      </section>
 
       {/* Contenido */}
       <div style={{
