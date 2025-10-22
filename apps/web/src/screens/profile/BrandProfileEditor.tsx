@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
-import ProfileRoleSwitch from "../../components/profile/ProfileRoleSwitch";
+import ProfileToolbar from "../../components/profile/ProfileToolbar";
 
 const colors = {
   blue: '#30cfd0',
