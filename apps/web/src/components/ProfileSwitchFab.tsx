@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useProfileMode } from "../state/profileMode";
 import { useOrganizerStore } from "../state/organizerStore";
 import { useAuth } from "../hooks/useAuth";
+import { useMyRoleRequests } from "../hooks/useRoleRequests";
+import { useToast } from "./Toast";
 import "./ProfileSwitchFab.css";
 
 function FabInner() {
@@ -13,8 +15,15 @@ function FabInner() {
   const { role, mode, toggleRole, toggleMode, setRole, setMode } = useProfileMode();
   const { organizerId, loading } = useOrganizerStore();
   const { user } = useAuth();
+  const { data: roleRequests } = useMyRoleRequests();
+  const { showToast } = useToast();
 
   const hasOrganizer = !!organizerId;
+  
+  // Verificar si el rol de organizador está aprobado
+  const organizadorApproved = roleRequests?.some(
+    r => r.role === 'organizador' && r.status === 'aprobado'
+  );
 
   const go = (nextMode = mode, nextRole = role) => {
     if (nextRole === "organizador") {
@@ -26,6 +35,14 @@ function FabInner() {
 
   const onToggleRole = () => {
     if (role === "usuario") {
+      // Intentando cambiar a organizador
+      // Verificar si tiene el rol aprobado
+      if (!organizadorApproved && !hasOrganizer) {
+        showToast('Necesitas solicitar acceso como organizador primero', 'error');
+        nav('/profile/roles');
+        return;
+      }
+      
       if (hasOrganizer) {
         toggleRole();
         go(mode, "organizador");
@@ -36,6 +53,7 @@ function FabInner() {
         nav("/profile/organizer/edit");
       }
     } else {
+      // Volver a usuario (siempre permitido)
       toggleRole();
       go(mode, "usuario");
     }
