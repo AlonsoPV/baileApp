@@ -13,6 +13,8 @@ Debes ejecutar los scripts en este orden exacto:
 7. ✅ **SCRIPT_8_CRONOGRAMAS_PRECIOS.sql** - Tablas de cronogramas y precios
 8. ✅ **SCRIPT_10_FIX_REQUISITOS.sql** - Fix columna requisitos
 9. ⭐ **SCRIPT_11_AUTO_CREATE_USER_PROFILE.sql** - Crea automáticamente perfil al registrarse (IMPORTANTE)
+10. 🔧 **SCRIPT_12_FIX_MISSING_PROFILES.sql** - Corrige perfiles faltantes de usuarios existentes
+11. 🔓 **SCRIPT_13_FIX_EVENTS_PUBLIC_RLS.sql** - Permite que usuarios vean eventos públicos de otros organizadores
 
 ---
 
@@ -284,6 +286,85 @@ LIMIT 5;
 **¿Por qué es importante?**
 - 🚫 **Antes**: Los usuarios nuevos obtenían error 404 al intentar acceder a su perfil
 - ✅ **Ahora**: Cada usuario tiene automáticamente un perfil desde el momento del registro
+
+---
+
+### **🔟 SCRIPT_12_FIX_MISSING_PROFILES.sql** 🔧
+
+**¿Qué hace?**
+- ✅ Crea perfiles para usuarios que ya existían antes del trigger
+- ✅ Usa LEFT JOIN para encontrar usuarios sin perfil
+- ✅ Muestra estadísticas de usuarios corregidos
+- ✅ Lista perfiles incompletos
+
+**Cuándo ejecutarlo:**
+- Después de ejecutar SCRIPT_11
+- Si tienes usuarios que se registraron antes del trigger
+- Si ves errores de "perfil no encontrado"
+
+---
+
+### **1️⃣1️⃣ SCRIPT_13_FIX_EVENTS_PUBLIC_RLS.sql** 🔓 (IMPORTANTE)
+
+**¿Qué hace?**
+- ✅ Elimina políticas RLS restrictivas antiguas
+- ✅ Crea política que permite a TODOS los usuarios autenticados ver eventos publicados
+- ✅ Mantiene política para que organizadores vean sus propios eventos (publicados y borradores)
+- ✅ Corrige problema de "eventos en blanco" cuando otro usuario intenta verlos
+
+**Políticas creadas:**
+```sql
+-- Política 1: Todos ven eventos publicados
+CREATE POLICY "Authenticated users can view published dates"
+ON events_date FOR SELECT TO authenticated
+USING (estado_publicacion = 'publicado');
+
+-- Política 2: Organizadores ven sus propios eventos
+CREATE POLICY "Organizers can view own dates"
+ON events_date FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM events_parent ep
+    JOIN profiles_organizer po ON po.id = ep.organizer_id
+    WHERE ep.id = parent_id AND po.user_id = auth.uid()
+  )
+);
+```
+
+**Verificación:**
+```sql
+-- Ver políticas actuales
+SELECT policyname, cmd, qual 
+FROM pg_policies 
+WHERE tablename = 'events_date';
+
+-- Ver eventos que DEBERÍAN ser visibles
+SELECT id, fecha, lugar, estado_publicacion
+FROM events_date
+WHERE estado_publicacion = 'publicado'
+LIMIT 10;
+```
+
+**¿Por qué es importante?**
+- 🚫 **Antes:** Solo el organizador podía ver sus eventos
+- ✅ **Ahora:** Todos los usuarios autenticados pueden ver eventos publicados
+- 🎯 **Resultado:** El sistema de exploración funciona correctamente
+
+---
+
+### **📋 DIAGNÓSTICO (Si hay problemas)**
+
+Si después de ejecutar los scripts aún no ves eventos, ejecuta:
+```sql
+-- apps/web/DIAGNOSTICO_EVENTOS_PUBLICOS.sql
+```
+
+Este script te dirá:
+- ✅ Cuántos eventos existen
+- ✅ Cuántos están publicados
+- ✅ Cuántos tienen organizador aprobado
+- ✅ Qué políticas RLS están activas
+- ✅ Recomendaciones específicas para tu caso
 
 ---
 
