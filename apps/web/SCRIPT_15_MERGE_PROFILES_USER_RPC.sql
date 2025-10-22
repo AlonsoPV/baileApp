@@ -55,7 +55,7 @@ BEGIN
   v_media          := COALESCE(p_patch->'media',          (SELECT media          FROM profiles_user WHERE user_id = p_user_id));
   v_redes_sociales := COALESCE(p_patch->'redes_sociales', (SELECT redes_sociales FROM profiles_user WHERE user_id = p_user_id));
 
-  -- Actualizar el perfil
+  -- Actualizar el perfil (sin updated_at si no existe en la tabla)
   UPDATE profiles_user
   SET 
     display_name   = v_display_name,
@@ -65,8 +65,7 @@ BEGIN
     zonas          = v_zonas,
     respuestas     = v_respuestas,
     media          = v_media,
-    redes_sociales = v_redes_sociales,
-    updated_at     = NOW()
+    redes_sociales = v_redes_sociales
   WHERE user_id = p_user_id;
   
   -- Si no existe el perfil, lanzar error
@@ -141,7 +140,8 @@ WHERE routine_schema = 'public'
 --    usando jsonb_array_elements_text() para evitar errores de casting.
 --    Los JSONB (media, redes_sociales, respuestas) se manejan directamente.
 
--- 5. updated_at siempre se actualiza a NOW() en cada merge.
+-- 5. updated_at NO se actualiza porque la tabla profiles_user no tiene esa columna.
+--    Si en el futuro agregas updated_at a la tabla, puedes añadirlo al UPDATE.
 
 -- =====================================================
 -- 5) TRIGGER: Proteger media de ser null accidentalmente
