@@ -15,6 +15,7 @@ Debes ejecutar los scripts en este orden exacto:
 9. ⭐ **SCRIPT_11_AUTO_CREATE_USER_PROFILE.sql** - Crea automáticamente perfil al registrarse (IMPORTANTE)
 10. 🔧 **SCRIPT_12_FIX_MISSING_PROFILES.sql** - Corrige perfiles faltantes de usuarios existentes
 11. 🔓 **SCRIPT_13_FIX_EVENTS_PUBLIC_RLS.sql** - Permite que usuarios vean eventos públicos de otros organizadores
+12. 🎭 **SCRIPT_14_ROLE_REQUESTS_SYSTEM.sql** - Sistema completo de roles y aprobación por super admin
 
 ---
 
@@ -349,6 +350,60 @@ LIMIT 10;
 - 🚫 **Antes:** Solo el organizador podía ver sus eventos
 - ✅ **Ahora:** Todos los usuarios autenticados pueden ver eventos publicados
 - 🎯 **Resultado:** El sistema de exploración funciona correctamente
+
+---
+
+---
+
+### **1️⃣2️⃣ SCRIPT_14_ROLE_REQUESTS_SYSTEM.sql** 🎭
+
+**¿Qué hace?**
+- ✅ Crea tabla `admins` para super administradores
+- ✅ Crea tabla `role_requests` para solicitudes de roles
+- ✅ Crea tablas `profiles_teacher`, `profiles_school`, `profiles_brand`
+- ✅ Implementa función `is_admin(uuid)` para verificar permisos
+- ✅ Implementa RPC `approve_role_request` para aprobar/rechazar y crear perfiles automáticamente
+- ✅ Configura políticas RLS seguras
+
+**Roles disponibles:**
+- 🎤 **Organizador**: Crea eventos
+- 🎓 **Maestro**: Ofrece clases
+- 🏫 **Academia**: Administra escuela
+- 🏷️ **Marca**: Promociona productos
+
+**Flujo de aprobación:**
+```
+Usuario solicita → Pendiente → Admin aprueba/rechaza → Perfil creado automáticamente
+```
+
+**IMPORTANTE - Convertir usuario en admin:**
+```sql
+-- 1. Obtener tu UUID
+SELECT id, email FROM auth.users WHERE email = 'tu-email@ejemplo.com';
+
+-- 2. Hacerte admin (reemplaza el UUID)
+INSERT INTO admins (user_id) VALUES ('uuid-aqui');
+
+-- 3. Verificar
+SELECT a.user_id, au.email FROM admins a 
+JOIN auth.users au ON a.user_id = au.id;
+```
+
+**Verificación:**
+```sql
+-- Ver solicitudes pendientes
+SELECT * FROM role_requests WHERE status = 'pendiente';
+
+-- Ver todos los maestros
+SELECT * FROM profiles_teacher;
+
+-- Ver todos los admins
+SELECT * FROM admins;
+```
+
+**Acceso en la app:**
+- Usuarios: `/profile/roles` (solicitar roles)
+- Admins: `/admin/roles` (aprobar/rechazar)
 
 ---
 

@@ -38,6 +38,10 @@ import UserPublicProfile from './screens/profile/UserPublicProfile';
 import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
 import ExploreListScreen from './screens/explore/ExploreListScreen';
 
+// Role Selection System
+import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
+import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
+
 export function AppRouter() {
   return (
     <Routes>
@@ -109,6 +113,12 @@ export function AppRouter() {
         {/* Explore/Search Routes */}
         <Route path="/explore" element={<ExploreHomeScreen />} />
         <Route path="/explore/list" element={<ExploreListScreen />} />
+
+        {/* Role Selection System */}
+        <Route path="/profile/roles" element={<RoleSelectorScreen />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
       </Route>
 
       {/* Public Routes (no authentication required) */}

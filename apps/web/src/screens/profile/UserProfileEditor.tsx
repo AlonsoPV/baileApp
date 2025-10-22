@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useTags } from "../../hooks/useTags";
 import { useUserMedia } from "../../hooks/useUserMedia";
@@ -19,6 +20,7 @@ const colors = {
 };
 
 export const UserProfileEditor: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
@@ -402,6 +404,27 @@ export const UserProfileEditor: React.FC = () => {
         }}
       >
         {isSaving ? 'Guardando...' : '💾 Guardar Cambios'}
+      </motion.button>
+
+      {/* Role Selection Button */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate('/profile/roles')}
+        style={{
+          width: '100%',
+          marginTop: '12px',
+          padding: '14px',
+          borderRadius: '50px',
+          border: `2px solid ${colors.blue}`,
+          background: 'transparent',
+          color: colors.light,
+          fontSize: '0.9rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+        }}
+      >
+        🎭 Tipos de Perfil (Organizador, Maestro, Academia)
       </motion.button>
     </div>
   );
