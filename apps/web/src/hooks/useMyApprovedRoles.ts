@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./useAuth";
 
-export type RoleKey = "organizador" | "maestro" | "academia" | "marca";
+export type RoleKey = "usuario" | "organizador" | "maestro" | "academia" | "marca";
 
 export function useMyApprovedRoles() {
   const { user } = useAuth();
@@ -25,11 +25,14 @@ export function useMyApprovedRoles() {
         throw e1;
       }
 
-      const approved = new Set((reqs || []).map((r) => r.role as RoleKey));
-      console.log('[useMyApprovedRoles] Approved roles:', Array.from(approved));
+      // 🔥 IMPORTANTE: "usuario" es un rol base que TODOS tienen
+      const approved = new Set<RoleKey>(["usuario"]);
+      (reqs || []).forEach((r) => approved.add(r.role as RoleKey));
+      console.log('[useMyApprovedRoles] Approved roles (including usuario):', Array.from(approved));
 
       // 2) existencia de perfiles (para rutas/edición)
       const exists: Record<RoleKey, boolean> = {
+        usuario: true, // Todos los usuarios tienen perfil de usuario por defecto
         organizador: false,
         maestro: false,
         academia: false,
