@@ -1,28 +1,11 @@
 import React from "react";
+const FALLBACK = "/default-media.png";
 
-type Props = React.ImgHTMLAttributes<HTMLImageElement> & {
-  fallback?: string;
-};
-
-const FALLBACK = "https://placehold.co/600x400/1F2937/FFFFFF?text=Imagen";
-
-export default function ImageWithFallback({ 
-  src, 
-  fallback = FALLBACK, 
-  alt = "",
-  ...rest 
-}: Props) {
+export default function ImageWithFallback(
+  { src, fallback = FALLBACK, ...rest }:
+  React.ImgHTMLAttributes<HTMLImageElement> & { fallback?: string }
+) {
   const [err, setErr] = React.useState(false);
   const finalSrc = !src || err ? fallback : src;
-  
-  return (
-    <img
-      src={finalSrc}
-      alt={alt}
-      onError={() => setErr(true)}
-      loading="lazy"
-      {...rest}
-    />
-  );
+  return <img src={finalSrc} onError={() => setErr(true)} {...rest} />;
 }
-

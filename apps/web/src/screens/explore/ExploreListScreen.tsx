@@ -45,18 +45,8 @@ export default function ExploreListScreen() {
   const totalCount = query.data?.pages[0]?.count || 0;
 
   const renderItem = (item: any, i: number) => {
-    const handleClick = () => {
-      if (filters.type === 'eventos') {
-        navigate(`/events/date/${item.id}`);
-      } else if (filters.type === 'organizadores') {
-        navigate(`/organizer/${item.id}`);
-      } else if (filters.type === 'usuarios') {
-        navigate(`/u/${item.user_id}`);
-      }
-      // maestros, academias, marcas - cuando estén las tablas
-    };
-
     // Seleccionar card según tipo
+    // Las cards ya tienen navegación integrada con LiveLink
     let CardComponent;
     let key;
 
@@ -90,11 +80,7 @@ export default function ExploreListScreen() {
         key = item.id ?? i;
     }
 
-    return (
-      <div key={key} onClick={handleClick}>
-        <CardComponent item={item} />
-      </div>
-    );
+    return <CardComponent key={key} item={item} />;
   };
 
   return (

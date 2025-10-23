@@ -11,6 +11,7 @@ export interface Tag {
 
 export interface ProfileUser {
   user_id: string;
+  email?: string;  // Email del usuario
   display_name?: string;
   bio?: string;
   avatar_url?: string;

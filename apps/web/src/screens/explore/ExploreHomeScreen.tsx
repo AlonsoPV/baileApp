@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useExploreFilters } from "../../state/exploreFilters";
@@ -6,6 +6,7 @@ import { useExploreQuery } from "../../hooks/useExploreQuery";
 import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
+import FilterBar, { FilterState } from "../../components/FilterBar";
 
 const colors = {
   coral: '#FF3D57',
@@ -47,38 +48,69 @@ export default function ExploreHomeScreen() {
   const navigate = useNavigate();
   const { set } = useExploreFilters();
 
-  // Próximos eventos (next 30d)
-  const start = new Date();
-  const end = new Date();
-  end.setDate(end.getDate() + 30);
-  
+  // Estado de filtros
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    perfiles: [],
+    ritmos: [],
+    zonas: [],
+    fechaDesde: undefined,
+    fechaHasta: undefined
+  });
+
+  // Determinar rango de fechas para eventos
+  const getDateRange = () => {
+    if (filters.fechaDesde || filters.fechaHasta) {
+      return {
+        dateFrom: filters.fechaDesde,
+        dateTo: filters.fechaHasta
+      };
+    }
+    // Por defecto: próximos 30 días
+    const start = new Date();
+    const end = new Date();
+    end.setDate(end.getDate() + 30);
+    return {
+      dateFrom: start.toISOString().slice(0, 10),
+      dateTo: end.toISOString().slice(0, 10)
+    };
+  };
+
+  const dateRange = getDateRange();
+
+  // Próximos eventos (filtrados)
   const eventsQuery = useExploreQuery({
     type: "eventos",
-    q: "",
-    ritmos: [],
-    zonas: [],
-    dateFrom: start.toISOString().slice(0, 10),
-    dateTo: end.toISOString().slice(0, 10),
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    dateFrom: dateRange.dateFrom,
+    dateTo: dateRange.dateTo,
     pageSize: 6
   });
 
-  // Organizadores destacados
+  // Organizadores destacados (filtrados)
   const orgQuery = useExploreQuery({
     type: "organizadores",
-    q: "",
-    ritmos: [],
-    zonas: [],
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
     pageSize: 6
   });
 
-  // Maestros recientes (placeholder)
+  // Maestros recientes (filtrados)
   const teachQuery = useExploreQuery({
     type: "maestros",
-    q: "",
-    ritmos: [],
-    zonas: [],
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
     pageSize: 6
   });
+
+  // Determinar qué secciones mostrar según los filtros de perfil
+  const showEvents = filters.perfiles.length === 0 || filters.perfiles.includes('eventos');
+  const showOrganizers = filters.perfiles.length === 0 || filters.perfiles.includes('organizadores');
+  const showTeachers = filters.perfiles.length === 0 || filters.perfiles.includes('maestros');
 
   const handleNavigateToAll = (type: string) => {
     set({ type: type as any });
@@ -89,141 +121,140 @@ export default function ExploreHomeScreen() {
     <div style={{
       minHeight: '100vh',
       background: colors.dark,
-      color: colors.light,
-      padding: '1.5rem'
+      color: colors.light
     }}>
-      <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', marginBottom: '3rem' }}
-        >
-          <h1 style={{
-            fontSize: '2.5rem',
-            fontWeight: '800',
-            marginBottom: '1rem',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            🔍 Explora BaileApp
-          </h1>
-          <p style={{
-            fontSize: '1.125rem',
-            opacity: 0.8,
-            maxWidth: '42rem',
-            margin: '0 auto'
-          }}>
-            Descubre eventos, organizadores, bailarines y más en tu comunidad
-          </p>
-        </motion.div>
+      {/* Barra de Filtros */}
+      <FilterBar 
+        filters={filters} 
+        onFiltersChange={setFilters}
+      />
+
+      <div style={{ padding: '1.5rem' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ textAlign: 'center', marginBottom: '3rem' }}
+          >
+            <h1 style={{
+              fontSize: '2.5rem',
+              fontWeight: '800',
+              marginBottom: '1rem',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              🔍 Explora BaileApp
+            </h1>
+            <p style={{
+              fontSize: '1.125rem',
+              opacity: 0.8,
+              maxWidth: '42rem',
+              margin: '0 auto'
+            }}>
+              Descubre eventos, organizadores, bailarines y más en tu comunidad
+            </p>
+          </motion.div>
 
         {/* Sección: Próximos Eventos */}
-        <Section title="📅 Próximos Eventos" toAll="/explore/list">
-          {eventsQuery.isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
-              Cargando eventos...
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '1rem'
-            }}>
-              {(eventsQuery.data?.pages?.[0]?.data || []).map((e: any, i: number) => (
-                <div
-                  key={e.id ?? i}
-                  onClick={() => navigate(`/events/date/${e.id}`)}
-                >
-                  <EventCard item={e} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
+        {showEvents && (
+          <Section title="📅 Próximos Eventos" toAll="/explore/list">
+            {eventsQuery.isLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+                Cargando eventos...
+              </div>
+            ) : (eventsQuery.data?.pages?.[0]?.data || []).length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                opacity: 0.6,
+                background: 'rgba(38, 38, 38, 0.6)',
+                borderRadius: '1rem',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                No se encontraron eventos con estos filtros
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '1rem'
+              }}>
+                {(eventsQuery.data?.pages?.[0]?.data || []).map((e: any, i: number) => (
+                  <EventCard key={e.id ?? i} item={e} />
+                ))}
+              </div>
+            )}
+          </Section>
+        )}
 
         {/* Sección: Organizadores Destacados */}
-        <Section title="🎤 Organizadores Destacados" toAll="/explore/list">
-          {orgQuery.isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
-              Cargando organizadores...
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '1rem'
-            }}>
-              {(orgQuery.data?.pages?.[0]?.data || []).map((o: any, i: number) => (
-                <div
-                  key={o.id ?? i}
-                  onClick={() => navigate(`/organizer/${o.id}`)}
-                >
-                  <OrganizerCard item={o} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
+        {showOrganizers && (
+          <Section title="🎤 Organizadores Destacados" toAll="/explore/list">
+            {orgQuery.isLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+                Cargando organizadores...
+              </div>
+            ) : (orgQuery.data?.pages?.[0]?.data || []).length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                opacity: 0.6,
+                background: 'rgba(38, 38, 38, 0.6)',
+                borderRadius: '1rem',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                No se encontraron organizadores con estos filtros
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '1rem'
+              }}>
+                {(orgQuery.data?.pages?.[0]?.data || []).map((o: any, i: number) => (
+                  <OrganizerCard key={o.id ?? i} item={o} />
+                ))}
+              </div>
+            )}
+          </Section>
+        )}
 
         {/* Sección: Nuevos Maestros */}
-        <Section title="🎓 Nuevos Maestros" toAll="/explore/list">
-          {teachQuery.isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
-              Cargando maestros...
-            </div>
-          ) : teachQuery.data?.pages?.[0]?.data?.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '2rem',
-              opacity: 0.6,
-              background: 'rgba(38, 38, 38, 0.6)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              Próximamente: Perfiles de maestros
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '1rem'
-            }}>
-              {(teachQuery.data?.pages?.[0]?.data || []).map((t: any, i: number) => (
-                <div key={t.id ?? i}>
-                  <TeacherCard item={t} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
+        {showTeachers && (
+          <Section title="🎓 Nuevos Maestros" toAll="/explore/list">
+            {teachQuery.isLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+                Cargando maestros...
+              </div>
+            ) : teachQuery.data?.pages?.[0]?.data?.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                opacity: 0.6,
+                background: 'rgba(38, 38, 38, 0.6)',
+                borderRadius: '1rem',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                Próximamente: Perfiles de maestros
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '1rem'
+              }}>
+                {(teachQuery.data?.pages?.[0]?.data || []).map((t: any, i: number) => (
+                  <TeacherCard key={t.id ?? i} item={t} />
+                ))}
+              </div>
+            )}
+          </Section>
+        )}
 
-        {/* CTA: ir a lista con filtros */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          style={{ marginTop: '2rem', textAlign: 'center' }}
-        >
-          <button
-            onClick={() => handleNavigateToAll("eventos")}
-            style={{
-              padding: '1rem 2rem',
-              borderRadius: '9999px',
-              border: 'none',
-              background: 'linear-gradient(to right, rgb(59, 130, 246), rgb(236, 72, 153))',
-              color: 'white',
-              fontSize: '1rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(236, 72, 153, 0.4)'
-            }}
-          >
-            🔍 Ver todos los eventos
-          </button>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { EventParent, EventDate, EventSchedule, EventPrice } from "../../types/e
 import { useTags } from "../../hooks/useTags";
 import EventScheduleEditor from "../EventScheduleEditor";
 import EventPriceEditor from "../EventPriceEditor";
+import { Chip } from "../profile/Chip";
 
 type Props = {
   mode: "create" | "edit";
@@ -20,7 +21,7 @@ type Props = {
 };
 
 export default function EventForm(props: Props) {
-  const { ritmos } = useTags("ritmo");
+  const { ritmos, zonas } = useTags();
   const p = props.parent || {};
   const d = props.date || {};
 
@@ -28,6 +29,12 @@ export default function EventForm(props: Props) {
     const arr = p.estilos ?? [];
     const exists = arr.includes(id);
     props.onChangeParent({ estilos: exists ? arr.filter(x => x !== id) : [...arr, id] });
+  }
+
+  function toggleZonaDate(id: number) {
+    const arr = d.zonas ?? [];
+    const exists = arr.includes(id);
+    props.onChangeDate({ zonas: exists ? arr.filter(x => x !== id) : [...arr, id] });
   }
 
   return (
@@ -108,31 +115,24 @@ export default function EventForm(props: Props) {
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Estilos</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {ritmos.map(r => (
-              <button
+          <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.75rem', fontWeight: '600' }}>
+            🎵 Ritmos / Estilos
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {ritmos?.map(r => (
+              <Chip
                 key={r.id}
-                type="button"
+                label={r.nombre}
+                icon="🎵"
+                variant="ritmo"
+                active={(p.estilos || []).includes(r.id)}
                 onClick={() => toggleEstiloParent(r.id)}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '9999px',
-                  border: (p.estilos || []).includes(r.id)
-                    ? '1px solid rgba(236, 72, 153, 1)'
-                    : '1px solid rgba(115, 115, 115, 1)',
-                  background: (p.estilos || []).includes(r.id)
-                    ? 'rgba(219, 39, 119, 0.7)'
-                    : 'rgba(38, 38, 38, 1)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {r.nombre}
-              </button>
+              />
             ))}
           </div>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(163, 163, 163, 1)', marginTop: '0.5rem' }}>
+            Selecciona los ritmos que se bailarán en este evento
+          </p>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
@@ -282,6 +282,28 @@ export default function EventForm(props: Props) {
               onChange={(e) => props.onChangeDate({ direccion: e.target.value })}
             />
           </div>
+        </div>
+
+        {/* Selector de Zonas */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.75rem', fontWeight: '600' }}>
+            📍 Zonas
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {zonas?.map(z => (
+              <Chip
+                key={z.id}
+                label={z.nombre}
+                icon="📍"
+                variant="zona"
+                active={(d.zonas || []).includes(z.id)}
+                onClick={() => toggleZonaDate(z.id)}
+              />
+            ))}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(163, 163, 163, 1)', marginTop: '0.5rem' }}>
+            Selecciona las zonas/barrios donde se realizará el evento
+          </p>
         </div>
 
         <div style={{ marginBottom: '1rem' }}>

@@ -34,6 +34,7 @@ export type EventDate = {
   direccion?: string|null; 
   ciudad?: string|null;
   zona?: number|null; 
+  zonas?: number[]; // Múltiples zonas
   estilos: number[]; 
   media: any[]; 
   estado_publicacion: PubEstado;

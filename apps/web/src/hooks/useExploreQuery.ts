@@ -6,12 +6,18 @@ const PAGE_LIMIT = 12;
 
 type QueryParams = ExploreFilters;
 
+/**
+ * Determina qué tabla o vista usar para cada tipo de exploración
+ * Para eventos y organizadores, usamos las vistas LIVE que solo muestran contenido aprobado/publicado
+ */
 function baseSelect(type: ExploreType) {
   switch (type) {
     case "eventos":        
-      return { table: "events_date", select: "*" };
+      // Usar vista live que filtra eventos publicados con organizadores aprobados
+      return { table: "events_live", select: "*" };
     case "organizadores":  
-      return { table: "profiles_organizer", select: "*" };
+      // Usar vista live que filtra organizadores aprobados
+      return { table: "organizers_live", select: "*" };
     case "maestros":       
       return { table: "profiles_teacher", select: "*" };   // si aún no existe, dejar preparado
     case "academias":      
@@ -21,7 +27,7 @@ function baseSelect(type: ExploreType) {
     case "usuarios":       
       return { table: "profiles_user", select: "user_id, display_name, avatar_url, ritmos, zonas, bio" };
     default:               
-      return { table: "events_date", select: "*" };
+      return { table: "events_live", select: "*" };
   }
 }
 
@@ -36,14 +42,14 @@ async function fetchPage(params: QueryParams, page: number) {
 
   // Filtros por tipo
   if (type === "eventos") {
-    // Solo fechas publicadas
-    query = query.eq("estado_publicacion", "publicado");
+    // La vista events_live ya filtra por estado_publicacion = 'publicado'
+    // y eventos/organizadores aprobados, no es necesario filtrar de nuevo
     
     if (dateFrom) query = query.gte("fecha", dateFrom);
     if (dateTo)   query = query.lte("fecha", dateTo);
     
-    // filtrar por estilos/ritmos si el evento (date) los guarda
-    if (ritmos?.length)  query = query.overlaps("estilos", ritmos as any);
+    // filtrar por estilos/ritmos - en la vista se llama evento_estilos
+    if (ritmos?.length)  query = query.overlaps("evento_estilos", ritmos as any);
     if (zonas?.length)   query = query.in("zona", zonas as any);
     
     // búsqueda textual básica (lugar/ciudad/direccion)
@@ -55,8 +61,8 @@ async function fetchPage(params: QueryParams, page: number) {
     query = query.order("fecha", { ascending: true });
   } 
   else if (type === "organizadores") {
-    // Solo organizadores aprobados
-    query = query.eq("estado_aprobacion", "aprobado");
+    // La vista organizers_live ya filtra por estado_aprobacion = 'aprobado'
+    // no es necesario filtrar de nuevo
     
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
     

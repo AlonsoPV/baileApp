@@ -1,15 +1,290 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useTags } from "../../hooks/useTags";
 import { useUserMedia } from "../../hooks/useUserMedia";
-import { useMyRSVPs } from "../../hooks/useMyRSVPs";
-import { MediaGrid } from "../../components/MediaGrid";
-import { EventInviteStrip } from "../../components/EventInviteStrip";
+import { useUserRSVPEvents } from "../../hooks/useRSVP";
+import { useAuth } from "../../hooks/useAuth";
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
+import { Chip } from "../../components/profile/Chip";
+import ImageWithFallback from "../../components/ImageWithFallback";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+
+// Componente de Carrusel
+const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const nextPhoto = () => {
+    setCurrentIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const prevPhoto = () => {
+    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const goToPhoto = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  if (photos.length === 0) return null;
+
+  return (
+    <div 
+      id="user-profile-carousel"
+      data-baile-id="user-profile-carousel"
+      data-test-id="user-profile-carousel"
+      style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}
+    >
+      {/* Carrusel Principal */}
+      <div 
+        id="user-profile-carousel-main"
+        data-baile-id="user-profile-carousel-main"
+        data-test-id="user-profile-carousel-main"
+        style={{
+          position: 'relative',
+          aspectRatio: '16/9',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          background: 'rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%'
+          }}
+        >
+          <ImageWithFallback
+            src={photos[currentIndex]}
+            alt={`Foto ${currentIndex + 1}`}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              cursor: 'pointer'
+            }}
+            onClick={() => setIsFullscreen(true)}
+          />
+        </motion.div>
+
+        {/* Contador de fotos */}
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          padding: '0.5rem 1rem',
+          borderRadius: '20px',
+          fontSize: '0.875rem',
+          fontWeight: '600'
+        }}>
+          {currentIndex + 1} / {photos.length}
+        </div>
+
+        {/* Botones de navegación */}
+        {photos.length > 1 && (
+          <>
+            <button
+              id="user-profile-carousel-prev"
+              data-baile-id="user-profile-carousel-prev"
+              data-test-id="user-profile-carousel-prev"
+              onClick={prevPhoto}
+              style={{
+                position: 'absolute',
+                left: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              ‹
+            </button>
+            <button
+              id="user-profile-carousel-next"
+              data-baile-id="user-profile-carousel-next"
+              data-test-id="user-profile-carousel-next"
+              onClick={nextPhoto}
+              style={{
+                position: 'absolute',
+                right: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Miniaturas */}
+      {photos.length > 1 && (
+        <div 
+          id="user-profile-carousel-thumbnails"
+          data-baile-id="user-profile-carousel-thumbnails"
+          data-test-id="user-profile-carousel-thumbnails"
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            marginTop: '1rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          {photos.map((photo, index) => (
+            <motion.button
+              key={index}
+              id={`user-profile-carousel-thumbnail-${index}`}
+              data-baile-id={`user-profile-carousel-thumbnail-${index}`}
+              data-test-id={`user-profile-carousel-thumbnail-${index}`}
+              onClick={() => goToPhoto(index)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: currentIndex === index ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
+                cursor: 'pointer',
+                background: 'transparent',
+                padding: 0,
+                transition: 'all 0.2s'
+              }}
+            >
+              <ImageWithFallback
+                src={photo}
+                alt={`Miniatura ${index + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de pantalla completa */}
+      {isFullscreen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          <div style={{
+            position: 'relative',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }}>
+            <ImageWithFallback
+              src={photos[currentIndex]}
+              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+              }}
+            />
+            
+            {/* Botón de cerrar */}
+            <button
+              onClick={() => setIsFullscreen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '1.5rem',
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const colors = {
   coral: '#FF3D57',
@@ -18,333 +293,1060 @@ const colors = {
   blue: '#1E88E5',
   dark: '#121212',
   light: '#F5F5F5',
+  grad: 'linear-gradient(135deg, #FF4D4D, #FFB200 35%, #2D9CDB 70%, #FFE056)',
 };
 
 export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
-  const { profile } = useUserProfile();
+  const { user } = useAuth();
+  const { profile, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
-  const { media } = useUserMedia();
-  const { data: rsvps } = useMyRSVPs();
+  const { media, setMedia } = useUserMedia();
+  
+  // Fallback para cuando no hay perfil
+  const safeMedia = media || [];
+  const { data: rsvpEvents } = useUserRSVPEvents('interesado');
 
-  // Preparar items para EventInviteStrip
-  const inviteItems = (rsvps || [])
-    .filter(r => r.parent && r.date)
-    .map((r) => ({
-      title: r.parent?.nombre || "Evento",
-      date: format(new Date(r.date.fecha), "EEE d MMM", { locale: es }),
-      place: r.date.lugar || r.date.ciudad || "",
-      href: `/events/date/${r.date.id}`,
-      cover: Array.isArray(r.date.media) && r.date.media.length > 0 
-        ? (r.date.media[0] as any)?.url || r.date.media[0]
-        : undefined,
-    }));
+  // Debug logs
+  React.useEffect(() => {
+    console.log('[UserProfileLive] Profile data:', profile);
+    console.log('[UserProfileLive] Redes Sociales:', profile?.redes_sociales);
+    console.log('[UserProfileLive] Respuestas.redes:', profile?.respuestas?.redes);
+    console.log('[UserProfileLive] RSVP Events:', rsvpEvents);
+    console.log('[UserProfileLive] Media:', media);
+    
+    // Log específico para redes sociales
+    if (profile?.redes_sociales) {
+      console.log('[UserProfileLive] Instagram:', profile.redes_sociales.instagram);
+      console.log('[UserProfileLive] TikTok:', profile.redes_sociales.tiktok);
+      console.log('[UserProfileLive] YouTube:', profile.redes_sociales.youtube);
+      console.log('[UserProfileLive] Facebook:', profile.redes_sociales.facebook);
+      console.log('[UserProfileLive] WhatsApp:', profile.redes_sociales.whatsapp);
+    }
+  }, [profile, rsvpEvents, media]);
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
+    console.log('[UserProfileLive] getRitmoNombres - allTags:', allTags);
+    console.log('[UserProfileLive] getRitmoNombres - profile.ritmos:', profile?.ritmos);
     if (!allTags || !profile?.ritmos) return [];
-    return profile.ritmos
+    const ritmos = profile.ritmos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
+    console.log('[UserProfileLive] getRitmoNombres - resultado:', ritmos);
+    return ritmos;
   };
 
   const getZonaNombres = () => {
+    console.log('[UserProfileLive] getZonaNombres - allTags:', allTags);
+    console.log('[UserProfileLive] getZonaNombres - profile.zonas:', profile?.zonas);
     if (!allTags || !profile?.zonas) return [];
-    return profile.zonas
+    const zonas = profile.zonas
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
+    console.log('[UserProfileLive] getZonaNombres - resultado:', zonas);
+    return zonas;
   };
 
+  // Upload cover photo
+  const handleCoverUpload = async (file: File) => {
+    if (!user) return;
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `user-covers/${user.id}/cover.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(path, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
+      
+      await updateProfileFields({ 
+        respuestas: { 
+          ...profile?.respuestas, 
+          cover_url: publicUrl.publicUrl 
+        } 
+      });
+    } catch (error) {
+      console.error('Error uploading cover:', error);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // Upload photo to slot
+  const handlePhotoUpload = async (file: File, slot: string) => {
+    if (!user) return;
+    setUploadingPhoto(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `user-media/${user.id}/${slot}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(path, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
+      
+      const mediaArray = (media || []) as any[];
+      const existing = mediaArray.findIndex(m => m.slot === slot);
+      const newItem = { slot, kind: 'photo', url: publicUrl.publicUrl };
+      
+      const updatedMedia = existing >= 0 
+        ? mediaArray.map((m, i) => i === existing ? newItem : m)
+        : [...mediaArray, newItem];
+      
+      await setMedia(updatedMedia);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Upload video to slot
+  const handleVideoUpload = async (file: File, slot: string) => {
+    if (!user) return;
+    setUploadingVideo(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `user-media/${user.id}/${slot}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(path, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
+      
+      const mediaArray = (media || []) as any[];
+      const existing = mediaArray.findIndex(m => m.slot === slot);
+      const newItem = { slot, kind: 'video', url: publicUrl.publicUrl };
+      
+      const updatedMedia = existing >= 0 
+        ? mediaArray.map((m, i) => i === existing ? newItem : m)
+        : [...mediaArray, newItem];
+      
+      await setMedia(updatedMedia);
+    } catch (error) {
+      console.error('Error uploading video:', error);
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  // Get photos for carousel
+  const carouselPhotos = PHOTO_SLOTS
+    .map(slot => getMediaBySlot(safeMedia as any, slot))
+    .filter(item => item && item.kind === 'photo')
+    .map(item => item!.url);
+
   return (
-    <div
-      style={{
+    <>
+      <style>{`
+        .profile-container {
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+        .profile-banner {
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+        .banner-grid {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 3rem;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .profile-container {
+            max-width: 100% !important;
+          }
+          .profile-banner {
+            border-radius: 0 !important;
+            padding: 2rem 1rem !important;
+          }
+          .banner-grid {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+            justify-items: center !important;
+            text-align: center !important;
+          }
+          .banner-grid h1 {
+            font-size: 2rem !important;
+          }
+          .banner-avatar {
+            width: 180px !important;
+            height: 180px !important;
+          }
+          .banner-avatar-fallback {
+            font-size: 4rem !important;
+          }
+          .question-section {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .question-section h3 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+        }
+      `}</style>
+      <div style={{
         position: 'relative',
         width: '100%',
         minHeight: '100vh',
         background: colors.dark,
         color: colors.light,
-      }}
-    >
-      {/* Profile Toolbar */}
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
-        <ProfileToolbar />
-      </div>
-
-      {/* Cover Image */}
-      <div style={{ 
-        position: 'relative', 
-        height: '500px', 
-        overflow: 'hidden',
-        maxWidth: '800px',
-        margin: '0 auto',
-        borderRadius: '0 0 24px 24px',
       }}>
-        <img
-          src={profile?.avatar_url || "https://placehold.co/500x500/121212/F5F5F5?text=Avatar"}
-          alt={profile?.display_name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.7,
-          }}
-          onError={(e) => {
-            e.currentTarget.src = 'https://placehold.co/500x500/121212/F5F5F5?text=Avatar';
-          }}
-        />
+        {/* Profile Toolbar - Toggle y Edición */}
+        <div className="profile-container" style={{
+          margin: '0 auto',
+          padding: '1rem'
+        }}>
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="user"
+          />
+        </div>
 
-        {/* Gradient Overlay */}
-        <div
+        {/* Banner Principal */}
+        <div 
+          id="user-profile-banner"
+          data-baile-id="user-profile-banner"
+          data-test-id="user-profile-banner"
+          className="profile-banner" 
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(to bottom, transparent 40%, ${colors.dark})`,
-          }}
-        />
-
-        {/* Floating Info */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '32px',
-            left: '24px',
-            right: '24px',
-            zIndex: 10,
+            position: 'relative',
+            margin: '0 auto',
+            background: '#000000',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            padding: '3rem 2rem'
           }}
         >
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              fontSize: '2.5rem',
-              fontWeight: '700',
-              color: colors.light,
-              margin: '0 0 8px 0',
-              textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-            }}
+          <div 
+            id="user-profile-banner-grid"
+            data-baile-id="user-profile-banner-grid"
+            data-test-id="user-profile-banner-grid"
+            className="banner-grid"
           >
-            {profile?.display_name}
-          </motion.h1>
-
-          {profile?.bio && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+            {/* Columna 1: Avatar Grande */}
+            <div 
+              id="user-profile-banner-avatar-container"
+              data-baile-id="user-profile-banner-avatar-container"
+              data-test-id="user-profile-banner-avatar-container"
               style={{
-                fontSize: '1rem',
-                color: colors.light,
-                opacity: 0.85,
-                margin: '0 0 16px 0',
-                lineHeight: 1.5,
-                textShadow: '0 1px 5px rgba(0,0,0,0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
               }}
             >
-              {profile.bio}
-            </motion.p>
-          )}
-
-          {/* Tags */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
-          >
-            {getRitmoNombres().map((nombre) => (
-              <span
-                key={nombre}
+              <div 
+                id="user-profile-banner-avatar"
+                data-baile-id="user-profile-banner-avatar"
+                data-test-id="user-profile-banner-avatar"
+                className="banner-avatar" 
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  background: `${colors.coral}cc`,
-                  border: `2px solid ${colors.coral}`,
-                  color: colors.light,
-                  fontSize: '0.875rem',
-                  fontWeight: '700',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: `0 2px 10px ${colors.coral}66`,
+                  width: '250px',
+                  height: '250px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '6px solid rgba(255, 255, 255, 0.9)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
+                  background: colors.grad
                 }}
               >
-                🎵 {nombre}
-              </span>
-            ))}
-            {getZonaNombres().map((nombre) => (
-              <span
-                key={nombre}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  background: `${colors.yellow}cc`,
-                  border: `2px solid ${colors.yellow}`,
-                  color: colors.dark,
-                  fontSize: '0.875rem',
-                  fontWeight: '700',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: `0 2px 10px ${colors.yellow}66`,
-                }}
-              >
-                📍 {nombre}
-              </span>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Social Media Section */}
-      {profile?.redes_sociales && (
-        Object.values(profile.redes_sociales).some(v => v) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            style={{
-              padding: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>
-              📱 Redes Sociales
-            </h3>
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-              {profile.redes_sociales.instagram && (
-                <motion.a
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={profile.redes_sociales.instagram.startsWith('http') 
-                    ? profile.redes_sociales.instagram 
-                    : `https://instagram.com/${profile.redes_sociales.instagram.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, #E4405F, #C13584)`,
+                {getMediaBySlot(safeMedia, 'p1')?.url ? (
+                  <ImageWithFallback
+                    src={getMediaBySlot(safeMedia, 'p1')!.url}
+                    alt="Avatar"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div className="banner-avatar-fallback" style={{
+                    width: '100%',
+                    height: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: colors.light,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 12px rgba(228,64,95,0.5)',
-                  }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                  </svg>
-                </motion.a>
-              )}
-              {profile.redes_sociales.facebook && (
-                <motion.a
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={profile.redes_sociales.facebook.startsWith('http') 
-                    ? profile.redes_sociales.facebook 
-                    : `https://facebook.com/${profile.redes_sociales.facebook.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    background: '#1877F2',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: colors.light,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 12px rgba(24,119,242,0.5)',
-                  }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                </motion.a>
-              )}
-              {profile.redes_sociales.whatsapp && (
-                <motion.a
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={profile.redes_sociales.whatsapp.startsWith('http') 
-                    ? profile.redes_sociales.whatsapp 
-                    : `https://wa.me/${profile.redes_sociales.whatsapp.replace(/[^\d]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    background: '#25D366',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: colors.light,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 12px rgba(37,211,102,0.5)',
-                  }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                </motion.a>
-              )}
+                    fontSize: '6rem',
+                    fontWeight: '700',
+                    color: 'white'
+                  }}>
+                    {profile?.display_name?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
+              </div>
             </div>
-          </motion.div>
-        )
-      )}
 
-      {/* Content Sections */}
-      <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-        {/* About Section */}
+            {/* Columna 2: Nombre y Chips */}
+            <div 
+              id="user-profile-banner-info"
+              data-baile-id="user-profile-banner-info"
+              data-test-id="user-profile-banner-info"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
+                justifyContent: 'center'
+              }}
+            >
+              <h1 
+                id="user-profile-display-name"
+                data-baile-id="user-profile-display-name"
+                data-test-id="user-profile-display-name"
+                style={{
+                  fontSize: '3rem',
+                  fontWeight: '800',
+                  margin: 0,
+                  color: colors.light,
+                  lineHeight: '1.2'
+                }}
+              >
+                {profile?.display_name || 'Usuario'}
+              </h1>
+
+              {/* Chips de usuario */}
+              <div 
+                id="user-profile-tags"
+                data-baile-id="user-profile-tags"
+                data-test-id="user-profile-tags"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
+              >
+                {getRitmoNombres().map((nombre) => (
+                  <Chip 
+                    key={`r-${nombre}`} 
+                    label={nombre} 
+                    icon="🎵" 
+                    variant="ritmo" 
+                  />
+                ))}
+                {getZonaNombres().map((nombre) => (
+                  <Chip 
+                    key={`z-${nombre}`} 
+                    label={nombre} 
+                    icon="📍" 
+                    variant="zona" 
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {/* Contenido Principal */}
+      <div 
+        id="user-profile-main-content"
+        data-baile-id="user-profile-main-content"
+        data-test-id="user-profile-main-content"
+        className="profile-container" 
+        style={{ 
+          padding: '2rem', 
+          margin: '0 auto' 
+        }}
+      >
+        
+        {/* Biografía */}
         {profile?.bio && (
           <motion.section
+            id="user-profile-bio"
+            data-baile-id="user-profile-bio"
+            data-test-id="user-profile-bio"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
             style={{
-              marginBottom: '32px',
-              padding: '24px',
-              background: `${colors.dark}ee`,
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '16px',
-              border: `1px solid ${colors.light}22`,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px', fontWeight: '600' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: '600' }}>
               💬 Sobre mí
             </h3>
-            <p style={{ lineHeight: 1.6, opacity: 0.85 }}>
+            <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1rem' }}>
               {profile.bio}
             </p>
           </motion.section>
         )}
 
-        {/* Acompáñame a estos eventos */}
-        <EventInviteStrip items={inviteItems} />
-
-        {/* Galería Section */}
-        {media && media.length > 0 && (
+        {/* Redes Sociales */}
+        {(profile?.redes_sociales?.instagram || profile?.redes_sociales?.tiktok || profile?.redes_sociales?.youtube ||
+          profile?.redes_sociales?.facebook || profile?.redes_sociales?.whatsapp ||
+          profile?.respuestas?.redes?.instagram || profile?.respuestas?.redes?.tiktok || profile?.respuestas?.redes?.youtube) && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.1 }}
             style={{
-              marginTop: '32px',
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            <h2 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: '700', 
-              marginBottom: '16px',
-              color: colors.light,
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600' }}>
+              🔗 Redes Sociales
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+              {(profile.redes_sociales?.instagram || profile.respuestas?.redes?.instagram) && (
+                <a
+                  href={profile.redes_sociales?.instagram || profile.respuestas?.redes?.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #833AB4, #FD1D1D)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  📷 Instagram
+                </a>
+              )}
+              {(profile.redes_sociales?.tiktok || profile.respuestas?.redes?.tiktok) && (
+                <a
+                  href={profile.redes_sociales?.tiktok || profile.respuestas?.redes?.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #000000, #00f2ea)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  🎵 TikTok
+                </a>
+              )}
+              {(profile.redes_sociales?.youtube || profile.respuestas?.redes?.youtube) && (
+                <a
+                  href={profile.redes_sociales?.youtube || profile.respuestas?.redes?.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #FF0000, #CC0000)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  📺 YouTube
+                </a>
+              )}
+              {(profile.redes_sociales?.facebook || profile.respuestas?.redes?.facebook) && (
+                <a
+                  href={profile.redes_sociales?.facebook || profile.respuestas?.redes?.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #1877F2, #0A5FCC)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  📘 Facebook
+                </a>
+              )}
+              {(profile.redes_sociales?.whatsapp || profile.respuestas?.redes?.whatsapp) && (
+                <a
+                  href={`https://wa.me/${(profile.redes_sociales?.whatsapp || profile.respuestas?.redes?.whatsapp).replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  💬 WhatsApp
+                </a>
+              )}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Sección 1: Foto - Pregunta */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            {/* Foto */}
+            <div style={{
+              aspectRatio: '4/3',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
             }}>
-              📸 Galería
-            </h2>
-            <MediaGrid items={media} />
+              {getMediaBySlot(safeMedia as any, 'p2') ? (
+                <ImageWithFallback
+                  src={getMediaBySlot(safeMedia as any, 'p2')!.url}
+                  alt="Foto personal"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '0.875rem'
+                }}>
+                  📷 Sin foto
+                </div>
+              )}
+            </div>
+            
+            {/* Pregunta */}
+            <div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
+                💡 Dime un dato curioso de ti
+              </h3>
+              <div style={{
+                padding: '1rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: colors.light
+              }}>
+                {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Sección 2: Pregunta - Foto */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          style={{
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            {/* Pregunta */}
+            <div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
+                💃 ¿Qué es lo que más te gusta bailar?
+              </h3>
+              <div style={{
+                padding: '1rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: colors.light
+              }}>
+                {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+              </div>
+            </div>
+            
+            {/* Foto */}
+            <div style={{
+              aspectRatio: '4/3',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              {getMediaBySlot(safeMedia as any, 'p3') ? (
+                <ImageWithFallback
+                  src={getMediaBySlot(safeMedia as any, 'p3')!.url}
+                  alt="Foto de baile"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '0.875rem'
+                }}>
+                  📷 Sin foto
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.section>
+
+
+        {/* Eventos de Interés */}
+        <motion.section
+          id="user-profile-interested-events"
+          data-baile-id="user-profile-interested-events"
+          data-test-id="user-profile-interested-events"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            marginBottom: '2rem',
+            padding: '2rem',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem'
+          }}>
+            <h3 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              ✨ Eventos de Interés
+            </h3>
+            {rsvpEvents && rsvpEvents.length > 0 && (
+              <div style={{
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.light
+              }}>
+                {rsvpEvents.length} evento{rsvpEvents.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+          
+          {rsvpEvents && rsvpEvents.length > 0 ? (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+              gap: '1.5rem' 
+            }}>
+              {rsvpEvents.map((rsvp: any, index: number) => {
+                // Acceder a los datos anidados correctamente
+                const evento = rsvp.events_date;
+                const parent = evento?.events_parent;
+                const eventoNombre = parent?.nombre || evento?.lugar || 'Evento';
+                const eventoFecha = evento?.fecha;
+                const eventoCiudad = evento?.ciudad;
+                const eventoDescripcion = parent?.descripcion;
+                
+                const fechaValida = eventoFecha && !isNaN(new Date(eventoFecha).getTime());
+                const fechaFormateada = fechaValida 
+                  ? format(new Date(eventoFecha), "EEE d MMM", { locale: es })
+                  : "Fecha por confirmar";
+                
+                const fechaCompleta = fechaValida 
+                  ? format(new Date(eventoFecha), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+                  : "Fecha por confirmar";
+                
+                return (
+                  <motion.div
+                    key={rsvp.id}
+                    id={`user-profile-event-${rsvp.event_date_id}`}
+                    data-baile-id={`user-profile-event-${rsvp.event_date_id}`}
+                    data-test-id={`user-profile-event-${rsvp.event_date_id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ 
+                      scale: 1.03,
+                      y: -5,
+                      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                    }}
+                    onClick={() => navigate(`/events/date/${rsvp.event_date_id}`)}
+                    style={{
+                      padding: '1.5rem',
+                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {/* Efecto de brillo en hover */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                      transition: 'left 0.5s'
+                    }} />
+                    
+                    {/* Header del evento */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <h4 style={{ 
+                        fontSize: '1.125rem', 
+                        fontWeight: '700', 
+                        marginBottom: '0.5rem',
+                        color: colors.light,
+                        lineHeight: '1.3'
+                      }}>
+                        {eventoNombre}
+                      </h4>
+                      
+                      {eventoDescripcion && (
+                        <p style={{ 
+                          fontSize: '0.875rem', 
+                          opacity: 0.8, 
+                          lineHeight: '1.4',
+                          marginBottom: '0.75rem',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {eventoDescripcion}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Información del evento */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '0.5rem',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        fontSize: '0.875rem',
+                        color: colors.light
+                      }}>
+                        <span style={{ fontSize: '1rem' }}>📅</span>
+                        <span style={{ fontWeight: '500' }}>{fechaFormateada}</span>
+                        <span style={{ opacity: 0.6 }}>•</span>
+                        <span style={{ opacity: 0.8 }}>{fechaCompleta}</span>
+                      </div>
+                      
+                      {eventoCiudad && (
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.5rem',
+                          fontSize: '0.875rem',
+                          color: colors.light
+                        }}>
+                          <span style={{ fontSize: '1rem' }}>📍</span>
+                          <span style={{ opacity: 0.8 }}>{eventoCiudad}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Footer con estado RSVP */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingTop: '1rem',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: '#4CAF50'
+                      }}>
+                        <span>✅</span>
+                        <span>Interesado</span>
+                      </div>
+                      
+                      <div style={{
+                        fontSize: '0.75rem',
+                        opacity: 0.6,
+                        color: colors.light
+                      }}>
+                        Haz clic para ver detalles
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{
+                textAlign: 'center',
+                padding: '3rem 1rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: '16px',
+                border: '2px dashed rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
+              <h4 style={{ 
+                fontSize: '1.125rem', 
+                fontWeight: '600', 
+                marginBottom: '0.5rem',
+                color: colors.light
+              }}>
+                Sin eventos de interés por ahora
+              </h4>
+              <p style={{ 
+                fontSize: '0.875rem', 
+                opacity: 0.7,
+                marginBottom: '1.5rem',
+                color: colors.light
+              }}>
+                Explora eventos y marca los que te interesen para verlos aquí
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/explore')}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                🔍 Explorar Eventos
+              </motion.button>
+            </motion.div>
+          )}
+        </motion.section>
+
+        {/* Slot para Foto Principal */}
+        {getMediaBySlot(safeMedia as any, 'p1') && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <div style={{
+              width: '100%',
+              maxWidth: '500px',
+              aspectRatio: '4/3',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <ImageWithFallback
+                src={getMediaBySlot(safeMedia as any, 'p1')!.url}
+                alt="Foto principal"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+          </motion.section>
+        )}
+
+        {/* Slot Video */}
+        {getMediaBySlot(safeMedia as any, 'v1') && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <div style={{
+              width: '100%',
+              maxWidth: '600px',
+              aspectRatio: '16/9',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <video
+                src={getMediaBySlot(safeMedia as any, 'v1')!.url}
+                controls
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+          </motion.section>
+        )}
+
+        {/* Galería de Fotos Mejorada */}
+        {carouselPhotos.length > 0 && (
+          <motion.section
+            id="user-profile-photo-gallery"
+            data-baile-id="user-profile-photo-gallery"
+            data-test-id="user-profile-photo-gallery"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '1.5rem'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                📷 Galería de Fotos
+              </h3>
+              <div style={{
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.light
+              }}>
+                {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+            
+            <CarouselComponent photos={carouselPhotos} />
           </motion.section>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };

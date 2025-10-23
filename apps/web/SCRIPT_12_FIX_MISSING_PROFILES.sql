@@ -8,9 +8,10 @@
 -- 3. Estás viendo errores de "perfil no encontrado"
 
 -- 1. Crear perfiles para todos los usuarios que no tienen uno
-INSERT INTO public.profiles_user (user_id, onboarding_complete, created_at)
+INSERT INTO public.profiles_user (user_id, email, onboarding_complete, created_at)
 SELECT 
     au.id AS user_id,
+    au.email AS email,  -- Incluir email del usuario
     false AS onboarding_complete,  -- Necesitan completar onboarding
     au.created_at
 FROM 

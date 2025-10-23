@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { UserProfileEditor } from './UserProfileEditor';
+import UserProfileEditor from './UserProfileEditor';
 import { UserProfileLive } from './UserProfileLive';
-import { OrganizerProfileEditor } from './OrganizerProfileEditor';
+import OrganizerProfileEditor from './OrganizerProfileEditor';
 import { OrganizerProfileLive } from './OrganizerProfileLive';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useProfileMode } from '../../state/profileMode';

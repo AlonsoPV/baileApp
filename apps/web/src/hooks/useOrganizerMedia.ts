@@ -46,7 +46,14 @@ export function useOrganizerMedia() {
   const { data: organizer, isLoading: organizerLoading } = useMyOrganizer();
   const orgId = organizer?.id;
   
-  console.log('[useOrganizerMedia] Organizer data:', { organizer, orgId, organizerLoading });
+  console.log('🔍 [useOrganizerMedia] Organizer data:', { 
+    organizer, 
+    orgId, 
+    organizerLoading,
+    redes_sociales: organizer?.redes_sociales,
+    bio: organizer?.bio,
+    nombre_publico: organizer?.nombre_publico
+  });
 
   const q = useQuery({
     queryKey: ["organizer", "media", orgId],
@@ -78,16 +85,24 @@ export function useOrganizerMedia() {
   };
 
   const add = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, slot }: { file: File; slot: string }) => {
       if (!orgId) throw new Error("No organizer");
       
-      console.log('[useOrganizerMedia] Adding media file:', { fileName: file.name, orgId });
+      console.log('[useOrganizerMedia] Adding media file:', { fileName: file.name, orgId, slot });
       
       try {
         const item = await uploadOrgFile(orgId, file);
         console.log('[useOrganizerMedia] File uploaded successfully:', item);
         
-        const next = [item, ...(q.data || [])];
+        // Agregar el slot al item
+        const itemWithSlot = { ...item, slot };
+        console.log('[useOrganizerMedia] Item with slot:', itemWithSlot);
+        
+        // Reemplazar cualquier item existente en el mismo slot
+        const existingMedia = q.data || [];
+        const filteredMedia = existingMedia.filter(m => m.slot !== slot);
+        const next = [itemWithSlot, ...filteredMedia];
+        
         console.log('[useOrganizerMedia] Updating profile with media list:', next);
         
         await save(next);

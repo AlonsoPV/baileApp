@@ -6,9 +6,10 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Insertar un registro en profiles_user para el nuevo usuario
-  INSERT INTO public.profiles_user (user_id, onboarding_complete, created_at)
+  INSERT INTO public.profiles_user (user_id, email, onboarding_complete, created_at)
   VALUES (
     NEW.id,
+    NEW.email,  -- Incluir email del nuevo usuario
     false,  -- El usuario necesita completar el onboarding
     NOW()
   );

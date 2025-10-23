@@ -61,28 +61,43 @@ export default function OnboardingGate() {
 
   const isOnboardingRoute = loc.pathname.startsWith("/onboarding");
   
-  // Rutas que NO requieren onboarding completo
-  const organizerRoutes = [
-    '/profile/organizer',
-    '/events/parent',
-    '/events/date'
+  // 🌐 Rutas LIVE (públicas) que NO requieren onboarding ni autenticación completa
+  // Estas rutas deben ser accesibles para todos los usuarios autenticados
+  const LIVE_WHITELIST = [
+    /^\/organizer\/\d+$/,        // /organizer/:id
+    /^\/events\/date\/\d+$/,     // /events/date/:id
+    /^\/events\/parent\/\d+$/,   // /events/parent/:id (legacy)
+    /^\/u\/[^/]+$/,              // /u/:userId
+    /^\/explore\/?$/,            // /explore
+    /^\/explore\/list/,          // /explore/list
   ];
-  const isOrganizerRoute = organizerRoutes.some(route => loc.pathname.startsWith(route));
+  const isLivePath = LIVE_WHITELIST.some(rx => rx.test(loc.pathname));
   
-  // Rutas públicas que tampoco requieren onboarding
-  const publicRoutes = ['/u/', '/events/parent/', '/events/date/'];
-  const isPublicRoute = publicRoutes.some(route => loc.pathname.includes(route) && !loc.pathname.includes('/edit'));
+  // Rutas de edición (requieren ser owner pero no onboarding necesariamente)
+  const organizerEditRoutes = [
+    '/profile/organizer/edit',
+    '/profile/organizer/events',
+    '/profile/organizer/date',
+    '/profile/organizer/dashboard',
+  ];
+  const isOrganizerRoute = organizerEditRoutes.some(route => loc.pathname.startsWith(route));
 
   // 🔹 3) Si ya está completo y estás en ruta onboarding → redirige a perfil
   if (complete && isOnboardingRoute) {
     return <Navigate to="/app/profile" replace />;
   }
 
-  // 🔹 4) ONBOARDING DISABLED - Permitir acceso sin onboarding completo
-  // if (!complete && !isOnboardingRoute && !isOrganizerRoute && !isPublicRoute) {
+  // 🔹 4) Si está en ruta LIVE → permitir siempre (sin onboarding requerido)
+  if (isLivePath) {
+    return <Outlet />;
+  }
+
+  // 🔹 5) ONBOARDING REQUERIDO (comentado por ahora)
+  // Descomenta esto cuando quieras forzar onboarding para rutas protegidas
+  // if (!complete && !isOnboardingRoute && !isOrganizerRoute) {
   //   return <Navigate to="/onboarding/basics" replace />;
   // }
 
-  // 🔹 5) Todo OK → deja pasar
+  // 🔹 6) Todo OK → deja pasar
   return <Outlet />;
 }

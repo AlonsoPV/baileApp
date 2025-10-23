@@ -1,32 +1,32 @@
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEventFullByDateId } from "../../hooks/useEventFull";
+import { useEventLiveById } from "../../hooks/useLive";
+import { useEventSchedules } from "../../hooks/useEventSchedules";
+import { useEventPrices } from "../../hooks/useEventPrices";
 import { useTags } from "../../hooks/useTags";
-import { useMyRSVP } from "../../hooks/useEvents";
+import { useAuth } from "../../hooks/useAuth";
+import { canEditEventDate } from "../../lib/access";
 import { useToast } from "../../components/Toast";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
+import ShareLink from "../../components/ShareLink";
+import SimpleInterestButton, { InterestCounter } from "../../components/SimpleInterestButton";
 
 export default function EventPublicScreen() {
   const { id } = useParams();
   const dateId = Number(id);
   const nav = useNavigate();
-  const { data, isLoading } = useEventFullByDateId(dateId);
+  const { user } = useAuth();
+  
+  // Usar vista LIVE en lugar de useEventFullByDateId
+  const { data: eventLive, isLoading } = useEventLiveById(dateId);
+  const { data: schedules = [] } = useEventSchedules(dateId);
+  const { data: prices = [] } = useEventPrices(dateId);
   const { ritmos } = useTags("ritmo");
-  const rsvp = useMyRSVP();
   const { showToast } = useToast();
 
-  const handleRSVP = async (status: 'voy' | 'interesado' | 'no_voy') => {
-    if (!data?.date) return;
-    
-    try {
-      await rsvp.set(data.date.id, status);
-      showToast(`RSVP actualizado: ${status}`, 'success');
-    } catch (err: any) {
-      console.error('[EventPublicScreen] RSVP error:', err);
-      showToast('Error al actualizar RSVP', 'error');
-    }
-  };
+  // Verificar si el usuario puede editar este evento
+  const canEdit = canEditEventDate(eventLive, user?.id);
 
   if (isLoading) {
     return (
@@ -60,7 +60,7 @@ export default function EventPublicScreen() {
     );
   }
 
-  if (!data) {
+  if (!eventLive) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -73,8 +73,11 @@ export default function EventPublicScreen() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
-            Evento no encontrado
+            Evento no disponible
           </h2>
+          <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginBottom: '24px' }}>
+            Este evento no está publicado o no existe.
+          </p>
           <button
             onClick={() => nav('/')}
             style={{
@@ -94,8 +97,8 @@ export default function EventPublicScreen() {
     );
   }
 
-  const { parent, date, schedules, prices } = data;
-  const styleNames = (parent.estilos || [])
+  // Extraer información de la vista live
+  const styleNames = (eventLive.evento_estilos || [])
     .map(eid => ritmos.find(r => r.id === eid)?.nombre)
     .filter(Boolean) as string[];
 
@@ -106,8 +109,8 @@ export default function EventPublicScreen() {
         <Breadcrumbs
           items={[
             { label: 'Inicio', href: '/', icon: '🏠' },
-            { label: parent.nombre, href: `/events/parent/${parent.id}`, icon: '🎉' },
-            { label: date.fecha, icon: '📅' },
+            { label: eventLive.evento_nombre, href: `/events/parent/${eventLive.parent_id}`, icon: '🎉' },
+            { label: eventLive.fecha, icon: '📅' },
           ]}
         />
       </div>
@@ -129,23 +132,49 @@ export default function EventPublicScreen() {
           margin: '0 auto',
           padding: '2.5rem 1.5rem'
         }}>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: '800',
-            textShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-            marginBottom: '0.5rem'
-          }}>
-            {parent.nombre}
-          </h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.5rem' }}>
+            <h1 style={{
+              fontSize: '1.875rem',
+              fontWeight: '800',
+              textShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+            }}>
+              {eventLive.evento_nombre}
+            </h1>
 
-          {parent.descripcion && (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <ShareLink label="Compartir" />
+              
+              {canEdit && (
+                <Link
+                  to={`/profile/organizer/events/date/${eventLive.id}/edit`}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    background: 'rgba(236, 72, 153, 0.8)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                  }}
+                >
+                  ✏️ Editar
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {eventLive.evento_descripcion && (
             <p style={{
               marginTop: '0.5rem',
               opacity: 0.9,
               maxWidth: '42rem',
               lineHeight: '1.6'
             }}>
-              {parent.descripcion}
+              {eventLive.evento_descripcion}
             </p>
           )}
 
@@ -179,38 +208,48 @@ export default function EventPublicScreen() {
             flexWrap: 'wrap',
             gap: '0.75rem'
           }}>
-            <span>📅 {date.fecha}</span>
-            {date.hora_inicio && (
+            <span>📅 {eventLive.fecha}</span>
+            {eventLive.hora_inicio && (
               <span>
-                🕒 {date.hora_inicio}{date.hora_fin ? `–${date.hora_fin}` : ""}
+                🕒 {eventLive.hora_inicio}{eventLive.hora_fin ? `–${eventLive.hora_fin}` : ""}
               </span>
             )}
-            {(date.ciudad || date.lugar) && (
-              <span>📍 {date.lugar || date.ciudad}</span>
+            {(eventLive.ciudad || eventLive.lugar) && (
+              <span>📍 {eventLive.lugar || eventLive.ciudad}</span>
             )}
+            <Link
+              to={`/organizer/${eventLive.organizador_id}`}
+              style={{
+                color: 'rgb(236, 72, 153)',
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+            >
+              👤 {eventLive.organizador_nombre}
+            </Link>
           </div>
 
-          {parent.sede_general && (
+          {eventLive.sede_general && (
             <div style={{
               marginTop: '0.5rem',
               fontSize: '0.875rem',
               opacity: 0.8
             }}>
-              🏢 {parent.sede_general}
+              🏢 {eventLive.sede_general}
             </div>
           )}
 
-          {date.direccion && (
+          {eventLive.direccion && (
             <div style={{
               marginTop: '0.5rem',
               fontSize: '0.875rem',
               opacity: 0.8
             }}>
-              🗺️ {date.direccion}
+              🗺️ {eventLive.direccion}
             </div>
           )}
 
-          {date.requisitos && (
+          {eventLive.requisitos && (
             <div style={{
               marginTop: '1rem',
               padding: '0.75rem 1rem',
@@ -219,99 +258,112 @@ export default function EventPublicScreen() {
               border: '1px solid rgba(255, 255, 255, 0.1)',
               fontSize: '0.875rem'
             }}>
-              <strong>👔 Requisitos:</strong> {date.requisitos}
+              <strong>👔 Requisitos:</strong> {eventLive.requisitos}
             </div>
           )}
         </div>
       </div>
 
-      {/* RSVP Section */}
+      {/* RSVP Section - Simplificado */}
       <section style={{
         padding: '2rem 1.5rem',
-        maxWidth: '56rem',
+        maxWidth: '50rem',
         margin: '0 auto'
       }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '1rem',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          padding: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            marginBottom: '1rem',
-            color: 'white'
-          }}>
-            ¿Vas a asistir?
-          </h3>
-          
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            padding: '3rem',
+            position: 'relative',
+            overflow: 'hidden',
+            textAlign: 'center'
+          }}
+        >
+          {/* Background Pattern */}
           <div style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            justifyContent: 'center'
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(circle at 50% 50%, rgba(255, 209, 102, 0.15) 0%, transparent 50%)
+            `,
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{
+            position: 'relative',
+            zIndex: 1
           }}>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleRSVP('voy')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: '50px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #10B981, #1E88E5)',
-                color: 'white',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)'
-              }}
+            {/* Sección principal */}
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
             >
-              ✅ Voy
-            </motion.button>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.75rem',
+                  boxShadow: '0 8px 24px rgba(255, 209, 102, 0.4)'
+                }}>
+                  🎉
+                </div>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: 'white',
+                  margin: 0,
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                }}>
+                  ¿Nos acompañas?
+                </h3>
+              </div>
+              
+              {/* Botón "Me interesa" */}
+              <div>
+                <SimpleInterestButton eventDateId={dateId} />
+              </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleRSVP('interesado')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: '50px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #FF8C42, #FFD166)',
-                color: 'white',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(255, 140, 66, 0.4)'
-              }}
-            >
-              🤔 Interesado
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleRSVP('no_voy')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: '50px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
-                color: 'white',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(255, 61, 87, 0.4)'
-              }}
-            >
-              ❌ No voy
-            </motion.button>
+              {/* Contador de interesados */}
+              <div style={{ marginTop: '2rem' }}>
+                <InterestCounter eventDateId={dateId} />
+              </div>
+            </motion.div>
           </div>
-        </div>
+
+          {/* Decorative Elements */}
+          <div style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 140, 66, 0.2))',
+            filter: 'blur(20px)',
+            pointerEvents: 'none'
+          }} />
+        </motion.div>
       </section>
 
       {/* Contenido */}

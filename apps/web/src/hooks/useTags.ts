@@ -27,6 +27,17 @@ export function useTags(tipo?: 'ritmo' | 'zona') {
     queryFn: () => fetchTags(tipo),
   });
 
+  // Si no se especifica tipo, separar ritmos y zonas del resultado
+  if (!tipo) {
+    const allTags = query.data || [];
+    return {
+      ...query,
+      ritmos: allTags.filter(t => t.tipo === 'ritmo'),
+      zonas: allTags.filter(t => t.tipo === 'zona'),
+    };
+  }
+
+  // Si se especifica tipo, devolver en el campo correspondiente
   return {
     ...query,
     ritmos: tipo === 'ritmo' ? (query.data || []) : [],

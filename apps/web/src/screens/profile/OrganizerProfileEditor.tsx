@@ -9,6 +9,15 @@ import { MediaGrid } from "../../components/MediaGrid";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
+import { Chip } from "../../components/profile/Chip";
+import { useTags } from "../../hooks/useTags";
+import { useHydratedForm } from "../../hooks/useHydratedForm";
+import ImageWithFallback from "../../components/ImageWithFallback";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { supabase } from "../../lib/supabase";
+import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 
 const colors = {
   coral: '#FF3D57',
@@ -42,128 +51,98 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px' }}>
             {parent.nombre}
           </h4>
-          {parent.descripcion && (
-            <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: '0 0 8px 0' }}>
-              {parent.descripcion.slice(0, 100)}{parent.descripcion.length > 100 && '...'}
-            </p>
-          )}
-          {parent.sede_general && (
-            <p style={{ fontSize: '0.875rem', opacity: 0.6 }}>
-              📍 {parent.sede_general}
-            </p>
-          )}
+          <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: '8px' }}>
+            {parent.descripcion}
+          </p>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(parent.id, parent.nombre);
+            onClick={() => navigate(`/events/${parent.id}/edit`)}
+            style={{
+              padding: '6px 12px',
+              background: colors.blue,
+              color: colors.light,
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              cursor: 'pointer'
             }}
+          >
+            ✏️ Editar
+          </button>
+          <button
+            onClick={() => onDelete(parent.id)}
             disabled={isDeleting}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              background: colors.coral,
+              color: colors.light,
               border: 'none',
-              background: isDeleting ? '#666' : colors.coral,
-              color: 'white',
+              borderRadius: '6px',
               fontSize: '0.75rem',
-              fontWeight: '600',
               cursor: isDeleting ? 'not-allowed' : 'pointer',
-              opacity: isDeleting ? 0.7 : 1,
+              opacity: isDeleting ? 0.5 : 1
             }}
           >
-            {isDeleting ? '⏳ Eliminando...' : '🗑️ Eliminar'}
-          </button>
-
-          <button
-            onClick={() => setExpanded(!expanded)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '20px',
-              border: 'none',
-              background: colors.blue,
-              color: 'white',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-            }}
-          >
-            {expanded ? '▲ Ocultar' : '▼ Ver Fechas'} ({dates?.length || 0})
+            {isDeleting ? '⏳' : '🗑️'} Eliminar
           </button>
         </div>
       </div>
 
       {/* Fechas del evento */}
-      {expanded && dates && dates.length > 0 && (
-        <div style={{ 
-          marginTop: '12px',
-          paddingTop: '12px', 
-          borderTop: `1px solid ${colors.light}22`,
-          display: 'grid',
-          gap: '8px'
-        }}>
-          {dates.map((date) => (
-            <motion.div
-              key={date.id}
-              whileHover={{ scale: 1.01, x: 4 }}
-              style={{
-                padding: '12px',
-                background: `${colors.dark}66`,
-                borderRadius: '8px',
-                border: `1px solid ${colors.light}11`,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-              }}
-              onClick={() => navigate(`/events/date/${date.id}/edit`)}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '4px' }}>
-                  📅 {date.fecha}
-                  {date.hora_inicio && ` • 🕒 ${date.hora_inicio}`}
-                  {date.hora_fin && `–${date.hora_fin}`}
-                </div>
-                {date.lugar && (
-                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                    📍 {date.lugar}
-                  </div>
-                )}
-                <div style={{ 
-                  fontSize: '0.7rem', 
-                  marginTop: '4px',
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  background: date.estado_publicacion === 'publicado' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(148, 163, 184, 0.2)',
-                  color: date.estado_publicacion === 'publicado' ? '#10B981' : '#94A3B8',
-                  display: 'inline-block'
+      {dates && dates.length > 0 && (
+        <div>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'transparent',
+              border: 'none',
+              color: colors.light,
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              marginBottom: expanded ? '12px' : '0'
+            }}
+          >
+            <span>📅 {dates.length} fecha{dates.length > 1 ? 's' : ''}</span>
+            <span style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              ▼
+            </span>
+          </button>
+          
+          {expanded && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {dates.map((date: any) => (
+                <div key={date.id} style={{
+                  padding: '8px 12px',
+                  background: `${colors.light}11`,
+                  borderRadius: '6px',
+                  border: `1px solid ${colors.light}22`
                 }}>
-                  {date.estado_publicacion === 'publicado' ? '✅ Publicado' : '📝 Borrador'}
+                  <div style={{ fontSize: '0.75rem', fontWeight: '600' }}>
+                    {new Date(date.fecha).toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                    {date.hora_inicio} - {date.hora_fin}
+                  </div>
                 </div>
-              </div>
-              <span style={{ fontSize: '1.25rem', opacity: 0.5 }}>✏️</span>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {expanded && (!dates || dates.length === 0) && (
-        <div style={{ 
-          marginTop: '12px',
-          padding: '16px',
-          textAlign: 'center',
-          opacity: 0.6,
-          fontSize: '0.875rem'
-        }}>
-          No hay fechas para este evento
+              ))}
+            </div>
+          )}
         </div>
       )}
     </motion.div>
   );
 }
 
-export function OrganizerProfileEditor() {
+export default function OrganizerProfileEditor() {
   const navigate = useNavigate();
   const { data: org, isLoading } = useMyOrganizer();
   const upsert = useUpsertMyOrganizer();
@@ -172,120 +151,128 @@ export function OrganizerProfileEditor() {
   const deleteParent = useDeleteParent();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
+  
+  // Estados para carga de media
+  const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
 
-  const [nombrePublico, setNombrePublico] = useState('');
-  const [bio, setBio] = useState('');
-
-  useEffect(() => {
-    if (org) {
-      setNombrePublico(org.nombre_publico || '');
-      setBio(org.bio || '');
-    }
-  }, [org]);
-
-  if (isLoading) {
-    return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando...</p>
-      </div>
-    );
-  }
-
-  if (!org) {
-    return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-        maxWidth: '600px',
-        margin: '0 auto',
-      }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-          Crear perfil de Organizador
-        </h1>
-        <p style={{ marginBottom: '24px', opacity: 0.7 }}>
-          Comienza creando tu perfil básico
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={async () => {
-            try {
-              await upsert.mutateAsync({ nombre_publico: "Mi Organizador" });
-              showToast('Organizador creado ✅', 'success');
-            } catch (err: any) {
-              showToast('Error al crear organizador', 'error');
-            }
-          }}
-          style={{
-            padding: '14px 28px',
-            borderRadius: '50px',
-            border: 'none',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light,
-            fontSize: '1rem',
-            fontWeight: '700',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(30,136,229,0.5)',
-          }}
-        >
-          ✨ Crear base
-        </motion.button>
-      </div>
-    );
-  }
-
-  const handleSave = async () => {
-    if (!nombrePublico.trim()) {
-      showToast('El nombre público es obligatorio', 'error');
-      return;
-    }
-
+  // Función para subir archivo
+  const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    setUploading(prev => ({ ...prev, [slot]: true }));
+    
     try {
-      await upsert.mutateAsync({
-        nombre_publico: nombrePublico,
-        bio: bio || null,
-      });
+      await add.mutateAsync({ file, slot });
+      showToast(`${kind === 'photo' ? 'Foto' : 'Video'} subido correctamente`, 'success');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      showToast('Error al subir el archivo', 'error');
+    } finally {
+      setUploading(prev => ({ ...prev, [slot]: false }));
+    }
+  };
+
+  // Función para eliminar archivo
+  const removeFile = async (slot: string) => {
+    try {
+      // Buscar el media item por slot
+      const mediaItem = media.find(m => m.slot === slot);
+      if (mediaItem) {
+        await remove.mutateAsync(mediaItem.id);
+        showToast('Archivo eliminado', 'success');
+      } else {
+        showToast('No se encontró el archivo', 'error');
+      }
+    } catch (error) {
+      console.error('Error removing file:', error);
+      showToast('Error al eliminar el archivo', 'error');
+    }
+  };
+  
+  // Cargar tags
+  const { data: allTags } = useTags();
+  const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
+  const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
+
+  // Usar formulario hidratado con borrador persistente
+  const { form, setField, setNested, hydrated } = useHydratedForm({
+    draftKey: `draft:org:${org?.id || 'new'}`,
+    serverData: org,
+    defaults: {
+      nombre_publico: "",
+      bio: "",
+      ritmos: [] as number[],
+      zonas: [] as number[],
+      redes_sociales: {
+        instagram: "",
+        facebook: "",
+        whatsapp: ""
+      },
+      respuestas: {
+        musica_tocaran: "",
+        hay_estacionamiento: ""
+      }
+    },
+    preferDraft: true
+  });
+
+  // Funciones para toggle de chips
+  const toggleRitmo = (id: number) => {
+    const newRitmos = form.ritmos.includes(id) 
+      ? form.ritmos.filter(r => r !== id) 
+      : [...form.ritmos, id];
+    setField('ritmos', newRitmos);
+  };
+
+  const toggleZona = (id: number) => {
+    const newZonas = form.zonas.includes(id) 
+      ? form.zonas.filter(z => z !== id) 
+      : [...form.zonas, id];
+    setField('zonas', newZonas);
+  };
+
+  // Función para guardar
+  const handleSave = async () => {
+    try {
+      console.log("🚀 [OrganizerProfileEditor] ===== INICIANDO GUARDADO =====");
+      console.log("📤 [OrganizerProfileEditor] Datos a enviar:", form);
+      console.log("📱 [OrganizerProfileEditor] Redes sociales:", form.redes_sociales);
+      console.log("📝 [OrganizerProfileEditor] Nombre público:", form.nombre_publico);
+      console.log("📄 [OrganizerProfileEditor] Bio:", form.bio);
+      console.log("🎵 [OrganizerProfileEditor] Ritmos:", form.ritmos);
+      console.log("📍 [OrganizerProfileEditor] Zonas:", form.zonas);
+      console.log("💬 [OrganizerProfileEditor] Respuestas:", form.respuestas);
+      
+      await upsert.mutateAsync(form);
+      console.log("✅ [OrganizerProfileEditor] Guardado exitoso");
       showToast('Organizador actualizado ✅', 'success');
     } catch (err: any) {
+      console.error("❌ [OrganizerProfileEditor] Error al guardar:", err);
       showToast('Error al guardar', 'error');
     }
   };
 
+  // Función para enviar para revisión
   const handleSubmitForReview = async () => {
     try {
       await submit.mutateAsync();
-      showToast('Enviado a revisión ✅', 'success');
+      showToast('Enviado para revisión ✅', 'success');
     } catch (err: any) {
-      showToast('Error al enviar a revisión', 'error');
+      console.error('Error submitting for review:', err);
+      showToast('Error al enviar para revisión', 'error');
     }
   };
 
-  const handleDeleteEvent = async (eventId: number, eventName: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar el evento "${eventName}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
+  // Función para eliminar evento
+  const handleDeleteEvent = async (parentId: string) => {
     try {
-      console.log('[OrganizerProfileEditor] Deleting event:', eventId, eventName);
-      await deleteParent.mutateAsync(eventId);
-      showToast('Evento eliminado correctamente', 'success');
-      
-      // Forzar refetch de la lista de eventos
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await deleteParent.mutateAsync(parentId);
+      showToast('Evento eliminado', 'success');
     } catch (err: any) {
-      console.error('[OrganizerProfileEditor] Error deleting event:', err);
-      showToast(err.message || 'Error al eliminar evento', 'error');
+      console.error('Error deleting event:', err);
+      showToast('Error al eliminar evento', 'error');
     }
   };
 
+  // Función para obtener badge de estado
   const getEstadoBadge = () => {
     const badges: Record<string, { bg: string; text: string; icon: string }> = {
       borrador: { bg: '#94A3B8', text: 'Borrador', icon: '📝' },
@@ -307,249 +294,494 @@ export function OrganizerProfileEditor() {
           fontSize: '0.875rem',
           fontWeight: '700',
           boxShadow: `0 2px 8px ${badge.bg}66`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
         }}
       >
-        <span>{badge.icon}</span>
-        {badge.text}
+        {badge.icon} {badge.text}
       </span>
     );
   };
 
+  if (isLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: colors.dark,
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+          <div>Cargando perfil del organizador...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!org) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: colors.dark,
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌</div>
+          <div>No se encontró el perfil del organizador</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
-      padding: '24px',
-      maxWidth: '800px',
-      margin: '0 auto',
+      minHeight: '100vh',
+      background: colors.dark,
       color: colors.light,
+      padding: '2rem',
     }}>
-      <Breadcrumbs
-        items={[
-          { label: 'Inicio', href: '/app/profile', icon: '🏠' },
-          { label: 'Organizador', href: '/profile/organizer', icon: '🎤' },
-          { label: 'Editar', icon: '✏️' },
-        ]}
-      />
-
-      <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '32px' }}>
-        🎤 Editar Organizador
-      </h1>
-
-      {/* Profile Toolbar */}
-      <ProfileToolbar />
-
-      <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-        Nombre público *
-      </label>
-      <input
-        type="text"
-        value={nombrePublico}
-        onChange={(e) => setNombrePublico(e.target.value)}
-        required
-        style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: '12px',
-          background: `${colors.dark}cc`,
-          border: `1px solid ${colors.light}33`,
-          color: colors.light,
-          fontSize: '1rem',
-          marginBottom: '24px',
-        }}
-      />
-
-      <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-        Bio
-      </label>
-      <textarea
-        value={bio}
-        onChange={(e) => setBio(e.target.value)}
-        rows={4}
-        placeholder="Cuéntanos sobre ti como organizador..."
-        style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: '12px',
-          background: `${colors.dark}cc`,
-          border: `1px solid ${colors.light}33`,
-          color: colors.light,
-          fontSize: '1rem',
-          resize: 'vertical',
-          marginBottom: '24px',
-        }}
-      />
-
-      {/* Galería */}
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: '700', 
-          marginBottom: '16px',
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header con botón Volver */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem'
         }}>
-          📸 Fotos y Videos
-        </h2>
-        
-        <MediaUploader 
-          onPick={async (files) => {
-            for (const f of Array.from(files)) {
-              try {
-                await add.mutateAsync(f);
-                showToast('Media agregada ✅', 'success');
-              } catch (err: any) {
-                showToast('Error al subir archivo', 'error');
-              }
-            }
-          }}
-        />
-        
-        <div style={{ marginTop: '16px' }}>
-          <MediaGrid 
-            items={media} 
-            onRemove={async (id) => {
-              try {
-                await remove.mutateAsync(id);
-                showToast('Media eliminada', 'success');
-              } catch (err: any) {
-                showToast('Error al eliminar', 'error');
-              }
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Estado y Actions */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '16px', 
-        marginBottom: '32px',
-        flexWrap: 'wrap',
-      }}>
-        <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-          Estado: {getEstadoBadge()}
-        </span>
-        
-        {org.estado_aprobacion === "borrador" && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSubmitForReview}
-            disabled={submit.isPending}
+          <button
+            onClick={() => navigate(-1)}
             style={{
-              padding: '12px 24px',
-              borderRadius: '50px',
-              border: 'none',
-              background: submit.isPending ? `${colors.light}33` : colors.blue,
+              padding: '0.75rem 1.5rem',
+              background: 'rgba(255, 255, 255, 0.1)',
               color: colors.light,
-              fontSize: '0.875rem',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              fontSize: '0.9rem',
               fontWeight: '600',
-              cursor: submit.isPending ? 'not-allowed' : 'pointer',
-              boxShadow: `0 4px 16px ${colors.blue}66`,
+              cursor: 'pointer',
+              transition: '0.2s'
             }}
           >
-            {submit.isPending ? 'Enviando...' : '📤 Enviar a revisión'}
-          </motion.button>
-        )}
-        
-      </div>
-
-      {/* Save Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleSave}
-        disabled={upsert.isPending}
-        style={{
-          width: '100%',
-          padding: '16px',
-          borderRadius: '50px',
-          border: 'none',
-          background: upsert.isPending 
-            ? `${colors.light}33` 
-            : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-          color: colors.light,
-          fontSize: '1rem',
-          fontWeight: '700',
-          cursor: upsert.isPending ? 'not-allowed' : 'pointer',
-          boxShadow: `0 8px 24px ${colors.blue}66`,
-          marginBottom: '32px',
-        }}
-      >
-        {upsert.isPending ? 'Guardando...' : '💾 Guardar'}
-      </motion.button>
-
-      {/* Mis Eventos */}
-      <div style={{
-        padding: '24px',
-        background: `${colors.dark}ee`,
-        borderRadius: '16px',
-        border: `1px solid ${colors.light}22`,
-      }}>
-        <div style={{ 
-          marginBottom: '16px',
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0 }}>
-            📅 Mis Eventos ({parents?.length || 0})
-          </h2>
+            ← Volver
+          </button>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: '700',
+            margin: '0',
+            flex: '1 1 0%',
+            textAlign: 'center'
+          }}>
+            ✏️ Editar Organizador
+          </h1>
+          <div style={{ width: '100px' }}></div>
         </div>
 
-        {parents && parents.length > 0 ? (
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {parents.map((parent) => (
-              <EventParentCard 
-                key={parent.id} 
-                parent={parent} 
-                onDelete={handleDeleteEvent}
-                isDeleting={deleteParent.isPending}
-              />
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', opacity: 0.7, padding: '32px' }}>
-            <p style={{ marginBottom: '8px', fontSize: '1.1rem' }}>No tienes eventos creados</p>
-            <p style={{ fontSize: '0.9rem', opacity: 0.6 }}>
-              Para crear eventos, ve al wizard de creación desde el menú principal
-            </p>
-          </div>
-        )}
-      </div>
+        {/* Componente de navegación flotante */}
+        <ProfileNavigationToggle
+          currentView="edit"
+          profileType="organizer"
+          onSave={handleSave}
+          isSaving={upsert.isPending}
+          saveDisabled={!form.nombre_publico?.trim()}
+        />
 
-      {/* Botón Discreto: Crear Evento - Centro Abajo */}
-      <div style={{
-        position: 'fixed',
-        bottom: '32px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1000,
-        pointerEvents: 'auto',
-      }}>
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/events/new')}
-          style={{
-            padding: '12px 24px',
-            borderRadius: '25px',
-            background: `${colors.dark}dd`,
-            backdropFilter: 'blur(10px)',
-            color: colors.light,
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            border: `1px solid ${colors.light}33`,
-          }}
-        >
-          <span style={{ fontSize: '1.1rem' }}>📅</span>
-          Crear Evento
-        </motion.button>
+        {/* Información del Organizador */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            🏢 Información del Organizador
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Nombre Público
+              </label>
+              <input
+                type="text"
+                value={form.nombre_publico}
+                onChange={(e) => setField('nombre_publico', e.target.value)}
+                placeholder="Nombre de tu organización"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Biografía
+              </label>
+              <textarea
+                value={form.bio}
+                onChange={(e) => setField('bio', e.target.value)}
+                placeholder="Cuéntanos sobre tu organización..."
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Ritmos y Zonas */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            🎵 Ritmos y Zonas
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+                🎶 Ritmos que Organizas
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {ritmoTags.map((tag) => (
+                  <Chip
+                    key={tag.id}
+                    label={tag.nombre}
+                    active={form.ritmos.includes(tag.id)}
+                    onClick={() => toggleRitmo(tag.id)}
+                    variant="ritmo"
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+                📍 Zonas donde Organizas
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {zonaTags.map((tag) => (
+                  <Chip
+                    key={tag.id}
+                    label={tag.nombre}
+                    active={form.zonas.includes(tag.id)}
+                    onClick={() => toggleZona(tag.id)}
+                    variant="zona"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Redes Sociales */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            📱 Redes Sociales
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                📸 Instagram
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.instagram}
+                onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                placeholder="@tu_organizacion"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                👥 Facebook
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.facebook}
+                onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                placeholder="Página o perfil"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                💬 WhatsApp
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.whatsapp}
+                onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                placeholder="Número de teléfono"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Información para Asistentes */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            💬 Información para Asistentes
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                🎵 ¿Qué música tocarán?
+              </label>
+              <textarea
+                value={form.respuestas.musica_tocaran}
+                onChange={(e) => setNested('respuestas.musica_tocaran', e.target.value)}
+                placeholder="Describe el tipo de música que tocarán..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                🅿️ ¿Hay estacionamiento?
+              </label>
+              <textarea
+                value={form.respuestas.hay_estacionamiento}
+                onChange={(e) => setNested('respuestas.hay_estacionamiento', e.target.value)}
+                placeholder="Información sobre estacionamiento..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Mis Eventos */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            📅 Mis Eventos
+          </h2>
+          
+          {parents && parents.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {parents.map((parent: any) => (
+                <EventParentCard
+                  key={parent.id}
+                  parent={parent}
+                  onDelete={handleDeleteEvent}
+                  isDeleting={deleteParent.isPending}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📅</div>
+              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No tienes eventos creados</div>
+              <div style={{ opacity: 0.7 }}>Crea tu primer evento para comenzar</div>
+            </div>
+          )}
+        </div>
+
+        {/* Estado y Acciones */}
+        <div style={{
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            ⚙️ Estado y Acciones
+          </h2>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+              Estado: {getEstadoBadge()}
+            </span>
+          </div>
+          
+          {org.estado_aprobacion === "borrador" && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSubmitForReview}
+              disabled={submit.isPending}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: submit.isPending ? `${colors.light}33` : colors.blue,
+                color: colors.light,
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: submit.isPending ? 'not-allowed' : 'pointer',
+                boxShadow: `0 4px 16px ${colors.blue}66`,
+              }}
+            >
+              {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Botón Discreto: Crear Evento - Centro Abajo */}
+        <div style={{
+          position: 'fixed',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          pointerEvents: 'auto',
+        }}>
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/events/new')}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '25px',
+              background: `${colors.dark}dd`,
+              backdropFilter: 'blur(10px)',
+              color: colors.light,
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: `1px solid ${colors.light}33`,
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>📅</span>
+            Crear Evento
+          </motion.button>
+        </div>
+
+        {/* Sección de Fotos */}
+        <PhotoManagementSection
+          media={media}
+          uploading={uploading}
+          uploadFile={uploadFile}
+          removeFile={removeFile}
+          title="📷 Gestión de Fotos"
+          description="La foto P1 se mostrará como tu avatar principal en el banner del perfil"
+          slots={['p1']}
+          isMainPhoto={true}
+        />
+
+        {/* Sección de Fotos Adicionales */}
+        <PhotoManagementSection
+          media={media}
+          uploading={uploading}
+          uploadFile={uploadFile}
+          removeFile={removeFile}
+          title="📷 Fotos Adicionales (p4-p10)"
+          description="Estas fotos aparecerán en la galería de tu perfil"
+          slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
+          isMainPhoto={false}
+        />
+
+        {/* Sección de Videos */}
+        <VideoManagementSection
+          media={media}
+          uploading={uploading}
+          uploadFile={uploadFile}
+          removeFile={removeFile}
+          title="🎥 Gestión de Videos"
+          description="Los videos aparecerán en la sección de videos de tu perfil"
+          slots={['v1', 'v2', 'v3']}
+        />
       </div>
     </div>
   );

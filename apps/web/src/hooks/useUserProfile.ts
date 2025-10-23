@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./useAuth";
-import { guardedPatch } from "../utils/safeUpdate";
+import { buildSafePatch } from "../utils/safePatch";
 
 export type ProfileUser = {
   user_id: string;
@@ -46,10 +46,9 @@ export function useUserProfile() {
         // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
         const { media, onboarding_complete, ...candidate } = next;
 
-        // Usar guardedPatch para evitar pérdida de datos accidental
-        const patch = guardedPatch<ProfileUser>(prev, candidate, {
-          allowEmptyArrays: ["ritmos", "zonas"], // permitir vaciar intencionalmente
-          blockEmptyStrings: ["display_name"],    // no permitir nombre vacío
+        // Usar buildSafePatch para merge inteligente
+        const patch = buildSafePatch(prev, candidate, { 
+          allowEmptyArrays: ["ritmos", "zonas"] as any 
         });
 
         if (Object.keys(patch).length === 0) {
@@ -59,6 +58,8 @@ export function useUserProfile() {
 
         // Diagnóstico en desarrollo
         if (import.meta.env.MODE === "development") {
+          console.log("[useUserProfile] PREV:", prev);
+          console.log("[useUserProfile] NEXT:", next);
           console.log("[useUserProfile] PATCH:", patch);
         }
 

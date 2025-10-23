@@ -9,6 +9,7 @@ import { PickRitmos } from './screens/onboarding/PickRitmos';
 import { PickZonas } from './screens/onboarding/PickZonas';
 import { Profile } from './screens/app/Profile';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
+import InfoScreen from './screens/InfoScreen';
 
 // Sprint 2 - Event screens
 import { OrganizerEditScreen } from './screens/events/OrganizerEditScreen';
@@ -30,9 +31,10 @@ import { EventEditor } from './screens/profile/EventEditor';
 import { EventDateEditor } from './screens/profile/EventDateEditor';
 import { OrganizerEditor } from './screens/profile/OrganizerEditor';
 import { OrganizerProfileLive as OrganizerProfileLiveNew } from './screens/profile/OrganizerProfileLive';
-import { OrganizerProfileEditor } from './screens/profile/OrganizerProfileEditor';
+import OrganizerProfileEditor from './screens/profile/OrganizerProfileEditor';
 import { OrganizerDashboardDates } from './screens/profile/OrganizerDashboardDates';
 import UserPublicProfile from './screens/profile/UserPublicProfile';
+import UserProfileEditor from './screens/profile/UserProfileEditor';
 
 // Sprint 3 - Explore/Search
 import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
@@ -81,6 +83,9 @@ export function AppRouter() {
         {/* App Routes */}
         <Route path="/app/profile" element={<ProfileScreen />} />
         <Route path="/app/profile/edit" element={<ProfileScreen />} />
+        
+        {/* Info Screen */}
+        <Route path="/info" element={<InfoScreen />} />
         
         {/* User Profile Routes (new unified) */}
         <Route path="/profile" element={<ProfileScreen />} />
@@ -150,6 +155,7 @@ export function AppRouter() {
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
+      <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
       
       {/* New unified public event view */}

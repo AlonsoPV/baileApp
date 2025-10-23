@@ -5,52 +5,62 @@ import { theme } from "@theme/colors";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./components/Toast";
 import { useAuth } from "./hooks/useAuth";
+import { useUserProfile } from "./hooks/useUserProfile";
 import { AppRouter } from "./router";
 import AppBootstrap from "./providers/AppBootstrap";
-import ProfileSwitchFab from "./components/ProfileSwitchFab";
 import "./App.css";
 
 function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { profile } = useUserProfile();
   const navigate = useNavigate();
 
   const menuItems = [
     {
-      id: "profile",
-      label: "Mi Perfil",
-      icon: "👤",
-      onClick: () => navigate('/app/profile'),
-    },
-    {
       id: "explore",
       label: "Explorar",
       icon: "🔍",
-      onClick: () => console.log("Explore"),
-    },
-    {
-      id: "events",
-      label: "Eventos",
-      icon: "🎉",
-      onClick: () => console.log("Events"),
-    },
-    {
-      id: "teachers",
-      label: "Maestros",
-      icon: "👨‍🏫",
-      onClick: () => console.log("Teachers"),
+      onClick: () => navigate('/explore'),
     },
     {
       id: "brands",
       label: "Marcas",
       icon: "🏷️",
-      onClick: () => console.log("Brands"),
+      onClick: () => navigate('/profile/brand'),
     },
     {
-      id: "settings",
-      label: "Configuración",
-      icon: "⚙️",
-      onClick: () => console.log("Settings"),
+      id: "pasos",
+      label: "Pasos",
+      icon: "💃",
+      onClick: () => console.log("Pasos - Próximamente"),
+      disabled: true,
+    },
+    {
+      id: "novedades",
+      label: "Novedades",
+      icon: "📢",
+      onClick: () => console.log("Novedades - Próximamente"),
+      disabled: true,
+    },
+    {
+      id: "bandas-dj",
+      label: "Bandas/DJ",
+      icon: "🎵",
+      onClick: () => console.log("Bandas/DJ - Próximamente"),
+      disabled: true,
+    },
+    {
+      id: "profile",
+      label: "Perfil",
+      icon: "👤",
+      onClick: () => navigate('/app/profile'),
+    },
+    {
+      id: "info",
+      label: "Info",
+      icon: "ℹ️",
+      onClick: () => navigate('/info'),
     },
   ];
 
@@ -72,6 +82,8 @@ function AppContent() {
           menuItems={menuItems}
           userName={user.email?.split('@')[0] || "Usuario"}
           userEmail={user.email || ""}
+          userAvatar={profile?.avatar_url || undefined}
+          displayName={profile?.display_name || undefined}
         />
       )}
     </div>
@@ -83,7 +95,6 @@ function App() {
     <ToastProvider>
       <AppBootstrap>
         <AppContent />
-        <ProfileSwitchFab />
       </AppBootstrap>
     </ToastProvider>
   );
