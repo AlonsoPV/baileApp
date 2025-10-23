@@ -15,6 +15,7 @@ import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import SocialMediaSection from "../../components/profile/SocialMediaSection";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -668,121 +669,18 @@ export function OrganizerProfileLive() {
         )}
 
         {/* Redes Sociales */}
-        {(org.redes_sociales?.instagram || org.redes_sociales?.facebook || org.redes_sociales?.whatsapp) && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem'
-            }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E91E63 0%, #9C27B0 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                📱 Redes Sociales
-              </h3>
-            </div>
-            
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              {org.redes_sociales?.instagram && (
-                <motion.a
-                  href={org.redes_sociales.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '1rem 1.5rem',
-                    background: 'linear-gradient(135deg, #E91E63 0%, #C2185B 100%)',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: 'white',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 16px rgba(233, 30, 99, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem' }}>📷</span>
-                  Instagram
-                </motion.a>
-              )}
-              
-              {org.redes_sociales?.facebook && (
-                <motion.a
-                  href={org.redes_sociales.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '1rem 1.5rem',
-                    background: 'linear-gradient(135deg, #1877F2 0%, #0D47A1 100%)',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: 'white',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 16px rgba(24, 119, 242, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem' }}>📘</span>
-                  Facebook
-                </motion.a>
-              )}
-              
-              {org.redes_sociales?.whatsapp && (
-                <motion.a
-                  href={`https://wa.me/${org.redes_sociales.whatsapp.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '1rem 1.5rem',
-                    background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: 'white',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 16px rgba(37, 211, 102, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <span style={{ fontSize: '1.25rem' }}>💬</span>
-                  WhatsApp
-                </motion.a>
-              )}
-            </div>
-          </motion.section>
-        )}
+        <SocialMediaSection 
+          respuestas={org.respuestas}
+          title="📱 Redes Sociales"
+          style={{
+            marginBottom: '2rem',
+            padding: '2rem',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          }}
+        />
 
         {/* Próximos Eventos del Organizador */}
         {inviteItems.length > 0 && (

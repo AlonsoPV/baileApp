@@ -13,6 +13,9 @@ import { useTags } from '../../hooks/useTags';
 import { PhotoManagementSection } from '../../components/profile/PhotoManagementSection';
 import { VideoManagementSection } from '../../components/profile/VideoManagementSection';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
+import { normalizeSocialInput } from '../../utils/social';
+import { buildSafePatch } from '../../utils/safePatch';
+import { useQueryClient } from '@tanstack/react-query';
 
 const colors = {
   dark: '#121212',
@@ -23,33 +26,34 @@ const colors = {
 export default function UserProfileEditor() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, updateProfileFields } = useUserProfile();
+  const { profile, updateProfileFields, refetchProfile } = useUserProfile();
   const { media, uploadToSlot, removeFromSlot } = useUserMediaSlots();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
 
-  // Usar formulario hidratado con borrador persistente
-  const { form, setField, setNested, setAll, hydrated } = useHydratedForm({
-    draftKey: "draft:user:profile",
-    serverData: profile,
+  // Usar formulario hidratado con borrador persistente (namespace por usuario)
+  const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({
+    draftKey: `draft:user:profile:${user?.id ?? 'anon'}`,
+    serverData: profile as any,
     defaults: {
       user_id: user?.id || "",
       display_name: "",
       bio: "",
       ritmos: [] as number[],
       zonas: [] as number[],
-      redes_sociales: {
-        instagram: "",
-        tiktok: "",
-        youtube: "",
-        facebook: "",
-        whatsapp: ""
-      },
       respuestas: {
+        redes: {
+          instagram: "",
+          tiktok: "",
+          youtube: "",
+          facebook: "",
+          whatsapp: ""
+        },
         dato_curioso: "",
         gusta_bailar: ""
       }
@@ -103,10 +107,48 @@ export default function UserProfileEditor() {
     setField('zonas', newZonas);
   };
 
-  // Función para guardar
+  // Función para guardar con normalización y rehidratación confiable
   const handleSave = async () => {
     try {
-      await updateProfileFields(form);
+      // Normalizar redes sociales (convertir "" a null)
+      const redes = normalizeSocialInput(form.respuestas?.redes || {});
+      
+      console.log('[UserProfileEditor] Form data antes del guardado:', form);
+      console.log('[UserProfileEditor] Respuestas:', form.respuestas);
+      
+      const candidate = {
+        display_name: form.display_name,
+        bio: form.bio,
+        ritmos: form.ritmos,
+        zonas: form.zonas,
+        respuestas: { 
+          redes,
+          dato_curioso: form.respuestas?.dato_curioso || null,
+          gusta_bailar: form.respuestas?.gusta_bailar || null
+        },
+      };
+
+      // Crear patch inteligente
+      const patch = buildSafePatch(profile || {}, candidate, { 
+        allowEmptyArrays: ["ritmos", "zonas"] as any 
+      });
+
+      console.log('[UserProfileEditor] Patch generado:', patch);
+      console.log('[UserProfileEditor] Candidate:', candidate);
+
+      if (Object.keys(patch).length === 0) {
+        showToast('No hay cambios para guardar', 'info');
+        return;
+      }
+
+      await updateProfileFields(patch);
+      
+      // Refetch y sincronizar draft con datos frescos del servidor
+      const fresh = await refetchProfile();
+      if (fresh) {
+        setFromServer(fresh as any); // sincroniza draft y form con server
+      }
+      
       showToast('Perfil actualizado ✅', 'success');
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -296,8 +338,8 @@ export default function UserProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.instagram}
-                onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                value={form.respuestas?.redes?.instagram || ''}
+                onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
                 placeholder="@tu_usuario"
                 style={{
                   width: '100%',
@@ -317,8 +359,8 @@ export default function UserProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.tiktok}
-                onChange={(e) => setNested('redes_sociales.tiktok', e.target.value)}
+                value={form.respuestas?.redes?.tiktok || ''}
+                onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
                 placeholder="@tu_usuario"
                 style={{
                   width: '100%',
@@ -338,8 +380,8 @@ export default function UserProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.youtube}
-                onChange={(e) => setNested('redes_sociales.youtube', e.target.value)}
+                value={form.respuestas?.redes?.youtube || ''}
+                onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
                 placeholder="Canal o enlace"
                 style={{
                   width: '100%',
@@ -359,8 +401,8 @@ export default function UserProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.facebook}
-                onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                value={form.respuestas?.redes?.facebook || ''}
+                onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
                 placeholder="Perfil o página"
                 style={{
                   width: '100%',
@@ -380,8 +422,8 @@ export default function UserProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.whatsapp}
-                onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                value={form.respuestas?.redes?.whatsapp || ''}
+                onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
                 placeholder="Número de teléfono"
                 style={{
                   width: '100%',
@@ -415,8 +457,11 @@ export default function UserProfileEditor() {
                 🎭 ¿Cuál es tu dato curioso favorito?
               </label>
               <textarea
-                value={form.respuestas.dato_curioso}
-                onChange={(e) => setNested('respuestas.dato_curioso', e.target.value)}
+                value={form.respuestas?.dato_curioso || ''}
+                onChange={(e) => {
+                  console.log('[UserProfileEditor] Cambiando dato_curioso:', e.target.value);
+                  setNested('respuestas.dato_curioso', e.target.value);
+                }}
                 placeholder="Comparte algo interesante sobre ti..."
                 rows={3}
                 style={{
@@ -437,8 +482,11 @@ export default function UserProfileEditor() {
                 💃 ¿Qué te gusta más del baile?
               </label>
               <textarea
-                value={form.respuestas.gusta_bailar}
-                onChange={(e) => setNested('respuestas.gusta_bailar', e.target.value)}
+                value={form.respuestas?.gusta_bailar || ''}
+                onChange={(e) => {
+                  console.log('[UserProfileEditor] Cambiando gusta_bailar:', e.target.value);
+                  setNested('respuestas.gusta_bailar', e.target.value);
+                }}
                 placeholder="Cuéntanos qué te apasiona del baile..."
                 rows={3}
                 style={{

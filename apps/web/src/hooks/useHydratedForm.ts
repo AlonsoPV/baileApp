@@ -2,9 +2,17 @@ import React from "react";
 import { useDrafts } from "../state/drafts";
 import { deepMerge } from "../utils/safePatch";
 
+// Draft vacío = objeto sin claves útiles o con strings vacíos
+function isMeaningfulDraft(v: any) {
+  if (!v || typeof v !== "object") return false;
+  const json = JSON.stringify(v);
+  // sin contenido o solo defaults vacíos
+  return json !== "{}" && !/^\s*$/.test(json);
+}
+
 type Options<T> = {
-  draftKey: string;             // Clave única del borrador
-  serverData?: T | null;        // Datos actuales del servidor
+  draftKey: string;             // ej: draft:user:profile:<userId>
+  serverData?: (T & { updated_at?: string }) | null;
   defaults: T;                  // Forma por defecto del formulario
   preferDraft?: boolean;        // true: si hay draft, usa draft primero
 };
@@ -41,33 +49,52 @@ export function useHydratedForm<T extends Record<string, any>>({
   preferDraft = true,
 }: Options<T>) {
   const { getDraft, setDraft } = useDrafts();
+  const draftRec = getDraft(draftKey);
+  const draftVal = draftRec?.value as T | undefined;
 
-  const draft = getDraft(draftKey)?.value as T | undefined;
-
-  const [hydrated, setHydrated] = React.useState(false);
   const [form, setForm] = React.useState<T>(defaults);
+  const [hydrated, setHydrated] = React.useState(false);
+  const [dirty, setDirty] = React.useState(false);
 
-  // Hidratación única: 1) borrador si existe y preferDraft; 2) serverData; 3) defaults
+  // mantén un sello del server para detectar cambios reales
+  const serverStamp = serverData?.updated_at || JSON.stringify(serverData ?? {});
+  const serverStampRef = React.useRef<string | null>(null);
+
+  // Hidratación inicial: prioridad => draft significativo > server > defaults
   React.useEffect(() => {
     if (hydrated) return;
-
-    let base = { ...defaults };
-    
-    if (preferDraft && draft) {
-      // Preferir draft si existe
-      base = deepMerge(base, draft);
-      console.log(`[useHydratedForm] Hydrated from draft: ${draftKey}`, draft);
-    } else if (serverData) {
-      // Usar datos del servidor
-      base = deepMerge(base, serverData as any);
-      console.log(`[useHydratedForm] Hydrated from server: ${draftKey}`, serverData);
-    } else {
-      console.log(`[useHydratedForm] Hydrated from defaults: ${draftKey}`);
+    if (preferDraft && isMeaningfulDraft(draftVal)) {
+      setForm(draftVal as T);
+      setHydrated(true);
+      return;
     }
-
-    setForm(base);
+    if (serverData) {
+      setForm(deepMerge(defaults, serverData as any));
+      setHydrated(true);
+      serverStampRef.current = serverStamp;
+      return;
+    }
+    // sin server todavía
+    setForm(defaults);
     setHydrated(true);
-  }, [hydrated, draftKey, serverData]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, draftKey, !!serverData]);
+
+  // Si cambia el server y el usuario NO está editando, rehidrata desde server
+  React.useEffect(() => {
+    if (!hydrated) return;
+    if (!serverData) return;
+
+    const prevStamp = serverStampRef.current;
+    if (prevStamp === serverStamp) return; // no cambió
+
+    if (!dirty) {
+      setForm((cur) => deepMerge(cur, serverData as any));
+      setDraft(draftKey, deepMerge(defaults, serverData as any));
+      serverStampRef.current = serverStamp;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverStamp, hydrated, dirty, draftKey]);
 
   /**
    * Actualiza un campo específico y persiste en draft
@@ -79,19 +106,18 @@ export function useHydratedForm<T extends Record<string, any>>({
         setDraft(draftKey, next);
         return next;
       });
+      if (!dirty) setDirty(true);
     },
-    [draftKey, setDraft]
+    [draftKey, dirty, setDraft]
   );
 
-  /**
-   * Reemplaza todo el formulario y persiste en draft
-   */
   const setAll = React.useCallback((next: T) => {
     setForm(() => {
       setDraft(draftKey, next);
       return next;
     });
-  }, [draftKey, setDraft]);
+    if (!dirty) setDirty(true);
+  }, [draftKey, dirty, setDraft]);
 
   /**
    * Actualiza un campo anidado (ej: respuestas.redes.instagram)
@@ -121,15 +147,27 @@ export function useHydratedForm<T extends Record<string, any>>({
         setDraft(draftKey, current);
         return current;
       });
+      if (!dirty) setDirty(true);
     },
-    [draftKey, setDraft]
+    [draftKey, dirty, setDraft]
   );
+
+  // Permite sincronizar tras guardar
+  const setFromServer = React.useCallback((server: T & { updated_at?: string }) => {
+    const merged = deepMerge(defaults, server as any);
+    setForm(merged);
+    setDraft(draftKey, merged);
+    serverStampRef.current = server.updated_at || JSON.stringify(server);
+    setDirty(false);
+  }, [draftKey, defaults, setDraft]);
 
   return { 
     form, 
     setField, 
     setAll, 
     setNested,
-    hydrated 
+    setFromServer,
+    hydrated,
+    dirty
   };
 }

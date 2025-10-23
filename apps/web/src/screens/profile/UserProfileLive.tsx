@@ -11,6 +11,7 @@ import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -687,148 +688,9 @@ export const UserProfileLive: React.FC = () => {
         )}
 
         {/* Redes Sociales */}
-        {(profile?.redes_sociales?.instagram || profile?.redes_sociales?.tiktok || profile?.redes_sociales?.youtube ||
-          profile?.redes_sociales?.facebook || profile?.redes_sociales?.whatsapp ||
-          profile?.respuestas?.redes?.instagram || profile?.respuestas?.redes?.tiktok || profile?.respuestas?.redes?.youtube) && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600' }}>
-              🔗 Redes Sociales
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              {(profile.redes_sociales?.instagram || profile.respuestas?.redes?.instagram) && (
-                <a
-                  href={profile.redes_sociales?.instagram || profile.respuestas?.redes?.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #833AB4, #FD1D1D)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    transition: 'transform 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  📷 Instagram
-                </a>
-              )}
-              {(profile.redes_sociales?.tiktok || profile.respuestas?.redes?.tiktok) && (
-                <a
-                  href={profile.redes_sociales?.tiktok || profile.respuestas?.redes?.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #000000, #00f2ea)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    transition: 'transform 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  🎵 TikTok
-                </a>
-              )}
-              {(profile.redes_sociales?.youtube || profile.respuestas?.redes?.youtube) && (
-                <a
-                  href={profile.redes_sociales?.youtube || profile.respuestas?.redes?.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #FF0000, #CC0000)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    transition: 'transform 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  📺 YouTube
-                </a>
-              )}
-              {(profile.redes_sociales?.facebook || profile.respuestas?.redes?.facebook) && (
-                <a
-                  href={profile.redes_sociales?.facebook || profile.respuestas?.redes?.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #1877F2, #0A5FCC)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    transition: 'transform 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  📘 Facebook
-                </a>
-              )}
-              {(profile.redes_sociales?.whatsapp || profile.respuestas?.redes?.whatsapp) && (
-                <a
-                  href={`https://wa.me/${(profile.redes_sociales?.whatsapp || profile.respuestas?.redes?.whatsapp).replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                    color: 'white',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    transition: 'transform 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  💬 WhatsApp
-                </a>
-              )}
-            </div>
-          </motion.section>
-        )}
+        <SocialMediaSection 
+          respuestas={profile?.respuestas}
+        />
 
         {/* Sección 1: Foto - Pregunta */}
         <motion.section

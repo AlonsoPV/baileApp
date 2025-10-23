@@ -14,6 +14,7 @@ export type ProfileUser = {
   onboarding_complete?: boolean; // ⚠️ NO actualizar desde este hook
   respuestas?: Record<string, any>;
   redes_sociales?: Record<string, any>;
+  updated_at?: string; // Para rehidratación confiable
 };
 
 const KEY = (uid?: string) => ["profile", "me", uid];
@@ -28,7 +29,7 @@ export function useUserProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles_user")
-        .select("*")
+        .select("user_id, display_name, bio, avatar_url, ritmos, zonas, respuestas, updated_at")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
@@ -87,10 +88,15 @@ export function useUserProfile() {
     },
   });
 
+  async function refetchProfile() {
+    return qc.fetchQuery({ queryKey: KEY(user?.id) });
+  }
+
   return {
     profile: profile.data,
     isLoading: profile.isLoading,
     updateProfileFields: updateFields.mutateAsync,
     refetch: profile.refetch,
+    refetchProfile,
   };
 }
