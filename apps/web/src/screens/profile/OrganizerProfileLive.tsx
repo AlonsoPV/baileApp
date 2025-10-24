@@ -1281,7 +1281,7 @@ export function OrganizerProfileLive() {
         )}
 
 
-        {/* Galería de Fotos Mejorada */}
+        {/* Galería de Fotos del Organizador */}
         {carouselPhotos.length > 0 && (
           <motion.section
             id="organizer-profile-photo-gallery"
@@ -1292,145 +1292,238 @@ export function OrganizerProfileLive() {
             transition={{ delay: 0.5 }}
             style={{
               marginBottom: '2rem',
-              padding: '2rem',
+              padding: '2.5rem',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              borderRadius: '24px',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
+            {/* Efecto de fondo animado */}
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem'
+              position: 'absolute',
+              top: '-50%',
+              right: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%)',
+              animation: 'float 10s ease-in-out infinite',
+              zIndex: 0
+            }} />
+            
+            <div style={{
+              position: 'relative',
+              zIndex: 1
             }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '1rem',
+                marginBottom: '2rem'
               }}>
-                📷 Galería de Fotos
-              </h3>
-              <div style={{
-                padding: '0.5rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '20px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: colors.light
-              }}>
-                {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
+                }}>
+                  📷
+                </div>
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    Galería de Fotos
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Fotos del organizador
+                  </p>
+                </div>
+                <div style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
+                  borderRadius: '25px',
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  color: colors.light,
+                  border: '1px solid rgba(229, 57, 53, 0.3)',
+                  boxShadow: '0 4px 16px rgba(229, 57, 53, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                </div>
               </div>
-            </div>
             
-            <CarouselComponent photos={carouselPhotos} />
+              <CarouselComponent photos={carouselPhotos} />
+            </div>
           </motion.section>
         )}
 
-        {/* Sección de Videos */}
+        {/* Sección de Videos del Organizador */}
         {videos.length > 0 && (
           <motion.section
+            id="organizer-profile-video-gallery"
+            data-test-id="organizer-profile-video-gallery"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             style={{
               marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+              borderRadius: '24px',
+              border: '2px solid rgba(30, 136, 229, 0.2)',
+              boxShadow: '0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
+            {/* Efecto de fondo animado */}
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem'
-            }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                🎥 Videos
-              </h3>
-              <div style={{
-                padding: '0.5rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '20px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: colors.light
-              }}>
-                {videos.length} video{videos.length !== 1 ? 's' : ''}
-              </div>
-            </div>
+              position: 'absolute',
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(30, 136, 229, 0.1) 0%, transparent 70%)',
+              animation: 'float 12s ease-in-out infinite reverse',
+              zIndex: 0
+            }} />
             
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1.5rem',
-              maxWidth: '1000px',
-              margin: '0 auto'
+              position: 'relative',
+              zIndex: 1
             }}>
-              {videos.map((video, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{
-                    scale: 1.05,
-                    y: -5,
-                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
-                  }}
-                  style={{
-                    aspectRatio: '16/9',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '2px solid rgba(255, 255, 255, 0.2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    background: 'rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  <video
-                    src={video}
-                    controls
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: '0.5rem',
-                    right: '0.5rem',
-                    background: 'rgba(0, 0, 0, 0.7)',
-                    color: 'white',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: '600'
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                }}>
+                  🎥
+                </div>
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
                   }}>
-                    Video {index + 1}
-                  </div>
-                </motion.div>
-              ))}
+                    Videos del Organizador
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Videos promocionales y demostraciones
+                  </p>
+                </div>
+                <div style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                  borderRadius: '25px',
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  color: colors.light,
+                  border: '1px solid rgba(30, 136, 229, 0.3)',
+                  boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  {videos.length} video{videos.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                gap: '2rem',
+                maxWidth: '1200px',
+                margin: '0 auto'
+              }}>
+                {videos.map((video, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{
+                      scale: 1.05,
+                      y: -8,
+                      boxShadow: '0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
+                    }}
+                    style={{
+                      aspectRatio: '16/9',
+                      borderRadius: '20px',
+                      overflow: 'hidden',
+                      border: '2px solid rgba(30, 136, 229, 0.3)',
+                      cursor: 'pointer',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      background: 'rgba(0, 0, 0, 0.1)',
+                      boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <video
+                      src={video}
+                      controls
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '1rem',
+                      right: '1rem',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '12px',
+                      fontSize: '0.875rem',
+                      fontWeight: '700',
+                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                      backdropFilter: 'blur(10px)'
+                    }}>
+                      🎥 Video {index + 1}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.section>
         )}
