@@ -10,6 +10,7 @@ import ChipPicker from "../common/ChipPicker";
 import FAQEditor from "../common/FAQEditor";
 import ScheduleEditor from "./ScheduleEditor";
 import CostsEditor from "./CostsEditor";
+import DateFlyerUploader from "./DateFlyerUploader";
 
 const colors = {
   coral: '#FF3D57',
@@ -102,6 +103,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       requisitos: '',
       cronograma: [],
       costos: [],
+      flyer_url: null,
       estado_publicacion: 'borrador',
     }
   });
@@ -664,6 +666,23 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   <CostsEditor
                     value={values?.costos || []}
                     onChange={(costos) => setValue('costos', costos)}
+                  />
+                </div>
+              )}
+
+              {/* Flyer - Solo para fechas */}
+              {!isParent && (
+                <div style={{
+                  padding: '24px',
+                  background: `${colors.dark}66`,
+                  borderRadius: '16px',
+                  border: `1px solid ${colors.light}22`,
+                }}>
+                  <DateFlyerUploader
+                    value={values?.flyer_url || null}
+                    onChange={(url) => setValue('flyer_url', url)}
+                    dateId={initialData?.id}
+                    parentId={props.parentId}
                   />
                 </div>
               )}

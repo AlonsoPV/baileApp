@@ -8,7 +8,7 @@ export function useEventDatesByParent(parentId?: number) {
       if (!parentId) return [];
       const { data, error } = await supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, estado_publicacion, created_at, updated_at")
+        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
         .eq("parent_id", parentId)
         .order("fecha", { ascending: true });
       if (error) throw error;
@@ -30,7 +30,7 @@ export function useEventDate(dateId?: number) {
       
       const { data, error } = await supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, estado_publicacion, created_at, updated_at")
+        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
         .eq("id", dateId)
         .maybeSingle();
         

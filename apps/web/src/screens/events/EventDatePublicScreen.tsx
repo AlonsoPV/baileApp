@@ -781,6 +781,91 @@ export default function EventDatePublicScreen() {
           </div>
         )}
 
+        {/* Flyer de la Fecha */}
+        {date.flyer_url && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '24px',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
+                }}>
+                  🎟️
+                </div>
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    Flyer del Evento
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Promocional de la fecha
+                  </p>
+                </div>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                <img
+                  src={date.flyer_url}
+                  alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
+                  style={{
+                    width: '100%',
+                    maxWidth: '520px',
+                    borderRadius: '16px',
+                    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)',
+                    aspectRatio: '4 / 5',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            </div>
+          </motion.section>
+        )}
+
         {/* RSVP Section */}
         <div style={{
           background: `${colors.dark}66`,
