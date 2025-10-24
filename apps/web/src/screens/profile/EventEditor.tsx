@@ -41,7 +41,7 @@ export const EventEditor: React.FC = () => {
         estilos: values.estilos || [],
         media: values.media || [],
       };
-      return await updateMutation.mutateAsync({ id: currentEvent.id, patch: payload });
+      await updateMutation.mutateAsync({ id: currentEvent.id, patch: payload });
     } else {
       // Create new event
       const payload = {
@@ -52,7 +52,7 @@ export const EventEditor: React.FC = () => {
         media: values.media || [],
         organizer_id: organizer.id,
       };
-      return await createMutation.mutateAsync(payload);
+      await createMutation.mutateAsync(payload);
     }
   };
 
@@ -129,12 +129,12 @@ export const EventEditor: React.FC = () => {
         }}>
           {/* Event Dates Section */}
           <div style={{ marginTop: '48px' }}>
-            <EventDatesSection eventId={currentEvent.id} />
+            <EventDatesSection eventId={currentEvent.id} eventName={currentEvent.nombre} />
           </div>
 
           {/* Event Pricing Section */}
           <div style={{ marginTop: '48px' }}>
-            <EventPricingSection eventId={currentEvent.id} />
+            <EventPricingSection eventId={currentEvent.id} eventName={currentEvent.nombre} />
           </div>
         </div>
       )}
