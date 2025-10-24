@@ -10,9 +10,17 @@ export interface SocialMediaSectionProps {
       whatsapp?: string | null;
     };
   };
+  redes_sociales?: {
+    instagram?: string | null;
+    tiktok?: string | null;
+    youtube?: string | null;
+    facebook?: string | null;
+    whatsapp?: string | null;
+  };
   title?: string;
   showTitle?: boolean;
   style?: React.CSSProperties;
+  availablePlatforms?: ('instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp')[];
 }
 
 function isNonEmpty(v?: string | null) {
@@ -36,11 +44,20 @@ function buildWhatsAppLink(v: string) {
 
 export default function SocialMediaSection({
   respuestas,
+  redes_sociales,
   title = "🔗 Redes Sociales",
   showTitle = true,
   style,
+  availablePlatforms = ['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp'],
 }: SocialMediaSectionProps) {
-  const redes = respuestas?.redes || {};
+  console.log('[SocialMediaSection] Props recibidas:', { respuestas, redes_sociales, title, showTitle, style, availablePlatforms });
+  
+  // Combinar ambas fuentes: respuestas.redes tiene prioridad sobre redes_sociales
+  const redes = {
+    ...redes_sociales,
+    ...respuestas?.redes,
+  };
+  console.log('[SocialMediaSection] Redes combinadas:', redes);
 
   const entries = ([
     ["instagram", redes.instagram],
@@ -48,7 +65,8 @@ export default function SocialMediaSection({
     ["youtube",   redes.youtube],
     ["facebook",  redes.facebook],
     ["whatsapp",  redes.whatsapp],
-  ] as const).flatMap(([k, v]) => {
+  ] as const).filter(([k]) => availablePlatforms.includes(k)).flatMap(([k, v]) => {
+    console.log(`[SocialMediaSection] Procesando ${k}:`, v, 'isNonEmpty:', isNonEmpty(v as string | null));
     if (!isNonEmpty(v as string | null)) return [];
     if (k === "whatsapp") {
       const link = buildWhatsAppLink(v as string);
@@ -66,7 +84,13 @@ export default function SocialMediaSection({
     return [[k, url]];
   }) as [string, string][];
 
-  if (entries.length === 0) return null;
+  console.log('[SocialMediaSection] Entries finales:', entries);
+  console.log('[SocialMediaSection] Entries length:', entries.length);
+
+  if (entries.length === 0) {
+    console.log('[SocialMediaSection] No hay entradas válidas, retornando null');
+    return null;
+  }
 
   const defaultStyle: React.CSSProperties = {
     marginBottom: '2rem',
@@ -166,8 +190,10 @@ export default function SocialMediaSection({
     };
   };
 
+  console.log('[SocialMediaSection] Renderizando componente con', entries.length, 'entradas');
+  
   return (
-    <section
+    <section 
       style={defaultStyle}
       data-test-id="social-media-section"
     >

@@ -15,9 +15,9 @@ import InfoScreen from './screens/InfoScreen';
 import { OrganizerEditScreen } from './screens/events/OrganizerEditScreen';
 import { OrganizerPublicScreen } from './screens/events/OrganizerPublicScreen';
 import { EventParentEditScreen } from './screens/events/EventParentEditScreen';
-import { EventParentPublicScreen } from './screens/events/EventParentPublicScreen';
+import EventParentPublicScreen from './screens/events/EventParentPublicScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
-import { EventDatePublicScreen } from './screens/events/EventDatePublicScreen';
+import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 import { EventCreateWizard } from './screens/events/EventCreateWizard';
 
@@ -35,6 +35,19 @@ import OrganizerProfileEditor from './screens/profile/OrganizerProfileEditor';
 import { OrganizerDashboardDates } from './screens/profile/OrganizerDashboardDates';
 import UserPublicProfile from './screens/profile/UserPublicProfile';
 import UserProfileEditor from './screens/profile/UserProfileEditor';
+import AcademyProfileLive from './screens/profile/AcademyProfileLive';
+import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
+import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
+
+// New Social/Event Flow Screens
+import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventParentCreateScreen';
+import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
+import OrganizerEventDateCreateScreen from './screens/events/OrganizerEventDateCreateScreen';
+import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEditScreen';
+import EventParentPublicScreenNew from './screens/events/EventParentPublicScreen';
+import EventDatePublicScreenNew from './screens/events/EventDatePublicScreen';
+import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
+import { DateLiveScreen } from './screens/events/DateLiveScreen';
 
 // Sprint 3 - Explore/Search
 import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
@@ -91,6 +104,9 @@ export function AppRouter() {
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/profile/edit" element={<ProfileScreen />} />
         
+        {/* Default Profile Settings */}
+        <Route path="/profile/settings" element={<DefaultProfileSettings />} />
+        
         {/* Event Creation Wizard */}
         <Route path="/events/new" element={<EventCreateWizard />} />
         
@@ -100,12 +116,19 @@ export function AppRouter() {
 
         {/* Sprint 3 - New Profile Routes */}
         <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
+        <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
         
         {/* Organizer Event Editors */}
         <Route path="/profile/organizer/events/new" element={<EventEditor />} />
         <Route path="/profile/organizer/events/:id" element={<EventEditor />} />
+        <Route path="/profile/organizer/events/:id/edit" element={<EventEditor />} />
         <Route path="/profile/organizer/date/new/:parentId" element={<EventDateEditor />} />
         <Route path="/profile/organizer/date/:id" element={<EventDateEditor />} />
+        <Route path="/profile/organizer/date/:id/edit" element={<EventDateEditor />} />
+        
+        {/* Event Routes - Alternative paths */}
+        <Route path="/events/:id/edit" element={<EventEditor />} />
+        <Route path="/events/date/:id/edit" element={<EventDateEditor />} />
 
         {/* Organizer Dashboard */}
         <Route path="/profile/organizer/dashboard/:id" element={<OrganizerDashboardDates />} />
@@ -126,6 +149,16 @@ export function AppRouter() {
 
         {/* My RSVPs Route */}
         <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
+
+        {/* New Social/Event Flow Routes */}
+        {/* Social (Parent) Routes */}
+        <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
+        <Route path="/social/:parentId" element={<EventParentPublicScreenNew />} />
+        <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
+        <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
+        
+        {/* Event Date Routes */}
+        <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
 
         {/* Explore/Search Routes */}
         <Route path="/explore" element={<ExploreHomeScreen />} />
@@ -154,11 +187,16 @@ export function AppRouter() {
       {/* Public Routes (no authentication required) */}
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
+      <Route path="/profile/academy" element={<AcademyProfileLive />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
       <Route path="/profile/user/edit" element={<UserProfileEditor />} />
-      <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
       
-      {/* New unified public event view */}
+      {/* Social and Date Live Routes */}
+      <Route path="/social/:id" element={<SocialLiveScreen />} />
+      <Route path="/social/fecha/:id" element={<DateLiveScreen />} />
+      
+      {/* Legacy event routes */}
+      <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
       <Route path="/events/date/:id" element={<EventPublicScreen />} />
 
       {/* Default redirect */}

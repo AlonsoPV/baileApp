@@ -1,0 +1,877 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useMyAcademy } from "../../hooks/useAcademy";
+import { useAcademyMedia } from "../../hooks/useAcademyMedia";
+import { useTags } from "../../hooks/useTags";
+import { fmtDate, fmtTime } from "../../utils/format";
+import { Chip } from "../../components/profile/Chip";
+import ImageWithFallback from "../../components/ImageWithFallback";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+
+// Componente FAQ Accordion
+const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={{
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '12px',
+      marginBottom: '0.75rem',
+      overflow: 'hidden',
+      background: 'rgba(255, 255, 255, 0.02)'
+    }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          padding: '1rem 1.5rem',
+          background: 'transparent',
+          border: 'none',
+          color: 'white',
+          textAlign: 'left',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '1rem',
+          fontWeight: '600',
+          transition: 'all 0.2s'
+        }}
+      >
+        <span>{question}</span>
+        <span style={{
+          fontSize: '1.25rem',
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s'
+        }}>
+          ▼
+        </span>
+      </button>
+      {isOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            padding: '0 1.5rem 1rem 1.5rem',
+            color: 'rgba(255, 255, 255, 0.8)',
+            lineHeight: 1.6
+          }}
+        >
+          {answer}
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+// Componente Carousel para fotos
+const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  if (photos.length === 0) return null;
+
+  const nextPhoto = () => {
+    setCurrentIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const prevPhoto = () => {
+    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const goToPhoto = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  return (
+    <>
+      <div style={{
+        position: 'relative',
+        maxWidth: '1000px',
+        margin: '0 auto'
+      }}>
+        {/* Imagen principal */}
+        <div style={{
+          position: 'relative',
+          aspectRatio: '16 / 9',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          background: 'rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 1,
+            transform: 'none'
+          }}>
+            <ImageWithFallback
+              src={photos[currentIndex]}
+              alt={`Foto ${currentIndex + 1}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                cursor: 'pointer'
+              }}
+              onClick={() => setIsFullscreen(true)}
+            />
+          </div>
+          
+          {/* Contador */}
+          <div style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '20px',
+            fontSize: '0.875rem',
+            fontWeight: '600'
+          }}>
+            {currentIndex + 1} / {photos.length}
+          </div>
+
+          {/* Botones de navegación */}
+          <button
+            onClick={prevPhoto}
+            style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.25rem',
+              transition: '0.2s'
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={nextPhoto}
+            style={{
+              position: 'absolute',
+              right: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.25rem',
+              transition: '0.2s'
+            }}
+          >
+            ›
+          </button>
+        </div>
+
+        {/* Miniaturas */}
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginTop: '1rem',
+          justifyContent: 'center',
+          flexWrap: 'wrap'
+        }}>
+          {photos.map((photo, index) => (
+            <button
+              key={index}
+              onClick={() => goToPhoto(index)}
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: index === currentIndex ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
+                cursor: 'pointer',
+                background: 'transparent',
+                padding: 0,
+                transition: '0.2s'
+              }}
+            >
+              <ImageWithFallback
+                src={photo}
+                alt={`Miniatura ${index + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pantalla completa */}
+      {isFullscreen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            cursor: 'pointer'
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          <div style={{
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }}>
+            <ImageWithFallback
+              src={photos[currentIndex]}
+              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const colors = {
+  primary: '#E53935',
+  secondary: '#FB8C00',
+  blue: '#1E88E5',
+  coral: '#FF7043',
+  light: '#F5F5F5',
+  dark: '#1A1A1A',
+  orange: '#FF9800'
+};
+
+export default function AcademyProfileLive() {
+  const navigate = useNavigate();
+  const { data: academy, isLoading } = useMyAcademy();
+  const { media } = useAcademyMedia();
+  const { data: allTags } = useTags();
+
+  // Obtener fotos del carrusel usando los media slots
+  const carouselPhotos = PHOTO_SLOTS
+    .map(slot => getMediaBySlot(media, slot)?.url)
+    .filter(Boolean) as string[];
+
+  // Obtener videos
+  const videos = VIDEO_SLOTS
+    .map(slot => getMediaBySlot(media, slot)?.url)
+    .filter(Boolean) as string[];
+
+  // Get tag names from IDs
+  const getEstiloNombres = () => {
+    if (!allTags || !academy?.estilos) return [];
+    return academy.estilos
+      .map(id => allTags.find(tag => tag.id === id)?.nombre)
+      .filter(Boolean);
+  };
+
+  console.log('[AcademyProfileLive] Academy data:', academy);
+  console.log('[AcademyProfileLive] Academy respuestas:', academy?.respuestas);
+  console.log('[AcademyProfileLive] Academy redes_sociales:', academy?.redes_sociales);
+
+  if (isLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando academia...</p>
+      </div>
+    );
+  }
+
+  if (!academy) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+          No tienes perfil de academia
+        </h2>
+        <p style={{ marginBottom: '24px', opacity: 0.7 }}>
+          Crea uno para dar clases
+        </p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/profile/academy/edit')}
+          style={{
+            padding: '14px 28px',
+            borderRadius: '50px',
+            border: 'none',
+            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+            color: colors.light,
+            fontSize: '1rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(30,136,229,0.5)',
+          }}
+        >
+          🎓 Crear Academia
+        </motion.button>
+      </div>
+    );
+  }
+
+  // Preparar chips de estado
+  const statusChip = (
+    <span
+      style={{
+        padding: '8px 16px',
+        borderRadius: '20px',
+        background: academy.estado_aprobacion === 'aprobado' ? '#10B981cc' : `${colors.orange}cc`,
+        border: `2px solid ${academy.estado_aprobacion === 'aprobado' ? '#10B981' : colors.orange}`,
+        color: colors.light,
+        fontSize: '0.875rem',
+        fontWeight: '700',
+        backdropFilter: 'blur(10px)',
+        boxShadow: `0 2px 10px ${academy.estado_aprobacion === 'aprobado' ? '#10B981' : colors.orange}66`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+      }}
+    >
+      {academy.estado_aprobacion === 'aprobado' ? '✅' : '⏳'} {academy.estado_aprobacion}
+    </span>
+  );
+
+  return (
+    <>
+      <style>{`
+        .academy-container {
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+        .academy-banner {
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
+          position: relative;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(229, 57, 53, 0.4);
+        }
+        .academy-banner-grid {
+          display: grid;
+          grid-template-columns: 1fr 2fr;
+          gap: 2rem;
+          padding: 2rem;
+          align-items: center;
+        }
+        .academy-banner-avatar {
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 6px solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+          background: linear-gradient(135deg, #1E88E5, #FF7043);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 4rem;
+          font-weight: 700;
+          color: white;
+        }
+        .academy-banner-avatar-fallback {
+          font-size: 6rem;
+        }
+        @media (max-width: 768px) {
+          .academy-banner-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 1.5rem;
+          }
+          .academy-banner h1 {
+            font-size: 2rem !important;
+          }
+          .academy-banner-avatar {
+            width: 180px !important;
+            height: 180px !important;
+          }
+          .academy-banner-avatar-fallback {
+            font-size: 4rem !important;
+          }
+        }
+      `}</style>
+
+      <div className="academy-container">
+        {/* Navigation Toggle */}
+        <ProfileNavigationToggle 
+          currentView="live" 
+          profileType="academy" 
+        />
+
+        {/* Banner Principal */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="academy-banner"
+        >
+          <div className="academy-banner-grid">
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div className="academy-banner-avatar">
+                {getMediaBySlot(media, 'cover')?.url || getMediaBySlot(media, 'p1')?.url ? (
+                  <img
+                    src={getMediaBySlot(media, 'cover')?.url || getMediaBySlot(media, 'p1')?.url || ''}
+                    alt="Logo de la academia"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div className="academy-banner-avatar-fallback" style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '6rem',
+                    fontWeight: '700',
+                    color: 'white'
+                  }}>
+                    {academy.nombre_publico?.[0]?.toUpperCase() || '🎓'}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ marginBottom: '1rem' }}>
+                {statusChip}
+              </div>
+              <h1 style={{
+                fontSize: '3rem',
+                fontWeight: '800',
+                color: 'white',
+                margin: '0 0 0.5rem 0',
+                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+              }}>
+                {academy.nombre_publico}
+              </h1>
+              <p style={{
+                fontSize: '1.25rem',
+                color: 'rgba(255, 255, 255, 0.9)',
+                margin: '0 0 1.5rem 0',
+                lineHeight: 1.4
+              }}>
+                Academia de Baile
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Contenido Principal */}
+        <div style={{ padding: '2rem 0' }}>
+          {/* Bio */}
+          {academy.bio && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: '0 0 1rem 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                📚 Sobre Nosotros
+              </h2>
+              <p style={{
+                fontSize: '1.1rem',
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.9)',
+                margin: 0
+              }}>
+                {academy.bio}
+              </p>
+            </motion.section>
+          )}
+
+          {/* Estilos de Baile */}
+          {academy.estilos && academy.estilos.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: '0 0 1.5rem 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                🎵 Estilos que Enseñamos
+              </h2>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}>
+                {getEstiloNombres().map((estilo, index) => (
+                  <Chip
+                    key={index}
+                    label={estilo}
+                    active={true}
+                    variant="ritmo"
+                    style={{
+                      background: 'rgba(229, 57, 53, 0.2)',
+                      border: '1px solid #E53935',
+                      color: '#E53935',
+                      fontWeight: '600'
+                    }}
+                  />
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Redes Sociales */}
+          <SocialMediaSection 
+            respuestas={academy.respuestas}
+            redes_sociales={academy.redes_sociales}
+            title="📱 Redes Sociales"
+            availablePlatforms={['instagram', 'facebook', 'whatsapp']}
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            }}
+          />
+
+          {/* Maestros Invitados */}
+          <InvitedMastersSection 
+            masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
+            title="🎭 Maestros Invitados"
+            showTitle={true}
+            isEditable={false}
+          />
+
+          {/* Foto Principal */}
+          {getMediaBySlot(media, 'p1') && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '1.5rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'center',
+                opacity: 1,
+                transform: 'none'
+              }}
+            >
+              <div style={{
+                width: '100%',
+                maxWidth: '500px',
+                aspectRatio: '4 / 3',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <ImageWithFallback
+                  alt="Foto principal"
+                  src={getMediaBySlot(media, 'p1')?.url || ''}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            </motion.section>
+          )}
+
+          {/* Video Principal */}
+          {getMediaBySlot(media, 'v1') && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '1.5rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'center',
+                opacity: 1,
+                transform: 'none'
+              }}
+            >
+              <div style={{
+                width: '100%',
+                maxWidth: '600px',
+                aspectRatio: '16 / 9',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <video
+                  src={getMediaBySlot(media, 'v1')?.url || ''}
+                  controls
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            </motion.section>
+          )}
+
+          {/* Galería de Fotos Mejorada */}
+          {carouselPhotos.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              id="academy-profile-photo-gallery"
+              data-baile-id="academy-profile-photo-gallery"
+              data-test-id="academy-profile-photo-gallery"
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                opacity: 1,
+                transform: 'none'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  margin: 0
+                }}>
+                  📷 Galería de Fotos
+                </h3>
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '20px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: 'rgba(245, 245, 245, 0.9)'
+                }}>
+                  {carouselPhotos.length} fotos
+                </div>
+              </div>
+              <CarouselComponent photos={carouselPhotos} />
+            </motion.section>
+          )}
+
+          {/* Videos */}
+          {videos.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: '0 0 1.5rem 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                🎥 Videos
+              </h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {videos.map((video, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      aspectRatio: '16 / 9',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '2px solid rgba(255, 255, 255, 0.1)',
+                      background: 'rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    <video
+                      src={video}
+                      controls
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Información para Estudiantes */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              margin: '0 0 1.5rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              💬 Información para Estudiantes
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <FAQAccordion
+                question="¿Qué necesito para empezar?"
+                answer="Solo necesitas ganas de aprender y ropa cómoda. No se requiere experiencia previa."
+              />
+              <FAQAccordion
+                question="¿Cuáles son los horarios de clases?"
+                answer="Ofrecemos clases de lunes a viernes de 6:00 PM a 9:00 PM y sábados de 10:00 AM a 2:00 PM."
+              />
+              <FAQAccordion
+                question="¿Hay niveles para principiantes?"
+                answer="Sí, tenemos clases para todos los niveles: principiantes, intermedios y avanzados."
+              />
+              <FAQAccordion
+                question="¿Cómo me inscribo a una clase?"
+                answer="Puedes inscribirte directamente desde nuestra página web o contactarnos por WhatsApp."
+              />
+            </div>
+          </motion.section>
+        </div>
+      </div>
+    </>
+  );
+}

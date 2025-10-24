@@ -47,23 +47,38 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   }, [isRoleDropdownOpen]);
 
   const getLiveRoute = () => {
-    return profileType === 'user' ? '/profile' : '/profile/organizer';
+    switch (profileType) {
+      case 'user': return '/profile';
+      case 'organizer': return '/profile/organizer';
+      case 'academy': return '/profile/academy';
+      default: return '/profile';
+    }
   };
 
   const getEditRoute = () => {
-    return profileType === 'user' ? '/profile/edit' : '/profile/organizer/edit';
+    switch (profileType) {
+      case 'user': return '/profile/edit';
+      case 'organizer': return '/profile/organizer/edit';
+      case 'academy': return '/profile/academy/edit';
+      default: return '/profile/edit';
+    }
   };
 
   const getProfileName = () => {
-    return profileType === 'user' ? 'Usuario' : 'Organizador';
+    switch (profileType) {
+      case 'user': return 'Usuario';
+      case 'organizer': return 'Organizador';
+      case 'academy': return 'Academia';
+      default: return 'Usuario';
+    }
   };
 
   // Definir roles disponibles
   const availableRoles = [
     { id: 'user', name: 'Usuario', icon: '👤', route: '/profile', available: true },
     { id: 'organizer', name: 'Organizador', icon: '🎤', route: '/profile/organizer', available: true },
+    { id: 'academy', name: 'Academia', icon: '🎓', route: '/profile/academy', available: true },
     { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher', available: true },
-    { id: 'school', name: 'Academia', icon: '🎓', route: '/profile/school', available: true },
     { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand', available: true },
   ];
 

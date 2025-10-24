@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./useAuth";
 import { buildSafePatch } from "../utils/safePatch";
+import { normalizeSocialInput, normalizeQuestions } from "../utils/normalize";
 
 export type ProfileUser = {
   user_id: string;
@@ -47,8 +48,18 @@ export function useUserProfile() {
         // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
         const { media, onboarding_complete, ...candidate } = next;
 
+        // Normalizar datos antes del patch
+        const normalizedCandidate = {
+          ...candidate,
+          respuestas: {
+            ...candidate.respuestas,
+            redes: normalizeSocialInput(candidate.respuestas?.redes || {}),
+            ...normalizeQuestions(candidate.respuestas || {})
+          }
+        };
+
         // Usar buildSafePatch para merge inteligente
-        const patch = buildSafePatch(prev, candidate, { 
+        const patch = buildSafePatch(prev, normalizedCandidate, { 
           allowEmptyArrays: ["ritmos", "zonas"] as any 
         });
 
@@ -60,11 +71,16 @@ export function useUserProfile() {
         // Diagnóstico en desarrollo
         if (import.meta.env.MODE === "development") {
           console.log("[useUserProfile] PREV:", prev);
-          console.log("[useUserProfile] NEXT:", next);
+          console.log("[useUserProfile] NEXT:", normalizedCandidate);
           console.log("[useUserProfile] PATCH:", patch);
         }
 
         // Usar RPC merge para actualizaciones seguras
+        console.log("[useUserProfile] Llamando a merge_profiles_user con:", {
+          p_user_id: user.id,
+          p_patch: patch
+        });
+        
         const { error } = await supabase.rpc("merge_profiles_user", {
           p_user_id: user.id,
           p_patch: patch,
@@ -72,6 +88,12 @@ export function useUserProfile() {
         
         if (error) {
           console.error("[useUserProfile] Error updating profile:", error);
+          console.error("[useUserProfile] Error details:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
           throw error;
         }
         

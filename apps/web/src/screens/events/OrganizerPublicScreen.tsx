@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useOrganizerLiveById, useEventsByOrganizerLive } from '../../hooks/useLive';
+import { useEventParentsByOrganizer, useEventDatesByOrganizer } from '../../hooks/useEventParentsByOrganizer';
 import { useAuth } from '../../hooks/useAuth';
 import { canEditOrganizer } from '../../lib/access';
 import { useTags } from "../../hooks/useTags";
@@ -26,7 +27,15 @@ export function OrganizerPublicScreen() {
   
   const { data: org, isLoading } = useOrganizerLiveById(organizerId);
   const { data: eventos } = useEventsByOrganizerLive(organizerId);
+  const { data: eventParents } = useEventParentsByOrganizer(organizerId);
+  const { data: eventDates } = useEventDatesByOrganizer(organizerId);
   const { data: allTags } = useTags();
+  
+  // Debug logs
+  console.log('[OrganizerPublicScreen] organizerId:', organizerId);
+  console.log('[OrganizerPublicScreen] org:', org);
+  console.log('[OrganizerPublicScreen] eventParents:', eventParents);
+  console.log('[OrganizerPublicScreen] eventDates:', eventDates);
   
   // Verificar si el usuario puede editar este organizador
   const canEdit = canEditOrganizer(org, user?.id);
@@ -362,8 +371,8 @@ export function OrganizerPublicScreen() {
             </motion.section>
           )}
 
-          {/* Próximos Eventos */}
-          {eventos && eventos.length > 0 && (
+          {/* Eventos (Sociales) */}
+          {eventParents && eventParents.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -376,17 +385,17 @@ export function OrganizerPublicScreen() {
               }}
             >
               <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-                🎫 Próximos Eventos
+                🎭 Nuestros Sociales
               </h3>
               <p style={{ marginBottom: '1.5rem', opacity: 0.7, fontSize: '0.9rem' }}>
-                {eventos.length} {eventos.length === 1 ? 'evento' : 'eventos'} disponibles
+                {eventParents.length} {eventParents.length === 1 ? 'evento' : 'eventos'} disponibles
               </p>
 
               <div style={{ display: 'grid', gap: '1rem' }}>
-                {eventos.map(evento => (
+                {eventParents.map(evento => (
                   <Link
                     key={evento.id}
-                    to={`/events/date/${evento.id}`}
+                    to={`/social/${evento.id}`}
                     style={{
                       display: 'block',
                       padding: '1.5rem',
@@ -406,32 +415,137 @@ export function OrganizerPublicScreen() {
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
-                    <h4 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: '600' }}>
-                      {evento.evento_nombre || evento.lugar}
-                    </h4>
-                    <div style={{ 
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      marginBottom: '0.5rem',
-                      fontSize: '0.875rem',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.75rem'
-                    }}>
-                      <span>📅 {evento.fecha}</span>
-                      {evento.hora_inicio && <span>🕒 {evento.hora_inicio}</span>}
-                      {evento.lugar && <span>📍 {evento.lugar}</span>}
-                      {evento.ciudad && <span>🌆 {evento.ciudad}</span>}
-                    </div>
-                    {evento.evento_descripcion && (
-                      <p style={{ 
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontSize: '0.9rem',
-                        marginTop: '0.5rem'
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>
+                        {evento.nombre}
+                      </h4>
+                      <span style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '0.25rem 0.5rem', 
+                        background: evento.estado_aprobacion === 'aprobado' ? colors.blue : colors.orange,
+                        borderRadius: '12px',
+                        fontWeight: '500'
                       }}>
-                        {evento.evento_descripcion.slice(0, 150)}
-                        {evento.evento_descripcion.length > 150 && '...'}
+                        {evento.estado_aprobacion === 'aprobado' ? 'Aprobado' : 'En revisión'}
+                      </span>
+                    </div>
+                    
+                    {evento.descripcion && (
+                      <p style={{ 
+                        fontSize: '0.9rem', 
+                        opacity: 0.8, 
+                        marginBottom: '0.75rem',
+                        lineHeight: 1.4
+                      }}>
+                        {evento.descripcion}
                       </p>
                     )}
+                    
+                    {evento.sede_general && (
+                      <div>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>📍 Sede General</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+                          {evento.sede_general}
+                        </p>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Fechas de Eventos */}
+          {eventDates && eventDates.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '1.5rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
+                📅 Próximas Fechas
+              </h3>
+              <p style={{ marginBottom: '1.5rem', opacity: 0.7, fontSize: '0.9rem' }}>
+                {eventDates.length} {eventDates.length === 1 ? 'fecha' : 'fechas'} disponibles
+              </p>
+
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {eventDates.map(fecha => (
+                  <Link
+                    key={fecha.id}
+                    to={`/social/fecha/${fecha.id}`}
+                    style={{
+                      display: 'block',
+                      padding: '1.5rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      textDecoration: 'none',
+                      color: colors.light,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>
+                        {fecha.events_parent?.nombre || 'Evento'}
+                      </h4>
+                      <span style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '0.25rem 0.5rem', 
+                        background: fecha.estado_publicacion === 'publicado' ? colors.blue : colors.orange,
+                        borderRadius: '12px',
+                        fontWeight: '500'
+                      }}>
+                        {fecha.estado_publicacion === 'publicado' ? 'Publicado' : 'Borrador'}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>📅 Fecha</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+                          {fmtDate(fecha.fecha)}
+                        </p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>🕐 Horario</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+                          {fecha.hora_inicio && fecha.hora_fin 
+                            ? `${fmtTime(fecha.hora_inicio)} - ${fmtTime(fecha.hora_fin)}`
+                            : 'Por definir'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>📍 Lugar</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+                          {fecha.lugar || 'Por definir'}
+                        </p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>🏙️ Ciudad</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+                          {fecha.ciudad || 'Por definir'}
+                        </p>
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>

@@ -90,15 +90,25 @@ export function useDatesByParent(parentId?: number, publishedOnly?: boolean) {
     queryKey: ["dates", parentId, publishedOnly],
     enabled: !!parentId,
     queryFn: async (): Promise<EventDate[]> => {
+      console.log('[useDatesByParent] Fetching dates for parentId:', parentId, 'publishedOnly:', publishedOnly);
+      
       let q = supabase
         .from("events_date")
-        .select("*")
+        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, estado_publicacion, created_at, updated_at")
         .eq("parent_id", parentId!);
       
       if (publishedOnly) q = q.eq("estado_publicacion", "publicado");
       
       const { data, error } = await q.order("fecha", { ascending: true });
-      if (error) throw error; 
+      
+      console.log('[useDatesByParent] Supabase response:', { data, error });
+      
+      if (error) {
+        console.error('[useDatesByParent] Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('[useDatesByParent] Returning dates:', data);
       return data || [];
     }
   });

@@ -18,6 +18,10 @@ import { supabase } from "../../lib/supabase";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import { getDraftKey } from "../../utils/draftKeys";
+import { useRoleChange } from "../../hooks/useRoleChange";
+import { useAuth } from "../../hooks/useAuth";
 
 const colors = {
   coral: '#FF3D57',
@@ -28,11 +32,20 @@ const colors = {
   light: '#F5F5F5',
 };
 
-// Componente para mostrar un evento con sus fechas
+// Componente para mostrar un social con sus fechas
 function EventParentCard({ parent, onDelete, isDeleting }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
+
+  // Debug logs
+  console.log('[EventParentCard] Parent:', parent);
+  console.log('[EventParentCard] Dates:', dates);
+  console.log('[EventParentCard] Dates length:', dates?.length);
+
+  const handleSocialClick = () => {
+    navigate(`/social/${parent.id}`);
+  };
 
   return (
     <motion.div
@@ -43,21 +56,36 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         background: `${colors.dark}aa`,
         borderRadius: '12px',
         border: `1px solid ${colors.light}22`,
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+      }}
+      onClick={handleSocialClick}
+      whileHover={{ 
+        background: `${colors.dark}dd`,
+        borderColor: colors.blue,
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
       }}
     >
-      {/* Header del evento */}
+      {/* Header del social */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px' }}>
+          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px', color: colors.light }}>
             {parent.nombre}
           </h4>
           <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: '8px' }}>
             {parent.descripcion}
           </p>
+          <div style={{ fontSize: '0.75rem', opacity: 0.6, color: colors.blue }}>
+            👁️ Click para ver el social
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => navigate(`/events/${parent.id}/edit`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/social/${parent.id}/edit`);
+            }}
             style={{
               padding: '6px 12px',
               background: colors.blue,
@@ -71,7 +99,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             ✏️ Editar
           </button>
           <button
-            onClick={() => onDelete(parent.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(parent.id);
+            }}
             disabled={isDeleting}
             style={{
               padding: '6px 12px',
@@ -89,11 +120,14 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         </div>
       </div>
 
-      {/* Fechas del evento */}
+      {/* Fechas del social */}
       {dates && dates.length > 0 && (
         <div>
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -103,7 +137,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               color: colors.light,
               cursor: 'pointer',
               fontSize: '0.875rem',
-              marginBottom: expanded ? '12px' : '0'
+              marginBottom: expanded ? '12px' : '0',
+              padding: '8px 0',
+              width: '100%',
+              textAlign: 'left'
             }}
           >
             <span>📅 {dates.length} fecha{dates.length > 1 ? 's' : ''}</span>
@@ -114,26 +151,136 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {dates.map((date: any) => (
-                <div key={date.id} style={{
-                  padding: '8px 12px',
-                  background: `${colors.light}11`,
-                  borderRadius: '6px',
-                  border: `1px solid ${colors.light}22`
-                }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: '600' }}>
-                    {new Date(date.fecha).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+              {dates.map((date: any) => {
+                // Debug log para cada fecha
+                console.log('[EventParentCard] Date item:', date);
+                console.log('[EventParentCard] Date nombre:', date.nombre);
+                console.log('[EventParentCard] Date fecha:', date.fecha);
+                
+                return (
+                  <motion.div 
+                    key={date.id} 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/social/fecha/${date.id}`);
+                    }}
+                    style={{
+                      padding: '12px',
+                      background: `${colors.light}11`,
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.light}22`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    whileHover={{ 
+                      background: `${colors.light}22`,
+                      borderColor: colors.blue,
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '4px', color: colors.light }}>
+                        {date.nombre || 'Fecha sin nombre'}
+                      </div>
+                    <div style={{ fontSize: '0.75rem', marginBottom: '2px', color: colors.blue }}>
+                      📅 {new Date(date.fecha).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </div>
+                    {date.hora_inicio && date.hora_fin && (
+                      <div style={{ fontSize: '0.75rem', marginBottom: '2px', opacity: 0.8 }}>
+                        🕐 {date.hora_inicio} - {date.hora_fin}
+                      </div>
+                    )}
+                    {date.lugar && (
+                      <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                        📍 {date.lugar}
+                      </div>
+                    )}
+                    {date.ciudad && (
+                      <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                        🏙️ {date.ciudad}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '4px', color: colors.blue }}>
+                      👁️ Click para ver detalles
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                    {date.hora_inicio} - {date.hora_fin}
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/social/fecha/${date.id}/edit`);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        background: colors.orange,
+                        color: colors.light,
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = colors.blue;
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = colors.orange;
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Implementar eliminación de fecha
+                        console.log('Eliminar fecha:', date.id);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        background: colors.coral,
+                        color: colors.light,
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#ff1744';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = colors.coral;
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      🗑️
+                    </button>
                   </div>
-                </div>
-              ))}
+                </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -151,7 +298,7 @@ export default function OrganizerProfileEditor() {
   const deleteParent = useDeleteParent();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
-  
+
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
 
@@ -174,7 +321,7 @@ export default function OrganizerProfileEditor() {
   const removeFile = async (slot: string) => {
     try {
       // Buscar el media item por slot
-      const mediaItem = media.find(m => m.slot === slot);
+      const mediaItem = media.find(m => (m as any).slot === slot);
       if (mediaItem) {
         await remove.mutateAsync(mediaItem.id);
         showToast('Archivo eliminado', 'success');
@@ -187,15 +334,21 @@ export default function OrganizerProfileEditor() {
     }
   };
   
+  // Manejar cambio de roles
+  useRoleChange();
+  
+  // Obtener usuario autenticado
+  const { user } = useAuth();
+  
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
 
-  // Usar formulario hidratado con borrador persistente
+  // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, hydrated } = useHydratedForm({
-    draftKey: `draft:org:${org?.id || 'new'}`,
-    serverData: org,
+    draftKey: getDraftKey(user?.id, 'organizer'),
+    serverData: org as any,
     defaults: {
       nombre_publico: "",
       bio: "",
@@ -264,7 +417,7 @@ export default function OrganizerProfileEditor() {
   // Función para eliminar evento
   const handleDeleteEvent = async (parentId: string) => {
     try {
-      await deleteParent.mutateAsync(parentId);
+      await deleteParent.mutateAsync(Number(parentId));
       showToast('Evento eliminado', 'success');
     } catch (err: any) {
       console.error('Error deleting event:', err);
@@ -390,13 +543,17 @@ export default function OrganizerProfileEditor() {
         />
 
         {/* Información del Organizador */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div 
+          id="organizer-basic-info"
+          data-test-id="organizer-basic-info"
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             🏢 Información del Organizador
           </h2>
@@ -407,6 +564,8 @@ export default function OrganizerProfileEditor() {
                 Nombre Público
               </label>
               <input
+                id="organizer-name-input"
+                data-test-id="organizer-name-input"
                 type="text"
                 value={form.nombre_publico}
                 onChange={(e) => setField('nombre_publico', e.target.value)}
@@ -422,12 +581,14 @@ export default function OrganizerProfileEditor() {
                 }}
               />
             </div>
-            
+
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
                 Biografía
               </label>
               <textarea
+                id="organizer-bio-input"
+                data-test-id="organizer-bio-input"
                 value={form.bio}
                 onChange={(e) => setField('bio', e.target.value)}
                 placeholder="Cuéntanos sobre tu organización..."
@@ -448,13 +609,17 @@ export default function OrganizerProfileEditor() {
         </div>
 
         {/* Ritmos y Zonas */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div 
+          id="organizer-rhythms-zones"
+          data-test-id="organizer-rhythms-zones"
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             🎵 Ritmos y Zonas
           </h2>
@@ -497,13 +662,17 @@ export default function OrganizerProfileEditor() {
         </div>
 
         {/* Redes Sociales */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div 
+          id="organizer-social-networks"
+          data-test-id="organizer-social-networks"
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             📱 Redes Sociales
           </h2>
@@ -574,6 +743,31 @@ export default function OrganizerProfileEditor() {
           </div>
         </div>
 
+        {/* Maestros Invitados */}
+        <InvitedMastersSection 
+          masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
+          title="🎭 Maestros Invitados"
+          showTitle={true}
+          isEditable={true}
+          availableUserMasters={[]} // TODO: Obtener usuarios con perfil de maestro
+          onAddMaster={() => {
+            // TODO: Implementar modal para agregar maestro externo
+            console.log('Agregar maestro externo');
+          }}
+          onAssignUserMaster={() => {
+            // TODO: Implementar modal para asignar usuario maestro
+            console.log('Asignar usuario maestro');
+          }}
+          onEditMaster={(master) => {
+            // TODO: Implementar modal para editar maestro
+            console.log('Editar maestro:', master);
+          }}
+          onRemoveMaster={(masterId) => {
+            // TODO: Implementar confirmación y eliminación
+            console.log('Eliminar maestro:', masterId);
+          }}
+        />
+
         {/* Información para Asistentes */}
         <div style={{
           marginBottom: '3rem',
@@ -585,7 +779,7 @@ export default function OrganizerProfileEditor() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             💬 Información para Asistentes
           </h2>
-          
+        
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
@@ -634,15 +828,19 @@ export default function OrganizerProfileEditor() {
         </div>
 
         {/* Mis Eventos */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div 
+          id="organizer-events-list"
+          data-test-id="organizer-events-list"
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            📅 Mis Eventos
+            🎭 Mis Sociales
           </h2>
           
           {parents && parents.length > 0 ? (
@@ -664,15 +862,15 @@ export default function OrganizerProfileEditor() {
               borderRadius: '12px',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📅</div>
-              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No tienes eventos creados</div>
-              <div style={{ opacity: 0.7 }}>Crea tu primer evento para comenzar</div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎭</div>
+              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No tienes sociales creados</div>
+              <div style={{ opacity: 0.7 }}>Crea tu primer social para comenzar</div>
             </div>
           )}
         </div>
 
         {/* Estado y Acciones */}
-        <div style={{
+        <div style={{ 
           marginBottom: '3rem',
           padding: '2rem',
           background: 'rgba(255, 255, 255, 0.05)',
@@ -688,7 +886,7 @@ export default function OrganizerProfileEditor() {
               Estado: {getEstadoBadge()}
             </span>
           </div>
-          
+        
           {org.estado_aprobacion === "borrador" && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -713,14 +911,18 @@ export default function OrganizerProfileEditor() {
         </div>
 
         {/* Botón Discreto: Crear Evento - Centro Abajo */}
-        <div style={{
-          position: 'fixed',
-          bottom: '32px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          pointerEvents: 'auto',
-        }}>
+        <div 
+          id="organizer-create-event-button"
+          data-test-id="organizer-create-event-button"
+          style={{
+            position: 'fixed',
+            bottom: '32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            pointerEvents: 'auto',
+          }}
+        >
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

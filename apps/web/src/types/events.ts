@@ -20,13 +20,14 @@ export type EventParent = {
   estilos: number[]; 
   sede_general?: string|null; 
   media: any[];
-  estado_aprobacion: Aprobacion; 
   created_at: string;
 };
 
 export type EventDate = {
   id: number; 
   parent_id: number; 
+  nombre?: string|null; // Nombre de la fecha
+  biografia?: string|null; // Biografía de la fecha
   fecha: string; 
   hora_inicio?: string|null; 
   hora_fin?: string|null;
@@ -35,10 +36,13 @@ export type EventDate = {
   ciudad?: string|null;
   zona?: number|null; 
   zonas?: number[]; // Múltiples zonas
+  referencias?: string|null; // Referencias de ubicación
+  requisitos?: string|null; 
+  cronograma?: any[]; // Cronograma de actividades
+  costos?: any[]; // Costos y promociones
   estilos: number[]; 
   media: any[]; 
   estado_publicacion: PubEstado;
-  requisitos?: string|null; 
   created_at: string;
 };
 

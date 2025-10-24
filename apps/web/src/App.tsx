@@ -6,6 +6,7 @@ import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./components/Toast";
 import { useAuth } from "./hooks/useAuth";
 import { useUserProfile } from "./hooks/useUserProfile";
+import { useDefaultProfile } from "./hooks/useDefaultProfile";
 import { AppRouter } from "./router";
 import AppBootstrap from "./providers/AppBootstrap";
 import "./App.css";
@@ -14,7 +15,11 @@ function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
   const navigate = useNavigate();
+
+  // Obtener información del perfil por defecto
+  const defaultProfileInfo = getDefaultProfileInfo();
 
   const menuItems = [
     {
@@ -52,9 +57,21 @@ function AppContent() {
     },
     {
       id: "profile",
-      label: "Perfil",
-      icon: "👤",
-      onClick: () => navigate('/app/profile'),
+      label: `Mi Perfil (${defaultProfileInfo?.name || 'Usuario'})`,
+      icon: defaultProfileInfo?.icon || "👤",
+      onClick: () => navigate(getDefaultRoute()),
+    },
+    {
+      id: "edit-profile",
+      label: `Editar Perfil (${defaultProfileInfo?.name || 'Usuario'})`,
+      icon: "✏️",
+      onClick: () => navigate(getDefaultEditRoute()),
+    },
+    {
+      id: "profile-settings",
+      label: "Configurar Perfil por Defecto",
+      icon: "⚙️",
+      onClick: () => navigate('/profile/settings'),
     },
     {
       id: "info",

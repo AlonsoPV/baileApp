@@ -4,47 +4,55 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
 import { theme } from '@theme/colors';
-import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { isValidEmail } from '../../utils/validation';
+import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkAuth';
 
 export function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [message, setMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    // Validations
-    if (!isValidEmail(email)) {
-      setError('Email inválido');
-      showToast('Por favor ingresa un email válido', 'error');
+  const handleMagicLink = async (isSignUp: boolean = false) => {
+    if (!email.trim()) {
+      setError('Por favor ingresa tu email');
+      setIsSuccess(false);
       return;
     }
 
-    const passwordValidation = isValidPassword(password);
-    if (!passwordValidation.valid) {
-      setError(passwordValidation.error || 'Contraseña inválida');
-      showToast(passwordValidation.error || 'Contraseña inválida', 'error');
+    if (!isValidEmail(email)) {
+      setError('Email inválido');
+      setIsSuccess(false);
       return;
     }
 
     setIsLoading(true);
+    setError('');
+    setMessage('');
 
-    const { error: signInError } = await signIn(email, password);
+    try {
+      const result = isSignUp 
+        ? await signUpWithMagicLink(email)
+        : await signInWithMagicLink(email);
 
-    if (signInError) {
-      setError(signInError.message);
-      showToast('Error al iniciar sesión', 'error');
+      if (result.success) {
+        setMessage(result.message);
+        setIsSuccess(true);
+        showToast(result.message, 'success');
+      } else {
+        setError('Error al enviar el enlace mágico');
+        setIsSuccess(false);
+        showToast('Error al enviar el enlace mágico', 'error');
+      }
+    } catch (error) {
+      setError('Error inesperado. Intenta de nuevo.');
+      setIsSuccess(false);
+      showToast('Error inesperado. Intenta de nuevo.', 'error');
+    } finally {
       setIsLoading(false);
-    } else {
-      showToast('¡Bienvenido de vuelta! 🎉', 'success');
-      // Navigation will be handled by RedirectIfAuthenticated
-      navigate('/onboarding/basics');
     }
   };
 
@@ -74,11 +82,9 @@ export function Login() {
             ¡Bienvenido! 💃
           </h1>
           <p style={{ color: theme.text.secondary }}>
-            Inicia sesión para continuar
+            Accede con tu email - Sin contraseñas
           </p>
         </div>
-
-        <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: theme.spacing(3) }}>
             <label
               htmlFor="email"
@@ -90,7 +96,7 @@ export function Login() {
                 color: theme.text.secondary,
               }}
             >
-              Email
+              📧 Tu Email
             </label>
             <input
               id="email"
@@ -112,39 +118,6 @@ export function Login() {
             />
           </div>
 
-          <div style={{ marginBottom: theme.spacing(3) }}>
-            <label
-              htmlFor="password"
-              style={{
-                display: 'block',
-                marginBottom: theme.spacing(1),
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: theme.text.secondary,
-              }}
-            >
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
-                fontSize: '1rem',
-              }}
-              placeholder="••••••••"
-            />
-          </div>
-
           {error && (
             <div
               style={{
@@ -157,35 +130,64 @@ export function Login() {
                 fontSize: '0.875rem',
               }}
             >
-              {error}
+              ❌ {error}
             </div>
           )}
 
-          <Button
-            type="submit"
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              marginBottom: theme.spacing(3),
-              opacity: isLoading ? 0.5 : 1,
-            }}
-          >
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </Button>
-        </form>
+          {message && (
+            <div
+              style={{
+                marginBottom: theme.spacing(3),
+                padding: theme.spacing(2),
+                background: isSuccess ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                border: `1px solid ${isSuccess ? '#10B981' : '#EF4444'}`,
+                borderRadius: theme.radius.md,
+                color: isSuccess ? '#10B981' : '#EF4444',
+                fontSize: '0.875rem',
+              }}
+            >
+              {isSuccess ? '✅' : '❌'} {message}
+            </div>
+          )}
 
-        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: theme.text.secondary }}>
-          ¿No tienes cuenta?{' '}
-          <Link
-            to="/auth/signup"
-            style={{
-              color: theme.brand.primary,
-              textDecoration: 'none',
-              fontWeight: '600',
-            }}
-          >
-            Regístrate
-          </Link>
+          <div style={{ display: 'flex', gap: theme.spacing(2), marginBottom: theme.spacing(3) }}>
+            <Button
+              onClick={() => handleMagicLink(false)}
+              disabled={isLoading}
+              style={{
+                flex: 1,
+                opacity: isLoading ? 0.5 : 1,
+              }}
+            >
+              {isLoading ? '⏳ Enviando...' : '🔑 Iniciar Sesión'}
+            </Button>
+
+            <Button
+              onClick={() => handleMagicLink(true)}
+              disabled={isLoading}
+              style={{
+                flex: 1,
+                opacity: isLoading ? 0.5 : 1,
+                background: theme.brand.secondary,
+              }}
+            >
+              {isLoading ? '⏳ Enviando...' : '✨ Registrarse'}
+            </Button>
+          </div>
+
+        <div style={{ 
+          textAlign: 'center', 
+          fontSize: '0.875rem', 
+          color: theme.text.secondary,
+          marginTop: theme.spacing(3),
+          padding: theme.spacing(2),
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: theme.radius.md,
+        }}>
+          <p style={{ margin: 0, fontSize: '0.8rem' }}>
+            💡 Te enviaremos un enlace mágico a tu email.<br/>
+            Haz clic en el enlace para acceder sin contraseña.
+          </p>
         </div>
       </div>
     </div>

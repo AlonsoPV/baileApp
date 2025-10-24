@@ -302,7 +302,12 @@ export const UserProfileLive: React.FC = () => {
   const { user } = useAuth();
   const { profile, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
-  const { media, setMedia } = useUserMedia();
+  const { media, addMedia, removeMedia } = useUserMedia();
+  
+  // Estados para carga de media
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   
   // Fallback para cuando no hay perfil
   const safeMedia = media || [];
@@ -396,15 +401,8 @@ export const UserProfileLive: React.FC = () => {
       
       const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
       
-      const mediaArray = (media || []) as any[];
-      const existing = mediaArray.findIndex(m => m.slot === slot);
-      const newItem = { slot, kind: 'photo', url: publicUrl.publicUrl };
-      
-      const updatedMedia = existing >= 0 
-        ? mediaArray.map((m, i) => i === existing ? newItem : m)
-        : [...mediaArray, newItem];
-      
-      await setMedia(updatedMedia);
+      // Usar addMedia para agregar nuevo media
+      await addMedia.mutateAsync(file);
     } catch (error) {
       console.error('Error uploading photo:', error);
     } finally {
@@ -428,15 +426,8 @@ export const UserProfileLive: React.FC = () => {
       
       const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
       
-      const mediaArray = (media || []) as any[];
-      const existing = mediaArray.findIndex(m => m.slot === slot);
-      const newItem = { slot, kind: 'video', url: publicUrl.publicUrl };
-      
-      const updatedMedia = existing >= 0 
-        ? mediaArray.map((m, i) => i === existing ? newItem : m)
-        : [...mediaArray, newItem];
-      
-      await setMedia(updatedMedia);
+      // Usar addMedia para agregar nuevo media
+      await addMedia.mutateAsync(file);
     } catch (error) {
       console.error('Error uploading video:', error);
     } finally {
@@ -519,7 +510,7 @@ export const UserProfileLive: React.FC = () => {
             currentView="live"
             profileType="user"
           />
-        </div>
+      </div>
 
         {/* Banner Principal */}
         <div 
@@ -528,7 +519,7 @@ export const UserProfileLive: React.FC = () => {
           data-test-id="user-profile-banner"
           className="profile-banner" 
           style={{
-            position: 'relative',
+        position: 'relative', 
             margin: '0 auto',
             background: '#000000',
             overflow: 'hidden',
@@ -562,19 +553,19 @@ export const UserProfileLive: React.FC = () => {
                   width: '250px',
                   height: '250px',
                   borderRadius: '50%',
-                  overflow: 'hidden',
+        overflow: 'hidden',
                   border: '6px solid rgba(255, 255, 255, 0.9)',
                   boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
                   background: colors.grad
                 }}
               >
-                {getMediaBySlot(safeMedia, 'p1')?.url ? (
+                {getMediaBySlot(safeMedia as any, 'p1')?.url ? (
                   <ImageWithFallback
-                    src={getMediaBySlot(safeMedia, 'p1')!.url}
+                    src={getMediaBySlot(safeMedia as any, 'p1')!.url}
                     alt="Avatar"
-                    style={{
-                      width: '100%',
-                      height: '100%',
+          style={{
+            width: '100%',
+            height: '100%',
                       objectFit: 'cover'
                     }}
                   />
@@ -600,7 +591,7 @@ export const UserProfileLive: React.FC = () => {
               id="user-profile-banner-info"
               data-baile-id="user-profile-banner-info"
               data-test-id="user-profile-banner-info"
-              style={{
+          style={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1.5rem',
@@ -611,7 +602,7 @@ export const UserProfileLive: React.FC = () => {
                 id="user-profile-display-name"
                 data-baile-id="user-profile-display-name"
                 data-test-id="user-profile-display-name"
-                style={{
+          style={{
                   fontSize: '3rem',
                   fontWeight: '800',
                   margin: 0,
@@ -656,21 +647,21 @@ export const UserProfileLive: React.FC = () => {
         data-baile-id="user-profile-main-content"
         data-test-id="user-profile-main-content"
         className="profile-container" 
-        style={{ 
+            style={{
           padding: '2rem', 
           margin: '0 auto' 
         }}
       >
         
         {/* Biografía */}
-        {profile?.bio && (
+          {profile?.bio && (
           <motion.section
             id="user-profile-bio"
             data-baile-id="user-profile-bio"
             data-test-id="user-profile-bio"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
               marginBottom: '2rem',
               padding: '1.5rem',
               background: 'rgba(255, 255, 255, 0.05)',
@@ -690,14 +681,15 @@ export const UserProfileLive: React.FC = () => {
         {/* Redes Sociales */}
         <SocialMediaSection 
           respuestas={profile?.respuestas}
+          availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
         />
 
         {/* Sección 1: Foto - Pregunta */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          style={{
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+                style={{
             marginBottom: '2rem',
             padding: '1.5rem',
             background: 'rgba(255, 255, 255, 0.05)',
@@ -717,7 +709,7 @@ export const UserProfileLive: React.FC = () => {
                 <ImageWithFallback
                   src={getMediaBySlot(safeMedia as any, 'p2')!.url}
                   alt="Foto personal"
-                  style={{
+                style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover'
@@ -755,16 +747,16 @@ export const UserProfileLive: React.FC = () => {
               }}>
                 {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
               </div>
-            </div>
-          </div>
+        </div>
+      </div>
         </motion.section>
 
         {/* Sección 2: Pregunta - Foto */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          style={{
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            style={{
             marginBottom: '2rem',
             padding: '1.5rem',
             background: 'rgba(255, 255, 255, 0.05)',
@@ -777,7 +769,7 @@ export const UserProfileLive: React.FC = () => {
             <div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
                 💃 ¿Qué es lo que más te gusta bailar?
-              </h3>
+            </h3>
               <div style={{
                 padding: '1rem',
                 background: 'rgba(255, 255, 255, 0.08)',
@@ -813,9 +805,9 @@ export const UserProfileLive: React.FC = () => {
                   width: '100%',
                   height: '100%',
                   background: 'rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   color: 'rgba(255, 255, 255, 0.5)',
                   fontSize: '0.875rem'
                 }}>
@@ -856,8 +848,8 @@ export const UserProfileLive: React.FC = () => {
               background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              display: 'flex',
-              alignItems: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
               gap: '0.5rem'
             }}>
               ✨ Eventos de Interés
@@ -1008,8 +1000,8 @@ export const UserProfileLive: React.FC = () => {
                       borderTop: '1px solid rgba(255, 255, 255, 0.1)'
                     }}>
                       <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
                         gap: '0.5rem',
                         fontSize: '0.875rem',
                         fontWeight: '600',
@@ -1181,8 +1173,8 @@ export const UserProfileLive: React.FC = () => {
               marginBottom: '1.5rem'
             }}>
               <h3 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '700',
+              fontSize: '1.5rem', 
+              fontWeight: '700', 
                 background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -1208,7 +1200,7 @@ export const UserProfileLive: React.FC = () => {
           </motion.section>
         )}
       </div>
-      </div>
+    </div>
     </>
   );
 };

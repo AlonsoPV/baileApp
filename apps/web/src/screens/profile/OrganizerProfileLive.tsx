@@ -7,6 +7,7 @@ import { MediaGrid } from "../../components/MediaGrid";
 import { EventInviteStrip } from "../../components/EventInviteStrip";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useParentsByOrganizer, useDatesByParent, useRSVPCounts } from "../../hooks/useEvents";
+import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
@@ -16,6 +17,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -362,32 +364,40 @@ const colors = {
 export function OrganizerProfileLive() {
   const navigate = useNavigate();
   const { data: org, isLoading } = useMyOrganizer();
-  const { data: parents } = useParentsByOrganizer(org?.id);
+  const { data: parents } = useEventParentsByOrganizer(org?.id);
+  const { data: eventDates } = useEventDatesByOrganizer(org?.id);
   const { media } = useOrganizerMedia();
   const { data: allTags } = useTags();
 
+  // Debug logs
+  console.log('[OrganizerProfileLive] org:', org);
+  console.log('[OrganizerProfileLive] parents:', parents);
+  console.log('[OrganizerProfileLive] eventDates:', eventDates);
+  console.log('[OrganizerProfileLive] parents length:', parents?.length);
+  console.log('[OrganizerProfileLive] eventDates length:', eventDates?.length);
+
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media, slot))
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
     .filter(Boolean) as string[];
 
   // Obtener videos
   const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media, slot))
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
     .filter(Boolean) as string[];
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !org?.ritmos) return [];
-    return org.ritmos
+    if (!allTags || !(org as any)?.estilos) return [];
+    return (org as any).estilos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
   };
 
   const getZonaNombres = () => {
-    if (!allTags || !org?.zonas) return [];
-    return org.zonas
+    if (!allTags || !(org as any)?.zonas) return [];
+    return (org as any).zonas
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
@@ -463,24 +473,41 @@ export function OrganizerProfileLive() {
     </span>
   );
 
-  // Preparar items de "Próximos eventos" (fechas publicadas)
+  // Preparar items de "Fechas" (fechas publicadas)
   const getUpcomingDates = () => {
     const upcomingItems: any[] = [];
     
-    parents?.forEach(parent => {
-      // Aquí podrías usar useDatesByParent para cada parent, pero por simplicidad usamos mock
-      upcomingItems.push({
-        title: parent.nombre,
-        date: 'Próximamente',
-        place: parent.sede_general || '',
-        href: `/events/parent/${parent.id}`,
-        cover: Array.isArray(parent.media) && parent.media.length > 0 
-          ? (parent.media[0] as any)?.url || parent.media[0]
+    console.log('[getUpcomingDates] eventDates:', eventDates);
+    console.log('[getUpcomingDates] eventDates length:', eventDates?.length);
+    
+    eventDates?.forEach((date, index) => {
+      console.log(`[getUpcomingDates] Processing date ${index}:`, date);
+      
+      // Usar el nombre específico de la fecha, o un nombre genérico si no existe
+      const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
+      
+      // Formatear hora si está disponible
+      const horaFormateada = date.hora_inicio && date.hora_fin 
+        ? `${date.hora_inicio} - ${date.hora_fin}`
+        : date.hora_inicio || '';
+
+      const item = {
+        nombre: fechaNombre,
+        date: fmtDate(date.fecha),
+        time: horaFormateada,
+        place: date.lugar || date.ciudad || '',
+        href: `/social/fecha/${date.id}`,
+        cover: Array.isArray(date.media) && date.media.length > 0 
+          ? (date.media[0] as any)?.url || date.media[0]
           : undefined,
-      });
+      };
+      
+      console.log(`[getUpcomingDates] Created item ${index}:`, item);
+      upcomingItems.push(item);
     });
 
-    return upcomingItems.slice(0, 3);
+    console.log('[getUpcomingDates] Final upcomingItems:', upcomingItems);
+    return upcomingItems;
   };
 
   const inviteItems = getUpcomingDates();
@@ -504,6 +531,35 @@ export function OrganizerProfileLive() {
           gap: 3rem;
           align-items: center;
         }
+        
+        /* Estilos para scroll horizontal */
+        .dates-scroll-container {
+          display: flex;
+          gap: 1rem;
+          overflow-x: auto;
+          padding-bottom: 0.5rem;
+          scrollbar-width: thin;
+          scrollbar-color: #1E88E566 transparent;
+        }
+        
+        .dates-scroll-container::-webkit-scrollbar {
+          height: 8px;
+        }
+        
+        .dates-scroll-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+        
+        .dates-scroll-container::-webkit-scrollbar-thumb {
+          background: #1E88E566;
+          border-radius: 4px;
+        }
+        
+        .dates-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #1E88E599;
+        }
+        
         @media (max-width: 768px) {
           .org-container {
             max-width: 100% !important;
@@ -528,6 +584,10 @@ export function OrganizerProfileLive() {
           .org-banner-avatar-fallback {
             font-size: 4rem !important;
           }
+          
+          .dates-scroll-container {
+            gap: 0.75rem;
+          }
         }
       `}</style>
       <div style={{
@@ -547,13 +607,18 @@ export function OrganizerProfileLive() {
         </div>
 
         {/* Banner Principal */}
-        <div className="org-banner" style={{
-          position: 'relative',
-          background: '#000000',
-          overflow: 'hidden',
-          borderRadius: '16px',
-          padding: '3rem 2rem'
-        }}>
+        <div 
+          id="organizer-banner"
+          data-test-id="organizer-banner"
+          className="org-banner" 
+          style={{
+            position: 'relative',
+            background: '#000000',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            padding: '3rem 2rem'
+          }}
+        >
           <div className="org-banner-grid">
             {/* Columna 1: Logo del Organizador */}
             <div style={{
@@ -561,18 +626,23 @@ export function OrganizerProfileLive() {
               justifyContent: 'center',
               alignItems: 'center'
             }}>
-              <div className="org-banner-avatar" style={{
-                width: '250px',
-                height: '250px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                border: '6px solid rgba(255, 255, 255, 0.9)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
-              }}>
-                {media[0]?.url ? (
+              <div 
+                id="organizer-avatar"
+                data-test-id="organizer-avatar"
+                className="org-banner-avatar" 
+                style={{
+                  width: '250px',
+                  height: '250px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '6px solid rgba(255, 255, 255, 0.9)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
+                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
+                }}
+              >
+                {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
                   <img
-                    src={media[0].url}
+                    src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''}
                     alt="Logo del organizador"
                     style={{
                       width: '100%',
@@ -604,18 +674,26 @@ export function OrganizerProfileLive() {
               gap: '1.5rem',
               justifyContent: 'center'
             }}>
-              <h1 style={{
-                fontSize: '3rem',
-                fontWeight: '800',
-                margin: 0,
-                color: colors.light,
-                lineHeight: '1.2'
-              }}>
+              <h1 
+                id="organizer-name"
+                data-test-id="organizer-name"
+                style={{
+                  fontSize: '3rem',
+                  fontWeight: '800',
+                  margin: 0,
+                  color: colors.light,
+                  lineHeight: '1.2'
+                }}
+              >
                 {org.nombre_publico}
               </h1>
 
               {/* Chips de ritmos y zonas */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div 
+                id="organizer-chips"
+                data-test-id="organizer-chips"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
+              >
                 {getRitmoNombres().map((nombre) => (
                   <Chip 
                     key={`r-${nombre}`} 
@@ -649,6 +727,8 @@ export function OrganizerProfileLive() {
         {/* Biografía */}
         {org.bio && (
           <motion.section
+            id="organizer-bio"
+            data-test-id="organizer-bio"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             style={{
@@ -669,182 +749,213 @@ export function OrganizerProfileLive() {
         )}
 
         {/* Redes Sociales */}
-        <SocialMediaSection 
-          respuestas={org.respuestas}
-          title="📱 Redes Sociales"
-          style={{
-            marginBottom: '2rem',
-            padding: '2rem',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-            borderRadius: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-          }}
-        />
+        {(() => {
+          console.log('[OrganizerProfileLive] Organizer data:', org);
+          console.log('[OrganizerProfileLive] Organizer respuestas:', (org as any)?.respuestas);
+          console.log('[OrganizerProfileLive] Organizer redes_sociales:', (org as any)?.redes_sociales);
+          return null;
+        })()}
+        <div
+          id="organizer-social-media"
+          data-test-id="organizer-social-media"
+        >
+          <SocialMediaSection 
+            respuestas={(org as any)?.respuestas}
+            redes_sociales={(org as any)?.redes_sociales}
+            title="📱 Redes Sociales"
+            availablePlatforms={['instagram', 'facebook', 'whatsapp']}
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            }}
+          />
+        </div>
 
-        {/* Próximos Eventos del Organizador */}
+        {/* Maestros Invitados */}
+        <div
+          id="organizer-invited-masters"
+          data-test-id="organizer-invited-masters"
+        >
+          <InvitedMastersSection 
+            masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
+            title="🎭 Maestros Invitados"
+            showTitle={true}
+            isEditable={false}
+          />
+        </div>
+
+        {/* Próximas Fechas del Organizador */}
+        {console.log('[Render] inviteItems.length:', inviteItems.length)}
         {inviteItems.length > 0 && (
           <motion.section
+            id="organizer-upcoming-dates"
+            data-test-id="organizer-upcoming-dates"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             style={{
               marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
           >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-              🎫 Nuestros Próximos Eventos
-            </h3>
-            <p style={{ marginBottom: '1.5rem', opacity: 0.7, fontSize: '0.9rem' }}>
-              {inviteItems.length} {inviteItems.length === 1 ? 'evento' : 'eventos'} próximos
-            </p>
-
-            <div
-              style={{
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '1.5rem'
+            }}>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                 display: 'flex',
-                overflowX: 'auto',
-                gap: '20px',
-                padding: '24px',
-                background: `${colors.dark}aa`,
-                borderRadius: '0 0 16px 16px',
-                border: `1px solid ${colors.coral}33`,
-                borderTop: 'none',
-                scrollbarWidth: 'thin',
-                scrollbarColor: `${colors.coral} ${colors.dark}`,
-              }}
-            >
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                📅 Próximas Fechas
+              </h3>
+              <div style={{
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.light
+              }}>
+                {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+
+            {/* Cards de fechas en scroll horizontal */}
+            <div className="dates-scroll-container">
               {inviteItems.map((ev, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + i * 0.1 }}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  style={{ minWidth: '300px' }}
+                  transition={{ delay: 0.1 + i * 0.1 }}
+                  whileHover={{ 
+                    y: -4, 
+                    scale: 1.02,
+                    borderColor: colors.blue,
+                    boxShadow: '0 8px 24px rgba(30, 136, 229, 0.3)'
+                  }}
+                  onClick={() => navigate(ev.href)}
+                  style={{
+                    minWidth: '280px',
+                    maxWidth: '320px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '200px'
+                  }}
                 >
-                  <motion.div
-                    onClick={() => navigate(ev.href)}
-                    style={{
-                      display: 'block',
-                      background: `${colors.dark}ee`,
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      textDecoration: 'none',
+                  {/* Header con nombre y fecha */}
+                  <div style={{ 
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                    <h3 style={{
                       color: colors.light,
-                      border: `2px solid ${colors.coral}44`,
-                      boxShadow: `0 4px 16px ${colors.coral}33`,
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                    }}
-                    whileHover={{ 
-                      borderColor: colors.coral,
-                      boxShadow: `0 12px 32px ${colors.coral}66`
-                    }}
-                  >
-                    {/* Cover Image */}
-                    <div style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
-                      {ev.cover ? (
-                        <>
-                          <img
-                            src={ev.cover}
-                            alt={ev.title}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
-                          />
-                          {/* Gradient Overlay */}
-                          <div style={{
-                            position: 'absolute',
-                            inset: 0,
-                            background: `linear-gradient(to bottom, transparent, ${colors.dark}aa)`,
-                          }} />
-                        </>
-                      ) : (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '3rem',
-                        }}>
-                          🎉
-                        </div>
-                      )}
-
-                      {/* Date Badge */}
-                      <div style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        padding: '6px 14px',
-                        borderRadius: '20px',
-                        background: colors.coral,
-                        color: colors.light,
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                        textTransform: 'uppercase',
-                      }}>
-                        {ev.date}
-                      </div>
+                      fontWeight: '700',
+                      fontSize: '1rem',
+                      marginBottom: '0.5rem',
+                      lineHeight: 1.2,
+                    }}>
+                      {ev.nombre}
+                    </h3>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: colors.blue,
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <span>📅</span>
+                      {ev.date}
                     </div>
+                  </div>
 
-                    {/* Content */}
-                    <div style={{ padding: '16px' }}>
-                      <h3 style={{
-                        color: colors.light,
-                        fontWeight: '700',
-                        fontSize: '1.2rem',
-                        marginBottom: '8px',
-                        lineHeight: 1.2,
-                      }}>
-                        {ev.title}
-                      </h3>
-                      {ev.place && (
-                        <div style={{
-                          fontSize: '0.875rem',
-                          color: `${colors.light}99`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}>
-                          <span style={{ fontSize: '1rem' }}>📍</span>
-                          {ev.place}
-                        </div>
-                      )}
-
-                      {/* CTA */}
+                  {/* Información de la fecha */}
+                  <div style={{ 
+                    padding: '1rem',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}>
+                    {/* Hora (si está disponible) */}
+                    {ev.time && (
                       <div style={{
-                        marginTop: '12px',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        background: `${colors.coral}22`,
-                        border: `1px solid ${colors.coral}44`,
-                        textAlign: 'center',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        color: colors.coral,
+                        fontSize: '0.8rem',
+                        color: `${colors.light}99`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
                       }}>
-                        👁️ Ver evento
+                        <span style={{ fontSize: '0.9rem' }}>🕐</span>
+                        <span style={{ fontWeight: '600' }}>{ev.time}</span>
                       </div>
+                    )}
+                    
+                    {/* Lugar */}
+                    {ev.place && (
+                      <div style={{
+                        fontSize: '0.8rem',
+                        color: `${colors.light}99`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}>
+                        <span style={{ fontSize: '0.9rem' }}>📍</span>
+                        <span style={{ fontWeight: '600' }}>{ev.place}</span>
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <div style={{
+                      marginTop: 'auto',
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      background: `${colors.blue}22`,
+                      border: `1px solid ${colors.blue}44`,
+                      textAlign: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: colors.blue,
+                    }}>
+                      👁️ Ver detalles
                     </div>
-                  </motion.div>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.section>
         )}
 
-        {/* Mis Eventos */}
+        {/* Mis Sociales */}
+        {console.log('[Render] parents.length:', parents?.length)}
         {parents && parents.length > 0 && (
           <motion.section
+            id="organizer-social-events"
+            data-test-id="organizer-social-events"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -873,7 +984,7 @@ export function OrganizerProfileLive() {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                📅 Mis Eventos
+                🎭 Social
               </h3>
               <div style={{
                 padding: '0.5rem 1rem',
@@ -883,7 +994,7 @@ export function OrganizerProfileLive() {
                 fontWeight: '600',
                 color: colors.light
               }}>
-                {parents.length} evento{parents.length !== 1 ? 's' : ''}
+                {parents.length} social{parents.length !== 1 ? 'es' : ''}
               </div>
             </div>
             
@@ -892,13 +1003,11 @@ export function OrganizerProfileLive() {
                 <motion.div
                   key={parent.id}
                   whileHover={{ scale: 1.01, y: -2 }}
-                  onClick={() => navigate(`/events/parent/${parent.id}`)}
                   style={{
                     padding: '1.5rem',
                     background: 'rgba(255, 255, 255, 0.05)',
                     borderRadius: '12px',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    cursor: 'pointer',
                     transition: 'all 0.3s ease',
                   }}
                 >
@@ -911,93 +1020,42 @@ export function OrganizerProfileLive() {
                     </p>
                   )}
                   {parent.sede_general && (
-                    <p style={{ fontSize: '0.875rem', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <p style={{ fontSize: '0.875rem', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                       📍 {parent.sede_general}
                     </p>
                   )}
+                  
+                  {/* Solo botón "Ver próximas fechas" */}
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/social/${parent.id}`);
+                      }}
+                      style={{
+                        padding: '0.75rem 2rem',
+                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: colors.light,
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                      }}
+                    >
+                      📅 Ver próximas fechas
+                    </motion.button>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.section>
         )}
 
-        {/* Foto Principal */}
-        {getMediaBySlot(media, 'p1') && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              display: 'flex',
-              justifyContent: 'center',
-              opacity: 1,
-              transform: 'none'
-            }}
-          >
-            <div style={{
-              width: '100%',
-              maxWidth: '500px',
-              aspectRatio: '4 / 3',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              border: '2px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <ImageWithFallback
-                alt="Foto principal"
-                src={getMediaBySlot(media, 'p1')!}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </div>
-          </motion.section>
-        )}
-
-        {/* Video Principal */}
-        {getMediaBySlot(media, 'v1') && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              display: 'flex',
-              justifyContent: 'center',
-              opacity: 1,
-              transform: 'none'
-            }}
-          >
-            <div style={{
-              width: '100%',
-              maxWidth: '600px',
-              aspectRatio: '16 / 9',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              border: '2px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <video
-                src={getMediaBySlot(media, 'v1')!}
-                controls
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </div>
-          </motion.section>
-        )}
 
         {/* Galería de Fotos Mejorada */}
         {carouselPhotos.length > 0 && (
@@ -1154,7 +1212,7 @@ export function OrganizerProfileLive() {
         )}
 
         {/* Información para Asistentes - FAQ */}
-        {(org.respuestas?.musica_tocaran || org.respuestas?.hay_estacionamiento) && (
+        {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1190,18 +1248,18 @@ export function OrganizerProfileLive() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* FAQ Item: Música */}
-              {org.respuestas?.musica_tocaran && (
+              {(org as any)?.respuestas?.musica_tocaran && (
                 <FAQAccordion
                   question="🎵 ¿Qué música tocarán?"
-                  answer={org.respuestas.musica_tocaran}
+                  answer={(org as any)?.respuestas?.musica_tocaran}
                 />
               )}
               
               {/* FAQ Item: Estacionamiento */}
-              {org.respuestas?.hay_estacionamiento && (
+              {(org as any)?.respuestas?.hay_estacionamiento && (
                 <FAQAccordion
                   question="🅿️ ¿Hay estacionamiento?"
-                  answer={org.respuestas.hay_estacionamiento}
+                  answer={(org as any)?.respuestas?.hay_estacionamiento}
                 />
               )}
             </div>

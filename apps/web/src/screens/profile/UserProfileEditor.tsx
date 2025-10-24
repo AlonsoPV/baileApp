@@ -16,6 +16,8 @@ import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigat
 import { normalizeSocialInput } from '../../utils/social';
 import { buildSafePatch } from '../../utils/safePatch';
 import { useQueryClient } from '@tanstack/react-query';
+import { getDraftKey } from '../../utils/draftKeys';
+import { useRoleChange } from '../../hooks/useRoleChange';
 
 const colors = {
   dark: '#121212',
@@ -31,17 +33,19 @@ export default function UserProfileEditor() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   
+  // Manejar cambio de roles
+  useRoleChange();
+  
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
 
-  // Usar formulario hidratado con borrador persistente (namespace por usuario)
+  // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({
-    draftKey: `draft:user:profile:${user?.id ?? 'anon'}`,
+    draftKey: getDraftKey(user?.id, 'user'),
     serverData: profile as any,
     defaults: {
-      user_id: user?.id || "",
       display_name: "",
       bio: "",
       ritmos: [] as number[],
@@ -115,6 +119,7 @@ export default function UserProfileEditor() {
       
       console.log('[UserProfileEditor] Form data antes del guardado:', form);
       console.log('[UserProfileEditor] Respuestas:', form.respuestas);
+      console.log('[UserProfileEditor] Redes normalizadas:', redes);
       
       const candidate = {
         display_name: form.display_name,
@@ -127,6 +132,8 @@ export default function UserProfileEditor() {
           gusta_bailar: form.respuestas?.gusta_bailar || null
         },
       };
+      
+      console.log('[UserProfileEditor] Candidate construido:', candidate);
 
       // Crear patch inteligente
       const patch = buildSafePatch(profile || {}, candidate, { 

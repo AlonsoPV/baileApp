@@ -46,14 +46,7 @@ export function useOrganizerMedia() {
   const { data: organizer, isLoading: organizerLoading } = useMyOrganizer();
   const orgId = organizer?.id;
   
-  console.log('🔍 [useOrganizerMedia] Organizer data:', { 
-    organizer, 
-    orgId, 
-    organizerLoading,
-    redes_sociales: organizer?.redes_sociales,
-    bio: organizer?.bio,
-    nombre_publico: organizer?.nombre_publico
-  });
+  // Debug logs removed to prevent infinite loop
 
   const q = useQuery({
     queryKey: ["organizer", "media", orgId],

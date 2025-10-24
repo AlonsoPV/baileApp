@@ -1,74 +1,53 @@
+/**
+ * Estado global para borradores persistentes
+ * Permite guardar y recuperar borradores de formularios en localStorage
+ */
+
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-/**
- * Registro de un borrador
- */
-type DraftRecord = {
-  value: any;
-  updatedAt: number;  // Timestamp en ms
+type DraftRecord = { 
+  value: any; 
+  updatedAt: number;
 };
 
-/**
- * Store de borradores
- */
-type DraftStore = {
+interface DraftsState {
   drafts: Record<string, DraftRecord | undefined>;
   setDraft: (key: string, value: any) => void;
   getDraft: (key: string) => DraftRecord | undefined;
   clearDraft: (key: string) => void;
   clearAll: () => void;
-};
+}
 
-/**
- * Store global de borradores persistentes
- * 
- * Claves recomendadas:
- * - draft:user:profile - Perfil de usuario
- * - draft:org:{organizerId} - Perfil de organizador
- * - draft:eventParent:{parentId} - Evento padre
- * - draft:eventDate:{dateId} - Fecha de evento
- */
-export const useDrafts = create<DraftStore>()(
+export const useDrafts = create<DraftsState>()(
   persist(
     (set, get) => ({
-      drafts: {},
+      drafts: {} as Record<string, DraftRecord | undefined>,
       
-      /**
-       * Guarda un borrador
-       */
-      setDraft: (key, value) =>
-        set((s) => ({
+      setDraft: (key: string, value: any) => 
+        set((s: any) => ({
           drafts: {
             ...s.drafts,
-            [key]: { value, updatedAt: Date.now() },
-          },
+            [key]: { value, updatedAt: Date.now() }
+          }
         })),
       
-      /**
-       * Obtiene un borrador
-       */
-      getDraft: (key) => get().drafts[key],
+      getDraft: (key: string) => 
+        get().drafts[key],
       
-      /**
-       * Elimina un borrador específico
-       */
-      clearDraft: (key) =>
-        set((s) => {
-          const next = { ...s.drafts };
-          delete next[key];
-          return { drafts: next };
+      clearDraft: (key: string) => 
+        set((s: any) => {
+          const d = { ...s.drafts };
+          delete d[key];
+          return { drafts: d };
         }),
       
-      /**
-       * Elimina todos los borradores
-       */
-      clearAll: () => set({ drafts: {} }),
+      clearAll: () => 
+        set({ drafts: {} })
     }),
-    {
-      name: "baileapp:drafts:v1",
-      storage: createJSONStorage(() => localStorage),
-      version: 1,
+    { 
+      name: "baileapp:drafts:v1", 
+      storage: createJSONStorage(() => localStorage) 
     }
   )
 );
