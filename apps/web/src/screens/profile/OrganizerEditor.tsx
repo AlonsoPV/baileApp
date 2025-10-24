@@ -241,7 +241,7 @@ export const OrganizerEditor: React.FC = () => {
           onPick={async (files) => {
             for (const f of Array.from(files)) {
               try {
-                await add.mutateAsync(f);
+                await add.mutateAsync({ file: f, slot: 'p1' });
                 showToast('Media agregada ✅', 'success');
               } catch (err: any) {
                 showToast('Error al subir archivo', 'error');
@@ -317,7 +317,7 @@ export const OrganizerEditor: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick To={() => navigate('/profile/organizer')}
+          onClick={() => navigate('/profile/organizer')}
           style={{
             padding: '16px 24px',
             borderRadius: '50px',

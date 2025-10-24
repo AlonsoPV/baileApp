@@ -48,7 +48,7 @@ export const EventDateEditor: React.FC = () => {
         media: values.media || [],
         estado_publicacion: values.estado_publicacion || 'borrador',
       };
-      return await updateMutation.mutateAsync({ id: currentDate.id, patch: payload });
+      await updateMutation.mutateAsync({ id: currentDate.id, ...payload });
     } else {
       // Create new date
       const payload = {
@@ -67,7 +67,7 @@ export const EventDateEditor: React.FC = () => {
         media: values.media || [],
         estado_publicacion: values.estado_publicacion || 'borrador',
       };
-      return await createMutation.mutateAsync(payload);
+      await createMutation.mutateAsync(payload);
     }
   };
 
