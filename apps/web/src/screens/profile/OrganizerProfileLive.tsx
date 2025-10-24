@@ -879,8 +879,8 @@ export function OrganizerProfileLive() {
             <div className="dates-scroll-container" style={{ 
               position: 'relative', 
               zIndex: 1,
-              height: '320px',
-              paddingBottom: '1rem'
+              height: 'auto',
+              padding: '1rem'
             }}>
               {inviteItems.map((ev, i) => (
                 <motion.div
