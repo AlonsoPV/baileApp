@@ -1160,6 +1160,7 @@ export default function OrganizerProfileEditor() {
         />
       </div>
       </div>
+      </div>
     </>
   );
 }
