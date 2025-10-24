@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useDatesByParent, useCreateDate, useUpdateDate } from "../../hooks/useEvents";
 import EventCreateForm from "../../components/events/EventCreateForm";
+// import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+// import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 
 const colors = {
   coral: '#FF3D57',
@@ -172,6 +174,35 @@ export const EventDateEditor: React.FC = () => {
         onCancel={handleCancel}
         showHeader={true}
       />
+
+      {/* Additional sections for editing existing dates */}
+      {isEditing && currentDate && (
+        <div style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '0 24px',
+        }}>
+          {/* Photo Management Section - TODO: Implement media management for dates */}
+          {/* <div style={{ marginTop: '48px' }}>
+            <PhotoManagementSection
+              entityId={currentDate.id}
+              entityType="date"
+              title="Galería de Fotos de la Fecha"
+              description="Sube fotos promocionales de esta fecha específica"
+            />
+          </div> */}
+
+          {/* Video Management Section - TODO: Implement media management for dates */}
+          {/* <div style={{ marginTop: '48px' }}>
+            <VideoManagementSection
+              entityId={currentDate.id}
+              entityType="date"
+              title="Videos de la Fecha"
+              description="Sube videos promocionales y demostraciones de esta fecha"
+            />
+          </div> */}
+        </div>
+      )}
     </div>
   );
 };

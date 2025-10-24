@@ -5,6 +5,8 @@ import { useParentsByOrganizer, useCreateParent, useUpdateParent } from "../../h
 import EventCreateForm from "../../components/events/EventCreateForm";
 import EventDatesSection from "../../components/events/EventDatesSection";
 import EventPricingSection from "../../components/events/EventPricingSection";
+// import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+// import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 
 const colors = {
   coral: '#FF3D57',
@@ -136,6 +138,26 @@ export const EventEditor: React.FC = () => {
           <div style={{ marginTop: '48px' }}>
             <EventPricingSection eventId={currentEvent.id} eventName={currentEvent.nombre} />
           </div>
+
+          {/* Photo Management Section - TODO: Implement media management for events */}
+          {/* <div style={{ marginTop: '48px' }}>
+            <PhotoManagementSection
+              entityId={currentEvent.id}
+              entityType="event"
+              title="Galería de Fotos del Social"
+              description="Sube fotos promocionales de tu social"
+            />
+          </div> */}
+
+          {/* Video Management Section - TODO: Implement media management for events */}
+          {/* <div style={{ marginTop: '48px' }}>
+            <VideoManagementSection
+              entityId={currentEvent.id}
+              entityType="event"
+              title="Videos del Social"
+              description="Sube videos promocionales y demostraciones"
+            />
+          </div> */}
         </div>
       )}
     </div>

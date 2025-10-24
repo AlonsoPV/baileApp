@@ -578,11 +578,6 @@ export default function OrganizerProfileEditor() {
   return (
     <>
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          33% { transform: translate(30px, -30px) rotate(120deg); }
-          66% { transform: translate(-20px, 20px) rotate(240deg); }
-        }
       `}</style>
       <div style={{
         minHeight: '100vh',
@@ -935,17 +930,6 @@ export default function OrganizerProfileEditor() {
             overflow: 'hidden'
           }}
         >
-          {/* Efecto de fondo animado */}
-          <div style={{
-            position: 'absolute',
-            top: '-50%',
-            left: '-50%',
-            width: '200%',
-            height: '200%',
-            background: 'radial-gradient(circle, rgba(255, 61, 87, 0.1) 0%, transparent 70%)',
-            animation: 'float 8s ease-in-out infinite reverse',
-            zIndex: 0
-          }} />
           
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
@@ -1043,47 +1027,6 @@ export default function OrganizerProfileEditor() {
           )}
         </div>
 
-        {/* Estado y Acciones */}
-        <div style={{ 
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            ⚙️ Estado y Acciones
-          </h2>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-              Estado: {getEstadoBadge()}
-            </span>
-          </div>
-        
-          {org.estado_aprobacion === "borrador" && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSubmitForReview}
-              disabled={submit.isPending}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '12px',
-                border: 'none',
-                background: submit.isPending ? `${colors.light}33` : colors.blue,
-                color: colors.light,
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: submit.isPending ? 'not-allowed' : 'pointer',
-                boxShadow: `0 4px 16px ${colors.blue}66`,
-              }}
-            >
-              {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
-            </motion.button>
-          )}
-        </div>
-
         {/* Botón Discreto: Crear Evento - Centro Abajo */}
         <div 
           id="organizer-create-event-button"
@@ -1158,6 +1101,47 @@ export default function OrganizerProfileEditor() {
           description="Los videos aparecerán en la sección de videos de tu perfil"
           slots={['v1', 'v2', 'v3']}
         />
+
+        {/* Estado y Acciones */}
+        <div style={{ 
+          marginBottom: '3rem',
+          padding: '2rem',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            ⚙️ Estado y Acciones
+          </h2>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+              Estado: {getEstadoBadge()}
+            </span>
+          </div>
+        
+          {org.estado_aprobacion === "borrador" && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSubmitForReview}
+              disabled={submit.isPending}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: submit.isPending ? `${colors.light}33` : colors.blue,
+                color: colors.light,
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: submit.isPending ? 'not-allowed' : 'pointer',
+                boxShadow: `0 4px 16px ${colors.blue}66`,
+              }}
+            >
+              {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
+            </motion.button>
+          )}
+        </div>
       </div>
       </div>
       </div>
