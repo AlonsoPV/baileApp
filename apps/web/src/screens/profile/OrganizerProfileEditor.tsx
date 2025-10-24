@@ -52,71 +52,156 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        padding: '16px',
-        background: `${colors.dark}aa`,
-        borderRadius: '12px',
-        border: `1px solid ${colors.light}22`,
+        padding: '2rem',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+        borderRadius: '20px',
+        border: '2px solid rgba(255, 61, 87, 0.2)',
         cursor: 'pointer',
-        transition: 'all 0.2s ease'
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        overflow: 'hidden',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)'
       }}
       onClick={handleSocialClick}
       whileHover={{ 
-        background: `${colors.dark}dd`,
-        borderColor: colors.blue,
-        transform: 'translateY(-2px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        y: -6,
+        scale: 1.02,
+        boxShadow: '0 16px 40px rgba(255, 61, 87, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)'
       }}
     >
+      {/* Efecto de brillo en hover */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: '-100%',
+        width: '100%',
+        height: '100%',
+        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+        transition: 'left 0.6s ease',
+        zIndex: 1
+      }} />
       {/* Header del social */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start', 
+        marginBottom: '1.5rem',
+        position: 'relative',
+        zIndex: 2
+      }}>
         <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '4px', color: colors.light }}>
-            {parent.nombre}
-          </h4>
-          <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: '8px' }}>
-            {parent.descripcion}
-          </p>
-          <div style={{ fontSize: '0.75rem', opacity: 0.6, color: colors.blue }}>
-            👁️ Click para ver el social
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.2rem',
+              boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)'
+            }}>
+              🎭
+            </div>
+            <h4 style={{ 
+              fontSize: '1.4rem', 
+              fontWeight: '800', 
+              margin: 0, 
+              color: colors.light,
+              background: 'linear-gradient(135deg, #ffffff 0%, #ffebee 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              {parent.nombre}
+            </h4>
+          </div>
+          {parent.descripcion && (
+            <p style={{ 
+              fontSize: '1rem', 
+              opacity: 0.9, 
+              marginBottom: '1rem',
+              fontWeight: '500',
+              lineHeight: 1.5,
+              color: colors.light
+            }}>
+              {parent.descripcion}
+            </p>
+          )}
+          <div style={{ 
+            fontSize: '0.85rem', 
+            opacity: 0.8, 
+            color: colors.blue,
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '0.5rem 0.75rem',
+            background: 'rgba(30, 136, 229, 0.1)',
+            borderRadius: '10px',
+            border: '1px solid rgba(30, 136, 229, 0.2)',
+            width: 'fit-content'
+          }}>
+            <span>👁️</span>
+            Click para ver el social
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
+        <div style={{ display: 'flex', gap: '0.75rem', position: 'relative', zIndex: 2 }}>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/social/${parent.id}/edit`);
             }}
             style={{
-              padding: '6px 12px',
-              background: colors.blue,
+              padding: '0.75rem 1.25rem',
+              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
               color: colors.light,
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              cursor: 'pointer'
+              border: '2px solid rgba(30, 136, 229, 0.3)',
+              borderRadius: '12px',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+              backdropFilter: 'blur(10px)'
             }}
           >
             ✏️ Editar
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(parent.id);
             }}
             disabled={isDeleting}
             style={{
-              padding: '6px 12px',
-              background: colors.coral,
+              padding: '0.75rem 1.25rem',
+              background: isDeleting 
+                ? 'rgba(255, 255, 255, 0.1)' 
+                : 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
               color: colors.light,
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
+              border: isDeleting 
+                ? '2px solid rgba(255, 255, 255, 0.2)' 
+                : '2px solid rgba(255, 61, 87, 0.3)',
+              borderRadius: '12px',
+              fontSize: '0.85rem',
+              fontWeight: '700',
               cursor: isDeleting ? 'not-allowed' : 'pointer',
-              opacity: isDeleting ? 0.5 : 1
+              opacity: isDeleting ? 0.5 : 1,
+              transition: 'all 0.3s ease',
+              boxShadow: isDeleting 
+                ? 'none' 
+                : '0 4px 16px rgba(255, 61, 87, 0.2)',
+              backdropFilter: 'blur(10px)'
             }}
           >
             {isDeleting ? '⏳' : '🗑️'} Eliminar
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -491,12 +576,20 @@ export default function OrganizerProfileEditor() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: colors.dark,
-      color: colors.light,
-      padding: '2rem',
-    }}>
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          33% { transform: translate(30px, -30px) rotate(120deg); }
+          66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+      `}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: colors.dark,
+        color: colors.light,
+        padding: '2rem',
+      }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header con botón Volver */}
         <div style={{
@@ -833,18 +926,67 @@ export default function OrganizerProfileEditor() {
           data-test-id="organizer-events-list"
           style={{
             marginBottom: '3rem',
-            padding: '2rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '2.5rem',
+            background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1) 0%, rgba(255, 140, 66, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+            borderRadius: '24px',
+            border: '2px solid rgba(255, 61, 87, 0.2)',
+            boxShadow: '0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            🎭 Mis Sociales
-          </h2>
+          {/* Efecto de fondo animado */}
+          <div style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(255, 61, 87, 0.1) 0%, transparent 70%)',
+            animation: 'float 8s ease-in-out infinite reverse',
+            zIndex: 0
+          }} />
+          
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
+              }}>
+                🎭
+              </div>
+              <div>
+                <h2 style={{ 
+                  fontSize: '1.75rem', 
+                  fontWeight: '800', 
+                  margin: 0, 
+                  color: colors.light,
+                  background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  Mis Sociales
+                </h2>
+                <p style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.8,
+                  margin: 0,
+                  fontWeight: '500'
+                }}>
+                  Gestiona tus eventos sociales
+                </p>
+              </div>
+            </div>
           
           {parents && parents.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {parents.map((parent: any) => (
                 <EventParentCard
                   key={parent.id}
@@ -857,14 +999,46 @@ export default function OrganizerProfileEditor() {
           ) : (
             <div style={{
               textAlign: 'center',
-              padding: '2rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              padding: '3rem 2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
+              borderRadius: '20px',
+              border: '2px solid rgba(255, 61, 87, 0.2)',
+              position: 'relative',
+              overflow: 'hidden'
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎭</div>
-              <div style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No tienes sociales creados</div>
-              <div style={{ opacity: 0.7 }}>Crea tu primer social para comenzar</div>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2.5rem',
+                margin: '0 auto 1.5rem',
+                boxShadow: '0 12px 32px rgba(255, 61, 87, 0.3)'
+              }}>
+                🎭
+              </div>
+              <h3 style={{ 
+                fontSize: '1.4rem', 
+                fontWeight: '700', 
+                marginBottom: '0.75rem',
+                color: colors.light,
+                background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                No tienes sociales creados
+              </h3>
+              <p style={{ 
+                opacity: 0.8, 
+                fontSize: '1rem',
+                fontWeight: '500',
+                margin: 0
+              }}>
+                Crea tu primer social para comenzar a organizar eventos
+              </p>
             </div>
           )}
         </div>
@@ -985,6 +1159,7 @@ export default function OrganizerProfileEditor() {
           slots={['v1', 'v2', 'v3']}
         />
       </div>
-    </div>
+      </div>
+    </>
   );
 }

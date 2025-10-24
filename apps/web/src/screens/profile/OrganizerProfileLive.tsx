@@ -515,6 +515,12 @@ export function OrganizerProfileLive() {
   return (
     <>
       <style>{`
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          33% { transform: translate(30px, -30px) rotate(120deg); }
+          66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+        
         .org-container {
           width: 100%;
           max-width: 900px;
@@ -535,7 +541,7 @@ export function OrganizerProfileLive() {
         /* Estilos para scroll horizontal */
         .dates-scroll-container {
           display: flex;
-          gap: 1rem;
+          gap: 1.5rem;
           overflow-x: auto;
           padding-bottom: 0.5rem;
           scrollbar-width: thin;
@@ -558,6 +564,12 @@ export function OrganizerProfileLive() {
         
         .dates-scroll-container::-webkit-scrollbar-thumb:hover {
           background: #1E88E599;
+        }
+        
+        /* Efectos de hover mejorados */
+        .dates-scroll-container > div:hover {
+          transform: translateY(-8px) scale(1.03);
+          box-shadow: 0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
         }
         
         @media (max-width: 768px) {
@@ -798,45 +810,87 @@ export function OrganizerProfileLive() {
             animate={{ opacity: 1, y: 0 }}
             style={{
               marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(255, 61, 87, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+              borderRadius: '24px',
+              border: '2px solid rgba(30, 136, 229, 0.2)',
+              boxShadow: '0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
+            {/* Efecto de fondo animado */}
+            <div style={{
+              position: 'absolute',
+              top: '-50%',
+              right: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(30, 136, 229, 0.1) 0%, transparent 70%)',
+              animation: 'float 6s ease-in-out infinite',
+              zIndex: 0
+            }} />
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1.5rem'
+              marginBottom: '2rem',
+              position: 'relative',
+              zIndex: 1
             }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                📅 Próximas Fechas
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                }}>
+                  📅
+                </div>
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    Próximas Fechas
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Eventos programados
+                  </p>
+                </div>
+              </div>
               <div style={{
-                padding: '0.5rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '20px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: colors.light
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                borderRadius: '25px',
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: colors.light,
+                border: '1px solid rgba(30, 136, 229, 0.3)',
+                boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+                backdropFilter: 'blur(10px)'
               }}>
                 {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''}
               </div>
             </div>
 
             {/* Cards de fechas en scroll horizontal */}
-            <div className="dates-scroll-container">
+            <div className="dates-scroll-container" style={{ position: 'relative', zIndex: 1 }}>
               {inviteItems.map((ev, i) => (
                 <motion.div
                   key={i}
@@ -844,102 +898,153 @@ export function OrganizerProfileLive() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + i * 0.1 }}
                   whileHover={{ 
-                    y: -4, 
-                    scale: 1.02,
-                    borderColor: colors.blue,
-                    boxShadow: '0 8px 24px rgba(30, 136, 229, 0.3)'
+                    y: -8, 
+                    scale: 1.03,
+                    boxShadow: '0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
                   }}
                   onClick={() => navigate(ev.href)}
                   style={{
-                    minWidth: '280px',
-                    maxWidth: '320px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    minWidth: '300px',
+                    maxWidth: '340px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '20px',
+                    border: '2px solid rgba(30, 136, 229, 0.2)',
                     overflow: 'hidden',
                     cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '200px'
+                    height: '220px',
+                    position: 'relative',
+                    backdropFilter: 'blur(10px)'
                   }}
                 >
+                  {/* Efecto de brillo en hover */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                    transition: 'left 0.6s ease',
+                    zIndex: 1
+                  }} />
+                  
                   {/* Header con nombre y fecha */}
                   <div style={{ 
-                    padding: '1rem',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    padding: '1.25rem',
+                    background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.15) 0%, rgba(0, 188, 212, 0.1) 100%)',
+                    borderBottom: '2px solid rgba(30, 136, 229, 0.2)',
+                    position: 'relative',
+                    zIndex: 2
                   }}>
-                    <h3 style={{
-                      color: colors.light,
-                      fontWeight: '700',
-                      fontSize: '1rem',
-                      marginBottom: '0.5rem',
-                      lineHeight: 1.2,
-                    }}>
-                      {ev.nombre}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.9rem',
+                        boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)'
+                      }}>
+                        📅
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{
+                          color: colors.light,
+                          fontWeight: '800',
+                          fontSize: '1.1rem',
+                          margin: 0,
+                          lineHeight: 1.2,
+                          background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent'
+                        }}>
+                          {ev.nombre}
+                        </h3>
+                      </div>
+                    </div>
                     <div style={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.85rem',
                       color: colors.blue,
-                      fontWeight: '600',
+                      fontWeight: '700',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      gap: '6px',
+                      padding: '0.5rem 0.75rem',
+                      background: 'rgba(30, 136, 229, 0.1)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(30, 136, 229, 0.2)'
                     }}>
-                      <span>📅</span>
+                      <span style={{ fontSize: '1rem' }}>📅</span>
                       {ev.date}
                     </div>
                   </div>
 
                   {/* Información de la fecha */}
                   <div style={{ 
-                    padding: '1rem',
+                    padding: '1.25rem',
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.5rem'
+                    gap: '0.75rem',
+                    position: 'relative',
+                    zIndex: 2
                   }}>
                     {/* Hora (si está disponible) */}
                     {ev.time && (
                       <div style={{
-                        fontSize: '0.8rem',
-                        color: `${colors.light}99`,
+                        fontSize: '0.85rem',
+                        color: colors.light,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
+                        gap: '8px',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
-                        <span style={{ fontSize: '0.9rem' }}>🕐</span>
-                        <span style={{ fontWeight: '600' }}>{ev.time}</span>
+                        <span style={{ fontSize: '1rem' }}>🕐</span>
+                        <span style={{ fontWeight: '700' }}>{ev.time}</span>
                       </div>
                     )}
                     
                     {/* Lugar */}
                     {ev.place && (
                       <div style={{
-                        fontSize: '0.8rem',
-                        color: `${colors.light}99`,
+                        fontSize: '0.85rem',
+                        color: colors.light,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
+                        gap: '8px',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
-                        <span style={{ fontSize: '0.9rem' }}>📍</span>
-                        <span style={{ fontWeight: '600' }}>{ev.place}</span>
+                        <span style={{ fontSize: '1rem' }}>📍</span>
+                        <span style={{ fontWeight: '700' }}>{ev.place}</span>
                       </div>
                     )}
 
                     {/* CTA */}
                     <div style={{
                       marginTop: 'auto',
-                      padding: '0.5rem',
-                      borderRadius: '8px',
-                      background: `${colors.blue}22`,
-                      border: `1px solid ${colors.blue}44`,
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                      border: '2px solid rgba(30, 136, 229, 0.3)',
                       textAlign: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      color: colors.blue,
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      color: colors.light,
+                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+                      transition: 'all 0.3s ease'
                     }}>
                       👁️ Ver detalles
                     </div>
@@ -961,94 +1066,203 @@ export function OrganizerProfileLive() {
             transition={{ delay: 0.6 }}
             style={{
               marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1) 0%, rgba(255, 140, 66, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+              borderRadius: '24px',
+              border: '2px solid rgba(255, 61, 87, 0.2)',
+              boxShadow: '0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
+            {/* Efecto de fondo animado */}
+            <div style={{
+              position: 'absolute',
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(255, 61, 87, 0.1) 0%, transparent 70%)',
+              animation: 'float 8s ease-in-out infinite reverse',
+              zIndex: 0
+            }} />
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1.5rem'
+              marginBottom: '2rem',
+              position: 'relative',
+              zIndex: 1
             }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                🎭 Social
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
+                }}>
+                  🎭
+                </div>
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    Mis Sociales
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Eventos sociales organizados
+                  </p>
+                </div>
+              </div>
               <div style={{
-                padding: '0.5rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '20px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: colors.light
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+                borderRadius: '25px',
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: colors.light,
+                border: '1px solid rgba(255, 61, 87, 0.3)',
+                boxShadow: '0 4px 16px rgba(255, 61, 87, 0.2)',
+                backdropFilter: 'blur(10px)'
               }}>
                 {parents.length} social{parents.length !== 1 ? 'es' : ''}
               </div>
             </div>
             
-            <div style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{ display: 'grid', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
               {parents.map((parent) => (
                 <motion.div
                   key={parent.id}
-                  whileHover={{ scale: 1.01, y: -2 }}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -4,
+                    boxShadow: '0 16px 40px rgba(255, 61, 87, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)'
+                  }}
                   style={{
-                    padding: '1.5rem',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    transition: 'all 0.3s ease',
+                    padding: '2rem',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '20px',
+                    border: '2px solid rgba(255, 61, 87, 0.2)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 32px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <h4 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem', color: colors.light }}>
-                    {parent.nombre}
-                  </h4>
-                  {parent.descripcion && (
-                    <p style={{ opacity: 0.8, marginBottom: '0.75rem', lineHeight: 1.5, fontSize: '0.9rem' }}>
-                      {parent.descripcion}
-                    </p>
-                  )}
-                  {parent.sede_general && (
-                    <p style={{ fontSize: '0.875rem', opacity: 0.7, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                      📍 {parent.sede_general}
-                    </p>
-                  )}
+                  {/* Efecto de brillo en hover */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                    transition: 'left 0.6s ease',
+                    zIndex: 1
+                  }} />
                   
-                  {/* Solo botón "Ver próximas fechas" */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/social/${parent.id}`);
-                      }}
-                      style={{
-                        padding: '0.75rem 2rem',
-                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                        border: 'none',
-                        borderRadius: '8px',
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)'
+                      }}>
+                        🎭
+                      </div>
+                      <h4 style={{ 
+                        fontSize: '1.4rem', 
+                        fontWeight: '800', 
+                        margin: 0, 
                         color: colors.light,
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                      }}
-                    >
-                      📅 Ver próximas fechas
-                    </motion.button>
+                        background: 'linear-gradient(135deg, #ffffff 0%, #ffebee 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}>
+                        {parent.nombre}
+                      </h4>
+                    </div>
+                    
+                    {parent.descripcion && (
+                      <p style={{ 
+                        opacity: 0.9, 
+                        marginBottom: '1rem', 
+                        lineHeight: 1.6, 
+                        fontSize: '1rem',
+                        fontWeight: '500',
+                        color: colors.light
+                      }}>
+                        {parent.descripcion}
+                      </p>
+                    )}
+                    
+                    {parent.sede_general && (
+                      <div style={{ 
+                        fontSize: '0.9rem', 
+                        opacity: 0.8, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        marginBottom: '1.5rem',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}>
+                        <span style={{ fontSize: '1rem' }}>📍</span>
+                        <span style={{ fontWeight: '600' }}>{parent.sede_general}</span>
+                      </div>
+                    )}
+                    
+                    {/* Botón mejorado */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/social/${parent.id}`);
+                        }}
+                        style={{
+                          padding: '1rem 2.5rem',
+                          background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+                          border: '2px solid rgba(255, 61, 87, 0.3)',
+                          borderRadius: '15px',
+                          color: colors.light,
+                          fontSize: '1rem',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 8px 24px rgba(255, 61, 87, 0.3)',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        📅 Ver próximas fechas
+                      </motion.button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
