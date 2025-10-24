@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useParentsByOrganizer, useCreateParent, useUpdateParent } from "../../hooks/useEvents";
+import { useEventParentMedia } from "../../hooks/useEventParentMedia";
+import { useToast } from "../../components/Toast";
 import EventCreateForm from "../../components/events/EventCreateForm";
 import EventDatesSection from "../../components/events/EventDatesSection";
 import EventPricingSection from "../../components/events/EventPricingSection";
-// import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-// import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 
 const colors = {
   coral: '#FF3D57',
@@ -26,8 +28,45 @@ export const EventEditor: React.FC = () => {
   const { data: events } = useParentsByOrganizer(organizer?.id);
   const createMutation = useCreateParent();
   const updateMutation = useUpdateParent();
+  const { showToast } = useToast();
 
   const currentEvent = isEditing ? events?.find(e => e.id === parseInt(id)) : null;
+  
+  // Media management
+  const { media, add, remove } = useEventParentMedia(currentEvent?.id);
+  const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+
+  // Función para subir archivo
+  const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    setUploading(prev => ({ ...prev, [slot]: true }));
+    
+    try {
+      await add.mutateAsync({ file, slot });
+      showToast(`${kind === 'photo' ? 'Foto' : 'Video'} subido correctamente`, 'success');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      showToast('Error al subir el archivo', 'error');
+    } finally {
+      setUploading(prev => ({ ...prev, [slot]: false }));
+    }
+  };
+
+  // Función para eliminar archivo
+  const removeFile = async (slot: string) => {
+    try {
+      // Buscar el media item por slot
+      const mediaItem = media.find(m => (m as any).slot === slot);
+      if (mediaItem) {
+        await remove.mutateAsync(mediaItem.id);
+        showToast('Archivo eliminado', 'success');
+      } else {
+        showToast('No se encontró el archivo', 'error');
+      }
+    } catch (error) {
+      console.error('Error removing file:', error);
+      showToast('Error al eliminar el archivo', 'error');
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     if (!organizer?.id) {
@@ -139,25 +178,32 @@ export const EventEditor: React.FC = () => {
             <EventPricingSection eventId={currentEvent.id} eventName={currentEvent.nombre} />
           </div>
 
-          {/* Photo Management Section - TODO: Implement media management for events */}
-          {/* <div style={{ marginTop: '48px' }}>
+          {/* Photo Management Section */}
+          <div style={{ marginTop: '48px' }}>
             <PhotoManagementSection
-              entityId={currentEvent.id}
-              entityType="event"
-              title="Galería de Fotos del Social"
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Galería de Fotos del Social"
               description="Sube fotos promocionales de tu social"
+              slots={['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
+              isMainPhoto={false}
             />
-          </div> */}
+          </div>
 
-          {/* Video Management Section - TODO: Implement media management for events */}
-          {/* <div style={{ marginTop: '48px' }}>
+          {/* Video Management Section */}
+          <div style={{ marginTop: '48px' }}>
             <VideoManagementSection
-              entityId={currentEvent.id}
-              entityType="event"
-              title="Videos del Social"
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="🎥 Videos del Social"
               description="Sube videos promocionales y demostraciones"
+              slots={['v1', 'v2', 'v3']}
             />
-          </div> */}
+          </div>
         </div>
       )}
     </div>

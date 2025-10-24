@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useDatesByParent, useCreateDate, useUpdateDate } from "../../hooks/useEvents";
+import { useEventDateMedia } from "../../hooks/useEventDateMedia";
+import { useToast } from "../../components/Toast";
 import EventCreateForm from "../../components/events/EventCreateForm";
-// import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-// import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 
 const colors = {
   coral: '#FF3D57',
@@ -24,9 +26,46 @@ export const EventDateEditor: React.FC = () => {
   const { data: dates } = useDatesByParent(parentId ? parseInt(parentId) : undefined);
   const createMutation = useCreateDate();
   const updateMutation = useUpdateDate();
+  const { showToast } = useToast();
 
   const currentDate = isEditing ? dates?.find(d => d.id === parseInt(id)) : null;
   const parentIdNum = parentId ? parseInt(parentId) : currentDate?.parent_id;
+  
+  // Media management
+  const { media, add, remove } = useEventDateMedia(currentDate?.id);
+  const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+
+  // Función para subir archivo
+  const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    setUploading(prev => ({ ...prev, [slot]: true }));
+    
+    try {
+      await add.mutateAsync({ file, slot });
+      showToast(`${kind === 'photo' ? 'Foto' : 'Video'} subido correctamente`, 'success');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      showToast('Error al subir el archivo', 'error');
+    } finally {
+      setUploading(prev => ({ ...prev, [slot]: false }));
+    }
+  };
+
+  // Función para eliminar archivo
+  const removeFile = async (slot: string) => {
+    try {
+      // Buscar el media item por slot
+      const mediaItem = media.find(m => (m as any).slot === slot);
+      if (mediaItem) {
+        await remove.mutateAsync(mediaItem.id);
+        showToast('Archivo eliminado', 'success');
+      } else {
+        showToast('No se encontró el archivo', 'error');
+      }
+    } catch (error) {
+      console.error('Error removing file:', error);
+      showToast('Error al eliminar el archivo', 'error');
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     if (!parentIdNum) {
@@ -182,25 +221,32 @@ export const EventDateEditor: React.FC = () => {
           margin: '0 auto',
           padding: '0 24px',
         }}>
-          {/* Photo Management Section - TODO: Implement media management for dates */}
-          {/* <div style={{ marginTop: '48px' }}>
+          {/* Photo Management Section */}
+          <div style={{ marginTop: '48px' }}>
             <PhotoManagementSection
-              entityId={currentDate.id}
-              entityType="date"
-              title="Galería de Fotos de la Fecha"
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Galería de Fotos de la Fecha"
               description="Sube fotos promocionales de esta fecha específica"
+              slots={['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
+              isMainPhoto={false}
             />
-          </div> */}
+          </div>
 
-          {/* Video Management Section - TODO: Implement media management for dates */}
-          {/* <div style={{ marginTop: '48px' }}>
+          {/* Video Management Section */}
+          <div style={{ marginTop: '48px' }}>
             <VideoManagementSection
-              entityId={currentDate.id}
-              entityType="date"
-              title="Videos de la Fecha"
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="🎥 Videos de la Fecha"
               description="Sube videos promocionales y demostraciones de esta fecha"
+              slots={['v1', 'v2', 'v3']}
             />
-          </div> */}
+          </div>
         </div>
       )}
     </div>
