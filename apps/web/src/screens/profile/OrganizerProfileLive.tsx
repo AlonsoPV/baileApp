@@ -541,11 +541,13 @@ export function OrganizerProfileLive() {
         /* Estilos para scroll horizontal */
         .dates-scroll-container {
           display: flex;
-          gap: 1.5rem;
+          gap: 0;
           overflow-x: auto;
           padding-bottom: 0.5rem;
           scrollbar-width: thin;
           scrollbar-color: #1E88E566 transparent;
+          scroll-snap-type: x mandatory;
+          scroll-behavior: smooth;
         }
         
         .dates-scroll-container::-webkit-scrollbar {
@@ -890,7 +892,12 @@ export function OrganizerProfileLive() {
             </div>
 
             {/* Cards de fechas en scroll horizontal */}
-            <div className="dates-scroll-container" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="dates-scroll-container" style={{ 
+              position: 'relative', 
+              zIndex: 1,
+              height: '320px',
+              paddingBottom: '1rem'
+            }}>
               {inviteItems.map((ev, i) => (
                 <motion.div
                   key={i}
@@ -904,20 +911,23 @@ export function OrganizerProfileLive() {
                   }}
                   onClick={() => navigate(ev.href)}
                   style={{
-                    minWidth: '300px',
-                    maxWidth: '340px',
+                    minWidth: '380px',
+                    maxWidth: '420px',
                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     border: '2px solid rgba(30, 136, 229, 0.2)',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)',
+                    boxShadow: '0 12px 40px rgba(30, 136, 229, 0.25), 0 6px 20px rgba(0, 0, 0, 0.2)',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '220px',
+                    height: '280px',
                     position: 'relative',
-                    backdropFilter: 'blur(10px)'
+                    backdropFilter: 'blur(10px)',
+                    marginRight: '1.5rem',
+                    scrollSnapAlign: 'start',
+                    flexShrink: 0
                   }}
                 >
                   {/* Efecto de brillo en hover */}
@@ -934,23 +944,23 @@ export function OrganizerProfileLive() {
                   
                   {/* Header con nombre y fecha */}
                   <div style={{ 
-                    padding: '1.25rem',
+                    padding: '1.5rem',
                     background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.15) 0%, rgba(0, 188, 212, 0.1) 100%)',
                     borderBottom: '2px solid rgba(30, 136, 229, 0.2)',
                     position: 'relative',
                     zIndex: 2
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                       <div style={{
-                        width: '32px',
-                        height: '32px',
+                        width: '40px',
+                        height: '40px',
                         borderRadius: '50%',
                         background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.9rem',
-                        boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)'
+                        fontSize: '1.1rem',
+                        boxShadow: '0 6px 16px rgba(30, 136, 229, 0.4)'
                       }}>
                         📅
                       </div>
@@ -958,7 +968,7 @@ export function OrganizerProfileLive() {
                         <h3 style={{
                           color: colors.light,
                           fontWeight: '800',
-                          fontSize: '1.1rem',
+                          fontSize: '1.3rem',
                           margin: 0,
                           lineHeight: 1.2,
                           background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)',
@@ -970,46 +980,46 @@ export function OrganizerProfileLive() {
                       </div>
                     </div>
                     <div style={{
-                      fontSize: '0.85rem',
+                      fontSize: '1rem',
                       color: colors.blue,
                       fontWeight: '700',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      padding: '0.5rem 0.75rem',
+                      gap: '8px',
+                      padding: '0.75rem 1rem',
                       background: 'rgba(30, 136, 229, 0.1)',
-                      borderRadius: '12px',
+                      borderRadius: '15px',
                       border: '1px solid rgba(30, 136, 229, 0.2)'
                     }}>
-                      <span style={{ fontSize: '1rem' }}>📅</span>
+                      <span style={{ fontSize: '1.2rem' }}>📅</span>
                       {ev.date}
                     </div>
                   </div>
 
                   {/* Información de la fecha */}
                   <div style={{ 
-                    padding: '1.25rem',
+                    padding: '1.5rem',
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem',
+                    gap: '1rem',
                     position: 'relative',
                     zIndex: 2
                   }}>
                     {/* Hora (si está disponible) */}
                     {ev.time && (
                       <div style={{
-                        fontSize: '0.85rem',
+                        fontSize: '1rem',
                         color: colors.light,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        padding: '0.5rem 0.75rem',
+                        gap: '10px',
+                        padding: '0.75rem 1rem',
                         background: 'rgba(255, 255, 255, 0.08)',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         border: '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
-                        <span style={{ fontSize: '1rem' }}>🕐</span>
+                        <span style={{ fontSize: '1.2rem' }}>🕐</span>
                         <span style={{ fontWeight: '700' }}>{ev.time}</span>
                       </div>
                     )}
@@ -1017,17 +1027,17 @@ export function OrganizerProfileLive() {
                     {/* Lugar */}
                     {ev.place && (
                       <div style={{
-                        fontSize: '0.85rem',
+                        fontSize: '1rem',
                         color: colors.light,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        padding: '0.5rem 0.75rem',
+                        gap: '10px',
+                        padding: '0.75rem 1rem',
                         background: 'rgba(255, 255, 255, 0.08)',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         border: '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
-                        <span style={{ fontSize: '1rem' }}>📍</span>
+                        <span style={{ fontSize: '1.2rem' }}>📍</span>
                         <span style={{ fontWeight: '700' }}>{ev.place}</span>
                       </div>
                     )}
@@ -1035,15 +1045,15 @@ export function OrganizerProfileLive() {
                     {/* CTA */}
                     <div style={{
                       marginTop: 'auto',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '12px',
+                      padding: '1rem 1.25rem',
+                      borderRadius: '15px',
                       background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
                       border: '2px solid rgba(30, 136, 229, 0.3)',
                       textAlign: 'center',
-                      fontSize: '0.85rem',
+                      fontSize: '1rem',
                       fontWeight: '700',
                       color: colors.light,
-                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+                      boxShadow: '0 6px 20px rgba(30, 136, 229, 0.25)',
                       transition: 'all 0.3s ease'
                     }}>
                       👁️ Ver detalles
