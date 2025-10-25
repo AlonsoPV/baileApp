@@ -823,7 +823,7 @@ export function OrganizerProfileLive() {
             <SocialMediaSection 
               respuestas={(org as any)?.respuestas}
               redes_sociales={(org as any)?.redes_sociales}
-              title="📱 Redes Sociales"
+              title="Sociales"
               availablePlatforms={['instagram', 'facebook', 'whatsapp']}
               style={{
                 marginBottom: spacing[8],
