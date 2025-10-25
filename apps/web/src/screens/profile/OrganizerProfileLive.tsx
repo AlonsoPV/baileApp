@@ -1177,7 +1177,7 @@ export function OrganizerProfileLive() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
-                  boxShadow: `0 8px 24px ${colors.deep[500]}40`
+                  boxShadow: `0 8px 24px ${colors.deep[600]}40`
                 }}>
                   🎥
                 </div>
