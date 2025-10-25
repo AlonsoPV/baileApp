@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsAdmin } from '../hooks/useRoleRequests';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -81,7 +81,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 padding: '0.5rem 1rem',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background 0.2s',
               }}
               onMouseEnter={(e) => {
@@ -101,7 +101,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 padding: '0.5rem 1rem',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background 0.2s',
               }}
               onMouseEnter={(e) => {
@@ -124,7 +124,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                   fontSize: '0.875rem',
                   fontWeight: '700',
                   padding: '0.5rem 1rem',
-                  borderRadius: theme.radius.md,
+                  borderRadius: borderRadius.md,
                   transition: 'background 0.2s',
                   border: '1px solid rgba(255, 214, 102, 0.3)',
                 }}
@@ -144,7 +144,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 padding: '0.5rem 1rem',
                 color: '#FFF',
                 fontSize: '0.875rem',
@@ -172,7 +172,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 padding: '0.5rem 1rem',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background 0.2s',
               }}
               onMouseEnter={(e) => {
@@ -189,7 +189,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 padding: '0.5rem 1rem',
                 color: '#FFF',
                 fontSize: '0.875rem',
