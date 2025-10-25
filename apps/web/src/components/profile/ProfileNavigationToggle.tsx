@@ -87,12 +87,11 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
 
   return (
     <div style={{
-      position: 'fixed',
+      position: 'sticky',
       top: '80px', // Justo debajo de la navbar
-      left: '50%',
-      transform: 'translateX(-50%)',
+      margin: 'auto',
       zIndex: 1000,
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
       gap: '0.75rem',
       padding: '0.75rem 1.5rem',
@@ -101,6 +100,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       backdropFilter: 'blur(10px)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      width: 'fit-content',
     }}>
       {/* Botón Ver Live */}
       <button
