@@ -659,7 +659,7 @@ export default function OrganizerProfileEditor() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: colors.darkBase,
+        background: '#000000',
         color: colors.light,
         display: 'flex',
         alignItems: 'center',
@@ -677,7 +677,7 @@ export default function OrganizerProfileEditor() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: colors.darkBase,
+        background: '#000000',
         color: colors.light,
         display: 'flex',
         alignItems: 'center',
@@ -697,7 +697,7 @@ export default function OrganizerProfileEditor() {
       `}</style>
       <div style={{
         minHeight: '100vh',
-        background: colors.darkBase,
+        background: '#000000',
         color: colors.light,
         padding: '2rem',
       }}>

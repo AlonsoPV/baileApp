@@ -641,6 +641,7 @@ export function DateLiveScreen() {
           console.log('[DateLiveScreen] Cronograma type:', typeof date.cronograma);
           console.log('[DateLiveScreen] Cronograma isArray:', Array.isArray(date.cronograma));
           console.log('[DateLiveScreen] Cronograma length:', date.cronograma?.length);
+          console.log('[DateLiveScreen] Cronograma stringified:', JSON.stringify(date.cronograma));
           return null;
         })()}
         {date.cronograma && Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
