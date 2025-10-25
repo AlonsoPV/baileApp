@@ -11,7 +11,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@ui": path.resolve(__dirname, "../../packages/ui/src"),
-      "@theme": path.resolve(__dirname, "src/theme")
+      "@theme": path.resolve(__dirname, "src/theme"),
+      "@": path.resolve(__dirname, "src")
     },
     dedupe: ["react", "react-dom"], // 👈 Asegura una sola copia de React
   }

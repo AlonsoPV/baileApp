@@ -1,23 +1,34 @@
-export const ENV = {
-  MODE: import.meta.env.MODE, // "development" | "production"
-  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL as string,
-  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
-  
-  get SUPABASE_REF() {
-    try {
-      // https://xxxxxx.supabase.co -> xxxxxx
-      const m = (this.SUPABASE_URL || "").match(/^https?:\/\/([^.]+)\.supabase\.co/i);
-      return m?.[1] || "unknown";
-    } catch {
-      return "unknown";
-    }
+// Environment configuration with fallbacks
+export const env = {
+  supabase: {
+    url: import.meta.env.VITE_SUPABASE_URL || '',
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
   },
+  isDev: import.meta.env.DEV,
+  isProd: import.meta.env.PROD,
 };
 
-if (ENV.MODE === "development") {
-  // Log seguro (sin llave completa)
-  console.log("[ENV] MODE:", ENV.MODE);
-  console.log("[ENV] REF:", ENV.SUPABASE_REF);
-  console.log("[ENV] URL:", ENV.SUPABASE_URL?.slice(0, 30) + "…");
+// Validate required environment variables
+export function validateEnv() {
+  const errors: string[] = [];
+  
+  if (!env.supabase.url) {
+    errors.push('VITE_SUPABASE_URL is required');
+  }
+  
+  if (!env.supabase.anonKey) {
+    errors.push('VITE_SUPABASE_ANON_KEY is required');
+  }
+  
+  if (errors.length > 0) {
+    console.error('[Environment] Missing required variables:', errors);
+    if (env.isProd) {
+      throw new Error(`Missing required environment variables: ${errors.join(', ')}`);
+    }
+  }
+  
+  return errors.length === 0;
 }
 
+// Initialize environment validation
+validateEnv();

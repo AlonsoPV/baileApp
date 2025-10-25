@@ -1,5 +1,5 @@
 import React from "react";
-import { ENV } from "../../lib/env";
+import { env } from "../../lib/env";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { guardedPatch } from "../../utils/safeUpdate";
 
@@ -29,7 +29,7 @@ export default function IntegrityDebugScreen() {
         color: 'rgb(212, 212, 212)',
         marginBottom: '1rem'
       }}>
-        REF: <strong>{ENV.SUPABASE_REF}</strong> • URL: {ENV.SUPABASE_URL}
+        REF: <strong>{env.supabase.url}</strong> • URL: {env.supabase.url}
       </div>
 
       <div style={{
