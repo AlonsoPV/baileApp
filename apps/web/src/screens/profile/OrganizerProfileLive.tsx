@@ -182,7 +182,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: colors.glass.darker,
-                color: colors.gray[50],
+                color: '#0277BD',
                 border: 'none',
                 borderRadius: borderRadius.full,
                 width: '48px',
@@ -208,7 +208,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: colors.glass.darker,
-                color: colors.gray[50],
+                color: '#0277BD',
                 border: 'none',
                 borderRadius: borderRadius.full,
                 width: '48px',
@@ -315,7 +315,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 top: spacing[4],
                 right: spacing[4],
                 background: colors.glass.darker,
-                color: colors.gray[50],
+                color: '#0277BD',
                 border: 'none',
                 borderRadius: borderRadius.full,
                 width: '48px',
@@ -618,7 +618,9 @@ export function OrganizerProfileLive() {
             overflow: 'hidden',
             borderRadius: borderRadius['2xl'],
             padding: spacing[12],
-            margin: spacing[4],
+            margin: `${spacing[20]} auto 0 auto`,
+            maxWidth: '900px',
+            width: '100%',
             border: `1px solid ${colors.glass.medium}`,
             boxShadow: colors.shadows.glass,
             zIndex: 1
@@ -670,7 +672,7 @@ export function OrganizerProfileLive() {
                     justifyContent: 'center',
                     fontSize: '6rem',
                     fontWeight: typography.fontWeight.black,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     {org.nombre_publico?.[0]?.toUpperCase() || '🎤'}
                   </div>
@@ -755,7 +757,7 @@ export function OrganizerProfileLive() {
                       ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)` 
                       : colors.gradients.secondary,
                     border: `2px solid ${org.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
-                    color: colors.gray[50],
+                    color: '#0277BD',
                     fontSize: typography.fontSize.sm,
                     fontWeight: typography.fontWeight.bold,
                     backdropFilter: 'blur(10px)',
@@ -780,7 +782,10 @@ export function OrganizerProfileLive() {
         <div className="org-container" style={{ 
           padding: spacing[8],
           position: 'relative',
-          zIndex: 1
+          zIndex: 1,
+          maxWidth: '900px',
+          margin: '0 auto',
+          width: '100%'
         }}>
           {/* Biografía */}
           {org.bio && (
@@ -800,7 +805,7 @@ export function OrganizerProfileLive() {
                 fontSize: typography.fontSize['2xl'], 
                 marginBottom: spacing[4], 
                 fontWeight: typography.fontWeight.bold,
-                color: colors.gray[50]
+                color: '#0277BD'
               }}>
                 💬 Sobre nosotros
               </h3>
@@ -808,7 +813,7 @@ export function OrganizerProfileLive() {
                 lineHeight: typography.lineHeight.relaxed, 
                 opacity: 0.9, 
                 fontSize: typography.fontSize.lg,
-                color: colors.gray[100]
+                color: '#0277BD'
               }}>
                 {org.bio}
               </p>
@@ -823,7 +828,7 @@ export function OrganizerProfileLive() {
             <SocialMediaSection 
               respuestas={(org as any)?.respuestas}
               redes_sociales={(org as any)?.redes_sociales}
-              title="Sociales"
+              title="Redes Sociales"
               availablePlatforms={['instagram', 'facebook', 'whatsapp']}
               style={{
                 marginBottom: spacing[8],
@@ -887,7 +892,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     Próximas Fechas
                   </h3>
@@ -895,7 +900,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#0277BD'
                   }}>
                     {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}
                   </p>
@@ -932,7 +937,7 @@ export function OrganizerProfileLive() {
                       fontSize: typography.fontSize.lg,
                       fontWeight: typography.fontWeight.semibold,
                       marginBottom: spacing[3],
-                      color: colors.gray[50]
+                      color: '#0277BD'
                     }}>
                       {ev.nombre}
                     </h4>
@@ -947,7 +952,7 @@ export function OrganizerProfileLive() {
                     {ev.time && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300],
+                        color: '#0277BD',
                         marginBottom: spacing[2]
                       }}>
                         🕐 {ev.time}
@@ -956,7 +961,7 @@ export function OrganizerProfileLive() {
                     {ev.place && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300]
+                        color: '#0277BD'
                       }}>
                         📍 {ev.place}
                       </p>
@@ -1006,7 +1011,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     Mis Sociales
                   </h3>
@@ -1014,7 +1019,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#0277BD'
                   }}>
                     {parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}
                   </p>
@@ -1043,14 +1048,14 @@ export function OrganizerProfileLive() {
                       fontSize: typography.fontSize.lg,
                       fontWeight: typography.fontWeight.semibold,
                       marginBottom: spacing[2],
-                      color: colors.gray[50]
+                      color: '#0277BD'
                     }}>
                       {parent.nombre}
                     </h4>
                     {parent.descripcion && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300],
+                        color: '#0277BD',
                         marginBottom: spacing[3]
                       }}>
                         {parent.descripcion}
@@ -1068,7 +1073,7 @@ export function OrganizerProfileLive() {
                         background: colors.gradients.secondary,
                         border: 'none',
                         borderRadius: borderRadius.lg,
-                        color: colors.gray[50],
+                        color: '#0277BD',
                         fontSize: typography.fontSize.sm,
                         fontWeight: typography.fontWeight.semibold,
                         cursor: 'pointer',
@@ -1123,7 +1128,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     Galería de Fotos
                   </h3>
@@ -1131,7 +1136,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#0277BD'
                   }}>
                     {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                   </p>
@@ -1181,7 +1186,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     Videos del Organizador
                   </h3>
@@ -1189,7 +1194,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#0277BD'
                   }}>
                     {videos.length} video{videos.length !== 1 ? 's' : ''}
                   </p>
@@ -1238,7 +1243,7 @@ export function OrganizerProfileLive() {
                       top: spacing[4],
                       right: spacing[4],
                       background: colors.glass.darker,
-                      color: colors.gray[50],
+                      color: '#0277BD',
                       padding: `${spacing[2]} ${spacing[4]}`,
                       borderRadius: borderRadius.lg,
                       fontSize: typography.fontSize.sm,
@@ -1291,7 +1296,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#0277BD'
                   }}>
                     Información para Asistentes
                   </h3>
@@ -1299,7 +1304,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#0277BD'
                   }}>
                     Preguntas frecuentes
                   </p>
