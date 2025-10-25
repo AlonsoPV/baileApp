@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
+import { useEventRSVP } from "../../hooks/useRSVP";
 import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
@@ -274,8 +275,14 @@ export default function EventDatePublicScreen() {
   const { data: parent } = useEventParent(date?.parent_id);
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
-
-  const [rsvpStatus, setRsvpStatus] = React.useState<'voy' | 'interesado' | 'no_voy' | null>(null);
+  
+  // Hook de RSVP
+  const { 
+    userStatus, 
+    stats, 
+    toggleInterested, 
+    isUpdating 
+  } = useEventRSVP(dateIdNum);
 
   if (isLoading) {
     return (
@@ -887,9 +894,38 @@ export default function EventDatePublicScreen() {
           </h2>
           
           <RSVPButtons
-            currentStatus={rsvpStatus}
-            onStatusChange={setRsvpStatus}
+            currentStatus={userStatus}
+            onStatusChange={toggleInterested}
+            disabled={isUpdating}
           />
+          
+          {/* Estadísticas de RSVP */}
+          {stats && (
+            <div style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '0.9rem',
+                color: colors.light,
+                opacity: 0.8,
+                marginBottom: '0.5rem'
+              }}>
+                {stats.interesado} persona{stats.interesado !== 1 ? 's' : ''} interesada{stats.interesado !== 1 ? 's' : ''}
+              </div>
+              <div style={{
+                fontSize: '0.8rem',
+                color: colors.light,
+                opacity: 0.6
+              }}>
+                Total: {stats.total} visualizaciones
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Galería de Fotos de la Fecha */}

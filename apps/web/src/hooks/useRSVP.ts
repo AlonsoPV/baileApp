@@ -4,12 +4,10 @@ import { supabase } from "../lib/supabase";
 // =====================================================
 // TIPOS DE RSVP
 // =====================================================
-export type RSVPStatus = 'asistire' | 'interesado' | 'no_asistire';
+export type RSVPStatus = 'interesado';
 
 export interface RSVPStats {
-  asistire: number;
   interesado: number;
-  no_asistire: number;
   total: number;
 }
 
@@ -216,15 +214,15 @@ export function useEventRSVP(eventDateId?: number) {
   const updateRSVP = useUpdateRSVP();
   const removeRSVP = useRemoveRSVP();
   
-  const handleRSVP = async (status: RSVPStatus) => {
+  const handleRSVP = async (status: RSVPStatus | null) => {
     if (!eventDateId) return;
     
     try {
-      // Si ya tiene ese estado, lo removemos
-      if (userRSVP.data === status) {
+      // Si se pasa null, removemos el RSVP
+      if (status === null) {
         await removeRSVP.mutateAsync(eventDateId);
       } else {
-        // Si no tiene ese estado, lo actualizamos
+        // Si se pasa 'interesado', lo actualizamos
         await updateRSVP.mutateAsync({ eventDateId, status });
       }
     } catch (error) {
@@ -248,6 +246,7 @@ export function useEventRSVP(eventDateId?: number) {
     // Acciones
     updateRSVP: handleRSVP,
     removeRSVP: handleRemoveRSVP,
+    toggleInterested: () => handleRSVP(userRSVP.data === 'interesado' ? null : 'interesado'),
     isUpdating: updateRSVP.isPending || removeRSVP.isPending,
     
     // Estados de mutación
