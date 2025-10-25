@@ -806,7 +806,7 @@ export function OrganizerProfileLive() {
                 fontSize: typography.fontSize['2xl'], 
                 marginBottom: spacing[4], 
                 fontWeight: typography.fontWeight.bold,
-                color: colors.gray[50]
+                color: '#B0B0B0'
               }}>
                 💬 Sobre nosotros
               </h3>
@@ -814,7 +814,7 @@ export function OrganizerProfileLive() {
                 lineHeight: typography.lineHeight.relaxed, 
                 opacity: 0.9, 
                 fontSize: typography.fontSize.lg,
-                color: colors.gray[100]
+                color: '#A0A0A0'
               }}>
                 {org.bio}
               </p>
@@ -893,7 +893,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#B0B0B0'
                   }}>
                     Próximas Fechas
                   </h3>
@@ -901,7 +901,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#A0A0A0'
                   }}>
                     {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}
                   </p>
@@ -938,7 +938,7 @@ export function OrganizerProfileLive() {
                       fontSize: typography.fontSize.lg,
                       fontWeight: typography.fontWeight.semibold,
                       marginBottom: spacing[3],
-                      color: colors.gray[50]
+                      color: '#B0B0B0'
                     }}>
                       {ev.nombre}
                     </h4>
@@ -953,7 +953,7 @@ export function OrganizerProfileLive() {
                     {ev.time && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300],
+                        color: '#A0A0A0',
                         marginBottom: spacing[2]
                       }}>
                         🕐 {ev.time}
@@ -962,7 +962,7 @@ export function OrganizerProfileLive() {
                     {ev.place && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300]
+                        color: '#A0A0A0'
                       }}>
                         📍 {ev.place}
                       </p>
@@ -1012,7 +1012,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#B0B0B0'
                   }}>
                     Mis Sociales
                   </h3>
@@ -1020,7 +1020,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#A0A0A0'
                   }}>
                     {parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}
                   </p>
@@ -1049,14 +1049,14 @@ export function OrganizerProfileLive() {
                       fontSize: typography.fontSize.lg,
                       fontWeight: typography.fontWeight.semibold,
                       marginBottom: spacing[2],
-                      color: colors.gray[50]
+                      color: '#B0B0B0'
                     }}>
                       {parent.nombre}
                     </h4>
                     {parent.descripcion && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: colors.gray[300],
+                        color: '#A0A0A0',
                         marginBottom: spacing[3]
                       }}>
                         {parent.descripcion}
@@ -1129,7 +1129,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#B0B0B0'
                   }}>
                     Galería de Fotos
                   </h3>
@@ -1137,7 +1137,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#A0A0A0'
                   }}>
                     {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                   </p>
@@ -1187,7 +1187,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#B0B0B0'
                   }}>
                     Videos del Organizador
                   </h3>
@@ -1195,7 +1195,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#A0A0A0'
                   }}>
                     {videos.length} video{videos.length !== 1 ? 's' : ''}
                   </p>
@@ -1297,7 +1297,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
-                    color: colors.gray[50]
+                    color: '#B0B0B0'
                   }}>
                     Información para Asistentes
                   </h3>
@@ -1305,7 +1305,7 @@ export function OrganizerProfileLive() {
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
-                    color: colors.gray[300]
+                    color: '#A0A0A0'
                   }}>
                     Preguntas frecuentes
                   </p>
