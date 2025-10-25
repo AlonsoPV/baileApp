@@ -202,3 +202,47 @@ export default {
   borderRadius,
   transitions,
 };
+
+// Export theme object for backward compatibility
+export const theme = {
+  // Background colors
+  bg: {
+    app: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+    card: colors.glass.light,
+    surface: colors.glass.medium,
+  },
+  
+  // Text colors
+  text: {
+    primary: colors.text.light,
+    secondary: colors.text.medium,
+    muted: colors.text.dark,
+  },
+  
+  // Brand colors
+  brand: {
+    primary: colors.gradients.primary,
+    secondary: colors.gradients.secondary,
+  },
+  
+  // Palette colors
+  palette: {
+    gray3: colors.glass.medium,
+    blue: colors.accent.blue[600],
+    coral: colors.primary[500],
+    orange: colors.secondary[500],
+  },
+  
+  // Spacing
+  spacing: (value: number) => spacing[value] || `${value * 0.25}rem`,
+  
+  // Border radius
+  radius: {
+    sm: borderRadius.sm,
+    md: borderRadius.md,
+    lg: borderRadius.lg,
+    xl: borderRadius['2xl'],
+  },
+};
+
+export type Theme = typeof theme;
