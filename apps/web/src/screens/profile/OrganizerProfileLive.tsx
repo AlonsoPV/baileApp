@@ -829,7 +829,7 @@ export function OrganizerProfileLive() {
               respuestas={(org as any)?.respuestas}
               redes_sociales={(org as any)?.redes_sociales}
               title="Redes Sociales"
-              availablePlatforms={['instagram', 'facebook', 'whatsapp']}
+              availablePlatforms={['instagram', 'facebook', 'whatsapp','tiktok']}
               style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
