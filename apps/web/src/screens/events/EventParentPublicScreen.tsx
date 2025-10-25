@@ -1238,5 +1238,6 @@ export default function EventParentPublicScreen() {
         })()}
       </div>
     </div>
+    </>
   );
 }
