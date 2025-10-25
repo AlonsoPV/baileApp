@@ -13,21 +13,63 @@ type QueryParams = ExploreFilters;
 function baseSelect(type: ExploreType) {
   switch (type) {
     case "eventos":        
-      // Usar vista live que filtra eventos publicados con organizadores aprobados
-      return { table: "events_live", select: "*" };
+      // Usar tabla events_date directamente con JOIN para obtener datos del organizador
+      return { 
+        table: "events_date", 
+        select: `
+          id,
+          parent_id,
+          nombre,
+          biografia,
+          fecha,
+          hora_inicio,
+          hora_fin,
+          lugar,
+          direccion,
+          ciudad,
+          zona,
+          referencias,
+          requisitos,
+          cronograma,
+          costos,
+          media,
+          flyer_url,
+          created_at,
+          updated_at,
+          events_parent!inner(
+            id,
+            nombre,
+            descripcion,
+            biografia,
+            estilos,
+            zonas,
+            sede_general,
+            faq,
+            media,
+            organizer_id,
+            profiles_organizer!inner(
+              id,
+              nombre_publico,
+              bio,
+              media,
+              estado_aprobacion
+            )
+          )
+        `
+      };
     case "organizadores":  
-      // Usar vista live que filtra organizadores aprobados
-      return { table: "organizers_live", select: "*" };
+      // Usar tabla profiles_organizer directamente
+      return { table: "profiles_organizer", select: "*" };
     case "maestros":       
       return { table: "profiles_teacher", select: "*" };   // si aún no existe, dejar preparado
     case "academias":      
-      return { table: "profiles_school", select: "*" };    // idem
+      return { table: "profiles_academy", select: "*" };    // usar profiles_academy
     case "marcas":         
       return { table: "profiles_brand", select: "*" };     // idem
     case "usuarios":       
       return { table: "profiles_user", select: "user_id, display_name, avatar_url, ritmos, zonas, bio" };
     default:               
-      return { table: "events_live", select: "*" };
+      return { table: "events_date", select: "*" };
   }
 }
 
@@ -42,14 +84,17 @@ async function fetchPage(params: QueryParams, page: number) {
 
   // Filtros por tipo
   if (type === "eventos") {
-    // La vista events_live ya filtra por estado_publicacion = 'publicado'
-    // y eventos/organizadores aprobados, no es necesario filtrar de nuevo
+    // Filtrar solo eventos futuros
+    query = query.gte("fecha", new Date().toISOString().split('T')[0]);
+    
+    // Filtrar por organizadores aprobados
+    query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
     
     if (dateFrom) query = query.gte("fecha", dateFrom);
     if (dateTo)   query = query.lte("fecha", dateTo);
     
-    // filtrar por estilos/ritmos - en la vista se llama evento_estilos
-    if (ritmos?.length)  query = query.overlaps("evento_estilos", ritmos as any);
+    // filtrar por estilos/ritmos - usar la relación con events_parent
+    if (ritmos?.length)  query = query.overlaps("events_parent.estilos", ritmos as any);
     if (zonas?.length)   query = query.in("zona", zonas as any);
     
     // búsqueda textual básica (lugar/ciudad/direccion)
@@ -61,8 +106,8 @@ async function fetchPage(params: QueryParams, page: number) {
     query = query.order("fecha", { ascending: true });
   } 
   else if (type === "organizadores") {
-    // La vista organizers_live ya filtra por estado_aprobacion = 'aprobado'
-    // no es necesario filtrar de nuevo
+    // Filtrar solo organizadores aprobados
+    query = query.eq("estado_aprobacion", "aprobado");
     
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
     
@@ -78,7 +123,7 @@ async function fetchPage(params: QueryParams, page: number) {
   else {
     // maestros / academias / marcas – adaptar nombres reales cuando estén
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
-    if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
+    if (ritmos?.length) query = query.overlaps("estilos", ritmos as any);
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     
     query = query.order("created_at", { ascending: false });
