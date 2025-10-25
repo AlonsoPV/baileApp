@@ -624,7 +624,7 @@ export function OrganizerProfileLive() {
             overflow: 'hidden',
             borderRadius: borderRadius['2xl'],
             padding: spacing[12],
-            margin: spacing[4],
+            margin: 'auto',
             border: `1px solid ${colors.glass.medium}`,
             boxShadow: colors.shadows.glass,
             zIndex: 1
@@ -1336,3 +1336,4 @@ export function OrganizerProfileLive() {
     </>
   );
 }
+

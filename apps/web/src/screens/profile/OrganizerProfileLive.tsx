@@ -598,17 +598,11 @@ export function OrganizerProfileLive() {
           zIndex: 0
         }} />
 
-        {/* Profile Toolbar - Toggle y Edición */}
-        <div className="org-container" style={{
-          padding: spacing[4],
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <ProfileNavigationToggle
-            currentView="live"
-            profileType="organizer"
-          />
-        </div>
+        {/* Profile Toolbar - Toggle y Edición (Fixed) */}
+        <ProfileNavigationToggle
+          currentView="live"
+          profileType="organizer"
+        />
 
         {/* Banner Principal */}
         <motion.div 

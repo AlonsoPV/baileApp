@@ -8,15 +8,7 @@ import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
-
-const colors = {
-  coral: '#FF3D57',
-  orange: '#FF8C42',
-  yellow: '#FFD166',
-  blue: '#1E88E5',
-  dark: '#121212',
-  light: '#F5F5F5',
-};
+import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {

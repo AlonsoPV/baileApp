@@ -15,6 +15,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -287,15 +288,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
-const colors = {
-  coral: '#FF3D57',
-  orange: '#FF8C42',
-  yellow: '#FFD166',
-  blue: '#1E88E5',
-  dark: '#121212',
-  light: '#F5F5F5',
-  grad: 'linear-gradient(135deg, #FF4D4D, #FFB200 35%, #2D9CDB 70%, #FFE056)',
-};
+// Usar el nuevo sistema de colores importado
 
 export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
@@ -501,16 +494,11 @@ export const UserProfileLive: React.FC = () => {
         background: colors.dark,
         color: colors.light,
       }}>
-        {/* Profile Toolbar - Toggle y Edición */}
-        <div className="profile-container" style={{
-          margin: '0 auto',
-          padding: '1rem'
-        }}>
-          <ProfileNavigationToggle
-            currentView="live"
-            profileType="user"
-          />
-      </div>
+        {/* Profile Toolbar - Toggle y Edición (Fixed) */}
+        <ProfileNavigationToggle
+          currentView="live"
+          profileType="user"
+        />
 
         {/* Banner Principal */}
         <div 
@@ -556,7 +544,7 @@ export const UserProfileLive: React.FC = () => {
         overflow: 'hidden',
                   border: '6px solid rgba(255, 255, 255, 0.9)',
                   boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
-                  background: colors.grad
+                  background: colors.gradients.primary
                 }}
               >
                 {getMediaBySlot(safeMedia as any, 'p1')?.url ? (

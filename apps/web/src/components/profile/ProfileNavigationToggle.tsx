@@ -88,7 +88,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   return (
     <div style={{
       position: 'fixed',
-      top: '20px',
+      top: '80px', // Justo debajo de la navbar
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 1000,
