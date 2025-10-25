@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     info: {
       bg: 'rgba(30, 136, 229, 0.15)',
       border: 'rgba(30, 136, 229, 0.4)',
-      color: colors.accent.blue[600],
+      color: colors.blue,
     },
   };
 
