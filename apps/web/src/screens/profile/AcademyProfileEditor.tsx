@@ -8,6 +8,7 @@ import { useHydratedForm } from "../../hooks/useHydratedForm";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
@@ -38,7 +39,7 @@ export default function AcademyProfileEditor() {
   useRoleChange();
 
   const { form, setField, setNested, setAll } = useHydratedForm({
-    key: getDraftKey(user?.id, 'academy'),
+    draftKey: getDraftKey(user?.id, 'academy'),
     serverData: academy,
     defaults: {
       nombre_publico: "",
@@ -58,7 +59,7 @@ export default function AcademyProfileEditor() {
         dato_curioso: "",
         gusta_bailar: ""
       }
-    }
+    } as any
   });
 
   const handleSave = async () => {
@@ -95,9 +96,9 @@ export default function AcademyProfileEditor() {
 
   const removeFile = async (slot: string) => {
     try {
-      const mediaItem = getMediaBySlot(media, slot);
-      if (mediaItem) {
-        await remove.mutateAsync(mediaItem.id);
+      const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot);
+      if (mediaItem && 'id' in mediaItem) {
+        await remove.mutateAsync((mediaItem as any).id);
       }
     } catch (error) {
       console.error('Error removing file:', error);
@@ -405,7 +406,7 @@ export default function AcademyProfileEditor() {
         {/* Gestión de Fotos */}
         <PhotoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={{ p1: add.isPending }}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Gestión de Fotos"
@@ -417,7 +418,7 @@ export default function AcademyProfileEditor() {
         {/* Fotos Adicionales */}
         <PhotoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Fotos Adicionales (p4-p10)"
@@ -428,12 +429,12 @@ export default function AcademyProfileEditor() {
         {/* Gestión de Videos */}
         <VideoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="🎥 Gestión de Videos"
           description="Videos promocionales, clases de muestra, testimonios"
-          slots={VIDEO_SLOTS}
+          slots={[...VIDEO_SLOTS]}
         />
       </div>
     </div>
