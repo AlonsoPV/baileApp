@@ -40,6 +40,9 @@ export function DateLiveScreen() {
   console.log('[DateLiveScreen] Date data:', date);
   console.log('[DateLiveScreen] Is loading:', isLoading);
   console.log('[DateLiveScreen] Error:', error);
+  console.log('[DateLiveScreen] User RSVP status:', userStatus);
+  console.log('[DateLiveScreen] RSVP stats:', stats);
+  console.log('[DateLiveScreen] Is updating:', isUpdating);
   
   // Verificar si el usuario puede editar esta fecha
   const canEdit = social?.organizer_id && user?.id && 

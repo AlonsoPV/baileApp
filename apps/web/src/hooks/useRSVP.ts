@@ -153,6 +153,8 @@ export function useUpdateRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
+      console.log('[useUpdateRSVP] Success, invalidating cache for eventDateId:', variables.eventDateId);
+      
       // Invalidar todas las queries relacionadas con RSVP
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
@@ -164,6 +166,10 @@ export function useUpdateRSVP() {
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user-events"] });
       queryClient.invalidateQueries({ queryKey: ["events", "with-rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events", "live"] });
+      
+      // Forzar refetch de las queries específicas
+      queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables.eventDateId] });
+      queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables.eventDateId] });
     }
   });
 }
@@ -185,6 +191,8 @@ export function useRemoveRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
+      console.log('[useRemoveRSVP] Success, invalidating cache for eventDateId:', variables);
+      
       // Invalidar todas las queries relacionadas con RSVP
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
@@ -196,6 +204,10 @@ export function useRemoveRSVP() {
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user-events"] });
       queryClient.invalidateQueries({ queryKey: ["events", "with-rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events", "live"] });
+      
+      // Forzar refetch de las queries específicas
+      queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables] });
+      queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables] });
     }
   });
 }
