@@ -551,8 +551,8 @@ export function OrganizerProfileLive() {
         }
       `}</style>
       
-      <div style={{
-        minHeight: '100vh',
+    <div style={{
+      minHeight: '100vh',
         background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
         color: colors.gray[50],
         width: '100%',
@@ -675,7 +675,7 @@ export function OrganizerProfileLive() {
                     color: '#0277BD'
                   }}>
                     {org.nombre_publico?.[0]?.toUpperCase() || '🎤'}
-                  </div>
+        </div>
                 )}
                 
                 {/* Efecto de brillo */}
@@ -687,7 +687,7 @@ export function OrganizerProfileLive() {
                   bottom: 0,
                   borderRadius: '50%'
                 }} />
-              </div>
+      </div>
             </motion.div>
 
             {/* Columna 2: Nombre, Chips y Estado */}
@@ -788,14 +788,14 @@ export function OrganizerProfileLive() {
           width: '100%'
         }}>
           {/* Biografía */}
-          {org.bio && (
-            <motion.section
+        {org.bio && (
+          <motion.section
               id="organizer-bio"
               data-test-id="organizer-bio"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
               className="glass-card"
-              style={{
+            style={{
                 marginBottom: spacing[8],
                 padding: spacing[6],
                 borderRadius: borderRadius['2xl']
@@ -807,18 +807,18 @@ export function OrganizerProfileLive() {
                 fontWeight: typography.fontWeight.bold,
                 color: '#0277BD'
               }}>
-                💬 Sobre nosotros
-              </h3>
+              💬 Sobre nosotros
+            </h3>
               <p style={{ 
                 lineHeight: typography.lineHeight.relaxed, 
                 opacity: 0.9, 
                 fontSize: typography.fontSize.lg,
                 color: '#0277BD'
               }}>
-                {org.bio}
-              </p>
-            </motion.section>
-          )}
+              {org.bio}
+            </p>
+          </motion.section>
+        )}
 
           {/* Redes Sociales */}
           <div
@@ -829,7 +829,7 @@ export function OrganizerProfileLive() {
               respuestas={(org as any)?.respuestas}
               redes_sociales={(org as any)?.redes_sociales}
               title="Redes Sociales"
-              availablePlatforms={['instagram', 'facebook', 'whatsapp','tiktok']}
+              availablePlatforms={['instagram', 'facebook', 'whatsapp']}
               style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
@@ -855,20 +855,20 @@ export function OrganizerProfileLive() {
           </div>
 
           {/* Próximas Fechas del Organizador */}
-          {inviteItems.length > 0 && (
-            <motion.section
+        {inviteItems.length > 0 && (
+          <motion.section
               id="organizer-upcoming-dates"
               data-test-id="organizer-upcoming-dates"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
               className="glass-card"
               style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
               }}
-            >
-              <div style={{
+          >
+            <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: spacing[4],
@@ -879,8 +879,8 @@ export function OrganizerProfileLive() {
                   height: '60px',
                   borderRadius: '50%',
                   background: colors.gradients.primary,
-                  display: 'flex',
-                  alignItems: 'center',
+                display: 'flex',
+                alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
                   boxShadow: colors.shadows.glow
@@ -896,7 +896,7 @@ export function OrganizerProfileLive() {
                   }}>
                     Próximas Fechas
                   </h3>
-                  <p style={{
+              <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
@@ -905,7 +905,7 @@ export function OrganizerProfileLive() {
                     {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-              </div>
+            </div>
 
               {/* Cards de fechas */}
               <div style={{ 
@@ -913,9 +913,9 @@ export function OrganizerProfileLive() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
                 gap: spacing[4]
               }}>
-                {inviteItems.map((ev, i) => (
-                  <motion.div
-                    key={i}
+              {inviteItems.map((ev, i) => (
+                <motion.div
+                  key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
@@ -981,40 +981,40 @@ export function OrganizerProfileLive() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               className="glass-card"
-              style={{
+                            style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
               }}
             >
-              <div style={{
+                          <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: spacing[4],
                 marginBottom: spacing[6]
               }}>
-                <div style={{
+                        <div style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
                   background: colors.gradients.secondary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
                   boxShadow: `0 8px 24px ${colors.secondary[500]}40`
-                }}>
+                        }}>
                   🎭
-                </div>
+                        </div>
                 <div>
-                  <h3 style={{
+                      <h3 style={{
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
                     color: '#0277BD'
                   }}>
                     Mis Sociales
-                  </h3>
+                      </h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1023,7 +1023,7 @@ export function OrganizerProfileLive() {
                   }}>
                     {parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}
                   </p>
-                </div>
+                        </div>
               </div>
               
               <div style={{ display: 'grid', gap: spacing[4] }}>
@@ -1083,22 +1083,22 @@ export function OrganizerProfileLive() {
                     >
                       📅 Ver próximas fechas
                     </motion.button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
 
           {/* Galería de Fotos del Organizador */}
           {carouselPhotos.length > 0 && (
-            <motion.section
+          <motion.section
               id="organizer-profile-photo-gallery"
               data-test-id="organizer-profile-photo-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="glass-card"
-              style={{
+            style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
@@ -1144,19 +1144,19 @@ export function OrganizerProfileLive() {
               </div>
             
               <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
-          )}
+          </motion.section>
+        )}
 
           {/* Sección de Videos del Organizador */}
           {videos.length > 0 && (
-            <motion.section
+          <motion.section
               id="organizer-profile-video-gallery"
               data-test-id="organizer-profile-video-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               className="glass-card"
-              style={{
+            style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
@@ -1177,7 +1177,7 @@ export function OrganizerProfileLive() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
-                  boxShadow: `0 8px 24px ${colors.deep[600]}40`
+                  boxShadow: `0 8px 24px ${colors.deep[500]}40`
                 }}>
                   🎥
                 </div>
@@ -1207,7 +1207,7 @@ export function OrganizerProfileLive() {
                 gap: spacing[6]
               }}>
                 {videos.map((video, index) => (
-                  <motion.div
+                <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -1217,12 +1217,12 @@ export function OrganizerProfileLive() {
                       y: -8,
                       boxShadow: colors.shadows.lg
                     }}
-                    style={{
+                  style={{
                       aspectRatio: '16/9',
                       borderRadius: borderRadius.xl,
                       overflow: 'hidden',
                       border: `2px solid ${colors.glass.medium}`,
-                      cursor: 'pointer',
+                    cursor: 'pointer',
                       transition: transitions.normal,
                       position: 'relative',
                       background: colors.dark[400],
@@ -1327,11 +1327,11 @@ export function OrganizerProfileLive() {
                     answer={(org as any)?.respuestas?.hay_estacionamiento}
                   />
                 )}
-              </div>
-            </motion.section>
-          )}
-        </div>
+            </div>
+          </motion.section>
+        )}
       </div>
+    </div>
     </>
   );
 }

@@ -491,7 +491,7 @@ export const UserProfileLive: React.FC = () => {
         position: 'relative',
         width: '100%',
         minHeight: '100vh',
-        background: colors.dark,
+        background: colors.darkBase,
         color: colors.light,
       }}>
         {/* Profile Toolbar - Toggle y Edición (Fixed) */}

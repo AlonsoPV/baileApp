@@ -9,7 +9,6 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import { useDefaultProfile } from "./hooks/useDefaultProfile";
 import { AppRouter } from "./router";
 import AppBootstrap from "./providers/AppBootstrap";
-import WebRouteGate from "./components/navigation/WebRouteGate";
 import "./App.css";
 
 function AppContent() {
@@ -112,9 +111,7 @@ function App() {
   return (
     <ToastProvider>
       <AppBootstrap>
-        <WebRouteGate>
-          <AppContent />
-        </WebRouteGate>
+        <AppContent />
       </AppBootstrap>
     </ToastProvider>
   );

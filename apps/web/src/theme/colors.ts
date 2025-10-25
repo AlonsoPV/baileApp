@@ -123,7 +123,7 @@ export const colors = {
   
   // Propiedades básicas para compatibilidad
   light: '#FFFFFF',
-  dark: '#0E0E0E',
+  darkBase: '#0E0E0E',
   blue: '#1E88E5',
   coral: '#FF3D57',
   orange: '#FF8C42',

@@ -61,7 +61,7 @@ export function DateLiveScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -76,7 +76,7 @@ export function DateLiveScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -165,7 +165,7 @@ export function DateLiveScreen() {
       
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #0f0f23, #1a1a2e)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #0f0f23, #1a1a2e)`,
         color: colors.light,
         position: 'relative',
         overflow: 'hidden'

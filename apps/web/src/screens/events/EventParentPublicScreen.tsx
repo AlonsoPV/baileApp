@@ -275,7 +275,7 @@ export default function EventParentPublicScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -323,7 +323,7 @@ export default function EventParentPublicScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -426,7 +426,7 @@ export default function EventParentPublicScreen() {
       `}</style>
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #0f0f23, #1a1a2e)`,
+        background: `linear-gradient(135deg, ${colors.darkBase}, #0f0f23, #1a1a2e)`,
         color: colors.light,
         position: 'relative',
         overflow: 'hidden'
@@ -568,7 +568,7 @@ export default function EventParentPublicScreen() {
 
           {/* Header Mejorado */}
           <div style={{
-            background: `linear-gradient(135deg, ${colors.dark}cc, ${colors.dark}88)`,
+            background: `linear-gradient(135deg, ${colors.darkBase}cc, ${colors.darkBase}88)`,
             borderRadius: '20px',
             padding: '32px',
             marginBottom: '32px',
@@ -717,7 +717,7 @@ export default function EventParentPublicScreen() {
         {/* FAQ Section */}
         {parent.faq && parent.faq.length > 0 && (
           <div style={{
-            background: `${colors.dark}66`,
+            background: `${colors.darkBase}66`,
             borderRadius: '16px',
             padding: '24px',
             marginBottom: '32px',
@@ -744,7 +744,7 @@ export default function EventParentPublicScreen() {
                   transition={{ delay: index * 0.1 }}
                   style={{
                     padding: '16px',
-                    background: `${colors.dark}44`,
+                    background: `${colors.darkBase}44`,
                     borderRadius: '12px',
                     border: `1px solid ${colors.light}22`,
                   }}
@@ -774,7 +774,7 @@ export default function EventParentPublicScreen() {
 
         {/* Fechas Section */}
         <div style={{
-          background: `${colors.dark}66`,
+          background: `${colors.darkBase}66`,
           borderRadius: '16px',
           padding: '24px',
           marginBottom: '32px',

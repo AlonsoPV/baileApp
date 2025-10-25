@@ -659,7 +659,7 @@ export default function OrganizerProfileEditor() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: colors.dark,
+        background: colors.darkBase,
         color: colors.light,
         display: 'flex',
         alignItems: 'center',
@@ -677,7 +677,7 @@ export default function OrganizerProfileEditor() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: colors.dark,
+        background: colors.darkBase,
         color: colors.light,
         display: 'flex',
         alignItems: 'center',
@@ -697,7 +697,7 @@ export default function OrganizerProfileEditor() {
       `}</style>
       <div style={{
         minHeight: '100vh',
-        background: colors.dark,
+        background: colors.darkBase,
         color: colors.light,
         padding: '2rem',
       }}>
@@ -1164,7 +1164,7 @@ export default function OrganizerProfileEditor() {
               style={{
                 padding: '12px 24px',
                 borderRadius: '25px',
-                background: `${colors.dark}dd`,
+                background: `${colors.darkBase}dd`,
                 backdropFilter: 'blur(10px)',
                 color: colors.light,
                 fontSize: '0.9rem',
