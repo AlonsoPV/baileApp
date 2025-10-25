@@ -112,139 +112,447 @@ export function DateLiveScreen() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-      color: colors.light,
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-        {/* Header */}
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        .event-hero {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        }
+        
+        .event-hero::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 20% 80%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .glass-card {
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .shimmer-effect {
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          background-size: 200% 100%;
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
+      
+      <div style={{
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark}, #0f0f23, #1a1a2e)`,
+        color: colors.light,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Hero Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="event-hero"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
-            marginBottom: '2rem',
+            padding: '4rem 2rem',
             textAlign: 'center',
+            position: 'relative',
+            zIndex: 1
           }}
         >
-          <h1 style={{
-            fontSize: '3rem',
-            fontWeight: '700',
-            background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '1rem',
-          }}>
-            {date.nombre || social.nombre}
-          </h1>
-          
-          {date.biografia && (
-            <p style={{
-              fontSize: '1.2rem',
-              opacity: 0.8,
-              maxWidth: '600px',
-              margin: '0 auto 2rem',
-              lineHeight: 1.6,
-            }}>
-              {date.biografia}
-            </p>
-          )}
-
-          {/* Botones de acción */}
+          {/* Floating Elements */}
           <div style={{
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '2rem',
-          }}>
-            {canEdit && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(`/social/fecha/${dateId}/edit`)}
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '60px',
+            height: '60px',
+            background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+            borderRadius: '50%',
+            animation: 'float 4s ease-in-out infinite',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            top: '30%',
+            right: '15%',
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+            borderRadius: '50%',
+            animation: 'float 3s ease-in-out infinite reverse',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '20%',
+            width: '80px',
+            height: '80px',
+            background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.1), rgba(255, 140, 66, 0.1))',
+            borderRadius: '50%',
+            animation: 'float 5s ease-in-out infinite',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            style={{ position: 'relative', zIndex: 2 }}
+          >
+            <h1 style={{
+              fontSize: '4rem',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #FF3D57 0%, #1E88E5 50%, #FF8C42 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '1.5rem',
+              textShadow: '0 4px 20px rgba(255, 61, 87, 0.3)',
+              letterSpacing: '-0.02em'
+            }}>
+              {date.nombre || social.nombre}
+            </h1>
+            
+            {date.biografia && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
                 style={{
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                  color: colors.light,
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
+                  fontSize: '1.3rem',
+                  opacity: 0.9,
+                  maxWidth: '700px',
+                  margin: '0 auto 2.5rem',
+                  lineHeight: 1.7,
+                  fontWeight: '400',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
                 }}
               >
-                ✏️ Editar Fecha
-              </motion.button>
+                {date.biografia}
+              </motion.p>
             )}
-            
-            <ShareLink url={window.location.href} />
-          </div>
+
+            {/* Botones de acción mejorados */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.6 }}
+              style={{
+                display: 'flex',
+                gap: '1.5rem',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                marginTop: '2rem'
+              }}
+            >
+              {canEdit && (
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate(`/social/fecha/${dateId}/edit`)}
+                  style={{
+                    padding: '16px 32px',
+                    borderRadius: '25px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                    color: colors.light,
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 25px rgba(30, 136, 229, 0.4)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <span style={{ position: 'relative', zIndex: 2 }}>✏️ Editar Fecha</span>
+                  <div className="shimmer-effect" style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 1
+                  }} />
+                </motion.button>
+              )}
+              
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ShareLink url={window.location.href} />
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </motion.div>
 
-        {/* Información de la Fecha */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem',
-          }}
-        >
-          {/* Fecha y Horario */}
-          <div style={{
-            padding: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-              📅 Fecha y Horario
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <p style={{ fontSize: '1.1rem', fontWeight: '600' }}>
-                📅 {fmtDate(date.fecha)}
-              </p>
-              {date.hora_inicio && date.hora_fin && (
-                <p style={{ fontSize: '1rem', opacity: 0.8 }}>
-                  🕐 {fmtTime(date.hora_inicio)} - {fmtTime(date.hora_fin)}
-                </p>
-              )}
-            </div>
-          </div>
+        {/* Contenido Principal */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+          {/* Información de la Fecha - Diseño Mejorado */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: '2.5rem',
+              marginBottom: '4rem',
+            }}
+          >
+            {/* Fecha y Horario - Tarjeta Mejorada */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="glass-card"
+              style={{
+                padding: '2.5rem',
+                borderRadius: '24px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Efecto de brillo */}
+              <div className="shimmer-effect" style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                zIndex: 1
+              }} />
+              
+              <div style={{ position: 'relative', zIndex: 2 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
+                  }}>
+                    📅
+                  </div>
+                  <h3 style={{ 
+                    fontSize: '1.5rem', 
+                    margin: 0, 
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}>
+                    📅 Fecha y Horario
+                  </h3>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{
+                    padding: '1rem',
+                    background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1), rgba(255, 140, 66, 0.1))',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 61, 87, 0.2)'
+                  }}>
+                    <p style={{ 
+                      fontSize: '1.3rem', 
+                      fontWeight: '700',
+                      margin: 0,
+                      color: colors.light,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      📅 {fmtDate(date.fecha)}
+                    </p>
+                  </div>
+                  
+                  {date.hora_inicio && date.hora_fin && (
+                    <div style={{
+                      padding: '1rem',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1), rgba(0, 188, 212, 0.1))',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(30, 136, 229, 0.2)'
+                    }}>
+                      <p style={{ 
+                        fontSize: '1.1rem', 
+                        fontWeight: '600',
+                        margin: 0,
+                        color: colors.light,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        🕐 {fmtTime(date.hora_inicio)} - {fmtTime(date.hora_fin)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
 
-          {/* Ubicación */}
-          <div style={{
-            padding: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-              📍 Ubicación
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {date.lugar && (
-                <p style={{ fontSize: '1rem', fontWeight: '600' }}>
-                  🏢 {date.lugar}
-                </p>
-              )}
-              {date.direccion && (
-                <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                  📍 {date.direccion}
-                </p>
-              )}
-              {date.ciudad && (
-                <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                  🏙️ {date.ciudad}
-                </p>
-              )}
-            </div>
-          </div>
+            {/* Ubicación - Tarjeta Mejorada */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="glass-card"
+              style={{
+                padding: '2.5rem',
+                borderRadius: '24px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Efecto de brillo */}
+              <div className="shimmer-effect" style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                zIndex: 1
+              }} />
+              
+              <div style={{ position: 'relative', zIndex: 2 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                  }}>
+                    📍
+                  </div>
+                  <h3 style={{ 
+                    fontSize: '1.5rem', 
+                    margin: 0, 
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}>
+                    📍 Ubicación
+                  </h3>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {date.lugar && (
+                    <div style={{
+                      padding: '1rem',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1), rgba(0, 188, 212, 0.1))',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(30, 136, 229, 0.2)'
+                    }}>
+                      <p style={{ 
+                        fontSize: '1.2rem', 
+                        fontWeight: '700',
+                        margin: 0,
+                        color: colors.light,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        🏢 {date.lugar}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {date.direccion && (
+                    <div style={{
+                      padding: '0.75rem',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <p style={{ 
+                        fontSize: '1rem', 
+                        fontWeight: '500',
+                        margin: 0,
+                        color: colors.light,
+                        opacity: 0.9,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        📍 {date.direccion}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {date.ciudad && (
+                    <div style={{
+                      padding: '0.75rem',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <p style={{ 
+                        fontSize: '1rem', 
+                        fontWeight: '500',
+                        margin: 0,
+                        color: colors.light,
+                        opacity: 0.9,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        🏙️ {date.ciudad}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
 
           {/* Ritmos */}
           {getRitmoNombres().length > 0 && (
@@ -408,48 +716,143 @@ export function DateLiveScreen() {
           </motion.section>
         )}
 
-        {/* RSVP */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          style={{
-            marginBottom: '2rem',
-            padding: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
-        >
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-            🎫 Confirmar Asistencia
-          </h3>
-          <RSVPButtons 
-            currentStatus={userStatus}
-            onStatusChange={toggleInterested}
-            disabled={isUpdating}
-          />
-          
-          {/* Estadísticas RSVP */}
-          {stats && (
-            <div style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                  👀 {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
-                </span>
-                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                  👥 {stats.total} persona{stats.total !== 1 ? 's' : ''} en total
-                </span>
+          {/* RSVP - Sección Mejorada */}
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="glass-card"
+            style={{
+              marginBottom: '3rem',
+              padding: '3rem',
+              borderRadius: '28px',
+              position: 'relative',
+              overflow: 'hidden',
+              background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1) 0%, rgba(30, 136, 229, 0.1) 50%, rgba(255, 140, 66, 0.1) 100%)',
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)'
+            }}
+          >
+            {/* Efecto de brillo */}
+            <div className="shimmer-effect" style={{
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '100%',
+              height: '100%',
+              zIndex: 1
+            }} />
+            
+            <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+              {/* Header con icono animado */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.5, type: "spring" }}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FF3D57, #1E88E5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2.5rem',
+                  margin: '0 auto 1.5rem',
+                  boxShadow: '0 12px 40px rgba(255, 61, 87, 0.4)',
+                  animation: 'pulse 2s ease-in-out infinite'
+                }}
+              >
+                🎫
+              </motion.div>
+              
+              <h3 style={{ 
+                fontSize: '2rem', 
+                marginBottom: '1.5rem', 
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #FF3D57, #1E88E5)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: '0 auto 1.5rem'
+              }}>
+                Confirmar Asistencia
+              </h3>
+              
+              <p style={{
+                fontSize: '1.1rem',
+                opacity: 0.8,
+                marginBottom: '2rem',
+                maxWidth: '500px',
+                margin: '0 auto 2rem',
+                lineHeight: 1.6
+              }}>
+                ¿Te interesa asistir a este evento? ¡Confirma tu interés!
+              </p>
+              
+              {/* Botón RSVP Mejorado */}
+              <div style={{ marginBottom: '2rem' }}>
+                <RSVPButtons 
+                  currentStatus={userStatus}
+                  onStatusChange={toggleInterested}
+                  disabled={isUpdating}
+                />
               </div>
+              
+              {/* Estadísticas RSVP Mejoradas */}
+              {stats && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1, duration: 0.5 }}
+                  style={{
+                    padding: '1.5rem',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+                  }}
+                >
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                    gap: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      padding: '1rem',
+                      background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255, 61, 87, 0.3)'
+                    }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👀</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: colors.light }}>
+                        {stats.interesado}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                        Interesado{stats.interesado !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    
+                    <div style={{
+                      padding: '1rem',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(30, 136, 229, 0.3)'
+                    }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👥</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: colors.light }}>
+                        {stats.total}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                        Persona{stats.total !== 1 ? 's' : ''} en total
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
-          )}
-        </motion.section>
+          </motion.section>
 
         {/* Media */}
         {date.media && Array.isArray(date.media) && date.media.length > 0 && (
