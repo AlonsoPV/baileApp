@@ -129,25 +129,6 @@ export function DateLiveScreen() {
           100% { background-position: 200% 0; }
         }
         
-        .event-hero {
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        }
-        
-        .event-hero::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: 
-            radial-gradient(circle at 20% 80%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
-          animation: float 6s ease-in-out infinite;
-        }
         
         .glass-card {
           background: rgba(255, 255, 255, 0.08);
@@ -165,14 +146,13 @@ export function DateLiveScreen() {
       
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.darkBase}, #0f0f23, #1a1a2e)`,
+        background: '#000000',
         color: colors.light,
         position: 'relative',
         overflow: 'hidden'
       }}>
         {/* Hero Section */}
         <motion.div
-          className="event-hero"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}

@@ -391,25 +391,6 @@ export default function EventParentPublicScreen() {
           100% { background-position: 200% 0; }
         }
         
-        .social-hero {
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        }
-        
-        .social-hero::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: 
-            radial-gradient(circle at 20% 80%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
-          animation: float 6s ease-in-out infinite;
-        }
         
         .glass-card {
           background: rgba(255, 255, 255, 0.08);
@@ -431,102 +412,6 @@ export default function EventParentPublicScreen() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Hero Section */}
-        <motion.div
-          className="social-hero"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 1
-          }}
-        >
-          {/* Floating Elements */}
-          <div style={{
-            position: 'absolute',
-            top: '20%',
-            left: '10%',
-            width: '60px',
-            height: '60px',
-            background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
-            borderRadius: '50%',
-            animation: 'float 4s ease-in-out infinite',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }} />
-          
-          <div style={{
-            position: 'absolute',
-            top: '30%',
-            right: '15%',
-            width: '40px',
-            height: '40px',
-            background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
-            borderRadius: '50%',
-            animation: 'float 3s ease-in-out infinite reverse',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }} />
-          
-          <div style={{
-            position: 'absolute',
-            bottom: '20%',
-            left: '20%',
-            width: '80px',
-            height: '80px',
-            background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.1), rgba(255, 140, 66, 0.1))',
-            borderRadius: '50%',
-            animation: 'float 5s ease-in-out infinite',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }} />
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            style={{ position: 'relative', zIndex: 2 }}
-          >
-            <h1 style={{
-              fontSize: '4rem',
-              fontWeight: '900',
-              background: 'linear-gradient(135deg, #FF3D57 0%, #1E88E5 50%, #FF8C42 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '1.5rem',
-              textShadow: '0 4px 20px rgba(255, 61, 87, 0.3)',
-              letterSpacing: '-0.02em'
-            }}>
-              {parent.nombre}
-            </h1>
-            
-            {parent.biografia && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                style={{
-                  fontSize: '1.3rem',
-                  opacity: 0.9,
-                  maxWidth: '700px',
-                  margin: '0 auto 2.5rem',
-                  lineHeight: 1.7,
-                  fontWeight: '400',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}
-              >
-                {parent.biografia}
-              </motion.p>
-            )}
-          </motion.div>
-        </motion.div>
 
         {/* Contenido Principal */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
