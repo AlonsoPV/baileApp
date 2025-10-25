@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     info: {
       bg: 'rgba(30, 136, 229, 0.15)',
       border: 'rgba(30, 136, 229, 0.4)',
-      color: theme.palette.blue,
+      color: colors.accent.blue[600],
     },
   };
 
@@ -75,8 +75,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               style={{
                 background: styles.bg,
                 border: `1px solid ${styles.border}`,
-                borderRadius: theme.radius.md,
-                padding: theme.spacing(2),
+                borderRadius: borderRadius.md,
+                padding: spacing[2],
                 color: styles.color,
                 fontSize: '0.875rem',
                 fontWeight: '500',
