@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import { isValidEmail, isValidPassword } from '../../utils/validation';
 
 export function Signup() {
@@ -64,39 +64,39 @@ export function Signup() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.bg.app,
-        padding: theme.spacing(2),
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        padding: spacing[2],
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '400px',
-          background: theme.bg.card,
-          borderRadius: theme.radius.xl,
-          padding: theme.spacing(4),
+          background: colors.glass.light,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[4],
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: theme.spacing(4) }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: theme.spacing(1) }}>
+        <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Crear Cuenta 🎉
           </h1>
-          <p style={{ color: theme.text.secondary }}>
+          <p style={{ color: colors.text.medium }}>
             Únete a la comunidad de baile
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="email"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Email
@@ -110,26 +110,26 @@ export function Signup() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
               }}
               placeholder="tu@email.com"
             />
           </div>
 
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="password"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Contraseña
@@ -143,26 +143,26 @@ export function Signup() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
               }}
               placeholder="••••••••"
             />
           </div>
 
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="confirmPassword"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Confirmar Contraseña
@@ -176,11 +176,11 @@ export function Signup() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
               }}
               placeholder="••••••••"
@@ -190,11 +190,11 @@ export function Signup() {
           {error && (
             <div
               style={{
-                marginBottom: theme.spacing(3),
-                padding: theme.spacing(2),
+                marginBottom: spacing[3],
+                padding: spacing[2],
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 color: '#ef4444',
                 fontSize: '0.875rem',
               }}
@@ -208,7 +208,7 @@ export function Signup() {
             disabled={isLoading}
             style={{
               width: '100%',
-              marginBottom: theme.spacing(3),
+              marginBottom: spacing[3],
               opacity: isLoading ? 0.5 : 1,
             }}
           >
@@ -216,12 +216,12 @@ export function Signup() {
           </Button>
         </form>
 
-        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: theme.text.secondary }}>
+        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: colors.text.medium }}>
           ¿Ya tienes cuenta?{' '}
           <Link
             to="/auth/login"
             style={{
-              color: theme.brand.primary,
+              color: colors.gradients.primary,
               textDecoration: 'none',
               fontWeight: '600',
             }}
