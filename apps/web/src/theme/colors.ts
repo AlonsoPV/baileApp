@@ -120,6 +120,14 @@ export const colors = {
     glow: '0 0 20px rgba(255, 60, 56, 0.3)',
     glass: '0 8px 32px rgba(0, 0, 0, 0.3)',
   },
+  
+  // Propiedades básicas para compatibilidad
+  light: '#FFFFFF',
+  dark: '#0E0E0E',
+  blue: '#1E88E5',
+  coral: '#FF3D57',
+  orange: '#FF8C42',
+  yellow: '#FFD166',
 };
 
 // Tipografía moderna
