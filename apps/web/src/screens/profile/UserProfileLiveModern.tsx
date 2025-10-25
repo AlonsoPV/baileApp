@@ -493,7 +493,7 @@ export const UserProfileLive: React.FC = () => {
                   position: 'relative'
                 }}
               >
-                {getMediaBySlot(safeMedia as any, 'cover')?.url || getMediaBySlot(safeMedia as any, 'p1')?.url) ? (
+                {(getMediaBySlot(safeMedia as any, 'cover')?.url || getMediaBySlot(safeMedia as any, 'p1')?.url) ? (
                   <img
                     src={getMediaBySlot(safeMedia as any, 'cover')?.url || getMediaBySlot(safeMedia as any, 'p1')?.url || ''}
                     alt="Avatar del usuario"

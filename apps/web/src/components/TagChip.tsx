@@ -1,5 +1,5 @@
 import React from 'react';
-import { theme } from '@theme/colors';
+import { colors, spacing, borderRadius } from '../theme/colors';
 
 interface TagChipProps {
   label: string;
@@ -22,9 +22,9 @@ export function TagChip({ label, variant, color, onClick, active }: TagChipProps
   if (color) {
     colorScheme = colorMap[color];
   } else if (variant === 'ritmo') {
-    colorScheme = { bg: 'rgba(30, 136, 229, 0.2)', border: '1px solid rgba(30, 136, 229, 0.4)', color: theme.palette.blue };
+    colorScheme = { bg: 'rgba(30, 136, 229, 0.2)', border: '1px solid rgba(30, 136, 229, 0.4)', color: colors.blue };
   } else if (variant === 'zona') {
-    colorScheme = { bg: 'rgba(253, 216, 53, 0.2)', border: '1px solid rgba(253, 216, 53, 0.4)', color: theme.palette.yellow };
+    colorScheme = { bg: 'rgba(253, 216, 53, 0.2)', border: '1px solid rgba(253, 216, 53, 0.4)', color: colors.yellow };
   } else {
     colorScheme = colorMap.blue;
   }
@@ -38,7 +38,7 @@ export function TagChip({ label, variant, color, onClick, active }: TagChipProps
         display: 'inline-flex',
         alignItems: 'center',
         padding: '6px 12px',
-        borderRadius: theme.radius.md,
+        borderRadius: borderRadius.md,
         fontSize: '0.875rem',
         fontWeight: '600',
         background: active ? colorScheme.color : colorScheme.bg,

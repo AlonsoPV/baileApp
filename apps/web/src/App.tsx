@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OffCanvasMenu } from "@ui/index";
-import { theme } from "@theme/colors";
+import { colors } from "./theme/colors";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./components/Toast";
 import { useAuth } from "./hooks/useAuth";
@@ -82,7 +82,7 @@ function AppContent() {
   ];
 
   return (
-    <div style={{ background: theme.bg.app, minHeight: "100vh", color: theme.text.primary }}>
+    <div style={{ background: colors.gradients.app, minHeight: "100vh", color: colors.light }}>
       {/* Navbar */}
       <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
 

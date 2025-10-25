@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMyOrganizer } from '../../hooks/useOrganizer';
 import { useToast } from '../../components/Toast';
-import { theme } from '@theme/colors';
+import { colors, spacing, borderRadius } from '../../theme/colors';
 import { required } from '../../utils/forms';
 
 export function OrganizerEditScreen() {
@@ -77,7 +77,7 @@ export function OrganizerEditScreen() {
     return (
       <span style={{
         padding: '0.5rem 1rem',
-        borderRadius: theme.radius.md,
+        borderRadius: borderRadius.md,
         fontSize: '0.875rem',
         fontWeight: '600',
         background: style.bg,
@@ -93,7 +93,7 @@ export function OrganizerEditScreen() {
       padding: '2rem', 
       maxWidth: '800px', 
       margin: '0 auto',
-      color: theme.text.primary,
+      color: colors.light,
     }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>
         Mi Organizador
@@ -106,8 +106,8 @@ export function OrganizerEditScreen() {
           alignItems: 'center',
           marginBottom: '2rem',
           padding: '1rem',
-          background: theme.bg.surface,
-          borderRadius: theme.radius.lg,
+          background: colors.glass.strong,
+          borderRadius: borderRadius.lg,
         }}>
           <div style={{ flex: 1 }}>
             <strong>Estado:</strong> {getEstadoBadge()}
@@ -118,11 +118,11 @@ export function OrganizerEditScreen() {
               onClick={handleSubmitForReview}
               disabled={isSubmittingForReview}
               style={{
-                background: theme.brand.secondary,
+                background: colors.secondary[500],
                 color: '#fff',
                 padding: '0.5rem 1rem',
                 border: 'none',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 cursor: isSubmittingForReview ? 'not-allowed' : 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -136,11 +136,11 @@ export function OrganizerEditScreen() {
             <button
               onClick={() => navigate(`/organizer/${organizer.id}`)}
               style={{
-                background: theme.brand.primary,
+                background: colors.primary[500],
                 color: '#fff',
                 padding: '0.5rem 1rem',
                 border: 'none',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: '600',
@@ -158,7 +158,7 @@ export function OrganizerEditScreen() {
             display: 'block', 
             marginBottom: '0.5rem', 
             fontWeight: '600',
-            color: theme.text.primary,
+            color: colors.light,
           }}>
             Nombre Público *
           </label>
@@ -170,11 +170,11 @@ export function OrganizerEditScreen() {
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: `1px solid ${theme.bg.border}`,
-              borderRadius: theme.radius.md,
+              border: `1px solid ${colors.glass.medium}`,
+              borderRadius: borderRadius.md,
               fontSize: '1rem',
-              background: theme.bg.surface,
-              color: theme.text.primary,
+              background: colors.glass.strong,
+              color: colors.light,
             }}
           />
         </div>
@@ -184,7 +184,7 @@ export function OrganizerEditScreen() {
             display: 'block', 
             marginBottom: '0.5rem', 
             fontWeight: '600',
-            color: theme.text.primary,
+            color: colors.light,
           }}>
             Biografía
           </label>
@@ -196,12 +196,12 @@ export function OrganizerEditScreen() {
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: `1px solid ${theme.bg.border}`,
-              borderRadius: theme.radius.md,
+              border: `1px solid ${colors.glass.medium}`,
+              borderRadius: borderRadius.md,
               fontSize: '1rem',
               resize: 'vertical',
-              background: theme.bg.surface,
-              color: theme.text.primary,
+              background: colors.glass.strong,
+              color: colors.light,
             }}
           />
         </div>
@@ -211,7 +211,7 @@ export function OrganizerEditScreen() {
             display: 'block', 
             marginBottom: '0.5rem', 
             fontWeight: '600',
-            color: theme.text.primary,
+            color: colors.light,
           }}>
             Media URLs (una por línea)
           </label>
@@ -223,12 +223,12 @@ export function OrganizerEditScreen() {
             style={{
               width: '100%',
               padding: '0.75rem',
-              border: `1px solid ${theme.bg.border}`,
-              borderRadius: theme.radius.md,
+              border: `1px solid ${colors.glass.medium}`,
+              borderRadius: borderRadius.md,
               fontSize: '1rem',
               resize: 'vertical',
-              background: theme.bg.surface,
-              color: theme.text.primary,
+              background: colors.glass.strong,
+              color: colors.light,
               fontFamily: 'monospace',
             }}
           />
@@ -239,7 +239,7 @@ export function OrganizerEditScreen() {
             padding: '0.75rem', 
             background: '#FEE2E2', 
             color: '#991B1B',
-            borderRadius: theme.radius.md,
+            borderRadius: borderRadius.md,
             marginBottom: '1rem',
           }}>
             {error}
@@ -250,11 +250,11 @@ export function OrganizerEditScreen() {
           type="submit"
           disabled={isUpserting}
           style={{
-            background: isUpserting ? theme.bg.border : theme.brand.primary,
+            background: isUpserting ? colors.glass.medium : colors.primary[500],
             color: '#fff',
             padding: '0.75rem 1.5rem',
             border: 'none',
-            borderRadius: theme.radius.md,
+            borderRadius: borderRadius.md,
             fontSize: '1rem',
             fontWeight: '600',
             cursor: isUpserting ? 'not-allowed' : 'pointer',
@@ -268,24 +268,24 @@ export function OrganizerEditScreen() {
         <div style={{
           marginTop: '3rem',
           padding: '2rem',
-          background: theme.bg.surface,
-          borderRadius: theme.radius.lg,
-          border: `1px solid ${theme.bg.border}`,
+          background: colors.glass.strong,
+          borderRadius: borderRadius.lg,
+          border: `1px solid ${colors.glass.medium}`,
         }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
             📅 Mis Eventos
           </h2>
-          <p style={{ color: theme.text.secondary, marginBottom: '1rem' }}>
+          <p style={{ color: colors.gray[400], marginBottom: '1rem' }}>
             Gestiona los eventos que organizas
           </p>
           <button
             onClick={() => navigate('/events/parent/new')}
             style={{
-              background: theme.brand.secondary,
+              background: colors.secondary[500],
               color: '#fff',
               padding: '0.75rem 1.5rem',
               border: 'none',
-              borderRadius: theme.radius.md,
+              borderRadius: borderRadius.md,
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',

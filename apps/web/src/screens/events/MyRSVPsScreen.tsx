@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useMyRSVPs } from '../../hooks/useMyRSVPs';
-import { theme } from '@theme/colors';
+import { colors, spacing, borderRadius } from '../../theme/colors';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -12,7 +12,7 @@ export function MyRSVPsScreen() {
       <div style={{ 
         padding: '2rem', 
         textAlign: 'center',
-        color: theme.text.primary,
+        color: colors.light,
       }}>
         Cargando mis RSVPs...
       </div>
@@ -31,7 +31,7 @@ export function MyRSVPsScreen() {
     return (
       <span style={{
         padding: '0.5rem 0.75rem',
-        borderRadius: theme.radius.md,
+        borderRadius: borderRadius.md,
         fontSize: '0.875rem',
         fontWeight: '600',
         background: badge.bg,
@@ -47,7 +47,7 @@ export function MyRSVPsScreen() {
       padding: '2rem', 
       maxWidth: '1000px', 
       margin: '0 auto',
-      color: theme.text.primary,
+      color: colors.light,
     }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '2rem' }}>
         📅 Mis RSVPs
@@ -71,19 +71,19 @@ export function MyRSVPsScreen() {
                 style={{
                   display: 'block',
                   padding: '1.5rem',
-                  background: theme.bg.surface,
-                  borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.bg.border}`,
+                  background: colors.glass.strong,
+                  borderRadius: borderRadius.lg,
+                  border: `1px solid ${colors.glass.medium}`,
                   textDecoration: 'none',
-                  color: theme.text.primary,
+                  color: colors.light,
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.brand.primary;
+                  e.currentTarget.style.borderColor = colors.primary[500];
                   e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.bg.border;
+                  e.currentTarget.style.borderColor = colors.glass.medium;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
@@ -98,7 +98,7 @@ export function MyRSVPsScreen() {
                     <h3 style={{ 
                       fontSize: '1.25rem', 
                       marginBottom: '0.5rem',
-                      color: theme.text.primary,
+                      color: colors.light,
                     }}>
                       {parentEvent.nombre}
                     </h3>
@@ -106,7 +106,7 @@ export function MyRSVPsScreen() {
                     <div style={{ 
                       display: 'grid', 
                       gap: '0.25rem',
-                      color: theme.text.secondary,
+                      color: colors.gray[400],
                       fontSize: '0.875rem',
                     }}>
                       <div>📅 {fechaFormateada}</div>
@@ -136,16 +136,16 @@ export function MyRSVPsScreen() {
       ) : (
         <div style={{ 
           padding: '3rem',
-          background: theme.bg.surface,
-          borderRadius: theme.radius.lg,
+          background: colors.glass.strong,
+          borderRadius: borderRadius.lg,
           textAlign: 'center',
-          border: `1px solid ${theme.bg.border}`,
+          border: `1px solid ${colors.glass.medium}`,
         }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
             No tienes RSVPs
           </h2>
           <p style={{ 
-            color: theme.text.secondary, 
+            color: colors.gray[400], 
             marginBottom: '2rem',
             fontSize: '1.125rem',
           }}>
@@ -156,10 +156,10 @@ export function MyRSVPsScreen() {
             style={{
               display: 'inline-block',
               padding: '0.75rem 1.5rem',
-              background: theme.brand.primary,
+              background: colors.primary[500],
               color: '#fff',
               textDecoration: 'none',
-              borderRadius: theme.radius.md,
+              borderRadius: borderRadius.md,
               fontWeight: '600',
             }}
           >

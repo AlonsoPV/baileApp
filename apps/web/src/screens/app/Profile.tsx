@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
-import { theme } from '@theme/colors';
+import { colors, spacing, borderRadius } from '../../theme/colors';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useTags } from '../../hooks/useTags';
 import { useToast } from '../../components/Toast';
@@ -157,8 +157,8 @@ export function Profile() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: theme.bg.app,
-          color: theme.text.secondary,
+          background: colors.gradients.app,
+          color: colors.gray[400],
           fontSize: '1.5rem',
         }}
       >
@@ -171,8 +171,8 @@ export function Profile() {
     <div
       style={{
         minHeight: '100vh',
-        background: theme.bg.app,
-        padding: theme.spacing(4),
+        background: colors.gradients.app,
+        padding: spacing(4),
       }}
     >
       <div
@@ -181,8 +181,8 @@ export function Profile() {
           margin: '0 auto',
         }}
       >
-        <div style={{ marginBottom: theme.spacing(4) }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: theme.spacing(2) }}>
+        <div style={{ marginBottom: spacing(4) }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: spacing(2) }}>
             Mi Perfil 👤
           </h1>
         </div>
@@ -190,15 +190,15 @@ export function Profile() {
         {/* Profile Card */}
         <div
           style={{
-            background: theme.bg.card,
-            borderRadius: theme.radius.xl,
-            padding: theme.spacing(4),
-            marginBottom: theme.spacing(4),
+            background: colors.glass.strong,
+            borderRadius: borderRadius.xl,
+            padding: spacing(4),
+            marginBottom: spacing(4),
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
           }}
         >
           {/* Avatar and Basic Info */}
-          <div style={{ display: 'flex', gap: theme.spacing(3), marginBottom: theme.spacing(4), alignItems: 'start' }}>
+          <div style={{ display: 'flex', gap: spacing(3), marginBottom: spacing(4), alignItems: 'start' }}>
             {/* Avatar */}
             {isEditing ? (
               // In edit mode, show preview if new file selected, otherwise show current avatar
@@ -211,7 +211,7 @@ export function Profile() {
                     height: '100px',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: `3px solid ${theme.brand.primary}`,
+                    border: `3px solid ${colors.primary[500]}`,
                   }}
                 />
               ) : profile?.avatar_url ? (
@@ -223,7 +223,7 @@ export function Profile() {
                     height: '100px',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: `3px solid ${theme.brand.primary}`,
+                    border: `3px solid ${colors.primary[500]}`,
                   }}
                 />
               ) : (
@@ -239,7 +239,7 @@ export function Profile() {
                     fontSize: '2.5rem',
                     fontWeight: '700',
                     color: '#FFF',
-                    border: `3px solid ${theme.brand.primary}`,
+                    border: `3px solid ${colors.primary[500]}`,
                   }}
                 >
                   {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -256,7 +256,7 @@ export function Profile() {
                     height: '100px',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: `3px solid ${theme.brand.primary}`,
+                    border: `3px solid ${colors.primary[500]}`,
                   }}
                 />
               ) : (
@@ -272,7 +272,7 @@ export function Profile() {
                     fontSize: '2.5rem',
                     fontWeight: '700',
                     color: '#FFF',
-                    border: `3px solid ${theme.brand.primary}`,
+                    border: `3px solid ${colors.primary[500]}`,
                   }}
                 >
                   {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -282,14 +282,14 @@ export function Profile() {
 
             {/* Info */}
             <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: theme.spacing(1) }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: spacing(1) }}>
                 {profile?.display_name || 'Sin nombre'}
               </h2>
-              <p style={{ color: theme.text.muted, fontSize: '0.875rem', marginBottom: theme.spacing(1) }}>
+              <p style={{ color: colors.gray[500], fontSize: '0.875rem', marginBottom: spacing(1) }}>
                 {user?.email}
               </p>
               {profile?.bio && (
-                <p style={{ color: theme.text.secondary, fontSize: '1rem', lineHeight: 1.6 }}>
+                <p style={{ color: colors.gray[400], fontSize: '1rem', lineHeight: 1.6 }}>
                   {profile.bio}
                 </p>
               )}
@@ -300,11 +300,11 @@ export function Profile() {
               <button
                 onClick={startEditing}
                 style={{
-                  padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+                  padding: `${spacing(1)} ${spacing(2)}`,
                   background: 'transparent',
-                  border: `1px solid ${theme.palette.gray3}`,
-                  borderRadius: theme.radius.md,
-                  color: theme.text.primary,
+                  border: `1px solid ${colors.gray[300]}`,
+                  borderRadius: borderRadius.md,
+                  color: colors.light,
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '600',
@@ -318,18 +318,18 @@ export function Profile() {
           {/* Edit Form */}
           {isEditing && (
             <div style={{ 
-              marginBottom: theme.spacing(4), 
-              paddingTop: theme.spacing(4), 
-              borderTop: `2px solid ${theme.palette.gray3}`,
-              background: theme.bg.surface,
-              borderRadius: theme.radius.lg,
-              padding: theme.spacing(4),
+              marginBottom: spacing(4), 
+              paddingTop: spacing(4), 
+              borderTop: `2px solid ${colors.gray[300]}`,
+              background: colors.glass.strong,
+              borderRadius: borderRadius.lg,
+              padding: spacing(4),
             }}>
               <h3 style={{ 
                 fontSize: '1.5rem', 
                 fontWeight: '700', 
-                marginBottom: theme.spacing(4),
-                color: theme.text.primary,
+                marginBottom: spacing(4),
+                color: colors.light,
                 textAlign: 'center'
               }}>
                 ✏️ Editar Perfil
@@ -339,20 +339,20 @@ export function Profile() {
                 {/* Avatar Upload Section */}
                 <div style={{ 
                   textAlign: 'center', 
-                  marginBottom: theme.spacing(4),
-                  padding: theme.spacing(3),
-                  background: theme.bg.app,
-                  borderRadius: theme.radius.lg,
-                  border: `2px dashed ${theme.palette.gray3}`
+                  marginBottom: spacing(4),
+                  padding: spacing(3),
+                  background: colors.gradients.app,
+                  borderRadius: borderRadius.lg,
+                  border: `2px dashed ${colors.gray[300]}`
                 }}>
                   <label
                     htmlFor="editAvatar"
                     style={{
                       display: 'block',
-                      marginBottom: theme.spacing(2),
+                      marginBottom: spacing(2),
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: theme.text.secondary,
+                      color: colors.gray[400],
                       cursor: 'pointer'
                     }}
                   >
@@ -365,12 +365,12 @@ export function Profile() {
                     onChange={handleAvatarChange}
                     disabled={isSaving}
                     style={{
-                      marginBottom: theme.spacing(2),
-                      padding: theme.spacing(2),
-                      background: theme.bg.surface,
-                      border: `1px solid ${theme.palette.gray3}`,
-                      borderRadius: theme.radius.md,
-                      color: theme.text.primary,
+                      marginBottom: spacing(2),
+                      padding: spacing(2),
+                      background: colors.glass.strong,
+                      border: `1px solid ${colors.gray[300]}`,
+                      borderRadius: borderRadius.md,
+                      color: colors.light,
                       fontSize: '0.875rem',
                       cursor: 'pointer',
                       opacity: isSaving ? 0.5 : 1,
@@ -378,7 +378,7 @@ export function Profile() {
                   />
                   <p style={{ 
                     fontSize: '0.75rem', 
-                    color: theme.text.muted,
+                    color: colors.gray[500],
                     margin: 0 
                   }}>
                     Formatos permitidos: JPG, PNG, GIF (máx. 5MB)
@@ -391,11 +391,11 @@ export function Profile() {
                         setAvatarPreview(profile?.avatar_url || '');
                       }}
                       style={{
-                        marginTop: theme.spacing(2),
-                        padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+                        marginTop: spacing(2),
+                        padding: `${spacing(1)} ${spacing(2)}`,
                         background: 'rgba(239, 68, 68, 0.1)',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
-                        borderRadius: theme.radius.md,
+                        borderRadius: borderRadius.md,
                         color: '#ef4444',
                         cursor: 'pointer',
                         fontSize: '0.75rem',
@@ -411,18 +411,18 @@ export function Profile() {
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: '1fr 1fr', 
-                  gap: theme.spacing(3),
-                  marginBottom: theme.spacing(4)
+                  gap: spacing(3),
+                  marginBottom: spacing(4)
                 }}>
                   <div>
                     <label
                       htmlFor="editDisplayName"
                       style={{
                         display: 'block',
-                        marginBottom: theme.spacing(1),
+                        marginBottom: spacing(1),
                         fontSize: '0.875rem',
                         fontWeight: '600',
-                        color: theme.text.secondary,
+                        color: colors.gray[400],
                       }}
                     >
                       👤 Nombre *
@@ -437,17 +437,17 @@ export function Profile() {
                       placeholder="Tu nombre de usuario"
                       style={{
                         width: '100%',
-                        padding: theme.spacing(2),
-                        background: theme.bg.app,
-                        border: `2px solid ${theme.palette.gray3}`,
-                        borderRadius: theme.radius.md,
-                        color: theme.text.primary,
+                        padding: spacing(2),
+                        background: colors.gradients.app,
+                        border: `2px solid ${colors.gray[300]}`,
+                        borderRadius: borderRadius.md,
+                        color: colors.light,
                         fontSize: '1rem',
                         fontWeight: '500',
                         transition: 'border-color 0.2s ease',
                       }}
-                      onFocus={(e) => e.target.style.borderColor = theme.brand.primary}
-                      onBlur={(e) => e.target.style.borderColor = theme.palette.gray3}
+                      onFocus={(e) => e.target.style.borderColor = colors.primary[500]}
+                      onBlur={(e) => e.target.style.borderColor = colors.gray[300]}
                     />
                   </div>
 
@@ -455,10 +455,10 @@ export function Profile() {
                     <label
                       style={{
                         display: 'block',
-                        marginBottom: theme.spacing(1),
+                        marginBottom: spacing(1),
                         fontSize: '0.875rem',
                         fontWeight: '600',
-                        color: theme.text.secondary,
+                        color: colors.gray[400],
                       }}
                     >
                       📧 Correo
@@ -469,34 +469,34 @@ export function Profile() {
                       disabled
                       style={{
                         width: '100%',
-                        padding: theme.spacing(2),
-                        background: theme.palette.gray1,
-                        border: `2px solid ${theme.palette.gray3}`,
-                        borderRadius: theme.radius.md,
-                        color: theme.text.muted,
+                        padding: spacing(2),
+                        background: colors.gray[100],
+                        border: `2px solid ${colors.gray[300]}`,
+                        borderRadius: borderRadius.md,
+                        color: colors.gray[500],
                         fontSize: '1rem',
                         cursor: 'not-allowed',
                       }}
                     />
                     <p style={{ 
                       fontSize: '0.75rem', 
-                      color: theme.text.muted,
-                      margin: `${theme.spacing(1)}px 0 0 0`
+                      color: colors.gray[500],
+                      margin: `${spacing(1)}px 0 0 0`
                     }}>
                       El correo no se puede cambiar
                     </p>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: theme.spacing(4) }}>
+                <div style={{ marginBottom: spacing(4) }}>
                   <label
                     htmlFor="editBio"
                     style={{
                       display: 'block',
-                      marginBottom: theme.spacing(1),
+                      marginBottom: spacing(1),
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      color: theme.text.secondary,
+                      color: colors.gray[400],
                     }}
                   >
                     📝 Bio
@@ -510,41 +510,41 @@ export function Profile() {
                     placeholder="Cuéntanos algo sobre ti..."
                     style={{
                       width: '100%',
-                      padding: theme.spacing(2),
-                      background: theme.bg.app,
-                      border: `2px solid ${theme.palette.gray3}`,
-                      borderRadius: theme.radius.md,
-                      color: theme.text.primary,
+                      padding: spacing(2),
+                      background: colors.gradients.app,
+                      border: `2px solid ${colors.gray[300]}`,
+                      borderRadius: borderRadius.md,
+                      color: colors.light,
                       fontSize: '1rem',
                       fontFamily: 'inherit',
                       resize: 'vertical',
                       transition: 'border-color 0.2s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = theme.brand.primary}
-                    onBlur={(e) => e.target.style.borderColor = theme.palette.gray3}
+                    onFocus={(e) => e.target.style.borderColor = colors.primary[500]}
+                    onBlur={(e) => e.target.style.borderColor = colors.gray[300]}
                   />
                 </div>
 
                 {/* Ritmos Selection */}
                 <div style={{ 
-                  marginBottom: theme.spacing(4),
-                  padding: theme.spacing(3),
-                  background: theme.bg.app,
-                  borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.palette.gray3}`
+                  marginBottom: spacing(4),
+                  padding: spacing(3),
+                  background: colors.gradients.app,
+                  borderRadius: borderRadius.lg,
+                  border: `1px solid ${colors.gray[300]}`
                 }}>
                   <label
                     style={{
                       display: 'block',
-                      marginBottom: theme.spacing(3),
+                      marginBottom: spacing(3),
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: theme.text.primary,
+                      color: colors.light,
                     }}
                   >
                     🎵 Mis Ritmos Favoritos
                   </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(2) }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(2) }}>
                     {allTags
                       ?.filter(tag => tag.tipo === 'ritmo')
                       .map((tag) => (
@@ -554,31 +554,31 @@ export function Profile() {
                           onClick={() => toggleRitmo(tag.id)}
                           disabled={isSaving}
                           style={{
-                            padding: `${theme.spacing(1.5)} ${theme.spacing(2.5)}`,
+                            padding: `${spacing(1.5)} ${spacing(2.5)}`,
                             background: selectedRitmos.includes(tag.id) 
-                              ? theme.brand.primary 
-                              : theme.bg.surface,
+                              ? colors.primary[500] 
+                              : colors.glass.strong,
                             color: selectedRitmos.includes(tag.id) 
                               ? '#FFF' 
-                              : theme.text.primary,
+                              : colors.light,
                             border: `2px solid ${selectedRitmos.includes(tag.id) 
-                              ? theme.brand.primary 
-                              : theme.palette.gray3}`,
-                            borderRadius: theme.radius.lg,
+                              ? colors.primary[500] 
+                              : colors.gray[300]}`,
+                            borderRadius: borderRadius.lg,
                             cursor: 'pointer',
                             fontSize: '0.875rem',
                             fontWeight: '600',
                             opacity: isSaving ? 0.5 : 1,
                             transition: 'all 0.2s ease',
                             boxShadow: selectedRitmos.includes(tag.id) 
-                              ? `0 4px 12px ${theme.brand.primary}40` 
+                              ? `0 4px 12px ${colors.primary[500]}40` 
                               : 'none',
                           }}
                           onMouseEnter={(e) => {
                             if (!isSaving) {
                               e.currentTarget.style.transform = 'translateY(-2px)';
                               e.currentTarget.style.boxShadow = selectedRitmos.includes(tag.id) 
-                                ? `0 6px 16px ${theme.brand.primary}50`
+                                ? `0 6px 16px ${colors.primary[500]}50`
                                 : '0 4px 8px rgba(0,0,0,0.1)';
                             }
                           }}
@@ -586,7 +586,7 @@ export function Profile() {
                             if (!isSaving) {
                               e.currentTarget.style.transform = 'translateY(0)';
                               e.currentTarget.style.boxShadow = selectedRitmos.includes(tag.id) 
-                                ? `0 4px 12px ${theme.brand.primary}40`
+                                ? `0 4px 12px ${colors.primary[500]}40`
                                 : 'none';
                             }
                           }}
@@ -597,8 +597,8 @@ export function Profile() {
                   </div>
                   <p style={{ 
                     fontSize: '0.75rem', 
-                    color: theme.text.muted,
-                    margin: `${theme.spacing(2)}px 0 0 0`,
+                    color: colors.gray[500],
+                    margin: `${spacing(2)}px 0 0 0`,
                     textAlign: 'center'
                   }}>
                     Selecciona todos los ritmos que te gustan
@@ -607,24 +607,24 @@ export function Profile() {
 
                 {/* Zonas Selection */}
                 <div style={{ 
-                  marginBottom: theme.spacing(4),
-                  padding: theme.spacing(3),
-                  background: theme.bg.app,
-                  borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.palette.gray3}`
+                  marginBottom: spacing(4),
+                  padding: spacing(3),
+                  background: colors.gradients.app,
+                  borderRadius: borderRadius.lg,
+                  border: `1px solid ${colors.gray[300]}`
                 }}>
                   <label
                     style={{
                       display: 'block',
-                      marginBottom: theme.spacing(3),
+                      marginBottom: spacing(3),
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: theme.text.primary,
+                      color: colors.light,
                     }}
                   >
                     📍 Mis Zonas Favoritas
                   </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(2) }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(2) }}>
                     {allTags
                       ?.filter(tag => tag.tipo === 'zona')
                       .map((tag) => (
@@ -634,17 +634,17 @@ export function Profile() {
                           onClick={() => toggleZona(tag.id)}
                           disabled={isSaving}
                           style={{
-                            padding: `${theme.spacing(1.5)} ${theme.spacing(2.5)}`,
+                            padding: `${spacing(1.5)} ${spacing(2.5)}`,
                             background: selectedZonas.includes(tag.id) 
                               ? '#FB8C00' 
-                              : theme.bg.surface,
+                              : colors.glass.strong,
                             color: selectedZonas.includes(tag.id) 
                               ? '#FFF' 
-                              : theme.text.primary,
+                              : colors.light,
                             border: `2px solid ${selectedZonas.includes(tag.id) 
                               ? '#FB8C00' 
-                              : theme.palette.gray3}`,
-                            borderRadius: theme.radius.lg,
+                              : colors.gray[300]}`,
+                            borderRadius: borderRadius.lg,
                             cursor: 'pointer',
                             fontSize: '0.875rem',
                             fontWeight: '600',
@@ -677,8 +677,8 @@ export function Profile() {
                   </div>
                   <p style={{ 
                     fontSize: '0.75rem', 
-                    color: theme.text.muted,
-                    margin: `${theme.spacing(2)}px 0 0 0`,
+                    color: colors.gray[500],
+                    margin: `${spacing(2)}px 0 0 0`,
                     textAlign: 'center'
                   }}>
                     Selecciona todas las zonas donde bailas
@@ -687,35 +687,35 @@ export function Profile() {
 
                 {/* Redes Sociales Section */}
                 <div style={{ 
-                  marginBottom: theme.spacing(4),
-                  padding: theme.spacing(3),
-                  background: theme.bg.app,
-                  borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.palette.gray3}`
+                  marginBottom: spacing(4),
+                  padding: spacing(3),
+                  background: colors.gradients.app,
+                  borderRadius: borderRadius.lg,
+                  border: `1px solid ${colors.gray[300]}`
                 }}>
                   <label
                     style={{
                       display: 'block',
-                      marginBottom: theme.spacing(3),
+                      marginBottom: spacing(3),
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: theme.text.primary,
+                      color: colors.light,
                     }}
                   >
                     📱 Redes Sociales
                   </label>
                   
-                  <div style={{ display: 'grid', gap: theme.spacing(3) }}>
+                  <div style={{ display: 'grid', gap: spacing(3) }}>
                     {/* Instagram */}
                     <div>
                       <label
                         htmlFor="instagram"
                         style={{
                           display: 'block',
-                          marginBottom: theme.spacing(1),
+                          marginBottom: spacing(1),
                           fontSize: '0.875rem',
                           fontWeight: '600',
-                          color: theme.text.secondary,
+                          color: colors.gray[400],
                         }}
                       >
                         📷 Instagram
@@ -729,17 +729,17 @@ export function Profile() {
                         placeholder="@tu_usuario o https://instagram.com/tu_usuario"
                         style={{
                           width: '100%',
-                          padding: theme.spacing(2),
-                          background: theme.bg.surface,
-                          border: `2px solid ${theme.palette.gray3}`,
-                          borderRadius: theme.radius.md,
-                          color: theme.text.primary,
+                          padding: spacing(2),
+                          background: colors.glass.strong,
+                          border: `2px solid ${colors.gray[300]}`,
+                          borderRadius: borderRadius.md,
+                          color: colors.light,
                           fontSize: '1rem',
                           fontWeight: '500',
                           transition: 'border-color 0.2s ease',
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#E4405F'}
-                        onBlur={(e) => e.target.style.borderColor = theme.palette.gray3}
+                        onBlur={(e) => e.target.style.borderColor = colors.gray[300]}
                       />
                     </div>
 
@@ -749,10 +749,10 @@ export function Profile() {
                         htmlFor="facebook"
                         style={{
                           display: 'block',
-                          marginBottom: theme.spacing(1),
+                          marginBottom: spacing(1),
                           fontSize: '0.875rem',
                           fontWeight: '600',
-                          color: theme.text.secondary,
+                          color: colors.gray[400],
                         }}
                       >
                         📘 Facebook
@@ -766,17 +766,17 @@ export function Profile() {
                         placeholder="@tu_pagina o https://facebook.com/tu_pagina"
                         style={{
                           width: '100%',
-                          padding: theme.spacing(2),
-                          background: theme.bg.surface,
-                          border: `2px solid ${theme.palette.gray3}`,
-                          borderRadius: theme.radius.md,
-                          color: theme.text.primary,
+                          padding: spacing(2),
+                          background: colors.glass.strong,
+                          border: `2px solid ${colors.gray[300]}`,
+                          borderRadius: borderRadius.md,
+                          color: colors.light,
                           fontSize: '1rem',
                           fontWeight: '500',
                           transition: 'border-color 0.2s ease',
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#1877F2'}
-                        onBlur={(e) => e.target.style.borderColor = theme.palette.gray3}
+                        onBlur={(e) => e.target.style.borderColor = colors.gray[300]}
                       />
                     </div>
 
@@ -786,10 +786,10 @@ export function Profile() {
                         htmlFor="whatsapp"
                         style={{
                           display: 'block',
-                          marginBottom: theme.spacing(1),
+                          marginBottom: spacing(1),
                           fontSize: '0.875rem',
                           fontWeight: '600',
-                          color: theme.text.secondary,
+                          color: colors.gray[400],
                         }}
                       >
                         💬 WhatsApp
@@ -803,25 +803,25 @@ export function Profile() {
                         placeholder="+52 55 1234 5678 o https://wa.me/525512345678"
                         style={{
                           width: '100%',
-                          padding: theme.spacing(2),
-                          background: theme.bg.surface,
-                          border: `2px solid ${theme.palette.gray3}`,
-                          borderRadius: theme.radius.md,
-                          color: theme.text.primary,
+                          padding: spacing(2),
+                          background: colors.glass.strong,
+                          border: `2px solid ${colors.gray[300]}`,
+                          borderRadius: borderRadius.md,
+                          color: colors.light,
                           fontSize: '1rem',
                           fontWeight: '500',
                           transition: 'border-color 0.2s ease',
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#25D366'}
-                        onBlur={(e) => e.target.style.borderColor = theme.palette.gray3}
+                        onBlur={(e) => e.target.style.borderColor = colors.gray[300]}
                       />
                     </div>
                   </div>
                   
                   <p style={{ 
                     fontSize: '0.75rem', 
-                    color: theme.text.muted,
-                    margin: `${theme.spacing(2)}px 0 0 0`,
+                    color: colors.gray[500],
+                    margin: `${spacing(2)}px 0 0 0`,
                     textAlign: 'center'
                   }}>
                     Agrega tus redes sociales para conectar con otros bailarines
@@ -831,11 +831,11 @@ export function Profile() {
                 {error && (
                   <div
                     style={{
-                      marginBottom: theme.spacing(3),
-                      padding: theme.spacing(3),
+                      marginBottom: spacing(3),
+                      padding: spacing(3),
                       background: 'rgba(239, 68, 68, 0.1)',
                       border: '2px solid rgba(239, 68, 68, 0.3)',
-                      borderRadius: theme.radius.lg,
+                      borderRadius: borderRadius.lg,
                       color: '#ef4444',
                       fontSize: '0.875rem',
                       fontWeight: '500',
@@ -848,9 +848,9 @@ export function Profile() {
                 {/* Action Buttons */}
                 <div style={{ 
                   display: 'flex', 
-                  gap: theme.spacing(3),
-                  paddingTop: theme.spacing(3),
-                  borderTop: `1px solid ${theme.palette.gray3}`
+                  gap: spacing(3),
+                  paddingTop: spacing(3),
+                  borderTop: `1px solid ${colors.gray[300]}`
                 }}>
                   <button
                     type="button"
@@ -858,11 +858,11 @@ export function Profile() {
                     disabled={isSaving}
                     style={{
                       flex: 1,
-                      padding: theme.spacing(3),
+                      padding: spacing(3),
                       background: 'transparent',
-                      border: `2px solid ${theme.palette.gray3}`,
-                      borderRadius: theme.radius.lg,
-                      color: theme.text.secondary,
+                      border: `2px solid ${colors.gray[300]}`,
+                      borderRadius: borderRadius.lg,
+                      color: colors.gray[400],
                       cursor: 'pointer',
                       fontWeight: '600',
                       fontSize: '1rem',
@@ -870,14 +870,14 @@ export function Profile() {
                     }}
                     onMouseEnter={(e) => {
                       if (!isSaving) {
-                        e.currentTarget.style.borderColor = theme.text.secondary;
-                        e.currentTarget.style.color = theme.text.primary;
+                        e.currentTarget.style.borderColor = colors.gray[400];
+                        e.currentTarget.style.color = colors.light;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isSaving) {
-                        e.currentTarget.style.borderColor = theme.palette.gray3;
-                        e.currentTarget.style.color = theme.text.secondary;
+                        e.currentTarget.style.borderColor = colors.gray[300];
+                        e.currentTarget.style.color = colors.gray[400];
                       }
                     }}
                   >
@@ -890,7 +890,7 @@ export function Profile() {
                       flex: 1,
                       opacity: isSaving ? 0.5 : 1,
                       fontSize: '1rem',
-                      padding: theme.spacing(3),
+                      padding: spacing(3),
                       fontWeight: '600',
                     }}
                   >
@@ -902,11 +902,11 @@ export function Profile() {
           )}
 
           {/* Ritmos Section */}
-          <div style={{ marginBottom: theme.spacing(4) }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: theme.spacing(2) }}>
+          <div style={{ marginBottom: spacing(4) }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: spacing(2) }}>
               Mis Ritmos 🎵
             </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(1) }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
               {isEditing ? (
                 // Show selected ritmos in edit mode
                 selectedRitmos.length > 0 ? (
@@ -917,7 +917,7 @@ export function Profile() {
                     ) : null;
                   })
                 ) : (
-                  <p style={{ color: theme.text.muted, fontSize: '0.875rem' }}>
+                  <p style={{ color: colors.gray[500], fontSize: '0.875rem' }}>
                     Selecciona tus ritmos favoritos
                   </p>
                 )
@@ -928,7 +928,7 @@ export function Profile() {
                     <TagChip key={nombre} label={nombre} variant="ritmo" />
                   ))
                 ) : (
-                  <p style={{ color: theme.text.muted, fontSize: '0.875rem' }}>
+                  <p style={{ color: colors.gray[500], fontSize: '0.875rem' }}>
                     No has seleccionado ritmos aún
                   </p>
                 )
@@ -938,10 +938,10 @@ export function Profile() {
 
           {/* Zonas Section */}
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: theme.spacing(2) }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: spacing(2) }}>
               Mis Zonas 📍
             </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(1) }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
               {isEditing ? (
                 // Show selected zonas in edit mode
                 selectedZonas.length > 0 ? (
@@ -952,7 +952,7 @@ export function Profile() {
                     ) : null;
                   })
                 ) : (
-                  <p style={{ color: theme.text.muted, fontSize: '0.875rem' }}>
+                  <p style={{ color: colors.gray[500], fontSize: '0.875rem' }}>
                     Selecciona tus zonas favoritas
                   </p>
                 )
@@ -963,7 +963,7 @@ export function Profile() {
                     <TagChip key={nombre} label={nombre} variant="zona" />
                   ))
                 ) : (
-                  <p style={{ color: theme.text.muted, fontSize: '0.875rem' }}>
+                  <p style={{ color: colors.gray[500], fontSize: '0.875rem' }}>
                     No has seleccionado zonas aún
                   </p>
                 )
@@ -974,11 +974,11 @@ export function Profile() {
           {/* Redes Sociales - Solo mostrar si tienen contenido */}
           {profile?.redes_sociales && (
             (profile.redes_sociales.instagram || profile.redes_sociales.facebook || profile.redes_sociales.whatsapp) && (
-              <div style={{ marginBottom: theme.spacing(4) }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: theme.spacing(2) }}>
+              <div style={{ marginBottom: spacing(4) }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: spacing(2) }}>
                   📱 Redes Sociales
                 </h3>
-                <div style={{ display: 'flex', gap: theme.spacing(2), flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: spacing(2), flexWrap: 'wrap' }}>
                   {profile.redes_sociales.instagram && (
                     <a
                       href={profile.redes_sociales.instagram.startsWith('http') ? profile.redes_sociales.instagram : `https://instagram.com/${profile.redes_sociales.instagram.replace('@', '')}`}
@@ -1078,22 +1078,22 @@ export function Profile() {
         {/* Events Section - Sprint 2 */}
         {!isEditing && (
           <div style={{
-            marginTop: theme.spacing(6),
-            padding: theme.spacing(4),
-            background: theme.bg.surface,
-            borderRadius: theme.radius.lg,
+            marginTop: spacing(6),
+            padding: spacing(4),
+            background: colors.glass.strong,
+            borderRadius: borderRadius.lg,
             border: `1px solid ${theme.bg.border}`,
           }}>
             <h3 style={{ 
               fontSize: '1.5rem', 
               fontWeight: '700', 
-              marginBottom: theme.spacing(3),
-              color: theme.text.primary,
+              marginBottom: spacing(3),
+              color: colors.light,
             }}>
               📅 Eventos
             </h3>
 
-            <div style={{ display: 'grid', gap: theme.spacing(2) }}>
+            <div style={{ display: 'grid', gap: spacing(2) }}>
               {/* My RSVPs */}
               <button
                 onClick={() => navigate('/me/rsvps')}
@@ -1101,17 +1101,17 @@ export function Profile() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: theme.spacing(3),
-                  background: theme.bg.app,
+                  padding: spacing(3),
+                  background: colors.gradients.app,
                   border: `1px solid ${theme.bg.border}`,
-                  borderRadius: theme.radius.md,
+                  borderRadius: borderRadius.md,
                   cursor: 'pointer',
-                  color: theme.text.primary,
+                  color: colors.light,
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.brand.primary;
+                  e.currentTarget.style.borderColor = colors.primary[500];
                   e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
                 }}
                 onMouseLeave={(e) => {
@@ -1123,7 +1123,7 @@ export function Profile() {
                   <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.25rem' }}>
                     🎫 Mis RSVPs
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: theme.text.secondary }}>
+                  <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
                     Ver eventos a los que voy a asistir
                   </div>
                 </div>
@@ -1140,12 +1140,12 @@ export function Profile() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: theme.spacing(3),
-                        background: theme.bg.app,
+                        padding: spacing(3),
+                        background: colors.gradients.app,
                         border: `1px solid ${theme.bg.border}`,
-                        borderRadius: theme.radius.md,
+                        borderRadius: borderRadius.md,
                         cursor: 'pointer',
-                        color: theme.text.primary,
+                        color: colors.light,
                         textAlign: 'left',
                         transition: 'all 0.2s ease',
                       }}
@@ -1162,7 +1162,7 @@ export function Profile() {
                         <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.25rem' }}>
                           🎤 {organizer.nombre_publico}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: theme.text.secondary }}>
+                        <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
                           Estado: {organizer.estado_aprobacion}
                         </div>
                       </div>
@@ -1175,12 +1175,12 @@ export function Profile() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: theme.spacing(3),
+                        padding: spacing(3),
                         background: `${theme.brand.secondary}20`,
                         border: `2px dashed ${theme.brand.secondary}`,
-                        borderRadius: theme.radius.md,
+                        borderRadius: borderRadius.md,
                         cursor: 'pointer',
-                        color: theme.text.primary,
+                        color: colors.light,
                         textAlign: 'left',
                         transition: 'all 0.2s ease',
                       }}
@@ -1195,7 +1195,7 @@ export function Profile() {
                         <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.25rem' }}>
                           ✨ Crear Perfil de Organizador
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: theme.text.secondary }}>
+                        <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
                           Organiza tus propios eventos de baile
                         </div>
                       </div>
@@ -1211,17 +1211,17 @@ export function Profile() {
         {/* Footer con iconos de acción */}
         <div style={{ 
           textAlign: 'center',
-          padding: theme.spacing(4),
-          background: theme.bg.surface,
-          borderRadius: theme.radius.lg,
-          marginTop: theme.spacing(4),
-          border: `1px solid ${theme.palette.gray3}`
+          padding: spacing(4),
+          background: colors.glass.strong,
+          borderRadius: borderRadius.lg,
+          marginTop: spacing(4),
+          border: `1px solid ${colors.gray[300]}`
         }}>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'center', 
-            gap: theme.spacing(4),
-            marginBottom: theme.spacing(3)
+            gap: spacing(4),
+            marginBottom: spacing(3)
           }}>
             {/* Compartir */}
             <button
@@ -1241,19 +1241,19 @@ export function Profile() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: theme.spacing(1),
-                padding: theme.spacing(2),
+                gap: spacing(1),
+                padding: spacing(2),
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background-color 0.2s ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = theme.palette.gray1}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray[100]}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ fontSize: '1.5rem' }}>📤</div>
-              <span style={{ fontSize: '0.75rem', color: theme.text.secondary }}>Compartir</span>
+              <span style={{ fontSize: '0.75rem', color: colors.gray[400] }}>Compartir</span>
             </button>
 
             {/* Información */}
@@ -1263,19 +1263,19 @@ export function Profile() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: theme.spacing(1),
-                padding: theme.spacing(2),
+                gap: spacing(1),
+                padding: spacing(2),
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background-color 0.2s ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = theme.palette.gray1}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray[100]}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ fontSize: '1.5rem' }}>ℹ️</div>
-              <span style={{ fontSize: '0.75rem', color: theme.text.secondary }}>Info</span>
+              <span style={{ fontSize: '0.75rem', color: colors.gray[400] }}>Info</span>
             </button>
 
             {/* Aviso de Privacidad */}
@@ -1285,23 +1285,23 @@ export function Profile() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: theme.spacing(1),
-                padding: theme.spacing(2),
+                gap: spacing(1),
+                padding: spacing(2),
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 transition: 'background-color 0.2s ease',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = theme.palette.gray1}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.gray[100]}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ fontSize: '1.5rem' }}>🔒</div>
-              <span style={{ fontSize: '0.75rem', color: theme.text.secondary }}>Privacidad</span>
+              <span style={{ fontSize: '0.75rem', color: colors.gray[400] }}>Privacidad</span>
             </button>
           </div>
           
-          <p style={{ color: theme.text.muted, fontSize: '0.875rem', margin: 0 }}>
+          <p style={{ color: colors.gray[500], fontSize: '0.875rem', margin: 0 }}>
             Miembro desde {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'hoy'}
           </p>
         </div>
