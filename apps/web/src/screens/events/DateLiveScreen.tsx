@@ -321,8 +321,44 @@ export function DateLiveScreen() {
           </motion.div>
         </motion.div>
 
-        {/* Contenido Principal */}
+        {/* Contenido Principal - Diseño Estructurado */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+          {/* Navegación de Secciones */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            style={{
+              marginBottom: '3rem',
+              padding: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02))',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              marginBottom: '1rem',
+              color: colors.light,
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #FF3D57, #1E88E5)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              📋 Información del Evento
+            </h2>
+            <p style={{
+              textAlign: 'center',
+              opacity: 0.8,
+              fontSize: '1rem',
+              margin: 0
+            }}>
+              Toda la información que necesitas saber sobre este evento
+            </p>
+          </motion.div>
+
           {/* Información de la Fecha - Diseño Mejorado */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -715,6 +751,88 @@ export function DateLiveScreen() {
             </div>
           </motion.section>
         )}
+
+          {/* Navegación Rápida */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            style={{
+              marginBottom: '3rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <h3 style={{
+              fontSize: '1.3rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              color: colors.light,
+              textAlign: 'center'
+            }}>
+              🚀 Acciones Rápidas
+            </h3>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem'
+            }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(`/social/${social.id}`)}
+                style={{
+                  padding: '1rem 1.5rem',
+                  background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+                  border: '2px solid rgba(255, 61, 87, 0.3)',
+                  borderRadius: '15px',
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 24px rgba(255, 61, 87, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                🎭 Ver Social Completo
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: date.nombre || social.nombre,
+                      text: date.biografia || social.biografia,
+                      url: window.location.href
+                    });
+                  } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('¡Enlace copiado al portapapeles!');
+                  }
+                }}
+                style={{
+                  padding: '1rem 1.5rem',
+                  background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                  border: '2px solid rgba(30, 136, 229, 0.3)',
+                  borderRadius: '15px',
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 24px rgba(30, 136, 229, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                📤 Compartir Evento
+              </motion.button>
+            </div>
+          </motion.div>
 
           {/* RSVP - Sección Mejorada */}
           <motion.section

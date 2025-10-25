@@ -167,9 +167,15 @@ export function useUpdateRSVP() {
       queryClient.invalidateQueries({ queryKey: ["events", "with-rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events", "live"] });
       
-      // Forzar refetch de las queries específicas
+      // Forzar refetch inmediato de las queries específicas
       queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables.eventDateId] });
       queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables.eventDateId] });
+      
+      // Invalidar también las queries de eventos específicos
+      queryClient.invalidateQueries({ queryKey: ["event", "date", variables.eventDateId] });
+      queryClient.invalidateQueries({ queryKey: ["event", "parent"] });
+      
+      console.log('[useUpdateRSVP] Cache invalidation completed');
     }
   });
 }
@@ -229,16 +235,22 @@ export function useEventRSVP(eventDateId?: number) {
   const handleRSVP = async (status: RSVPStatus | null) => {
     if (!eventDateId) return;
     
+    console.log('[useEventRSVP] handleRSVP called with:', { eventDateId, status });
+    
     try {
       // Si se pasa null, removemos el RSVP
       if (status === null) {
+        console.log('[useEventRSVP] Removing RSVP for eventDateId:', eventDateId);
         await removeRSVP.mutateAsync(eventDateId);
       } else {
         // Si se pasa 'interesado', lo actualizamos
+        console.log('[useEventRSVP] Updating RSVP for eventDateId:', eventDateId, 'status:', status);
         await updateRSVP.mutateAsync({ eventDateId, status });
       }
+      
+      console.log('[useEventRSVP] RSVP operation completed successfully');
     } catch (error) {
-      console.error('Error updating RSVP:', error);
+      console.error('[useEventRSVP] Error updating RSVP:', error);
       throw error;
     }
   };
