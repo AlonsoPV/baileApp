@@ -41,15 +41,33 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
       const safeDate = dateId ? String(dateId) : String(Date.now());
       const path = `${user.id}/${safeParent}/${safeDate}_flyer.${ext}`;
 
+      console.log('[DateFlyerUploader] Uploading to path:', path);
+      console.log('[DateFlyerUploader] File type:', file.type);
+      console.log('[DateFlyerUploader] File size:', file.size);
+
       const { data: up, error: upErr } = await supabase.storage
         .from("event-flyers")
         .upload(path, file, { upsert: true, contentType: file.type });
 
-      if (upErr) throw upErr;
+      if (upErr) {
+        console.error('[DateFlyerUploader] Upload error:', upErr);
+        
+        // Manejar error específico del bucket
+        if (upErr.message.includes('Bucket not found') || upErr.message.includes('bucket not found')) {
+          throw new Error("El bucket 'event-flyers' no existe. Contacta al administrador para crear el bucket.");
+        }
+        
+        throw upErr;
+      }
+
+      console.log('[DateFlyerUploader] Upload successful:', up);
 
       const { data: pub } = supabase.storage.from("event-flyers").getPublicUrl(up.path);
+      console.log('[DateFlyerUploader] Public URL:', pub.publicUrl);
+      
       onChange(pub.publicUrl || null);
     } catch (e: any) {
+      console.error('[DateFlyerUploader] Error:', e);
       setErr(e?.message || "Error subiendo el flyer.");
     } finally {
       setLoading(false);

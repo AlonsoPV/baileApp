@@ -657,6 +657,13 @@ export function DateLiveScreen() {
         )}
 
         {/* Cronograma */}
+        {(() => {
+          console.log('[DateLiveScreen] Cronograma data:', date.cronograma);
+          console.log('[DateLiveScreen] Cronograma type:', typeof date.cronograma);
+          console.log('[DateLiveScreen] Cronograma isArray:', Array.isArray(date.cronograma));
+          console.log('[DateLiveScreen] Cronograma length:', date.cronograma?.length);
+          return null;
+        })()}
         {date.cronograma && Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
