@@ -8,6 +8,7 @@ import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -287,12 +288,12 @@ export default function AcademyProfileLive() {
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media, slot)?.url)
+    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
 
   // Obtener videos
   const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media, slot)?.url)
+    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
 
   // Get tag names from IDs
@@ -460,9 +461,9 @@ export default function AcademyProfileLive() {
               alignItems: 'center'
             }}>
               <div className="academy-banner-avatar">
-                {getMediaBySlot(media, 'cover')?.url || getMediaBySlot(media, 'p1')?.url ? (
+                {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
                   <img
-                    src={getMediaBySlot(media, 'cover')?.url || getMediaBySlot(media, 'p1')?.url || ''}
+                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
                     alt="Logo de la academia"
                     style={{
                       width: '100%',
@@ -631,7 +632,7 @@ export default function AcademyProfileLive() {
           />
 
           {/* Foto Principal */}
-          {getMediaBySlot(media, 'p1') && (
+          {getMediaBySlot(media as unknown as MediaSlotItem[], 'p1') && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -658,7 +659,7 @@ export default function AcademyProfileLive() {
               }}>
                 <ImageWithFallback
                   alt="Foto principal"
-                  src={getMediaBySlot(media, 'p1')?.url || ''}
+                  src={getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -670,7 +671,7 @@ export default function AcademyProfileLive() {
           )}
 
           {/* Video Principal */}
-          {getMediaBySlot(media, 'v1') && (
+          {getMediaBySlot(media as unknown as MediaSlotItem[], 'v1') && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -696,7 +697,7 @@ export default function AcademyProfileLive() {
                 border: '2px solid rgba(255, 255, 255, 0.1)'
               }}>
                 <video
-                  src={getMediaBySlot(media, 'v1')?.url || ''}
+                  src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')?.url || ''}
                   controls
                   style={{
                     width: '100%',

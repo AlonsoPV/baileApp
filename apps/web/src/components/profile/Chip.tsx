@@ -7,6 +7,7 @@ interface ChipProps {
   color?: string;
   onClick?: () => void;
   active?: boolean;
+  style?: React.CSSProperties;
 }
 
 const colors = {
@@ -26,7 +27,7 @@ const variantColors = {
   custom: colors.blue,
 };
 
-export function Chip({ label, icon, variant = 'custom', color, onClick, active }: ChipProps) {
+export function Chip({ label, icon, variant = 'custom', color, onClick, active, style }: ChipProps) {
   const chipColor = color || variantColors[variant];
   
   return (
@@ -56,6 +57,7 @@ export function Chip({ label, icon, variant = 'custom', color, onClick, active }
         transition: 'all 0.3s ease',
         backdropFilter: 'blur(10px)',
         userSelect: 'none',
+        ...style,
         boxShadow: active 
           ? `0 4px 16px ${chipColor}55, inset 0 1px 0 rgba(255, 255, 255, 0.2)` 
           : `0 2px 8px ${chipColor}33`,

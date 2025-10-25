@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
-  profileType: 'user' | 'organizer';
+  profileType: 'user' | 'organizer' | 'academy';
   onSave?: () => void;
   isSaving?: boolean;
   saveDisabled?: boolean;
