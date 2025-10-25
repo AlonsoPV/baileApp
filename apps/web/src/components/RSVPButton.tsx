@@ -19,31 +19,13 @@ const RSVP_OPTIONS: Array<{
   shadowColor: string;
 }> = [
   {
-    status: 'asistire',
-    label: 'Asistiré',
-    icon: '✅',
-    color: 'text-white',
-    bgColor: 'rgb(34 197 94 / 55%)', // green-500 con 55% opacity
-    hoverColor: 'hover:bg-green-500/60',
-    shadowColor: 'rgba(34, 197, 94, 0.3)'
-  },
-  {
     status: 'interesado',
-    label: 'Lo pienso',
-    icon: '🤔',
+    label: 'Me interesa',
+    icon: '👀',
     color: 'text-white',
-    bgColor: 'rgb(234 179 8 / 55%)', // yellow-500 con 55% opacity
-    hoverColor: 'hover:bg-yellow-500/60',
-    shadowColor: 'rgba(234, 179, 8, 0.3)'
-  },
-  {
-    status: 'no_asistire',
-    label: 'No voy',
-    icon: '❌',
-    color: 'text-white',
-    bgColor: 'rgb(239 68 68 / 55%)', // red-500 con 55% opacity
-    hoverColor: 'hover:bg-red-500/60',
-    shadowColor: 'rgba(239, 68, 68, 0.3)'
+    bgColor: 'rgb(30 136 229 / 55%)', // blue-500 con 55% opacity
+    hoverColor: 'hover:bg-blue-500/60',
+    shadowColor: 'rgba(30, 136, 229, 0.3)'
   }
 ];
 
