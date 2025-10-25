@@ -288,10 +288,40 @@ export default function EventParentPublicScreen() {
         alignItems: 'center',
         justifyContent: 'center',
         color: colors.light,
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <p>Cargando social...</p>
+        {/* Efectos de fondo animados */}
+        <div style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: '100px',
+          height: '100px',
+          background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1), rgba(30, 136, 229, 0.1))',
+          borderRadius: '50%',
+          animation: 'float 3s ease-in-out infinite'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '20%',
+          right: '15%',
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1), rgba(255, 140, 66, 0.1))',
+          borderRadius: '50%',
+          animation: 'float 4s ease-in-out infinite reverse'
+        }} />
+        
+        <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            style={{ fontSize: '3rem', marginBottom: '1rem' }}
+          >
+            ⏳
+          </motion.div>
+          <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Cargando social...</p>
         </div>
       </div>
     );
@@ -352,21 +382,207 @@ export default function EventParentPublicScreen() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-      padding: '24px 0',
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-        {/* Header */}
-        <div style={{
-          background: `linear-gradient(135deg, ${colors.dark}cc, ${colors.dark}88)`,
-          borderRadius: '20px',
-          padding: '32px',
-          marginBottom: '32px',
-          border: `1px solid ${colors.light}22`,
-          backdropFilter: 'blur(10px)',
-        }}>
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        .social-hero {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        }
+        
+        .social-hero::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 20% 80%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .glass-card {
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .shimmer-effect {
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          background-size: 200% 100%;
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark}, #0f0f23, #1a1a2e)`,
+        color: colors.light,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Hero Section */}
+        <motion.div
+          className="social-hero"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{
+            padding: '4rem 2rem',
+            textAlign: 'center',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          {/* Floating Elements */}
+          <div style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '60px',
+            height: '60px',
+            background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
+            borderRadius: '50%',
+            animation: 'float 4s ease-in-out infinite',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            top: '30%',
+            right: '15%',
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+            borderRadius: '50%',
+            animation: 'float 3s ease-in-out infinite reverse',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+          
+          <div style={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '20%',
+            width: '80px',
+            height: '80px',
+            background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.1), rgba(255, 140, 66, 0.1))',
+            borderRadius: '50%',
+            animation: 'float 5s ease-in-out infinite',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }} />
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            style={{ position: 'relative', zIndex: 2 }}
+          >
+            <h1 style={{
+              fontSize: '4rem',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #FF3D57 0%, #1E88E5 50%, #FF8C42 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '1.5rem',
+              textShadow: '0 4px 20px rgba(255, 61, 87, 0.3)',
+              letterSpacing: '-0.02em'
+            }}>
+              {parent.nombre}
+            </h1>
+            
+            {parent.biografia && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                style={{
+                  fontSize: '1.3rem',
+                  opacity: 0.9,
+                  maxWidth: '700px',
+                  margin: '0 auto 2.5rem',
+                  lineHeight: 1.7,
+                  fontWeight: '400',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
+                {parent.biografia}
+              </motion.p>
+            )}
+          </motion.div>
+        </motion.div>
+
+        {/* Contenido Principal */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+          {/* Navegación de Secciones */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            style={{
+              marginBottom: '3rem',
+              padding: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02))',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              marginBottom: '1rem',
+              color: colors.light,
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #FF3D57, #1E88E5)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              📋 Información del Social
+            </h2>
+            <p style={{
+              textAlign: 'center',
+              opacity: 0.8,
+              fontSize: '1rem',
+              margin: 0
+            }}>
+              Toda la información que necesitas saber sobre este social
+            </p>
+          </motion.div>
+
+          {/* Header Mejorado */}
+          <div style={{
+            background: `linear-gradient(135deg, ${colors.dark}cc, ${colors.dark}88)`,
+            borderRadius: '20px',
+            padding: '32px',
+            marginBottom: '32px',
+            border: `1px solid ${colors.light}22`,
+            backdropFilter: 'blur(10px)',
+          }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
             <div style={{ flex: 1 }}>
               <h1 style={{
@@ -610,51 +826,124 @@ export default function EventParentPublicScreen() {
           </div>
 
           {dates && dates.length > 0 ? (
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {dates.map((date: any) => (
+            <div style={{ 
+              display: 'grid', 
+              gap: '1.5rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))'
+            }}>
+              {dates.map((date: any, index: number) => (
                 <motion.div
                   key={date.id}
-                  whileHover={{ scale: 1.02 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ 
+                    scale: 1.03, 
+                    y: -8,
+                    boxShadow: '0 16px 40px rgba(30, 136, 229, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)'
+                  }}
                   onClick={() => navigate(`/social/fecha/${date.id}`)}
                   style={{
-                    padding: '20px',
-                    background: `${colors.dark}44`,
-                    borderRadius: '12px',
-                    border: `1px solid ${colors.light}22`,
+                    padding: '2rem',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '20px',
+                    border: '2px solid rgba(30, 136, 229, 0.2)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 32px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{
-                        fontSize: '1.3rem',
-                        fontWeight: '600',
-                        color: colors.light,
-                        marginBottom: '8px',
+                  {/* Efecto de brillo en hover */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                    transition: 'left 0.6s ease',
+                    zIndex: 1
+                  }} />
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    {/* Header con icono y nombre */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                      <div style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.5rem',
+                        boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
                       }}>
-                        {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                      </h3>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                        <span style={{
-                          fontSize: '1rem',
-                          color: colors.light,
-                          opacity: 0.8,
-                        }}>
-                          📅 {formatDate(date.fecha)}
-                        </span>
-                        
-                        {date.hora_inicio && (
-                          <span style={{
-                            fontSize: '1rem',
-                            color: colors.light,
-                            opacity: 0.8,
-                          }}>
-                            🕐 {date.hora_inicio} - {date.hora_fin || 'Sin hora fin'}
-                          </span>
-                        )}
+                        📅
                       </div>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{
+                          fontSize: '1.4rem',
+                          fontWeight: '800',
+                          color: colors.light,
+                          margin: 0,
+                          background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent'
+                        }}>
+                          {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    {/* Información de la fecha */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1rem',
+                      marginBottom: '1.5rem'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(30, 136, 229, 0.1)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(30, 136, 229, 0.2)'
+                      }}>
+                        <span style={{ fontSize: '1.2rem' }}>📅</span>
+                        <span style={{ 
+                          fontSize: '1rem', 
+                          color: colors.blue,
+                          fontWeight: '700' 
+                        }}>
+                          {formatDate(date.fecha)}
+                        </span>
+                      </div>
+                      
+                      {date.hora_inicio && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '0.75rem 1rem',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <span style={{ fontSize: '1.2rem' }}>🕐</span>
+                          <span style={{ 
+                            fontSize: '1rem', 
+                            color: colors.light,
+                            fontWeight: '700' 
+                          }}>
+                            {date.hora_inicio} - {date.hora_fin || 'Sin hora fin'}
+                          </span>
+                        </div>
+                      )}
 
                       {date.lugar && (
                         <p style={{
