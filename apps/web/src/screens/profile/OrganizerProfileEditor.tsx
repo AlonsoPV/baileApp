@@ -1100,7 +1100,6 @@ export default function OrganizerProfileEditor() {
                 <div style={{
                   textAlign: 'center',
                   padding: '3rem 2rem',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
                   borderRadius: '20px',
                   border: '2px solid rgba(255, 61, 87, 0.2)',
                   position: 'relative',
@@ -1110,7 +1109,7 @@ export default function OrganizerProfileEditor() {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                    
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
