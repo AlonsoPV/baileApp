@@ -12,28 +12,12 @@ interface RSVPCounterProps {
 
 const RSVP_STATS_CONFIG = [
   {
-    key: 'asistire' as keyof RSVPStats,
-    label: 'Asistirán',
-    icon: '✅',
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/20',
-    borderColor: 'border-green-500/30'
-  },
-  {
     key: 'interesado' as keyof RSVPStats,
     label: 'Interesados',
     icon: '👀',
-    color: 'text-yellow-400',
-    bgColor: 'bg-yellow-500/20',
-    borderColor: 'border-yellow-500/30'
-  },
-  {
-    key: 'no_asistire' as keyof RSVPStats,
-    label: 'No asistirán',
-    icon: '❌',
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/20',
-    borderColor: 'border-red-500/30'
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+    borderColor: 'border-orange-500/30'
   }
 ];
 
@@ -44,7 +28,7 @@ export default function RSVPCounter({
   showIcons = true,
   animated = true
 }: RSVPCounterProps) {
-  const { stats, isLoading, error } = useEventRSVPStats(eventDateId);
+  const { data: stats, isLoading, error } = useEventRSVPStats(eventDateId);
 
   if (isLoading) {
     return (
