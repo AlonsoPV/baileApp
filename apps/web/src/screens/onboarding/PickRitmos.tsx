@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Chip } from '@ui/index';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useToast } from '../../components/Toast';
@@ -57,36 +57,36 @@ export function PickRitmos() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.bg.app,
-        padding: theme.spacing(2),
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        padding: spacing[2],
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '600px',
-          background: theme.bg.card,
-          borderRadius: theme.radius.xl,
-          padding: theme.spacing(4),
+          background: colors.glass.light,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[4],
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: theme.spacing(4) }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: theme.spacing(1) }}>
+        <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Paso 2: Ritmos 🎵
           </h1>
-          <p style={{ color: theme.text.secondary }}>
+          <p style={{ color: colors.text.medium }}>
             ¿Qué ritmos te gustan? (selecciona todos los que quieras)
           </p>
         </div>
 
         {loadingTags ? (
-          <div style={{ textAlign: 'center', padding: theme.spacing(4), color: theme.text.secondary }}>
+          <div style={{ textAlign: 'center', padding: spacing[4], color: colors.text.medium }}>
             Cargando ritmos...
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: theme.spacing(4), display: 'flex', flexWrap: 'wrap', gap: theme.spacing(1) }}>
+            <div style={{ marginBottom: spacing[4], display: 'flex', flexWrap: 'wrap', gap: spacing[1] }}>
               {ritmos?.map((ritmo) => (
                 <div key={ritmo.id} onClick={() => toggleRitmo(ritmo.id)} style={{ cursor: 'pointer' }}>
                   <Chip
@@ -97,18 +97,18 @@ export function PickRitmos() {
               ))}
             </div>
 
-            <div style={{ color: theme.text.muted, fontSize: '0.875rem', marginBottom: theme.spacing(3) }}>
+            <div style={{ color: colors.text.dark, fontSize: '0.875rem', marginBottom: spacing[3] }}>
               {selectedIds.length} ritmo(s) seleccionado(s)
             </div>
 
             {error && (
               <div
                 style={{
-                  marginBottom: theme.spacing(3),
-                  padding: theme.spacing(2),
+                  marginBottom: spacing[3],
+                  padding: spacing[2],
                   background: 'rgba(239, 68, 68, 0.1)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: theme.radius.md,
+                  borderRadius: borderRadius.md,
                   color: '#ef4444',
                   fontSize: '0.875rem',
                 }}
@@ -117,7 +117,7 @@ export function PickRitmos() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: theme.spacing(2) }}>
+            <div style={{ display: 'flex', gap: spacing[2] }}>
               {profile?.ritmos && profile.ritmos.length > 0 && (
                 <button
                   type="button"
@@ -125,11 +125,11 @@ export function PickRitmos() {
                   disabled={isLoading}
                   style={{
                     flex: 1,
-                    padding: theme.spacing(2),
+                    padding: spacing[2],
                     background: 'transparent',
-                    border: `1px solid ${theme.palette.gray3}`,
-                    borderRadius: theme.radius.md,
-                    color: theme.text.secondary,
+                    border: `1px solid ${colors.glass.medium}`,
+                    borderRadius: borderRadius.md,
+                    color: colors.text.medium,
                     cursor: 'pointer',
                   }}
                 >
