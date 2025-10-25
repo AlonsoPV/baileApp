@@ -774,7 +774,7 @@ export function DateLiveScreen() {
                       🏷️ Tipo: {item.tipo}
                     </p>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.section>
