@@ -222,9 +222,9 @@ export const theme = {
   
   // Text colors
   text: {
-    primary: colors.text.light,
-    secondary: colors.text.medium,
-    muted: colors.text.dark,
+    primary: colors.light,
+    secondary: colors.gray[300],
+    muted: colors.gray[500],
   },
   
   // Brand colors
@@ -236,9 +236,9 @@ export const theme = {
   // Palette colors
   palette: {
     gray3: colors.glass.medium,
-    blue: colors.accent.blue[600],
-    coral: colors.primary[500],
-    orange: colors.secondary[500],
+    blue: colors.blue,
+    coral: colors.coral,
+    orange: colors.orange,
   },
   
   // Spacing
