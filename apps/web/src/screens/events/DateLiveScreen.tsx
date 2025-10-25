@@ -10,6 +10,7 @@ import { Chip } from "../../components/profile/Chip";
 import ShareLink from '../../components/ShareLink';
 import ImageWithFallback from "../../components/ImageWithFallback";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
+import { useEventRSVP } from "../../hooks/useRSVP";
 
 const colors = {
   coral: '#FF3D57',
@@ -33,6 +34,7 @@ export function DateLiveScreen() {
   const { data: date, isLoading, error } = useEventDate(dateId);
   const { data: social } = useEventParent(date?.parent_id);
   const { data: allTags } = useTags();
+  const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
   
   // Debug logs
   console.log('[DateLiveScreen] Date data:', date);
@@ -419,7 +421,31 @@ export function DateLiveScreen() {
           <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
             🎫 Confirmar Asistencia
           </h3>
-          <RSVPButtons dateId={dateId} />
+          <RSVPButtons 
+            currentStatus={userStatus}
+            onStatusChange={toggleInterested}
+            disabled={isUpdating}
+          />
+          
+          {/* Estadísticas RSVP */}
+          {stats && (
+            <div style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                  👀 {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
+                </span>
+                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                  👥 {stats.total} persona{stats.total !== 1 ? 's' : ''} en total
+                </span>
+              </div>
+            </div>
+          )}
         </motion.section>
 
         {/* Media */}
