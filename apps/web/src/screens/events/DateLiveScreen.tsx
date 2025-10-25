@@ -286,7 +286,6 @@ export function DateLiveScreen() {
                   style={{
                     padding: '16px 32px',
                     borderRadius: '25px',
-                    border: 'none',
                     background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
                     color: colors.light,
                     fontSize: '1.1rem',

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import { isValidEmail } from '../../utils/validation';
 import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkAuth';
 
@@ -63,37 +63,37 @@ export function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.bg.app,
-        padding: theme.spacing(2),
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        padding: spacing[2],
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '400px',
-          background: theme.bg.card,
-          borderRadius: theme.radius.xl,
-          padding: theme.spacing(4),
+          background: colors.glass.light,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[4],
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: theme.spacing(4) }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: theme.spacing(1) }}>
+        <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             ¡Bienvenido! 💃
           </h1>
-          <p style={{ color: theme.text.secondary }}>
+          <p style={{ color: colors.text.medium }}>
             Accede con tu email - Sin contraseñas
           </p>
         </div>
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="email"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               📧 Tu Email
@@ -107,11 +107,11 @@ export function Login() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
               }}
               placeholder="tu@email.com"
@@ -121,11 +121,11 @@ export function Login() {
           {error && (
             <div
               style={{
-                marginBottom: theme.spacing(3),
-                padding: theme.spacing(2),
+                marginBottom: spacing[3],
+                padding: spacing[2],
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 color: '#ef4444',
                 fontSize: '0.875rem',
               }}
@@ -137,11 +137,11 @@ export function Login() {
           {message && (
             <div
               style={{
-                marginBottom: theme.spacing(3),
-                padding: theme.spacing(2),
+                marginBottom: spacing[3],
+                padding: spacing[2],
                 background: isSuccess ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                 border: `1px solid ${isSuccess ? '#10B981' : '#EF4444'}`,
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 color: isSuccess ? '#10B981' : '#EF4444',
                 fontSize: '0.875rem',
               }}
@@ -150,7 +150,7 @@ export function Login() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: theme.spacing(2), marginBottom: theme.spacing(3) }}>
+          <div style={{ display: 'flex', gap: spacing[2], marginBottom: spacing[3] }}>
             <Button
               onClick={() => handleMagicLink(false)}
               disabled={isLoading}
@@ -168,7 +168,7 @@ export function Login() {
               style={{
                 flex: 1,
                 opacity: isLoading ? 0.5 : 1,
-                background: theme.brand.secondary,
+                background: colors.gradients.secondary,
               }}
             >
               {isLoading ? '⏳ Enviando...' : '✨ Registrarse'}
@@ -178,11 +178,11 @@ export function Login() {
         <div style={{ 
           textAlign: 'center', 
           fontSize: '0.875rem', 
-          color: theme.text.secondary,
-          marginTop: theme.spacing(3),
-          padding: theme.spacing(2),
+          color: colors.text.medium,
+          marginTop: spacing[3],
+          padding: spacing[2],
           background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: theme.radius.md,
+          borderRadius: borderRadius.md,
         }}>
           <p style={{ margin: 0, fontSize: '0.8rem' }}>
             💡 Te enviaremos un enlace mágico a tu email.<br/>
