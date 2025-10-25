@@ -671,38 +671,107 @@ export function DateLiveScreen() {
             transition={{ delay: 0.6 }}
             style={{
               marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+              borderRadius: '20px',
+              border: '2px solid rgba(30, 136, 229, 0.2)',
+              boxShadow: '0 8px 32px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-              ⏰ Cronograma
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {date.cronograma.map((item: any, index: number) => (
-                <div key={index} style={{
-                  padding: '1rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+              }}>
+                ⏰
+              </div>
+              <div>
+                <h3 style={{ 
+                  fontSize: '1.5rem', 
+                  margin: 0, 
+                  fontWeight: '800',
+                  background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
                 }}>
+                  Cronograma del Evento
+                </h3>
+                <p style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.8,
+                  margin: 0,
+                  fontWeight: '500'
+                }}>
+                  Horarios y actividades programadas
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {date.cronograma.map((item: any, index: number) => (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    y: -4,
+                    boxShadow: '0 12px 32px rgba(30, 136, 229, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1)'
+                  }}
+                  style={{
+                    padding: '1.5rem',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '16px',
+                    border: '2px solid rgba(30, 136, 229, 0.2)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 8px 24px rgba(30, 136, 229, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
                   <h4 style={{
                     fontSize: '1rem',
                     fontWeight: '600',
                     marginBottom: '0.5rem',
                     color: colors.light,
                   }}>
-                    {item.hora && `🕐 ${item.hora} - `}{item.actividad}
+                    {item.inicio && `🕐 ${item.inicio}${item.fin ? ` - ${item.fin}` : ''} - `}{item.titulo}
                   </h4>
-                  {item.descripcion && (
+                  {item.nivel && (
                     <p style={{
                       fontSize: '0.9rem',
                       opacity: 0.8,
                       lineHeight: 1.4,
+                      marginBottom: '0.5rem',
+                      fontWeight: '600',
+                      color: colors.blue
                     }}>
-                      {item.descripcion}
+                      📊 Nivel: {item.nivel}
+                    </p>
+                  )}
+                  {item.tipo && (
+                    <p style={{
+                      fontSize: '0.85rem',
+                      opacity: 0.7,
+                      lineHeight: 1.4,
+                      textTransform: 'capitalize'
+                    }}>
+                      🏷️ Tipo: {item.tipo}
                     </p>
                   )}
                 </div>
