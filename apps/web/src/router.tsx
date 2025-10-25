@@ -39,6 +39,10 @@ import AcademyProfileLive from './screens/profile/AcademyProfileLive';
 import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
 import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
 
+// Brand screens
+import BrandEditorScreen from './screens/brand/BrandEditorScreen';
+import BrandPublicScreen from './screens/brand/BrandPublicScreen';
+
 // New Social/Event Flow Screens
 import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventParentCreateScreen';
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
@@ -174,8 +178,7 @@ export function AppRouter() {
         <Route path="/profile/school/edit" element={<SchoolProfileEditor />} />
         <Route path="/profile/school" element={<SchoolProfileEditor />} />
         
-        <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
-        <Route path="/profile/brand" element={<BrandProfileEditor />} />
+        <Route path="/marca/editar" element={<BrandEditorScreen />} />
         
         {/* Admin Routes */}
         <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
@@ -194,6 +197,9 @@ export function AppRouter() {
       {/* Social and Date Live Routes */}
       <Route path="/social/:id" element={<SocialLiveScreen />} />
       <Route path="/social/fecha/:id" element={<DateLiveScreen />} />
+      
+      {/* Brand Public Route */}
+      <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
       
       {/* Legacy event routes */}
       <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />

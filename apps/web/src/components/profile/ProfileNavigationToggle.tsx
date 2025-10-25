@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
-  profileType: 'user' | 'organizer' | 'academy';
+  profileType: 'user' | 'organizer' | 'academy' | 'brand';
   onSave?: () => void;
   isSaving?: boolean;
   saveDisabled?: boolean;
@@ -51,6 +51,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'user': return '/profile';
       case 'organizer': return '/profile/organizer';
       case 'academy': return '/profile/academy';
+      case 'brand': return '/marca/1'; // TODO: Get actual brand ID
       default: return '/profile';
     }
   };
@@ -60,6 +61,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'user': return '/profile/edit';
       case 'organizer': return '/profile/organizer/edit';
       case 'academy': return '/profile/academy/edit';
+      case 'brand': return '/marca/editar';
       default: return '/profile/edit';
     }
   };
@@ -69,7 +71,18 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'user': return 'Usuario';
       case 'organizer': return 'Organizador';
       case 'academy': return 'Academia';
+      case 'brand': return 'Marca';
       default: return 'Usuario';
+    }
+  };
+
+  const getProfileIcon = () => {
+    switch (profileType) {
+      case 'user': return '👤';
+      case 'organizer': return '🎤';
+      case 'academy': return '🎓';
+      case 'brand': return '🏷️';
+      default: return '👤';
     }
   };
 
@@ -358,7 +371,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
         color: 'rgba(255, 255, 255, 0.7)',
         fontWeight: '500'
       }}>
-        <span>🎭</span>
+        <span>{getProfileIcon()}</span>
         <span>{getProfileName()}</span>
       </div>
     </div>
