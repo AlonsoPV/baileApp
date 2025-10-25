@@ -1,7 +1,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
-import { theme } from '@theme/colors';
+import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useToast } from '../../components/Toast';
@@ -89,32 +89,32 @@ export function ProfileBasics() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.bg.app,
-        padding: theme.spacing(2),
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        padding: spacing[2],
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '500px',
-          background: theme.bg.card,
-          borderRadius: theme.radius.xl,
-          padding: theme.spacing(4),
+          background: colors.glass.light,
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[4],
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: theme.spacing(4) }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: theme.spacing(1) }}>
+        <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Paso 1: Datos Básicos 📝
           </h1>
-          <p style={{ color: theme.text.secondary }}>
+          <p style={{ color: colors.text.medium }}>
             Cuéntanos sobre ti
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Avatar Upload */}
-          <div style={{ marginBottom: theme.spacing(3), textAlign: 'center' }}>
+          <div style={{ marginBottom: spacing[3], textAlign: 'center' }}>
             {avatarPreview && (
               <img
                 src={avatarPreview}
@@ -124,18 +124,18 @@ export function ProfileBasics() {
                   height: '100px',
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  marginBottom: theme.spacing(2),
-                  border: `3px solid ${theme.brand.primary}`,
+                  marginBottom: spacing[2],
+                  border: `3px solid ${colors.gradients.primary}`,
                 }}
               />
             )}
             <label
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Foto de Perfil (opcional)
@@ -147,26 +147,26 @@ export function ProfileBasics() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '0.875rem',
               }}
             />
           </div>
 
           {/* Display Name */}
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="displayName"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Nombre para mostrar *
@@ -180,11 +180,11 @@ export function ProfileBasics() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
               }}
               placeholder="Ej: Juan el Salsero"
@@ -192,15 +192,15 @@ export function ProfileBasics() {
           </div>
 
           {/* Bio */}
-          <div style={{ marginBottom: theme.spacing(3) }}>
+          <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="bio"
               style={{
                 display: 'block',
-                marginBottom: theme.spacing(1),
+                marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: theme.text.secondary,
+                color: colors.text.medium,
               }}
             >
               Bio (opcional)
@@ -213,11 +213,11 @@ export function ProfileBasics() {
               rows={4}
               style={{
                 width: '100%',
-                padding: theme.spacing(2),
-                background: theme.bg.surface,
-                border: `1px solid ${theme.palette.gray3}`,
-                borderRadius: theme.radius.md,
-                color: theme.text.primary,
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.text.light,
                 fontSize: '1rem',
                 fontFamily: 'inherit',
                 resize: 'vertical',
@@ -229,11 +229,11 @@ export function ProfileBasics() {
           {error && (
             <div
               style={{
-                marginBottom: theme.spacing(3),
-                padding: theme.spacing(2),
+                marginBottom: spacing[3],
+                padding: spacing[2],
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: theme.radius.md,
+                borderRadius: borderRadius.md,
                 color: '#ef4444',
                 fontSize: '0.875rem',
               }}
