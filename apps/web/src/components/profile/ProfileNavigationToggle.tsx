@@ -50,7 +50,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     switch (profileType) {
       case 'user': return '/profile';
       case 'organizer': return '/profile/organizer';
-      case 'academy': return '/profile/academy';
+      case 'academy': return '/academia/1'; // TODO: Get actual academy ID
       case 'brand': return '/marca/1'; // TODO: Get actual brand ID
       default: return '/profile';
     }
@@ -60,7 +60,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     switch (profileType) {
       case 'user': return '/profile/edit';
       case 'organizer': return '/profile/organizer/edit';
-      case 'academy': return '/profile/academy/edit';
+      case 'academy': return '/academia/editar';
       case 'brand': return '/marca/editar';
       default: return '/profile/edit';
     }

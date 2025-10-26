@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useMyAcademy } from "../../hooks/useAcademy";
+import { useAcademyMy } from "../../hooks/useAcademy";
 import { useAcademyMedia } from "../../hooks/useAcademyMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
@@ -282,7 +282,7 @@ const colors = {
 
 export default function AcademyProfileLive() {
   const navigate = useNavigate();
-  const { data: academy, isLoading } = useMyAcademy();
+  const { data: academy, isLoading } = useAcademyMy();
   const { media } = useAcademyMedia();
   const { data: allTags } = useTags();
 
@@ -297,15 +297,21 @@ export default function AcademyProfileLive() {
     .filter(Boolean) as string[];
 
   // Get tag names from IDs
-  const getEstiloNombres = () => {
-    if (!allTags || !academy?.estilos) return [];
-    return academy.estilos
-      .map(id => allTags.find(tag => tag.id === id)?.nombre)
+  const getRitmoNombres = () => {
+    if (!allTags || !academy?.ritmos) return [];
+    return academy.ritmos
+      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+      .filter(Boolean);
+  };
+
+  const getZonaNombres = () => {
+    if (!allTags || !academy?.zonas) return [];
+    return academy.zonas
+      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona')?.nombre)
       .filter(Boolean);
   };
 
   console.log('[AcademyProfileLive] Academy data:', academy);
-  console.log('[AcademyProfileLive] Academy respuestas:', academy?.respuestas);
   console.log('[AcademyProfileLive] Academy redes_sociales:', academy?.redes_sociales);
 
   if (isLoading) {
@@ -555,8 +561,8 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Estilos de Baile */}
-          {academy.estilos && academy.estilos.length > 0 && (
+          {/* Ritmos de Baile */}
+          {academy.ritmos && academy.ritmos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -589,10 +595,10 @@ export default function AcademyProfileLive() {
                 flexWrap: 'wrap',
                 gap: '0.75rem'
               }}>
-                {getEstiloNombres().map((estilo, index) => (
+                {getRitmoNombres().map((ritmo, index) => (
                   <Chip
                     key={index}
-                    label={estilo}
+                    label={ritmo}
                     active={true}
                     variant="ritmo"
                     style={{
@@ -609,7 +615,7 @@ export default function AcademyProfileLive() {
 
           {/* Redes Sociales */}
           <SocialMediaSection 
-            respuestas={academy.respuestas}
+            respuestas={{ redes: academy.redes_sociales }}
             redes_sociales={academy.redes_sociales}
             title="📱 Redes Sociales"
             availablePlatforms={['instagram', 'facebook', 'whatsapp']}

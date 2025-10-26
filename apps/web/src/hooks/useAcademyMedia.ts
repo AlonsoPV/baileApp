@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
-import { useMyAcademy } from "./useAcademy";
+import { useAcademyMy } from "./useAcademy";
 
 const BUCKET = "academy-media";
 
@@ -43,7 +43,7 @@ async function removeAcademyFile(path: string) {
 
 export function useAcademyMedia() {
   const qc = useQueryClient();
-  const { data: academy, isLoading: academyLoading } = useMyAcademy();
+  const { data: academy, isLoading: academyLoading } = useAcademyMy();
   const academyId = academy?.id;
   
   console.log('🔍 [useAcademyMedia] Academy data:', { 

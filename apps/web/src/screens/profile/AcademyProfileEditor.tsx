@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useMyAcademy, useUpsertMyAcademy } from "../../hooks/useAcademy";
+import { useAcademyMy, useUpsertAcademy } from "../../hooks/useAcademy";
 import { useAcademyMedia } from "../../hooks/useAcademyMedia";
 import { useTags } from "../../hooks/useTags";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
@@ -30,10 +30,10 @@ const colors = {
 export default function AcademyProfileEditor() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: academy, isLoading } = useMyAcademy();
+  const { data: academy, isLoading } = useAcademyMy();
   const { data: allTags } = useTags();
   const { media, add, remove } = useAcademyMedia();
-  const upsert = useUpsertMyAcademy();
+  const upsert = useUpsertAcademy();
   
   // Hook para cambio de rol
   useRoleChange();

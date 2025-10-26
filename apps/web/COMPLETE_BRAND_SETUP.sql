@@ -4,8 +4,7 @@
 -- 1. Verificar estado inicial
 DO $$
 BEGIN
-    RAISE NOTICE '🚀 Iniciando configuración completa del módulo de Marca...';
-    RAISE NOTICE 'Este script creará/actualizará la tabla profiles_brand con todas las columnas necesarias.';
+    RAISE NOTICE 'Iniciando configuracion del modulo de Marca';
 END $$;
 
 -- 2. Eliminar tabla existente si hay problemas
@@ -173,12 +172,12 @@ BEGIN
                 '[{"titulo": "Producto de Prueba", "precio": 100, "moneda": "MXN"}]'::jsonb,
                 'aprobado'
             );
-            RAISE NOTICE '✅ Marca de prueba creada para usuario %', test_user_id;
+            RAISE NOTICE 'Marca de prueba creada para usuario %', test_user_id;
         ELSE
-            RAISE NOTICE '⚠️ Ya existe una marca para el usuario de prueba';
+            RAISE NOTICE 'Ya existe una marca para el usuario de prueba';
         END IF;
     ELSE
-        RAISE NOTICE '⚠️ No se encontró usuario para crear marca de prueba';
+        RAISE NOTICE 'No se encontro usuario para crear marca de prueba';
     END IF;
 END $$;
 
@@ -226,24 +225,18 @@ BEGIN
         WHERE id = test_id;
         
         IF new_updated_at > old_updated_at THEN
-            RAISE NOTICE '✅ Trigger funcionando correctamente - updated_at actualizado de % a %', old_updated_at, new_updated_at;
+            RAISE NOTICE 'Trigger funcionando correctamente - updated_at actualizado de % a %', old_updated_at, new_updated_at;
         ELSE
-            RAISE NOTICE '⚠️ Trigger podría no estar funcionando - updated_at no cambió';
+            RAISE NOTICE 'Trigger podria no estar funcionando - updated_at no cambio';
         END IF;
     ELSE
-        RAISE NOTICE '⚠️ No hay marcas para probar el trigger';
+        RAISE NOTICE 'No hay marcas para probar el trigger';
     END IF;
 END $$;
 
--- 19. Verificación final
+-- 19. Verificacion final
 DO $$
 BEGIN
-    RAISE NOTICE '🎉 CONFIGURACIÓN COMPLETA EXITOSA!';
-    RAISE NOTICE '✅ Tabla profiles_brand creada con todas las columnas';
-    RAISE NOTICE '✅ Trigger updated_at funcionando';
-    RAISE NOTICE '✅ Políticas RLS configuradas';
-    RAISE NOTICE '✅ Vista pública v_brands_public operativa';
-    RAISE NOTICE '✅ Índices creados para optimización';
-    RAISE NOTICE '✅ Permisos otorgados correctamente';
-    RAISE NOTICE '🚀 El módulo de Marca está 100% funcional!';
+    RAISE NOTICE 'CONFIGURACION COMPLETA EXITOSA!';
+    RAISE NOTICE 'Modulo de Marca listo para usar';
 END $$;

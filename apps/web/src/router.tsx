@@ -43,6 +43,10 @@ import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
 import BrandEditorScreen from './screens/brand/BrandEditorScreen';
 import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 
+// Academy screens
+import AcademyEditorScreen from './screens/academy/AcademyEditorScreen';
+import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
+
 // New Social/Event Flow Screens
 import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventParentCreateScreen';
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
@@ -180,6 +184,9 @@ export function AppRouter() {
         
         <Route path="/marca/editar" element={<BrandEditorScreen />} />
         
+        {/* Academy Routes */}
+        <Route path="/academia/editar" element={<AcademyEditorScreen />} />
+        
         {/* Admin Routes */}
         <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
         
@@ -200,6 +207,9 @@ export function AppRouter() {
       
       {/* Brand Public Route */}
       <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
+      
+      {/* Academy Public Route */}
+      <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
       
       {/* Legacy event routes */}
       <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />

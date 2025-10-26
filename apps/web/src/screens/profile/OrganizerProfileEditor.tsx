@@ -1164,7 +1164,7 @@ export default function OrganizerProfileEditor() {
               style={{
                 padding: '12px 24px',
                 borderRadius: '25px',
-                background: `${colors.darkBase}dd`,
+                background: `${colors.dark}dd`,
                 backdropFilter: 'blur(10px)',
                 color: colors.light,
                 fontSize: '0.9rem',
