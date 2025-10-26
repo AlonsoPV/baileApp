@@ -1,13 +1,13 @@
 import { useMyBrand, useUpsertBrand } from './useBrand';
 import { useAuth } from './useAuth';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 
 export function useBrandRole() {
   const { user } = useAuth();
   const { data: brand, isLoading } = useMyBrand();
   const upsert = useUpsertBrand();
 
-  const createBrandIfNeeded = async () => {
+  const createBrandIfNeeded = useCallback(async () => {
     if (!user || brand || isLoading) return;
     
     try {
@@ -33,7 +33,7 @@ export function useBrandRole() {
     } catch (error) {
       console.error('❌ [useBrandRole] Error al crear marca:', error);
     }
-  };
+  }, [user, brand, isLoading, upsert]);
 
   return {
     brand,

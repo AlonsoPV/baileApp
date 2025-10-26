@@ -35,7 +35,8 @@ export function ProfileScreen() {
     } else if (mode === 'marca') {
       createBrandIfNeeded();
     }
-  }, [mode, createAcademyIfNeeded, createBrandIfNeeded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   if (isLoading) {
     return (
