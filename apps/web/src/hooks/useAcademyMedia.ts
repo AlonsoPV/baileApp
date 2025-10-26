@@ -50,6 +50,7 @@ export function useAcademyMedia() {
     academy, 
     academyId, 
     academyLoading,
+    hasId: !!academyId,
     redes_sociales: academy?.redes_sociales,
     bio: academy?.bio,
     nombre_publico: academy?.nombre_publico
@@ -86,7 +87,10 @@ export function useAcademyMedia() {
 
   const add = useMutation({
     mutationFn: async ({ file, slot }: { file: File; slot: string }) => {
-      if (!academyId) throw new Error("No academy");
+      if (!academyId) {
+        console.error('[useAcademyMedia] No academy ID available for media upload');
+        throw new Error("No academy ID available. Please save the academy profile first.");
+      }
       
       console.log('[useAcademyMedia] Adding media file:', { fileName: file.name, academyId, slot });
       
@@ -126,6 +130,11 @@ export function useAcademyMedia() {
 
   const remove = useMutation({
     mutationFn: async (path: string) => {
+      if (!academyId) {
+        console.error('[useAcademyMedia] No academy ID available for media removal');
+        throw new Error("No academy ID available. Please save the academy profile first.");
+      }
+      
       console.log('[useAcademyMedia] Removing media:', path);
       
       try {

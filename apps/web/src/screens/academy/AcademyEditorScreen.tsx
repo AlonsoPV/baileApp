@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAcademyMy, useUpsertAcademy, useSubmitAcademyForReview } from '../../hooks/useAcademy';
+import { useAcademyMedia } from '../../hooks/useAcademyMedia';
 import { useTags } from '../../hooks/useTags';
 import { useHydratedForm } from '../../hooks/useHydratedForm';
 import { getDraftKey } from '../../utils/draftKeys';
@@ -22,6 +23,7 @@ export default function AcademyEditorScreen() {
   const upsert = useUpsertAcademy();
   const submit = useSubmitAcademyForReview();
   const { data: allTags } = useTags();
+  const { media, add: addMedia, remove: removeMedia } = useAcademyMedia();
   
   // Hook para cambio de rol
   useRoleChange();
@@ -374,20 +376,44 @@ export default function AcademyEditorScreen() {
               </h2>
               
               <PhotoManagementSection
-                media={form.media}
+                media={media || []}
                 uploading={{}}
-                uploadFile={() => {}}
-                removeFile={() => {}}
+                uploadFile={(file: File, slot: string) => {
+                  if (academy?.id) {
+                    addMedia.mutate({ file, slot });
+                  } else {
+                    console.warn('No academy ID available. Please save the academy first.');
+                  }
+                }}
+                removeFile={(path: string) => {
+                  if (academy?.id) {
+                    removeMedia.mutate(path);
+                  } else {
+                    console.warn('No academy ID available. Please save the academy first.');
+                  }
+                }}
                 title="📷 Fotos de la Academia"
                 description="Sube fotos de tus instalaciones, clases y eventos"
                 slots={['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
               />
 
               <VideoManagementSection
-                media={form.media}
+                media={media || []}
                 uploading={{}}
-                uploadFile={() => {}}
-                removeFile={() => {}}
+                uploadFile={(file: File, slot: string) => {
+                  if (academy?.id) {
+                    addMedia.mutate({ file, slot });
+                  } else {
+                    console.warn('No academy ID available. Please save the academy first.');
+                  }
+                }}
+                removeFile={(path: string) => {
+                  if (academy?.id) {
+                    removeMedia.mutate(path);
+                  } else {
+                    console.warn('No academy ID available. Please save the academy first.');
+                  }
+                }}
                 title="🎥 Videos de la Academia"
                 description="Videos de clases, eventos, promocionales"
                 slots={['v1', 'v2', 'v3']}
