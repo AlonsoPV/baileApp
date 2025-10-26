@@ -123,8 +123,12 @@ export function AppRouter() {
         <Route path="/events/date/:dateId/edit" element={<EventEditScreen />} />
 
         {/* Sprint 3 - New Profile Routes */}
-        <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
-        <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
+        <Route path="/profile/organizer" element={<ProfileScreen />} />
+        <Route path="/profile/organizer/edit" element={<ProfileScreen />} />
+        <Route path="/profile/academy" element={<ProfileScreen />} />
+        <Route path="/profile/academy/edit" element={<ProfileScreen />} />
+        <Route path="/profile/brand" element={<ProfileScreen />} />
+        <Route path="/profile/brand/edit" element={<ProfileScreen />} />
         
         {/* Organizer Event Editors */}
         <Route path="/profile/organizer/events/new" element={<EventEditor />} />

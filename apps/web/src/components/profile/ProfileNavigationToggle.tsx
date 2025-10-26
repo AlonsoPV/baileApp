@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useProfileMode } from '../../state/profileMode';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
@@ -26,6 +27,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   showRoleToggle = true
 }) => {
   const navigate = useNavigate();
+  const { setMode } = useProfileMode();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -50,8 +52,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     switch (profileType) {
       case 'user': return '/profile';
       case 'organizer': return '/profile/organizer';
-      case 'academy': return '/academia/1'; // TODO: Get actual academy ID
-      case 'brand': return '/marca/1'; // TODO: Get actual brand ID
+      case 'academy': return '/profile/academy';
+      case 'brand': return '/profile/brand';
       default: return '/profile';
     }
   };
@@ -306,6 +308,18 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                       console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
                       if (role.available) {
                         console.log('✅ Navegando a:', role.route);
+                        // Actualizar el modo de perfil
+                        const modeMap: Record<string, string> = {
+                          'user': 'usuario',
+                          'organizer': 'organizador',
+                          'academy': 'academia',
+                          'brand': 'marca',
+                          'teacher': 'maestro'
+                        };
+                        const newMode = modeMap[role.id];
+                        if (newMode) {
+                          setMode(newMode as any);
+                        }
                         navigate(role.route);
                         setIsRoleDropdownOpen(false);
                       } else {

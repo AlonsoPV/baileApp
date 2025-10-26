@@ -1,10 +1,16 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import UserProfileEditor from './UserProfileEditor';
 import { UserProfileLive } from './UserProfileLive';
 import OrganizerProfileEditor from './OrganizerProfileEditor';
 import { OrganizerProfileLive } from './OrganizerProfileLive';
+import AcademyProfileEditor from './AcademyProfileEditor';
+import AcademyProfileLive from './AcademyProfileLive';
+import BrandProfileEditor from './BrandProfileEditor';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useProfileMode } from '../../state/profileMode';
+import { useAcademyRole } from '../../hooks/useAcademyRole';
+import { useBrandRole } from '../../hooks/useBrandRole';
 
 const colors = {
   coral: '#FF3D57',
@@ -18,7 +24,18 @@ const colors = {
 export function ProfileScreen() {
   const { profile, isLoading } = useUserProfile();
   const { mode } = useProfileMode(); // mode ahora es el rol actual
+  const { createAcademyIfNeeded } = useAcademyRole();
+  const { createBrandIfNeeded } = useBrandRole();
   const isEditRoute = window.location.pathname.includes('/edit');
+
+  // Crear perfiles automáticamente cuando se cambia de rol
+  React.useEffect(() => {
+    if (mode === 'academia') {
+      createAcademyIfNeeded();
+    } else if (mode === 'marca') {
+      createBrandIfNeeded();
+    }
+  }, [mode, createAcademyIfNeeded, createBrandIfNeeded]);
 
   if (isLoading) {
     return (
@@ -77,6 +94,14 @@ export function ProfileScreen() {
 
       {mode === 'organizador' && (
         isEditRoute ? <OrganizerProfileEditor /> : <OrganizerProfileLive />
+      )}
+
+      {mode === 'academy' && (
+        isEditRoute ? <AcademyProfileEditor /> : <AcademyProfileLive />
+      )}
+
+      {mode === 'brand' && (
+        isEditRoute ? <BrandProfileEditor /> : <div>Brand Live View - Coming Soon</div>
       )}
 
       {/* Otros roles se manejan en sus propias rutas */}
