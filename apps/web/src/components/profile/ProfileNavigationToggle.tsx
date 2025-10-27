@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
-  profileType: 'user' | 'organizer' | 'academy' | 'brand';
+  profileType: 'user' | 'organizer' | 'academy' | 'brand' | 'teacher';
   onSave?: () => void;
   isSaving?: boolean;
   saveDisabled?: boolean;
   showRoleToggle?: boolean;
+  liveHref?: string;
+  editHref?: string;
 }
 
 const colors = {
@@ -23,7 +25,9 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   onSave,
   isSaving = false,
   saveDisabled = false,
-  showRoleToggle = true
+  showRoleToggle = true,
+  liveHref,
+  editHref,
 }) => {
   const navigate = useNavigate();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -47,22 +51,27 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   }, [isRoleDropdownOpen]);
 
   const getLiveRoute = () => {
+    if (liveHref) return liveHref;
     switch (profileType) {
       case 'user': return '/profile';
       case 'organizer': return '/profile/organizer';
-      case 'academy': return '/academia/1'; // TODO: Get actual academy ID
-      case 'brand': return '/marca/1'; // TODO: Get actual brand ID
+      case 'academy': return '/profile/academy';
+      case 'brand': return '/profile/brand';
+      case 'teacher': return '/profile/teacher/live';
+      // teacher live route
       default: return '/profile';
     }
   };
 
   const getEditRoute = () => {
+    if (editHref) return editHref;
     switch (profileType) {
       case 'user': return '/profile/edit';
       case 'organizer': return '/profile/organizer/edit';
-      case 'academy': return '/academia/editar';
-      case 'brand': return '/marca/editar';
-      default: return '/profile/edit';
+      case 'academy': return '/profile/academy/edit';
+      case 'brand': return '/profile/brand/edit';
+      case 'teacher': return '/profile/teacher/edit';
+      default: return '/profile';
     }
   };
 
@@ -71,6 +80,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'user': return 'Usuario';
       case 'organizer': return 'Organizador';
       case 'academy': return 'Academia';
+      case 'teacher': return 'Maestro';
       case 'brand': return 'Marca';
       default: return 'Usuario';
     }

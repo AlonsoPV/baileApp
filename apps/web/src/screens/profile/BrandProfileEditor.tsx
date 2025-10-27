@@ -2,6 +2,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
+import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import { useAuth } from "@/contexts/AuthProvider";
+import { useMyBrand, useUpsertBrand } from "../../hooks/useBrand";
 
 const colors = {
   blue: '#30cfd0',
@@ -10,6 +13,9 @@ const colors = {
 };
 
 export default function BrandProfileEditor() {
+  const { user } = useAuth();
+  const { data: brand } = useMyBrand();
+  const upsert = useUpsertBrand();
   return (
     <div style={{
       minHeight: '100vh',
@@ -26,9 +32,21 @@ export default function BrandProfileEditor() {
           ]}
         />
 
-        <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '2rem' }}>
-          🏷️ Editar Perfil de Marca
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>
+            🏷️ Editar Perfil de Marca
+          </h1>
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="brand"
+            liveHref="/marca/" /* fallback if brand id unknown */
+            editHref="/profile/brand"
+            onSave={async ()=>{
+              await upsert.mutateAsync({ id: brand?.id });
+            }}
+            isSaving={upsert.isPending}
+          />
+        </div>
 
         <ProfileToolbar />
 

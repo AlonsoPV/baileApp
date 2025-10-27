@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import { useTags } from '../../hooks/useTags';
+import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
+import { useTeacherMy } from '@/hooks/useTeacher';
 
 const colors = {
   coral: '#FF3D57',
@@ -14,6 +16,7 @@ const colors = {
 export default function TeacherProfileLive() {
   const { profile, isLoading } = useUserProfile();
   const { ritmos = [], zonas = [] } = useTags() as any;
+  const { data: teacher } = useTeacherMy();
 
   const getRitmoNombres = (ids: number[] = []) =>
     ids.map(id => ritmos.find((t: any) => t.id === id)?.nombre).filter(Boolean) as string[];
@@ -42,6 +45,14 @@ export default function TeacherProfileLive() {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.dark, color: colors.light }}>
+      <div style={{ position: 'sticky', top: 80, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+        <ProfileNavigationToggle
+          currentView="live"
+          profileType="teacher"
+          liveHref={teacher?.id ? `/maestro/${teacher.id}` : "/profile/teacher/live"}
+          editHref="/profile/teacher"
+        />
+      </div>
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <div style={{

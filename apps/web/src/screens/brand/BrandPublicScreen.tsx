@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
 import { useBrandPublic } from '../../hooks/useBrand';
 import { useTags } from '../../hooks/useTags';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
@@ -88,6 +89,14 @@ export default function BrandPublicScreen() {
         color: colors.light,
         position: 'relative'
       }}>
+        <div style={{ position: 'sticky', top: 80, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="brand"
+            liveHref={`/marca/${brand.id}`}
+            editHref="/profile/brand"
+          />
+        </div>
         {/* Banner de la marca */}
         <div style={{
           position: 'relative',

@@ -2,6 +2,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
+import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import { useNavigate } from "react-router-dom";
 import ChipPicker from "../../components/common/ChipPicker";
 import FAQEditor from "../../components/common/FAQEditor";
 import { MediaUploader } from "../../components/MediaUploader";
@@ -15,6 +17,7 @@ const colors = {
 };
 
 export default function TeacherProfileEditor() {
+  const navigate = useNavigate();
   const { data: teacher } = useTeacherMy();
   const upsert = useUpsertTeacher();
   const [form, setForm] = React.useState({
@@ -61,9 +64,32 @@ export default function TeacherProfileEditor() {
           ]}
         />
 
-        <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '2rem' }}>
-          🎓 Editar Perfil de Maestro
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>
+            🎓 Editar Perfil de Maestro
+          </h1>
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="teacher"
+            editHref="/profile/teacher"
+            liveHref={teacher?.id ? `/maestro/${teacher.id}` : "/profile/teacher/live"}
+            onSave={async ()=>{
+              await upsert.mutateAsync({
+                id: teacher?.id,
+                nombre_publico: form.nombre_publico,
+                bio: form.bio,
+                ritmos: form.ritmos,
+                zonas: form.zonas,
+                redes_sociales: form.redes_sociales,
+                media: form.media,
+                faq: form.faq,
+              });
+              if (teacher?.id) navigate(`/maestro/${teacher.id}`);
+            }}
+            isSaving={upsert.isPending}
+            saveDisabled={!form.nombre_publico}
+          />
+        </div>
 
         <ProfileToolbar />
 

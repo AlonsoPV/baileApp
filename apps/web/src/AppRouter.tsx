@@ -30,6 +30,8 @@ import { OrganizerProfileLive as OrganizerProfileLiveNew } from './screens/profi
 
 // Event Screens
 import { EventParentEditScreen } from './screens/events/EventParentEditScreen';
+import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventParentCreateScreen';
+import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import EventParentPublicScreen from './screens/events/EventParentPublicScreen';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
@@ -43,6 +45,7 @@ import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
 import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
 import AcademyProfileLive from './screens/profile/AcademyProfileLive';
 import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
+import TeacherProfileLive from './screens/profile/TeacherProfileLive';
 import BrandProfileEditor from './screens/profile/BrandProfileEditor';
 
 // Brand Screens
@@ -94,7 +97,9 @@ export default function AppRouter() {
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
         <Route path="/profile/academy" element={<AcademyProfileLive />} />
+        <Route path="/profile/teacher/live" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
+        <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
         <Route path="/u/:userId" element={<UserPublicProfile />} />
 
         {/* Protected */}
@@ -107,12 +112,12 @@ export default function AppRouter() {
           <Route path="/profile/brand" element={<BrandProfileEditor />} />
           <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
           <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
-          <Route path="/events/parent/new" element={<EventParentEditScreen />} />
-          <Route path="/events/parent/:id/edit" element={<EventParentEditScreen />} />
+          <Route path="/events/parent/new" element={<OrganizerEventParentCreateScreen />} />
+          <Route path="/events/parent/:id/edit" element={<OrganizerEventParentEditScreen />} />
           <Route path="/events/date/new/:parentId" element={<EventDateEditScreen />} />
           <Route path="/events/date/:id/edit" element={<EventDateEditScreen />} />
-          <Route path="/social/new" element={<EventParentEditScreen />} />
-          <Route path="/social/:parentId/edit" element={<EventParentEditScreen />} />
+          <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
+          <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
           <Route path="/social/:parentId/fecha/nueva" element={<EventDateEditScreen />} />
           <Route path="/social/fecha/:dateId/edit" element={<EventDateEditScreen />} />
           <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
