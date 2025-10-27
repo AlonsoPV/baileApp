@@ -15,9 +15,12 @@ export default function OnboardingGate() {
   const loc = useLocation();
   const { ready, user, complete, authLoading, onboardingLoading } = useAuthReady();
 
+  console.log('🛡️ [OnboardingGate] State:', { ready, user: user?.id || 'null', complete, authLoading, onboardingLoading });
+
   // 🔹 1) Mientras carga sesión o perfil: NO tomar decisiones
   // Esto previene redirecciones prematuras al onboarding
   if (!ready || authLoading || onboardingLoading) {
+    console.log('🛡️ [OnboardingGate] BLOCKED - Loading:', { authLoading, onboardingLoading });
     return (
       <div style={{
         minHeight: '100vh',
