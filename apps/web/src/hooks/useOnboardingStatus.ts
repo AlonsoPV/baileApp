@@ -43,8 +43,18 @@ export function useOnboardingStatus() {
     retry: 1, // Solo retry una vez
   });
 
+  console.log('📊 [useOnboardingStatus] Query state:', {
+    isLoading: q.isLoading,
+    isFetching: q.isFetching,
+    error: q.error,
+    data: q.data
+  });
+
+  // TEMPORARY FIX: Force loading to false if there's an error
+  const isLoadingFixed = (q.isLoading || q.isFetching) && !q.error;
+
   return {
-    loading: q.isLoading || q.isFetching,
+    loading: isLoadingFixed,
     error: q.error as Error | null,
     exists: q.data?.exists ?? false,
     complete: q.data?.complete ?? false,
