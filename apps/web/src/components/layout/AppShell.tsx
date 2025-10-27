@@ -1,7 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Navbar } from '../Navbar';
-import { ToastProvider } from '../Toast';
 import AppBootstrap from '@/providers/AppBootstrap';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -28,11 +27,9 @@ export default function AppShell() {
   return (
     <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#e5e7eb' }}>
       <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
-      <ToastProvider>
-        <AppBootstrap>
-          <Outlet />
-        </AppBootstrap>
-      </ToastProvider>
+      <AppBootstrap>
+        <Outlet />
+      </AppBootstrap>
 
       {user && (
         <OffCanvasMenu
