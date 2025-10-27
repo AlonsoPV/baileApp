@@ -31,8 +31,10 @@ export default function OnboardingGate() {
 
   // 🔹 1) Mientras carga sesión o perfil: NO tomar decisiones
   // Esto previene redirecciones prematuras al onboarding
-  if (!ready && !forceReady || ((authLoading || onboardingLoading) && !forceReady)) {
-    console.log('🛡️ [OnboardingGate] BLOCKED - Loading:', { authLoading, onboardingLoading });
+  const isBlocked = !forceReady && (!ready || authLoading || onboardingLoading);
+  
+  if (isBlocked) {
+    console.log('🛡️ [OnboardingGate] BLOCKED - Ready:', ready, 'Auth:', authLoading, 'Onboarding:', onboardingLoading, 'Force:', forceReady);
     return (
       <div style={{
         minHeight: '100vh',
