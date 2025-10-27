@@ -5,7 +5,7 @@ import { Button, Chip } from '@ui/index';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { useToast } from '../../components/Toast';
+import { routes } from '@/routes/registry';
 import { mergeProfile } from '../../utils/mergeProfile';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,7 +34,7 @@ export function PickZonas() {
     onSuccess: async () => {
       // 🔁 Asegura que el guard vea el cambio
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      navigate("/app/profile", { replace: true });
+      navigate(routes.app.profile, { replace: true });
     }
   });
 
@@ -73,7 +73,7 @@ export function PickZonas() {
         await finishOnboarding.mutateAsync();
       } catch (err) {
         console.error('Error marking onboarding complete:', err);
-        navigate('/app/profile');
+        navigate(routes.app.profile);
       }
     }
   };

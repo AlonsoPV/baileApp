@@ -7,7 +7,7 @@ import { ToastProvider } from "./components/Toast";
 import { useAuth } from "./hooks/useAuth";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { useDefaultProfile } from "./hooks/useDefaultProfile";
-import { AppRouter } from "./router";
+import AppRouter from "./AppRouter";
 import AppBootstrap from "./providers/AppBootstrap";
 import "./App.css";
 

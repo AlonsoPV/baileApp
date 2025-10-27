@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
@@ -14,7 +14,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/auth/login');
+    navigate(routes.auth.login);
   };
 
   return (

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { routes } from '@/routes/registry';
 import { useDefaultProfile } from "../../hooks/useDefaultProfile";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useAcademyMy } from "../../hooks/useAcademyMy";
@@ -296,7 +296,7 @@ export default function DefaultProfileSettings() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/app/profile')}
+              onClick={() => navigate(routes.app.profile)}
               style={{
                 padding: '0.75rem 1.5rem',
                 background: 'rgba(255, 255, 255, 0.1)',
