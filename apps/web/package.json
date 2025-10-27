@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "lint": "eslint --ext .ts,.tsx src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:auth": "powershell -Command \"if (Select-String -Path 'src\\**\\*.ts','src\\**\\*.tsx' -Pattern 'useAuth\\(\\)' | Select-String -Pattern '(utils|stores|services)') { Write-Host '❌ useAuth usado fuera de componentes'; exit 1 } else { Write-Host '✅ useAuth sólo en componentes' }\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.76.0",

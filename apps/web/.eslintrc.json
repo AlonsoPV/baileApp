@@ -16,6 +16,14 @@
             "message": "❌ Importa useAuth desde '@/contexts/AuthProvider'."
           },
           {
+            "name": "../../hooks/useAuth",
+            "message": "❌ Usa alias '@/contexts/AuthProvider'."
+          },
+          {
+            "name": "../hooks/useAuth",
+            "message": "❌ Usa alias '@/contexts/AuthProvider'."
+          },
+          {
             "name": "useAuth",
             "importNames": ["useAuth"],
             "message": "❌ Siempre importa: import { useAuth } from '@/contexts/AuthProvider'"

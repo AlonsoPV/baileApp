@@ -15,5 +15,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src")
     },
     dedupe: ["react", "react-dom"], // 👈 Asegura una sola copia de React
-  }
+  },
+  build: {
+    sourcemap: true, // 👈 Clave para stack trace legible en producción
+  },
 });

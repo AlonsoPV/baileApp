@@ -21,6 +21,11 @@ npm run dev
 npm run build
 ```
 
+## 🔍 Debug de useAuth
+
+Si ves `ReferenceError: useAuth is not defined`, sigue esta guía:
+- [docs/DEBUG_USEAUTH.md](./docs/DEBUG_USEAUTH.md)
+
 ## Deployment
 
 This project is configured to deploy to Vercel. Make sure to set the environment variables in your Vercel dashboard:

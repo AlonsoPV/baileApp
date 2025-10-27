@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
+import { useAuth } from '@/contexts/AuthProvider';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
 interface NavbarProps {
