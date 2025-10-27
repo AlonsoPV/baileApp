@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
+import { Navigate } from 'react-router-dom';
 import UserProfileEditor from './UserProfileEditor';
 import { UserProfileLive } from './UserProfileLive';
 import OrganizerProfileEditor from './OrganizerProfileEditor';
 import { OrganizerProfileLive } from './OrganizerProfileLive';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useProfileMode } from '../../state/profileMode';
+import { useAuth } from '@/contexts/AuthProvider';
 
 const colors = {
   coral: '#FF3D57',
@@ -16,11 +18,12 @@ const colors = {
 };
 
 export function ProfileScreen() {
+  const { user, loading } = useAuth();
   const { profile, isLoading } = useUserProfile();
   const { mode } = useProfileMode(); // mode ahora es el rol actual
   const isEditRoute = window.location.pathname.includes('/edit');
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div
         style={{
@@ -43,6 +46,10 @@ export function ProfileScreen() {
         </motion.div>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth/login" replace />;
   }
 
   if (!profile) {

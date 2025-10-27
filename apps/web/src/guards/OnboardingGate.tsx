@@ -1,133 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuthReady } from "../hooks/useAuthReady";
-import { colors, typography, spacing, borderRadius, theme } from "../theme/colors";
-
-const TIMEOUT_MS = 6000; // 6 seconds timeout
+import React from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { routes } from '@/routes/registry';
 
 export default function OnboardingGate() {
-  const loc = useLocation();
-  const { ready, user, complete, authLoading, onboardingLoading } = useAuthReady();
-  const [timeoutReached, setTimeoutReached] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
 
-  // Timeout fallback to prevent infinite loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTimeoutReached(true);
-    }, TIMEOUT_MS);
+  const isOnboardingRoute = location.pathname.startsWith('/onboarding');
 
-    return () => clearTimeout(timer);
-  }, []);
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ['onboarding-status', user?.id],
+    enabled: !!user && !authLoading,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('onboarding_complete')
+        .eq('user_id', user!.id)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? { onboarding_complete: false };
+    },
+    staleTime: 30000,
+  });
 
-  // 🔹 1) Mientras carga sesión o perfil: NO tomar decisiones
-  // Esto previene redirecciones prematuras al onboarding
-  if (!ready || authLoading || onboardingLoading) {
-    // If timeout reached, fallback to profile
-    if (timeoutReached) {
-      console.warn('[OnboardingGate] Timeout reached, falling back to profile');
-      return <Navigate to="/app/profile" replace />;
-    }
-
+  // 1) Aún autenticando o esperando query
+  if (authLoading || isLoading || isFetching) {
     return (
       <div style={{
         minHeight: '100vh',
-        background: theme.bg.app,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: colors.light
+        display: 'grid',
+        placeItems: 'center',
+        background: '#0b0d10',
+        color: '#e5e7eb',
+        fontFamily: 'system-ui, sans-serif'
       }}>
         <div style={{
-          textAlign: 'center',
-          padding: spacing[8],
-          background: colors.glass.light,
-          borderRadius: borderRadius['2xl'],
-          border: `1px solid ${colors.glass.medium}`,
-          boxShadow: colors.shadows.glass,
-          backdropFilter: 'blur(20px)'
+          padding: 16,
+          borderRadius: 12,
+          border: '1px solid rgba(255,255,255,.12)'
         }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: `3px solid ${colors.glass.medium}`,
-            borderTop: `3px solid ${colors.primary[500]}`,
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }} />
-          <div style={{ 
-            fontSize: typography.fontSize.base, 
-            opacity: 0.8,
-            color: theme.text.secondary
-          }}>
-            {authLoading ? 'Verificando autenticación...' : 'Cargando perfil...'}
-          </div>
+          Cargando…
         </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
 
-  // 🔹 2) Si no hay usuario autenticado, manda a login
+  // 2) Sin usuario ⇒ manda a login
   if (!user) {
-    return <Navigate to="/auth/login" replace state={{ from: loc.pathname }} />;
+    return <Navigate to={routes.auth.login} replace />;
   }
 
-  const isOnboardingRoute = loc.pathname.startsWith("/onboarding");
-  
-  // 🌐 Rutas LIVE (públicas) que NO requieren onboarding ni autenticación completa
-  // Estas rutas deben ser accesibles para todos los usuarios autenticados
-  const LIVE_WHITELIST = [
-    /^\/organizador\/\d+$/,        // /organizador/:id
-    /^\/academia\/\d+$/,           // /academia/:id
-    /^\/marca\/\d+$/,              // /marca/:id
-    /^\/maestro\/\d+$/,            // /maestro/:id
-    /^\/evento\/\d+$/,             // /evento/:id
-    /^\/evento\/fecha\/\d+$/,      // /evento/fecha/:id
-    /^\/events\/date\/\d+$/,        // /events/date/:id
-    /^\/events\/parent\/\d+$/,      // /events/parent/:id (legacy)
-    /^\/u\/[^/]+$/,                // /u/:userId
-    /^\/explore\/?$/,              // /explore
-    /^\/explore\/list/,            // /explore/list
-    /^\/social\/\d+$/,             // /social/:id
-    /^\/social\/fecha\/\d+$/,     // /social/fecha/:id
-  ];
-  const isLivePath = LIVE_WHITELIST.some(rx => rx.test(loc.pathname));
-  
-  // Rutas de edición (requieren ser owner pero no onboarding necesariamente)
-  const organizerEditRoutes = [
-    '/profile/organizer/edit',
-    '/profile/organizer/events',
-    '/profile/organizer/date',
-    '/profile/organizer/dashboard',
-    '/organizador/editar',
-    '/academia/editar',
-    '/marca/editar',
-    '/maestro/editar',
-  ];
-  const isOrganizerRoute = organizerEditRoutes.some(route => loc.pathname.startsWith(route));
-
-  // 🔹 3) Si ya está completo y estás en ruta onboarding → redirige a perfil
-  if (complete && isOnboardingRoute) {
-    return <Navigate to="/app/profile" replace />;
-  }
-
-  // 🔹 4) Si está en ruta LIVE → permitir siempre (sin onboarding requerido)
-  if (isLivePath) {
+  // 3) Error pero con usuario ⇒ deja pasar (fallback seguro)
+  if (error) {
+    console.warn('[OnboardingGate] Error status:', error);
     return <Outlet />;
   }
 
-  // 🔹 5) ONBOARDING REQUERIDO (comentado por ahora)
-  // Descomenta esto cuando quieras forzar onboarding para rutas protegidas
-  // if (!complete && !isOnboardingRoute && !isOrganizerRoute) {
-  //   return <Navigate to="/onboarding/basics" replace />;
-  // }
+  const complete = data?.onboarding_complete === true;
 
-  // 🔹 6) Todo OK → deja pasar
+  // 4) Si completo ⇒ libera la app
+  if (complete) {
+    return <Outlet />;
+  }
+
+  // 5) Si no completo y NO estás ya en onboarding ⇒ mándalo a onboarding/basics
+  if (!isOnboardingRoute) {
+    return <Navigate to={routes.onboarding.basics} replace />;
+  }
+
+  // 6) Estás en onboarding ⇒ renderiza la ruta de onboarding
   return <Outlet />;
 }
