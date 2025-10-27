@@ -2,7 +2,7 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
 import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useToast } from '../../components/Toast';
 import { supabase, getBucketPublicUrl } from '../../lib/supabase';

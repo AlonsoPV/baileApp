@@ -8,7 +8,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { routes } from '@/routes/registry';
 import { mergeProfile } from '../../utils/mergeProfile';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export function PickZonas() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);

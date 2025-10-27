@@ -1,5 +1,5 @@
 import { useAcademyMy, useUpsertAcademy } from './useAcademy';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useEffect } from 'react';
 
 export function useAcademyRole() {

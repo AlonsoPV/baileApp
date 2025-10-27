@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "./useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 
 export function useOnboardingStatus() {
   const { user } = useAuth();

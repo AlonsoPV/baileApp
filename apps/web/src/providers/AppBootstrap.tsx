@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "@/contexts/AuthProvider";
 import { useOrganizerStore } from "../state/organizerStore";
 import { useProfileMode } from "../state/profileMode";
 
