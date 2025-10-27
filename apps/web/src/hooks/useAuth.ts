@@ -10,10 +10,14 @@ export function useAuth() {
   const qc = useQueryClient();
 
   useEffect(() => {
+    console.log('🔐 [useAuth] Initializing auth hook...');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 [useAuth] Initial session:', session?.user?.id || 'null');
       setUser(session?.user ?? null);
       setLoading(false);
+      console.log('🔐 [useAuth] Loading set to false');
       
       // 🎭 Resetear a usuario si no hay sesión
       if (!session?.user) {
@@ -24,7 +28,8 @@ export function useAuth() {
     // Listen to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 [useAuth] Auth state changed:', event, session?.user?.id || 'null');
       setUser(session?.user ?? null);
       setLoading(false);
       
