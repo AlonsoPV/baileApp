@@ -13,7 +13,18 @@
         "paths": [
           {
             "name": "@/hooks/useAuth",
-            "message": "Importa useAuth desde '@/contexts/AuthProvider'."
+            "message": "❌ Importa useAuth desde '@/contexts/AuthProvider'."
+          },
+          {
+            "name": "useAuth",
+            "importNames": ["useAuth"],
+            "message": "❌ Siempre importa: import { useAuth } from '@/contexts/AuthProvider'"
+          }
+        ],
+        "patterns": [
+          {
+            "group": ["**/useAuth"],
+            "message": "❌ Usa el import oficial desde '@/contexts/AuthProvider'"
           }
         ]
       }

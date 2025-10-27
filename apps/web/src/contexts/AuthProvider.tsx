@@ -125,6 +125,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(Ctx);
+/** Hook oficial. Lanza error legible si se usa fuera del Provider. */
+export function useAuth(): AuthCtx {
+  const ctx = useContext(Ctx);
+  if (!ctx) {
+    if (import.meta.env.DEV) {
+      console.error('[useAuth] Hook usado fuera de <AuthProvider>. Envuelve tu árbol en <AuthProvider>.');
+      throw new Error('useAuth fue usado fuera de <AuthProvider>. Envuelve tu árbol en <AuthProvider>.');
+    }
+    // En prod, devolver estado inerte para no crashear
+    console.warn('[useAuth] Hook usado fuera de <AuthProvider>');
+    return { session: null, user: null, loading: true, signUp: async () => ({ data: null, error: new Error('Not initialized') }), signIn: async () => ({ data: null, error: new Error('Not initialized') }), signOut: async () => ({ error: null }) };
+  }
+  return ctx;
 }
+
+// Export default para tolerar ambos estilos de import
+export default useAuth;

@@ -1,3 +1,3 @@
-// Reexport from centralized AuthProvider for compatibility
-export { useAuth } from '@/contexts/AuthProvider';
+// Re-export from centralized AuthProvider for compatibility
+export { useAuth as default, useAuth } from '@/contexts/AuthProvider';
 
