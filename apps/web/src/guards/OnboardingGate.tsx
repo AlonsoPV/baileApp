@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthReady } from "../hooks/useAuthReady";
 
@@ -14,12 +14,24 @@ const colors = {
 export default function OnboardingGate() {
   const loc = useLocation();
   const { ready, user, complete, authLoading, onboardingLoading } = useAuthReady();
+  const [forceReady, setForceReady] = useState(false);
 
   console.log('🛡️ [OnboardingGate] State:', { ready, user: user?.id || 'null', complete, authLoading, onboardingLoading });
 
+  // 🔹 FALLBACK: Después de 6 segundos, desbloquea si está en loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!ready && (authLoading || onboardingLoading)) {
+        console.warn('🛡️ [OnboardingGate] TIMEOUT - Force ready after 6s');
+        setForceReady(true);
+      }
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [ready, authLoading, onboardingLoading]);
+
   // 🔹 1) Mientras carga sesión o perfil: NO tomar decisiones
   // Esto previene redirecciones prematuras al onboarding
-  if (!ready || authLoading || onboardingLoading) {
+  if (!ready && !forceReady || ((authLoading || onboardingLoading) && !forceReady)) {
     console.log('🛡️ [OnboardingGate] BLOCKED - Loading:', { authLoading, onboardingLoading });
     return (
       <div style={{

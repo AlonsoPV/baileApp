@@ -1,46 +1,61 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./useAuth";
 
+type Status = {
+  complete: boolean;
+  exists: boolean;
+  profile: any;
+  reason?: 'NO_SESSION' | 'NO_PROFILE' | 'INCOMPLETE' | 'ERROR';
+};
+
+async function fetchStatus(userId: string): Promise<Status> {
+  // 1) Perfil con timeout
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort('timeout'), 5000); // 5s max
+  
+  try {
+    const { data, error } = await supabase
+      .from("profiles_user")
+      .select("user_id, display_name, ritmos, zonas, respuestas")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    clearTimeout(timeout);
+
+    if (error) {
+      console.error('[useOnboardingStatus] select profiles_user error:', error);
+      return { complete: false, exists: false, profile: null, reason: 'ERROR' };
+    }
+    
+    if (!data) return { complete: false, exists: false, profile: null, reason: 'NO_PROFILE' };
+
+    const hasName = !!data.display_name && data.display_name.trim().length > 0;
+    const hasR = Array.isArray(data.ritmos) && data.ritmos.length > 0;
+    const hasZ = Array.isArray(data.zonas) && data.zonas.length > 0;
+    const complete = hasName || hasR || hasZ;
+
+    console.log('✅ [useOnboardingStatus] Profile complete:', complete);
+
+    return { complete: true, exists: true, profile: data, reason: complete ? undefined : 'INCOMPLETE' };
+  } catch (e: any) {
+    clearTimeout(timeout);
+    console.error('[useOnboardingStatus] exception:', e?.message || e);
+    return { complete: false, exists: false, profile: null, reason: 'ERROR' };
+  }
+}
+
 export function useOnboardingStatus() {
   const { user } = useAuth();
-
+  
   const q = useQuery({
-    queryKey: ["profile","me", user?.id],
+    queryKey: ["onboarding-status", user?.id],
+    queryFn: () => fetchStatus(user!.id),
     enabled: !!user?.id,
-    queryFn: async () => {
-      console.log('🔍 [useOnboardingStatus] Fetching profile for user:', user?.id);
-      const { data, error } = await supabase
-        .from("profiles_user")
-        .select("user_id, display_name, ritmos, zonas, onboarding_complete")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      
-      console.log('📊 [useOnboardingStatus] Profile data:', data);
-      console.log('❌ [useOnboardingStatus] Error:', error);
-      
-      if (error) {
-        console.error('❌ [useOnboardingStatus] Query error:', error);
-        throw error;
-      }
-      
-      // Fallback: Si onboarding_complete no existe, verificar datos manualmente
-      const computedComplete =
-        !!data?.onboarding_complete ||
-        (!!data?.display_name && 
-         (data?.ritmos?.length || 0) > 0 && 
-         (data?.zonas?.length || 0) > 0);
-      
-      console.log('✅ [useOnboardingStatus] Computed complete:', computedComplete);
-      
-      return {
-        exists: !!data,
-        complete: true, // ONBOARDING DISABLED - Siempre completo
-        profile: data
-      };
-    },
-    staleTime: 0,
-    retry: 1, // Solo retry una vez
+    staleTime: 10_000, // evita refetchs en cascada
+    retry: false,      // no hagas retry infinito en prod
+    refetchOnWindowFocus: false,
   });
 
   console.log('📊 [useOnboardingStatus] Query state:', {
@@ -50,11 +65,8 @@ export function useOnboardingStatus() {
     data: q.data
   });
 
-  // TEMPORARY FIX: Force loading to false if there's an error
-  const isLoadingFixed = (q.isLoading || q.isFetching) && !q.error;
-
   return {
-    loading: isLoadingFixed,
+    loading: q.isLoading || q.isFetching,
     error: q.error as Error | null,
     exists: q.data?.exists ?? false,
     complete: q.data?.complete ?? false,
