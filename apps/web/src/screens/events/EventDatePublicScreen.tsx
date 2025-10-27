@@ -267,9 +267,10 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 };
 
 export default function EventDatePublicScreen() {
-  const { dateId } = useParams<{ dateId: string }>();
+  const params = useParams<{ dateId?: string; id?: string }>();
+  const dateIdParam = params.dateId ?? params.id;
   const navigate = useNavigate();
-  const dateIdNum = dateId ? parseInt(dateId) : undefined;
+  const dateIdNum = dateIdParam ? parseInt(dateIdParam) : undefined;
   
   const { data: date, isLoading } = useEventDate(dateIdNum);
   const { data: parent } = useEventParent(date?.parent_id);

@@ -16,8 +16,9 @@ const colors = {
 };
 
 export function EventParentEditScreen() {
-  const { id } = useParams();
-  const isEdit = !!id;
+  const params = useParams<{ id?: string; parentId?: string }>();
+  const idParam = params.id ?? params.parentId;
+  const isEdit = !!idParam;
   const navigate = useNavigate();
   const { data: org } = useMyOrganizer();
   const { data: parents } = useParentsByOrganizer(org?.id);
@@ -25,10 +26,10 @@ export function EventParentEditScreen() {
   const update = useUpdateParent();
   const { showToast } = useToast();
 
-  const currentEvent = isEdit ? parents?.find(p => p.id === parseInt(id!)) : null;
+  const currentEvent = isEdit ? parents?.find(p => p.id === parseInt(idParam!)) : null;
 
   console.log('[EventParentEditScreen] Debug:', {
-    id,
+    id: idParam,
     isEdit,
     parentsCount: parents?.length,
     currentEvent,
@@ -54,7 +55,7 @@ export function EventParentEditScreen() {
   }, [currentEvent]);
 
   async function save() {
-    console.log('[EventParentEditScreen] Save called:', { isEdit, id, form });
+    console.log('[EventParentEditScreen] Save called:', { isEdit, id: idParam, form });
     
     if (!org?.id) {
       showToast('No tienes organizador creado', 'error');
@@ -81,9 +82,9 @@ export function EventParentEditScreen() {
         showToast('Evento creado ✅', 'success');
         navigate(`/events/parent/${p.id}/edit`);
       } else {
-        console.log('[EventParentEditScreen] Updating event:', id);
+        console.log('[EventParentEditScreen] Updating event:', idParam);
         await update.mutateAsync({
-          id: Number(id),
+          id: Number(idParam),
           patch: {
             nombre: form.nombre.trim(),
             descripcion: form.descripcion.trim() || null,

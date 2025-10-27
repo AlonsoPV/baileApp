@@ -258,9 +258,10 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 };
 
 export default function EventParentPublicScreen() {
-  const { parentId } = useParams<{ parentId: string }>();
+  const params = useParams<{ parentId?: string; id?: string }>();
+  const parentIdParam = params.parentId ?? params.id;
   const navigate = useNavigate();
-  const parentIdNum = parentId ? parseInt(parentId) : undefined;
+  const parentIdNum = parentIdParam ? parseInt(parentIdParam) : undefined;
   
   const { data: parent, isLoading } = useEventParent(parentIdNum);
   const { data: dates } = useEventDatesByParent(parentIdNum);
@@ -504,7 +505,7 @@ export default function EventParentPublicScreen() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/social/${parentId}/edit`)}
+                  onClick={() => navigate(`/social/${parentIdNum}/edit`)}
                   style={{
                     padding: '12px 20px',
                     borderRadius: '25px',
@@ -683,7 +684,7 @@ export default function EventParentPublicScreen() {
             </h2>
             
             <button
-              onClick={() => navigate(`/social/${parentId}/fecha/nueva`)}
+              onClick={() => navigate(`/social/${parentIdNum}/fecha/nueva`)}
               style={{
                 padding: '12px 20px',
                 borderRadius: '25px',

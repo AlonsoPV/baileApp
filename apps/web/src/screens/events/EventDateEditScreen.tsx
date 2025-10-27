@@ -18,7 +18,9 @@ const colors = {
 };
 
 export function EventDateEditScreen() {
-  const { id, parentId } = useParams();
+  const params = useParams<{ id?: string; dateId?: string; parentId?: string }>();
+  const id = params.id ?? params.dateId;
+  const parentId = params.parentId;
   const isNew = !!parentId;
   const navigate = useNavigate();
   const create = useCreateDate();
@@ -36,7 +38,7 @@ export function EventDateEditScreen() {
     direccion: "",
     ciudad: "",
     requisitos: "",
-    estado_publicacion: "borrador" as const
+    estado_publicacion: "borrador" as 'borrador' | 'publicado'
   });
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function EventDateEditScreen() {
         direccion: currentDate.direccion || "",
         ciudad: currentDate.ciudad || "",
         requisitos: currentDate.requisitos || "",
-        estado_publicacion: currentDate.estado_publicacion
+        estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
       });
     }
   }, [currentDate]);
