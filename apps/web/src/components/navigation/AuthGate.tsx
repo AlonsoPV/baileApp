@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
-import { colors, typography, spacing, borderRadius } from '@/theme/colors';
+import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
     return fallback || (
       <div style={{
         minHeight: '100vh',
-        background: colors.gradients.app,
+        background: theme.bg.app,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -44,7 +44,7 @@ export default function AuthGate({ children, fallback }: AuthGateProps) {
           <div style={{ 
             fontSize: typography.fontSize.base, 
             opacity: 0.8,
-            color: colors.text.secondary
+            color: theme.text.secondary
           }}>
             Verificando autenticación...
           </div>

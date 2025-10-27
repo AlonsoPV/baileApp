@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors, typography, spacing, borderRadius } from '@/theme/colors';
+import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
 import { routes } from '@/routes/registry';
 
 export default function Unauthorized() {
@@ -13,7 +13,7 @@ export default function Unauthorized() {
       placeItems: 'center',
       textAlign: 'center',
       padding: spacing[8],
-      background: colors.gradients.app,
+      background: theme.bg.app,
       color: colors.light
     }}>
       <div style={{
@@ -47,7 +47,7 @@ export default function Unauthorized() {
           fontSize: typography.fontSize.lg,
           opacity: 0.8,
           marginBottom: spacing[8],
-          color: colors.text.secondary
+          color: theme.text.secondary
         }}>
           No tienes permisos para acceder a esta página. 
           Inicia sesión o contacta al administrador.
@@ -98,7 +98,7 @@ export default function Unauthorized() {
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = colors.text.secondary;
+              e.currentTarget.style.color = theme.text.secondary;
             }}
           >
             Ir al inicio

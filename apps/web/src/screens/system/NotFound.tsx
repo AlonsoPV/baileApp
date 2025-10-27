@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors, typography, spacing, borderRadius } from '@/theme/colors';
+import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
 import { routes } from '@/routes/registry';
 
 export default function NotFound() {
@@ -13,7 +13,7 @@ export default function NotFound() {
       placeItems: 'center',
       textAlign: 'center',
       padding: spacing[8],
-      background: colors.gradients.app,
+      background: theme.bg.app,
       color: colors.light
     }}>
       <div style={{
@@ -39,7 +39,7 @@ export default function NotFound() {
           fontSize: typography.fontSize.lg,
           opacity: 0.8,
           marginBottom: spacing[8],
-          color: colors.text.secondary
+          color: theme.text.secondary
         }}>
           La página que buscas no existe o ha sido movida.
         </p>
@@ -89,7 +89,7 @@ export default function NotFound() {
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = colors.text.secondary;
+              e.currentTarget.style.color = theme.text.secondary;
             }}
           >
             Página anterior
