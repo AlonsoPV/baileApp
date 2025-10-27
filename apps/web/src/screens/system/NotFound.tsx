@@ -1,6 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
+import { colors } from '@/theme/colors';
+const spacing = { 4: '1rem', 8: '2rem', 12: '3rem' } as const;
+const borderRadius = { lg: '0.75rem', ['2xl']: '1.5rem' } as const;
+const typography = { fontSize: { base: '1rem', lg: '1.125rem', ['5xl']: '3rem' }, fontWeight: { medium: '500', bold: '700' } } as const;
+const theme = { bg: { app: '#0b0d10' }, text: { secondary: '#BDBDBD' } } as const;
 import { routes } from '@/routes/registry';
 
 export default function NotFound() {
@@ -76,7 +80,7 @@ export default function NotFound() {
               padding: `${spacing[3]} ${spacing[6]}`,
               borderRadius: borderRadius.lg,
               background: 'transparent',
-              color: colors.text.secondary,
+              color: theme.text.secondary,
               border: `1px solid ${colors.glass.medium}`,
               fontSize: typography.fontSize.base,
               fontWeight: typography.fontWeight.medium,
