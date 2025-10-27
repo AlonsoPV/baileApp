@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCreateDate, useUpdateDate, useDatesByParent } from "../../hooks/useEvents";
+import { useCreateDate, useUpdateDate } from "../../hooks/useEvents";
+import { useEventDate } from "../../hooks/useEventDate";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
 import EventScheduleEditor from "../../components/EventScheduleEditor";
@@ -25,10 +26,11 @@ export function EventDateEditScreen() {
   const navigate = useNavigate();
   const create = useCreateDate();
   const update = useUpdateDate();
-  const { data: dates } = useDatesByParent(parentId ? parseInt(parentId) : undefined);
+  const dateIdNum = id ? parseInt(id) : undefined;
+  const { data: currentDate } = useEventDate(!isNew ? dateIdNum : undefined);
   const { showToast } = useToast();
 
-  const currentDate = isNew ? null : dates?.find(d => d.id === parseInt(id!));
+  // For new date, currentDate stays null; for edit, we fetch by dateId
 
   const [form, setForm] = useState({
     fecha: "",

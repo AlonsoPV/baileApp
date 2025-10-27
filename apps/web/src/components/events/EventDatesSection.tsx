@@ -192,7 +192,7 @@ export default function EventDatesSection({ eventId, eventName }: EventDatesSect
                     onClick={() => handleEditDate(date.id)}
                     style={{
                       padding: '0.5rem',
-                      background: 'rgba(30, 136, 229, 0.2)',
+                    
                       border: '1px solid rgba(30, 136, 229, 0.3)',
                       borderRadius: '8px',
                       color: colors.blue,

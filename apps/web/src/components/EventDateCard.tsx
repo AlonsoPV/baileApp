@@ -128,7 +128,6 @@ export function EventDateCard({
       whileHover={{ scale: 1.02, boxShadow: `0 8px 24px ${colors.dark}88` }}
       style={{
         padding: '20px',
-        background: `${colors.dark}ee`,
         borderRadius: '16px',
         border: `1px solid ${colors.light}22`,
         transition: 'all 0.2s ease',
