@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OffCanvasMenu } from "@ui/index";
 import { colors } from "./theme/colors";
@@ -9,7 +9,6 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import { useDefaultProfile } from "./hooks/useDefaultProfile";
 import { AppRouter } from "./router";
 import AppBootstrap from "./providers/AppBootstrap";
-import { supaHealth } from "./utils/supaHealth";
 import "./App.css";
 
 function AppContent() {
@@ -18,11 +17,6 @@ function AppContent() {
   const { profile } = useUserProfile();
   const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
   const navigate = useNavigate();
-
-  // Health check al inicio
-  useEffect(() => {
-    supaHealth();
-  }, []);
 
   // Obtener información del perfil por defecto
   const defaultProfileInfo = getDefaultProfileInfo();

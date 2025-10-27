@@ -123,12 +123,8 @@ export function AppRouter() {
         <Route path="/events/date/:dateId/edit" element={<EventEditScreen />} />
 
         {/* Sprint 3 - New Profile Routes */}
-        <Route path="/profile/organizer" element={<ProfileScreen />} />
-        <Route path="/profile/organizer/edit" element={<ProfileScreen />} />
-        <Route path="/profile/academy" element={<ProfileScreen />} />
-        <Route path="/profile/academy/edit" element={<ProfileScreen />} />
-        <Route path="/profile/brand" element={<ProfileScreen />} />
-        <Route path="/profile/brand/edit" element={<ProfileScreen />} />
+        <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
+        <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
         
         {/* Organizer Event Editors */}
         <Route path="/profile/organizer/events/new" element={<EventEditor />} />
@@ -200,7 +196,10 @@ export function AppRouter() {
 
       {/* Public Routes (no authentication required) */}
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
+      <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
+      <Route path="/profile/academy" element={<AcademyProfileLive />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
+      <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       
       {/* Social and Date Live Routes */}
       <Route path="/social/:id" element={<SocialLiveScreen />} />

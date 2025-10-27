@@ -590,7 +590,7 @@ export default function EventDatePublicScreen() {
 
           {/* Requisitos */}
           {date.requisitos && (
-        <div style={{
+          <div style={{
               padding: '16px',
               background: `${colors.light}11`,
               borderRadius: '12px',
@@ -608,7 +608,7 @@ export default function EventDatePublicScreen() {
                 📋 Requisitos
               </h3>
               <p style={{
-                fontSize: '1rem',
+            fontSize: '1rem',
                 color: colors.light,
                 opacity: 0.9,
                 lineHeight: 1.5,
@@ -616,13 +616,13 @@ export default function EventDatePublicScreen() {
               }}>
                 {date.requisitos}
               </p>
-            </div>
-          )}
+          </div>
+        )}
         </div>
 
         {/* Cronograma */}
         {date.cronograma && date.cronograma.length > 0 && (
-          <div style={{
+        <div style={{
             background: `${colors.dark}66`,
               borderRadius: '16px',
             padding: '24px',
@@ -653,8 +653,8 @@ export default function EventDatePublicScreen() {
                     background: `${colors.dark}44`,
                     borderRadius: '12px',
                     border: `1px solid ${colors.light}22`,
-                    display: 'flex',
-                    alignItems: 'center',
+          display: 'flex',
+          alignItems: 'center',
                     gap: '16px',
                   }}
                 >
@@ -668,19 +668,19 @@ export default function EventDatePublicScreen() {
                   <div style={{ flex: 1 }}>
                     <h3 style={{
                       fontSize: '1.2rem',
-                      fontWeight: '600',
+              fontWeight: '600',
                       color: colors.light,
                       marginBottom: '4px',
-                    }}>
+            }}>
                       {item.titulo}
                     </h3>
-                    
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <span style={{
+            <span style={{
                         fontSize: '1rem',
-                        color: colors.light,
+              color: colors.light,
                         opacity: 0.8,
-                      }}>
+            }}>
                         🕐 {item.inicio} - {item.fin}
             </span>
 
@@ -713,7 +713,7 @@ export default function EventDatePublicScreen() {
             marginBottom: '32px',
             border: `1px solid ${colors.light}22`,
           }}>
-            <h2 style={{
+          <h2 style={{ 
               fontSize: '1.8rem',
               fontWeight: '600',
               color: colors.light,
@@ -794,7 +794,7 @@ export default function EventDatePublicScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            style={{
+              style={{
               marginBottom: '2rem',
               padding: '2.5rem',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -859,7 +859,7 @@ export default function EventDatePublicScreen() {
                 <img
                   src={date.flyer_url}
                   alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
-                  style={{
+              style={{
                     width: '100%',
                     maxWidth: '520px',
                     borderRadius: '16px',
@@ -869,9 +869,9 @@ export default function EventDatePublicScreen() {
                   }}
                 />
               </div>
-            </div>
-          </motion.section>
-        )}
+          </div>
+        </motion.section>
+      )}
 
         {/* RSVP Section */}
         <div style={{
@@ -936,13 +936,13 @@ export default function EventDatePublicScreen() {
             .filter(Boolean) as string[];
 
           return carouselPhotos.length > 0 && (
-            <motion.section
+        <motion.section
               id="date-photo-gallery"
               data-test-id="date-photo-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              style={{
+          style={{
                 marginBottom: '2rem',
                 padding: '2.5rem',
                 background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -971,7 +971,7 @@ export default function EventDatePublicScreen() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.5rem',
+            fontSize: '1.5rem', 
                     boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
                   }}>
                     📷
@@ -988,7 +988,7 @@ export default function EventDatePublicScreen() {
                     }}>
                       Galería de Fotos
                     </h3>
-                    <p style={{
+          <p style={{ 
                       fontSize: '0.9rem',
                       opacity: 0.8,
                       margin: 0,
@@ -1001,7 +1001,7 @@ export default function EventDatePublicScreen() {
                     padding: '0.75rem 1.5rem',
                     background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
                     borderRadius: '25px',
-                    fontSize: '1rem',
+            fontSize: '1rem',
                     fontWeight: '700',
                     color: colors.light,
                     border: '1px solid rgba(229, 57, 53, 0.3)',
@@ -1014,7 +1014,7 @@ export default function EventDatePublicScreen() {
               
                 <CarouselComponent photos={carouselPhotos} />
               </div>
-            </motion.section>
+        </motion.section>
           );
         })()}
 
@@ -1026,13 +1026,13 @@ export default function EventDatePublicScreen() {
             .filter(Boolean) as string[];
 
           return videos.length > 0 && (
-            <motion.section
+      <motion.section
               id="date-video-gallery"
               data-test-id="date-video-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              style={{
+        style={{
                 marginBottom: '2rem',
                 padding: '2.5rem',
                 background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
@@ -1067,7 +1067,7 @@ export default function EventDatePublicScreen() {
                     🎥
                   </div>
                   <div>
-                    <h3 style={{
+        <h3 style={{ 
                       fontSize: '1.75rem',
                       fontWeight: '800',
                       background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
@@ -1077,7 +1077,7 @@ export default function EventDatePublicScreen() {
                       lineHeight: 1.2
                     }}>
                       Videos de la Fecha
-                    </h3>
+        </h3>
                     <p style={{
                       fontSize: '0.9rem',
                       opacity: 0.8,
@@ -1159,8 +1159,8 @@ export default function EventDatePublicScreen() {
                     </motion.div>
                   ))}
                 </div>
-              </div>
-            </motion.section>
+        </div>
+      </motion.section>
           );
         })()}
         </div>

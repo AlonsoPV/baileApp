@@ -1,13 +1,13 @@
 import { useAcademyMy, useUpsertAcademy } from './useAcademy';
 import { useAuth } from './useAuth';
-import { useCallback } from 'react';
+import { useEffect } from 'react';
 
 export function useAcademyRole() {
   const { user } = useAuth();
   const { data: academy, isLoading } = useAcademyMy();
   const upsert = useUpsertAcademy();
 
-  const createAcademyIfNeeded = useCallback(async () => {
+  const createAcademyIfNeeded = async () => {
     if (!user || academy || isLoading) return;
     
     try {
@@ -34,7 +34,7 @@ export function useAcademyRole() {
     } catch (error) {
       console.error('❌ [useAcademyRole] Error al crear academia:', error);
     }
-  }, [user, academy, isLoading, upsert]);
+  };
 
   return {
     academy,
