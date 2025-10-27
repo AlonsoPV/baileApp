@@ -19,6 +19,9 @@
   width: fit-content;
 }
 
+/* Estándar de margen para todos los banners live */
+.org-banner { margin: 5rem auto 0 !important; }
+
 .profile-toggle__btn {
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -63,7 +66,7 @@
 .org-banner {
   width: 100%;
   max-width: 900px;
-  margin: 0 auto;
+  margin: 0 auto; /* will be overridden by standard margin above */
   position: relative;
   overflow: hidden;
   border-radius: 1rem;
@@ -142,6 +145,7 @@
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0;
+  flex: 1 1 0%;
   text-align: center;
 }
 

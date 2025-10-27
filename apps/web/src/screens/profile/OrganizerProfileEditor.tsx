@@ -53,7 +53,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       animate={{ opacity: 1, y: 0 }}
       style={{
         padding: '2rem',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
         borderRadius: '20px',
         border: '2px solid rgba(255, 61, 87, 0.2)',
         cursor: 'pointer',
@@ -77,7 +76,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         left: '-100%',
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
         transition: 'left 0.6s ease',
         zIndex: 1
       }} />
@@ -96,7 +94,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -110,7 +107,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               fontWeight: '800',
               margin: 0,
               color: colors.light,
-              background: 'linear-gradient(135deg, #ffffff 0%, #ffebee 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
@@ -157,7 +153,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             }}
             style={{
               padding: '0.75rem 1.25rem',
-              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
               color: colors.light,
               border: '2px solid rgba(30, 136, 229, 0.3)',
               borderRadius: '12px',
@@ -241,7 +236,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               gap: '1rem',
               marginTop: '1rem',
               padding: '1rem',
-              background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.08) 0%, rgba(0, 188, 212, 0.05) 100%)',
               borderRadius: '16px',
               border: '1px solid rgba(30, 136, 229, 0.2)',
               position: 'relative',
@@ -265,7 +259,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                     }}
                     style={{
                       padding: '1.25rem',
-                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
                       borderRadius: '16px',
                       border: '2px solid rgba(30, 136, 229, 0.2)',
                       display: 'flex',
@@ -293,7 +286,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                       left: '-100%',
                       width: '100%',
                       height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
                       transition: 'left 0.6s ease',
                       zIndex: 1
                     }} />
@@ -305,7 +297,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -434,7 +425,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                         }}
                         style={{
                           padding: '0.5rem 0.75rem',
-                          background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
                           color: colors.light,
                           border: '2px solid rgba(30, 136, 229, 0.3)',
                           borderRadius: '10px',
@@ -461,7 +451,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                         }}
                         style={{
                           padding: '0.5rem 0.75rem',
-                          background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
                           color: colors.light,
                           border: '2px solid rgba(255, 61, 87, 0.3)',
                           borderRadius: '10px',
@@ -1038,7 +1027,6 @@ export default function OrganizerProfileEditor() {
             style={{
               marginBottom: '3rem',
               padding: '2.5rem',
-              background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.1) 0%, rgba(255, 140, 66, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
               borderRadius: '24px',
               border: '2px solid rgba(255, 61, 87, 0.2)',
               boxShadow: '0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
@@ -1053,7 +1041,6 @@ export default function OrganizerProfileEditor() {
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1124,7 +1111,7 @@ export default function OrganizerProfileEditor() {
                     fontWeight: '700',
                     marginBottom: '0.75rem',
                     color: colors.light,
-                    background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
+                    
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                   }}>

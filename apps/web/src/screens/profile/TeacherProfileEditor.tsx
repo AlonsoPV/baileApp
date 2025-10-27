@@ -62,9 +62,7 @@ export default function TeacherProfileEditor() {
 
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
-          <h1 className="org-editor__title" style={{ margin: 0 }}>
-            🎓 Editar Perfil de Maestro
-          </h1>
+          <h1 className="org-editor__title" style={{ margin: 0 }}>✏️ Editar Maestro</h1>
           <ProfileNavigationToggle
             currentView="edit"
             profileType="teacher"

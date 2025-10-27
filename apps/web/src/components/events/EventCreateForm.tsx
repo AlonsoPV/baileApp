@@ -11,6 +11,8 @@ import FAQEditor from "../common/FAQEditor";
 import ScheduleEditor from "./ScheduleEditor";
 import CostsEditor from "./CostsEditor";
 import DateFlyerUploader from "./DateFlyerUploader";
+import { MediaGrid } from "../MediaGrid";
+import { MediaUploader } from "../MediaUploader";
 
 const colors = {
   coral: '#FF3D57',
@@ -172,7 +174,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               WebkitTextFillColor: 'transparent',
               marginBottom: '8px',
             }}>
-              {editMode ? 'Editar' : 'Crear'} {isParent ? 'Social' : 'Fecha'}
+              {isParent ? (editMode ? '🎭 Editar Social' : '🎭 Crear Social') : (editMode ? '📅 Editar Fecha' : '📅 Crear Fecha')}
             </h1>
             <p style={{
               fontSize: '1.1rem',
@@ -372,15 +374,52 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 borderRadius: '16px',
                 border: `1px solid ${colors.light}22`,
               }}>
-                <FAQEditor
-                  value={values?.faq || []}
-                  onChange={(faq) => {
-                    console.log('[EventCreateForm] FAQ changed:', faq);
-                    console.log('[EventCreateForm] Current values before FAQ update:', values);
-                    setValue('faq', faq);
-                    console.log('[EventCreateForm] FAQ setValue called');
-                  }}
-                />
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: colors.light,
+                  marginBottom: '20px',
+                }}>
+                  ❓ Preguntas Frecuentes
+                </h2>
+                <FAQEditor value={values?.faq || []} onChange={(faq) => setValue('faq', faq)} />
+              </div>
+
+              {/* Galería de Medios (opcional) */}
+              <div style={{
+                padding: '24px',
+                background: `${colors.dark}66`,
+                borderRadius: '16px',
+                border: `1px solid ${colors.light}22`,
+              }}>
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: colors.light,
+                  marginBottom: '20px',
+                }}>
+                  📷 Galería de Medios
+                </h2>
+                <MediaUploader onPick={(files) => {
+                  const now = Date.now();
+                  const picked = Array.from(files).map((f, i) => ({
+                    id: `${now}-${i}`,
+                    type: f.type.startsWith('video') ? 'video' : 'image',
+                    url: URL.createObjectURL(f)
+                  }));
+                  const current = (values?.media as any[]) || [];
+                  setValue('media', [...picked, ...current]);
+                }} />
+
+                <div style={{ marginTop: 16 }}>
+                  <MediaGrid
+                    items={(values?.media as any[]) || []}
+                    onRemove={(id) => {
+                      const next = ((values?.media as any[]) || []).filter((m: any) => m.id !== id);
+                      setValue('media', next);
+                    }}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -649,6 +688,14 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 borderRadius: '16px',
                 border: `1px solid ${colors.light}22`,
               }}>
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: colors.light,
+                  marginBottom: '20px',
+                }}>
+                  📅 Cronograma del Evento
+                </h2>
                 <ScheduleEditor
                   value={values?.cronograma || []}
                   onChange={(cronograma) => setValue('cronograma', cronograma)}
@@ -678,6 +725,14 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   borderRadius: '16px',
                   border: `1px solid ${colors.light}22`,
                 }}>
+                  <h2 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '600',
+                    color: colors.light,
+                    marginBottom: '20px',
+                  }}>
+                    🖼️ Flyer del Evento
+                  </h2>
                   <DateFlyerUploader
                     value={values?.flyer_url || null}
                     onChange={(url) => setValue('flyer_url', url)}
@@ -741,6 +796,9 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       🌐 Público (visible para todos)
                     </span>
                   </label>
+                  <span style={{ fontSize: '0.9rem', opacity: 0.8, color: colors.light }}>
+                    Visible públicamente y permite RSVP
+                  </span>
                 </div>
               </div>
             </>

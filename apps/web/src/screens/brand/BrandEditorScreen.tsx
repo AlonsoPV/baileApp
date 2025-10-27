@@ -142,6 +142,8 @@ export default function BrandEditorScreen() {
               ← Volver
             </button>
 
+            <h1 className="org-editor__title">✏️ Editar Marca</h1>
+
             <ProfileNavigationToggle
               currentView="edit"
               profileType="brand"
