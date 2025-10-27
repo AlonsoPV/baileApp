@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrowserRouter } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { OffCanvasMenu } from "@ui/index";
 import { colors } from "./theme/colors";
@@ -109,11 +110,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ToastProvider>
-      <AppBootstrap>
-        <AppContent />
-      </AppBootstrap>
-    </ToastProvider>
+    <BrowserRouter>
+      <ToastProvider>
+        <AppBootstrap>
+          <AppContent />
+        </AppBootstrap>
+      </ToastProvider>
+    </BrowserRouter>
   );
 }
 

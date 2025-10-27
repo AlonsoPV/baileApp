@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { routes } from './routes/registry';
 
 // Guards
@@ -69,8 +69,7 @@ import RouteDiagnostics from './dev/RouteDiagnostics';
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
         {/* Auth Routes - Redirect if authenticated */}
         <Route
           path={routes.auth.login}
@@ -187,6 +186,5 @@ export default function AppRouter() {
         {/* Catch all - 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
   );
 }
