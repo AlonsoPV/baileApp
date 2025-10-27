@@ -1,8 +1,13 @@
 import React from "react";
 import { UseInfiniteQueryResult } from "@tanstack/react-query";
 
+type InfiniteData<T> = {
+  pages: { data: T[]; count: number; nextPage?: number }[];
+  pageParams: number[];
+};
+
 type Props<T> = {
-  query: UseInfiniteQueryResult<{ data: T[]; count: number; nextPage?: number }, Error>;
+  query: UseInfiniteQueryResult<InfiniteData<T>, Error>;
   renderItem: (item: T, i: number) => React.ReactNode;
   emptyText?: string;
 };
