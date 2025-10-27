@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '../hooks/useUserProfile';
 
 interface RedirectIfAuthenticatedProps {

@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
 import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';

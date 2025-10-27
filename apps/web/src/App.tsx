@@ -5,7 +5,7 @@ import { OffCanvasMenu } from "@ui/index";
 import { colors } from "./theme/colors";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./components/Toast";
-import { useAuth } from "./hooks/useAuth";
+import { AuthProvider } from "./contexts/AuthProvider";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { useDefaultProfile } from "./hooks/useDefaultProfile";
 import AppRouter from "./AppRouter";
@@ -14,10 +14,13 @@ import "./App.css";
 
 function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { profile } = useUserProfile();
   const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
   const navigate = useNavigate();
+
+  // Debug auth state
+  console.log('[Auth check]', { loading, uid: user?.id });
 
   // Obtener información del perfil por defecto
   const defaultProfileInfo = getDefaultProfileInfo();
@@ -111,11 +114,13 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <AppBootstrap>
-          <AppContent />
-        </AppBootstrap>
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <AppBootstrap>
+            <AppContent />
+          </AppBootstrap>
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
