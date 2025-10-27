@@ -224,6 +224,7 @@ export const theme = {
   text: {
     primary: colors.light,
     secondary: colors.gray[300],
+    medium: colors.gray[400],
     muted: colors.gray[500],
   },
   
