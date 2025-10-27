@@ -200,10 +200,7 @@ export function AppRouter() {
 
       {/* Public Routes (no authentication required) */}
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
-      <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
-      <Route path="/profile/academy" element={<AcademyProfileLive />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
-      <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       
       {/* Social and Date Live Routes */}
       <Route path="/social/:id" element={<SocialLiveScreen />} />
