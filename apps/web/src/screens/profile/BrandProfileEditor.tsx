@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Breadcrumbs } from "../../components/Breadcrumbs";
 // ProfileToolbar removido: usamos el toggle unificado
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -24,13 +23,7 @@ export default function BrandProfileEditor() {
       padding: '1.5rem'
     }}>
       <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
-        <Breadcrumbs
-          items={[
-            { label: 'Inicio', href: '/', icon: '🏠' },
-            { label: 'Marca', href: '/profile/brand', icon: '🏷️' },
-            { label: 'Editar', icon: '✏️' },
-          ]}
-        />
+        {/* Toolbar antigua removida */}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>
@@ -47,8 +40,6 @@ export default function BrandProfileEditor() {
             isSaving={upsert.isPending}
           />
         </div>
-
-        {/* Toolbar antigua removida */}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

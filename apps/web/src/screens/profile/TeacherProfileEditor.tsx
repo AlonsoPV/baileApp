@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Breadcrumbs } from "../../components/Breadcrumbs";
 // ProfileToolbar removido: usamos el toggle unificado
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import '@/styles/organizer.css';
@@ -50,41 +49,36 @@ export default function TeacherProfileEditor() {
   }, [teacher]);
 
   return (
-    <div className="org-editor" style={{ minHeight: '100vh', background: '#000', color: '#F5F5F5', padding: '1.5rem' }}>
-      <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
-        <Breadcrumbs
-          items={[
-            { label: 'Inicio', href: '/', icon: '🏠' },
-            { label: 'Maestro', href: '/profile/teacher', icon: '🎓' },
-            { label: 'Editar', icon: '✏️' },
-          ]}
-        />
+    <div className="org-editor" style={{ minHeight: '100vh', background: '#000000', color: '#F5F5F5', padding: '2rem' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
           <h1 className="org-editor__title" style={{ margin: 0 }}>✏️ Editar Maestro</h1>
-          <ProfileNavigationToggle
-            currentView="edit"
-            profileType="teacher"
-            editHref="/profile/teacher"
-            liveHref={teacher?.id ? `/maestro/${teacher.id}` : "/profile/teacher/live"}
-            onSave={async ()=>{
-              await upsert.mutateAsync({
-                id: teacher?.id,
-                nombre_publico: form.nombre_publico,
-                bio: form.bio,
-                ritmos: form.ritmos,
-                zonas: form.zonas,
-                redes_sociales: form.redes_sociales,
-                media: form.media,
-                faq: form.faq,
-              });
-              if (teacher?.id) navigate(`/maestro/${teacher.id}`);
-            }}
-            isSaving={upsert.isPending}
-            saveDisabled={!form.nombre_publico}
-          />
+          <div style={{ width: 100 }} />
         </div>
+
+        <ProfileNavigationToggle
+          currentView="edit"
+          profileType="teacher"
+          editHref="/profile/teacher"
+          liveHref={teacher?.id ? `/maestro/${teacher.id}` : "/profile/teacher/live"}
+          onSave={async ()=>{
+            await upsert.mutateAsync({
+              id: teacher?.id,
+              nombre_publico: form.nombre_publico,
+              bio: form.bio,
+              ritmos: form.ritmos,
+              zonas: form.zonas,
+              redes_sociales: form.redes_sociales,
+              media: form.media,
+              faq: form.faq,
+            });
+            if (teacher?.id) navigate(`/maestro/${teacher.id}`);
+          }}
+          isSaving={upsert.isPending}
+          saveDisabled={!form.nombre_publico}
+        />
 
         {/* Toolbar antigua removida */}
 
@@ -125,7 +119,6 @@ export default function TeacherProfileEditor() {
             <h3 style={{ margin: 0, marginBottom: 12 }}>🔗 Redes</h3>
             <SocialMediaSection availablePlatforms={[ 'instagram','tiktok','youtube','facebook','whatsapp' ]}
               respuestas={{ redes: form.redes_sociales }}
-              onChange={(v)=>setField('redes_sociales', v.redes)}
             />
           </motion.div>
 

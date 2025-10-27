@@ -144,14 +144,16 @@ export default function BrandEditorScreen() {
 
             <h1 className="org-editor__title">✏️ Editar Marca</h1>
 
-            <ProfileNavigationToggle
-              currentView="edit"
-              profileType="brand"
-              onSave={handleSave}
-              isSaving={upsert.isPending}
-              saveDisabled={!form.nombre_publico}
-            />
+            <div style={{ width: 100 }} />
           </div>
+
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="brand"
+            onSave={handleSave}
+            isSaving={upsert.isPending}
+            saveDisabled={!form.nombre_publico}
+          />
 
           {/* Banner de la marca */}
           <div style={{
