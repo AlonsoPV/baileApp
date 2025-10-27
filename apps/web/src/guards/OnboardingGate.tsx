@@ -19,10 +19,10 @@ export default function OnboardingGate() {
         .from('profiles_user')
         .select('onboarding_complete')
         .eq('user_id', user!.id)
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
       if (error) throw error;
-      return data ?? { onboarding_complete: false };
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ?? { onboarding_complete: false };
     },
     staleTime: 30000,
   });
