@@ -105,9 +105,9 @@ ORDER BY created_at DESC
 LIMIT 5;
 
 -- 10. Verificar si hay problemas con el usuario actual
-SELECT 
-    'Información del usuario actual' as info,
-    auth.uid() as user_id,
-    auth.role() as user_role,
-    current_user,
-    session_user;
+    SELECT 
+        'Información del usuario actual' as info,
+        auth.uid() as user_id,
+        auth.role() as user_role,
+        current_user,
+        session_user;
