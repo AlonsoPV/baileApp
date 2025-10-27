@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
-import ProfileToolbar from "../../components/profile/ProfileToolbar";
+// ProfileToolbar removido: usamos el toggle unificado
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useMyBrand, useUpsertBrand } from "../../hooks/useBrand";
@@ -48,7 +48,7 @@ export default function BrandProfileEditor() {
           />
         </div>
 
-        <ProfileToolbar />
+        {/* Toolbar antigua removida */}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

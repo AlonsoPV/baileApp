@@ -4,6 +4,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import { useTags } from '../../hooks/useTags';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
+import '@/styles/organizer.css';
 import { useTeacherMy } from '@/hooks/useTeacher';
 
 const colors = {
@@ -45,7 +46,7 @@ export default function TeacherProfileLive() {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.dark, color: colors.light }}>
-      <div style={{ position: 'sticky', top: 80, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+      <div className="profile-toggle">
         <ProfileNavigationToggle
           currentView="live"
           profileType="teacher"

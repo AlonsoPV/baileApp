@@ -43,14 +43,31 @@ export function useUpsertAcademy() {
     mutationFn: async (payload: Partial<AcademyProfile>): Promise<AcademyProfile> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No session');
-      const base = { user_id: user.id, ...payload };
-      const { data, error } = await supabase
-        .from(TABLE)
-        .upsert(base, { onConflict: 'id', ignoreDuplicates: false })
-        .select('*')
-        .single();
-      if (error) throw error;
-      return data as AcademyProfile;
+      // Evitar error de identidad al insertar: si no hay id -> insert, si hay id -> update
+      if (payload.id) {
+        const id = payload.id;
+        const patch: any = { ...payload };
+        delete patch.id;
+        delete patch.user_id;
+        const { data, error } = await supabase
+          .from(TABLE)
+          .update(patch)
+          .eq('id', id)
+          .select('*')
+          .single();
+        if (error) throw error;
+        return data as AcademyProfile;
+      } else {
+        const insertData: any = { user_id: user.id, ...payload };
+        delete insertData.id; // asegurar no enviar id en insert
+        const { data, error } = await supabase
+          .from(TABLE)
+          .insert(insertData)
+          .select('*')
+          .single();
+        if (error) throw error;
+        return data as AcademyProfile;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['academy','mine'] });

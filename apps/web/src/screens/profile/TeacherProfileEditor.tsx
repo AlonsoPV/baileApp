@@ -1,8 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
-import ProfileToolbar from "../../components/profile/ProfileToolbar";
+// ProfileToolbar removido: usamos el toggle unificado
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import '@/styles/organizer.css';
 import { useNavigate } from "react-router-dom";
 import ChipPicker from "../../components/common/ChipPicker";
 import FAQEditor from "../../components/common/FAQEditor";
@@ -64,8 +65,8 @@ export default function TeacherProfileEditor() {
           ]}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>
+        <div className="org-editor__header">
+          <h1 className="org-editor__title" style={{ margin: 0 }}>
             🎓 Editar Perfil de Maestro
           </h1>
           <ProfileNavigationToggle
@@ -91,12 +92,12 @@ export default function TeacherProfileEditor() {
           />
         </div>
 
-        <ProfileToolbar />
+        {/* Toolbar antigua removida */}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Header básico */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ padding: '1.5rem', border: `1px solid ${colors.green}33`, borderRadius: '1rem', background: 'rgba(67,233,123,0.06)' }}>
+            className="org-editor__card">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
               <input
                 placeholder="Nombre público"
@@ -116,7 +117,7 @@ export default function TeacherProfileEditor() {
 
           {/* Ritmos y Zonas */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ padding: '1.5rem', border: `1px solid ${colors.green}33`, borderRadius: '1rem', background: 'rgba(67,233,123,0.06)' }}>
+            className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>🎵 Ritmos y Zonas</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <ChipPicker tipo="ritmo" selected={form.ritmos} onChange={(v)=>setField('ritmos', v)} label="Ritmos que enseñas" />
@@ -126,7 +127,7 @@ export default function TeacherProfileEditor() {
 
           {/* Redes sociales */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ padding: '1.5rem', border: `1px solid ${colors.green}33`, borderRadius: '1rem', background: 'rgba(67,233,123,0.06)' }}>
+            className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>🔗 Redes</h3>
             <SocialMediaSection availablePlatforms={[ 'instagram','tiktok','youtube','facebook','whatsapp' ]}
               respuestas={{ redes: form.redes_sociales }}
@@ -136,7 +137,7 @@ export default function TeacherProfileEditor() {
 
           {/* Media */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ padding: '1.5rem', border: `1px solid ${colors.green}33`, borderRadius: '1rem', background: 'rgba(67,233,123,0.06)' }}>
+            className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>📸 Media</h3>
             <MediaUploader onPick={(files)=>{
               const next = Array.from(files).map(f=>({ type: f.type.startsWith('video')?'video':'image', url: URL.createObjectURL(f) }));

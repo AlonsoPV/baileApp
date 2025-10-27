@@ -14,6 +14,7 @@ import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import ProductsEditor from '../../components/brand/ProductsEditor';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import ImageWithFallback from '../../components/ImageWithFallback';
+import '@/styles/organizer.css';
 
 export default function BrandEditorScreen() {
   const navigate = useNavigate();
@@ -133,29 +134,14 @@ export default function BrandEditorScreen() {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Header con botón Volver */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: spacing[8]
-          }}>
+          <div className="org-editor__header">
             <button
               onClick={() => navigate(-1)}
-              style={{
-                padding: `${spacing[2]} ${spacing[4]}`,
-                borderRadius: borderRadius.lg,
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: colors.light,
-                cursor: 'pointer',
-                fontSize: typography.fontSize.sm,
-                fontWeight: typography.fontWeight.medium,
-                transition: 'all 0.2s ease'
-              }}
+              className="org-editor__back"
             >
               ← Volver
             </button>
-            
+
             <ProfileNavigationToggle
               currentView="edit"
               profileType="brand"
@@ -205,12 +191,7 @@ export default function BrandEditorScreen() {
           </div>
 
           {/* Formulario */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: borderRadius['2xl'],
-            padding: spacing[8],
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }}>
+          <div className="org-editor__card">
             {/* Información básica */}
             <div style={{ marginBottom: spacing[8] }}>
               <h2 style={{
@@ -338,9 +319,7 @@ export default function BrandEditorScreen() {
                 respuestas={form}
                 redes_sociales={form.redes_sociales}
                 title="Redes Sociales"
-                availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'web']}
-                isEditable={true}
-                onUpdate={(redes) => setField('redes_sociales', redes)}
+                availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
               />
             </div>
 

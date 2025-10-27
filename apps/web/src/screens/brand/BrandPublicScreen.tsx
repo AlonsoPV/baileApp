@@ -7,6 +7,7 @@ import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import ProductsGrid from '../../components/brand/ProductsGrid';
 import { Chip } from '../../components/profile/Chip';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
+import '@/styles/organizer.css';
 import ImageWithFallback from '../../components/ImageWithFallback';
 
 export default function BrandPublicScreen() {
@@ -89,7 +90,7 @@ export default function BrandPublicScreen() {
         color: colors.light,
         position: 'relative'
       }}>
-        <div style={{ position: 'sticky', top: 80, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+        <div className="profile-toggle">
           <ProfileNavigationToggle
             currentView="live"
             profileType="brand"
@@ -98,7 +99,7 @@ export default function BrandPublicScreen() {
           />
         </div>
         {/* Banner de la marca */}
-        <div style={{
+        <div className="org-banner" style={{
           position: 'relative',
           height: '400px',
           background: brand.portada_url 

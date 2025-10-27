@@ -3,6 +3,10 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useAcademyMy } from "./useAcademy";
 
+// Buckets esperados (crear en Supabase si no existen):
+// - academy-avatars (público)
+// - academy-covers (público)
+// - academy-media (público)
 const BUCKET = "academy-media";
 
 // Helper to upload to academy-media bucket
