@@ -16,6 +16,7 @@ import InvitedMastersSection from "../../components/profile/InvitedMastersSectio
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import '@/styles/organizer.css';
 
 const colors = {
   primary: '#E53935',
@@ -119,56 +120,25 @@ export default function AcademyProfileEditor() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark} 0%, #2C2C2C 100%)`,
-      color: colors.light,
-      padding: '2rem 1rem'
-    }}>
+    <div className="org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Navigation Toggle */}
-        <ProfileNavigationToggle 
-          currentView="edit" 
-          profileType="academy" 
-          onSave={handleSave}
-          isSaving={upsert.isPending}
-          saveDisabled={!form.nombre_publico?.trim()}
-        />
-
-        {/* Header */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '3rem',
-          padding: '2rem 0',
-          borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          <h1 style={{
-            fontSize: '2.5rem',
-            fontWeight: '800',
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            margin: '0 0 1rem 0'
-          }}>
-            🎓 Editar Academia
-          </h1>
-          <p style={{
-            fontSize: '1.1rem',
-            color: 'rgba(255, 255, 255, 0.7)',
-            margin: 0
-          }}>
-            Configura la información de tu academia
-          </p>
+        {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
+        <div className="org-editor__header">
+          <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
+          <h1 className="org-editor__title">✏️ Editar Academia</h1>
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="academy"
+            onSave={handleSave}
+            isSaving={upsert.isPending}
+            saveDisabled={!form.nombre_publico?.trim()}
+            editHref="/profile/academy/edit"
+            liveHref="/profile/academy"
+          />
         </div>
 
         {/* Información Básica */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             📚 Información Básica
           </h2>
@@ -220,13 +190,7 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Estilos de Baile */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             🎵 Estilos que Enseñamos
           </h2>
@@ -245,13 +209,7 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Redes Sociales */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             📱 Redes Sociales
           </h2>
@@ -346,13 +304,7 @@ export default function AcademyProfileEditor() {
         />
 
         {/* Información para Estudiantes */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             💬 Información para Estudiantes
           </h2>

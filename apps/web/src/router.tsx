@@ -70,7 +70,6 @@ import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
 
 // Additional Profile Types
 import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
-import SchoolProfileEditor from './screens/profile/SchoolProfileEditor';
 import BrandProfileEditor from './screens/profile/BrandProfileEditor';
 
 export function AppRouter() {
@@ -178,11 +177,6 @@ export function AppRouter() {
         {/* Additional Profile Types */}
         <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
         <Route path="/profile/teacher" element={<TeacherProfileEditor />} />
-        
-        <Route path="/profile/school/edit" element={<SchoolProfileEditor />} />
-        <Route path="/profile/school" element={<SchoolProfileEditor />} />
-        
-        <Route path="/marca/editar" element={<BrandEditorScreen />} />
         
         {/* Academy Routes */}
         <Route path="/academia/editar" element={<AcademyEditorScreen />} />
