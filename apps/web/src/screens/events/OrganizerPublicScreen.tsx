@@ -1,14 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useOrganizerLiveById, useEventsByOrganizerLive } from '../../hooks/useLive';
-import { useEventParentsByOrganizer, useEventDatesByOrganizer } from '../../hooks/useEventParentsByOrganizer';
-import { useAuth } from '@/contexts/AuthProvider';
-import { canEditOrganizer } from '../../lib/access';
-import { useTags } from "../../hooks/useTags";
-import { Chip } from "../../components/profile/Chip";
-import ShareLink from '../../components/ShareLink';
-import { fmtDate, fmtTime } from "../../utils/format";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import NotFound from '@/screens/system/NotFound';
 
 const colors = {
   coral: '#FF3D57',
@@ -19,26 +14,27 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
 export function OrganizerPublicScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const organizerId = parseInt(id || '0');
-  
-  const { data: org, isLoading } = useOrganizerLiveById(organizerId);
-  const { data: eventos } = useEventsByOrganizerLive(organizerId);
-  const { data: eventParents } = useEventParentsByOrganizer(organizerId);
-  const { data: eventDates } = useEventDatesByOrganizer(organizerId);
-  const { data: allTags } = useTags();
-  
-  // Debug logs
-  console.log('[OrganizerPublicScreen] organizerId:', organizerId);
-  console.log('[OrganizerPublicScreen] org:', org);
-  console.log('[OrganizerPublicScreen] eventParents:', eventParents);
-  console.log('[OrganizerPublicScreen] eventDates:', eventDates);
-  
-  // Verificar si el usuario puede editar este organizador
-  const canEdit = canEditOrganizer(org, user?.id);
+
+  const { data: org, isLoading, isError } = useQuery({
+    queryKey: ['org-public', id],
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) return null;
+      if (isUUID(id)) {
+        const { data, error } = await supabase.from('organizers').select('*').eq('id', id).maybeSingle();
+        if (error) throw error;
+        if (data) return data;
+      }
+      const { data, error } = await supabase.from('organizers').select('*').eq('slug', id).maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    }
+  });
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
@@ -92,36 +88,8 @@ export function OrganizerPublicScreen() {
     );
   }
 
-  if (!org) {
-    return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-          Organizador no disponible
-        </h2>
-        <p style={{ marginBottom: '24px', opacity: 0.7 }}>
-          El organizador que buscas no está aprobado, no existe o no está disponible.
-        </p>
-        <Link 
-          to="/explore"
-          style={{
-            padding: '14px 28px',
-            borderRadius: '12px',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light,
-            fontSize: '1rem',
-            fontWeight: '700',
-            textDecoration: 'none',
-            display: 'inline-block',
-          }}
-        >
-          🔍 Volver a Explorar
-        </Link>
-      </div>
-    );
+  if (isError || !org) {
+    return <NotFound />;
   }
 
   return (

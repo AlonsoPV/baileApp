@@ -9,6 +9,13 @@ export default function OnboardingGate() {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
+  // Guard only /app/* and /profile/* paths
+  const PROTECTED_PREFIX = [/^\/app\//, /^\/profile(\/|$)/];
+  const shouldGuard = PROTECTED_PREFIX.some((r) => r.test(location.pathname));
+  if (!shouldGuard) {
+    return <Outlet />;
+  }
+
   const isOnboardingRoute = location.pathname.startsWith('/onboarding');
 
   const { data, isLoading, isFetching, error } = useQuery({
