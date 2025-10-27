@@ -5,7 +5,7 @@ import { OffCanvasMenu } from "@ui/index";
 import { colors } from "./theme/colors";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./components/Toast";
-import { AuthProvider } from "./contexts/AuthProvider";
+import { AuthProvider, useAuth } from "./contexts/AuthProvider";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { useDefaultProfile } from "./hooks/useDefaultProfile";
 import AppRouter from "./AppRouter";
@@ -86,7 +86,7 @@ function AppContent() {
   ];
 
   return (
-    <div style={{ background: colors.gradients.app, minHeight: "100vh", color: colors.light }}>
+    <div style={{ background: colors.dark[400], minHeight: "100vh", color: colors.light }}>
       {/* Navbar */}
       <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
 
