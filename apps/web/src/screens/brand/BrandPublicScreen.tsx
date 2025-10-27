@@ -101,177 +101,96 @@ export default function BrandPublicScreen() {
         {/* Banner de la marca */}
         <div className="org-banner" style={{
           position: 'relative',
-          height: '400px',
           background: brand.portada_url 
             ? `url(${brand.portada_url}) center/cover`
-            : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden'
+            : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
         }}>
-          {/* Overlay */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%)'
-          }} />
-          
-          {/* Contenido del banner */}
-          <div style={{
-            position: 'relative',
-            zIndex: 2,
-            textAlign: 'center',
-            maxWidth: '800px',
-            padding: spacing[8]
-          }}>
-            {/* Avatar */}
-            <div style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              margin: '0 auto',
-              marginBottom: spacing[4],
-              overflow: 'hidden',
-              border: '4px solid rgba(255, 255, 255, 0.2)',
-              background: 'rgba(255, 255, 255, 0.1)'
-            }}>
-              {brand.avatar_url ? (
-                <img
-                  src={brand.avatar_url}
-                  alt={brand.nombre_publico}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '3rem',
-                  background: 'linear-gradient(135deg, #FF3D57, #FF8C42)'
-                }}>
-                  🏷️
-                </div>
-              )}
-            </div>
-            
-            <h1 style={{
-              fontSize: typography.fontSize['4xl'],
-              fontWeight: typography.fontWeight.black,
-              margin: 0,
-              marginBottom: spacing[2],
-              background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              {brand.nombre_publico}
-            </h1>
-            
-            {brand.bio && (
-              <p style={{
-                fontSize: typography.fontSize.lg,
-                opacity: 0.9,
-                margin: 0,
-                lineHeight: typography.lineHeight.relaxed
+          <div className="org-banner-grid">
+            {/* Avatar circular grande */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{
+                width: '220px',
+                height: '220px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '4px solid rgba(255, 255, 255, 0.2)',
+                background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
+                position: 'relative',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
               }}>
-                {brand.bio}
-              </p>
-            )}
+                {brand.avatar_url ? (
+                  <img
+                    src={brand.avatar_url}
+                    alt={brand.nombre_publico}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem'
+                  }}>
+                    🏷️
+                  </div>
+                )}
+                <div className="shimmer-effect" style={{ position: 'absolute', inset: 0, borderRadius: '50%' }} />
+              </div>
+            </div>
+
+            {/* Nombre, bio y chips */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4], justifyContent: 'center' }}>
+              <h1 className="gradient-text" style={{
+                fontSize: typography.fontSize['5xl'],
+                fontWeight: typography.fontWeight.black,
+                margin: 0,
+                lineHeight: typography.lineHeight.tight
+              }}>
+                {brand.nombre_publico}
+              </h1>
+              {brand.bio && (
+                <p style={{ fontSize: typography.fontSize.lg, opacity: 0.9, margin: 0, lineHeight: typography.lineHeight.relaxed }}>
+                  {brand.bio}
+                </p>
+              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
+                {getRitmoNombres().map((nombre) => (
+                  <Chip key={`r-${nombre}`} label={nombre} icon="🎵" variant="ritmo" />
+                ))}
+                {getZonaNombres().map((nombre) => (
+                  <Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Contenido principal */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: spacing[8] }}>
-          {/* Chips de ritmos y zonas */}
-          <div style={{ marginBottom: spacing[8] }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], justifyContent: 'center' }}>
-              {getRitmoNombres().map((nombre) => (
-                <Chip 
-                  key={`r-${nombre}`} 
-                  label={nombre} 
-                  icon="🎵" 
-                  variant="ritmo" 
-                />
-              ))}
-              {getZonaNombres().map((nombre) => (
-                <Chip 
-                  key={`z-${nombre}`} 
-                  label={nombre} 
-                  icon="📍" 
-                  variant="zona" 
-                />
-              ))}
-            </div>
-          </div>
-
+        <div className="org-container" style={{ padding: spacing[8] }}>
           {/* Redes Sociales */}
-          <div style={{ marginBottom: spacing[8] }}>
+          <div className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
             <SocialMediaSection 
               respuestas={{ redes: brand.redes_sociales }}
               redes_sociales={brand.redes_sociales}
               title="Redes Sociales"
               availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[6],
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
             />
           </div>
 
           {/* Galería de medios */}
           {Array.isArray(brand.media) && brand.media.length > 0 && (
-            <div style={{ marginBottom: spacing[8] }}>
-              <h2 style={{
-                fontSize: typography.fontSize['2xl'],
-                fontWeight: typography.fontWeight.bold,
-                marginBottom: spacing[6],
-                color: colors.light
-              }}>
-                📷 Galería
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: spacing[4]
-              }}>
+            <div className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF3D57, #FF8C42)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
+                <div>
+                  <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0, color: colors.light }}>Galería</h2>
+                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{brand.media.length} elemento{brand.media.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
                 {brand.media.map((item, index) => (
-                  <div key={index} style={{
-                    borderRadius: borderRadius.xl,
-                    overflow: 'hidden',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}>
+                  <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                     {item.type === 'image' ? (
-                      <img
-                        src={item.url}
-                        alt={`Imagen ${index + 1}`}
-                        style={{
-                          width: '100%',
-                          aspectRatio: '16/9',
-                          objectFit: 'cover'
-                        }}
-                      />
+                      <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                     ) : (
-                      <video
-                        src={item.url}
-                        controls
-                        style={{
-                          width: '100%',
-                          aspectRatio: '16/9',
-                          objectFit: 'cover'
-                        }}
-                      />
+                      <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                     )}
                   </div>
                 ))}

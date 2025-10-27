@@ -50,12 +50,7 @@ export default function TeacherProfileEditor() {
   }, [teacher]);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: colors.dark,
-      color: colors.light,
-      padding: '1.5rem'
-    }}>
+    <div className="org-editor" style={{ minHeight: '100vh', background: '#000', color: '#F5F5F5', padding: '1.5rem' }}>
       <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
         <Breadcrumbs
           items={[
@@ -66,6 +61,7 @@ export default function TeacherProfileEditor() {
         />
 
         <div className="org-editor__header">
+          <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
           <h1 className="org-editor__title" style={{ margin: 0 }}>
             🎓 Editar Perfil de Maestro
           </h1>

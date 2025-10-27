@@ -1,51 +1,48 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useParams } from 'react-router-dom';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import { useTags } from '../../hooks/useTags';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
 import '@/styles/organizer.css';
-import { useTeacherMy } from '@/hooks/useTeacher';
+import { useTeacherMy, useTeacherPublic } from '@/hooks/useTeacher';
+import { Chip } from '../../components/profile/Chip';
+import { colors as themeColors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 
-const colors = {
-  coral: '#FF3D57',
-  blue: '#1E88E5',
-  dark: '#121212',
-  light: '#F5F5F5',
-};
+const colors = themeColors;
 
 export default function TeacherProfileLive() {
-  const { profile, isLoading } = useUserProfile();
-  const { ritmos = [], zonas = [] } = useTags() as any;
-  const { data: teacher } = useTeacherMy();
+  const { teacherId } = useParams();
+  const teacherIdNum = teacherId ? parseInt(teacherId, 10) : undefined;
+  const { data: teacherMy, isLoading: myLoading } = useTeacherMy();
+  const { data: teacherPub, isLoading: pubLoading } = useTeacherPublic(teacherIdNum as any);
+  const teacher: any = teacherIdNum ? teacherPub : teacherMy;
+  const { data: allTags } = useTags() as any;
 
   const getRitmoNombres = (ids: number[] = []) =>
-    ids.map(id => ritmos.find((t: any) => t.id === id)?.nombre).filter(Boolean) as string[];
+    ids.map(id => allTags?.find((t: any) => t.id === id && t.tipo === 'ritmo')?.nombre).filter(Boolean) as string[];
 
   const getZonaNombres = (ids: number[] = []) =>
-    ids.map(id => zonas.find((t: any) => t.id === id)?.nombre).filter(Boolean) as string[];
+    ids.map(id => allTags?.find((t: any) => t.id === id && t.tipo === 'zona')?.nombre).filter(Boolean) as string[];
 
-  if (isLoading) {
+  if (myLoading || pubLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: colors.dark, color: colors.light }}>
-        ⏳ Cargando…
-      </div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: colors.dark[400], color: colors.gray[50] }}>⏳ Cargando…</div>
     );
   }
 
-  if (!profile) {
+  if (!teacher) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: colors.dark, color: colors.light }}>
-        No se encontró el perfil
-      </div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: colors.dark[400], color: colors.gray[50] }}>No se encontró el perfil</div>
     );
   }
 
-  const ritmoNombres = getRitmoNombres(profile.ritmos);
-  const zonaNombres = getZonaNombres(profile.zonas);
+  const ritmoNombres = getRitmoNombres(teacher.ritmos || []);
+  const zonaNombres = getZonaNombres(teacher.zonas || []);
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.dark, color: colors.light }}>
+    <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], position: 'relative' }}>
+      {/* Toggle */}
       <div className="profile-toggle">
         <ProfileNavigationToggle
           currentView="live"
@@ -54,62 +51,67 @@ export default function TeacherProfileLive() {
           editHref="/profile/teacher"
         />
       </div>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
-        <header style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-          <div style={{
-            width: 96, height: 96, borderRadius: '50%', overflow: 'hidden',
-            border: '3px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)'
-          }}>
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 32 }}>🎓</div>
-            )}
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800 }}>{profile.display_name || 'Maestro'}</h1>
-            {profile.bio && (
-              <p style={{ margin: '6px 0 0 0', opacity: 0.8 }}>{profile.bio}</p>
-            )}
-          </div>
-        </header>
 
-        {/* Chips */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {ritmoNombres.map((n) => (
-            <span key={`r-${n}`} style={{ padding: '6px 10px', borderRadius: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>🎵 {n}</span>
-          ))}
-          {zonaNombres.map((n) => (
-            <span key={`z-${n}`} style={{ padding: '6px 10px', borderRadius: 16, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>📍 {n}</span>
-          ))}
+      {/* Banner similar al de organizador */}
+      <motion.div className="org-banner" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ margin: `${spacing[20]} auto 0 auto` }}>
+        <div className="org-banner-grid">
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ width: '220px', height: '220px', borderRadius: '50%', overflow: 'hidden', border: `4px solid rgba(255,255,255,0.2)`, background: 'linear-gradient(135deg,#1E88E5,#00BCD4)', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+              {teacher?.avatar_url ? (
+                <img src={teacher.avatar_url} alt="Foto del maestro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>🎓</div>
+              )}
+              <div className="shimmer-effect" style={{ position: 'absolute', inset: 0, borderRadius: '50%' }} />
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.6 }} style={{ display: 'flex', flexDirection: 'column', gap: spacing[6], justifyContent: 'center' }}>
+            <h1 className="gradient-text" style={{ fontSize: typography.fontSize['5xl'], fontWeight: typography.fontWeight.black, margin: 0, lineHeight: typography.lineHeight.tight }}> {teacher?.nombre_publico || 'Maestro'} </h1>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] }}>
+              {ritmoNombres.map((nombre) => (<Chip key={`r-${nombre}`} label={nombre} icon="🎵" variant="ritmo" />))}
+              {zonaNombres.map((nombre) => (<Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />))}
+            </div>
+          </motion.div>
         </div>
+      </motion.div>
 
-        {/* Redes sociales */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', marginBottom: 16 }}>
+      <div className="org-container" style={{ padding: spacing[8], position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+        {teacher?.bio && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+            <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>💬 Sobre mí</h3>
+            <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.lg }}>{teacher.bio}</p>
+          </motion.section>
+        )}
+        <div>
           <SocialMediaSection
-            availablePlatforms={[ 'instagram','tiktok','youtube','facebook','whatsapp' ]}
-            respuestas={{ redes: (profile as any)?.respuestas?.redes || {} }}
+            respuestas={{ redes: teacher?.redes_sociales || {} }}
+            redes_sociales={teacher?.redes_sociales}
+            title="Redes Sociales"
+            availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']}
+            style={{ marginBottom: spacing[8], padding: spacing[8], background: 'rgba(255,255,255,0.06)', borderRadius: borderRadius['2xl'], border: '1px solid rgba(255,255,255,0.14)' }}
           />
-        </motion.div>
-
-        {/* Galería simple */}
-        {(profile as any).media?.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)' }}>
-            <h3 style={{ marginTop: 0 }}>📸 Galería</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
-              {(profile as any).media.map((m: any, i: number) => (
-                <div key={i} style={{ aspectRatio: '1', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)' }}>
-                  {m.type === 'video' ? (
-                    <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+        {Array.isArray(teacher?.media) && teacher.media.length > 0 && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
+              <div>
+                <h3 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>Galería</h3>
+                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>{teacher.media.length} elemento{teacher.media.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
+              {teacher.media.map((item: any, index: number) => (
+                <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  {item.type === 'image' ? (
+                    <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                   ) : (
-                    <img src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                   )}
                 </div>
               ))}
             </div>
-          </motion.div>
+          </motion.section>
         )}
       </div>
     </div>
