@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthReady } from "../hooks/useAuthReady";
-import { colors, typography, spacing, borderRadius } from "../theme/colors";
+import { colors, typography, spacing, borderRadius, theme } from "../theme/colors";
 
 const TIMEOUT_MS = 6000; // 6 seconds timeout
 
@@ -31,7 +31,7 @@ export default function OnboardingGate() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: colors.gradients.app,
+        background: theme.bg.app,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -58,7 +58,7 @@ export default function OnboardingGate() {
           <div style={{ 
             fontSize: typography.fontSize.base, 
             opacity: 0.8,
-            color: colors.text.secondary
+            color: theme.text.secondary
           }}>
             {authLoading ? 'Verificando autenticación...' : 'Cargando perfil...'}
           </div>
