@@ -87,6 +87,8 @@ export default function AppRouter() {
         <Route path="/explore/list" element={<ExploreListScreen />} />
         <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
         <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
+        <Route path="/social/:id" element={<EventParentPublicScreen />} />
+        <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
         <Route path="/profile/academy" element={<AcademyProfileLive />} />

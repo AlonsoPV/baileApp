@@ -286,7 +286,7 @@ export function OrganizerEditScreen() {
             Gestiona los eventos que organizas
           </p>
           <button
-            onClick={() => navigate('/events/parent/new')}
+            onClick={() => navigate('/social/new')}
             style={{
               background: colors.secondary[500],
               color: '#fff',

@@ -38,8 +38,8 @@ export function OrganizerPublicScreen() {
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !org?.estilos) return [];
-    return org.estilos
+    if (!allTags || !org?.ritmos) return [];
+    return org.ritmos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);

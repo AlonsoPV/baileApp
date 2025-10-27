@@ -1160,7 +1160,7 @@ export default function OrganizerProfileEditor() {
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/events/new')}
+              onClick={() => navigate('/social/new')}
               style={{
                 padding: '12px 24px',
                 borderRadius: '25px',
