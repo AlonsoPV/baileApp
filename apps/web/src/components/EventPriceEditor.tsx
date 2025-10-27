@@ -1,5 +1,5 @@
 import React from "react";
-import { useEventPrices } from "../hooks/useEventPrices";
+import { useEventPrices, useCreatePrice, useDeletePrice } from "../hooks/useEventPrices";
 
 const colors = {
   coral: '#FF3D57',
@@ -15,7 +15,9 @@ interface EventPriceEditorProps {
 }
 
 export default function EventPriceEditor({ eventDateId }: EventPriceEditorProps) {
-  const { data: prices, upsert, remove } = useEventPrices(eventDateId);
+  const { data: prices } = useEventPrices(eventDateId);
+  const createPrice = useCreatePrice();
+  const deletePrice = useDeletePrice();
   const [draft, setDraft] = React.useState({ 
     tipo: "preventa" as const, 
     nombre: "", 
@@ -24,10 +26,14 @@ export default function EventPriceEditor({ eventDateId }: EventPriceEditorProps)
 
   const handleAdd = () => {
     if (!draft.nombre || draft.monto <= 0) return;
-    
-    upsert.mutate({
-      ...draft,
-      event_date_id: eventDateId
+    // Mapear a payload esperado por el RPC
+    createPrice.mutate({
+      event_id: eventDateId,
+      nombre: draft.nombre,
+      precio: draft.monto,
+      moneda: 'MXN',
+      tipo: draft.tipo,
+      activo: true
     });
     
     setDraft({ 
@@ -79,7 +85,7 @@ export default function EventPriceEditor({ eventDateId }: EventPriceEditorProps)
                 {p.nombre}
               </div>
               <div style={{ fontSize: '0.9rem', opacity: 0.8, color: colors.light }}>
-                {formatPrice(p.monto || 0)} • {p.tipo}
+                {formatPrice(p.precio || 0)} • {p.tipo}
                 {p.hora_inicio && p.hora_fin && (
                   <span> • {p.hora_inicio} - {p.hora_fin}</span>
                 )}
@@ -96,7 +102,7 @@ export default function EventPriceEditor({ eventDateId }: EventPriceEditorProps)
               )}
             </div>
             <button 
-              onClick={() => remove.mutate(p.id!)}
+              onClick={() => deletePrice.mutate(p.id!)}
               style={{
                 background: 'transparent',
                 border: 'none',

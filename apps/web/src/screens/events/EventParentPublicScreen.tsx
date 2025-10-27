@@ -761,6 +761,25 @@ export default function EventParentPublicScreen() {
                       }}>
                         📅
                       </div>
+                      {isOwner && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate(`/social/fecha/${date.id}/edit`);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            background: 'transparent',
+                            color: colors.light,
+                            cursor: 'pointer'
+                          }}
+                          title="Editar fecha"
+                        >
+                          ✏️ Editar
+                        </button>
+                      )}
                       <div style={{ flex: 1 }}>
                         <h3 style={{
                           fontSize: '1.4rem',

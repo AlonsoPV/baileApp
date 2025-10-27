@@ -2,6 +2,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
+import { useTags } from "../../hooks/useTags";
+import { useAuth } from '@/contexts/AuthProvider';
+import ShareLink from '../../components/ShareLink';
 import { supabase } from '@/lib/supabase';
 import NotFound from '@/screens/system/NotFound';
 
@@ -19,6 +22,8 @@ const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}
 export function OrganizerPublicScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
+  const { user } = useAuth();
 
   const { data: org, isLoading, isError } = useQuery({
     queryKey: ['org-public', id],
@@ -38,17 +43,17 @@ export function OrganizerPublicScreen() {
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !org?.ritmos) return [];
+    if (!org?.ritmos) return [];
     return org.ritmos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
+      .map(id => allRitmos.find(tag => tag.id === id))
       .filter(Boolean)
       .map(tag => tag!.nombre);
   };
 
   const getZonaNombres = () => {
-    if (!allTags || !org?.zonas) return [];
+    if (!org?.zonas) return [];
     return org.zonas
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
+      .map(id => allZonas.find(tag => tag.id === id))
       .filter(Boolean)
       .map(tag => tag!.nombre);
   };
@@ -91,6 +96,8 @@ export function OrganizerPublicScreen() {
   if (isError || !org) {
     return <NotFound />;
   }
+
+  const canEdit = !!user && (org as any)?.user_id === user.id;
 
   return (
     <>
@@ -154,7 +161,7 @@ export function OrganizerPublicScreen() {
           
           {canEdit && (
             <Link 
-              to="/profile/organizer/edit"
+              to={`/social/${(org as any)?.id}/edit`}
               style={{
                 padding: '0.75rem 1.5rem',
                 borderRadius: '12px',
