@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { EventParent, EventDate, RSVPStatus, RSVPCount } from "../types/events";
 import { useMyOrganizer } from "./useOrganizer";
-import { useAuth } from "./useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 
 export function useParentsByOrganizer(organizerId?: number) {
   return useQuery({

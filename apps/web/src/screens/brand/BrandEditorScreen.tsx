@@ -5,7 +5,7 @@ import { useTags } from '../../hooks/useTags';
 import { useHydratedForm } from '../../hooks/useHydratedForm';
 import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
 import { Chip } from '../../components/profile/Chip';
 import { PhotoManagementSection } from '../../components/profile/PhotoManagementSection';

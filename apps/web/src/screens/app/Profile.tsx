@@ -5,7 +5,7 @@ import { colors, spacing, borderRadius } from '../../theme/colors';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useTags } from '../../hooks/useTags';
 import { useToast } from '../../components/Toast';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useMyOrganizer } from '../../hooks/useOrganizer';
 import { TagChip } from '../../components/TagChip';
 import { isValidDisplayName } from '../../utils/validation';

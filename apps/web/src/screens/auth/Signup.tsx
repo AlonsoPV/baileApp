@@ -28,10 +28,9 @@ export function Signup() {
     }
 
     // Password validation
-    const passwordValidation = isValidPassword(password);
-    if (!passwordValidation.valid) {
-      setError(passwordValidation.error || 'Contraseña inválida');
-      showToast(passwordValidation.error || 'Contraseña inválida', 'error');
+    if (!isValidPassword(password)) {
+      setError('Contraseña inválida');
+      showToast('Contraseña inválida', 'error');
       return;
     }
 
@@ -82,7 +81,7 @@ export function Signup() {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Crear Cuenta 🎉
           </h1>
-          <p style={{ color: colors.text.medium }}>
+          <p style={{ color: colors.gray[400] }}>
             Únete a la comunidad de baile
           </p>
         </div>
@@ -96,7 +95,7 @@ export function Signup() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Email
@@ -114,7 +113,7 @@ export function Signup() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[50],
                 fontSize: '1rem',
               }}
               placeholder="tu@email.com"
@@ -129,7 +128,7 @@ export function Signup() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Contraseña
@@ -147,7 +146,7 @@ export function Signup() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[50],
                 fontSize: '1rem',
               }}
               placeholder="••••••••"
@@ -162,7 +161,7 @@ export function Signup() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Confirmar Contraseña
@@ -180,7 +179,7 @@ export function Signup() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[50],
                 fontSize: '1rem',
               }}
               placeholder="••••••••"
@@ -216,7 +215,7 @@ export function Signup() {
           </Button>
         </form>
 
-        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: colors.text.medium }}>
+        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: colors.gray[400] }}>
           ¿Ya tienes cuenta?{' '}
           <Link
             to="/auth/login"

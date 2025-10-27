@@ -6,6 +6,7 @@ import { useEventFullByDateId } from "../../hooks/useEventFull";
 import { useUpdateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useToast } from "../../components/Toast";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
+import type { EventParent, EventDate } from "../../types/events";
 
 export default function EventEditScreen() {
   const { dateId } = useParams();
@@ -18,8 +19,8 @@ export default function EventEditScreen() {
   const updateParent = useUpdateParent();
   const updateDate = useUpdateDate();
 
-  const [parent, setParent] = useState(q.data?.parent || {});
-  const [date, setDate] = useState(q.data?.date || {});
+  const [parent, setParent] = useState<Partial<EventParent>>(q.data?.parent || {});
+  const [date, setDate] = useState<Partial<EventDate>>(q.data?.date || {});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {

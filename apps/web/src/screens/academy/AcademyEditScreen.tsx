@@ -12,7 +12,7 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 
 const colors = {
   primary: '#E53935',
@@ -37,7 +37,7 @@ export default function AcademyEditScreen() {
   useRoleChange();
 
   const { form, setField, setNested, setAll } = useHydratedForm({
-    key: getDraftKey(user?.id, 'academy'),
+    draftKey: getDraftKey(user?.id, 'academy'),
     serverData: academy,
     defaults: {
       nombre_publico: "",
@@ -58,7 +58,7 @@ export default function AcademyEditScreen() {
         dato_curioso: "",
         gusta_bailar: ""
       }
-    }
+    } as any
   });
 
   const handleSave = async () => {
@@ -101,7 +101,7 @@ export default function AcademyEditScreen() {
 
   const removeFile = async (slot: string) => {
     try {
-      const mediaItem = media.find(m => m.slot === slot);
+      const mediaItem = media.find(m => (m as any).slot === slot);
       if (mediaItem) {
         await remove.mutateAsync(mediaItem.id);
       }
@@ -432,7 +432,7 @@ export default function AcademyEditScreen() {
         {/* Gestión de Fotos */}
         <PhotoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={{ p1: add.isPending }}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Gestión de Fotos"
@@ -444,7 +444,7 @@ export default function AcademyEditScreen() {
         {/* Fotos Adicionales */}
         <PhotoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={{ p4: add.isPending, p5: add.isPending, p6: add.isPending, p7: add.isPending, p8: add.isPending, p9: add.isPending, p10: add.isPending }}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Fotos Adicionales (p4-p10)"
@@ -455,7 +455,7 @@ export default function AcademyEditScreen() {
         {/* Gestión de Videos */}
         <VideoManagementSection
           media={media}
-          uploading={add.isPending}
+          uploading={{ v1: add.isPending, v2: add.isPending, v3: add.isPending }}
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="🎥 Gestión de Videos"

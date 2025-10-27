@@ -18,7 +18,7 @@ export function ProfileBasics() {
   const [isLoading, setIsLoading] = useState(false);
   
   const { user } = useAuth();
-  const { profile, upsert } = useUserProfile();
+  const { profile, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -37,10 +37,10 @@ export function ProfileBasics() {
     setError('');
 
     // Validate display name
-    const nameValidation = isValidDisplayName(displayName);
-    if (!nameValidation.valid) {
-      setError(nameValidation.error || 'Nombre inválido');
-      showToast(nameValidation.error || 'Nombre inválido', 'error');
+    if (!isValidDisplayName(displayName)) {
+      const errorMsg = 'El nombre debe tener entre 2 y 50 caracteres y contener solo letras, números, espacios y caracteres permitidos';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       return;
     }
 
@@ -64,14 +64,14 @@ export function ProfileBasics() {
       }
 
       // Merge with existing profile
-      const updates = mergeProfile(profile, {
+      const updates = mergeProfile(profile as any, {
         display_name: displayName,
         bio: bio || undefined,
         avatar_url: avatarUrl,
       });
 
       // Upsert profile
-      await upsert(updates);
+      await updateProfileFields(updates);
 
       showToast('Perfil guardado exitosamente ✅', 'success');
       navigate('/onboarding/ritmos');
@@ -107,7 +107,7 @@ export function ProfileBasics() {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Paso 1: Datos Básicos 📝
           </h1>
-          <p style={{ color: colors.text.medium }}>
+          <p style={{ color: colors.gray[400] }}>
             Cuéntanos sobre ti
           </p>
         </div>
@@ -135,7 +135,7 @@ export function ProfileBasics() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Foto de Perfil (opcional)
@@ -151,7 +151,7 @@ export function ProfileBasics() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[200],
                 fontSize: '0.875rem',
               }}
             />
@@ -166,7 +166,7 @@ export function ProfileBasics() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Nombre para mostrar *
@@ -184,7 +184,7 @@ export function ProfileBasics() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[200],
                 fontSize: '1rem',
               }}
               placeholder="Ej: Juan el Salsero"
@@ -200,7 +200,7 @@ export function ProfileBasics() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               Bio (opcional)
@@ -217,7 +217,7 @@ export function ProfileBasics() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[200],
                 fontSize: '1rem',
                 fontFamily: 'inherit',
                 resize: 'vertical',

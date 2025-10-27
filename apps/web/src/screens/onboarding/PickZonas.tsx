@@ -5,6 +5,7 @@ import { Button, Chip } from '@ui/index';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import { useToast } from '../../components/Toast';
 import { routes } from '@/routes/registry';
 import { mergeProfile } from '../../utils/mergeProfile';
 import { supabase } from '../../lib/supabase';
@@ -16,7 +17,7 @@ export function PickZonas() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: zonas, isLoading: loadingTags } = useTags('zona');
-  const { profile, upsert } = useUserProfile();
+  const { profile, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -50,11 +51,11 @@ export function PickZonas() {
     setIsLoading(true);
 
     try {
-      const updates = mergeProfile(profile, {
+      const updates = mergeProfile(profile as any, {
         zonas: selectedIds,
       });
       
-      await upsert(updates);
+      await updateProfileFields(updates);
       showToast('Zonas guardadas exitosamente 📍', 'success');
       
       // Marcar onboarding como completo
@@ -85,7 +86,7 @@ export function PickZonas() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: colors.gradients.app,
+        background: colors.gradients.dark,
         padding: spacing[2],
       }}
     >
@@ -114,7 +115,7 @@ export function PickZonas() {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: spacing(4), display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
+            <div style={{ marginBottom: spacing[4], display: 'flex', flexWrap: 'wrap', gap: spacing[1] }}>
               {zonas?.map((zona) => (
                 <div key={zona.id} onClick={() => toggleZona(zona.id)} style={{ cursor: 'pointer' }}>
                   <Chip
@@ -125,15 +126,15 @@ export function PickZonas() {
               ))}
             </div>
 
-            <div style={{ color: colors.gray[500], fontSize: '0.875rem', marginBottom: spacing(3) }}>
+            <div style={{ color: colors.gray[500], fontSize: '0.875rem', marginBottom: spacing[3] }}>
               {selectedIds.length} zona(s) seleccionada(s)
             </div>
 
             {error && (
               <div
                 style={{
-                  marginBottom: spacing(3),
-                  padding: spacing(2),
+                  marginBottom: spacing[3],
+                  padding: spacing[2],
                   background: 'rgba(239, 68, 68, 0.1)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
                   borderRadius: borderRadius.md,
@@ -145,7 +146,7 @@ export function PickZonas() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: spacing(2) }}>
+            <div style={{ display: 'flex', gap: spacing[2] }}>
               {profile?.zonas && profile.zonas.length > 0 && (
                 <button
                   type="button"
@@ -153,7 +154,7 @@ export function PickZonas() {
                   disabled={isLoading}
                   style={{
                     flex: 1,
-                    padding: spacing(2),
+                    padding: spacing[2],
                     background: 'transparent',
                     border: `1px solid ${colors.gray[300]}`,
                     borderRadius: borderRadius.md,

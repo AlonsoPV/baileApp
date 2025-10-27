@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function MyRSVPsScreen() {
-  const { rsvps, isLoading } = useMyRSVPs();
+  const { data: rsvps, isLoading } = useMyRSVPs();
 
   if (isLoading) {
     return (
@@ -55,9 +55,9 @@ export function MyRSVPsScreen() {
       
       {rsvps && rsvps.length > 0 ? (
         <div style={{ display: 'grid', gap: '1rem' }}>
-          {rsvps.map((rsvp) => {
-            const eventDate = rsvp.event_date;
-            const parentEvent = rsvp.parent_event;
+          {rsvps.map((rsvp: any) => {
+            const eventDate = rsvp.date;
+            const parentEvent = rsvp.parent;
 
             if (!eventDate || !parentEvent) return null;
 
@@ -126,7 +126,7 @@ export function MyRSVPsScreen() {
                   </div>
 
                   <div>
-                    {getRSVPBadge(rsvp.status)}
+                    {getRSVPBadge(rsvp.my?.status || 'interesado')}
                   </div>
                 </div>
               </Link>

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
@@ -61,7 +61,7 @@ export function DateLiveScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -76,7 +76,7 @@ export function DateLiveScreen() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.darkBase}, #1a1a1a)`,
+        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

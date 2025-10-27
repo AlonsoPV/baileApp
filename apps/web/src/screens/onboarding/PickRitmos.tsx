@@ -13,7 +13,7 @@ export function PickRitmos() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: ritmos, isLoading: loadingTags } = useTags('ritmo');
-  const { profile, upsert } = useUserProfile();
+  const { profile, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -29,11 +29,11 @@ export function PickRitmos() {
     setIsLoading(true);
 
     try {
-      const updates = mergeProfile(profile, {
+      const updates = mergeProfile(profile as any, {
         ritmos: selectedIds,
       });
       
-      await upsert(updates);
+      await updateProfileFields(updates);
       showToast('Ritmos guardados exitosamente 🎵', 'success');
       navigate('/onboarding/zonas');
     } catch (err: any) {
@@ -75,13 +75,13 @@ export function PickRitmos() {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             Paso 2: Ritmos 🎵
           </h1>
-          <p style={{ color: colors.text.medium }}>
+          <p style={{ color: colors.gray[400] }}>
             ¿Qué ritmos te gustan? (selecciona todos los que quieras)
           </p>
         </div>
 
         {loadingTags ? (
-          <div style={{ textAlign: 'center', padding: spacing[4], color: colors.text.medium }}>
+          <div style={{ textAlign: 'center', padding: spacing[4], color: colors.gray[400] }}>
             Cargando ritmos...
           </div>
         ) : (
@@ -97,7 +97,7 @@ export function PickRitmos() {
               ))}
             </div>
 
-            <div style={{ color: colors.text.dark, fontSize: '0.875rem', marginBottom: spacing[3] }}>
+            <div style={{ color: colors.gray[500], fontSize: '0.875rem', marginBottom: spacing[3] }}>
               {selectedIds.length} ritmo(s) seleccionado(s)
             </div>
 
@@ -127,9 +127,9 @@ export function PickRitmos() {
                     flex: 1,
                     padding: spacing[2],
                     background: 'transparent',
-                    border: `1px solid ${colors.glass.medium}`,
+                    border: `1px solid ${colors.gray[300]}`,
                     borderRadius: borderRadius.md,
-                    color: colors.text.medium,
+                    color: colors.gray[400],
                     cursor: 'pointer',
                   }}
                 >

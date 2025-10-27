@@ -21,7 +21,7 @@ export default function EventCreateScreen() {
     estilos: [] as number[]
   });
 
-  const [date, setDate] = useState({
+  const [date, setDate] = useState<Partial<import('../../types/events').EventDate>>({
     fecha: "",
     hora_inicio: "",
     hora_fin: "",
@@ -29,7 +29,7 @@ export default function EventCreateScreen() {
     ciudad: "",
     direccion: "",
     requisitos: "",
-    estado_publicacion: "borrador" as const
+    estado_publicacion: "borrador"
   });
 
   const [parentId, setParentId] = useState<number | null>(null);

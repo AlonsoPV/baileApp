@@ -5,7 +5,7 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { useTags } from "../../hooks/useTags";
 import { useUserMedia } from "../../hooks/useUserMedia";
 import { useUserRSVPEvents } from "../../hooks/useRSVP";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";

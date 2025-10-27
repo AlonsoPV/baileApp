@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "./useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { useMyOrganizer } from "./useOrganizer";
 
 export type ActiveRole = "usuario" | "organizador";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from './useUserProfile';
 import { useMyOrganizer } from './useOrganizer';
 import { useAcademyMy } from './useAcademyMy';

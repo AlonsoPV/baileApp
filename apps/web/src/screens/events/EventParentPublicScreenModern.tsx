@@ -366,8 +366,8 @@ export default function EventParentPublicScreen() {
 
   // Obtener nombres de ritmos y zonas
   const getRitmoNombres = () => {
-    if (!ritmos || !parent.ritmos) return [];
-    return parent.ritmos
+    if (!ritmos || !parent.estilos) return [];
+    return parent.estilos
       .map(id => ritmos.find(ritmo => ritmo.id === id))
       .filter(Boolean)
       .map(ritmo => ritmo!.nombre);
@@ -538,7 +538,7 @@ export default function EventParentPublicScreen() {
             left: '20%',
             width: '80px',
             height: '80px',
-            background: colors.gradients.accent,
+            background: colors.gradients.secondary,
             borderRadius: '50%',
             animation: 'float 5s ease-in-out infinite',
             backdropFilter: 'blur(10px)',

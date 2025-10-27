@@ -81,7 +81,7 @@ export function Login() {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
             ¡Bienvenido! 💃
           </h1>
-          <p style={{ color: colors.text.medium }}>
+          <p style={{ color: colors.gray[400] }}>
             Accede con tu email - Sin contraseñas
           </p>
         </div>
@@ -93,7 +93,7 @@ export function Login() {
                 marginBottom: spacing[1],
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: colors.text.medium,
+                color: colors.gray[400],
               }}
             >
               📧 Tu Email
@@ -111,7 +111,7 @@ export function Login() {
                 background: colors.glass.medium,
                 border: `1px solid ${colors.glass.medium}`,
                 borderRadius: borderRadius.md,
-                color: colors.text.light,
+                color: colors.gray[200],
                 fontSize: '1rem',
               }}
               placeholder="tu@email.com"
@@ -178,7 +178,7 @@ export function Login() {
         <div style={{ 
           textAlign: 'center', 
           fontSize: '0.875rem', 
-          color: colors.text.medium,
+          color: colors.gray[400],
           marginTop: spacing[3],
           padding: spacing[2],
           background: 'rgba(255, 255, 255, 0.05)',

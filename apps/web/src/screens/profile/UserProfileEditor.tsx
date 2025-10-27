@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useUserMediaSlots } from '../../hooks/useUserMediaSlots';
 import { useHydratedForm } from '../../hooks/useHydratedForm';

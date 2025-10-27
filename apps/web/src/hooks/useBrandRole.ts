@@ -1,5 +1,5 @@
 import { useMyBrand, useUpsertBrand } from './useBrand';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { useEffect } from 'react';
 
 export function useBrandRole() {

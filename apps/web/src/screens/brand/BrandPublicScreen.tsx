@@ -206,10 +206,10 @@ export default function BrandPublicScreen() {
           {/* Redes Sociales */}
           <div style={{ marginBottom: spacing[8] }}>
             <SocialMediaSection 
-              respuestas={brand}
+              respuestas={{ redes: brand.redes_sociales }}
               redes_sociales={brand.redes_sociales}
               title="Redes Sociales"
-              availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'web']}
+              availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
                 borderRadius: borderRadius['2xl'],

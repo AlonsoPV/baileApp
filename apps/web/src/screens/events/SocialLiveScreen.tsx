@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useEventDatesByParent } from "../../hooks/useEventDate";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";

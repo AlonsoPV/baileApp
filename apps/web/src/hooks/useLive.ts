@@ -22,7 +22,13 @@ export interface OrganizerLive {
   nombre_publico: string;
   bio?: string;
   media?: string[];
+  estilos?: number[];
+  zonas?: number[];
+  redes_sociales?: any;
+  respuestas?: any;
+  estado_aprobacion: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface EventLive {

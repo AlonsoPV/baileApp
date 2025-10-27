@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "./useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { supabase } from "../lib/supabase";
 import { uploadUserFile, removeUserFile, MediaItem } from "../lib/storage";
 

@@ -21,7 +21,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const colors = {
   coral: '#FF3D57',

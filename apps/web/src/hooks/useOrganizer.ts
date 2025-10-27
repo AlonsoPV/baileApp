@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "./useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import type { Organizer } from "../types/events";
 import { buildSafePatch } from "../utils/safePatch";
 

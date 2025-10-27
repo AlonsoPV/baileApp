@@ -337,12 +337,11 @@ export default function AcademyEditorScreen() {
             {/* Redes Sociales */}
             <div style={{ marginBottom: spacing[8] }}>
               <SocialMediaSection 
-                respuestas={form}
+                respuestas={{ redes: form.redes_sociales }}
                 redes_sociales={form.redes_sociales}
                 title="Redes Sociales"
-                availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'web']}
-                isEditable={true}
-                onUpdate={(redes) => setField('redes_sociales', redes)}
+                availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
+                showTitle={true}
               />
             </div>
 

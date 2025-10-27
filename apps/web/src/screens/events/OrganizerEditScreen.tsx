@@ -5,8 +5,15 @@ import { useToast } from '../../components/Toast';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import { required } from '../../utils/forms';
 
+import { useUpsertMyOrganizer, useSubmitOrganizerForReview } from '../../hooks/useOrganizer';
+
 export function OrganizerEditScreen() {
-  const { organizer, upsert, isUpserting, submitForReview, isSubmittingForReview } = useMyOrganizer();
+  const organizerQuery = useMyOrganizer();
+  const { data: organizer } = organizerQuery;
+  const upsertMutation = useUpsertMyOrganizer();
+  const { mutateAsync: upsert, isPending: isUpserting } = upsertMutation;
+  const submitForReviewMutation = useSubmitOrganizerForReview();
+  const { mutateAsync: submitForReview, isPending: isSubmittingForReview } = submitForReviewMutation;
   const { showToast } = useToast();
   const navigate = useNavigate();
   
@@ -19,7 +26,7 @@ export function OrganizerEditScreen() {
     if (organizer) {
       setNombrePublico(organizer.nombre_publico || '');
       setBio(organizer.bio || '');
-      setMediaUrls(organizer.media?.join('\n') || '');
+      setMediaUrls(Array.isArray(organizer.media) ? organizer.media.join('\n') : '');
     }
   }, [organizer]);
 
@@ -44,7 +51,7 @@ export function OrganizerEditScreen() {
         nombre_publico: nombrePublico,
         bio: bio || null,
         media: mediaArray,
-      });
+      } as any);
       
       showToast('Organizador guardado exitosamente ✅', 'success');
     } catch (err: any) {

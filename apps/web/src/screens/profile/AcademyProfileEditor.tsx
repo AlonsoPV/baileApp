@@ -15,7 +15,7 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const colors = {
   primary: '#E53935',

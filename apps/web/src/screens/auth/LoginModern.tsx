@@ -336,7 +336,7 @@ export function Login() {
                 left: '20%',
                 width: '80px',
                 height: '80px',
-                background: colors.gradients.accent,
+                background: colors.gradients.deep,
                 borderRadius: '50%',
                 animation: 'float 5s ease-in-out infinite',
                 backdropFilter: 'blur(10px)',

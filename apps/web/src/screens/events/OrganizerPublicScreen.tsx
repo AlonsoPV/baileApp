@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useOrganizerLiveById, useEventsByOrganizerLive } from '../../hooks/useLive';
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from '../../hooks/useEventParentsByOrganizer';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/contexts/AuthProvider';
 import { canEditOrganizer } from '../../lib/access';
 import { useTags } from "../../hooks/useTags";
 import { Chip } from "../../components/profile/Chip";
@@ -42,8 +42,8 @@ export function OrganizerPublicScreen() {
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !org?.ritmos) return [];
-    return org.ritmos
+    if (!allTags || !org?.estilos) return [];
+    return org.estilos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
@@ -231,7 +231,7 @@ export function OrganizerPublicScreen() {
               }}>
                 {org.media && Array.isArray(org.media) && org.media[0] ? (
                   <img
-                    src={typeof org.media[0] === 'string' ? org.media[0] : org.media[0].url}
+                    src={typeof org.media[0] === 'string' ? org.media[0] : (org.media[0] as any).url || org.media[0]}
                     alt="Logo del organizador"
                     style={{
                       width: '100%',

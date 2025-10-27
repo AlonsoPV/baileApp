@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { EventDate, RSVPCount } from "../types/events";
-import { RSVPCounter } from "./RSVPCounter";
+import { RSVPCountsRow } from "./events/RSVPCountsRow";
 import { fmtDateTime } from "../utils/format";
 
 const colors = {
@@ -106,7 +106,6 @@ export function EventDateCard({
         style={{
           padding: '8px 16px',
           borderRadius: '20px',
-          border: 'none',
           background: isActive
             ? `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`
             : `${colors.dark}cc`,
@@ -218,7 +217,7 @@ export function EventDateCard({
       {/* RSVP Counts */}
       {counts && (counts.voy > 0 || counts.interesado > 0 || counts.no_voy > 0) && (
         <div style={{ marginBottom: '16px' }}>
-          <RSVPCounter counts={counts} variant="compact" />
+          <RSVPCountsRow counts={counts} variant="compact" />
         </div>
       )}
 

@@ -5,7 +5,7 @@ import { useEventLiveById } from "../../hooks/useLive";
 import { useEventSchedules } from "../../hooks/useEventSchedules";
 import { useEventPrices } from "../../hooks/useEventPrices";
 import { useTags } from "../../hooks/useTags";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { canEditEventDate } from "../../lib/access";
 import { useToast } from "../../components/Toast";
 import { Breadcrumbs } from "../../components/Breadcrumbs";

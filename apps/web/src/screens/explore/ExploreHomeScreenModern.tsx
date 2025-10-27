@@ -68,34 +68,35 @@ export default function ExploreHomeScreen() {
 
   // Estados para los filtros
   const [filters, setFilters] = useState<FilterState>({
-    tipo: 'eventos',
-    ritmo: null,
-    zona: null,
-    fecha: null,
-    precio: null,
-    nivel: null
+    search: '',
+    perfiles: ['eventos'],
+    ritmos: [],
+    zonas: []
   });
 
   // Queries para obtener datos
-  const { data: eventos, isLoading: eventosLoading } = useExploreQuery('eventos', {
-    limit: 6,
-    ...(filters.ritmo && { ritmo: filters.ritmo }),
-    ...(filters.zona && { zona: filters.zona }),
-    ...(filters.fecha && { fecha: filters.fecha }),
-    ...(filters.precio && { precio: filters.precio }),
-    ...(filters.nivel && { nivel: filters.nivel })
+  const { data: eventos, isLoading: eventosLoading } = useExploreQuery({
+    type: 'eventos',
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 6
   });
 
-  const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery('organizadores', {
-    limit: 4,
-    ...(filters.ritmo && { ritmo: filters.ritmo }),
-    ...(filters.zona && { zona: filters.zona })
+  const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery({
+    type: 'organizadores',
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 4
   });
 
-  const { data: maestros, isLoading: maestrosLoading } = useExploreQuery('maestros', {
-    limit: 4,
-    ...(filters.ritmo && { ritmo: filters.ritmo }),
-    ...(filters.zona && { zona: filters.zona })
+  const { data: maestros, isLoading: maestrosLoading } = useExploreQuery({
+    type: 'maestros',
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 4
   });
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -286,7 +287,7 @@ export default function ExploreHomeScreen() {
             left: '20%',
             width: '80px',
             height: '80px',
-            background: colors.gradients.accent,
+            background: colors.gradients.deep,
             borderRadius: '50%',
             animation: 'float 5s ease-in-out infinite',
             backdropFilter: 'blur(10px)',
@@ -477,9 +478,9 @@ export default function ExploreHomeScreen() {
                   </motion.div>
                 ))}
               </div>
-            ) : eventos && eventos.length > 0 ? (
+            ) : eventos && eventos.pages?.[0]?.data?.length > 0 ? (
               <div className="explore-grid">
-                {eventos.map((evento: any, index: number) => (
+                {eventos.pages[0].data.map((evento: any, index: number) => (
                   <motion.div
                     key={evento.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -487,7 +488,7 @@ export default function ExploreHomeScreen() {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -4, scale: 1.02 }}
                   >
-                    <EventCard evento={evento} />
+                    <EventCard item={evento} />
                   </motion.div>
                 ))}
               </div>
@@ -538,9 +539,9 @@ export default function ExploreHomeScreen() {
                   </motion.div>
                 ))}
               </div>
-            ) : organizadores && organizadores.length > 0 ? (
+            ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
               <div className="explore-grid">
-                {organizadores.map((organizador: any, index: number) => (
+                {organizadores.pages[0].data.map((organizador: any, index: number) => (
                   <motion.div
                     key={organizador.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -548,7 +549,7 @@ export default function ExploreHomeScreen() {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -4, scale: 1.02 }}
                   >
-                    <OrganizerCard organizador={organizador} />
+                    <OrganizerCard item={organizador} />
                   </motion.div>
                 ))}
               </div>
@@ -599,9 +600,9 @@ export default function ExploreHomeScreen() {
                   </motion.div>
                 ))}
               </div>
-            ) : maestros && maestros.length > 0 ? (
+            ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
               <div className="explore-grid">
-                {maestros.map((maestro: any, index: number) => (
+                {maestros.pages[0].data.map((maestro: any, index: number) => (
                   <motion.div
                     key={maestro.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -609,7 +610,7 @@ export default function ExploreHomeScreen() {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -4, scale: 1.02 }}
                   >
-                    <TeacherCard maestro={maestro} />
+                    <TeacherCard item={maestro} />
                   </motion.div>
                 ))}
               </div>

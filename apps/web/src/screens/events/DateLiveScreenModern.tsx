@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from '@/contexts/AuthProvider';
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
@@ -289,7 +289,7 @@ export function DateLiveScreen() {
             left: '20%',
             width: '80px',
             height: '80px',
-            background: colors.gradients.accent,
+            background: colors.gradients.secondary,
             borderRadius: '50%',
             animation: 'float 5s ease-in-out infinite',
             backdropFilter: 'blur(10px)',
@@ -374,22 +374,7 @@ export function DateLiveScreen() {
               
               <ShareLink 
                 url={window.location.href}
-                title={date.nombre || social?.nombre || 'Evento'}
-                style={{
-                  padding: `${spacing[4]} ${spacing[8]}`,
-                  borderRadius: borderRadius.full,
-                  border: 'none',
-                  background: colors.gradients.deep,
-                  color: colors.gray[50],
-                  fontSize: typography.fontSize.lg,
-                  fontWeight: typography.fontWeight.bold,
-                  cursor: 'pointer',
-                  boxShadow: colors.shadows.glow,
-                  transition: transitions.normal,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing[2]
-                }}
+                label="Compartir Evento"
               />
             </motion.div>
           </motion.div>
