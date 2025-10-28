@@ -66,6 +66,19 @@ function baseSelect(type: ExploreType) {
       return { table: "profiles_academy", select: "*" };    // usar profiles_academy
     case "marcas":         
       return { table: "profiles_brand", select: "*" };     // idem
+    case "sociales":
+      // Eventos padre (sociales)
+      return { table: "events_parent", select: `
+        id,
+        organizer_id,
+        nombre,
+        descripcion,
+        biografia,
+        sede_general,
+        estilos,
+        zonas,
+        created_at
+      ` };
     case "usuarios":       
       return { table: "profiles_user", select: "user_id, display_name, avatar_url, ritmos, zonas, bio" };
     default:               

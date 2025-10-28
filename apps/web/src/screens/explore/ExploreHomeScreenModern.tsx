@@ -6,6 +6,7 @@ import { useExploreQuery } from "../../hooks/useExploreQuery";
 import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
+import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import FilterBar, { FilterState } from "../../components/FilterBar";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
@@ -108,35 +109,58 @@ export default function ExploreHomeScreen() {
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
           </div>
 
-          <Section title="Eventos" toAll="/explore/eventos">
+          <Section title="Fechas" toAll="/explore/eventos">
             {eventosLoading ? (
               <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : eventos && eventos.pages?.[0]?.data?.length > 0 ? (
-              <div className="grid">
-                {eventos.pages[0].data.map((evento: any, idx: number) => (
+              <HorizontalSlider
+                items={eventos.pages[0].data}
+                renderItem={(evento: any, idx: number) => (
                   <motion.div key={evento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
                     <EventCard item={evento} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
+          </Section>
+
+          <Section title="Sociales" toAll="/explore/sociales">
+            {/* Usa el mismo hook pero con type 'sociales' */}
+            {(() => {
+              const { data, isLoading } = useExploreQuery({ type: 'sociales' as any, q: filters.search, ritmos: filters.ritmos, zonas: filters.zonas, pageSize: 8 });
+              if (isLoading) return <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
+              const list = data?.pages?.[0]?.data || [];
+              return list.length ? (
+                <HorizontalSlider
+                  items={list}
+                  renderItem={(social: any, idx: number) => (
+                    <motion.div key={social.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16 }}>
+                      {/* Reutilizar OrganizerCard a falta de SocialCard propia */}
+                      <OrganizerCard item={{ id: social.organizer_id, nombre_publico: social.nombre, bio: social.descripcion }} />
+                    </motion.div>
+                  )}
+                />
+              ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
+            })()}
           </Section>
 
           <Section title="Organizadores" toAll="/explore/organizadores">
             {organizadoresLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
-              <div className="grid">
-                {organizadores.pages[0].data.map((organizador: any, idx: number) => (
+              <HorizontalSlider
+                items={organizadores.pages[0].data}
+                renderItem={(organizador: any, idx: number) => (
                   <motion.div key={organizador.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
                     <OrganizerCard item={organizador} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -146,14 +170,15 @@ export default function ExploreHomeScreen() {
             {maestrosLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
-              <div className="grid">
-                {maestros.pages[0].data.map((maestro: any, idx: number) => (
+              <HorizontalSlider
+                items={maestros.pages[0].data}
+                renderItem={(maestro: any, idx: number) => (
                   <motion.div key={maestro.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
                     <TeacherCard item={maestro} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -163,14 +188,15 @@ export default function ExploreHomeScreen() {
             {marcasLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
-              <div className="grid">
-                {marcas.pages[0].data.map((brand: any, idx: number) => (
+              <HorizontalSlider
+                items={marcas.pages[0].data}
+                renderItem={(brand: any, idx: number) => (
                   <motion.div key={brand.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
                     <BrandCard item={brand} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}

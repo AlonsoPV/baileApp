@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ExploreType = "eventos" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
+export type ExploreType = "eventos" | "sociales" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
 
 export type ExploreFilters = {
   type: ExploreType;
