@@ -802,9 +802,9 @@ export default function AcademyProfileLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              id="academy-profile-photo-gallery"
-              data-baile-id="academy-profile-photo-gallery"
-              data-test-id="academy-profile-photo-gallery"
+              id="user-profile-photo-gallery"
+              data-baile-id="user-profile-photo-gallery"
+              data-test-id="user-profile-photo-gallery"
               style={{
                 marginBottom: '2rem',
                 padding: '2rem',

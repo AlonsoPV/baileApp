@@ -42,6 +42,9 @@ export default function TeacherProfileLive() {
 
   const ritmoNombres = getRitmoNombres(teacher.ritmos || []);
   const zonaNombres = getZonaNombres(teacher.zonas || []);
+  const teacherPhotos: string[] = Array.isArray((teacher as any)?.media)
+    ? ((teacher as any).media as any[]).filter(m => m?.type === 'image').map(m => m.url).filter(Boolean)
+    : [];
 
   return (
     <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], position: 'relative' }}>
@@ -79,22 +82,40 @@ export default function TeacherProfileLive() {
       </motion.div>
 
       <div className="org-container" style={{ padding: spacing[8], position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-        {/* Foto principal (slot p1) */}
-        {getMediaBySlot((teacher as any)?.media || [], 'p1') && (
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[6], borderRadius: borderRadius['2xl'] }}>
-            <h3 style={{ fontSize: typography.fontSize['xl'], margin: 0, marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>📷 Foto Principal</h3>
-            <div style={{ width: '100%', maxWidth: 520, aspectRatio: '4 / 3', borderRadius: 12, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
-              <ImageWithFallback src={getMediaBySlot((teacher as any)?.media || [], 'p1')?.url || ''} alt="Foto principal" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          </motion.section>
-        )}
-
         {/* Video principal (slot v1) */}
         {getMediaBySlot((teacher as any)?.media || [], 'v1') && (
           <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[6], borderRadius: borderRadius['2xl'] }}>
             <h3 style={{ fontSize: typography.fontSize['xl'], margin: 0, marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>🎥 Video Principal</h3>
             <div style={{ width: '100%', maxWidth: 640, aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
               <video src={getMediaBySlot((teacher as any)?.media || [], 'v1')?.url || ''} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          </motion.section>
+        )}
+
+        {/* Carrusel de fotos */}
+        {teacherPhotos.length > 0 && (
+          <motion.section id="user-profile-photo-gallery" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
+              <div>
+                <h3 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>Galería</h3>
+                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>{teacherPhotos.length} elemento{teacherPhotos.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            {/* Carousel */}
+            <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto' }}>
+              {/* Main image */}
+              <div style={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: 16, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)' }}>
+                <ImageWithFallback src={teacherPhotos[0]} alt="Foto 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              {/* Thumbnails */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {teacherPhotos.map((p, i) => (
+                  <div key={i} style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)' }}>
+                    <img src={p} alt={`Miniatura ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.section>
         )}
