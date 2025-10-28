@@ -94,7 +94,7 @@ export function useDatesByParent(parentId?: number, publishedOnly?: boolean) {
       
       let q = supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, estado_publicacion, created_at, updated_at")
+        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
         .eq("parent_id", parentId!);
       
       if (publishedOnly) q = q.eq("estado_publicacion", "publicado");
@@ -135,7 +135,14 @@ export function useCreateDate() {
       return data as EventDate;
     },
     onSuccess: (d) => {
+      // Claves antiguas usadas en algunas vistas
       qc.invalidateQueries({ queryKey: ["dates", d.parent_id] });
+      qc.invalidateQueries({ queryKey: ["date", d.id] });
+      qc.invalidateQueries({ queryKey: ["dates"] });
+
+      // Claves nuevas/unificadas usadas por hooks de eventos modernos
+      qc.invalidateQueries({ queryKey: ["event", "dates", d.parent_id] });
+      qc.invalidateQueries({ queryKey: ["event", "date", d.id] });
     }
   });
 }
@@ -164,9 +171,14 @@ export function useUpdateDate() {
       return data as EventDate;
     },
     onSuccess: (data) => {
+      // Claves antiguas
       qc.invalidateQueries({ queryKey: ["dates"] });
       qc.invalidateQueries({ queryKey: ["dates", data.parent_id] });
       qc.invalidateQueries({ queryKey: ["date", data.id] });
+
+      // Claves nuevas/unificadas
+      qc.invalidateQueries({ queryKey: ["event", "dates", data.parent_id] });
+      qc.invalidateQueries({ queryKey: ["event", "date", data.id] });
     }
   });
 }
