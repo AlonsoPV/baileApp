@@ -9,6 +9,7 @@ import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import EventInfoGrid from "../../components/events/EventInfoGrid";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -63,7 +64,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
           ▼
         </motion.span>
       </motion.button>
-      
+
       <motion.div
         initial={false}
         animate={{
@@ -248,8 +249,8 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 height: '60px',
                 borderRadius: borderRadius.lg,
                 overflow: 'hidden',
-                border: currentIndex === index 
-                  ? `3px solid ${colors.primary[500]}` 
+                border: currentIndex === index
+                  ? `3px solid ${colors.primary[500]}`
                   : `2px solid ${colors.glass.medium}`,
                 cursor: 'pointer',
                 background: 'transparent',
@@ -305,7 +306,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 objectFit: 'contain'
               }}
             />
-            
+
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -436,11 +437,11 @@ export function OrganizerProfileLive() {
   // Preparar items de "Fechas" (fechas publicadas)
   const getUpcomingDates = () => {
     const upcomingItems: any[] = [];
-    
+
     eventDates?.forEach((date, index) => {
       const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
-      
-      const horaFormateada = date.hora_inicio && date.hora_fin 
+
+      const horaFormateada = date.hora_inicio && date.hora_fin
         ? `${date.hora_inicio} - ${date.hora_fin}`
         : date.hora_inicio || '';
 
@@ -450,11 +451,11 @@ export function OrganizerProfileLive() {
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
         href: `/social/fecha/${date.id}`,
-        cover: Array.isArray(date.media) && date.media.length > 0 
+        cover: Array.isArray(date.media) && date.media.length > 0
           ? (date.media[0] as any)?.url || date.media[0]
           : undefined,
       };
-      
+
       upcomingItems.push(item);
     });
 
@@ -550,9 +551,9 @@ export function OrganizerProfileLive() {
           }
         }
       `}</style>
-      
-    <div style={{
-      minHeight: '100vh',
+
+      <div style={{
+        minHeight: '100vh',
         background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
         color: colors.gray[50],
         width: '100%',
@@ -571,7 +572,7 @@ export function OrganizerProfileLive() {
           animation: 'float 8s ease-in-out infinite',
           zIndex: 0
         }} />
-        
+
         <div style={{
           position: 'absolute',
           top: '20%',
@@ -584,7 +585,7 @@ export function OrganizerProfileLive() {
           animation: 'float 6s ease-in-out infinite reverse',
           zIndex: 0
         }} />
-        
+
         <div style={{
           position: 'absolute',
           bottom: '20%',
@@ -609,10 +610,10 @@ export function OrganizerProfileLive() {
         </div>
 
         {/* Banner Principal */}
-        <motion.div 
+        <motion.div
           id="organizer-banner"
           data-test-id="organizer-banner"
-          className="org-banner" 
+          className="org-banner"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -632,7 +633,7 @@ export function OrganizerProfileLive() {
         >
           <div className="org-banner-grid">
             {/* Columna 1: Logo del Organizador */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
@@ -642,10 +643,10 @@ export function OrganizerProfileLive() {
                 alignItems: 'center'
               }}
             >
-              <div 
+              <div
                 id="organizer-avatar"
                 data-test-id="organizer-avatar"
-                className="org-banner-avatar" 
+                className="org-banner-avatar"
                 style={{
                   width: '250px',
                   height: '250px',
@@ -679,9 +680,9 @@ export function OrganizerProfileLive() {
                     color: colors.light
                   }}>
                     {org.nombre_publico?.[0]?.toUpperCase() || '🎤'}
-        </div>
+                  </div>
                 )}
-                
+
                 {/* Efecto de brillo */}
                 <div className="shimmer-effect" style={{
                   position: 'absolute',
@@ -691,11 +692,11 @@ export function OrganizerProfileLive() {
                   bottom: 0,
                   borderRadius: '50%'
                 }} />
-      </div>
+              </div>
             </motion.div>
 
             {/* Columna 2: Nombre, Chips y Estado */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
@@ -706,7 +707,7 @@ export function OrganizerProfileLive() {
                 justifyContent: 'center'
               }}
             >
-              <h1 
+              <h1
                 id="organizer-name"
                 data-test-id="organizer-name"
                 className="gradient-text"
@@ -722,30 +723,30 @@ export function OrganizerProfileLive() {
               </h1>
 
               {/* Chips de ritmos y zonas */}
-              <div 
+              <div
                 id="organizer-chips"
                 data-test-id="organizer-chips"
-                style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
                   gap: spacing[2],
                   marginBottom: spacing[2]
                 }}
               >
                 {getRitmoNombres().map((nombre) => (
-                  <Chip 
-                    key={`r-${nombre}`} 
-                    label={nombre} 
-                    icon="🎵" 
-                    variant="ritmo" 
+                  <Chip
+                    key={`r-${nombre}`}
+                    label={nombre}
+                    icon="🎵"
+                    variant="ritmo"
                   />
                 ))}
                 {getZonaNombres().map((nombre) => (
-                  <Chip 
-                    key={`z-${nombre}`} 
-                    label={nombre} 
-                    icon="📍" 
-                    variant="zona" 
+                  <Chip
+                    key={`z-${nombre}`}
+                    label={nombre}
+                    icon="📍"
+                    variant="zona"
                   />
                 ))}
               </div>
@@ -757,16 +758,16 @@ export function OrganizerProfileLive() {
                   style={{
                     padding: `${spacing[2]} ${spacing[4]}`,
                     borderRadius: borderRadius.full,
-                    background: org.estado_aprobacion === 'aprobado' 
-                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)` 
+                    background: org.estado_aprobacion === 'aprobado'
+                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)`
                       : colors.gradients.secondary,
                     border: `2px solid ${org.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
                     color: colors.light,
                     fontSize: typography.fontSize.sm,
                     fontWeight: typography.fontWeight.bold,
                     backdropFilter: 'blur(10px)',
-                    boxShadow: org.estado_aprobacion === 'aprobado' 
-                      ? `0 4px 16px ${colors.success}66` 
+                    boxShadow: org.estado_aprobacion === 'aprobado'
+                      ? `0 4px 16px ${colors.success}66`
                       : `0 4px 16px ${colors.secondary[500]}66`,
                     display: 'flex',
                     alignItems: 'center',
@@ -783,7 +784,7 @@ export function OrganizerProfileLive() {
         </motion.div>
 
         {/* Contenido Principal */}
-        <div className="org-container" style={{ 
+        <div className="org-container" style={{
           padding: spacing[8],
           position: 'relative',
           zIndex: 1,
@@ -792,44 +793,44 @@ export function OrganizerProfileLive() {
           width: '100%'
         }}>
           {/* Biografía */}
-        {org.bio && (
-          <motion.section
+          {org.bio && (
+            <motion.section
               id="organizer-bio"
               data-test-id="organizer-bio"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               className="glass-card"
-            style={{
+              style={{
                 marginBottom: spacing[8],
                 padding: spacing[6],
                 borderRadius: borderRadius['2xl']
               }}
             >
-              <h3 style={{ 
-                fontSize: typography.fontSize['2xl'], 
-                marginBottom: spacing[4], 
+              <h3 style={{
+                fontSize: typography.fontSize['2xl'],
+                marginBottom: spacing[4],
                 fontWeight: typography.fontWeight.bold,
                 color: colors.light
               }}>
-              💬 Sobre nosotros
-            </h3>
-              <p style={{ 
-                lineHeight: typography.lineHeight.relaxed, 
-                opacity: 0.9, 
+                💬 Sobre nosotros
+              </h3>
+              <p style={{
+                lineHeight: typography.lineHeight.relaxed,
+                opacity: 0.9,
                 fontSize: typography.fontSize.lg,
                 color: colors.light
               }}>
-              {org.bio}
-            </p>
-          </motion.section>
-        )}
+                {org.bio}
+              </p>
+            </motion.section>
+          )}
 
           {/* Redes Sociales */}
           <div
             id="organizer-social-media"
             data-test-id="organizer-social-media"
           >
-            <SocialMediaSection 
+            <SocialMediaSection
               respuestas={(org as any)?.respuestas}
               redes_sociales={(org as any)?.redes_sociales}
               title="Redes Sociales"
@@ -850,7 +851,7 @@ export function OrganizerProfileLive() {
             id="organizer-invited-masters"
             data-test-id="organizer-invited-masters"
           >
-            <InvitedMastersSection 
+            <InvitedMastersSection
               masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
               title="🎭 Maestros Invitados"
               showTitle={true}
@@ -859,20 +860,20 @@ export function OrganizerProfileLive() {
           </div>
 
           {/* Próximas Fechas del Organizador */}
-        {inviteItems.length > 0 && (
-          <motion.section
+          {inviteItems.length > 0 && (
+            <motion.section
               id="organizer-upcoming-dates"
               data-test-id="organizer-upcoming-dates"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               className="glass-card"
               style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
               }}
-          >
-            <div style={{
+            >
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: spacing[4],
@@ -883,8 +884,8 @@ export function OrganizerProfileLive() {
                   height: '60px',
                   borderRadius: '50%',
                   background: colors.gradients.primary,
-                display: 'flex',
-                alignItems: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
                   boxShadow: colors.shadows.glow
@@ -900,7 +901,7 @@ export function OrganizerProfileLive() {
                   }}>
                     Próximas Fechas
                   </h3>
-              <p style={{
+                  <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
@@ -909,22 +910,22 @@ export function OrganizerProfileLive() {
                     {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-            </div>
+              </div>
 
               {/* Cards de fechas */}
-              <div style={{ 
+              <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
                 gap: spacing[4]
               }}>
-              {inviteItems.map((ev, i) => (
-                <motion.div
-                  key={i}
+                {inviteItems.map((ev, i) => (
+                  <motion.div
+                    key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    whileHover={{ 
-                      scale: 1.02, 
+                    whileHover={{
+                      scale: 1.02,
                       y: -4,
                       boxShadow: colors.shadows.lg
                     }}
@@ -970,6 +971,19 @@ export function OrganizerProfileLive() {
                         📍 {ev.place}
                       </p>
                     )}
+
+                    {/* Info Grid resumido para esta fecha */}
+                    <div style={{ marginTop: spacing[4] }}>
+                      <EventInfoGrid date={{
+                        lugar: ev.place,
+                        direccion: undefined,
+                        ciudad: undefined,
+                        referencias: undefined,
+                        requisitos: undefined,
+                        cronograma: [],
+                        costos: []
+                      }} />
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -985,40 +999,40 @@ export function OrganizerProfileLive() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               className="glass-card"
-                            style={{
+              style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
               }}
             >
-                          <div style={{
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: spacing[4],
                 marginBottom: spacing[6]
               }}>
-                        <div style={{
+                <div style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
                   background: colors.gradients.secondary,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   fontSize: typography.fontSize['2xl'],
                   boxShadow: `0 8px 24px ${colors.secondary[500]}40`
-                        }}>
+                }}>
                   🎭
-                        </div>
+                </div>
                 <div>
-                      <h3 style={{
+                  <h3 style={{
                     fontSize: typography.fontSize['2xl'],
                     fontWeight: typography.fontWeight.bold,
                     margin: 0,
                     color: colors.light
                   }}>
                     Mis Sociales
-                      </h3>
+                  </h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1027,15 +1041,15 @@ export function OrganizerProfileLive() {
                   }}>
                     {parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}
                   </p>
-                        </div>
+                </div>
               </div>
-              
+
               <div style={{ display: 'grid', gap: spacing[4] }}>
                 {parents.map((parent) => (
                   <motion.div
                     key={parent.id}
-                    whileHover={{ 
-                      scale: 1.02, 
+                    whileHover={{
+                      scale: 1.02,
                       y: -4,
                       boxShadow: colors.shadows.lg
                     }}
@@ -1087,22 +1101,22 @@ export function OrganizerProfileLive() {
                     >
                       📅 Ver próximas fechas
                     </motion.button>
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-        )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
 
           {/* Galería de Fotos del Organizador */}
           {carouselPhotos.length > 0 && (
-          <motion.section
+            <motion.section
               id="organizer-profile-photo-gallery"
               data-test-id="organizer-profile-photo-gallery"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="glass-card"
-            style={{
+              style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
@@ -1146,21 +1160,21 @@ export function OrganizerProfileLive() {
                   </p>
                 </div>
               </div>
-            
+
               <CarouselComponent photos={carouselPhotos} />
-          </motion.section>
-        )}
+            </motion.section>
+          )}
 
           {/* Sección de Videos del Organizador */}
           {videos.length > 0 && (
-          <motion.section
+            <motion.section
               id="organizer-profile-video-gallery"
               data-test-id="organizer-profile-video-gallery"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               className="glass-card"
-            style={{
+              style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
                 borderRadius: borderRadius['2xl']
@@ -1204,14 +1218,14 @@ export function OrganizerProfileLive() {
                   </p>
                 </div>
               </div>
-            
+
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
                 gap: spacing[6]
               }}>
                 {videos.map((video, index) => (
-                <motion.div
+                  <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -1221,12 +1235,12 @@ export function OrganizerProfileLive() {
                       y: -8,
                       boxShadow: colors.shadows.lg
                     }}
-                  style={{
+                    style={{
                       aspectRatio: '16/9',
                       borderRadius: borderRadius.xl,
                       overflow: 'hidden',
                       border: `2px solid ${colors.glass.medium}`,
-                    cursor: 'pointer',
+                      cursor: 'pointer',
                       transition: transitions.normal,
                       position: 'relative',
                       background: colors.dark[400],
@@ -1314,7 +1328,7 @@ export function OrganizerProfileLive() {
                   </p>
                 </div>
               </div>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
                 {/* FAQ Item: Música */}
                 {(org as any)?.respuestas?.musica_tocaran && (
@@ -1323,7 +1337,7 @@ export function OrganizerProfileLive() {
                     answer={(org as any)?.respuestas?.musica_tocaran}
                   />
                 )}
-                
+
                 {/* FAQ Item: Estacionamiento */}
                 {(org as any)?.respuestas?.hay_estacionamiento && (
                   <FAQAccordion
@@ -1331,11 +1345,11 @@ export function OrganizerProfileLive() {
                     answer={(org as any)?.respuestas?.hay_estacionamiento}
                   />
                 )}
-            </div>
-          </motion.section>
-        )}
+              </div>
+            </motion.section>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { routes } from '@/routes/registry';
-import { isPinVerified } from '@/lib/pin';
+import { isPinVerified, needsPinVerify } from '@/lib/pin';
 
 export default function OnboardingGate() {
   const { user, loading: authLoading } = useAuth();
@@ -75,8 +75,8 @@ export default function OnboardingGate() {
     // Enforce PIN verification for protected areas
     const onPinRoutes = location.pathname.startsWith(routes.auth.pin) || location.pathname.startsWith(routes.auth.pinSetup);
     if (!onPinRoutes) {
-      // Require local verification per user
-      if (!isPinVerified(user.id)) {
+      // Solo exigir PIN justo después de login o si no verificado aún en esta sesión
+      if (needsPinVerify(user.id) && !isPinVerified(user.id)) {
         // Decide whether user has PIN configured – if not, redirect to setup
         // Defer check to server by letting PinLogin/Setup handle flow; send to PIN login
         return <Navigate to={routes.auth.pin} replace />;

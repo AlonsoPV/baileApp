@@ -417,7 +417,7 @@ export default function EventParentPublicScreen() {
         {/* Contenido Principal */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
           {/* Navegación de Secciones */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -450,7 +450,7 @@ export default function EventParentPublicScreen() {
             }}>
               Toda la información que necesitas saber sobre este social
             </p>
-          </motion.div>
+          </motion.div> */}
 
           {/* Header Mejorado */}
           <div style={{

@@ -16,21 +16,27 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   return (
     <LiveLink to={urls.academyLive(id)} asCard={false}>
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ scale: 1.02, y: -4 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
         whileTap={{ scale: 0.98 }}
         style={{
           position: 'relative',
-          borderRadius: 16,
-          background: 'rgba(18, 18, 24, 0.96)',
-          border: '1px solid rgba(30,136,229,0.25)',
-          padding: 16,
+          borderRadius: '1.25rem',
+          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
+          border: '1px solid rgba(240, 147, 251, 0.2)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          minHeight: '200px',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(30,136,229,0.35)', background: 'rgba(30,136,229,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {avatar ? (
@@ -40,9 +46,9 @@ export default function AcademyCard({ item }: AcademyCardProps) {
             )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#F5F5F5', fontWeight: 700, fontSize: 16, lineHeight: 1.25 }}>{nombre}</div>
+            <div style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.25, background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{nombre}</div>
             {bio && (
-              <div style={{ color: 'rgba(245,245,245,0.7)', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bio}</div>
+              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bio}</div>
             )}
           </div>
         </div>

@@ -27,26 +27,33 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
         marginBottom: spacing[4],
         padding: `0 ${spacing[2]}`
       }}>
-        <h2 style={{ 
-          fontSize: typography.fontSize['xl'], 
-          fontWeight: typography.fontWeight.bold,
-          color: colors.gray[50],
-          margin: 0
-        }}>
-          {title}
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+          <div style={{ width: 8, height: 32, borderRadius: 8, background: 'linear-gradient(180deg, #f093fb, #FFD166)' }} />
+          <h2 style={{ 
+            fontSize: typography.fontSize['2xl'], 
+            fontWeight: typography.fontWeight.extrabold,
+            margin: 0,
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            {title}
+          </h2>
+        </div>
         <Link
           to={toAll}
           style={{
             fontSize: typography.fontSize.sm,
-            color: colors.gray[200],
+            color: colors.gray[900],
             textDecoration: 'none',
-            fontWeight: typography.fontWeight.medium,
+            fontWeight: typography.fontWeight.bold,
             padding: `${spacing[1]} ${spacing[3]}`,
-            borderRadius: borderRadius.lg,
-            background: 'rgb(15, 12, 181)',
+            borderRadius: borderRadius.full,
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
             border: `1px solid rgba(255,255,255,0.08)`,
-            transition: transitions.fast
+            transition: transitions.fast,
+            boxShadow: '0 8px 24px rgba(240,147,251,0.15)'
           }}
         >
           Ver todo →

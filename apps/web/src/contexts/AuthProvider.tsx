@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
-import { clearAllPinVerified } from '@/lib/pin';
+import { clearAllPinVerified, setNeedsPinVerify } from '@/lib/pin';
 
 type AuthCtx = {
   session: import('@supabase/supabase-js').Session | null;
@@ -81,6 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // 🎭 Resetear modo de perfil a "usuario" por defecto
       useProfileMode.getState().setMode("usuario");
+
+      // 🔐 Marcar que esta sesión requiere verificación de PIN (solo por sesión)
+      setNeedsPinVerify(data.user.id);
     }
     
     return { data, error };

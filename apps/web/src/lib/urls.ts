@@ -12,7 +12,7 @@
  * @param id ID del organizador
  */
 export function organizerLive(id: number | string): string {
-  return `/organizer/${id}`;
+  return `/profile/organizer/${id}`;
 }
 
 /**
@@ -28,7 +28,7 @@ export function eventDateLive(id: number | string): string {
  * @param id ID del evento padre (events_parent.id)
  */
 export function eventParentLive(id: number | string): string {
-  return `/events/parent/${id}`;
+  return `/social/${id}`;
 }
 
 /**

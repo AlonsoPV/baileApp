@@ -21,26 +21,26 @@ export default function EventCard({ item }: EventCardProps) {
   return (
     <LiveLink to={urls.eventDateLive(eventId)} asCard={false}>
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -4, boxShadow: '0 10px 24px rgba(0,0,0,0.45)' }}
-        whileTap={{ scale: 0.99 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+        whileTap={{ scale: 0.98 }}
         style={{
           position: 'relative',
-          borderRadius: 16,
-          background: 'linear-gradient(135deg, #0f141a 0%, #121722 100%)',
-          padding: '16px',
+          borderRadius: '1.25rem',
+          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
-          transition: 'box-shadow .2s ease, transform .2s ease, border-color .2s ease',
-          
+          border: '1px solid rgba(240, 147, 251, 0.2)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          minHeight: '200px',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, rgba(30,136,229,0.7), rgba(124,77,255,0.7))' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
 
         {(() => {
           const avatarUrl = (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
@@ -57,8 +57,9 @@ export default function EventCard({ item }: EventCardProps) {
         })()}
 
         <div style={{
-          fontSize: '1.05rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-          color: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
+          fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
+          background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
         }}>
           <motion.span aria-hidden whileHover={{ scale: 1.05, rotate: 4 }} style={{ display: 'inline-block', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))' }}>🎉</motion.span>
           <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nombre}</span>
