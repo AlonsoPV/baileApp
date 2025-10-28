@@ -45,7 +45,7 @@ function buildWhatsAppLink(v: string) {
 export default function SocialMediaSection({
   respuestas,
   redes_sociales,
-  title = "🔗 Redes Sociales",
+  title = "Redes Sociales",
   showTitle = true,
   style,
   availablePlatforms = ['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp'],
@@ -59,30 +59,31 @@ export default function SocialMediaSection({
   };
   console.log('[SocialMediaSection] Redes combinadas:', redes);
 
-  const entries = ([
-    ["instagram", redes.instagram],
-    ["tiktok",    redes.tiktok],
-    ["youtube",   redes.youtube],
-    ["facebook",  redes.facebook],
-    ["whatsapp",  redes.whatsapp],
-  ] as const).filter(([k]) => availablePlatforms.includes(k)).flatMap(([k, v]) => {
-    console.log(`[SocialMediaSection] Procesando ${k}:`, v, 'isNonEmpty:', isNonEmpty(v as string | null));
-    if (!isNonEmpty(v as string | null)) return [];
-    if (k === "whatsapp") {
-      const link = buildWhatsAppLink(v as string);
-      return link ? [[k, link]] : [];
-    }
-    const clean = sanitizeUrl(v as string);
-    // convierte @handle a URLs si quieres (opcional)
-    const url =
-      k === "instagram" && !/^https?:\/\//i.test(clean) ? `https://instagram.com/${clean}` :
-      k === "tiktok"    && !/^https?:\/\//i.test(clean) ? `https://tiktok.com/@${clean}` :
-      k === "youtube"   && !/^https?:\/\//i.test(clean) ? `https://youtube.com/@${clean}` :
-      k === "facebook"  && !/^https?:\/\//i.test(clean) ? `https://facebook.com/${clean}` :
-      clean;
+  const entries: [string, string][] = [];
+  
+  // Procesar cada plataforma disponible
+  availablePlatforms.forEach(platform => {
+    const value = redes[platform as keyof typeof redes];
+    console.log(`[SocialMediaSection] Procesando ${platform}:`, value, 'isNonEmpty:', isNonEmpty(value as string | null));
+    
+    if (!isNonEmpty(value as string | null)) return;
+    
+    if (platform === "whatsapp") {
+      const link = buildWhatsAppLink(value as string);
+      if (link) entries.push([platform, link]);
+    } else {
+      const clean = sanitizeUrl(value as string);
+      // convierte @handle a URLs si quieres (opcional)
+      const url =
+        platform === "instagram" && !/^https?:\/\//i.test(clean) ? `https://instagram.com/${clean}` :
+        platform === "tiktok"    && !/^https?:\/\//i.test(clean) ? `https://tiktok.com/@${clean}` :
+        platform === "youtube"   && !/^https?:\/\//i.test(clean) ? `https://youtube.com/@${clean}` :
+        platform === "facebook"  && !/^https?:\/\//i.test(clean) ? `https://facebook.com/${clean}` :
+        clean;
 
-    return [[k, url]];
-  }) as [string, string][];
+      entries.push([platform, url]);
+    }
+  });
 
   console.log('[SocialMediaSection] Entries finales:', entries);
   console.log('[SocialMediaSection] Entries length:', entries.length);
