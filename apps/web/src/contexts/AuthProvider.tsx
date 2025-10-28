@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
+import { clearAllPinVerified } from '@/lib/pin';
 
 type AuthCtx = {
   session: import('@supabase/supabase-js').Session | null;
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 🧹 Limpiar cache SIEMPRE, incluso si hay error 403
       // El error 403 puede ser de Supabase pero el logout local funciona
       qc.clear();
+      clearAllPinVerified();
       
       // 🎭 Resetear modo de perfil a "usuario"
       useProfileMode.getState().setMode("usuario");
@@ -106,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('[AuthProvider] Logout error:', e);
       // Limpiar cache de todas formas
       qc.clear();
+      clearAllPinVerified();
       useProfileMode.getState().setMode("usuario");
       return { error: e };
     }

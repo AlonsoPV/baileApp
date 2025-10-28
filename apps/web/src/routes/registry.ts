@@ -11,6 +11,8 @@ export const routes = {
   auth: {
     login: '/auth/login',
     signup: '/auth/signup',
+    pin: '/auth/pin',
+    pinSetup: '/auth/pin/setup',
   },
   
   onboarding: {

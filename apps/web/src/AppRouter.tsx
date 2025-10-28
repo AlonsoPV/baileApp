@@ -71,6 +71,8 @@ import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
 
 // Dev-only components
 import RouteDiagnostics from './dev/RouteDiagnostics';
+import PinSetup from './screens/auth/PinSetup';
+import PinLogin from './screens/auth/PinLogin';
 
 export default function AppRouter() {
   return (
@@ -78,6 +80,8 @@ export default function AppRouter() {
       {/* Auth */}
       <Route path={routes.auth.login} element={<Login />} />
       <Route path={routes.auth.signup} element={<Signup />} />
+      <Route path="/auth/pin/setup" element={<PinSetup />} />
+      <Route path="/auth/pin" element={<PinLogin />} />
 
       {/* Onboarding public */}
       <Route path={routes.onboarding.basics} element={<ProfileBasics />} />
