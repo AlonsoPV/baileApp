@@ -15,6 +15,8 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import ScheduleEditor from "../../components/events/ScheduleEditor";
+import CostsEditor from "../../components/events/CostsEditor";
 import CostosyHorarios from './CostosyHorarios';
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
@@ -50,6 +52,9 @@ export default function AcademyProfileEditor() {
       bio: "",
       estilos: [] as number[],
       zonas: [] as number[],
+      cronograma: [] as any[],
+      costos: [] as any[],
+      ubicaciones: [] as any[],
       redes_sociales: {
         instagram: "",
         facebook: "",
@@ -242,6 +247,28 @@ export default function AcademyProfileEditor() {
               />
             ))}
           </div>
+        </div>
+
+        {/* Horarios (Cronograma) */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            🗓️ Horarios (Cronograma)
+          </h2>
+          <ScheduleEditor
+            value={(form as any).cronograma || []}
+            onChange={(v)=>setField('cronograma' as any, v as any)}
+          />
+        </div>
+
+        {/* Costos y Promociones */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            💰 Costos y Promociones
+          </h2>
+          <CostsEditor
+            value={(form as any).costos || []}
+            onChange={(v)=>setField('costos' as any, v as any)}
+          />
         </div>
 
         {/* Redes Sociales */}

@@ -376,7 +376,7 @@ export default function AcademyProfileLive() {
         fontWeight: '700',
         backdropFilter: 'blur(10px)',
         boxShadow: `0 2px 10px ${academy.estado_aprobacion === 'aprobado' ? '#10B981' : colors.orange}66`,
-        display: 'flex',
+        display: 'inline',
         alignItems: 'center',
         gap: '6px',
       }}
@@ -467,7 +467,8 @@ export default function AcademyProfileLive() {
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.08)',
             }}>
               <div className="academy-banner-avatar">
                 {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
@@ -517,7 +518,7 @@ export default function AcademyProfileLive() {
                 margin: '0 0 1.5rem 0',
                 lineHeight: 1.4
               }}>
-                Academia de Baile live
+                Academia de Baile
               </p>
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
