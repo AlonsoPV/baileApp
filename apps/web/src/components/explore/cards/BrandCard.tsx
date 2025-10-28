@@ -2,14 +2,24 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
+import { useTags } from "../../../hooks/useTags";
 
 type Props = { item: any };
 
 export default function BrandCard({ item }: Props) {
+  const { data: allTags } = useTags() as any;
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Marca";
   const bio = item.bio || "";
-  const avatar = item.avatar_url || null;
+  const avatar = (item.portada_url)
+    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
+    || item.avatar_url || null;
+  const ritmoNombres: string[] = (item.ritmos || [])
+    .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
+    .filter(Boolean);
+  const zonaNombres: string[] = (item.zonas || [])
+    .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
+    .filter(Boolean);
 
   return (
     <LiveLink to={urls.brandLive(id)} asCard={false}>
@@ -51,13 +61,13 @@ export default function BrandCard({ item }: Props) {
           </div>
         </div>
 
-        {item.ritmos?.length > 0 && (
+        {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {item.ritmos.slice(0, 3).map((_: any, i: number) => (
-              <span key={i} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', padding: '4px 8px', borderRadius: 8 }}>🎵 Ritmo</span>
+            {ritmoNombres.slice(0,3).map((name: string, i: number) => (
+              <span key={`r-${i}`} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', padding: '4px 8px', borderRadius: 8 }}>🎵 {name}</span>
             ))}
-            {item.zonas?.slice(0, 2).map((_: any, i: number) => (
-              <span key={`z-${i}`} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', padding: '4px 8px', borderRadius: 8 }}>📍 Zona</span>
+            {zonaNombres.slice(0,2).map((name: string, i: number) => (
+              <span key={`z-${i}`} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', padding: '4px 8px', borderRadius: 8 }}>📍 {name}</span>
             ))}
           </div>
         )}

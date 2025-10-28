@@ -43,7 +43,9 @@ export default function EventCard({ item }: EventCardProps) {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
 
         {(() => {
-          const avatarUrl = (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
+          // Priorizar flyer para fechas; fallback a primera media o avatar conocido
+          const flyer = (item && (item.flyer_url || (Array.isArray(item.media) && (item.media[0]?.url || item.media[0])))) as string | undefined;
+          const avatarUrl = flyer || (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
           const fallback = ((organizador || nombre || 'E') as string).charAt(0).toUpperCase();
           return (
             <div style={{ width: '64px',

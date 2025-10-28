@@ -9,6 +9,8 @@ import { useTeacherMy, useTeacherPublic } from '@/hooks/useTeacher';
 import { Chip } from '../../components/profile/Chip';
 import { colors as themeColors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import CostosyHorarios from './CostosyHorarios';
+import ImageWithFallback from '../../components/ImageWithFallback';
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
 
 const colors = themeColors;
 
@@ -77,6 +79,25 @@ export default function TeacherProfileLive() {
       </motion.div>
 
       <div className="org-container" style={{ padding: spacing[8], position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+        {/* Foto principal (slot p1) */}
+        {getMediaBySlot((teacher as any)?.media || [], 'p1') && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[6], borderRadius: borderRadius['2xl'] }}>
+            <h3 style={{ fontSize: typography.fontSize['xl'], margin: 0, marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>📷 Foto Principal</h3>
+            <div style={{ width: '100%', maxWidth: 520, aspectRatio: '4 / 3', borderRadius: 12, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
+              <ImageWithFallback src={getMediaBySlot((teacher as any)?.media || [], 'p1')?.url || ''} alt="Foto principal" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          </motion.section>
+        )}
+
+        {/* Video principal (slot v1) */}
+        {getMediaBySlot((teacher as any)?.media || [], 'v1') && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[6], borderRadius: borderRadius['2xl'] }}>
+            <h3 style={{ fontSize: typography.fontSize['xl'], margin: 0, marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>🎥 Video Principal</h3>
+            <div style={{ width: '100%', maxWidth: 640, aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
+              <video src={getMediaBySlot((teacher as any)?.media || [], 'v1')?.url || ''} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          </motion.section>
+        )}
         {teacher?.bio && (
           <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
             <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>💬 Sobre mí</h3>

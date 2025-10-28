@@ -14,6 +14,9 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     .slice(0, 2)
     .join('')
     .toUpperCase() || '??';
+  const bannerUrl: string | undefined = (item.portada_url)
+    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
+    || (item.avatar_url);
 
   return (
     <LiveLink to={urls.organizerLive(item.id)} asCard={false}>
@@ -52,34 +55,26 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           opacity: 0.9
         }} />
 
-        {/* Avatar circle with initials */}
+        {/* Avatar circle with banner (fallback to initials) */}
         <div style={{
           width: '64px',
           height: '64px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+          overflow: 'hidden',
+          border: '2px solid rgba(240,147,251,0.35)',
+          background: 'rgba(240,147,251,0.12)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          color: 'white',
           marginBottom: '1rem',
-          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)',
-          position: 'relative'
+          position: 'relative',
+          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.25)'
         }}>
-          {initials}
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{
-              position: 'absolute',
-              inset: '-4px',
-              borderRadius: '50%',
-              border: '2px solid rgba(240, 147, 251, 0.3)',
-              pointerEvents: 'none'
-            }}
-          />
+          {bannerUrl ? (
+            <img src={bannerUrl} alt={item.nombre_publico} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>{initials}</span>
+          )}
         </div>
 
         {/* Nombre del organizador */}
