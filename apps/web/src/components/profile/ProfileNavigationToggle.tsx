@@ -55,7 +55,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     switch (profileType) {
       case 'user': return '/profile';
       case 'organizer': return '/profile/organizer';
-      case 'academy': return '/profile/academy';
+      case 'academy': return '/profile/academy/live';
       case 'brand': return '/profile/brand';
       case 'teacher': return '/profile/teacher/live';
       // teacher live route
@@ -68,7 +68,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     switch (profileType) {
       case 'user': return '/profile/edit';
       case 'organizer': return '/profile/organizer/edit';
-      case 'academy': return '/profile/academy/edit';
+      case 'academy': return '/profile/academy';
       case 'brand': return '/profile/brand/edit';
       case 'teacher': return '/profile/teacher/edit';
       default: return '/profile';

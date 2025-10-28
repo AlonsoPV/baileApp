@@ -131,7 +131,11 @@ export default function AcademyPublicScreen() {
 
         <section className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
           <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>🔗 Redes</h3>
-          <SocialMediaSection availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']} respuestas={{ redes: academy?.redes_sociales }} />
+          <SocialMediaSection
+            availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']}
+            respuestas={{ redes: academy?.redes_sociales || {} }}
+            redes_sociales={academy?.redes_sociales || {}}
+          />
         </section>
 
         {academy?.ubicaciones?.length > 0 && (

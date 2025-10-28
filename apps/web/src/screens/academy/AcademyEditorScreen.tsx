@@ -135,8 +135,8 @@ export default function AcademyEditorScreen() {
         <ProfileNavigationToggle
           currentView="edit"
           profileType="academy"
-          editHref="/profile/academy/edit"
-          liveHref="/profile/academy"
+          editHref="/profile/academy"
+          liveHref="/profile/academy/live"
           onSave={handleSave}
           isSaving={upsert.isPending}
           saveDisabled={!form.nombre_publico}
@@ -177,7 +177,8 @@ export default function AcademyEditorScreen() {
           <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>🔗 Redes</h2>
           <SocialMediaSection 
             availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
-            respuestas={{ redes: form.redes_sociales }}
+            respuestas={{ redes: form.redes_sociales || {} }}
+            redes_sociales={form.redes_sociales || {}}
           />
         </div>
 

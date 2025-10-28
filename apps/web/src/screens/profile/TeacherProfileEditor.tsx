@@ -124,7 +124,8 @@ export default function TeacherProfileEditor() {
             className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>🔗 Redes</h3>
             <SocialMediaSection availablePlatforms={[ 'instagram','tiktok','youtube','facebook','whatsapp' ]}
-              respuestas={{ redes: form.redes_sociales }}
+              respuestas={{ redes: form.redes_sociales || {} }}
+              redes_sociales={form.redes_sociales || {}}
             />
           </motion.div>
 

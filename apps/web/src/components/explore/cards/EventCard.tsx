@@ -28,20 +28,33 @@ export default function EventCard({ item }: EventCardProps) {
         style={{
           position: 'relative',
           borderRadius: 16,
-          background: '#101317',
+          background: 'linear-gradient(135deg, #0f141a 0%, #121722 100%)',
           padding: '16px',
           cursor: 'pointer',
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.06)',
           boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
           transition: 'box-shadow .2s ease, transform .2s ease, border-color .2s ease',
-          aspectRatio: '1 / 1',
+          
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between'
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, rgba(30,136,229,0.7), rgba(124,77,255,0.7))' }} />
+
+        {(() => {
+          const avatarUrl = (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
+          const fallback = ((organizador || nombre || 'E') as string).charAt(0).toUpperCase();
+          return (
+            <div style={{ position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, fontSize: 14 }}>{fallback}</span>
+              )}
+            </div>
+          );
+        })()}
 
         <div style={{
           fontSize: '1.05rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
