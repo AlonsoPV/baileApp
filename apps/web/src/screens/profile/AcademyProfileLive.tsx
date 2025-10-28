@@ -13,6 +13,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import CostosyHorarios from './CostosyHorarios';
+import ClasesLive from '../../components/events/ClasesLive';
 import CrearClase from "../../components/events/CrearClase";
 import { useUpsertAcademy } from "../../hooks/useAcademy";
 
@@ -672,9 +673,9 @@ export default function AcademyProfileLive() {
                 <p style={{ margin: 0, opacity: 0.8, fontSize: '0.9rem' }}>Información de horarios, costos y ubicación</p>
               </div>
             </div>
-            <CostosyHorarios
-              title="Horarios & Costos"
-              date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
+            <ClasesLive
+              cronograma={(academy as any)?.cronograma || []}
+              costos={(academy as any)?.costos || []}
               ubicacion={{
                 nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
                 direccion: (academy as any)?.ubicaciones?.[0]?.direccion,

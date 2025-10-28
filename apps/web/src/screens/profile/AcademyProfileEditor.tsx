@@ -260,7 +260,7 @@ export default function AcademyProfileEditor() {
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             {/* Crear Clase rápida */}
             <div>
-              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>➕ Crear Clase</h3>
+
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
@@ -289,50 +289,6 @@ export default function AcademyProfileEditor() {
               />
             </div>
 
-            {/* Horarios (Cronograma) */}
-            <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>🕒 Horarios de Clases</h3>
-                <span style={{ fontSize: 12, opacity: 0.7 }}>Configura clases, tipo, fecha y horas</span>
-              </div>
-              <EventScheduleEditor
-                schedule={(form as any).cronograma || []}
-                onChangeSchedule={(v: any) => setField('cronograma' as any, v as any)}
-                costos={(form as any).costos || []}
-                onChangeCostos={(v: any) => setField('costos' as any, v as any)}
-                ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-              />
-            </div>
-
-            {/* Costos y Promociones */}
-            <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>💰 Costos y Promociones</h3>
-                <span style={{ fontSize: 12, opacity: 0.7 }}>Precios, paquetes y reglas</span>
-              </div>
-              <EventCostsEditor
-                value={(form as any).costos || []}
-                onChange={(v) => setField('costos' as any, v as any)}
-              />
-            </div>
-
-            {/* Vista previa live de horarios & costos */}
-            <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>👀 Vista previa</h3>
-                <span style={{ fontSize: 12, opacity: 0.7 }}>Así se verá en tu perfil</span>
-              </div>
-              <CostosyHorarios
-                title="Horarios & Costos"
-                date={{ cronograma: (form as any)?.cronograma || [], costos: (form as any)?.costos || [] }}
-                ubicacion={{
-                  nombre: (form as any)?.ubicaciones?.[0]?.nombre,
-                  direccion: (form as any)?.ubicaciones?.[0]?.direccion,
-                  ciudad: (form as any)?.ubicaciones?.[0]?.ciudad,
-                  referencias: (form as any)?.ubicaciones?.[0]?.referencias,
-                }}
-              />
-            </div>
 
           </div>
         </div>

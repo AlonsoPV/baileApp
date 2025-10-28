@@ -11,6 +11,7 @@ import { colors as themeColors, typography, spacing, borderRadius, transitions }
 import CostosyHorarios from './CostosyHorarios';
 import ImageWithFallback from '../../components/ImageWithFallback';
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
+import ClasesLive from '../../components/events/ClasesLive';
 
 const colors = themeColors;
 
@@ -178,16 +179,19 @@ export default function TeacherProfileLive() {
           </motion.section>
         )}
 
-        {/* Horarios, Costos y Ubicación */}
-        <CostosyHorarios
-          date={{ cronograma: (teacher as any)?.cronograma || [], costos: (teacher as any)?.costos || [] }}
-          ubicacion={{
-            nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
-            direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
-            ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
-            referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
-          }}
-        />
+        {/* Clases & Tarifas (visual) */}
+        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+          <ClasesLive
+            cronograma={(teacher as any)?.cronograma || []}
+            costos={(teacher as any)?.costos || []}
+            ubicacion={{
+              nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
+              direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
+              ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
+              referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
+            }}
+          />
+        </motion.section>
       </div>
     </div>
   );
