@@ -7,6 +7,7 @@ import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import FilterBar, { FilterState } from "../../components/FilterBar";
+import BrandCard from "../../components/explore/cards/BrandCard";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -67,7 +68,21 @@ export default function ExploreHomeScreen() {
 
   const { data: eventos, isLoading: eventosLoading } = useExploreQuery({ type: 'eventos', q: filters.search, ritmos: filters.ritmos, zonas: filters.zonas, pageSize: 6 });
   const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery({ type: 'organizadores', q: filters.search, ritmos: filters.ritmos, zonas: filters.zonas, pageSize: 4 });
-  const { data: maestros, isLoading: maestrosLoading } = useExploreQuery({ type: 'maestros', q: filters.search, ritmos: filters.ritmos, zonas: filters.zonas, pageSize: 4 });
+  const { data: maestros, isLoading: maestrosLoading } = useExploreQuery({
+    type: 'maestros',
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 4
+  });
+
+  const { data: marcas, isLoading: marcasLoading } = useExploreQuery({
+    type: 'marcas',
+    q: filters.search,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 4
+  });
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -136,6 +151,23 @@ export default function ExploreHomeScreen() {
                   <motion.div key={maestro.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
                     <TeacherCard item={maestro} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+            )}
+          </Section>
+
+          <Section title="Marcas" toAll="/explore/marcas">
+            {marcasLoading ? (
+              <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+            ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
+              <div className="grid">
+                {marcas.pages[0].data.map((brand: any, idx: number) => (
+                  <motion.div key={brand.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                    <BrandCard item={brand} />
                   </motion.div>
                 ))}
               </div>
