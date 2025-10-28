@@ -47,7 +47,7 @@ type Props = {
   onCancel?: () => void;
   ritmos: Tag[];
   zonas: Tag[];
-  locations?: Array<{ nombre?: string; direccion?: string; referencias?: string }>; // para seleccionar
+  locations?: Array<{ id?: string; nombre?: string; direccion?: string; referencias?: string }>; // para seleccionar
   title?: string;
   style?: React.CSSProperties;
   className?: string;
@@ -478,9 +478,9 @@ export default function CrearClase({
                 <div style={fieldShell()}>
                   <select
                     style={{ ...inputBase, background: 'transparent' }}
-                    value={form.ubicacionNombre || ''}
+                    value={(locations.find(l => (l.nombre || '') === form.ubicacionNombre)?.id) || ''}
                     onChange={(e) => {
-                      const sel = locations.find(l => (l.nombre || '') === e.target.value);
+                      const sel = locations.find(l => (l.id || '') === e.target.value);
                       if (sel) {
                         setField('ubicacionNombre', sel.nombre || '');
                         setField('ubicacionDireccion', sel.direccion || '');
@@ -494,7 +494,7 @@ export default function CrearClase({
                   >
                     <option value="">— Escribir manualmente —</option>
                     {locations.map((l, i) => (
-                      <option key={i} value={l.nombre || ''}>{l.nombre || l.direccion || 'Ubicación'}</option>
+                      <option key={l.id || i} value={l.id || ''}>{l.nombre || l.direccion || 'Ubicación'}</option>
                     ))}
                   </select>
                 </div>

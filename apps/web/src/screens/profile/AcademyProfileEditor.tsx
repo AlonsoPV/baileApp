@@ -286,6 +286,7 @@ export default function AcademyProfileEditor() {
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                locations={((form as any).ubicaciones || []).map((u: any) => ({ id: u?.id, nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
                 editIndex={editingIndex}
                 editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}

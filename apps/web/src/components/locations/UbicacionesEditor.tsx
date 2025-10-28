@@ -27,12 +27,17 @@ const colors = {
 export default function UbicacionesEditor({ value = [], onChange, title = 'Ubicaciones', className, style }: Props) {
   const { data: allTags } = useTags();
   const zonas = (allTags || []).filter((t: any) => t.tipo === 'zona');
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
 
   const ensureId = (u: Ubicacion): Ubicacion => ({ ...u, id: u.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` });
 
   const update = (items: Ubicacion[]) => onChange?.(items.map(ensureId));
 
-  const addItem = () => update([...(value || []), ensureId({ nombre: '', direccion: '', referencias: '', zonaIds: [] })]);
+  const addItem = () => {
+    const item = ensureId({ nombre: '', direccion: '', referencias: '', zonaIds: [] });
+    update([...(value || []), item]);
+    if (item.id) setExpandedIds(new Set([...Array.from(expandedIds), item.id]));
+  };
 
   const updateField = (idx: number, key: keyof Ubicacion, val: any) => {
     const next = [...(value || [])];
@@ -50,8 +55,14 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
 
   const removeItem = (idx: number) => {
     const next = [...(value || [])];
+    const removed = next[idx];
     next.splice(idx, 1);
     update(next);
+    if (removed?.id && expandedIds.has(removed.id)) {
+      const copy = new Set(expandedIds);
+      copy.delete(removed.id);
+      setExpandedIds(copy);
+    }
   };
 
   const label: React.CSSProperties = { fontSize: 12, color: colors.mut, marginBottom: 6 };
@@ -93,52 +104,74 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
       </div>
 
       <div style={{ display: 'grid', gap: 12 }}>
-        {(value || []).map((u, idx) => (
-          <div key={u.id || idx} style={{ padding: 12, borderRadius: 12, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.04)', display: 'grid', gap: 10 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div>
-                <div style={label}>Nombre de la ubicación</div>
-                <div style={shell(!(u?.nombre || '').trim())}>
-                  <input style={input} value={u?.nombre || ''} onChange={(e) => updateField(idx, 'nombre', e.target.value)} placeholder="Ej. Sede Centro / Salón" />
+        {(value || []).map((u, idx) => {
+          const id = u.id || String(idx);
+          const isOpen = id ? expandedIds.has(id) : false;
+          const zonaNames = (u?.zonaIds || []).map(zid => zonas.find((z: any) => z.id === zid)?.nombre).filter(Boolean) as string[];
+
+          return (
+            <div key={id} style={{ padding: 12, borderRadius: 12, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.04)', display: 'grid', gap: 10 }}>
+              {!isOpen && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <strong style={{ color: '#fff' }}>{(u?.nombre || 'Ubicación')}</strong>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {zonaNames.map((name, i) => (
+                        <span key={i} style={{ fontSize: 12, fontWeight: 600, color: '#fff', border: '1px solid rgba(25,118,210,0.4)', background: 'rgba(25,118,210,0.18)', padding: '2px 8px', borderRadius: 999 }}>{name}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={() => setExpandedIds(new Set([...Array.from(expandedIds), id]))} style={{ padding: '6px 10px', borderRadius: 10, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>Editar</button>
+                    <button type="button" onClick={() => removeItem(idx)} style={{ padding: '6px 10px', borderRadius: 10, border: '1px solid rgba(229,57,53,0.35)', background: 'rgba(229,57,53,0.12)', color: '#fff', cursor: 'pointer' }}>Eliminar</button>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div style={label}>Dirección</div>
-                <div style={shell()}>
-                  <input style={input} value={u?.direccion || ''} onChange={(e) => updateField(idx, 'direccion', e.target.value)} placeholder="Calle, número, colonia, ciudad" />
-                </div>
-              </div>
-            </div>
+              )}
 
-            <div>
-              <div style={label}>Notas o referencias</div>
-              <div style={shell()}>
-                <input style={input} value={u?.referencias || ''} onChange={(e) => updateField(idx, 'referencias', e.target.value)} placeholder="Ej. Entrada lateral, 2do piso" />
-              </div>
-            </div>
+              {isOpen && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <div style={label}>Nombre de la ubicación</div>
+                      <div style={shell(!(u?.nombre || '').trim())}>
+                        <input style={input} value={u?.nombre || ''} onChange={(e) => updateField(idx, 'nombre', e.target.value)} placeholder="Ej. Sede Centro / Salón" />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={label}>Dirección</div>
+                      <div style={shell()}>
+                        <input style={input} value={u?.direccion || ''} onChange={(e) => updateField(idx, 'direccion', e.target.value)} placeholder="Calle, número, colonia, ciudad" />
+                      </div>
+                    </div>
+                  </div>
 
-            <div>
-              <div style={label}>Zonas</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {zonas.map((z: any) => (
-                  <button key={z.id} type="button" style={chip((u?.zonaIds || []).includes(z.id))} onClick={() => toggleZona(idx, z.id)}>
-                    {z.nombre}
-                  </button>
-                ))}
-              </div>
-            </div>
+                  <div>
+                    <div style={label}>Notas o referencias</div>
+                    <div style={shell()}>
+                      <input style={input} value={u?.referencias || ''} onChange={(e) => updateField(idx, 'referencias', e.target.value)} placeholder="Ej. Entrada lateral, 2do piso" />
+                    </div>
+                  </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => removeItem(idx)}
-                style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(229,57,53,0.35)', background: 'rgba(229,57,53,0.12)', color: '#fff', cursor: 'pointer' }}
-              >
-                Eliminar
-              </button>
+                  <div>
+                    <div style={label}>Zonas</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {zonas.map((z: any) => (
+                        <button key={z.id} type="button" style={chip((u?.zonaIds || []).includes(z.id))} onClick={() => toggleZona(idx, z.id)}>
+                          {z.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button type="button" onClick={() => setExpandedIds((prev) => { const next = new Set(prev); next.delete(id); return next; })} style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>Guardar</button>
+                    <button type="button" onClick={() => removeItem(idx)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(229,57,53,0.35)', background: 'rgba(229,57,53,0.12)', color: '#fff', cursor: 'pointer' }}>Eliminar</button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
