@@ -15,11 +15,13 @@ import UbicacionesEditor from '../../components/academy/UbicacionesEditor';
 import HorariosEditor from '../../components/academy/HorariosEditor';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import '@/styles/organizer.css';
+import { useAcademyMedia } from '@/hooks/useAcademyMedia';
 
 export default function AcademyEditorScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: academy, isLoading } = useAcademyMy();
+  const academyMedia = useAcademyMedia();
   const upsert = useUpsertAcademy();
   const submit = useSubmitAcademyForReview();
   const { data: allTags } = useTags();
@@ -209,25 +211,48 @@ export default function AcademyEditorScreen() {
           </h2>
 
           <PhotoManagementSection
-            media={form.media}
+            media={academyMedia.media}
             uploading={{}}
-            uploadFile={() => {}}
-            removeFile={() => {}}
+            uploadFile={(file, slot)=>academyMedia.add.mutate({ file, slot })}
+            removeFile={(slot)=>{
+              const item = (academyMedia.media as any[]).find((m:any)=>m.slot===slot);
+              if (item) academyMedia.remove.mutate(item.id);
+            }}
             title="📷 Fotos de la Academia"
             description="Sube fotos de tus instalaciones, clases y eventos"
             slots={['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
           />
 
           <VideoManagementSection
-            media={form.media}
+            media={academyMedia.media}
             uploading={{}}
-            uploadFile={() => {}}
-            removeFile={() => {}}
+            uploadFile={(file, slot)=>academyMedia.add.mutate({ file, slot })}
+            removeFile={(slot)=>{
+              const item = (academyMedia.media as any[]).find((m:any)=>m.slot===slot);
+              if (item) academyMedia.remove.mutate(item.id);
+            }}
             title="🎥 Videos de la Academia"
             description="Videos de clases, eventos, promocionales"
             slots={['v1', 'v2', 'v3']}
           />
         </div>
+
+        {Array.isArray(academyMedia.media) && academyMedia.media.length > 0 && (
+          <div id="user-profile-photo-gallery" className="org-editor__card" style={{ marginTop: spacing[6] }}>
+            <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>📷 Galería</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
+              {(academyMedia.media as any[]).map((item: any, index: number) => (
+                <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  {item.type === 'image' ? (
+                    <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                  ) : (
+                    <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Botones de acción */}
         <div style={{

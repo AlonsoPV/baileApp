@@ -727,6 +727,7 @@ export default function OrganizerProfileEditor() {
           </div>
 
           {/* Componente de navegación flotante */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
             currentView="edit"
             profileType="organizer"
@@ -734,6 +735,7 @@ export default function OrganizerProfileEditor() {
             isSaving={upsert.isPending}
             saveDisabled={!form.nombre_publico?.trim()}
           />
+          </div>
 
           {/* Información del Organizador */}
           <div

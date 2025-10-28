@@ -495,10 +495,12 @@ export const UserProfileLive: React.FC = () => {
         color: colors.light,
       }}>
         {/* Profile Toolbar - Toggle y Edición (Fixed) */}
-        <ProfileNavigationToggle
-          currentView="live"
-          profileType="user"
-        />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="user"
+          />
+        </div>
 
         {/* Banner Principal */}
         <div 

@@ -9,7 +9,9 @@ import FAQEditor from "../../components/common/FAQEditor";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
+import { useTeacherMedia } from "@/hooks/useTeacherMedia";
 
 const colors = {
   green: '#43e97b',
@@ -21,6 +23,7 @@ export default function TeacherProfileEditor() {
   const navigate = useNavigate();
   const { data: teacher } = useTeacherMy();
   const upsert = useUpsertTeacher();
+  const teacherMedia = useTeacherMedia();
   const [form, setForm] = React.useState({
     nombre_publico: "",
     bio: "",
@@ -125,29 +128,61 @@ export default function TeacherProfileEditor() {
             />
           </motion.div>
 
+          {/* Ubicaciones (opcional) */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <h3 style={{ margin: 0, marginBottom: 12 }}>📍 Ubicaciones</h3>
+            <UbicacionesEditor
+              value={(form as any).ubicaciones || []}
+              onChange={(v:any)=> setField('ubicaciones' as any, v as any)}
+            />
+          </motion.div>
+
           {/* Gestión de Media (fotos y videos) */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>📸 Media</h3>
             <PhotoManagementSection
-              media={form.media}
+              media={teacherMedia.media}
               uploading={{}}
-              uploadFile={() => {}}
-              removeFile={() => {}}
+              uploadFile={(file, slot) => teacherMedia.add.mutate({ file, slot })}
+              removeFile={(slot) => {
+                const item = (teacherMedia.media as any[]).find((m:any)=> m.slot===slot);
+                if (item) teacherMedia.remove.mutate(item.id);
+              }}
               title="📷 Fotos del Maestro"
               description="Sube tus fotos de clases, presentaciones o retratos"
               slots={['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10']}
             />
 
             <VideoManagementSection
-              media={form.media}
+              media={teacherMedia.media}
               uploading={{}}
-              uploadFile={() => {}}
-              removeFile={() => {}}
+              uploadFile={(file, slot) => teacherMedia.add.mutate({ file, slot })}
+              removeFile={(slot) => {
+                const item = (teacherMedia.media as any[]).find((m:any)=> m.slot===slot);
+                if (item) teacherMedia.remove.mutate(item.id);
+              }}
               title="🎥 Videos del Maestro"
               description="Comparte videos de clases, sociales o demos"
               slots={['v1','v2','v3']}
             />
           </motion.div>
+
+          {Array.isArray(teacherMedia.media) && teacherMedia.media.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} id="user-profile-photo-gallery" className="org-editor__card">
+              <h3 style={{ margin: 0, marginBottom: 12 }}>📷 Galería</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+                {(teacherMedia.media as any[]).map((item: any, index: number) => (
+                  <div key={index} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a' }}>
+                    {item.type === 'image' ? (
+                      <img src={item.url} alt={`Imagen ${index+1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                    ) : (
+                      <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* FAQ */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

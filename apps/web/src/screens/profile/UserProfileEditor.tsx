@@ -211,13 +211,15 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Componente de navegación flotante */}
-        <ProfileNavigationToggle
-          currentView="edit"
-          profileType="user"
-          onSave={handleSave}
-          isSaving={false}
-          saveDisabled={!form.display_name?.trim()}
-        />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="user"
+            onSave={handleSave}
+            isSaving={false}
+            saveDisabled={!form.display_name?.trim()}
+          />
+        </div>
 
         {/* Información Personal */}
         <div style={{

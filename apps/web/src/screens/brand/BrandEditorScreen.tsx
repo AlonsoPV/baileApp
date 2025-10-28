@@ -196,6 +196,30 @@ export default function BrandEditorScreen() {
             </div>
           </div>
 
+          {/* Galería (preview) */}
+          {Array.isArray(form.media) && form.media.length > 0 && (
+            <div id="user-profile-photo-gallery" className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF3D57, #FF8C42)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
+                <div>
+                  <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0, color: colors.light }}>Galería</h2>
+                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{form.media.length} elemento{form.media.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
+                {form.media.map((item: any, index: number) => (
+                  <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    {item.type === 'image' ? (
+                      <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                    ) : (
+                      <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Formulario */}
           <div className="org-editor__card">
             {/* Información básica */}

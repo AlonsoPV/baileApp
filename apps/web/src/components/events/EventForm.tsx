@@ -4,6 +4,7 @@ import { useTags } from "../../hooks/useTags";
 import EventScheduleEditor from "../EventScheduleEditor";
 import EventPriceEditor from "../EventPriceEditor";
 import { Chip } from "../profile/Chip";
+import DateFlyerUploader from "./DateFlyerUploader";
 
 type Props = {
   mode: "create" | "edit";
@@ -282,6 +283,16 @@ export default function EventForm(props: Props) {
               onChange={(e) => props.onChangeDate({ direccion: e.target.value })}
             />
           </div>
+        </div>
+
+        {/* Uploader de Flyer (4:5 recomendado) */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <DateFlyerUploader
+            value={(d as any).flyer_url || (d as any).portada_url || null}
+            onChange={(url)=> props.onChangeDate({ flyer_url: url } as any)}
+            dateId={(props.dateId as any) || undefined}
+            parentId={(p as any).id || undefined}
+          />
         </div>
 
         {/* Selector de Zonas */}
