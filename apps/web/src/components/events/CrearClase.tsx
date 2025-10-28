@@ -47,6 +47,7 @@ type Props = {
   onCancel?: () => void;
   ritmos: Tag[];
   zonas: Tag[];
+  locations?: Array<{ nombre?: string; direccion?: string; referencias?: string }>; // para seleccionar
   title?: string;
   style?: React.CSSProperties;
   className?: string;
@@ -161,6 +162,7 @@ export default function CrearClase({
   onCancel,
   ritmos,
   zonas,
+  locations,
   title = 'Crear Clase',
   style,
   className
@@ -470,6 +472,34 @@ export default function CrearClase({
 
             {/* UBICACIÓN */}
             <div style={sectionHeader}><span>📍</span><b>Ubicación</b></div>
+            {Array.isArray(locations) && locations.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={label}>Elegir ubicación existente</div>
+                <div style={fieldShell()}>
+                  <select
+                    style={{ ...inputBase, background: 'transparent' }}
+                    value={form.ubicacionNombre || ''}
+                    onChange={(e) => {
+                      const sel = locations.find(l => (l.nombre || '') === e.target.value);
+                      if (sel) {
+                        setField('ubicacionNombre', sel.nombre || '');
+                        setField('ubicacionDireccion', sel.direccion || '');
+                        setField('ubicacionNotas', sel.referencias || '');
+                      } else {
+                        setField('ubicacionNombre', '');
+                        setField('ubicacionDireccion', '');
+                        setField('ubicacionNotas', '');
+                      }
+                    }}
+                  >
+                    <option value="">— Escribir manualmente —</option>
+                    {locations.map((l, i) => (
+                      <option key={i} value={l.nombre || ''}>{l.nombre || l.direccion || 'Ubicación'}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
                 <div style={label}>Nombre de la ubicación</div>

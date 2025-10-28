@@ -18,7 +18,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import EventScheduleEditor from "../../components/events/ScheduleEditor";
 import EventCostsEditor from "../../components/events/CostsEditor";
 import CostosyHorarios from './CostosyHorarios';
-import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
@@ -261,6 +261,12 @@ export default function AcademyProfileEditor() {
           </h2>
 
           <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {/* Ubicaciones */}
+            <UbicacionesEditor
+              value={(form as any).ubicaciones || []}
+              onChange={(v) => setField('ubicaciones' as any, v as any)}
+              title="Ubicaciones"
+            />
             {/* Crear Clase rápida */}
             <div>
               {statusMsg && (
@@ -390,38 +396,86 @@ export default function AcademyProfileEditor() {
                         <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
                         <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'} {it.fecha ? `· 📅 ${it.fecha}` : ''}</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase());
-                          setEditingIndex(idx);
-                          setEditInitial({
-                            nombre: it.titulo || '',
-                            tipo: (costo?.tipo as any) || 'clases sueltas',
-                            precio: costo?.precio ?? null,
-                            regla: costo?.regla || '',
-                            fechaModo: it.fecha ? 'especifica' : 'semanal',
-                            fecha: it.fecha || '',
-                            diaSemana: null,
-                            inicio: it.inicio || '',
-                            fin: it.fin || '',
-                            ritmoId: it.ritmoId ?? null,
-                            zonaId: it.zonaId ?? null,
-                            ubicacion: it.ubicacion || ''
-                          });
-                          setStatusMsg(null);
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: 10,
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          background: 'rgba(255,255,255,0.06)',
-                          color: '#fff',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Editar
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase());
+                            setEditingIndex(idx);
+                            setEditInitial({
+                              nombre: it.titulo || '',
+                              tipo: (costo?.tipo as any) || 'clases sueltas',
+                              precio: costo?.precio ?? null,
+                              regla: costo?.regla || '',
+                              fechaModo: it.fecha ? 'especifica' : 'semanal',
+                              fecha: it.fecha || '',
+                              diaSemana: null,
+                              inicio: it.inicio || '',
+                              fin: it.fin || '',
+                              ritmoId: it.ritmoId ?? null,
+                              zonaId: it.zonaId ?? null,
+                              ubicacion: it.ubicacion || ''
+                            });
+                            setStatusMsg(null);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 10,
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
+                            if (!ok) return;
+
+                            const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+                            const currentCostos = ([...((form as any).costos || [])] as any[]);
+
+                            const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
+                            const nextCrono = currentCrono.filter((_: any, i: number) => i !== idx);
+                            const nextCostos = refKey
+                              ? currentCostos.filter((c: any) => (c?.nombre || '').trim().toLowerCase() !== refKey)
+                              : currentCostos;
+
+                            setField('cronograma' as any, nextCrono as any);
+                            setField('costos' as any, nextCostos as any);
+
+                            const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
+                            upsert
+                              .mutateAsync(payload)
+                              .then(() => {
+                                setStatusMsg({ type: 'ok', text: '✅ Clase eliminada' });
+                                if (editingIndex !== null && editingIndex === idx) {
+                                  setEditingIndex(null);
+                                  setEditInitial(undefined);
+                                }
+                              })
+                              .catch((e) => {
+                                setStatusMsg({ type: 'err', text: '❌ Error al eliminar clase' });
+                                // eslint-disable-next-line no-console
+                                console.error('[AcademyProfileEditor] Error eliminando clase', e);
+                              });
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 10,
+                            border: '1px solid rgba(229,57,53,0.35)',
+                            background: 'rgba(229,57,53,0.12)',
+                            color: '#fff',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

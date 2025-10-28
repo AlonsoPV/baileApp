@@ -16,6 +16,7 @@ import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
 import CrearClase from "../../components/events/CrearClase";
 import { useUpsertAcademy } from "../../hooks/useAcademy";
+import UbicacionesLive from "../../components/locations/UbicacionesLive";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -684,6 +685,25 @@ export default function AcademyProfileLive() {
               }}
             />
           </motion.section>
+
+          {/* Ubicaciones (live) */}
+          {Array.isArray((academy as any)?.ubicaciones) && (academy as any).ubicaciones.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              <UbicacionesLive ubicaciones={(academy as any).ubicaciones} />
+            </motion.section>
+          )}
 
 
           {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
