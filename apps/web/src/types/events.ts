@@ -40,6 +40,7 @@ export type EventDate = {
   requisitos?: string|null; 
   cronograma?: any[]; // Cronograma de actividades
   costos?: any[]; // Costos y promociones
+  flyer_url?: string|null; // URL del flyer del evento
   estilos: number[]; 
   media: any[]; 
   estado_publicacion: PubEstado;

@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import EventScheduleEditor from "../../components/EventScheduleEditor";
 import EventPriceEditor from "../../components/EventPriceEditor";
 import AddToCalendarButton from "../../components/AddToCalendarButton";
+import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 
 const colors = {
   coral: '#FF3D57',
@@ -40,6 +41,7 @@ export function EventDateEditScreen() {
     direccion: "",
     ciudad: "",
     requisitos: "",
+    flyer_url: "",
     estado_publicacion: "borrador" as 'borrador' | 'publicado'
   });
 
@@ -53,6 +55,7 @@ export function EventDateEditScreen() {
         direccion: currentDate.direccion || "",
         ciudad: currentDate.ciudad || "",
         requisitos: currentDate.requisitos || "",
+        flyer_url: currentDate.flyer_url || "",
         estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
       });
     }
@@ -83,8 +86,9 @@ export function EventDateEditScreen() {
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
           requisitos: form.requisitos.trim() || null,
+          flyer_url: form.flyer_url.trim() || null,
           estado_publicacion: form.estado_publicacion
-        });
+        } as any);
         console.log('[EventDateEditScreen] Date created successfully:', result);
         showToast('Fecha creada ✅', 'success');
       } else {
@@ -98,8 +102,9 @@ export function EventDateEditScreen() {
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
           requisitos: form.requisitos.trim() || null,
+          flyer_url: form.flyer_url.trim() || null,
           estado_publicacion: form.estado_publicacion
-        });
+        } as any);
         showToast('Fecha actualizada ✅', 'success');
       }
       navigate('/profile/organizer/edit');
@@ -277,6 +282,16 @@ export function EventDateEditScreen() {
         />
       </div>
 
+      {/* Flyer del Evento */}
+      <div style={{ marginBottom: '24px' }}>
+        <DateFlyerUploader
+          value={form.flyer_url || null}
+          onChange={(url) => setForm({...form, flyer_url: url || ""})}
+          dateId={!isNew ? Number(id) : undefined}
+          parentId={parentId ? Number(parentId) : undefined}
+        />
+      </div>
+
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -311,14 +326,64 @@ export function EventDateEditScreen() {
         </span>
       </div>
 
-      {/* Cronograma del Evento - Solo para eventos existentes */}
-      {!isNew && id && (
+      {/* Cronograma del Evento */}
+      {!isNew && id ? (
         <EventScheduleEditor eventDateId={parseInt(id)} />
+      ) : (
+        <div style={{
+          padding: '24px',
+          background: `${colors.dark}66`,
+          borderRadius: '16px',
+          border: `1px solid ${colors.light}22`,
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: colors.light,
+            marginBottom: '16px'
+          }}>
+            📅 Cronograma del Evento
+          </h2>
+          <p style={{
+            color: colors.light,
+            opacity: 0.7,
+            fontSize: '0.875rem',
+            margin: 0
+          }}>
+            El cronograma se podrá configurar después de guardar la fecha del evento.
+          </p>
+        </div>
       )}
 
-      {/* Costos y Promociones - Solo para eventos existentes */}
-      {!isNew && id && (
+      {/* Costos y Promociones */}
+      {!isNew && id ? (
         <EventPriceEditor eventDateId={parseInt(id)} />
+      ) : (
+        <div style={{
+          padding: '24px',
+          background: `${colors.dark}66`,
+          borderRadius: '16px',
+          border: `1px solid ${colors.light}22`,
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: colors.light,
+            marginBottom: '16px'
+          }}>
+            💰 Costos y Promociones
+          </h2>
+          <p style={{
+            color: colors.light,
+            opacity: 0.7,
+            fontSize: '0.875rem',
+            margin: 0
+          }}>
+            Los costos y promociones se podrán configurar después de guardar la fecha del evento.
+          </p>
+        </div>
       )}
 
       {/* Botón Agregar a Calendario - Solo para eventos existentes */}

@@ -38,6 +38,7 @@ export default function LiveLink({
       to={to}
       className={finalClassName}
       title={title}
+      style={{ textDecoration: 'none', color: 'inherit' }}
       {...props}
     >
       {children}
@@ -58,7 +59,8 @@ export function LiveLinkInline({
   return (
     <Link
       to={to}
-      className={className ?? "text-pink-500 hover:text-pink-400 transition-colors underline"}
+      className={className ?? "text-pink-500 hover:text-pink-400 transition-colors"}
+      style={{ textDecoration: 'underline' }}
       {...props}
     >
       {children}
