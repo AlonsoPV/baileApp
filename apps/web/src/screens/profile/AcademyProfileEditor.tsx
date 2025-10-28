@@ -38,7 +38,7 @@ export default function AcademyProfileEditor() {
   const { data: allTags } = useTags();
   const { media, add, remove } = useAcademyMedia();
   const upsert = useUpsertAcademy();
-  
+
   // Hook para cambio de rol
   useRoleChange();
 
@@ -150,7 +150,7 @@ export default function AcademyProfileEditor() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             📚 Información Básica
           </h2>
-          
+
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
@@ -163,12 +163,12 @@ export default function AcademyProfileEditor() {
                 placeholder="Ej: Academia de Baile Moderno"
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: `${colors.dark}cc`,
+                  border: `1px solid ${colors.light}33`,
                   color: colors.light,
-                  fontSize: '1rem'
+                  fontSize: '1rem',
                 }}
               />
             </div>
@@ -184,13 +184,13 @@ export default function AcademyProfileEditor() {
                 rows={4}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: `${colors.dark}cc`,
+                  border: `1px solid ${colors.light}33`,
                   color: colors.light,
                   fontSize: '1rem',
-                  resize: 'vertical'
+                  resize: 'vertical',
                 }}
               />
             </div>
@@ -202,7 +202,7 @@ export default function AcademyProfileEditor() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             🎵 Estilos que Enseñamos
           </h2>
-          
+
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
             {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
               <Chip
@@ -218,88 +218,88 @@ export default function AcademyProfileEditor() {
 
         {/* Redes Sociales */}
         <div
-            id="organizer-social-networks"
-            data-test-id="organizer-social-networks"
-            style={{
-              marginBottom: '3rem',
-              padding: '2rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              📱 Redes Sociales
-            </h2>
+          id="organizer-social-networks"
+          data-test-id="organizer-social-networks"
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            📱 Redes Sociales
+          </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  📸 Instagram
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.instagram}
-                  onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
-                  placeholder="@tu_organizacion"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                📸 Instagram
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.instagram}
+                onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                placeholder="@tu_organizacion"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  👥 Facebook
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.facebook}
-                  onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
-                  placeholder="Página o perfil"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                👥 Facebook
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.facebook}
+                onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                placeholder="Página o perfil"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  💬 WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.whatsapp}
-                  onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
-                  placeholder="Número de teléfono"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                💬 WhatsApp
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.whatsapp}
+                onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                placeholder="Número de teléfono"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
             </div>
           </div>
+        </div>
 
         {/* Maestros Invitados */}
-        <InvitedMastersSection 
+        <InvitedMastersSection
           masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
           title="🎭 Maestros Invitados"
           showTitle={true}
@@ -328,8 +328,8 @@ export default function AcademyProfileEditor() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
             💬 Información para Estudiantes
           </h2>
-          
-          <FAQEditor value={(form as any).faq || []} onChange={(v:any)=> setField('faq' as any, v as any)} />
+
+          <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
         </div>
 
         {/* Vista previa: Horarios y Costos */}

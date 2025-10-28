@@ -503,6 +503,7 @@ export default function AcademyProfileLive() {
               </div>
               <h1 style={{
                 fontSize: '3rem',
+                display: 'inline',
                 fontWeight: '800',
                 color: 'white',
                 margin: '0 0 0.5rem 0',
@@ -518,6 +519,38 @@ export default function AcademyProfileLive() {
               }}>
                 Academia de Baile
               </p>
+
+              {/* Chips de Ritmos y Zonas dentro del banner */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {getRitmoNombres().map((ritmo, index) => (
+                  <Chip
+                    key={`ritmo-${index}`}
+                    label={ritmo}
+                    active={true}
+                    variant="ritmo"
+                    style={{
+                      background: 'rgba(229, 57, 53, 0.2)',
+                      border: '1px solid #E53935',
+                      color: '#E53935',
+                      fontWeight: '600'
+                    }}
+                  />
+                ))}
+                {getZonaNombres().map((zona, index) => (
+                  <Chip
+                    key={`zona-${index}`}
+                    label={zona}
+                    active={true}
+                    variant="zona"
+                    style={{
+                      background: 'rgba(25, 118, 210, 0.2)',
+                      border: '1px solid #1976D2',
+                      color: '#90CAF9',
+                      fontWeight: '600'
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
