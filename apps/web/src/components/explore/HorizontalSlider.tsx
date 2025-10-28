@@ -22,43 +22,110 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
 
   return (
     <div style={{ position: 'relative' }}>
+      {/* Left Arrow */}
       <button
         aria-label="Anterior"
-        onClick={() => scrollBy(-400)}
+        onClick={() => scrollBy(-320)}
         style={{
-          position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-          zIndex: 2, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-          color: '#F5F5F5', borderRadius: 12, padding: '8px 10px', cursor: 'pointer'
+          position: 'absolute', 
+          left: -8, 
+          top: '50%', 
+          transform: 'translateY(-50%)',
+          zIndex: 10, 
+          background: 'rgba(0,0,0,0.8)', 
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#F5F5F5', 
+          borderRadius: '50%', 
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '18px',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
         }}
       >
         ←
       </button>
 
+      {/* Scrollable Container */}
       <div
         ref={ref}
         style={{
-          display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(280px, 1fr)', gap: '12px',
-          overflowX: 'auto', scrollSnapType: 'x mandatory', padding: '2px 40px', scrollbarWidth: 'none'
+          display: 'flex',
+          gap: '16px',
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          padding: '8px 48px',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}
       >
         {items.map((it, i) => (
-          <div key={i} style={{ scrollSnapAlign: 'start' }}>
+          <div 
+            key={i} 
+            style={{ 
+              scrollSnapAlign: 'start',
+              flexShrink: 0,
+              width: '280px'
+            }}
+          >
             {renderItem(it, i)}
           </div>
         ))}
       </div>
 
+      {/* Right Arrow */}
       <button
         aria-label="Siguiente"
-        onClick={() => scrollBy(400)}
+        onClick={() => scrollBy(320)}
         style={{
-          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-          zIndex: 2, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-          color: '#F5F5F5', borderRadius: 12, padding: '8px 10px', cursor: 'pointer'
+          position: 'absolute', 
+          right: -8, 
+          top: '50%', 
+          transform: 'translateY(-50%)',
+          zIndex: 10, 
+          background: 'rgba(0,0,0,0.8)', 
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#F5F5F5', 
+          borderRadius: '50%', 
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '18px',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
         }}
       >
         →
       </button>
+
+      <style>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }

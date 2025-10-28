@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useExploreFilters } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
@@ -9,6 +9,8 @@ import InfiniteGrid from "../../components/explore/InfiniteGrid";
 import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
+import AcademyCard from "../../components/explore/cards/AcademyCard";
+import BrandCard from "../../components/explore/cards/BrandCard";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 
 type InfiniteData<T> = { pages: { data: T[]; count: number; nextPage?: number }[]; pageParams: number[] };
@@ -28,6 +30,7 @@ const typeLabels: Record<string, string> = {
   maestros: 'Maestros',
   academias: 'Academias',
   marcas: 'Marcas',
+  sociales: 'Sociales',
 };
 
 const typeIcons: Record<string, string> = {
@@ -37,11 +40,22 @@ const typeIcons: Record<string, string> = {
   maestros: '🎓',
   academias: '🏫',
   marcas: '🏷️',
+  sociales: '🎉',
 };
 
 export default function ExploreListScreen() {
   const navigate = useNavigate();
-  const { filters } = useExploreFilters();
+  const [searchParams] = useSearchParams();
+  const { filters, set } = useExploreFilters();
+  
+  // Update filters based on URL parameters
+  React.useEffect(() => {
+    const type = searchParams.get('type');
+    if (type && type !== filters.type) {
+      set({ type: type as any });
+    }
+  }, [searchParams, filters.type, set]);
+  
   const query = useExploreQuery(filters);
   const typedQuery = query as unknown as UseInfiniteQueryResult<InfiniteData<any>, Error>;
 
@@ -65,15 +79,19 @@ export default function ExploreListScreen() {
         key = item.id ?? i;
         break;
       case "academias":
-        CardComponent = TeacherCard; // reutilizar por ahora
+        CardComponent = AcademyCard;
         key = item.id ?? i;
         break;
       case "marcas":
-        CardComponent = OrganizerCard; // reutilizar por ahora
+        CardComponent = BrandCard;
+        key = item.id ?? i;
+        break;
+      case "sociales":
+        CardComponent = OrganizerCard; // Reutilizar OrganizerCard para sociales
         key = item.id ?? i;
         break;
       case "usuarios":
-        CardComponent = TeacherCard; // reutilizar por ahora
+        CardComponent = TeacherCard; // Reutilizar TeacherCard para usuarios
         key = item.user_id ?? i;
         break;
       default:

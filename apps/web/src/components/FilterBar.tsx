@@ -2,19 +2,11 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTags } from "../hooks/useTags";
 import { Chip } from "./profile/Chip";
-
-export interface FilterState {
-  search: string;
-  perfiles: string[];
-  ritmos: number[];
-  zonas: number[];
-  fechaDesde?: string;
-  fechaHasta?: string;
-}
+import type { ExploreFilters } from "../state/exploreFilters";
 
 interface FilterBarProps {
-  filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
+  filters: ExploreFilters;
+  onFiltersChange: (filters: ExploreFilters) => void;
   className?: string;
 }
 
@@ -22,7 +14,10 @@ const PERFIL_OPTIONS = [
   { value: 'eventos', label: '📅 Eventos', icon: '📅' },
   { value: 'organizadores', label: '👤 Organizadores', icon: '👤' },
   { value: 'maestros', label: '🎓 Maestros', icon: '🎓' },
-  { value: 'bailarines', label: '💃 Bailarines', icon: '💃' },
+  { value: 'academias', label: '🏫 Academias', icon: '🏫' },
+  { value: 'marcas', label: '🏷️ Marcas', icon: '🏷️' },
+  { value: 'sociales', label: '🎉 Sociales', icon: '🎉' },
+  { value: 'usuarios', label: '💃 Usuarios', icon: '💃' },
 ];
 
 export default function FilterBar({ filters, onFiltersChange, className = '' }: FilterBarProps) {
@@ -34,14 +29,11 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
   };
 
   const handleSearchChange = (value: string) => {
-    onFiltersChange({ ...filters, search: value });
+    onFiltersChange({ ...filters, q: value });
   };
 
-  const handlePerfilToggle = (perfil: string) => {
-    const newPerfiles = filters.perfiles.includes(perfil)
-      ? filters.perfiles.filter(p => p !== perfil)
-      : [...filters.perfiles, perfil];
-    onFiltersChange({ ...filters, perfiles: newPerfiles });
+  const handleTypeChange = (type: string) => {
+    onFiltersChange({ ...filters, type: type as any });
   };
 
   const handleRitmoToggle = (ritmoId: number) => {
@@ -60,40 +52,39 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
 
   const handleDateChange = (type: 'desde' | 'hasta', value: string) => {
     if (type === 'desde') {
-      onFiltersChange({ ...filters, fechaDesde: value });
+      onFiltersChange({ ...filters, dateFrom: value });
     } else {
-      onFiltersChange({ ...filters, fechaHasta: value });
+      onFiltersChange({ ...filters, dateTo: value });
     }
   };
 
   const clearFilters = () => {
     onFiltersChange({
-      search: '',
-      perfiles: [],
+      type: 'eventos',
+      q: '',
       ritmos: [],
       zonas: [],
-      fechaDesde: undefined,
-      fechaHasta: undefined
+      pageSize: 12
     });
     setOpenDropdown(null);
   };
 
   const hasActiveFilters = () => {
-    return filters.search !== '' || 
-           filters.perfiles.length > 0 || 
+    return filters.q !== '' || 
+           filters.type !== 'eventos' ||
            filters.ritmos.length > 0 || 
            filters.zonas.length > 0 || 
-           filters.fechaDesde || 
-           filters.fechaHasta;
+           filters.dateFrom || 
+           filters.dateTo;
   };
 
   const getActiveFilterCount = () => {
     let count = 0;
-    if (filters.search) count++;
-    count += filters.perfiles.length;
+    if (filters.q) count++;
+    if (filters.type !== 'eventos') count++;
     count += filters.ritmos.length;
     count += filters.zonas.length;
-    if (filters.fechaDesde || filters.fechaHasta) count++;
+    if (filters.dateFrom || filters.dateTo) count++;
     return count;
   };
 
@@ -137,7 +128,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                 <input
                   type="text"
                   placeholder="Buscar..."
-                  value={filters.search}
+                  value={filters.q}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   style={{
                     width: '100%',
@@ -149,7 +140,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                     fontSize: '0.875rem',
                     outline: 'none',
                     transition: 'all 0.2s',
-                    boxShadow: filters.search ? 'rgba(59, 130, 246, 0.3) 0px 0px 0px 2px' : 'none'
+                    boxShadow: filters.q ? 'rgba(59, 130, 246, 0.3) 0px 0px 0px 2px' : 'none'
                   }}
                   onFocus={(e) => {
                     e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
@@ -163,13 +154,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
               </div>
             </div>
 
-            {/* Botón Tipos (Perfiles) */}
+            {/* Botón Tipos */}
             <FilterButton
               label="Tipos"
               icon="👥"
-              isOpen={openDropdown === 'perfiles'}
-              onClick={() => toggleDropdown('perfiles')}
-              activeCount={filters.perfiles.length}
+              isOpen={openDropdown === 'tipos'}
+              onClick={() => toggleDropdown('tipos')}
+              activeCount={filters.type !== 'eventos' ? 1 : 0}
             />
 
             {/* Botón Ritmos */}
@@ -196,7 +187,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
               icon="📅"
               isOpen={openDropdown === 'fechas'}
               onClick={() => toggleDropdown('fechas')}
-              activeCount={filters.fechaDesde || filters.fechaHasta ? 1 : 0}
+              activeCount={filters.dateFrom || filters.dateTo ? 1 : 0}
             />
 
             {/* Botón Limpiar Filtros */}
@@ -232,8 +223,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
 
           {/* Dropdowns */}
           <AnimatePresence>
-            {/* Dropdown Perfiles */}
-            {openDropdown === 'perfiles' && (
+            {/* Dropdown Tipos */}
+            {openDropdown === 'tipos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 <div style={{
                   display: 'flex',
@@ -246,8 +237,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                       label={option.label.replace(/^.+ /, '')} // Remove emoji from label
                       icon={option.icon}
                       variant="perfil"
-                      active={filters.perfiles.includes(option.value)}
-                      onClick={() => handlePerfilToggle(option.value)}
+                      active={filters.type === option.value}
+                      onClick={() => handleTypeChange(option.value)}
                     />
                   ))}
                 </div>
@@ -325,7 +316,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                     </label>
                     <input
                       type="date"
-                      value={filters.fechaDesde || ''}
+                      value={filters.dateFrom || ''}
                       onChange={(e) => handleDateChange('desde', e.target.value)}
                       style={{
                         width: '100%',
@@ -351,7 +342,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                     </label>
                     <input
                       type="date"
-                      value={filters.fechaHasta || ''}
+                      value={filters.dateTo || ''}
                       onChange={(e) => handleDateChange('hasta', e.target.value)}
                       style={{
                         width: '100%',

@@ -1,21 +1,24 @@
 import React from "react";
 import { motion } from "framer-motion";
+import LiveLink from "../../LiveLink";
+import { urls } from "../../../lib/urls";
 
 export default function TeacherCard({ item }: { item: any }) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      style={{
-        borderRadius: '1rem',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'rgba(23, 23, 23, 0.6)',
-        padding: '1rem',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-      }}
-    >
+    <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
+      <motion.div
+        whileHover={{ scale: 1.02, y: -4 }}
+        whileTap={{ scale: 0.98 }}
+        style={{
+          borderRadius: '1rem',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(23, 23, 23, 0.6)',
+          padding: '1rem',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        }}
+      >
       <div style={{
         fontSize: '1.125rem',
         fontWeight: '600',
@@ -46,7 +49,8 @@ export default function TeacherCard({ item }: { item: any }) {
           {item.bio}
         </div>
       )}
-    </motion.div>
+      </motion.div>
+    </LiveLink>
   );
 }
 

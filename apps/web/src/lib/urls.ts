@@ -39,6 +39,30 @@ export function userLive(userId: string): string {
   return `/u/${userId}`;
 }
 
+/**
+ * URL pública de una academia
+ * @param id ID de la academia
+ */
+export function academyLive(id: number | string): string {
+  return `/academia/${id}`;
+}
+
+/**
+ * URL pública de un maestro
+ * @param id ID del maestro
+ */
+export function teacherLive(id: number | string): string {
+  return `/maestro/${id}`;
+}
+
+/**
+ * URL pública de una marca
+ * @param id ID de la marca
+ */
+export function brandLive(id: number | string): string {
+  return `/marca/${id}`;
+}
+
 // =====================================================
 // RUTAS DE EXPLORACIÓN
 // =====================================================
@@ -221,6 +245,9 @@ export const urls = {
   eventDateLive,
   eventParentLive,
   userLive,
+  academyLive,
+  teacherLive,
+  brandLive,
   
   // Exploración
   exploreHome,

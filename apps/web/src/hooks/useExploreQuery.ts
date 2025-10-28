@@ -126,6 +126,14 @@ async function fetchPage(params: QueryParams, page: number) {
     
     query = query.order("created_at", { ascending: false });
   } 
+  else if (type === "sociales") {
+    // Eventos padre (sociales) - usar estilos y zonas
+    if (q) query = query.ilike("nombre", `%${q}%`);
+    if (ritmos?.length) query = query.overlaps("estilos", ritmos as any);
+    if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
+    
+    query = query.order("created_at", { ascending: false });
+  }
   else if (type === "usuarios") {
     if (q) query = query.ilike("display_name", `%${q}%`);
     if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
@@ -134,10 +142,13 @@ async function fetchPage(params: QueryParams, page: number) {
     query = query.order("created_at", { ascending: false });
   } 
   else {
-    // maestros / academias / marcas – adaptar nombres reales cuando estén
+    // maestros / academias / marcas – usar columnas correctas
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
-    if (ritmos?.length) query = query.overlaps("estilos", ritmos as any);
+    if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
+    
+    // Filtrar solo perfiles aprobados
+    query = query.eq("estado_aprobacion", "aprobado");
     
     query = query.order("created_at", { ascending: false });
   }
