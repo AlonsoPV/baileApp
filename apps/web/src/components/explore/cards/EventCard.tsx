@@ -58,7 +58,18 @@ export default function EventCard({ item }: EventCardProps) {
               color: 'white',
               marginBottom: '1rem',
               boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)',
-              position: 'relative' }}>
+              position: 'relative' }}>  
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{
+                  position: 'absolute',
+                  inset: '-4px',
+                  borderRadius: '50%',
+                  border: '2px solid rgba(240, 147, 251, 0.3)',
+                  pointerEvents: 'none'
+                }}
+              />
               {avatarUrl ? (
                 <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : (
@@ -73,7 +84,7 @@ export default function EventCard({ item }: EventCardProps) {
           background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
         }}>
-          <motion.span aria-hidden whileHover={{ scale: 1.05, rotate: 4 }} style={{ display: 'inline-block', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))' }}>🎉</motion.span>
+
           <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nombre}</span>
         </div>
 
