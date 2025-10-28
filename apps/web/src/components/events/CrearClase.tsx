@@ -30,6 +30,7 @@ export type CrearClaseValue = {
   fin?: string;
   ritmoId?: number | null;
   zonaId?: number | null;
+  ubicacion?: string;
 };
 
 type Tag = { id: number; nombre: string };
@@ -169,6 +170,7 @@ export default function CrearClase({
     fin: normalizeTime(value?.fin),
     ritmoId: value?.ritmoId ?? null,
     zonaId: value?.zonaId ?? null,
+    ubicacion: value?.ubicacion || '',
   });
 
   const setField = (k: keyof CrearClaseValue, v: any) => {
@@ -402,6 +404,21 @@ export default function CrearClase({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* UBICACIÓN */}
+        <div style={sectionHeader}><span>📍</span><b>Ubicación</b></div>
+        <div>
+          <div style={label}>Ubicación (opcional)</div>
+          <div style={fieldShell()}>
+            <div style={leftIcon('📍')} />
+            <input
+              style={inputBase}
+              placeholder="Nombre de la sede o dirección"
+              value={form.ubicacion || ''}
+              onChange={(e)=>setField('ubicacion', e.target.value)}
+            />
           </div>
         </div>
 

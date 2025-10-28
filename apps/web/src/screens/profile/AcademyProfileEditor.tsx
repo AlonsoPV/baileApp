@@ -42,6 +42,9 @@ export default function AcademyProfileEditor() {
   const { data: allTags } = useTags();
   const { media, add, remove } = useAcademyMedia();
   const upsert = useUpsertAcademy();
+  const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
+  const [editInitial, setEditInitial] = React.useState<any>(undefined);
+  const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
 
   // Hook para cambio de rol
   useRoleChange();
@@ -260,45 +263,158 @@ export default function AcademyProfileEditor() {
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             {/* Crear Clase rápida */}
             <div>
+              {statusMsg && (
+                <div style={{
+                  marginBottom: 12,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
+                  background: statusMsg.type === 'ok' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                  color: '#fff',
+                  fontSize: 14
+                }}>
+                  {statusMsg.text}
+                </div>
+              )}
+
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                value={editInitial}
+                title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
+                onCancel={() => { setEditingIndex(null); setEditInitial(undefined); }}
                 onSubmit={(c) => {
-                  const nextCrono = ([...((form as any).cronograma || []), {
-                    tipo: 'clase',
-                    titulo: c.nombre,
-                    fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
-                    inicio: c.inicio,
-                    fin: c.fin,
-                    nivel: undefined,
-                    referenciaCosto: c.nombre,
-                    ritmoId: c.ritmoId,
-                    zonaId: c.zonaId,
-                    ubicacion: ((form as any).ubicaciones || [])[0]?.nombre || ''
-                  }] as any);
-                  const nextCostos = ([...((form as any).costos || []), {
-                    nombre: c.nombre,
-                    tipo: c.tipo,
-                    precio: c.precio ?? null,
-                    regla: c.regla || ''
-                  }] as any);
-                  setField('cronograma' as any, nextCrono as any);
-                  setField('costos' as any, nextCostos as any);
+                  const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+                  const currentCostos = ([...((form as any).costos || [])] as any[]);
 
-                  // Persistir inmediatamente para que aparezca en la vista live sin necesidad de pulsar Guardar
-                  const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                  upsert
-                    .mutateAsync(payload)
-                    .then(() => {
-                      // eslint-disable-next-line no-console
-                      console.log('[AcademyProfileEditor] Clase creada y guardada');
-                    })
-                    .catch((e) => {
-                      // eslint-disable-next-line no-console
-                      console.error('[AcademyProfileEditor] Error guardando clase', e);
-                    });
+                  if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+                    const prev = currentCrono[editingIndex];
+                    const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
+
+                    const updatedItem = {
+                      ...prev,
+                      tipo: 'clase',
+                      titulo: c.nombre,
+                      fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
+                      inicio: c.inicio,
+                      fin: c.fin,
+                      referenciaCosto: c.nombre,
+                      ritmoId: c.ritmoId,
+                      zonaId: c.zonaId,
+                      ubicacion: c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                    };
+                    currentCrono[editingIndex] = updatedItem;
+
+                    const costoIdx = currentCostos.findIndex((x: any) => (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase());
+                    const updatedCosto = {
+                      nombre: c.nombre,
+                      tipo: c.tipo,
+                      precio: c.precio ?? null,
+                      regla: c.regla || ''
+                    } as any;
+                    if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
+
+                    setField('cronograma' as any, currentCrono as any);
+                    setField('costos' as any, currentCostos as any);
+
+                    const payload: any = { id: (form as any)?.id, cronograma: currentCrono, costos: currentCostos };
+                    upsert
+                      .mutateAsync(payload)
+                      .then(() => {
+                        setStatusMsg({ type: 'ok', text: '✅ Clase editada' });
+                        setEditingIndex(null);
+                        setEditInitial(undefined);
+                        // eslint-disable-next-line no-console
+                        console.log('[AcademyProfileEditor] Clase editada y guardada');
+                      })
+                      .catch((e) => {
+                        setStatusMsg({ type: 'err', text: '❌ Error al editar clase' });
+                        // eslint-disable-next-line no-console
+                        console.error('[AcademyProfileEditor] Error editando clase', e);
+                      });
+                  } else {
+                    const nextCrono = ([...currentCrono, {
+                      tipo: 'clase',
+                      titulo: c.nombre,
+                      fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
+                      inicio: c.inicio,
+                      fin: c.fin,
+                      nivel: undefined,
+                      referenciaCosto: c.nombre,
+                      ritmoId: c.ritmoId,
+                      zonaId: c.zonaId,
+                      ubicacion: c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                    }] as any);
+                    const nextCostos = ([...currentCostos, {
+                      nombre: c.nombre,
+                      tipo: c.tipo,
+                      precio: c.precio ?? null,
+                      regla: c.regla || ''
+                    }] as any);
+                    setField('cronograma' as any, nextCrono as any);
+                    setField('costos' as any, nextCostos as any);
+
+                    const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
+                    upsert
+                      .mutateAsync(payload)
+                      .then(() => {
+                        setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
+                        // eslint-disable-next-line no-console
+                        console.log('[AcademyProfileEditor] Clase creada y guardada');
+                      })
+                      .catch((e) => {
+                        setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });
+                        // eslint-disable-next-line no-console
+                        console.error('[AcademyProfileEditor] Error guardando clase', e);
+                      });
+                  }
                 }}
               />
+
+              {Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
+                <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+                  {(form as any).cronograma.map((it: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
+                        <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'} {it.fecha ? `· 📅 ${it.fecha}` : ''}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase());
+                          setEditingIndex(idx);
+                          setEditInitial({
+                            nombre: it.titulo || '',
+                            tipo: (costo?.tipo as any) || 'clases sueltas',
+                            precio: costo?.precio ?? null,
+                            regla: costo?.regla || '',
+                            fechaModo: it.fecha ? 'especifica' : 'semanal',
+                            fecha: it.fecha || '',
+                            diaSemana: null,
+                            inicio: it.inicio || '',
+                            fin: it.fin || '',
+                            ritmoId: it.ritmoId ?? null,
+                            zonaId: it.zonaId ?? null,
+                            ubicacion: it.ubicacion || ''
+                          });
+                          setStatusMsg(null);
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 10,
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          background: 'rgba(255,255,255,0.06)',
+                          color: '#fff',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
 
