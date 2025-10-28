@@ -12,6 +12,7 @@ interface FilterBarProps {
 
 const PERFIL_OPTIONS = [
   { value: 'eventos', label: '📅 Eventos', icon: '📅' },
+  { value: 'fechas', label: '📆 Fechas', icon: '📆' },
   { value: 'organizadores', label: '👤 Organizadores', icon: '👤' },
   { value: 'maestros', label: '🎓 Maestros', icon: '🎓' },
   { value: 'academias', label: '🏫 Academias', icon: '🏫' },

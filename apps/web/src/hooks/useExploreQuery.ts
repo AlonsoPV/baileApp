@@ -57,6 +57,51 @@ function baseSelect(type: ExploreType) {
           )
         `
       };
+    case "fechas":
+      // Mismo que eventos pero específicamente para fechas
+      return { 
+        table: "events_date", 
+        select: `
+          id,
+          parent_id,
+          nombre,
+          biografia,
+          fecha,
+          hora_inicio,
+          hora_fin,
+          lugar,
+          direccion,
+          ciudad,
+          zona,
+          referencias,
+          requisitos,
+          cronograma,
+          costos,
+          media,
+          flyer_url,
+          created_at,
+          updated_at,
+          events_parent!inner(
+            id,
+            nombre,
+            descripcion,
+            biografia,
+            estilos,
+            zonas,
+            sede_general,
+            faq,
+            media,
+            organizer_id,
+            profiles_organizer!inner(
+              id,
+              nombre_publico,
+              bio,
+              media,
+              estado_aprobacion
+            )
+          )
+        `
+      };
     case "organizadores":  
       // Usar tabla profiles_organizer directamente
       return { table: "profiles_organizer", select: "*" };
@@ -100,6 +145,32 @@ async function fetchPage(params: QueryParams, page: number) {
     // DEBUG: Log the current date filter
     const today = new Date().toISOString().split('T')[0];
     console.log('[useExploreQuery] Filtering events from date:', today);
+    
+    // TEMPORARY: Comment out future events filter to debug
+    // query = query.gte("fecha", today);
+    
+    // Filtrar por organizadores aprobados
+    query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
+    
+    if (dateFrom) query = query.gte("fecha", dateFrom);
+    if (dateTo)   query = query.lte("fecha", dateTo);
+    
+    // filtrar por estilos/ritmos - usar la relación con events_parent
+    if (ritmos?.length)  query = query.overlaps("events_parent.estilos", ritmos as any);
+    if (zonas?.length)   query = query.in("zona", zonas as any);
+    
+    // búsqueda textual básica (lugar/ciudad/direccion)
+    if (q) {
+      query = query.or(`lugar.ilike.%${q}%,ciudad.ilike.%${q}%,direccion.ilike.%${q}%`);
+    }
+    
+    // orden por fecha asc (próximos primero)
+    query = query.order("fecha", { ascending: true });
+  } 
+  else if (type === "fechas") {
+    // DEBUG: Log the current date filter
+    const today = new Date().toISOString().split('T')[0];
+    console.log('[useExploreQuery] Filtering fechas from date:', today);
     
     // TEMPORARY: Comment out future events filter to debug
     // query = query.gte("fecha", today);

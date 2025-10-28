@@ -25,6 +25,7 @@ const colors = {
 
 const typeLabels: Record<string, string> = {
   eventos: 'Eventos',
+  fechas: 'Fechas',
   organizadores: 'Organizadores',
   usuarios: 'Bailarines',
   maestros: 'Maestros',
@@ -35,6 +36,7 @@ const typeLabels: Record<string, string> = {
 
 const typeIcons: Record<string, string> = {
   eventos: '📅',
+  fechas: '📆',
   organizadores: '🎤',
   usuarios: '💃',
   maestros: '🎓',
@@ -67,6 +69,10 @@ export default function ExploreListScreen() {
 
     switch (filters.type) {
       case "eventos":
+        CardComponent = EventCard;
+        key = item.id ?? i;
+        break;
+      case "fechas":
         CardComponent = EventCard;
         key = item.id ?? i;
         break;

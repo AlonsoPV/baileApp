@@ -61,6 +61,16 @@ export default function ExploreHomeScreen() {
   const navigate = useNavigate();
   const { filters, set } = useExploreFilters();
 
+  const { data: fechas, isLoading: fechasLoading } = useExploreQuery({ 
+    type: 'fechas', 
+    q: filters.q, 
+    ritmos: filters.ritmos, 
+    zonas: filters.zonas, 
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    pageSize: 6 
+  });
+
   const { data: eventos, isLoading: eventosLoading } = useExploreQuery({ 
     type: 'eventos', 
     q: filters.q, 
@@ -126,16 +136,34 @@ export default function ExploreHomeScreen() {
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
           </div>
 
-          <Section title="Fechas" toAll="/explore/list?type=eventos">
+          <Section title="Fechas" toAll="/explore/list?type=fechas">
+            {fechasLoading ? (
+              <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+            ) : fechas && fechas.pages?.[0]?.data?.length > 0 ? (
+              <HorizontalSlider
+                items={fechas.pages[0].data}
+                renderItem={(fechaEvento: any, idx: number) => (
+                  <motion.div key={fechaEvento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                    <EventCard item={fechaEvento} />
+                  </motion.div>
+                )}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+            )}
+          </Section>
+
+          <Section title="Eventos" toAll="/explore/list?type=eventos">
             {eventosLoading ? (
               <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : eventos && eventos.pages?.[0]?.data?.length > 0 ? (
               <HorizontalSlider
                 items={eventos.pages[0].data}
-                renderItem={(fechaEvento: any, idx: number) => (
-                  <motion.div key={fechaEvento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                renderItem={(evento: any, idx: number) => (
+                  <motion.div key={evento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
-                    <EventCard item={fechaEvento} />
+                    <EventCard item={evento} />
                   </motion.div>
                 )}
               />
