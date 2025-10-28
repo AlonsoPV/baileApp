@@ -651,38 +651,39 @@ export default function AcademyProfileLive() {
               </div>
             </motion.section>
           )} */}
-          {/* Horarios, Costos y Ubicación (reutiliza componente) */}
-          <CostosyHorarios
-            title="Horarios & Costos"
-            date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
-            ubicacion={{
-              nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-              direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-              ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-              referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+          {/* Clases & Tarifas (visualización) */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
             }}
-          />
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🗓️</div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Clases & Tarifas</h3>
+                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.9rem' }}>Información de horarios, costos y ubicación</p>
+              </div>
+            </div>
+            <CostosyHorarios
+              title="Horarios & Costos"
+              date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
+              ubicacion={{
+                nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+              }}
+            />
+          </motion.section>
 
-          {/* Añadir clase rápida (solo si hay academy.id) */}
-          {academy?.id && (
-            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>➕ Crear Clase</h3>
-              <CrearClase
-                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                onSubmit={async (c)=>{
-                  const nextCrono = ([...(((academy as any)?.cronograma)||[]), {
-                    tipo: 'clase', titulo: c.nombre, fecha: c.fechaModo==='especifica'?c.fecha:undefined,
-                    inicio: c.inicio, fin: c.fin, referenciaCosto: c.nombre
-                  }] as any);
-                  const nextCostos = ([...(((academy as any)?.costos)||[]), {
-                    nombre: c.nombre, tipo: c.tipo, precio: c.precio ?? null, regla: c.regla || ''
-                  }] as any);
-                  await upsert.mutateAsync({ id: academy.id, cronograma: nextCrono as any, costos: nextCostos as any });
-                }}
-              />
-            </motion.section>
-          )}
 
           {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
           {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
