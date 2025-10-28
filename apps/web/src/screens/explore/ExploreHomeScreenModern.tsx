@@ -78,9 +78,6 @@ export default function ExploreHomeScreen() {
     <>
       <style>{`
         .explore-container { min-height: 100vh; background: #0b0d10; color: ${colors.gray[50]}; }
-        .hero { padding: ${spacing[12]}; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .hero h1 { margin: 0; font-size: ${typography.fontSize['4xl']}; font-weight: ${typography.fontWeight.black}; letter-spacing: -0.02em; }
-        .hero p { margin: ${spacing[2]} auto 0; color: ${colors.gray[300]}; max-width: 720px; }
         .filters { padding: ${spacing[6]}; }
         .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: ${spacing[5]}; }
@@ -89,15 +86,7 @@ export default function ExploreHomeScreen() {
       `}</style>
 
       <div className="explore-container">
-        <div className="hero">
-          <h1>Explorar</h1>
-          <p>Encuentra eventos, organizadores y maestros. Una vista limpia y sin distracciones.</p>
-          <div style={{ marginTop: spacing[4], display: 'flex', gap: spacing[3], justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => navigate('/explore/eventos')} style={{ padding: `${spacing[3]} ${spacing[5]}`, borderRadius: 999, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: colors.gray[100], cursor: 'pointer' }}>Eventos</button>
-            <button onClick={() => navigate('/explore/organizadores')} style={{ padding: `${spacing[3]} ${spacing[5]}`, borderRadius: 999, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: colors.gray[100], cursor: 'pointer' }}>Organizadores</button>
-            <button onClick={() => navigate('/explore/maestros')} style={{ padding: `${spacing[3]} ${spacing[5]}`, borderRadius: 999, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: colors.gray[100], cursor: 'pointer' }}>Maestros</button>
-          </div>
-        </div>
+        {/* Hero removido para una vista más directa al contenido */}
 
         <div className="wrap">
           <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
@@ -109,7 +98,12 @@ export default function ExploreHomeScreen() {
               <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : eventos && eventos.pages?.[0]?.data?.length > 0 ? (
               <div className="grid">
-                {eventos.pages[0].data.map((evento: any) => (<EventCard key={evento.id} item={evento} />))}
+                {eventos.pages[0].data.map((evento: any, idx: number) => (
+                  <motion.div key={evento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                    <EventCard item={evento} />
+                  </motion.div>
+                ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
@@ -121,7 +115,12 @@ export default function ExploreHomeScreen() {
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
               <div className="grid">
-                {organizadores.pages[0].data.map((organizador: any) => (<OrganizerCard key={organizador.id} item={organizador} />))}
+                {organizadores.pages[0].data.map((organizador: any, idx: number) => (
+                  <motion.div key={organizador.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                    <OrganizerCard item={organizador} />
+                  </motion.div>
+                ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
@@ -133,7 +132,12 @@ export default function ExploreHomeScreen() {
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
               <div className="grid">
-                {maestros.pages[0].data.map((maestro: any) => (<TeacherCard key={maestro.id} item={maestro} />))}
+                {maestros.pages[0].data.map((maestro: any, idx: number) => (
+                  <motion.div key={maestro.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                    <TeacherCard item={maestro} />
+                  </motion.div>
+                ))}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
