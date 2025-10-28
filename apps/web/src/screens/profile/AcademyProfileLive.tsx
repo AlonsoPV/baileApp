@@ -71,7 +71,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
     </div>
   );
 };
-{/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */}
+{/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */ }
 // Componente Carousel para fotos
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -128,7 +128,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               onClick={() => setIsFullscreen(true)}
             />
           </div>
-          
+
           {/* Contador */}
           <div style={{
             position: 'absolute',
@@ -398,7 +398,7 @@ export default function AcademyProfileLive() {
           max-width: 900px;
           margin: 0 auto;
           position: relative;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          background: black;
           border-radius: 24px;
           overflow: hidden;
           box-shadow: 0 20px 60px rgba(229, 57, 53, 0.4);
@@ -450,9 +450,9 @@ export default function AcademyProfileLive() {
       <div className="academy-container">
         {/* Navigation Toggle */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle 
-            currentView="live" 
-            profileType="academy" 
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="academy"
           />
         </div>
 
@@ -468,7 +468,6 @@ export default function AcademyProfileLive() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.08)',
             }}>
               <div className="academy-banner-avatar">
                 {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
@@ -599,7 +598,7 @@ export default function AcademyProfileLive() {
           )}
 
           {/* Ritmos de Baile */}
-          {academy.ritmos && academy.ritmos.length > 0 && (
+          {/*   {academy.ritmos && academy.ritmos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -648,10 +647,54 @@ export default function AcademyProfileLive() {
                 ))}
               </div>
             </motion.section>
-          )}
+          )} */}
+          {/* Horarios, Costos y Ubicación (reutiliza componente) */}
+          <CostosyHorarios
+            title="Horarios & Costos"
+            date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
+            ubicacion={{
+              nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+              direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+              ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+              referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+            }}
+          />
 
+          {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
+          {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
+                <div>
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.2 }}>Información para Estudiantes</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {(academy as any).faq.map((faq: any, index: number) => (
+                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
+                    <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
           {/* Redes Sociales */}
-          <SocialMediaSection 
+          <SocialMediaSection
             respuestas={{ redes: academy.redes_sociales }}
             redes_sociales={academy.redes_sociales}
             title="Redes Sociales"
@@ -667,7 +710,7 @@ export default function AcademyProfileLive() {
           />
 
           {/* Maestros Invitados */}
-          <InvitedMastersSection 
+          <InvitedMastersSection
             masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
             title="🎭 Maestros Invitados"
             showTitle={true}
@@ -866,51 +909,7 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Horarios, Costos y Ubicación (reutiliza componente) */}
-          <CostosyHorarios
-            title="Horarios & Costos"
-            date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
-            ubicacion={{
-              nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-              direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-              ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-              referencias: (academy as any)?.ubicaciones?.[0]?.referencias
-            }}
-          />
 
-          {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
-          {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
-                <div>
-                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.2 }}>Información para Estudiantes</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {(academy as any).faq.map((faq: any, index: number) => (
-                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
-                    <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
         </div>
       </div>
     </>
