@@ -46,7 +46,19 @@ export default function EventCard({ item }: EventCardProps) {
           const avatarUrl = (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
           const fallback = ((organizador || nombre || 'E') as string).charAt(0).toUpperCase();
           return (
-            <div style={{ position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              color: 'white',
+              marginBottom: '1rem',
+              boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)',
+              position: 'relative' }}>
               {avatarUrl ? (
                 <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : (
@@ -72,7 +84,7 @@ export default function EventCard({ item }: EventCardProps) {
             {horaInicio && (
               <>
                 <span style={{ opacity: 0.45 }}>•</span>
-                <span style={{ opacity: 0.9 }}>🕒 {horaInicio}{horaFin ? ` – ${horaFin}` : ''}</span>
+                <span style={{ opacity: 0.9 }}>🕒 {horaInicio}</span>
               </>
             )}
           </div>
@@ -85,12 +97,12 @@ export default function EventCard({ item }: EventCardProps) {
           )}
         </div>
 
-        {direccion && (
+       {/*  {direccion && (
           <div style={{ fontSize: 12, marginTop: 6, padding: 8, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 10, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }} title={direccion}>
-            🗺️ {direccion}
+            📍 {direccion}
           </div>
         )}
-
+ */}
         {organizador && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>👤</div>
@@ -109,7 +121,7 @@ export default function EventCard({ item }: EventCardProps) {
           <div style={{
             padding: '8px 12px',
             borderRadius: 12,
-            background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)',
+            background: 'rgba(240, 147, 251, 0.1)',
             color: '#fff',
             margin: '10px 0',
             textAlign: 'center',
