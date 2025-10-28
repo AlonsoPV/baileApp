@@ -668,6 +668,7 @@ export default function AcademyProfileLive() {
               transition={{ duration: 0.6, delay: 0.7 }}
               style={{
                 marginBottom: '2rem',
+                marginTop: '2rem',
                 padding: '2rem',
                 background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
                 borderRadius: '20px',

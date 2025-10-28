@@ -41,7 +41,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
             {title}
           </h2>
         </div>
-        <Link
+        {/* <Link
           to={toAll}
           style={{
             fontSize: typography.fontSize.sm,
@@ -57,7 +57,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
           }}
         >
           Ver todo →
-        </Link>
+        </Link> */}
       </div>
       {children}
     </motion.section>

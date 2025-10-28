@@ -96,6 +96,7 @@ export default function SocialMediaSection({
   const defaultStyle: React.CSSProperties = {
     marginBottom: '2rem',
     padding: '2rem',
+    textAlign: 'center',
     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
     borderRadius: '20px',
     border: '1px solid rgba(255, 255, 255, 0.15)',

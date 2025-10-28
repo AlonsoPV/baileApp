@@ -11,12 +11,18 @@ const colors = {
 };
 
 interface ScheduleItem {
-  tipo: 'clase' | 'show' | 'otro';
-  titulo: string;
+  tipo: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro';
+  titulo?: string;
+  ritmoId?: number; // selección por chip de ritmo
   inicio: string; // HH:mm
   fin: string; // HH:mm
+  fecha?: string; // YYYY-MM-DD
+  ubicacion?: string; // nombre de sede/lugar
   nivel?: string;
+  referenciaCosto?: string; // para enlazar con costos.nombre
 }
+
+interface RitmoTag { id: number; nombre: string }
 
 interface ScheduleEditorProps {
   value: ScheduleItem[];
@@ -24,6 +30,9 @@ interface ScheduleEditorProps {
   label?: string;
   style?: React.CSSProperties;
   className?: string;
+  ritmos?: RitmoTag[];
+  locations?: string[]; // nombres de ubicaciones
+  costos?: { nombre?: string }[];
 }
 
 export default function ScheduleEditor({
@@ -31,34 +40,48 @@ export default function ScheduleEditor({
   onChange,
   label = "Cronograma",
   style,
-  className
+  className,
+  ritmos = [],
+  locations = [],
+  costos = []
 }: ScheduleEditorProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newItem, setNewItem] = useState<ScheduleItem>({
     tipo: 'clase',
     titulo: '',
+    ritmoId: undefined,
     inicio: '',
     fin: '',
-    nivel: ''
+    fecha: '',
+    ubicacion: '',
+    nivel: '',
+    referenciaCosto: ''
   });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const addItem = () => {
-    if (newItem.titulo.trim() && newItem.inicio && newItem.fin) {
-      const newSchedule = [...value, { ...newItem, titulo: newItem.titulo.trim() }];
+    const hasTitulo = (newItem.titulo && newItem.titulo.trim()) || newItem.ritmoId;
+    if (hasTitulo && newItem.inicio && newItem.fin) {
+      const titleFromRitmo = newItem.ritmoId ? (ritmos.find(r=>r.id===newItem.ritmoId)?.nombre || '') : '';
+      const finalTitulo = (newItem.titulo && newItem.titulo.trim()) || titleFromRitmo;
+      const newSchedule = [...value, { ...newItem, titulo: finalTitulo }];
       onChange(newSchedule);
       setNewItem({
         tipo: 'clase',
         titulo: '',
+        ritmoId: undefined,
         inicio: '',
         fin: '',
-        nivel: ''
+        fecha: '',
+        ubicacion: '',
+        nivel: '',
+        referenciaCosto: ''
       });
       setIsAdding(false);
     }
   };
 
-  const updateItem = (index: number, field: keyof ScheduleItem, value: string) => {
+  const updateItem = (index: number, field: keyof ScheduleItem, value: any) => {
     const updated = [...value];
     updated[index] = { ...updated[index], [field]: value };
     onChange(updated);
@@ -80,6 +103,8 @@ export default function ScheduleEditor({
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
       case 'clase': return '📚';
+      case 'paquete': return '🧾';
+      case 'coreografia': return '🎬';
       case 'show': return '🎭';
       case 'otro': return '📋';
       default: return '📋';
@@ -89,6 +114,8 @@ export default function ScheduleEditor({
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
       case 'clase': return colors.blue;
+      case 'paquete': return colors.yellow;
+      case 'coreografia': return colors.orange;
       case 'show': return colors.coral;
       case 'otro': return colors.orange;
       default: return colors.light;
@@ -159,6 +186,8 @@ export default function ScheduleEditor({
                       }}
                     >
                       <option value="clase">📚 Clase</option>
+                      <option value="paquete">🧾 Paquete</option>
+                      <option value="coreografia">🎬 Coreografía</option>
                       <option value="show">🎭 Show</option>
                       <option value="otro">📋 Otro</option>
                     </select>
@@ -184,11 +213,27 @@ export default function ScheduleEditor({
                     />
                   </div>
                 </div>
+                {/* Selección de ritmo como título (chips) */}
+                {ritmos.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {ritmos.map(r => (
+                      <button key={r.id} onClick={()=>updateItem(index,'ritmoId', r.id)}
+                        style={{
+                          padding: '6px 10px', borderRadius: 999,
+                          border: `1px solid ${item.ritmoId===r.id ? colors.blue : `${colors.light}33`}`,
+                          background: item.ritmoId===r.id ? `${colors.blue}33` : 'transparent', color: colors.light,
+                          cursor: 'pointer', fontSize: 12, fontWeight: 600
+                        }}
+                      >{r.nombre}</button>
+                    ))}
+                  </div>
+                )}
+                {/* Campo opcional de título manual */}
                 <input
                   type="text"
-                  value={item.titulo}
+                  value={item.titulo || ''}
                   onChange={(e) => updateItem(index, 'titulo', e.target.value)}
-                  placeholder="Título de la actividad"
+                  placeholder="Título (opcional si eliges un ritmo)"
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -200,6 +245,25 @@ export default function ScheduleEditor({
                   }}
                 />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
+                      Fecha
+                    </label>
+                    <input
+                      type="date"
+                      value={item.fecha || ''}
+                      onChange={(e) => updateItem(index, 'fecha', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        background: `${colors.dark}cc`,
+                        border: `1px solid ${colors.light}33`,
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </div>
                   <div>
                     <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
                       Inicio
@@ -237,6 +301,46 @@ export default function ScheduleEditor({
                         fontSize: '0.9rem',
                       }}
                     />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
+                      Ubicación
+                    </label>
+                    <select
+                      value={item.ubicacion || ''}
+                      onChange={(e)=> updateItem(index,'ubicacion', e.target.value)}
+                      style={{
+                        width: '100%', padding: '8px 12px', borderRadius: '8px',
+                        background: `${colors.dark}cc`, border: `1px solid ${colors.light}33`, color: colors.light,
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <option value="">Selecciona</option>
+                      {locations.map((loc)=> (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
+                      Referencia de costo (opcional)
+                    </label>
+                    <select
+                      value={item.referenciaCosto || ''}
+                      onChange={(e)=> updateItem(index,'referenciaCosto', e.target.value)}
+                      style={{
+                        width: '100%', padding: '8px 12px', borderRadius: '8px',
+                        background: `${colors.dark}cc`, border: `1px solid ${colors.light}33`, color: colors.light,
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <option value="">Sin referencia</option>
+                      {costos.map((c,i)=> (
+                        <option key={i} value={c.nombre || ''}>{c.nombre || ''}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -311,15 +415,21 @@ export default function ScheduleEditor({
                     color: colors.light,
                     marginBottom: '4px',
                   }}>
-                    {item.titulo}
+                    {item.titulo || (item.ritmoId ? ritmos.find(r=>r.id===item.ritmoId)?.nombre : '')}
                   </h4>
                   <p style={{
                     fontSize: '0.9rem',
                     color: colors.light,
                     opacity: 0.8,
                   }}>
-                    🕐 {item.inicio} - {item.fin}
+                    🗓️ {item.fecha || '—'} · 🕐 {item.inicio} - {item.fin}
                   </p>
+                  {item.ubicacion && (
+                    <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>📍 {item.ubicacion}</p>
+                  )}
+                  {item.referenciaCosto && (
+                    <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>💲 {item.referenciaCosto}</p>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
                   <motion.button

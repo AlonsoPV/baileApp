@@ -257,6 +257,9 @@ export default function AcademyProfileEditor() {
           <ScheduleEditor
             value={(form as any).cronograma || []}
             onChange={(v)=>setField('cronograma' as any, v as any)}
+            ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+            locations={((form as any).ubicaciones||[]).map((u:any)=> u?.nombre || u?.lugar || '').filter(Boolean)}
+            costos={(form as any).costos || []}
           />
         </div>
 

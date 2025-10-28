@@ -14,6 +14,7 @@ import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
 import { useTeacherMedia } from "@/hooks/useTeacherMedia";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
 import CostosyHorarios from './CostosyHorarios';
+import { useTags } from "@/hooks/useTags";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 
@@ -28,6 +29,7 @@ export default function TeacherProfileEditor() {
   const { data: teacher } = useTeacherMy();
   const upsert = useUpsertTeacher();
   const teacherMedia = useTeacherMedia();
+  const { data: allTags } = useTags();
   const [form, setForm] = React.useState({
     nombre_publico: "",
     bio: "",
@@ -122,7 +124,13 @@ export default function TeacherProfileEditor() {
           {/* Clases & Talleres (Cronograma) */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>🗓️ Clases & Talleres (Cronograma)</h3>
-            <ScheduleEditor value={(form as any).cronograma || []} onChange={(v:any)=> setField('cronograma' as any, v as any)} />
+            <ScheduleEditor 
+              value={(form as any).cronograma || []}
+              onChange={(v:any)=> setField('cronograma' as any, v as any)}
+              ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+              locations={((form as any).ubicaciones||[]).map((u:any)=> u?.nombre || u?.lugar || '').filter(Boolean)}
+              costos={(form as any).costos || []}
+            />
           </motion.div>
 
           {/* Costos y Promociones */}
