@@ -18,8 +18,8 @@ type CostoItem = {
 };
 
 type Ubicacion = {
-  nombre?: string; // nombre de la sede o lugar
-  lugar?: string;  // compat: algunos modelos usan 'lugar'
+  nombre?: string;
+  lugar?: string;
   direccion?: string;
   ciudad?: string;
   zona?: string;
@@ -27,12 +27,12 @@ type Ubicacion = {
 };
 
 interface Props {
+  title?: string;
   date: {
     cronograma?: CronoItem[];
     costos?: CostoItem[];
   };
   ubicacion?: Ubicacion;
-  title?: string;
 }
 
 const iconFor = (tipo?: string) => {
@@ -49,7 +49,7 @@ const priceIcon = (tipo?: string) => {
 
 const fmtHora = (h?: string) => (h ? h : '—');
 
-export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Talleres' }: Props) {
+export default function CostosyHorarios({ title = 'Horarios & Costos', date, ubicacion }: Props) {
   const items = date?.cronograma ?? [];
   const costos = date?.costos ?? [];
 
@@ -74,7 +74,9 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
       });
   }, [items, costoIndex]);
 
-  const hasUbicacion = Boolean(ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad || ubicacion?.referencias);
+  const hasUbicacion = Boolean(
+    ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad || ubicacion?.referencias
+  );
   const hasContenido = hasUbicacion || enriched.length > 0 || costos.length > 0;
 
   return (
@@ -94,17 +96,27 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <span style={{ fontSize: 22 }}>🗓️</span>
-        <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: 0.2 }}>{title}</h2>
+        <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: 0.2 }}>
+          {title}
+        </h2>
       </div>
 
+      {!hasContenido && (
+        <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
+          Aún no hay información de ubicación, horarios o costos.
+        </div>
+      )}
+
       {hasUbicacion && (
-        <div style={{
-          marginBottom: 16,
-          padding: 14,
-          borderRadius: 12,
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)'
-        }}>
+        <div
+          style={{
+            marginBottom: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 18 }}>📍</span>
             <strong style={{ color: 'rgba(255,255,255,0.95)' }}>Ubicación</strong>
@@ -150,7 +162,16 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
                     {item.titulo || 'Clase'}
                   </h3>
                   {item.nivel && (
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.12)', padding: '2px 8px', borderRadius: 999 }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'rgba(255,255,255,0.85)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        padding: '2px 8px',
+                        borderRadius: 999
+                      }}
+                    >
                       {item.nivel}
                     </span>
                   )}
@@ -161,9 +182,25 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
                 {item.costos && item.costos.length > 0 && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
                     {item.costos.map((c, i) => (
-                      <span key={i} title={c.regla || ''} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, padding: '4px 8px', background: 'rgba(255,255,255,0.04)' }}>
+                      <span
+                        key={i}
+                        title={c.regla || ''}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          fontSize: 12,
+                          color: 'rgba(255,255,255,0.9)',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          borderRadius: 10,
+                          padding: '4px 8px',
+                          background: 'rgba(255,255,255,0.04)'
+                        }}
+                      >
                         <span>{priceIcon(c.tipo)}</span>
-                        <strong style={{ fontWeight: 700 }}>{c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}</strong>
+                        <strong style={{ fontWeight: 700 }}>
+                          {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
+                        </strong>
                         {c.nombre && <span style={{ opacity: 0.75 }}>· {c.nombre}</span>}
                       </span>
                     ))}
@@ -174,7 +211,9 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
                 <div style={{ textAlign: 'right', minWidth: 90 }}>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{item.costos[0].tipo ?? ''}</div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.95)' }}>
-                    {item.costos[0].precio !== undefined && item.costos[0].precio !== null ? `$${item.costos[0].precio!.toLocaleString()}` : 'Gratis'}
+                    {item.costos[0].precio !== undefined && item.costos[0].precio !== null
+                      ? `$${item.costos[0].precio!.toLocaleString()}`
+                      : 'Gratis'}
                   </div>
                 </div>
               )}
@@ -188,7 +227,18 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Otras opciones / pases:</div>
           <div style={{ display: 'grid', gap: 10 }}>
             {costos.map((c, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 10,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)'
+                }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 18 }}>{priceIcon(c.tipo)}</span>
@@ -204,15 +254,6 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
           </div>
         </div>
       )}
-
-      {/* Mensaje vacío si no hay contenido */}
-      {!hasContenido && (
-        <div style={{ marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
-          Aún no hay información de ubicación, horarios o costos.
-        </div>
-      )}
     </motion.section>
   );
 }
-
-

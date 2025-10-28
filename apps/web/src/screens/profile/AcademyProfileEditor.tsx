@@ -15,9 +15,10 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
-import ScheduleEditor from "../../components/events/ScheduleEditor";
-import CostsEditor from "../../components/events/CostsEditor";
+import EventScheduleEditor from "../../components/events/ScheduleEditor";
+import EventCostsEditor from "../../components/events/CostsEditor";
 import CostosyHorarios from './CostosyHorarios';
+import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -249,29 +250,45 @@ export default function AcademyProfileEditor() {
           </div>
         </div>
 
-        {/* Horarios (Cronograma) */}
+        {/* Horarios, Costos y Ubicación (unificado) */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            🗓️ Horarios (Cronograma)
+            🗓️ Horarios, Costos y Ubicación
           </h2>
-          <ScheduleEditor
-            value={(form as any).cronograma || []}
-            onChange={(v)=>setField('cronograma' as any, v as any)}
-            ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-            locations={((form as any).ubicaciones||[]).map((u:any)=> u?.nombre || u?.lugar || '').filter(Boolean)}
-            costos={(form as any).costos || []}
-          />
-        </div>
 
-        {/* Costos y Promociones */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            💰 Costos y Promociones
-          </h2>
-          <CostsEditor
-            value={(form as any).costos || []}
-            onChange={(v)=>setField('costos' as any, v as any)}
-          />
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {/* Ubicaciones */}
+            <div>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>📍 Ubicaciones</h3>
+              <UbicacionesEditor
+                value={(form as any).ubicaciones || []}
+                onChange={(v:any)=> setField('ubicaciones' as any, v as any)}
+              />
+            </div>
+
+            {/* Horarios (Cronograma) */}
+            <div>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>🕒 Horarios (Cronograma)</h3>
+              <EventScheduleEditor
+                schedule={(form as any).cronograma || []}
+                onChangeSchedule={(v:any)=>setField('cronograma' as any, v as any)}
+                costos={(form as any).costos || []}
+                onChangeCostos={(v:any)=>setField('costos' as any, v as any)}
+                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                ubicacion={((form as any).ubicaciones||[])[0]?.nombre || ((form as any).ubicaciones||[])[0]?.lugar || ''}
+              />
+            </div>
+
+            {/* Costos y Promociones */}
+            <div>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>💰 Costos y Promociones</h3>
+              <EventCostsEditor
+                value={(form as any).costos || []}
+                onChange={(v)=>setField('costos' as any, v as any)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Redes Sociales */}

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// ScheduleEditorPlus.tsx
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 const colors = {
@@ -10,70 +11,167 @@ const colors = {
   light: '#F5F5F5',
 };
 
-interface ScheduleItem {
+type ScheduleItem = {
   tipo: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro';
   titulo?: string;
-  ritmoId?: number; // selección por chip de ritmo
-  inicio: string; // HH:mm
-  fin: string; // HH:mm
-  fecha?: string; // YYYY-MM-DD
-  ubicacion?: string; // nombre de sede/lugar
+  ritmoId?: number | null;
+  zonaId?: number | null;
+  inicio: string;  // HH:MM
+  fin: string;     // HH:MM
+  fecha?: string;  // YYYY-MM-DD
+  ubicacion?: string;  // texto libre
   nivel?: string;
-  referenciaCosto?: string; // para enlazar con costos.nombre
-}
+  referenciaCosto?: string; // enlaza con costos.nombre (normalizado)
+};
 
-interface RitmoTag { id: number; nombre: string }
+type RitmoTag = { id: number; nombre: string };
+type ZonaTag = { id: number; nombre: string };
 
-interface ScheduleEditorProps {
-  value: ScheduleItem[];
-  onChange: (value: ScheduleItem[]) => void;
-  label?: string;
+type CostoItem = {
+  nombre?: string; // etiqueta y clave de referencia
+  tipo?: 'paquetes' | 'clases sueltas' | 'coreografia' | 'entrenamiento' | 'otro';
+  precio?: number | null;
+  regla?: string;
+};
+
+type MetaState = {
+  ritmoId?: number | null;
+  zonaId?: number | null;
+  ubicacion?: string;
+};
+
+type Props = {
+  // Cronograma
+  schedule: ScheduleItem[];
+  onChangeSchedule: (value: ScheduleItem[]) => void;
+
+  // Costos/Promos
+  costos: CostoItem[];
+  onChangeCostos: (value: CostoItem[]) => void;
+
+  // Chips
+  ritmos?: RitmoTag[];
+  zonas?: ZonaTag[];
+
+  // Metadatos compartidos (opcional: útil para setear por defecto)
+  selectedRitmoId?: number | null;
+  selectedZonaId?: number | null;
+  ubicacion?: string;
+
+  onMetaChange?: (meta: MetaState) => void;
+
+  labelSchedule?: string;
+  labelCostos?: string;
   style?: React.CSSProperties;
   className?: string;
-  ritmos?: RitmoTag[];
-  locations?: string[]; // nombres de ubicaciones
-  costos?: { nombre?: string }[];
-}
+};
 
-export default function ScheduleEditor({
-  value = [],
-  onChange,
-  label = "Cronograma",
+const tiposCosto: NonNullable<CostoItem['tipo']>[] = [
+  'paquetes', 'clases sueltas', 'coreografia', 'entrenamiento', 'otro'
+];
+
+const niveles = ['Inicial', 'Intermedio', 'Avanzado', 'Todos'] as const;
+
+const normalizeTime = (t?: string) => {
+  if (!t) return '';
+  const [hh = '', mm = ''] = t.split(':');
+  return `${hh.padStart(2,'0')}:${(mm||'00').padStart(2,'0')}`;
+};
+
+const card: React.CSSProperties = {
+  padding: 16,
+  borderRadius: 12,
+  background: `${colors.dark}66`,
+  border: `1px solid ${colors.light}22`,
+};
+
+const input: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 8,
+  background: `${colors.dark}cc`,
+  border: `1px solid ${colors.light}33`,
+  color: colors.light,
+  fontSize: '0.9rem',
+  outline: 'none',
+};
+
+const pillWrap: React.CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap' };
+const pill = (active: boolean): React.CSSProperties => ({
+  padding: '6px 10px',
+  borderRadius: 999,
+  border: `1px solid ${active ? colors.blue : `${colors.light}33`}`,
+  background: active ? `${colors.blue}33` : 'transparent',
+  color: colors.light,
+  cursor: 'pointer',
+  fontSize: 12,
+  fontWeight: 600
+});
+
+export default function ScheduleEditorPlus({
+  schedule,
+  onChangeSchedule,
+  costos,
+  onChangeCostos,
+  ritmos = [],
+  zonas = [],
+  selectedRitmoId = null,
+  selectedZonaId = null,
+  ubicacion = '',
+  onMetaChange,
+  labelSchedule = "Cronograma",
+  labelCostos = "Costos y Promociones",
   style,
   className,
-  ritmos = [],
-  locations = [],
-  costos = []
-}: ScheduleEditorProps) {
+}: Props) {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [meta, setMeta] = useState<MetaState>({
+    ritmoId: selectedRitmoId ?? null,
+    zonaId: selectedZonaId ?? null,
+    ubicacion: ubicacion ?? '',
+  });
+
+  const setMetaField = (patch: MetaState) => {
+    const next = { ...meta, ...patch };
+    setMeta(next);
+    onMetaChange?.(next);
+  };
+
   const [newItem, setNewItem] = useState<ScheduleItem>({
     tipo: 'clase',
     titulo: '',
-    ritmoId: undefined,
+    ritmoId: selectedRitmoId ?? null,
+    zonaId: selectedZonaId ?? null,
     inicio: '',
     fin: '',
     fecha: '',
-    ubicacion: '',
+    ubicacion: ubicacion ?? '',
     nivel: '',
     referenciaCosto: ''
   });
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const addItem = () => {
     const hasTitulo = (newItem.titulo && newItem.titulo.trim()) || newItem.ritmoId;
     if (hasTitulo && newItem.inicio && newItem.fin) {
       const titleFromRitmo = newItem.ritmoId ? (ritmos.find(r=>r.id===newItem.ritmoId)?.nombre || '') : '';
       const finalTitulo = (newItem.titulo && newItem.titulo.trim()) || titleFromRitmo;
-      const newSchedule = [...value, { ...newItem, titulo: finalTitulo }];
-      onChange(newSchedule);
+      const next = [...schedule, {
+        ...newItem,
+        titulo: finalTitulo,
+        inicio: normalizeTime(newItem.inicio),
+        fin: normalizeTime(newItem.fin),
+      }];
+      onChangeSchedule(next);
       setNewItem({
         tipo: 'clase',
         titulo: '',
-        ritmoId: undefined,
+        ritmoId: meta.ritmoId ?? null,
+        zonaId: meta.zonaId ?? null,
         inicio: '',
         fin: '',
         fecha: '',
-        ubicacion: '',
+        ubicacion: meta.ubicacion ?? '',
         nivel: '',
         referenciaCosto: ''
       });
@@ -81,434 +179,316 @@ export default function ScheduleEditor({
     }
   };
 
-  const updateItem = (index: number, field: keyof ScheduleItem, value: any) => {
-    const updated = [...value];
-    updated[index] = { ...updated[index], [field]: value };
-    onChange(updated);
+  const updateItem = (index: number, field: keyof ScheduleItem, v: any) => {
+    const next = [...schedule];
+    next[index] = {
+      ...next[index],
+      [field]: field === 'inicio' || field === 'fin' ? normalizeTime(v) : v
+    };
+    onChangeSchedule(next);
   };
 
   const removeItem = (index: number) => {
-    const updated = value.filter((_, i) => i !== index);
-    onChange(updated);
+    onChangeSchedule(schedule.filter((_, i) => i !== index));
   };
 
-  const startEdit = (index: number) => {
-    setEditingIndex(index);
+  const startEdit = (i: number) => setEditingIndex(i);
+  const finishEdit = () => setEditingIndex(null);
+
+  // ====== Costos ======
+  const setCosto = (idx: number, patch: Partial<CostoItem>) => {
+    const next = [...costos];
+    next[idx] = { ...next[idx], ...patch };
+    onChangeCostos(next);
   };
 
-  const finishEdit = () => {
-    setEditingIndex(null);
+  const addCosto = () => {
+    onChangeCostos([
+      ...costos,
+      { nombre: '', tipo: 'otro', precio: null, regla: '' }
+    ]);
   };
 
-  const getTipoIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'clase': return '📚';
-      case 'paquete': return '🧾';
-      case 'coreografia': return '🎬';
-      case 'show': return '🎭';
-      case 'otro': return '📋';
-      default: return '📋';
-    }
+  const removeCosto = (idx: number) => {
+    onChangeCostos(costos.filter((_, i) => i !== idx));
   };
 
-  const getTipoColor = (tipo: string) => {
-    switch (tipo) {
-      case 'clase': return colors.blue;
-      case 'paquete': return colors.yellow;
-      case 'coreografia': return colors.orange;
-      case 'show': return colors.coral;
-      case 'otro': return colors.orange;
-      default: return colors.light;
-    }
-  };
+  const costoNombres = useMemo(() => (costos || []).map(c => (c.nombre || '').trim()).filter(Boolean), [costos]);
 
   return (
     <div style={{ ...style }} className={className}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '16px',
-      }}>
-        <label style={{
-          fontSize: '1.1rem',
-          fontWeight: '600',
-          color: colors.light,
-        }}>
-          {label}
-        </label>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsAdding(true)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '20px',
-            border: 'none',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light,
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-          }}
-        >
-          ➕ Agregar Actividad
-        </motion.button>
+      {/* === Metadatos globales para “defaults” === */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <h3 style={{ margin: 0, marginBottom: 12, color: colors.light, fontSize: '1rem', fontWeight: 700 }}>Meta (por defecto para nuevas clases)</h3>
+        <div style={{ display: 'grid', gap: 12 }}>
+          {!!ritmos.length && (
+            <div>
+              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo (chips)</div>
+              <div style={pillWrap}>
+                {ritmos.map(r => (
+                  <div
+                    key={r.id}
+                    style={pill(meta.ritmoId === r.id)}
+                    onClick={() => setMetaField({ ritmoId: r.id })}
+                  >{r.nombre}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!!zonas.length && (
+            <div>
+              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona (chips)</div>
+              <div style={pillWrap}>
+                {zonas.map(z => (
+                  <div
+                    key={z.id}
+                    style={pill(meta.zonaId === z.id)}
+                    onClick={() => setMetaField({ zonaId: z.id })}
+                  >{z.nombre}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ubicación (texto)</div>
+            <input
+              style={input}
+              placeholder="Ej. Estudio Central, Av. Reforma 123, CDMX"
+              value={meta.ubicacion || ''}
+              onChange={(e)=> setMetaField({ ubicacion: e.target.value })}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Lista de actividades existentes */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-        {value.map((item, index) => (
-          <div key={index} style={{
-            padding: '16px',
-            background: `${colors.dark}66`,
-            borderRadius: '12px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            {editingIndex === index ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Tipo
-                    </label>
-                    <select
-                      value={item.tipo}
-                      onChange={(e) => updateItem(index, 'tipo', e.target.value as ScheduleItem['tipo'])}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: `${colors.dark}cc`,
-                        border: `1px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      <option value="clase">📚 Clase</option>
-                      <option value="paquete">🧾 Paquete</option>
-                      <option value="coreografia">🎬 Coreografía</option>
-                      <option value="show">🎭 Show</option>
-                      <option value="otro">📋 Otro</option>
-                    </select>
+      {/* === Cronograma === */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <label style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.light }}>{labelSchedule}</label>
+          <motion.button
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setIsAdding(true);
+              setNewItem(s => ({
+                ...s,
+                ritmoId: meta.ritmoId ?? null,
+                zonaId: meta.zonaId ?? null,
+                ubicacion: meta.ubicacion ?? '',
+              }));
+            }}
+            style={{
+              padding: '8px 16px', borderRadius: 20, border: 'none',
+              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              color: colors.light, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer'
+            }}
+          >➕ Agregar Actividad</motion.button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {schedule.map((item, index) => (
+            <div key={index} style={card}>
+              {editingIndex === index ? (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {/* tipo y nivel */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
+                      <select
+                        value={item.tipo}
+                        onChange={(e)=> updateItem(index, 'tipo', e.target.value as ScheduleItem['tipo'])}
+                        style={input}
+                      >
+                        <option value="clase">📚 Clase</option>
+                        <option value="paquete">🧾 Paquete</option>
+                        <option value="coreografia">🎬 Coreografía</option>
+                        <option value="show">🎭 Show</option>
+                        <option value="otro">📋 Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nivel (opcional)</div>
+                      <input
+                        type="text"
+                        value={item.nivel || ''}
+                        onChange={(e)=> updateItem(index, 'nivel', e.target.value)}
+                        placeholder="Ej: Principiante, Intermedio"
+                        style={input}
+                      />
+                    </div>
                   </div>
+
+                  {/* chips ritmo y zona */}
+                  {!!ritmos.length && (
+                    <div>
+                      <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+                      <div style={pillWrap}>
+                        {ritmos.map(r => (
+                          <div
+                            key={r.id}
+                            style={pill(item.ritmoId === r.id)}
+                            onClick={()=> updateItem(index, 'ritmoId', r.id)}
+                          >{r.nombre}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {!!zonas.length && (
+                    <div>
+                      <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona</div>
+                      <div style={pillWrap}>
+                        {zonas.map(z => (
+                          <div
+                            key={z.id}
+                            style={pill(item.zonaId === z.id)}
+                            onClick={()=> updateItem(index, 'zonaId', z.id)}
+                          >{z.nombre}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* título manual */}
+                  <input
+                    type="text"
+                    value={item.titulo || ''}
+                    onChange={(e)=> updateItem(index, 'titulo', e.target.value)}
+                    placeholder="Título (opcional si eliges un ritmo)"
+                    style={input}
+                  />
+
+                  {/* fecha, horario */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fecha</div>
+                      <input
+                        type="date"
+                        value={item.fecha || ''}
+                        onChange={(e)=> updateItem(index, 'fecha', e.target.value)}
+                        style={input}
+                      />
+                    </div>
+                    <div />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Inicio (HH:MM)</div>
+                      <input
+                        type="time" step={60}
+                        value={item.inicio}
+                        onChange={(e)=> updateItem(index, 'inicio', e.target.value)}
+                        style={input}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fin (HH:MM)</div>
+                      <input
+                        type="time" step={60}
+                        value={item.fin}
+                        onChange={(e)=> updateItem(index, 'fin', e.target.value)}
+                        style={input}
+                      />
+                    </div>
+                  </div>
+
+                  {/* ubicación texto */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Nivel (opcional)
-                    </label>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Ubicación (texto)</div>
                     <input
                       type="text"
-                      value={item.nivel || ''}
-                      onChange={(e) => updateItem(index, 'nivel', e.target.value)}
-                      placeholder="Ej: Principiante, Intermedio"
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: `${colors.dark}cc`,
-                        border: `1px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </div>
-                </div>
-                {/* Selección de ritmo como título (chips) */}
-                {ritmos.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {ritmos.map(r => (
-                      <button key={r.id} onClick={()=>updateItem(index,'ritmoId', r.id)}
-                        style={{
-                          padding: '6px 10px', borderRadius: 999,
-                          border: `1px solid ${item.ritmoId===r.id ? colors.blue : `${colors.light}33`}`,
-                          background: item.ritmoId===r.id ? `${colors.blue}33` : 'transparent', color: colors.light,
-                          cursor: 'pointer', fontSize: 12, fontWeight: 600
-                        }}
-                      >{r.nombre}</button>
-                    ))}
-                  </div>
-                )}
-                {/* Campo opcional de título manual */}
-                <input
-                  type="text"
-                  value={item.titulo || ''}
-                  onChange={(e) => updateItem(index, 'titulo', e.target.value)}
-                  placeholder="Título (opcional si eliges un ritmo)"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: `${colors.dark}cc`,
-                    border: `1px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                  }}
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Fecha
-                    </label>
-                    <input
-                      type="date"
-                      value={item.fecha || ''}
-                      onChange={(e) => updateItem(index, 'fecha', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: `${colors.dark}cc`,
-                        border: `1px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Inicio
-                    </label>
-                    <input
-                      type="time"
-                      value={item.inicio}
-                      onChange={(e) => updateItem(index, 'inicio', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: `${colors.dark}cc`,
-                        border: `1px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Fin
-                    </label>
-                    <input
-                      type="time"
-                      value={item.fin}
-                      onChange={(e) => updateItem(index, 'fin', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: `${colors.dark}cc`,
-                        border: `1px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Ubicación
-                    </label>
-                    <select
                       value={item.ubicacion || ''}
-                      onChange={(e)=> updateItem(index,'ubicacion', e.target.value)}
-                      style={{
-                        width: '100%', padding: '8px 12px', borderRadius: '8px',
-                        background: `${colors.dark}cc`, border: `1px solid ${colors.light}33`, color: colors.light,
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="">Selecciona</option>
-                      {locations.map((loc)=> (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
+                      onChange={(e)=> updateItem(index, 'ubicacion', e.target.value)}
+                      placeholder="Ej. Estudio Central, Av. Reforma 123, CDMX"
+                      style={input}
+                    />
                   </div>
+
+                  {/* referencia costo */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                      Referencia de costo (opcional)
-                    </label>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Referencia de costo (opcional)</div>
                     <select
                       value={item.referenciaCosto || ''}
-                      onChange={(e)=> updateItem(index,'referenciaCosto', e.target.value)}
-                      style={{
-                        width: '100%', padding: '8px 12px', borderRadius: '8px',
-                        background: `${colors.dark}cc`, border: `1px solid ${colors.light}33`, color: colors.light,
-                        fontSize: '0.9rem'
-                      }}
+                      onChange={(e)=> updateItem(index, 'referenciaCosto', e.target.value)}
+                      style={input}
                     >
                       <option value="">Sin referencia</option>
-                      {costos.map((c,i)=> (
-                        <option key={i} value={c.nombre || ''}>{c.nombre || ''}</option>
+                      {costoNombres.map((n, i)=> (
+                        <option key={i} value={n}>{n}</option>
                       ))}
                     </select>
                   </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={finishEdit}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: colors.blue,
-                      color: colors.light,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ✅ Guardar
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditingIndex(null)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: colors.coral,
-                      color: colors.light,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ❌ Cancelar
-                  </motion.button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '1.2rem' }}>
-                      {getTipoIcon(item.tipo)}
-                    </span>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      background: `${getTipoColor(item.tipo)}33`,
-                      color: getTipoColor(item.tipo),
-                      fontSize: '0.8rem',
-                      fontWeight: '600',
-                      textTransform: 'capitalize',
-                    }}>
-                      {item.tipo}
-                    </span>
-                    {item.nivel && (
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        background: `${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                      }}>
-                        {item.nivel}
-                      </span>
-                    )}
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={finishEdit}
+                      style={{ ...input, width: 'auto', background: colors.blue, border: 'none', cursor: 'pointer' }}
+                    >✅ Guardar</motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => setEditingIndex(null)}
+                      style={{ ...input, width: 'auto', background: colors.coral, border: 'none', cursor: 'pointer' }}
+                    >❌ Cancelar</motion.button>
                   </div>
-                  <h4 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: colors.light,
-                    marginBottom: '4px',
-                  }}>
-                    {item.titulo || (item.ritmoId ? ritmos.find(r=>r.id===item.ritmoId)?.nombre : '')}
-                  </h4>
-                  <p style={{
-                    fontSize: '0.9rem',
-                    color: colors.light,
-                    opacity: 0.8,
-                  }}>
-                    🗓️ {item.fecha || '—'} · 🕐 {item.inicio} - {item.fin}
-                  </p>
-                  {item.ubicacion && (
-                    <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>📍 {item.ubicacion}</p>
-                  )}
-                  {item.referenciaCosto && (
-                    <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>💲 {item.referenciaCosto}</p>
-                  )}
                 </div>
-                <div style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => startEdit(index)}
-                    style={{
-                      padding: '6px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: colors.blue,
-                      color: colors.light,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ✏️
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => removeItem(index)}
-                    style={{
-                      padding: '6px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: colors.coral,
-                      color: colors.light,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🗑️
-                  </motion.button>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: '1.2rem' }}>📚</span>
+                      {item.nivel && (
+                        <span style={{
+                          padding: '4px 8px', borderRadius: 12,
+                          background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: 600
+                        }}>{item.nivel}</span>
+                      )}
+                    </div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 4 }}>
+                      {item.titulo || (item.ritmoId ? ritmos.find(r=>r.id===item.ritmoId)?.nombre : '')}
+                    </h4>
+                    <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8 }}>
+                      🗓️ {item.fecha || '—'} · 🕐 {item.inicio} - {item.fin}
+                    </p>
+                    {item.ubicacion && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>📍 {item.ubicacion}</p>}
+                    {item.referenciaCosto && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>💲 {item.referenciaCosto}</p>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginLeft: 12 }}>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={()=> startEdit(index)}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.blue, color: colors.light, cursor: 'pointer' }}
+                    >✏️</motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={()=> removeItem(index)}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.coral, color: colors.light, cursor: 'pointer' }}
+                    >🗑️</motion.button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          ))}
+        </div>
+
+        {schedule.length === 0 && !isAdding && (
+          <div style={{ textAlign: 'center', padding: 24, background: `${colors.dark}33`, borderRadius: 12, color: colors.light, opacity: 0.6 }}>
+            <p>No hay actividades programadas aún</p>
+            <p style={{ fontSize: '0.9rem', marginTop: 4 }}>Haz clic en "Agregar Actividad" para comenzar</p>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Formulario para agregar nueva actividad */}
+      {/* Form de alta rápida */}
       {isAdding && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            padding: '16px',
-            background: `${colors.dark}66`,
-            borderRadius: '12px',
-            border: `1px solid ${colors.blue}33`,
-          }}
-        >
-          <h4 style={{
-            fontSize: '1rem',
-            fontWeight: '600',
-            color: colors.light,
-            marginBottom: '12px',
-          }}>
-            ➕ Nueva Actividad
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
+          <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 12 }}>➕ Nueva Actividad</h4>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                  Tipo
-                </label>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
                 <select
                   value={newItem.tipo}
                   onChange={(e) => setNewItem({ ...newItem, tipo: e.target.value as ScheduleItem['tipo'] })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: `${colors.dark}cc`,
-                    border: `1px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                  }}
+                  style={input}
                 >
                   <option value="clase">📚 Clase</option>
                   <option value="show">🎭 Show</option>
@@ -516,148 +496,214 @@ export default function ScheduleEditor({
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                  Nivel (opcional)
-                </label>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nivel (opcional)</div>
                 <input
                   type="text"
-                  value={newItem.nivel}
+                  value={newItem.nivel || ''}
                   onChange={(e) => setNewItem({ ...newItem, nivel: e.target.value })}
                   placeholder="Ej: Principiante, Intermedio"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: `${colors.dark}cc`,
-                    border: `1px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                  }}
+                  style={input}
                 />
               </div>
             </div>
+
+            {!!ritmos.length && (
+              <div>
+                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+                <div style={pillWrap}>
+                  {ritmos.map(r => (
+                    <div
+                      key={r.id}
+                      style={pill(newItem.ritmoId === r.id)}
+                      onClick={()=> setNewItem(s => ({ ...s, ritmoId: r.id }))}
+                    >{r.nombre}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!!zonas.length && (
+              <div>
+                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona</div>
+                <div style={pillWrap}>
+                  {zonas.map(z => (
+                    <div
+                      key={z.id}
+                      style={pill(newItem.zonaId === z.id)}
+                      onClick={()=> setNewItem(s => ({ ...s, zonaId: z.id }))}
+                    >{z.nombre}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <input
               type="text"
               value={newItem.titulo}
               onChange={(e) => setNewItem({ ...newItem, titulo: e.target.value })}
-              placeholder="Título de la actividad"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                background: `${colors.dark}cc`,
-                border: `1px solid ${colors.light}33`,
-                color: colors.light,
-                fontSize: '1rem',
-              }}
+              placeholder="Título (opcional si eliges un ritmo)"
+              style={input}
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                  Inicio
-                </label>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fecha</div>
                 <input
-                  type="time"
+                  type="date"
+                  value={newItem.fecha || ''}
+                  onChange={(e) => setNewItem({ ...newItem, fecha: e.target.value })}
+                  style={input}
+                />
+              </div>
+              <div />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Inicio</div>
+                <input
+                  type="time" step={60}
                   value={newItem.inicio}
                   onChange={(e) => setNewItem({ ...newItem, inicio: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: `${colors.dark}cc`,
-                    border: `1px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                  }}
+                  style={input}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: colors.light }}>
-                  Fin
-                </label>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fin</div>
                 <input
-                  type="time"
+                  type="time" step={60}
                   value={newItem.fin}
                   onChange={(e) => setNewItem({ ...newItem, fin: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: `${colors.dark}cc`,
-                    border: `1px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                  }}
+                  style={input}
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+
+            <div>
+              <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Ubicación (texto)</div>
+              <input
+                type="text"
+                value={newItem.ubicacion || ''}
+                onChange={(e)=> setNewItem({ ...newItem, ubicacion: e.target.value })}
+                placeholder="Ej. Estudio Central, Av. Reforma 123, CDMX"
+                style={input}
+              />
+            </div>
+
+            <div>
+              <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Referencia de costo (opcional)</div>
+              <select
+                value={newItem.referenciaCosto || ''}
+                onChange={(e) => setNewItem({ ...newItem, referenciaCosto: e.target.value })}
+                style={input}
+              >
+                <option value="">Sin referencia</option>
+                {costoNombres.map((n, i)=> (
+                  <option key={i} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={addItem}
-                disabled={!newItem.titulo.trim() || !newItem.inicio || !newItem.fin}
+                disabled={!((newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin)}
                 style={{
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: newItem.titulo.trim() && newItem.inicio && newItem.fin
-                    ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
-                    : `${colors.light}33`,
-                  color: colors.light,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: newItem.titulo.trim() && newItem.inicio && newItem.fin ? 'pointer' : 'not-allowed',
+                  padding: '10px 20px', borderRadius: 8, border: 'none',
+                  background: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin
+                    ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : `${colors.light}33`,
+                  color: colors.light, fontSize: '0.9rem', fontWeight: 600,
+                  cursor: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin ? 'pointer' : 'not-allowed',
                 }}
-              >
-                ✅ Agregar Actividad
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setIsAdding(false);
-                  setNewItem({
-                    tipo: 'clase',
-                    titulo: '',
-                    inicio: '',
-                    fin: '',
-                    nivel: ''
-                  });
-                }}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  border: `1px solid ${colors.light}33`,
-                  background: 'transparent',
-                  color: colors.light,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-              >
-                ❌ Cancelar
-              </motion.button>
+              >✅ Agregar Actividad</motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={() => { setIsAdding(false); }}
+                style={{ padding: '10px 20px', borderRadius: 8, border: `1px solid ${colors.light}33`, background: 'transparent', color: colors.light, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+              >❌ Cancelar</motion.button>
             </div>
           </div>
         </motion.div>
       )}
 
-      {value.length === 0 && !isAdding && (
-        <div style={{
-          textAlign: 'center',
-          padding: '24px',
-          background: `${colors.dark}33`,
-          borderRadius: '12px',
-          color: colors.light,
-          opacity: 0.6,
-        }}>
-          <p>No hay actividades programadas aún</p>
-          <p style={{ fontSize: '0.9rem', marginTop: '4px' }}>
-            Haz clic en "Agregar Actividad" para comenzar
-          </p>
+      {/* === Costos / Promos === */}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <label style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.light }}>{labelCostos}</label>
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={addCosto}
+            style={{
+              padding: '8px 16px', borderRadius: 20, border: 'none',
+              background: `linear-gradient(135deg, ${colors.yellow}, ${colors.orange})`,
+              color: colors.dark, fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer'
+            }}
+          >+ Añadir costo</motion.button>
         </div>
-      )}
+
+        <div style={{ display: 'grid', gap: 12 }}>
+          {costos.map((c, idx)=> (
+            <div key={idx} style={card}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
+                  <input
+                    style={input}
+                    placeholder="Ej. Clase suelta / Paquete 4 clases"
+                    value={c.nombre || ''}
+                    onChange={(e)=> setCosto(idx, { nombre: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
+                  <div style={pillWrap}>
+                    {tiposCosto.map(t => (
+                      <div
+                        key={t}
+                        style={pill(c.tipo === t)}
+                        onClick={()=> setCosto(idx, { tipo: t })}
+                      >{t}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
+                  <input
+                    type="number" min={0} step="1" placeholder="Ej. 200"
+                    value={c.precio ?? ''}
+                    onChange={(e)=> setCosto(idx, { precio: e.target.value === '' ? null : Number(e.target.value) })}
+                    style={input}
+                  />
+                </div>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
+                  <input
+                    style={input}
+                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                    value={c.regla || ''}
+                    onChange={(e)=> setCosto(idx, { regla: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={()=> removeCosto(idx)}
+                  style={{ ...input, width: 'auto', background: colors.coral, border: 'none', cursor: 'pointer' }}
+                >Eliminar</motion.button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {costos.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 24, background: `${colors.dark}33`, borderRadius: 12, color: colors.light, opacity: 0.6, marginTop: 8 }}>
+            <p>No hay costos cargados</p>
+            <p style={{ fontSize: '0.9rem', marginTop: 4 }}>Agrega al menos una opción para vincular desde las clases</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
