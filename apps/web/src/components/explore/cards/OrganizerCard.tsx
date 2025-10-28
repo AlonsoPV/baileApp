@@ -148,23 +148,11 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           {/* CTA button */}
           <motion.div
             whileHover={{ x: 3 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              fontSize: '0.8rem',
-              fontWeight: '600',
-              color: '#f093fb',
-              padding: '0.375rem 0.75rem',
-              background: 'rgba(240, 147, 251, 0.1)',
-              borderRadius: '9999px',
-              border: '1px solid rgba(240, 147, 251, 0.2)'
-            }}
           >
             <div style={{
               padding: '8px 12px',
               borderRadius: 12,
-              
+              background: 'rgba(240, 147, 251, 0.1)',
               color: '#fff',
               margin: '10px 0',
               textAlign: 'center',

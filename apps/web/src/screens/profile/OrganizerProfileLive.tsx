@@ -454,6 +454,10 @@ export function OrganizerProfileLive() {
         cover: Array.isArray(date.media) && date.media.length > 0
           ? (date.media[0] as any)?.url || date.media[0]
           : undefined,
+        flyer: (date as any).flyer_url
+          || (Array.isArray(date.media) && date.media.length > 0
+            ? (date.media[0] as any)?.url || date.media[0]
+            : undefined),
       };
 
       upcomingItems.push(item);
@@ -912,11 +916,11 @@ export function OrganizerProfileLive() {
                 </div>
               </div>
 
-          {/* Cards de fechas */}
+              {/* Cards de fechas */}
               <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: spacing[4]
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: spacing[4]
               }}>
                 {inviteItems.map((ev, i) => (
                   <motion.div
@@ -938,56 +942,76 @@ export function OrganizerProfileLive() {
                       transition: transitions.normal
                     }}
                   >
-                    <h4 style={{
-                      fontSize: typography.fontSize.lg,
-                      fontWeight: typography.fontWeight.semibold,
-                      marginBottom: spacing[3],
-                      color: colors.light
-                    }}>
-                      {ev.nombre}
-                    </h4>
-                    <p style={{
-                      fontSize: typography.fontSize.sm,
-                      color: colors.primary[500],
-                      fontWeight: typography.fontWeight.medium,
-                      marginBottom: spacing[2]
-                    }}>
-                      📅 {ev.date}
-                    </p>
-                    {ev.time && (
-                      <p style={{
-                        fontSize: typography.fontSize.sm,
-                        color: colors.light,
-                        marginBottom: spacing[2]
-                      }}>
-                        🕐 {ev.time}
-                      </p>
-                    )}
-                    {ev.place && (
-                      <p style={{
-                        fontSize: typography.fontSize.sm,
-                        color: colors.light
-                      }}>
-                        📍 {ev.place}
-                      </p>
-                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: spacing[4], alignItems: 'start' }}>
+                      <div>
+                        <h4 style={{
+                          fontSize: typography.fontSize.lg,
+                          fontWeight: typography.fontWeight.semibold,
+                          marginBottom: spacing[3],
+                          color: colors.light
+                        }}>
+                          {ev.nombre}
+                        </h4>
+                        <p style={{
+                          fontSize: typography.fontSize.sm,
+                          color: colors.primary[500],
+                          fontWeight: typography.fontWeight.medium,
+                          marginBottom: spacing[2]
+                        }}>
+                          📅 {ev.date}
+                        </p>
+                        {ev.time && (
+                          <p style={{
+                            fontSize: typography.fontSize.sm,
+                            color: colors.light,
+                            marginBottom: spacing[2]
+                          }}>
+                            🕐 {ev.time}
+                          </p>
+                        )}
+                        {ev.place && (
+                          <p style={{
+                            fontSize: typography.fontSize.sm,
+                            color: colors.light
+                          }}>
+                            📍 {ev.place}
+                          </p>
+                        )}
 
-                    {/* Info Grid resumido para esta fecha */}
-                  <style>{`
-                    .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-                    @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
-                  `}</style>
-                  <div style={{ marginTop: spacing[4] }}>
-                    <EventInfoGrid date={{
-                      lugar: ev.place,
-                      direccion: undefined,
-                      ciudad: undefined,
-                      referencias: undefined,
-                      requisitos: undefined,
-                      cronograma: [],
-                      costos: []
-                    }} />
-                  </div>
+                        {/* Info Grid resumido para esta fecha */}
+                        <style>{`
+                          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+                          @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+                        `}</style>
+                        <div style={{ marginTop: spacing[4] }}>
+                          <EventInfoGrid date={{
+                            lugar: ev.place,
+                            direccion: undefined,
+                            ciudad: undefined,
+                            referencias: undefined,
+                            requisitos: undefined,
+                            cronograma: [],
+                            costos: []
+                          }} />
+                        </div>
+                      </div>
+
+                      {ev.flyer && (
+                        <div style={{ justifySelf: 'center' }}>
+                          <img
+                            src={ev.flyer}
+                            alt={`Flyer de ${ev.nombre}`}
+                            style={{
+                              width: 350,
+                              maxWidth: '100%',
+                              borderRadius: borderRadius.lg,
+                              boxShadow: colors.shadows.md,
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -1035,7 +1059,7 @@ export function OrganizerProfileLive() {
                     margin: 0,
                     color: colors.light
                   }}>
-                    Mis Sociales
+                    Sociales que organizamos
                   </h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,

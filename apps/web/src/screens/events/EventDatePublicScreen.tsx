@@ -367,74 +367,112 @@ export default function EventDatePublicScreen() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+      background: `linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)`,
       padding: '24px 0',
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
       {/* Header */}
-        <div style={{
-          background: `linear-gradient(135deg, ${colors.dark}cc, ${colors.dark}88)`,
-          borderRadius: '20px',
-          padding: '32px',
-          marginBottom: '32px',
-          border: `1px solid ${colors.light}22`,
-          backdropFilter: 'blur(10px)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <button
-                  onClick={() => navigate(`/social/${date.parent_id}`)}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
           style={{
-                    padding: '8px 12px',
-            borderRadius: '20px',
-                    border: `1px solid ${colors.light}33`,
-            background: 'transparent',
-            color: colors.light,
+            position: 'relative',
+            borderRadius: '1.5rem',
+            background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+            padding: '2rem',
+            marginBottom: '2rem',
+            border: '1px solid rgba(240, 147, 251, 0.2)',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Top gradient bar */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
+            opacity: 0.9
+          }} />
+
+          {/* Decorative corner accent */}
+          <div style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            width: '60px',
+            height: '60px',
+            background: 'radial-gradient(circle, rgba(240, 147, 251, 0.2), transparent)',
+            borderRadius: '50%',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate(`/social/${date.parent_id}`)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '25px',
+                    border: '1px solid rgba(240, 147, 251, 0.3)',
+                    background: 'rgba(240, 147, 251, 0.1)',
+                    color: '#f093fb',
                     fontSize: '0.9rem',
-            cursor: 'pointer',
+                    fontWeight: '600',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '6px',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.2s'
                   }}
                 >
                   ← Volver al Social
-                </button>
+                </motion.button>
                 
-                <div style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  background: date.estado_publicacion === 'publicado' 
-                    ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
-                    : `${colors.light}33`,
-                  color: colors.light,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                }}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '25px',
+                    background: date.estado_publicacion === 'publicado' 
+                      ? 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))'
+                      : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    border: '1px solid rgba(240, 147, 251, 0.2)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
                   {date.estado_publicacion === 'publicado' ? '🌐 Público' : '📝 Borrador'}
-                </div>
+                </motion.div>
               </div>
 
-        <h1 style={{ 
-                fontSize: '3rem',
-                fontWeight: '700',
-                background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
-                backgroundClip: 'text',
+              <h1 style={{ 
+                fontSize: '2.5rem',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #f093fb, #FFD166)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                marginBottom: '16px',
-          lineHeight: 1.2,
-        }}>
+                backgroundClip: 'text',
+                marginBottom: '1rem',
+                lineHeight: 1.2,
+              }}>
                 {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-        </h1>
+              </h1>
 
               {date.biografia && (
                 <p style={{
-                  fontSize: '1.2rem',
-                  color: colors.light,
-                  opacity: 0.9,
+                  fontSize: '1.1rem',
+                  color: 'rgba(255, 255, 255, 0.8)',
                   lineHeight: 1.6,
-                  marginBottom: '20px',
+                  marginBottom: '1.5rem',
                 }}>
                   {date.biografia}
                 </p>
@@ -444,8 +482,8 @@ export default function EventDatePublicScreen() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '24px',
-                marginBottom: '20px',
+                gap: '2rem',
+                marginBottom: '1.5rem',
                 flexWrap: 'wrap',
               }}>
                 <div style={{
@@ -453,20 +491,28 @@ export default function EventDatePublicScreen() {
                   alignItems: 'center',
                   gap: '8px',
                   fontSize: '1.1rem',
-                  color: colors.light,
+                  color: '#fff',
                   fontWeight: '600',
+                  padding: '8px 16px',
+                  background: 'rgba(240, 147, 251, 0.1)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(240, 147, 251, 0.2)'
                 }}>
                   📅 {formatDate(date.fecha)}
                 </div>
                 
                 {date.hora_inicio && (
-        <div style={{ 
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                     fontSize: '1.1rem',
-                    color: colors.light,
+                    color: '#fff',
                     fontWeight: '600',
+                    padding: '8px 16px',
+                    background: 'rgba(255, 209, 102, 0.1)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255, 209, 102, 0.2)'
                   }}>
                     🕐 {formatTime(date.hora_inicio)}
                     {date.hora_fin && ` - ${formatTime(date.hora_fin)}`}
@@ -485,18 +531,21 @@ export default function EventDatePublicScreen() {
           </div>
 
           {/* Chips de Ritmos y Zonas */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '1.5rem' }}>
             {date.estilos?.map((ritmoId: number) => (
               <motion.span
                 key={ritmoId}
                 whileHover={{ scale: 1.05 }}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                  color: colors.light,
+                  padding: '10px 18px',
+                  borderRadius: '25px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
+                  color: '#f093fb',
                   fontSize: '0.9rem',
                   fontWeight: '600',
+                  border: '1px solid rgba(240, 147, 251, 0.3)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)'
                 }}
               >
                 🎵 {getRitmoName(ritmoId)}
@@ -508,38 +557,63 @@ export default function EventDatePublicScreen() {
                 key={zonaId}
                 whileHover={{ scale: 1.05 }}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                  color: colors.light,
+                  padding: '10px 18px',
+                  borderRadius: '25px',
+                  background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 140, 66, 0.2))',
+                  color: '#FFD166',
                   fontSize: '0.9rem',
                   fontWeight: '600',
+                  border: '1px solid rgba(255, 209, 102, 0.3)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 16px rgba(255, 209, 102, 0.2)'
                 }}
               >
                 📍 {getZonaName(zonaId)}
               </motion.span>
             ))}
-        </div>
+          </div>
+        </motion.div>
 
         {/* Contenedor responsive 2x2: Ubicación | Requisitos  y  Cronograma | Costos */}
         <style>{`
-          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px; }
+          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; }
           @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
         `}</style>
         <div className="two-col-grid">
           {/* Ubicación */}
           {(date.lugar || date.direccion || date.ciudad) && (
-            <div style={{
-              padding: '16px',
-              background: `${colors.light}11`,
-              borderRadius: '12px',
-              border: `1px solid ${colors.light}22`
-            }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{
+                position: 'relative',
+                padding: '1.5rem',
+                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
+                borderRadius: '1.25rem',
+                border: '1px solid rgba(240, 147, 251, 0.2)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Top gradient bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #f093fb, #f5576c)',
+                opacity: 0.8
+              }} />
+              
               <h3 style={{
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                color: colors.light,
-                marginBottom: '8px',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -547,125 +621,216 @@ export default function EventDatePublicScreen() {
                 📍 Ubicación
               </h3>
               {date.lugar && (
-                <p style={{ fontSize: '1rem', color: colors.light, opacity: 0.9, marginBottom: '4px', fontWeight: '600' }}>{date.lugar}</p>
+                <p style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem', fontWeight: '600' }}>{date.lugar}</p>
               )}
               {date.direccion && (
-                <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8, marginBottom: '4px' }}>{date.direccion}</p>
+                <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.5rem' }}>{date.direccion}</p>
               )}
               {date.ciudad && (
-                <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.7 }}>{date.ciudad}</p>
+                <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>{date.ciudad}</p>
               )}
               {date.referencias && (
-                <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8, marginTop: '8px', fontStyle: 'italic' }}>💡 {date.referencias}</p>
+                <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)', marginTop: '1rem', fontStyle: 'italic', padding: '0.75rem', background: 'rgba(240, 147, 251, 0.1)', borderRadius: '12px', border: '1px solid rgba(240, 147, 251, 0.2)' }}>💡 {date.referencias}</p>
               )}
-            </div>
+            </motion.div>
           )}
 
           {/* Requisitos */}
           {date.requisitos && (
-            <div style={{
-              padding: '16px',
-              background: `${colors.light}11`,
-              borderRadius: '12px',
-              border: `1px solid ${colors.light}22`
-            }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              style={{
+                position: 'relative',
+                padding: '1.5rem',
+                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
+                borderRadius: '1.25rem',
+                border: '1px solid rgba(240, 147, 251, 0.2)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Top gradient bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #FFD166, #FF8C42)',
+                opacity: 0.8
+              }} />
+              
               <h3 style={{
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                color: colors.light,
-                marginBottom: '8px',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
                 📋 Requisitos
               </h3>
-              <p style={{ fontSize: '1rem', color: colors.light, opacity: 0.9, lineHeight: 1.5, margin: 0 }}>{date.requisitos}</p>
-            </div>
+              <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.6, margin: 0 }}>{date.requisitos}</p>
+            </motion.div>
           )}
 
           {/* Cronograma */}
           {date.cronograma && date.cronograma.length > 0 && (
-            <div style={{
-              background: `${colors.dark}66`,
-              borderRadius: '16px',
-              padding: '24px',
-              border: `1px solid ${colors.light}22`
-            }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              style={{
+                position: 'relative',
+                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
+                borderRadius: '1.25rem',
+                padding: '1.5rem',
+                border: '1px solid rgba(240, 147, 251, 0.2)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Top gradient bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #1E88E5, #00BCD4)',
+                opacity: 0.8
+              }} />
+              
               <h2 style={{
-                fontSize: '1.8rem',
-                fontWeight: '600',
-                color: colors.light,
-                marginBottom: '20px',
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '1.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
                 📅 Cronograma
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {date.cronograma.map((item: any, index: number) => (
-                  <motion.div key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}
-                    style={{ padding: '20px', background: `${colors.dark}44`, borderRadius: '12px', border: `1px solid ${colors.light}22`, display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <motion.div 
+                    key={index} 
+                    initial={{ opacity: 0, x: -20 }} 
+                    animate={{ opacity: 1, x: 0 }} 
+                    transition={{ delay: index * 0.1 }}
+                    style={{ 
+                      padding: '1.25rem', 
+                      background: 'rgba(30, 136, 229, 0.1)', 
+                      borderRadius: '1rem', 
+                      border: '1px solid rgba(30, 136, 229, 0.2)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '1rem',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  >
                     <div style={{ fontSize: '1.5rem', minWidth: '40px' }}>
                       {item.tipo === 'clase' ? '📚' : item.tipo === 'show' ? '🎭' : '📋'}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: colors.light, marginBottom: '4px' }}>{item.titulo}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <span style={{ fontSize: '1rem', color: colors.light, opacity: 0.8 }}>🕐 {item.inicio} - {item.fin}</span>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', marginBottom: '0.5rem' }}>{item.titulo}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)' }}>🕐 {item.inicio} - {item.fin}</span>
                         {item.nivel && (
-                          <span style={{ padding: '4px 8px', borderRadius: '12px', background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: '600' }}>{item.nivel}</span>
+                          <span style={{ padding: '4px 8px', borderRadius: '12px', background: 'rgba(30, 136, 229, 0.2)', color: '#1E88E5', fontSize: '0.8rem', fontWeight: '600', border: '1px solid rgba(30, 136, 229, 0.3)' }}>{item.nivel}</span>
                         )}
                       </div>
                     </div>
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Costos */}
           {date.costos && date.costos.length > 0 && (
-            <div style={{
-              background: `${colors.dark}66`,
-              borderRadius: '16px',
-              padding: '24px',
-              border: `1px solid ${colors.light}22`
-            }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              style={{
+                position: 'relative',
+                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
+                borderRadius: '1.25rem',
+                padding: '1.5rem',
+                border: '1px solid rgba(240, 147, 251, 0.2)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Top gradient bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #FFD166, #FF8C42)',
+                opacity: 0.8
+              }} />
+              
               <h2 style={{
-                fontSize: '1.8rem',
-                fontWeight: '600',
-                color: colors.light,
-                marginBottom: '20px',
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '1.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
                 💰 Costos y Promociones
               </h2>
-              <div style={{ display: 'grid', gap: '16px' }}>
+              <div style={{ display: 'grid', gap: '1rem' }}>
                 {date.costos.map((costo: any, index: number) => (
-                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}
-                    style={{ padding: '20px', background: `${colors.dark}44`, borderRadius: '12px', border: `1px solid ${colors.light}22`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <motion.div 
+                    key={index} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: index * 0.1 }}
+                    style={{ 
+                      padding: '1.25rem', 
+                      background: 'rgba(255, 209, 102, 0.1)', 
+                      borderRadius: '1rem', 
+                      border: '1px solid rgba(255, 209, 102, 0.2)', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  >
                     <div>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: colors.light, marginBottom: '4px' }}>{costo.nombre}</h3>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', marginBottom: '0.5rem' }}>{costo.nombre}</h3>
                       {costo.regla && (
-                        <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8, margin: 0 }}>{costo.regla}</p>
+                        <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)', margin: 0 }}>{costo.regla}</p>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '1.5rem' }}>
                         {costo.tipo === 'preventa' ? '🎫' : costo.tipo === 'taquilla' ? '💰' : '🎁'}
                       </span>
-                      <span style={{ fontSize: '1.3rem', fontWeight: '700', color: colors.light }}>
+                      <span style={{ fontSize: '1.3rem', fontWeight: '700', color: '#FFD166' }}>
                         {costo.precio !== undefined && costo.precio !== null ? `$${costo.precio.toLocaleString()}` : 'Gratis'}
                       </span>
                     </div>
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
@@ -755,18 +920,39 @@ export default function EventDatePublicScreen() {
       )}
 
         {/* RSVP Section */}
-        <div style={{
-          background: `${colors.dark}66`,
-          borderRadius: '16px',
-            padding: '24px',
-          marginBottom: '32px',
-          border: `1px solid ${colors.light}22`,
-        }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          style={{
+            position: 'relative',
+            background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
+            borderRadius: '1.25rem',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            border: '1px solid rgba(240, 147, 251, 0.2)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Top gradient bar */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
+            opacity: 0.8
+          }} />
+          
           <h2 style={{
-            fontSize: '1.8rem',
-            fontWeight: '600',
-            color: colors.light,
-            marginBottom: '20px',
+            fontSize: '1.5rem',
+            fontWeight: '700',
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '1.5rem',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -782,32 +968,37 @@ export default function EventDatePublicScreen() {
           
           {/* Estadísticas de RSVP */}
           {stats && (
-            <div style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              textAlign: 'center'
-            }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8 }}
+              style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: 'rgba(240, 147, 251, 0.1)',
+                borderRadius: '1rem',
+                border: '1px solid rgba(240, 147, 251, 0.2)',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
               <div style={{
-                fontSize: '0.9rem',
-                color: colors.light,
-                opacity: 0.8,
+                fontSize: '1rem',
+                color: '#f093fb',
+                fontWeight: '600',
                 marginBottom: '0.5rem'
               }}>
                 {stats.interesado} persona{stats.interesado !== 1 ? 's' : ''} interesada{stats.interesado !== 1 ? 's' : ''}
               </div>
               <div style={{
-                fontSize: '0.8rem',
-                color: colors.light,
-                opacity: 0.6
+                fontSize: '0.9rem',
+                color: 'rgba(255, 255, 255, 0.7)'
               }}>
                 Total: {stats.total} visualizaciones
               </div>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
         {/* Galería de Fotos de la Fecha */}
         {(() => {
@@ -1044,8 +1235,7 @@ export default function EventDatePublicScreen() {
       </motion.section>
           );
         })()}
-        </div>
-        </div>
+      </div>
     </div>
   );
 }

@@ -1,11 +1,22 @@
 import React from "react";
 const FALLBACK = "/default-media.png";
 
-export default function ImageWithFallback(
-  { src, fallback = FALLBACK, ...rest }:
-  React.ImgHTMLAttributes<HTMLImageElement> & { fallback?: string }
-) {
+type ImageWithFallbackProps = React.ImgHTMLAttributes<HTMLImageElement> & {
+  fallback?: string;
+  priority?: boolean; // si true, fuerza carga inmediata
+};
+
+export default function ImageWithFallback({ src, fallback = FALLBACK, priority = false, loading, ...rest }: ImageWithFallbackProps) {
   const [err, setErr] = React.useState(false);
   const finalSrc = !src || err ? fallback : src;
-  return <img src={finalSrc} onError={() => setErr(true)} {...rest} />;
+  const resolvedLoading = loading || (priority ? 'eager' : 'lazy');
+  return (
+    <img
+      src={finalSrc}
+      onError={() => setErr(true)}
+      decoding="async"
+      loading={resolvedLoading as any}
+      {...rest}
+    />
+  );
 }

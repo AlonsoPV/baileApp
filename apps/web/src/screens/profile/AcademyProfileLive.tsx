@@ -831,54 +831,39 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Información para Estudiantes */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(10px)'
-            }}
-          >
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              margin: '0 0 1.5rem 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              💬 Información para Estudiantes
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <FAQAccordion
-                question="¿Qué necesito para empezar?"
-                answer="Solo necesitas ganas de aprender y ropa cómoda. No se requiere experiencia previa."
-              />
-              <FAQAccordion
-                question="¿Cuáles son los horarios de clases?"
-                answer="Ofrecemos clases de lunes a viernes de 6:00 PM a 9:00 PM y sábados de 10:00 AM a 2:00 PM."
-              />
-              <FAQAccordion
-                question="¿Hay niveles para principiantes?"
-                answer="Sí, tenemos clases para todos los niveles: principiantes, intermedios y avanzados."
-              />
-              <FAQAccordion
-                question="¿Cómo me inscribo a una clase?"
-                answer="Puedes inscribirte directamente desde nuestra página web o contactarnos por WhatsApp."
-              />
-            </div>
-          </motion.section>
+          {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
+          {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              style={{
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
+                <div>
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.2 }}>Información para Estudiantes</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {(academy as any).faq.map((faq: any, index: number) => (
+                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
+                    <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
         </div>
       </div>
     </>

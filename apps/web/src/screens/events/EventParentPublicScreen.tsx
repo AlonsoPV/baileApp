@@ -600,62 +600,95 @@ export default function EventParentPublicScreen() {
           )}
         </div>
 
-        {/* FAQ Section */}
+        {/* FAQ Section - Estilo Organizer */}
         {parent.faq && parent.faq.length > 0 && (
-          <div style={{
-            background: `${colors.darkBase}66`,
-            borderRadius: '16px',
-            padding: '24px',
-            marginBottom: '32px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            <h2 style={{
-              fontSize: '1.8rem',
-              fontWeight: '600',
-              color: colors.light,
-              marginBottom: '20px',
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="glass-card"
+            style={{
+              marginBottom: '2rem',
+              padding: '2rem',
+              borderRadius: '20px'
+            }}
+          >
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '1rem',
+              marginBottom: '1.5rem'
             }}>
-              ❓ Preguntas Frecuentes
-            </h2>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FB8C00, #FF7043)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
+              }}>
+                ❓
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '1.75rem',
+                  fontWeight: '800',
+                  background: 'linear-gradient(135deg, #FF7043 0%, #FB8C00 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  margin: 0,
+                  lineHeight: 1.2
+                }}>
+                  Información para Asistentes
+                </h3>
+                <p style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.8,
+                  margin: 0,
+                  fontWeight: '500'
+                }}>
+                  Preguntas frecuentes
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {parent.faq.map((faq: any, index: number) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.08 }}
                   style={{
-                    padding: '16px',
-                    background: `${colors.darkBase}44`,
+                    padding: '1rem 1.25rem',
+                    background: 'rgba(255, 255, 255, 0.06)',
                     borderRadius: '12px',
-                    border: `1px solid ${colors.light}22`,
+                    border: '1px solid rgba(255, 255, 255, 0.12)'
                   }}
                 >
                   <h4 style={{
                     fontSize: '1.1rem',
-                    fontWeight: '600',
-                    color: colors.light,
-                    marginBottom: '8px',
+                    fontWeight: 700,
+                    margin: 0,
+                    marginBottom: '0.5rem'
                   }}>
                     {faq.q}
                   </h4>
                   <p style={{
                     fontSize: '1rem',
-                    color: colors.light,
-                    opacity: 0.8,
-                    lineHeight: 1.5,
+                    opacity: 0.85,
                     margin: 0,
+                    lineHeight: 1.6
                   }}>
                     {faq.a}
                   </p>
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.section>
         )}
 
         {/* Fechas Section */}

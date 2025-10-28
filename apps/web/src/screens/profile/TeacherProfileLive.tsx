@@ -91,6 +91,27 @@ export default function TeacherProfileLive() {
             style={{ marginBottom: spacing[8], padding: spacing[8], background: 'rgba(255,255,255,0.06)', borderRadius: borderRadius['2xl'], border: '1px solid rgba(255,255,255,0.14)' }}
           />
         </div>
+
+        {/* FAQ estilo Organizer */}
+        {Array.isArray(teacher?.faq) && teacher.faq.length > 0 && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg,#FB8C00,#FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>❓</div>
+              <div>
+                <h3 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>Información para Estudiantes</h3>
+                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>Preguntas frecuentes</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+              {teacher.faq.map((faq: any, index: number) => (
+                <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: spacing[4], background: 'rgba(255,255,255,0.06)', borderRadius: borderRadius.xl, border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <h4 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, margin: 0, marginBottom: spacing[2] }}>{faq.q}</h4>
+                  <p style={{ fontSize: typography.fontSize.base, opacity: 0.85, margin: 0, lineHeight: typography.lineHeight.relaxed }}>{faq.a}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
         {Array.isArray(teacher?.media) && teacher.media.length > 0 && (
           <motion.section id="user-profile-photo-gallery" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>

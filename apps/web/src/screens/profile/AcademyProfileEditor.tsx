@@ -13,6 +13,8 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import FAQEditor from "../../components/common/FAQEditor";
+import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -59,7 +61,8 @@ export default function AcademyProfileEditor() {
         },
         dato_curioso: "",
         gusta_bailar: ""
-      }
+      },
+      faq: [] as any[]
     } as any
   });
 
@@ -280,6 +283,16 @@ export default function AcademyProfileEditor() {
               />
             </div>
           </div>
+
+          {/* Vista previa con componente SocialMediaSection */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <SocialMediaSection
+              respuestas={{ redes: (form as any).redes_sociales || {} }}
+              redes_sociales={(form as any).redes_sociales || {}}
+              title="🔗 Vista previa de Redes"
+              availablePlatforms={['instagram','facebook','whatsapp']}
+            />
+          </div>
         </div>
 
         {/* Maestros Invitados */}
@@ -313,50 +326,7 @@ export default function AcademyProfileEditor() {
             💬 Información para Estudiantes
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                ❓ ¿Qué necesito para empezar?
-              </label>
-              <textarea
-                value={form.respuestas?.dato_curioso || ''}
-                onChange={(e) => setNested('respuestas.dato_curioso', e.target.value)}
-                placeholder="Información sobre requisitos, materiales, etc."
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                🎯 ¿Por qué elegir nuestra academia?
-              </label>
-              <textarea
-                value={form.respuestas?.gusta_bailar || ''}
-                onChange={(e) => setNested('respuestas.gusta_bailar', e.target.value)}
-                placeholder="Ventajas, metodología, experiencia, etc."
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
-              />
-            </div>
-          </div>
+          <FAQEditor value={(form as any).faq || []} onChange={(v:any)=> setField('faq' as any, v as any)} />
         </div>
 
         {/* Gestión de Fotos */}
