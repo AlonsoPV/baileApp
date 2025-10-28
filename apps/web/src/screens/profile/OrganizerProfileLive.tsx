@@ -923,95 +923,167 @@ export function OrganizerProfileLive() {
                 gap: spacing[4]
               }}>
                 {inviteItems.map((ev, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    whileHover={{
-                      scale: 1.02,
-                      y: -4,
-                      boxShadow: colors.shadows.lg
-                    }}
-                    onClick={() => navigate(ev.href)}
-                    className="glass-card"
-                    style={{
-                      padding: spacing[6],
-                      borderRadius: borderRadius.xl,
-                      cursor: 'pointer',
-                      transition: transitions.normal
-                    }}
-                  >
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: spacing[4], alignItems: 'start' }}>
-                      <div>
-                        <h4 style={{
-                          fontSize: typography.fontSize.lg,
-                          fontWeight: typography.fontWeight.semibold,
-                          marginBottom: spacing[3],
-                          color: colors.light
-                        }}>
-                          {ev.nombre}
-                        </h4>
-                        <p style={{
-                          fontSize: typography.fontSize.sm,
-                          color: colors.primary[500],
-                          fontWeight: typography.fontWeight.medium,
-                          marginBottom: spacing[2]
-                        }}>
-                          📅 {ev.date}
-                        </p>
-                        {ev.time && (
-                          <p style={{
-                            fontSize: typography.fontSize.sm,
-                            color: colors.light,
-                            marginBottom: spacing[2]
-                          }}>
-                            🕐 {ev.time}
-                          </p>
-                        )}
-                        {ev.place && (
-                          <p style={{
-                            fontSize: typography.fontSize.sm,
-                            color: colors.light
-                          }}>
-                            📍 {ev.place}
-                          </p>
-                        )}
-
-                        {/* Info Grid resumido para esta fecha */}
-                        <style>{`
-                          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-                          @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
-                        `}</style>
-                        <div style={{ marginTop: spacing[4] }}>
-                          <EventInfoGrid date={{
-                            lugar: ev.place,
-                            direccion: undefined,
-                            ciudad: undefined,
-                            referencias: undefined,
-                            requisitos: undefined,
-                            cronograma: [],
-                            costos: []
-                          }} />
-                        </div>
-                      </div>
-
-                      {ev.flyer && (
-                        <div style={{ justifySelf: 'center' }}>
-                          <img
-                            src={ev.flyer}
-                            alt={`Flyer de ${ev.nombre}`}
-                            style={{
-                              width: 350,
-                              maxWidth: '100%',
-                              borderRadius: borderRadius.lg,
-                              boxShadow: colors.shadows.md,
-                              objectFit: 'cover'
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                 <motion.div
+                 key={i}
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: i * 0.1 }}
+                 whileHover={{
+                   scale: 1.02,
+                   y: -4,
+                   boxShadow: colors.shadows.lg
+                 }}
+                 onClick={() => navigate(ev.href)}
+                 className="glass-card"
+                 style={{
+                   // --- Card base (flyer de fondo) ---
+                   position: 'relative',
+                   borderRadius: borderRadius.xl,
+                   cursor: 'pointer',
+                   transition: transitions.normal,
+                   overflow: 'hidden',
+                   minHeight: 260,
+               
+                   // Fondo: flyer si existe, si no, fallback neutro
+                   backgroundImage: ev.flyer 
+                     ? `url(${ev.flyer})`
+                     : 'linear-gradient(135deg, rgba(40,30,45,0.95), rgba(30,20,40,0.95))',
+                   backgroundSize: 'cover',
+                   backgroundPosition: 'center',
+               
+                   // Borde / sombra sutil
+                   border: '1px solid rgba(255,255,255,0.08)',
+                   boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+               
+                   // Quitamos padding directo del card; lo aplicamos en el panel inferior
+                   padding: 0,
+                   display: 'flex',
+                   flexDirection: 'column',
+                   justifyContent: 'flex-end'
+                 }}
+               >
+                 {/* Overlay oscuro para legibilidad sobre la imagen */}
+                 <div
+                   aria-hidden
+                   style={{
+                     position: 'absolute',
+                     inset: 0,
+                     background:
+                       'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0.05) 100%)',
+                     pointerEvents: 'none'
+                   }}
+                 />
+               
+                 {/* Panel inferior con contenido (mantiene tu estructura interna) */}
+                 <div
+                   style={{
+                     position: 'relative',
+                     zIndex: 1,
+                     padding: spacing[6],
+                     backdropFilter: 'blur(6px)',
+                     background: 'rgba(0,0,0,0.35)',
+                     borderTop: '1px solid rgba(255,255,255,0.08)'
+                   }}
+                 >
+                   <div
+                     style={{
+                       display: 'grid',
+                       gridTemplateColumns: '1fr',
+                       gap: spacing[4],
+                       alignItems: 'start'
+                     }}
+                   >
+                     <div>
+                       <h4
+                         style={{
+                           fontSize: typography.fontSize.lg,
+                           fontWeight: typography.fontWeight.semibold,
+                           marginBottom: spacing[3],
+                           color: 'rgba(255,255,255,0.95)',
+                           lineHeight: 1.25,
+                           textShadow: '0 1px 2px rgba(0,0,0,0.35)',
+                           letterSpacing: 0.2
+                         }}
+                       >
+                         {ev.nombre}
+                       </h4>
+               
+                       {/* Fecha / hora / lugar con jerarquía sutil */}
+                       <p
+                         style={{
+                           fontSize: typography.fontSize.sm,
+                           color: 'rgba(255,255,255,0.85)',
+                           fontWeight: typography.fontWeight.medium,
+                           marginBottom: spacing[2]
+                         }}
+                       >
+                         📅 {ev.date}
+                       </p>
+               
+                       {ev.time && (
+                         <p
+                           style={{
+                             fontSize: typography.fontSize.sm,
+                             color: 'rgba(255,255,255,0.8)',
+                             marginBottom: spacing[2]
+                           }}
+                         >
+                           🕐 {ev.time}
+                         </p>
+                       )}
+               
+                       {ev.place && (
+                         <p
+                           style={{
+                             fontSize: typography.fontSize.sm,
+                             color: 'rgba(255,255,255,0.85)'
+                           }}
+                         >
+                           📍 {ev.place}
+                         </p>
+                       )}
+               
+                       {/* Info Grid resumido para esta fecha */}
+                       <style>{`
+                         .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+                         @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+                       `}</style>
+                       <div style={{ marginTop: spacing[4] }}>
+                         <EventInfoGrid
+                           date={{
+                             lugar: ev.place,
+                             direccion: undefined,
+                             ciudad: undefined,
+                             referencias: undefined,
+                             requisitos: undefined,
+                             cronograma: [],
+                             costos: []
+                           }}
+                         />
+                       </div>
+                     </div>
+               
+                     {/* Conservamos el <img> pero lo ocultamos si ya usamos el flyer como fondo.
+                         (No cambiamos la estructura, solo estilos) */}
+                     {ev.flyer && (
+                       <div style={{ justifySelf: 'center' }}>
+                         <img
+                           src={ev.flyer}
+                           alt={`Flyer de ${ev.nombre}`}
+                           style={{
+                             width: 350,
+                             maxWidth: '100%',
+                             borderRadius: borderRadius.lg,
+                             boxShadow: colors.shadows.md,
+                             objectFit: 'cover',
+                             display: 'none' // el flyer ahora es fondo del card
+                           }}
+                         />
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               
                   </motion.div>
                 ))}
               </div>

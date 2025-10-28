@@ -32,7 +32,10 @@ export function EventCreateWizard() {
       organizer_id: organizer.id,
     };
 
-    return await createParent.mutateAsync(payload);
+    const result = await createParent.mutateAsync(payload);
+    
+    // Llamar onSuccess con el ID del evento creado
+    handleSuccess(result.id);
   };
 
   const handleSuccess = (eventId: number) => {
