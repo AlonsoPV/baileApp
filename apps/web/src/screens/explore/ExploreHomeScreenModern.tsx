@@ -44,7 +44,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
             fontWeight: typography.fontWeight.medium,
             padding: `${spacing[1]} ${spacing[3]}`,
             borderRadius: borderRadius.lg,
-            background: 'rgba(255,255,255,0.04)',
+            background: 'rgb(255, 255, 255)',
             border: `1px solid rgba(255,255,255,0.08)`,
             transition: transitions.fast
           }}
