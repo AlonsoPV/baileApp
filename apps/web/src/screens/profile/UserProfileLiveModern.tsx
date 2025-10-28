@@ -38,7 +38,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 
   return (
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Carrusel Principal */}
+      {/* Carruse Principal */}
       <div style={{
         position: 'relative',
         aspectRatio: '16/9',
