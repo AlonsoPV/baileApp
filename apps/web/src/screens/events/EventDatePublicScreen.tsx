@@ -522,12 +522,11 @@ export default function EventDatePublicScreen() {
         </div>
 
         {/* Contenedor responsive 2x2: Ubicación | Requisitos  y  Cronograma | Costos */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '24px',
-          marginBottom: '32px'
-        }}>
+        <style>{`
+          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px; }
+          @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+        `}</style>
+        <div className="two-col-grid">
           {/* Ubicación */}
           {(date.lugar || date.direccion || date.ciudad) && (
             <div style={{

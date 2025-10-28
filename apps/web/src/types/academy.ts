@@ -2,7 +2,8 @@ export type AcademyLocation = {
   sede?: string; 
   direccion?: string; 
   ciudad?: string; 
-  zona_id?: number|null 
+  zona_id?: number|null;
+  referencias?: string|null; // notas
 };
 
 export type AcademyHorario = { 

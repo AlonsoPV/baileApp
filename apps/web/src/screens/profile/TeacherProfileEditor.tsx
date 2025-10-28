@@ -12,6 +12,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
 import { useTeacherMedia } from "@/hooks/useTeacherMedia";
+import EventInfoGrid from "../../components/events/EventInfoGrid";
 
 const colors = {
   green: '#43e97b',
@@ -32,6 +33,8 @@ export default function TeacherProfileEditor() {
     redes_sociales: {} as any,
     media: [] as any[],
     faq: [] as any[],
+    cronograma: [] as any[],
+    costos: [] as any[],
   });
 
   function setField<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
@@ -48,6 +51,8 @@ export default function TeacherProfileEditor() {
         redes_sociales: teacher.redes_sociales || {},
         media: teacher.media || [],
         faq: teacher.faq || [],
+        cronograma: (teacher as any).cronograma || [],
+        costos: (teacher as any).costos || [],
       });
     }
   }, [teacher]);
@@ -78,6 +83,8 @@ export default function TeacherProfileEditor() {
               redes_sociales: form.redes_sociales,
               media: form.media,
               faq: form.faq,
+              ...(form as any).cronograma ? { cronograma: (form as any).cronograma } : {},
+              ...(form as any).costos ? { costos: (form as any).costos } : {},
             });
             if (teacher?.id) navigate(`/maestro/${teacher.id}`);
           }}
@@ -107,6 +114,24 @@ export default function TeacherProfileEditor() {
                 onChange={(e)=>setField('bio', e.target.value)}
               />
             </div>
+          </motion.div>
+
+          {/* Vista previa informativa (2x2) */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <h3 style={{ margin: 0, marginBottom: 12 }}>🧭 Vista previa de información</h3>
+            <style>{`
+              .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+              @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+            `}</style>
+            <EventInfoGrid date={{
+              lugar: (form as any)?.ubicaciones?.[0]?.nombre || '',
+              direccion: (form as any)?.ubicaciones?.[0]?.direccion || '',
+              ciudad: (form as any)?.ubicaciones?.[0]?.ciudad || '',
+              referencias: (form as any)?.ubicaciones?.[0]?.referencias || '',
+              requisitos: undefined,
+              cronograma: (form as any).cronograma || [],
+              costos: (form as any).costos || []
+            }} />
           </motion.div>
 
           {/* Ritmos y Zonas */}

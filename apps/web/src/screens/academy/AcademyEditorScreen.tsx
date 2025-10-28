@@ -14,6 +14,7 @@ import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import UbicacionesEditor from '../../components/academy/UbicacionesEditor';
 import HorariosEditor from '../../components/academy/HorariosEditor';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
+import EventInfoGrid from '../../components/events/EventInfoGrid';
 import '@/styles/organizer.css';
 import { useAcademyMedia } from '@/hooks/useAcademyMedia';
 
@@ -198,6 +199,29 @@ export default function AcademyEditorScreen() {
             value={form.horarios} 
             onChange={(horarios) => setField('horarios', horarios)} 
           />
+        </div>
+
+        {/* Vista previa informativa (2x2) */}
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>🧭 Vista previa de información</h2>
+          <style>{`
+            .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+            @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+          `}</style>
+          <EventInfoGrid date={{
+            lugar: form.ubicaciones?.[0]?.nombre || '',
+            direccion: form.ubicaciones?.[0]?.direccion || '',
+            ciudad: form.ubicaciones?.[0]?.ciudad || '',
+            referencias: form.ubicaciones?.[0]?.referencias || '',
+            requisitos: undefined,
+            cronograma: form.horarios?.map((h: any) => ({
+              titulo: h.titulo || h.nombre || 'Horario',
+              inicio: h.inicio || h.hora_inicio,
+              fin: h.fin || h.hora_fin,
+              tipo: 'otro'
+            })) || [],
+            costos: []
+          }} />
         </div>
 
         {/* Gestión de Media */}

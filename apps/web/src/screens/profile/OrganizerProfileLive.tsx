@@ -912,11 +912,11 @@ export function OrganizerProfileLive() {
                 </div>
               </div>
 
-              {/* Cards de fechas */}
+          {/* Cards de fechas */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                gap: spacing[4]
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: spacing[4]
               }}>
                 {inviteItems.map((ev, i) => (
                   <motion.div
@@ -973,17 +973,21 @@ export function OrganizerProfileLive() {
                     )}
 
                     {/* Info Grid resumido para esta fecha */}
-                    <div style={{ marginTop: spacing[4] }}>
-                      <EventInfoGrid date={{
-                        lugar: ev.place,
-                        direccion: undefined,
-                        ciudad: undefined,
-                        referencias: undefined,
-                        requisitos: undefined,
-                        cronograma: [],
-                        costos: []
-                      }} />
-                    </div>
+                  <style>{`
+                    .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+                    @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
+                  `}</style>
+                  <div style={{ marginTop: spacing[4] }}>
+                    <EventInfoGrid date={{
+                      lugar: ev.place,
+                      direccion: undefined,
+                      ciudad: undefined,
+                      referencias: undefined,
+                      requisitos: undefined,
+                      cronograma: [],
+                      costos: []
+                    }} />
+                  </div>
                   </motion.div>
                 ))}
               </div>

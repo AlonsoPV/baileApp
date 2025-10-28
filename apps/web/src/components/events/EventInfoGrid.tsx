@@ -20,14 +20,7 @@ export default function EventInfoGrid({ date }: Props) {
   const colors = themeColors;
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '24px',
-        marginBottom: '32px',
-      }}
-    >
+    <div className="two-col-grid">
       {(date.lugar || date.direccion || date.ciudad) && (
         <div
           style={{

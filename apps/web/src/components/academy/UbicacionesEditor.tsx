@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AcademyLocation } from '../../types/academy';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
+import { useTags } from '../../hooks/useTags';
 
 export default function UbicacionesEditor({
   value, onChange
 }: { value: AcademyLocation[]; onChange:(v:AcademyLocation[])=>void }) {
   const [items, setItems] = useState<AcademyLocation[]>(value || []);
+  const { zonas } = useTags('zona');
 
   useEffect(() => {
     setItems(value || []);
@@ -22,7 +24,8 @@ export default function UbicacionesEditor({
       sede: '', 
       direccion: '', 
       ciudad: '', 
-      zona_id: null 
+      zona_id: null,
+      referencias: ''
     }]);
   };
 
@@ -124,7 +127,7 @@ export default function UbicacionesEditor({
             onChange={e=>patch(index, {ciudad: e.target.value})}
           />
           
-          <input 
+          <select
             style={{
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: borderRadius.lg,
@@ -133,10 +136,29 @@ export default function UbicacionesEditor({
               color: colors.light,
               fontSize: typography.fontSize.sm
             }}
-            placeholder="Zona ID (opcional)"
-            type="number"
-            value={item.zona_id || ''} 
-            onChange={e=>patch(index, {zona_id: e.target.value ? Number(e.target.value) : null})}
+            value={item.zona_id || ''}
+            onChange={e=>patch(index, { zona_id: e.target.value ? Number(e.target.value) : null })}
+          >
+            <option value="">Seleccionar zona</option>
+            {(zonas || []).map((z:any) => (
+              <option key={z.id} value={z.id}>{z.nombre}</option>
+            ))}
+          </select>
+
+          <textarea
+            style={{
+              gridColumn: '1 / -1',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: borderRadius.lg,
+              padding: `${spacing[2]} ${spacing[3]}`,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: colors.light,
+              fontSize: typography.fontSize.sm,
+              minHeight: 64
+            }}
+            placeholder="Notas / referencias"
+            value={item.referencias || ''}
+            onChange={e=>patch(index, { referencias: e.target.value })}
           />
           
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
