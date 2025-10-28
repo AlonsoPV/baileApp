@@ -103,13 +103,15 @@ export default function EventCard({ item }: EventCardProps) {
         )}
 
         {/* CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+        <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Descubre más del evento</div>
           <div style={{
             padding: '8px 12px',
             borderRadius: 12,
             background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)',
             color: '#fff',
+            margin: '10px 0',
+            textAlign: 'center',
             fontSize: 13,
             fontWeight: 700,
             border: '1px solid rgba(255,255,255,0.08)'
