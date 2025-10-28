@@ -7,7 +7,7 @@ import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
 import { useAuth } from '@/contexts/AuthProvider';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
-import { Chip } from '../../components/profile/Chip';
+import ChipPicker from '../../components/common/ChipPicker';
 import { PhotoManagementSection } from '../../components/profile/PhotoManagementSection';
 import { VideoManagementSection } from '../../components/profile/VideoManagementSection';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
@@ -119,7 +119,7 @@ export default function AcademyEditorScreen() {
   }
 
   return (
-    <div className="org-editor" style={{ padding: spacing[8] }}>
+    <div className="org-editor" style={{ minHeight: '100vh', background: '#000000', color: colors.light, padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header con botón Volver + Título + espacio + toggle */}
         <div className="org-editor__header">
@@ -159,73 +159,27 @@ export default function AcademyEditorScreen() {
           </div>
         </div>
 
-        {/* Ritmos y Zonas */}
-        <div style={{ marginBottom: spacing[8] }}>
-          <h2 style={{
-            fontSize: typography.fontSize['2xl'],
-            fontWeight: typography.fontWeight.bold,
-            marginBottom: spacing[6],
-            color: colors.light
-          }}>
-            🎵 Ritmos y Zonas
-          </h2>
-          
-          <div style={{ marginBottom: spacing[4] }}>
-            <h3 style={{
-              fontSize: typography.fontSize.lg,
-              fontWeight: typography.fontWeight.semibold,
-              marginBottom: spacing[3],
-              color: colors.light
-            }}>
-              Ritmos seleccionados:
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
-              {getRitmoNombres().map((nombre) => (
-                <Chip 
-                  key={`r-${nombre}`} 
-                  label={nombre} 
-                  icon="🎵" 
-                  variant="ritmo" 
-                />
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: spacing[4] }}>
-            <h3 style={{
-              fontSize: typography.fontSize.lg,
-              fontWeight: typography.fontWeight.semibold,
-              marginBottom: spacing[3],
-              color: colors.light
-            }}>
-              Zonas seleccionadas:
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
-              {getZonaNombres().map((nombre) => (
-                <Chip 
-                  key={`z-${nombre}`} 
-                  label={nombre} 
-                  icon="📍" 
-                  variant="zona" 
-                />
-              ))}
-            </div>
+        {/* Ritmos y Zonas (editable con ChipPicker) */}
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>🎵 Ritmos y Zonas</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+            <ChipPicker tipo="ritmo" selected={form.ritmos} onChange={(v)=>setField('ritmos', v)} label="Ritmos de la academia" />
+            <ChipPicker tipo="zona" selected={form.zonas} onChange={(v)=>setField('zonas', v)} label="Zonas donde operan" />
           </div>
         </div>
 
         {/* Redes Sociales */}
-        <div style={{ marginBottom: spacing[8] }}>
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>🔗 Redes</h2>
           <SocialMediaSection 
-            respuestas={{ redes: form.redes_sociales }}
-            redes_sociales={form.redes_sociales}
-            title="Redes Sociales"
             availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
-            showTitle={true}
+            respuestas={{ redes: form.redes_sociales }}
           />
         </div>
 
         {/* Ubicaciones */}
-        <div style={{ marginBottom: spacing[8] }}>
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>📍 Ubicaciones</h2>
           <UbicacionesEditor 
             value={form.ubicaciones} 
             onChange={(ubicaciones) => setField('ubicaciones', ubicaciones)} 
@@ -233,7 +187,8 @@ export default function AcademyEditorScreen() {
         </div>
 
         {/* Horarios */}
-        <div style={{ marginBottom: spacing[8] }}>
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4] }}>🕒 Horarios</h2>
           <HorariosEditor 
             value={form.horarios} 
             onChange={(horarios) => setField('horarios', horarios)} 
@@ -241,16 +196,16 @@ export default function AcademyEditorScreen() {
         </div>
 
         {/* Gestión de Media */}
-        <div style={{ marginBottom: spacing[8] }}>
+        <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
           <h2 style={{
             fontSize: typography.fontSize['2xl'],
             fontWeight: typography.fontWeight.bold,
-            marginBottom: spacing[6],
+            marginBottom: spacing[4],
             color: colors.light
           }}>
             📷 Galería de Medios
           </h2>
-          
+
           <PhotoManagementSection
             media={form.media}
             uploading={{}}

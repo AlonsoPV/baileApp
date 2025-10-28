@@ -83,22 +83,22 @@ export default function TeacherProfileEditor() {
         {/* Toolbar antigua removida */}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Header básico */}
+          {/* Información básica */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="org-editor__card">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
               <input
+                className="org-editor__input"
                 placeholder="Nombre público"
                 value={form.nombre_publico}
                 onChange={(e)=>setField('nombre_publico', e.target.value)}
-                style={{ padding: '12px', borderRadius: 12, border: '1px solid #2a2a2a', background: '#111', color: '#fff' }}
               />
               <textarea
+                className="org-editor__textarea"
                 placeholder="Biografía"
                 rows={3}
                 value={form.bio}
                 onChange={(e)=>setField('bio', e.target.value)}
-                style={{ padding: '12px', borderRadius: 12, border: '1px solid #2a2a2a', background: '#111', color: '#fff' }}
               />
             </div>
           </motion.div>
