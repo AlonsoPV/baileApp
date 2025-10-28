@@ -262,10 +262,10 @@ export default function AcademyProfileEditor() {
             <div>
               <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>➕ Crear Clase</h3>
               <CrearClase
-                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                onSubmit={(c)=>{
-                  const nextCrono = ([...((form as any).cronograma||[]), {
+                ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                onSubmit={(c) => {
+                  const nextCrono = ([...((form as any).cronograma || []), {
                     tipo: 'clase',
                     titulo: c.nombre,
                     fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
@@ -275,9 +275,9 @@ export default function AcademyProfileEditor() {
                     referenciaCosto: c.nombre,
                     ritmoId: c.ritmoId,
                     zonaId: c.zonaId,
-                    ubicacion: ((form as any).ubicaciones||[])[0]?.nombre || ''
+                    ubicacion: ((form as any).ubicaciones || [])[0]?.nombre || ''
                   }] as any);
-                  const nextCostos = ([...((form as any).costos||[]), {
+                  const nextCostos = ([...((form as any).costos || []), {
                     nombre: c.nombre,
                     tipo: c.tipo,
                     precio: c.precio ?? null,
@@ -288,7 +288,7 @@ export default function AcademyProfileEditor() {
                 }}
               />
             </div>
-            
+
             {/* Horarios (Cronograma) */}
             <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -297,10 +297,10 @@ export default function AcademyProfileEditor() {
               </div>
               <EventScheduleEditor
                 schedule={(form as any).cronograma || []}
-                onChangeSchedule={(v:any)=>setField('cronograma' as any, v as any)}
+                onChangeSchedule={(v: any) => setField('cronograma' as any, v as any)}
                 costos={(form as any).costos || []}
-                onChangeCostos={(v:any)=>setField('costos' as any, v as any)}
-                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                onChangeCostos={(v: any) => setField('costos' as any, v as any)}
+                ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
               />
             </div>
 
@@ -312,7 +312,7 @@ export default function AcademyProfileEditor() {
               </div>
               <EventCostsEditor
                 value={(form as any).costos || []}
-                onChange={(v)=>setField('costos' as any, v as any)}
+                onChange={(v) => setField('costos' as any, v as any)}
               />
             </div>
 

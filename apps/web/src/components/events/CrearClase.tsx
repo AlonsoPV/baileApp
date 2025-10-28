@@ -41,35 +41,39 @@ type Props = {
 
 const card: React.CSSProperties = {
   position: 'relative',
-  borderRadius: 16,
-  background: 'rgba(255,255,255,0.04)',
-  padding: 16,
+  borderRadius: 20,
+  background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
+  padding: 20,
   overflow: 'hidden',
-  border: '1px solid rgba(255,255,255,0.08)',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-  backdropFilter: 'blur(8px)'
+  border: '1px solid rgba(255,255,255,0.10)',
+  boxShadow: '0 18px 44px rgba(0,0,0,0.45)',
+  backdropFilter: 'blur(12px)'
 };
 
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 };
 const label: React.CSSProperties = { fontSize: 12, opacity: 0.8, marginBottom: 6 };
 const input: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px',
+  padding: '12px 14px',
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
+  borderRadius: 12,
   color: '#fff',
-  outline: 'none'
+  outline: 'none',
+  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.03)',
+  transition: 'all .2s ease'
 };
 const pillWrap: React.CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap' };
 const pill = (active: boolean): React.CSSProperties => ({
   padding: '8px 12px',
   borderRadius: 999,
-  border: `1px solid ${active ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.16)'}`,
-  background: active ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
+  border: active ? '1px solid rgba(255,255,255,0.55)' : '1px solid rgba(255,255,255,0.16)',
+  background: active ? 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))' : 'rgba(255,255,255,0.04)',
   fontSize: 13,
   cursor: 'pointer',
-  userSelect: 'none'
+  userSelect: 'none',
+  boxShadow: active ? '0 6px 16px rgba(30,136,229,0.25)' : 'none',
+  transition: 'all .15s ease'
 });
 
 const normalizeTime = (t?: string) => {
@@ -130,19 +134,29 @@ export default function CrearClase({
   }, [form]);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...style }} className={className}>
-      <div style={{ ...card, padding: 20 }}>
-        <h2 style={{ margin: 0, marginBottom: 12, fontSize: 18, fontWeight: 800, color: colors.light }}>{title}</h2>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...style }} className={className}>
+      <div style={{ ...card }}>
+        {/* Accent bar */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #1E88E5, #7C4DFF, #FFD166)', opacity: 0.9 }} />
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>➕</div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, background: 'linear-gradient(135deg,#ffffff,#cde1ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{title}</h2>
+            <div style={{ fontSize: 12, opacity: 0.75 }}>Crea rápidamente una clase con precio, fecha/semana y horario</div>
+          </div>
+        </div>
 
         {/* Nombre y Tipo */}
-        <div style={row}>
+        <div style={{ ...row, alignItems: 'start' }}>
           <div>
             <div style={label}>Nombre</div>
             <input style={input} placeholder="Ej. Bachata Sensual" value={form.nombre || ''} onChange={(e)=>setField('nombre', e.target.value)} />
           </div>
           <div>
             <div style={label}>Tipo</div>
-            <div style={pillWrap}>
+            <div style={{ ...pillWrap }}>
               {tipos.map(t => (
                 <div key={t} style={pill(form.tipo === t)} onClick={()=>setField('tipo', t)}>{t}</div>
               ))}
@@ -151,7 +165,7 @@ export default function CrearClase({
         </div>
 
         {/* Precio y Regla */}
-        <div style={row}>
+        <div style={{ ...row, alignItems: 'start' }}>
           <div>
             <div style={label}>Precio (opcional)</div>
             <input style={input} type="number" min={0} step="1" placeholder="Ej. 200" value={form.precio ?? ''} onChange={(e)=>setField('precio', e.target.value === '' ? null : Number(e.target.value))} />
@@ -163,10 +177,10 @@ export default function CrearClase({
         </div>
 
         {/* Fecha */}
-        <div style={{ ...row, gridTemplateColumns: '1fr 1fr' }}>
+        <div style={{ ...row, gridTemplateColumns: '1fr 1fr', alignItems: 'start' }}>
           <div>
             <div style={label}>Fecha</div>
-            <div style={pillWrap}>
+            <div style={{ ...pillWrap }}>
               <div style={pill(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</div>
               <div style={pill(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</div>
             </div>
@@ -175,7 +189,7 @@ export default function CrearClase({
             {form.fechaModo === 'especifica' ? (
               <input type="date" style={input} value={form.fecha || ''} onChange={(e)=>setField('fecha', e.target.value)} />
             ) : (
-              <div style={pillWrap}>
+              <div style={{ ...pillWrap }}>
                 {diasSemana.map(d => (
                   <div key={d.id} style={pill(form.diaSemana === d.id)} onClick={()=>setField('diaSemana', d.id)}>{d.nombre}</div>
                 ))}
@@ -185,7 +199,7 @@ export default function CrearClase({
         </div>
 
         {/* Horario */}
-        <div style={row}>
+        <div style={{ ...row, alignItems: 'start' }}>
           <div>
             <div style={label}>Hora inicio (HH:MM)</div>
             <input type="time" step={60} style={input} value={form.inicio || ''} onChange={(e)=>setField('inicio', normalizeTime(e.target.value))} />
@@ -197,10 +211,10 @@ export default function CrearClase({
         </div>
 
         {/* Ritmo y Zona */}
-        <div style={row}>
+        <div style={{ ...row, alignItems: 'start' }}>
           <div>
             <div style={label}>Ritmo</div>
-            <div style={pillWrap}>
+            <div style={{ ...pillWrap }}>
               {ritmos.map(r => (
                 <div key={r.id} style={pill(form.ritmoId === r.id)} onClick={()=>setField('ritmoId', r.id)}>{r.nombre}</div>
               ))}
@@ -208,7 +222,7 @@ export default function CrearClase({
           </div>
           <div>
             <div style={label}>Zona</div>
-            <div style={pillWrap}>
+            <div style={{ ...pillWrap }}>
               {zonas.map(z => (
                 <div key={z.id} style={pill(form.zonaId === z.id)} onClick={()=>setField('zonaId', z.id)}>{z.nombre}</div>
               ))}
@@ -218,8 +232,8 @@ export default function CrearClase({
 
         {/* Acciones */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 12 }}>
-          <button onClick={onCancel} style={{ ...input, width: 'auto', padding: '10px 16px', cursor: 'pointer', background: 'transparent', borderColor: 'rgba(255,255,255,0.16)' }}>Cancelar</button>
-          <button disabled={!canSubmit} onClick={()=> canSubmit && onSubmit?.(form)} style={{ padding: '10px 16px', borderRadius: 12, border: 'none', background: canSubmit ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : 'rgba(255,255,255,0.12)', color:'#fff', fontWeight: 700, cursor: canSubmit ? 'pointer' : 'not-allowed' }}>Crear</button>
+          <button onClick={onCancel} style={{ ...input, width: 'auto', padding: '10px 16px', cursor: 'pointer', background: 'transparent', borderColor: 'rgba(255,255,255,0.18)' }}>Cancelar</button>
+          <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} disabled={!canSubmit} onClick={()=> canSubmit && onSubmit?.(form)} style={{ padding: '12px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: canSubmit ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : 'rgba(255,255,255,0.12)', color:'#fff', fontWeight: 800, cursor: canSubmit ? 'pointer' : 'not-allowed', boxShadow: canSubmit ? '0 10px 24px rgba(30,136,229,0.35)' : 'none' }}>Crear clase →</motion.button>
         </div>
       </div>
     </motion.div>
