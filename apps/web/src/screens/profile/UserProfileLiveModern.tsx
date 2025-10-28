@@ -666,7 +666,7 @@ export const UserProfileLive: React.FC = () => {
             <SocialMediaSection 
               respuestas={profile?.respuestas}
               redes_sociales={profile?.redes_sociales}
-              title="📱 Redes Sociales"
+              title="Redes Sociales"
               availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
               style={{
                 marginBottom: spacing[8],

@@ -15,6 +15,7 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import CostosyHorarios from './CostosyHorarios';
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -216,84 +217,86 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Redes Sociales */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            📱 Redes Sociales
-          </h2>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📸 Instagram
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales.instagram}
-                onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
-                placeholder="@tu_academia"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📘 Facebook
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales.facebook}
-                onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
-                placeholder="Página o perfil"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📱 WhatsApp
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales.whatsapp}
-                onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
-                placeholder="Número de teléfono"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-          </div>
+        <div
+            id="organizer-social-networks"
+            data-test-id="organizer-social-networks"
+            style={{
+              marginBottom: '3rem',
+              padding: '2rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📱 Redes Sociales
+            </h2>
 
-          {/* Vista previa con componente SocialMediaSection */}
-          <div style={{ marginTop: '1.5rem' }}>
-            <SocialMediaSection
-              respuestas={{ redes: (form as any).redes_sociales || {} }}
-              redes_sociales={(form as any).redes_sociales || {}}
-              title="🔗 Vista previa de Redes"
-              availablePlatforms={['instagram','facebook','whatsapp']}
-            />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  📸 Instagram
+                </label>
+                <input
+                  type="text"
+                  value={form.redes_sociales.instagram}
+                  onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                  placeholder="@tu_organizacion"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: colors.light,
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  👥 Facebook
+                </label>
+                <input
+                  type="text"
+                  value={form.redes_sociales.facebook}
+                  onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                  placeholder="Página o perfil"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: colors.light,
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  💬 WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={form.redes_sociales.whatsapp}
+                  onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                  placeholder="Número de teléfono"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: colors.light,
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
         {/* Maestros Invitados */}
         <InvitedMastersSection 
@@ -327,6 +330,23 @@ export default function AcademyProfileEditor() {
           </h2>
           
           <FAQEditor value={(form as any).faq || []} onChange={(v:any)=> setField('faq' as any, v as any)} />
+        </div>
+
+        {/* Vista previa: Horarios y Costos */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            🗓️ Vista previa de horarios y costos
+          </h2>
+          <CostosyHorarios
+            title="Horarios & Costos"
+            date={{ cronograma: (form as any)?.cronograma || [], costos: (form as any)?.costos || [] }}
+            ubicacion={{
+              nombre: (form as any)?.ubicaciones?.[0]?.nombre,
+              direccion: (form as any)?.ubicaciones?.[0]?.direccion,
+              ciudad: (form as any)?.ubicaciones?.[0]?.ciudad,
+              referencias: (form as any)?.ubicaciones?.[0]?.referencias,
+            }}
+          />
         </div>
 
         {/* Gestión de Fotos */}

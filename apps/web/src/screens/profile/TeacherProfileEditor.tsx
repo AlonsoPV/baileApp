@@ -13,6 +13,7 @@ import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
 import { useTeacherMedia } from "@/hooks/useTeacherMedia";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
+import CostosyHorarios from './CostosyHorarios';
 
 const colors = {
   green: '#43e97b',
@@ -132,6 +133,20 @@ export default function TeacherProfileEditor() {
               cronograma: (form as any).cronograma || [],
               costos: (form as any).costos || []
             }} />
+          </motion.div>
+
+          {/* Vista previa: Costos y Horarios */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <h3 style={{ margin: 0, marginBottom: 12 }}>🗓️ Vista previa de horarios y costos</h3>
+            <CostosyHorarios
+              date={{ cronograma: (form as any).cronograma || [], costos: (form as any).costos || [] }}
+              ubicacion={{
+                nombre: (form as any)?.ubicaciones?.[0]?.nombre,
+                direccion: (form as any)?.ubicaciones?.[0]?.direccion,
+                ciudad: (form as any)?.ubicaciones?.[0]?.ciudad,
+                referencias: (form as any)?.ubicaciones?.[0]?.referencias,
+              }}
+            />
           </motion.div>
 
           {/* Ritmos y Zonas */}

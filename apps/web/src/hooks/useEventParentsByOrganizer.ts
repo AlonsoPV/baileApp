@@ -81,6 +81,7 @@ export function useEventDatesByOrganizer(organizerId?: number) {
           requisitos,
           estilos,
           zonas,
+          flyer_url,
           cronograma,
           costos,
           media,

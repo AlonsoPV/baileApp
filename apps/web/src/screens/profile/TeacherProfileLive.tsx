@@ -8,6 +8,7 @@ import '@/styles/organizer.css';
 import { useTeacherMy, useTeacherPublic } from '@/hooks/useTeacher';
 import { Chip } from '../../components/profile/Chip';
 import { colors as themeColors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
+import CostosyHorarios from './CostosyHorarios';
 
 const colors = themeColors;
 
@@ -134,6 +135,17 @@ export default function TeacherProfileLive() {
             </div>
           </motion.section>
         )}
+
+        {/* Horarios, Costos y Ubicación */}
+        <CostosyHorarios
+          date={{ cronograma: (teacher as any)?.cronograma || [], costos: (teacher as any)?.costos || [] }}
+          ubicacion={{
+            nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
+            direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
+            ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
+            referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
+          }}
+        />
       </div>
     </div>
   );

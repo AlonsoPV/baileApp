@@ -12,6 +12,7 @@ import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import CostosyHorarios from './CostosyHorarios';
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -70,7 +71,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
     </div>
   );
 };
-
+{/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */}
 // Componente Carousel para fotos
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -619,7 +620,7 @@ export default function AcademyProfileLive() {
           <SocialMediaSection 
             respuestas={{ redes: academy.redes_sociales }}
             redes_sociales={academy.redes_sociales}
-            title="📱 Redes Sociales"
+            title="Redes Sociales"
             availablePlatforms={['instagram', 'facebook', 'whatsapp']}
             style={{
               marginBottom: '2rem',
@@ -830,6 +831,18 @@ export default function AcademyProfileLive() {
               </div>
             </motion.section>
           )}
+
+          {/* Horarios, Costos y Ubicación (reutiliza componente) */}
+          <CostosyHorarios
+            title="Horarios & Costos"
+            date={{ cronograma: (academy as any)?.cronograma || [], costos: (academy as any)?.costos || [] }}
+            ubicacion={{
+              nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+              direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+              ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+              referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+            }}
+          />
 
           {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
           {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
