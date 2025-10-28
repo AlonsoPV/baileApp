@@ -169,6 +169,7 @@ export default function CrearClase({
 }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [submitState, setSubmitState] = useState<'idle'|'saving'|'success'|'error'>('idle');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [form, setForm] = useState<CrearClaseValue>({
     nombre: value?.nombre || '',
     tipo: value?.tipo || 'clases sueltas',
@@ -209,6 +210,7 @@ export default function CrearClase({
         ubicacionNotas: effective?.ubicacionNotas || '',
       });
       setIsOpen(true);
+      setSelectedLocationId('');
     }
   }, [value, editValue]);
 
@@ -265,6 +267,7 @@ export default function CrearClase({
       ubicacionDireccion: '',
       ubicacionNotas: '',
     });
+    setSelectedLocationId('');
   };
 
   return (
@@ -477,11 +480,24 @@ export default function CrearClase({
                 <div style={label}>Elegir ubicación existente</div>
                 <div style={fieldShell()}>
                   <select
-                    style={{ ...inputBase, background: 'transparent' }}
-                    value={(locations.find(l => (l.nombre || '') === form.ubicacionNombre)?.id) || ''}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: 'none',
+                      color: colors.text,
+                      outline: 'none',
+                      fontSize: 14,
+                      borderRadius: 8,
+                      WebkitAppearance: 'none' as any,
+                      appearance: 'none' as any
+                    }}
+                    value={selectedLocationId}
                     onChange={(e) => {
-                      const sel = locations.find(l => (l.id || '') === e.target.value);
-                      if (sel) {
+                      const nextId = e.target.value;
+                      setSelectedLocationId(nextId);
+                      const sel = locations.find(l => (l.id || '') === nextId);
+                      if (sel && nextId) {
                         setField('ubicacionNombre', sel.nombre || '');
                         setField('ubicacionDireccion', sel.direccion || '');
                         setField('ubicacionNotas', sel.referencias || '');
@@ -492,9 +508,9 @@ export default function CrearClase({
                       }
                     }}
                   >
-                    <option value="">— Escribir manualmente —</option>
+                    <option value="" style={{ color: '#111' }}>— Escribir manualmente —</option>
                     {locations.map((l, i) => (
-                      <option key={l.id || i} value={l.id || ''}>{l.nombre || l.direccion || 'Ubicación'}</option>
+                      <option key={l.id || i} value={l.id || ''} style={{ color: '#111' }}>{l.nombre || l.direccion || 'Ubicación'}</option>
                     ))}
                   </select>
                 </div>

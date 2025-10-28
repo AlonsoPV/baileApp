@@ -141,25 +141,6 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
         ))}
       </div>
 
-      {/* Otras opciones */}
-      {costos.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 13, opacity: 0.8, fontWeight: 700, marginBottom: 8 }}>Otras opciones</div>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {costos.map((c, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <strong>{c.nombre || 'Opción'}</strong>
-                  {c.regla && <span style={{ fontSize: 12, opacity: 0.75 }}>{c.regla}</span>}
-                </div>
-                <div style={{ fontWeight: 900 }}>
-                  {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
