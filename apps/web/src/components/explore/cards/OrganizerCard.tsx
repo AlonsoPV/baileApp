@@ -20,8 +20,8 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ 
-          scale: 1.03, 
+        whileHover={{
+          scale: 1.03,
           y: -8,
           transition: { duration: 0.2 }
         }}
@@ -96,7 +96,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
         }}>
           {item.nombre_publico}
         </div>
-        
+
         {/* Badge de verificación */}
         <div style={{
           display: 'inline-flex',
@@ -115,7 +115,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           <span>✓</span>
           <span>Organizador Verificado</span>
         </div>
-        
+
         {/* Biografía */}
         {item.bio && (
           <div style={{
@@ -143,22 +143,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           justifyContent: 'space-between',
           gap: '0.5rem'
         }}>
-          {/* Fecha de creación */}
-          <div style={{
-            fontSize: '0.75rem',
-            color: 'rgba(255, 255, 255, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem'
-          }}>
-            <span>📅</span>
-            <span>
-              Desde {new Date(item.created_at).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'short'
-              })}
-            </span>
-          </div>
+         
 
           {/* CTA button */}
           <motion.div
@@ -176,8 +161,17 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
               border: '1px solid rgba(240, 147, 251, 0.2)'
             }}
           >
-            <span>Ver perfil</span>
-            <span style={{ fontSize: '0.7rem' }}>→</span>
+            <div style={{
+              padding: '8px 12px',
+              borderRadius: 12,
+              
+              color: '#fff',
+              margin: '10px 0',
+              textAlign: 'center',
+              fontSize: 13,
+              fontWeight: 700,
+              border: '1px solid rgba(255,255,255,0.08)'
+            }}>Conoce más →</div>
           </motion.div>
         </div>
 
