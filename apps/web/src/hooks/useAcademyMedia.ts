@@ -118,10 +118,13 @@ export function useAcademyMedia() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
       console.log('[useAcademyMedia] Invalidating queries...');
+      // Actualizar cache inmediata del listado de media
+      qc.setQueryData(["academy", "media", academyId], next);
+      // Invalidate para sincronizar cualquier consumidor relacionado
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
-      qc.invalidateQueries({ queryKey: ["academy", "me", academy?.user_id] });
+      qc.invalidateQueries({ queryKey: ["academy", "mine"] });
     },
     onError: (error: any) => {
       console.error('[useAcademyMedia] Error adding media:', error);
@@ -148,10 +151,12 @@ export function useAcademyMedia() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
       console.log('[useAcademyMedia] Invalidating queries after media removal');
+      // Reflejar cambios inmediatos
+      qc.setQueryData(["academy", "media", academyId], next);
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
-      qc.invalidateQueries({ queryKey: ["academy", "me", academy?.user_id] });
+      qc.invalidateQueries({ queryKey: ["academy", "mine"] });
     },
     onError: (error: any) => {
       console.error('[useAcademyMedia] Error removing media:', error);

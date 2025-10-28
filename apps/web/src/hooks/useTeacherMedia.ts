@@ -73,7 +73,8 @@ export function useTeacherMedia() {
       await save(next);
       return next;
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
+      qc.setQueryData(["teacher", "media", teacherId], next);
       qc.invalidateQueries({ queryKey: ["teacher", "media", teacherId] });
       qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
     },
@@ -86,7 +87,8 @@ export function useTeacherMedia() {
       await save(next);
       return next;
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
+      qc.setQueryData(["teacher", "media", teacherId], next);
       qc.invalidateQueries({ queryKey: ["teacher", "media", teacherId] });
       qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
     },

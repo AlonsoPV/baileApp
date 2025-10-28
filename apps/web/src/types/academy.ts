@@ -32,6 +32,9 @@ export type AcademyProfile = {
     web?: string|null;
   };
   respuestas?: any; // Columna existente en la BD
+  cronograma?: any[]; // Horarios generalizados para UI
+  costos?: any[];     // Costos/Promos generalizados para UI
+  faq?: { q: string; a: string }[];
   ubicaciones: AcademyLocation[];
   horarios: AcademyHorario[];
   media: { type: 'image'|'video'; url: string }[];

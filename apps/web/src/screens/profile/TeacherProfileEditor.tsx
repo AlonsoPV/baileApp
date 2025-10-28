@@ -14,6 +14,8 @@ import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
 import { useTeacherMedia } from "@/hooks/useTeacherMedia";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
 import CostosyHorarios from './CostosyHorarios';
+import ScheduleEditor from "../../components/events/ScheduleEditor";
+import CostsEditor from "../../components/events/CostsEditor";
 
 const colors = {
   green: '#43e97b',
@@ -115,6 +117,18 @@ export default function TeacherProfileEditor() {
                 onChange={(e)=>setField('bio', e.target.value)}
               />
             </div>
+          </motion.div>
+
+          {/* Clases & Talleres (Cronograma) */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <h3 style={{ margin: 0, marginBottom: 12 }}>🗓️ Clases & Talleres (Cronograma)</h3>
+            <ScheduleEditor value={(form as any).cronograma || []} onChange={(v:any)=> setField('cronograma' as any, v as any)} />
+          </motion.div>
+
+          {/* Costos y Promociones */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <h3 style={{ margin: 0, marginBottom: 12 }}>💰 Costos y Promociones</h3>
+            <CostsEditor value={(form as any).costos || []} onChange={(v:any)=> setField('costos' as any, v as any)} />
           </motion.div>
 
           {/* Vista previa informativa (2x2) */}
@@ -246,6 +260,9 @@ export default function TeacherProfileEditor() {
                   redes_sociales: form.redes_sociales,
                   media: (teacherMedia.media as any[]),
                   faq: form.faq,
+                  ...(form as any).cronograma ? { cronograma: (form as any).cronograma } : {},
+                  ...(form as any).costos ? { costos: (form as any).costos } : {},
+                  ...(form as any).ubicaciones ? { ubicaciones: (form as any).ubicaciones } : {},
                 });
               }}
               style={{ padding: '10px 16px', borderRadius: 12, border: 'none', background: '#2e7d32', color:'#fff', fontWeight: 700 }}

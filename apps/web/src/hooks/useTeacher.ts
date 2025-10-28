@@ -11,6 +11,9 @@ export type TeacherProfile = {
   ritmos: number[];
   zonas: number[];
   redes_sociales?: { instagram?: string|null; tiktok?: string|null; youtube?: string|null; facebook?: string|null; whatsapp?: string|null };
+  ubicaciones?: any[];
+  cronograma?: any[];
+  costos?: any[];
   media: { type: 'image'|'video'; url: string }[];
   faq?: { q: string; a: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
