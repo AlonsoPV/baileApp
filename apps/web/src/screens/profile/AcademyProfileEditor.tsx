@@ -260,7 +260,6 @@ export default function AcademyProfileEditor() {
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             {/* Crear Clase rápida */}
             <div>
-
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
@@ -285,6 +284,19 @@ export default function AcademyProfileEditor() {
                   }] as any);
                   setField('cronograma' as any, nextCrono as any);
                   setField('costos' as any, nextCostos as any);
+
+                  // Persistir inmediatamente para que aparezca en la vista live sin necesidad de pulsar Guardar
+                  const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
+                  upsert
+                    .mutateAsync(payload)
+                    .then(() => {
+                      // eslint-disable-next-line no-console
+                      console.log('[AcademyProfileEditor] Clase creada y guardada');
+                    })
+                    .catch((e) => {
+                      // eslint-disable-next-line no-console
+                      console.error('[AcademyProfileEditor] Error guardando clase', e);
+                    });
                 }}
               />
             </div>
