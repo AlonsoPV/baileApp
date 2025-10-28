@@ -82,7 +82,7 @@ export default function TeacherProfileEditor() {
               ritmos: form.ritmos,
               zonas: form.zonas,
               redes_sociales: form.redes_sociales,
-              media: form.media,
+              media: (teacherMedia.media as any[]),
               faq: form.faq,
               ...(form as any).cronograma ? { cronograma: (form as any).cronograma } : {},
               ...(form as any).costos ? { costos: (form as any).costos } : {},
@@ -244,7 +244,7 @@ export default function TeacherProfileEditor() {
                   ritmos: form.ritmos,
                   zonas: form.zonas,
                   redes_sociales: form.redes_sociales,
-                  media: form.media,
+                  media: (teacherMedia.media as any[]),
                   faq: form.faq,
                 });
               }}
