@@ -147,13 +147,15 @@ export default function BrandEditorScreen() {
             <div style={{ width: 100 }} />
           </div>
 
-          <ProfileNavigationToggle
-            currentView="edit"
-            profileType="brand"
-            onSave={handleSave}
-            isSaving={upsert.isPending}
-            saveDisabled={!form.nombre_publico}
-          />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: spacing[6] }}>
+            <ProfileNavigationToggle
+              currentView="edit"
+              profileType="brand"
+              onSave={handleSave}
+              isSaving={upsert.isPending}
+              saveDisabled={!form.nombre_publico}
+            />
+          </div>
 
           {/* Banner de la marca */}
           <div style={{

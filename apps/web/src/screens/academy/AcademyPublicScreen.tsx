@@ -89,7 +89,7 @@ export default function AcademyPublicScreen() {
   return (
     <div style={{ minHeight: '100vh', background: '#000000', color: colors.light }}>
       {/* Toggle */}
-      <div className="profile-toggle">
+      <div className="profile-toggle" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <ProfileNavigationToggle
           currentView="live"
           profileType="academy"

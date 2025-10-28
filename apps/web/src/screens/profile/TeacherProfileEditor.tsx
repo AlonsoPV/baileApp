@@ -6,7 +6,8 @@ import '@/styles/organizer.css';
 import { useNavigate } from "react-router-dom";
 import ChipPicker from "../../components/common/ChipPicker";
 import FAQEditor from "../../components/common/FAQEditor";
-import { MediaUploader } from "../../components/MediaUploader";
+import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
+import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
 
@@ -58,6 +59,7 @@ export default function TeacherProfileEditor() {
           <div style={{ width: 100 }} />
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
         <ProfileNavigationToggle
           currentView="edit"
           profileType="teacher"
@@ -79,6 +81,7 @@ export default function TeacherProfileEditor() {
           isSaving={upsert.isPending}
           saveDisabled={!form.nombre_publico}
         />
+        </div>
 
         {/* Toolbar antigua removida */}
 
@@ -122,25 +125,28 @@ export default function TeacherProfileEditor() {
             />
           </motion.div>
 
-          {/* Media */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="org-editor__card">
+          {/* Gestión de Media (fotos y videos) */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>📸 Media</h3>
-            <MediaUploader onPick={(files)=>{
-              const next = Array.from(files).map(f=>({ type: f.type.startsWith('video')?'video':'image', url: URL.createObjectURL(f) }));
-              setField('media', [...form.media, ...next]);
-            }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px,1fr))', gap: 12, marginTop: 12 }}>
-              {form.media.map((m, i)=> (
-                <div key={i} style={{ aspectRatio: '1', border: '1px solid #2a2a2a', borderRadius: 8, overflow: 'hidden' }}>
-                  {m.type==='image' ? (
-                    <img src={m.url} alt="media" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  ) : (
-                    <video src={m.url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  )}
-                </div>
-              ))}
-            </div>
+            <PhotoManagementSection
+              media={form.media}
+              uploading={{}}
+              uploadFile={() => {}}
+              removeFile={() => {}}
+              title="📷 Fotos del Maestro"
+              description="Sube tus fotos de clases, presentaciones o retratos"
+              slots={['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10']}
+            />
+
+            <VideoManagementSection
+              media={form.media}
+              uploading={{}}
+              uploadFile={() => {}}
+              removeFile={() => {}}
+              title="🎥 Videos del Maestro"
+              description="Comparte videos de clases, sociales o demos"
+              slots={['v1','v2','v3']}
+            />
           </motion.div>
 
           {/* FAQ */}

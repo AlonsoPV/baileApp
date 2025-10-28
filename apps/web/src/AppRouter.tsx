@@ -42,7 +42,6 @@ import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 // Academy Screens
 import AcademyEditorScreen from './screens/academy/AcademyEditorScreen';
 import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
-import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
 import AcademyProfileLive from './screens/profile/AcademyProfileLive';
 import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
 import TeacherProfileLive from './screens/profile/TeacherProfileLive';
@@ -96,7 +95,7 @@ export default function AppRouter() {
         <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
-        <Route path="/profile/academy" element={<AcademyProfileLive />} />
+        <Route path="/profile/academy/live" element={<AcademyProfileLive />} />
         <Route path="/profile/teacher/live" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
@@ -122,7 +121,7 @@ export default function AppRouter() {
           <Route path="/social/fecha/:dateId/edit" element={<EventDateEditScreen />} />
           <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
           <Route path={routes.academy.edit} element={<AcademyEditorScreen />} />
-          <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
+          <Route path="/profile/academy" element={<AcademyEditorScreen />} />
           <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
           <Route path="/profile/roles" element={<RoleSelectorScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />

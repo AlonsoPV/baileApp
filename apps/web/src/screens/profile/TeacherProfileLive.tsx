@@ -43,7 +43,7 @@ export default function TeacherProfileLive() {
   return (
     <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], position: 'relative' }}>
       {/* Toggle */}
-      <div className="profile-toggle">
+      <div className="profile-toggle" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <ProfileNavigationToggle
           currentView="live"
           profileType="teacher"

@@ -129,6 +129,7 @@ export default function AcademyEditorScreen() {
         </div>
 
         {/* Toggle unificado */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: spacing[6] }}>
         <ProfileNavigationToggle
           currentView="edit"
           profileType="academy"
@@ -138,6 +139,7 @@ export default function AcademyEditorScreen() {
           isSaving={upsert.isPending}
           saveDisabled={!form.nombre_publico}
         />
+        </div>
 
         {/* Primer contenedor de información con org-editor__card */}
         <div className="org-editor__card" style={{ marginTop: spacing[6] }}>
