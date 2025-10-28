@@ -19,7 +19,7 @@ import { PickZonas } from './screens/onboarding/PickZonas';
 
 // App Screens
 import { ProfileScreen } from './screens/profile/ProfileScreen';
-import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
+import ExploreHomeScreen from './screens/explore/ExploreHomeScreenModern';
 import ExploreListScreen from './screens/explore/ExploreListScreen';
 
 // Organizer Screens

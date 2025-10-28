@@ -599,10 +599,14 @@ export function OrganizerProfileLive() {
         }} />
 
         {/* Profile Toolbar - Toggle y Edición (Fixed) */}
-        <ProfileNavigationToggle
-          currentView="live"
-          profileType="organizer"
-        />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="organizer"
+            liveHref="/profile/organizer"
+            editHref="/profile/organizer/edit"
+          />
+        </div>
 
         {/* Banner Principal */}
         <motion.div 

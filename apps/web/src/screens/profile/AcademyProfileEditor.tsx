@@ -126,6 +126,10 @@ export default function AcademyProfileEditor() {
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
           <h1 className="org-editor__title">✏️ Editar Academia</h1>
+          <div style={{ width: 100 }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
             currentView="edit"
             profileType="academy"

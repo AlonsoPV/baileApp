@@ -90,7 +90,7 @@ export default function BrandPublicScreen() {
         color: colors.light,
         position: 'relative'
       }}>
-        <div className="profile-toggle">
+        <div className="profile-toggle" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <ProfileNavigationToggle
             currentView="live"
             profileType="brand"

@@ -448,10 +448,12 @@ export default function AcademyProfileLive() {
 
       <div className="academy-container">
         {/* Navigation Toggle */}
-        <ProfileNavigationToggle 
-          currentView="live" 
-          profileType="academy" 
-        />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+          <ProfileNavigationToggle 
+            currentView="live" 
+            profileType="academy" 
+          />
+        </div>
 
         {/* Banner Principal */}
         <motion.div
