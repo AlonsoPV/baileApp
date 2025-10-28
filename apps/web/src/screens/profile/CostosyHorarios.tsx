@@ -76,7 +76,6 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
 
   const hasUbicacion = Boolean(ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad || ubicacion?.referencias);
   const hasContenido = hasUbicacion || enriched.length > 0 || costos.length > 0;
-  if (!hasContenido) return null;
 
   return (
     <motion.section
@@ -203,6 +202,13 @@ export default function CostosyHorarios({ date, ubicacion, title = 'Clases & Tal
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Mensaje vacío si no hay contenido */}
+      {!hasContenido && (
+        <div style={{ marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
+          Aún no hay información de ubicación, horarios o costos.
         </div>
       )}
     </motion.section>
