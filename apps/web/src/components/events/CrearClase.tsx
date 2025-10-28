@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const colors = {
@@ -31,14 +31,19 @@ export type CrearClaseValue = {
   ritmoId?: number | null;
   zonaId?: number | null;
   ubicacion?: string;
+  ubicacionNombre?: string;
+  ubicacionDireccion?: string;
+  ubicacionNotas?: string;
 };
 
 type Tag = { id: number; nombre: string };
 
 type Props = {
   value?: CrearClaseValue;
+  editIndex?: number | null;
+  editValue?: CrearClaseValue;
   onChange?: (v: CrearClaseValue) => void;
-  onSubmit?: (v: CrearClaseValue) => void;
+  onSubmit?: (v: CrearClaseValue) => void | Promise<void>;
   onCancel?: () => void;
   ritmos: Tag[];
   zonas: Tag[];
@@ -149,6 +154,8 @@ const diasSemana = [
 
 export default function CrearClase({
   value,
+  editIndex,
+  editValue,
   onChange,
   onSubmit,
   onCancel,
@@ -158,6 +165,8 @@ export default function CrearClase({
   style,
   className
 }: Props) {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [submitState, setSubmitState] = useState<'idle'|'saving'|'success'|'error'>('idle');
   const [form, setForm] = useState<CrearClaseValue>({
     nombre: value?.nombre || '',
     tipo: value?.tipo || 'clases sueltas',
@@ -171,7 +180,35 @@ export default function CrearClase({
     ritmoId: value?.ritmoId ?? null,
     zonaId: value?.zonaId ?? null,
     ubicacion: value?.ubicacion || '',
+    ubicacionNombre: value?.ubicacionNombre || '',
+    ubicacionDireccion: value?.ubicacionDireccion || '',
+    ubicacionNotas: value?.ubicacionNotas || '',
   });
+
+  // Synchronize form when editing value changes
+  useEffect(() => {
+    const effective = editValue || value;
+    if (effective) {
+      setForm({
+        nombre: effective?.nombre || '',
+        tipo: effective?.tipo || 'clases sueltas',
+        precio: effective?.precio ?? null,
+        regla: effective?.regla || '',
+        fechaModo: effective?.fechaModo || 'especifica',
+        fecha: effective?.fecha || '',
+        diaSemana: effective?.diaSemana ?? null,
+        inicio: normalizeTime(effective?.inicio),
+        fin: normalizeTime(effective?.fin),
+        ritmoId: effective?.ritmoId ?? null,
+        zonaId: effective?.zonaId ?? null,
+        ubicacion: effective?.ubicacion || '',
+        ubicacionNombre: effective?.ubicacionNombre || '',
+        ubicacionDireccion: effective?.ubicacionDireccion || '',
+        ubicacionNotas: effective?.ubicacionNotas || '',
+      });
+      setIsOpen(true);
+    }
+  }, [value, editValue]);
 
   const setField = (k: keyof CrearClaseValue, v: any) => {
     const next = { ...form, [k]: v };
@@ -206,6 +243,28 @@ export default function CrearClase({
     return Math.round((done / total) * 100);
   }, [invalid, form.fechaModo, form.ritmoId]);
 
+  const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
+
+  const resetForm = () => {
+    setForm({
+      nombre: '',
+      tipo: 'clases sueltas',
+      precio: null,
+      regla: '',
+      fechaModo: 'especifica',
+      fecha: '',
+      diaSemana: null,
+      inicio: '',
+      fin: '',
+      ritmoId: null,
+      zonaId: null,
+      ubicacion: '',
+      ubicacionNombre: '',
+      ubicacionDireccion: '',
+      ubicacionNotas: '',
+    });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...style }} className={className}>
       <div style={{ ...card }}>
@@ -222,155 +281,157 @@ export default function CrearClase({
           </div>
         </div>
 
-        {/* NOMBRE + TIPO */}
-        <div style={sectionHeader}><span>📝</span><b>Detalles</b></div>
-        <div style={row}>
-          <div>
-            <div style={label}>Nombre</div>
-            <div style={fieldShell(invalid.nombre)}>
-              <div style={leftIcon('🏷️')} />
-              <input
-                style={inputBase}
-                placeholder="Ej. Bachata Sensual"
-                value={form.nombre || ''}
-                onChange={(e)=>setField('nombre', e.target.value)}
-              />
-            </div>
-            {invalid.nombre && <div style={helpText(true)}>Agrega un nombre</div>}
-          </div>
-
-          <div>
-            <div style={label}>Tipo</div>
-            <div style={chipWrap}>
-              {tipos.map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={()=>setField('tipo', t)}
-                  style={chip(form.tipo === t)}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* PRECIO + REGLA */}
-        <div style={sectionHeader}><span>💰</span><b>Precio</b></div>
-        <div style={row}>
-          <div>
-            <div style={label}>Precio (opcional)</div>
-            <div style={fieldShell()}>
-              <div style={leftIcon('💵')} />
-              <input
-                style={inputBase}
-                type="number"
-                min={0}
-                step="1"
-                placeholder="Ej. 200"
-                value={form.precio ?? ''}
-                onChange={(e)=>setField('precio', e.target.value === '' ? null : Number(e.target.value))}
-              />
-            </div>
-            <div style={helpText()}>Déjalo vacío para marcar como <b>Gratis</b></div>
-          </div>
-
-          <div>
-            <div style={label}>Regla o condición</div>
-            <div style={fieldShell()}>
-              <div style={leftIcon('📋')} />
-              <input
-                style={inputBase}
-                placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
-                value={form.regla || ''}
-                onChange={(e)=>setField('regla', e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* FECHA */}
-        <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
-        <div style={row}>
-          <div>
-            <div style={label}>Modo</div>
-            <div style={chipWrap}>
-              <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</button>
-              <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</button>
-            </div>
-          </div>
-          <div>
-            {form.fechaModo === 'especifica' ? (
-              <>
-                <div style={fieldShell(invalid.fecha)}>
-                  <div style={leftIcon('📆')} />
+        {isOpen && (
+          <>
+            {/* NOMBRE + TIPO */}
+            <div style={sectionHeader}><span>📝</span><b>Detalles</b></div>
+            <div style={row}>
+              <div>
+                <div style={label}>Nombre</div>
+                <div style={fieldShell(invalid.nombre)}>
+                  <div style={leftIcon('🏷️')} />
                   <input
                     style={inputBase}
-                    type="date"
-                    value={form.fecha || ''}
-                    onChange={(e)=>setField('fecha', e.target.value)}
+                    placeholder="Ej. Bachata Sensual"
+                    value={form.nombre || ''}
+                    onChange={(e)=>setField('nombre', e.target.value)}
                   />
                 </div>
-                {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
-              </>
-            ) : (
-              <>
+                {invalid.nombre && <div style={helpText(true)}>Agrega un nombre</div>}
+              </div>
+
+              <div>
+                <div style={label}>Tipo</div>
                 <div style={chipWrap}>
-                  {diasSemana.map(d => (
+                  {tipos.map(t => (
                     <button
+                      key={t}
                       type="button"
-                      key={d.id}
-                      style={chip(form.diaSemana === d.id)}
-                      onClick={()=>setField('diaSemana', d.id)}
+                      onClick={()=>setField('tipo', t)}
+                      style={chip(form.tipo === t)}
                     >
-                      {d.nombre}
+                      {t}
                     </button>
                   ))}
                 </div>
-                {invalid.dia && <div style={helpText(true)}>Elige un día de la semana</div>}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* HORARIO */}
-        <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
-        <div style={row}>
-          <div>
-            <div style={label}>Hora inicio (HH:MM)</div>
-            <div style={fieldShell(invalid.inicio)}>
-              <div style={leftIcon('🟢')} />
-              <input
-                type="time"
-                step={60}
-                style={inputBase}
-                value={form.inicio || ''}
-                onChange={(e)=>setField('inicio', normalizeTime(e.target.value))}
-              />
+              </div>
             </div>
-            {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
-          </div>
 
-          <div>
-            <div style={label}>Hora fin (HH:MM)</div>
-            <div style={fieldShell(invalid.fin)}>
-              <div style={leftIcon('🔴')} />
-              <input
-                type="time"
-                step={60}
-                style={inputBase}
-                value={form.fin || ''}
-                onChange={(e)=>setField('fin', normalizeTime(e.target.value))}
-              />
+            {/* PRECIO + REGLA */}
+            <div style={sectionHeader}><span>💰</span><b>Precio</b></div>
+            <div style={row}>
+              <div>
+                <div style={label}>Precio (opcional)</div>
+                <div style={fieldShell()}>
+                  <div style={leftIcon('💵')} />
+                  <input
+                    style={inputBase}
+                    type="number"
+                    min={0}
+                    step="1"
+                    placeholder="Ej. 200"
+                    value={form.precio ?? ''}
+                    onChange={(e)=>setField('precio', e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                </div>
+                <div style={helpText()}>Déjalo vacío para marcar como <b>Gratis</b></div>
+              </div>
+
+              <div>
+                <div style={label}>Regla o condición</div>
+                <div style={fieldShell()}>
+                  <div style={leftIcon('📋')} />
+                  <input
+                    style={inputBase}
+                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                    value={form.regla || ''}
+                    onChange={(e)=>setField('regla', e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-            {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
-          </div>
-        </div>
 
-        {/* RITMO + ZONA */}
-        <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>
-        <div style={row}>
+            {/* FECHA */}
+            <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
+            <div style={row}>
+              <div>
+                <div style={label}>Modo</div>
+                <div style={chipWrap}>
+                  <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</button>
+                  <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</button>
+                </div>
+              </div>
+              <div>
+                {form.fechaModo === 'especifica' ? (
+                  <>
+                    <div style={fieldShell(invalid.fecha)}>
+                      <div style={leftIcon('📆')} />
+                      <input
+                        style={inputBase}
+                        type="date"
+                        value={form.fecha || ''}
+                        onChange={(e)=>setField('fecha', e.target.value)}
+                      />
+                    </div>
+                    {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
+                  </>
+                ) : (
+                  <>
+                    <div style={chipWrap}>
+                      {diasSemana.map(d => (
+                        <button
+                          type="button"
+                          key={d.id}
+                          style={chip(form.diaSemana === d.id)}
+                          onClick={()=>setField('diaSemana', d.id)}
+                        >
+                          {d.nombre}
+                        </button>
+                      ))}
+                    </div>
+                    {invalid.dia && <div style={helpText(true)}>Elige un día de la semana</div>}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* HORARIO */}
+            <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
+            <div style={row}>
+              <div>
+                <div style={label}>Hora inicio (HH:MM)</div>
+                <div style={fieldShell(invalid.inicio)}>
+                  <div style={leftIcon('🟢')} />
+                  <input
+                    type="time"
+                    step={60}
+                    style={inputBase}
+                    value={form.inicio || ''}
+                    onChange={(e)=>setField('inicio', normalizeTime(e.target.value))}
+                  />
+                </div>
+                {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
+              </div>
+
+              <div>
+                <div style={label}>Hora fin (HH:MM)</div>
+                <div style={fieldShell(invalid.fin)}>
+                  <div style={leftIcon('🔴')} />
+                  <input
+                    type="time"
+                    step={60}
+                    style={inputBase}
+                    value={form.fin || ''}
+                    onChange={(e)=>setField('fin', normalizeTime(e.target.value))}
+                  />
+                </div>
+                {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
+              </div>
+            </div>
+
+            {/* RITMO + ZONA */}
+            <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>
+            <div style={row}>
           <div>
             <div style={label}>Ritmo</div>
             <div style={chipWrap}>
@@ -389,40 +450,68 @@ export default function CrearClase({
             {!form.ritmoId && <div style={helpText()}>Sugerencia: elegir un ritmo mejora el descubrimiento</div>}
           </div>
 
-          <div>
-            <div style={label}>Zona</div>
-            <div style={chipWrap}>
-              {zonas.map(z => (
-                <button
-                  type="button"
-                  key={z.id}
-                  style={chip(form.zonaId === z.id)}
-                  onClick={()=>setField('zonaId', z.id)}
-                  title={z.nombre}
-                >
-                  {z.nombre}
-                </button>
-              ))}
+              <div>
+                <div style={label}>Zona</div>
+                <div style={chipWrap}>
+                  {zonas.map(z => (
+                    <button
+                      type="button"
+                      key={z.id}
+                      style={chip(form.zonaId === z.id)}
+                      onClick={()=>setField('zonaId', z.id)}
+                      title={z.nombre}
+                    >
+                      {z.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* UBICACIÓN */}
-        <div style={sectionHeader}><span>📍</span><b>Ubicación</b></div>
-        <div>
-          <div style={label}>Ubicación (opcional)</div>
-          <div style={fieldShell()}>
-            <div style={leftIcon('📍')} />
-            <input
-              style={inputBase}
-              placeholder="Nombre de la sede o dirección"
-              value={form.ubicacion || ''}
-              onChange={(e)=>setField('ubicacion', e.target.value)}
-            />
-          </div>
-        </div>
+            {/* UBICACIÓN */}
+            <div style={sectionHeader}><span>📍</span><b>Ubicación</b></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div>
+                <div style={label}>Nombre de la ubicación</div>
+                <div style={fieldShell()}>
+                  <div style={leftIcon('🏢')} />
+                  <input
+                    style={inputBase}
+                    placeholder="Ej. Sede Centro / Salón Principal"
+                    value={form.ubicacionNombre || ''}
+                    onChange={(e)=>setField('ubicacionNombre', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <div style={label}>Dirección</div>
+                <div style={fieldShell()}>
+                  <div style={leftIcon('📍')} />
+                  <input
+                    style={inputBase}
+                    placeholder="Calle, número, colonia, ciudad"
+                    value={form.ubicacionDireccion || ''}
+                    onChange={(e)=>setField('ubicacionDireccion', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <div style={label}>Notas o referencias</div>
+              <div style={fieldShell()}>
+                <div style={leftIcon('📝')} />
+                <input
+                  style={inputBase}
+                  placeholder="Ej. Entrada por la puerta lateral, 2do piso"
+                  value={form.ubicacionNotas || ''}
+                  onChange={(e)=>setField('ubicacionNotas', e.target.value)}
+                />
+              </div>
+            </div>
 
-        <div style={divider} />
+            <div style={divider} />
+          </>
+        )}
 
         {/* Acciones */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
@@ -441,22 +530,42 @@ export default function CrearClase({
           </button>
 
           <motion.button
-            whileHover={{ y: canSubmit ? -1 : 0 }}
-            whileTap={{ scale: canSubmit ? 0.98 : 1 }}
-            disabled={!canSubmit}
-            onClick={()=> canSubmit && onSubmit?.(form)}
+            whileHover={{ y: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? -1 : 0 }}
+            whileTap={{ scale: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? 0.98 : 1 }}
+            disabled={isOpen ? (submitState === 'saving' || !canSubmit) : false}
+            onClick={async ()=> {
+              if (!isOpen) { setIsOpen(true); return; }
+              if (submitState === 'saving') return;
+              try {
+                setSubmitState('saving');
+                await Promise.resolve(onSubmit?.(form));
+                setSubmitState('success');
+                // Reiniciar siempre después de éxito (tanto crear como editar)
+                resetForm();
+                setTimeout(() => { setSubmitState('idle'); setIsOpen(false); }, 2200);
+              } catch (e) {
+                setSubmitState('error');
+                setTimeout(() => setSubmitState('idle'), 2500);
+              }
+            }}
             style={{
               padding: '12px 18px',
               borderRadius: 12,
               border: `1px solid ${colors.line}`,
-              background: canSubmit ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : colors.soft,
+              background: submitState === 'saving' ? colors.soft : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
               color: colors.text,
               fontWeight: 800,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-              boxShadow: canSubmit ? '0 10px 24px rgba(30,136,229,0.35)' : 'none'
+              cursor: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? 'pointer' : (submitState === 'saving' ? 'wait' : 'not-allowed'),
+              boxShadow: (submitState === 'saving') ? 'none' : '0 10px 24px rgba(30,136,229,0.35)'
             }}
           >
-            Crear clase →
+            {(() => {
+              if (!isOpen) return 'Crear clase →';
+              if (submitState === 'saving') return isEditing ? 'Guardando...' : 'Creando...';
+              if (submitState === 'success') return isEditing ? '✅ Clase actualizada' : '✅ Clase creada';
+              if (submitState === 'error') return isEditing ? '❌ Error al actualizar' : '❌ Error al crear';
+              return isEditing ? 'Guardar cambios' : 'Crear clase →';
+            })()}
           </motion.button>
         </div>
       </div>

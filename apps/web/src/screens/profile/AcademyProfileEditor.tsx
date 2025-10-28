@@ -280,7 +280,8 @@ export default function AcademyProfileEditor() {
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-                value={editInitial}
+                editIndex={editingIndex}
+                editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
                 onCancel={() => { setEditingIndex(null); setEditInitial(undefined); }}
                 onSubmit={(c) => {
@@ -290,6 +291,10 @@ export default function AcademyProfileEditor() {
                   if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
                     const prev = currentCrono[editingIndex];
                     const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
+
+                    const ubicacionStr = (
+                      [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+                    ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
 
                     const updatedItem = {
                       ...prev,
@@ -301,7 +306,7 @@ export default function AcademyProfileEditor() {
                       referenciaCosto: c.nombre,
                       ritmoId: c.ritmoId,
                       zonaId: c.zonaId,
-                      ubicacion: c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
                     };
                     currentCrono[editingIndex] = updatedItem;
 
@@ -318,21 +323,26 @@ export default function AcademyProfileEditor() {
                     setField('costos' as any, currentCostos as any);
 
                     const payload: any = { id: (form as any)?.id, cronograma: currentCrono, costos: currentCostos };
-                    upsert
+                    return upsert
                       .mutateAsync(payload)
                       .then(() => {
-                        setStatusMsg({ type: 'ok', text: '✅ Clase editada' });
+                        setStatusMsg({ type: 'ok', text: '✅ Clase actualizada' });
                         setEditingIndex(null);
                         setEditInitial(undefined);
                         // eslint-disable-next-line no-console
                         console.log('[AcademyProfileEditor] Clase editada y guardada');
                       })
                       .catch((e) => {
-                        setStatusMsg({ type: 'err', text: '❌ Error al editar clase' });
+                        setStatusMsg({ type: 'err', text: '❌ Error al actualizar clase' });
                         // eslint-disable-next-line no-console
                         console.error('[AcademyProfileEditor] Error editando clase', e);
+                        throw e;
                       });
                   } else {
+                    const ubicacionStr = (
+                      [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+                    ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+
                     const nextCrono = ([...currentCrono, {
                       tipo: 'clase',
                       titulo: c.nombre,
@@ -343,7 +353,7 @@ export default function AcademyProfileEditor() {
                       referenciaCosto: c.nombre,
                       ritmoId: c.ritmoId,
                       zonaId: c.zonaId,
-                      ubicacion: c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
                     }] as any);
                     const nextCostos = ([...currentCostos, {
                       nombre: c.nombre,
@@ -355,7 +365,7 @@ export default function AcademyProfileEditor() {
                     setField('costos' as any, nextCostos as any);
 
                     const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                    upsert
+                    return upsert
                       .mutateAsync(payload)
                       .then(() => {
                         setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
@@ -366,6 +376,7 @@ export default function AcademyProfileEditor() {
                         setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });
                         // eslint-disable-next-line no-console
                         console.error('[AcademyProfileEditor] Error guardando clase', e);
+                        throw e;
                       });
                   }
                 }}
