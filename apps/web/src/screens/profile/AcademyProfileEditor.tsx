@@ -19,6 +19,7 @@ import EventScheduleEditor from "../../components/events/ScheduleEditor";
 import EventCostsEditor from "../../components/events/CostsEditor";
 import CostosyHorarios from './CostosyHorarios';
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -257,9 +258,38 @@ export default function AcademyProfileEditor() {
           </h2>
 
           <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {/* Crear Clase rápida */}
+            <div>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>➕ Crear Clase</h3>
+              <CrearClase
+                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                onSubmit={(c)=>{
+                  const nextCrono = ([...((form as any).cronograma||[]), {
+                    tipo: 'clase',
+                    titulo: c.nombre,
+                    fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
+                    inicio: c.inicio,
+                    fin: c.fin,
+                    nivel: undefined,
+                    referenciaCosto: c.nombre,
+                    ritmoId: c.ritmoId,
+                    zonaId: c.zonaId,
+                    ubicacion: ((form as any).ubicaciones||[])[0]?.nombre || ''
+                  }] as any);
+                  const nextCostos = ([...((form as any).costos||[]), {
+                    nombre: c.nombre,
+                    tipo: c.tipo,
+                    precio: c.precio ?? null,
+                    regla: c.regla || ''
+                  }] as any);
+                  setField('cronograma' as any, nextCrono as any);
+                  setField('costos' as any, nextCostos as any);
+                }}
+              />
+            </div>
             {/* Ubicaciones */}
             <div>
-              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>📍 Ubicaciones</h3>
               <UbicacionesEditor
                 value={(form as any).ubicaciones || []}
                 onChange={(v:any)=> setField('ubicaciones' as any, v as any)}
@@ -268,15 +298,13 @@ export default function AcademyProfileEditor() {
 
             {/* Horarios (Cronograma) */}
             <div>
-              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>🕒 Horarios (Cronograma)</h3>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>🕒 Horarios de Clases</h3>
               <EventScheduleEditor
                 schedule={(form as any).cronograma || []}
                 onChangeSchedule={(v:any)=>setField('cronograma' as any, v as any)}
                 costos={(form as any).costos || []}
                 onChangeCostos={(v:any)=>setField('costos' as any, v as any)}
                 ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-                ubicacion={((form as any).ubicaciones||[])[0]?.nombre || ((form as any).ubicaciones||[])[0]?.lugar || ''}
               />
             </div>
 

@@ -13,6 +13,8 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import CostosyHorarios from './CostosyHorarios';
+import CrearClase from "../../components/events/CrearClase";
+import { useUpsertAcademy } from "../../hooks/useAcademy";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -286,6 +288,7 @@ export default function AcademyProfileLive() {
   const { data: academy, isLoading } = useAcademyMy();
   const { media } = useAcademyMedia();
   const { data: allTags } = useTags();
+  const upsert = useUpsertAcademy();
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
@@ -659,6 +662,27 @@ export default function AcademyProfileLive() {
               referencias: (academy as any)?.ubicaciones?.[0]?.referencias
             }}
           />
+
+          {/* Añadir clase rápida (solo si hay academy.id) */}
+          {academy?.id && (
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <h3 style={{ margin: 0, marginBottom: '0.75rem' }}>➕ Crear Clase</h3>
+              <CrearClase
+                ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                zonas={(allTags||[]).filter((t:any)=>t.tipo==='zona').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+                onSubmit={async (c)=>{
+                  const nextCrono = ([...(((academy as any)?.cronograma)||[]), {
+                    tipo: 'clase', titulo: c.nombre, fecha: c.fechaModo==='especifica'?c.fecha:undefined,
+                    inicio: c.inicio, fin: c.fin, referenciaCosto: c.nombre
+                  }] as any);
+                  const nextCostos = ([...(((academy as any)?.costos)||[]), {
+                    nombre: c.nombre, tipo: c.tipo, precio: c.precio ?? null, regla: c.regla || ''
+                  }] as any);
+                  await upsert.mutateAsync({ id: academy.id, cronograma: nextCrono as any, costos: nextCostos as any });
+                }}
+              />
+            </motion.section>
+          )}
 
           {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
           {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
