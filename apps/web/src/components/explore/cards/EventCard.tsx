@@ -29,15 +29,19 @@ export default function EventCard({ item }: EventCardProps) {
           position: 'relative',
           borderRadius: 16,
           background: '#101317',
-          padding: '16px 16px 14px',
+          padding: '16px',
           cursor: 'pointer',
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.06)',
           boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
-          transition: 'box-shadow .2s ease, transform .2s ease, border-color .2s ease'
+          transition: 'box-shadow .2s ease, transform .2s ease, border-color .2s ease',
+          aspectRatio: '1 / 1',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, rgba(30,136,229,0.7), rgba(124,77,255,0.7))' }} />
 
         <div style={{
           fontSize: '1.05rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
@@ -47,7 +51,7 @@ export default function EventCard({ item }: EventCardProps) {
           <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nombre}</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.92)', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
             <span style={{ fontSize: 16 }}>📅</span>
             {fecha && <span style={{ fontWeight: 600 }}>{fecha}</span>}
@@ -84,6 +88,20 @@ export default function EventCard({ item }: EventCardProps) {
             </div>
           </div>
         )}
+
+        {/* CTA */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Descubre más del evento</div>
+          <div style={{
+            padding: '8px 12px',
+            borderRadius: 12,
+            background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)',
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: 700,
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>Ver más →</div>
+        </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
