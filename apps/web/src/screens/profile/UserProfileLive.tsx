@@ -896,7 +896,7 @@ export const UserProfileLive: React.FC = () => {
                       y: -5,
                       boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
                     }}
-                    onClick={() => navigate(`/events/date/${rsvp.event_date_id}`)}
+                    onClick={() => navigate(`/social/fecha/${rsvp.event_date_id}`)}
                     style={{
                       padding: '1.5rem',
                       background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',

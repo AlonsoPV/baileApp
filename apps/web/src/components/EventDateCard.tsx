@@ -244,7 +244,7 @@ export function EventDateCard({
           gap: '8px',
         }}>
           <Link
-            to={`/events/date/${date.id}`}
+            to={`/social/fecha/${date.id}`}
             style={{
               padding: '8px 16px',
               borderRadius: '20px',

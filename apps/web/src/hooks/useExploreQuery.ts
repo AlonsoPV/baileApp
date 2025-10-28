@@ -97,8 +97,12 @@ async function fetchPage(params: QueryParams, page: number) {
 
   // Filtros por tipo
   if (type === "eventos") {
-    // Filtrar solo eventos futuros
-    query = query.gte("fecha", new Date().toISOString().split('T')[0]);
+    // DEBUG: Log the current date filter
+    const today = new Date().toISOString().split('T')[0];
+    console.log('[useExploreQuery] Filtering events from date:', today);
+    
+    // TEMPORARY: Comment out future events filter to debug
+    // query = query.gte("fecha", today);
     
     // Filtrar por organizadores aprobados
     query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
@@ -167,8 +171,20 @@ async function fetchPage(params: QueryParams, page: number) {
   console.log('[useExploreQuery] Success:', { 
     dataCount: data?.length, 
     totalCount: count, 
-    hasMore: (to + 1 < (count || 0)) 
+    hasMore: (to + 1 < (count || 0)),
+    type: params.type,
+    filters: { q, ritmos, zonas, dateFrom, dateTo }
   });
+  
+  // DEBUG: Log first few events for debugging
+  if (params.type === "eventos" && data && data.length > 0) {
+    console.log('[useExploreQuery] Sample events:', data.slice(0, 3).map(e => ({
+      id: e.id,
+      nombre: e.nombre,
+      fecha: e.fecha,
+      organizer_aprobado: e.events_parent?.profiles_organizer?.estado_aprobacion
+    })));
+  }
   
   return { 
     data, 
@@ -184,5 +200,75 @@ export function useExploreQuery(params: QueryParams) {
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
   });
+}
+
+// Diagnostic function to help debug event display issues
+export async function diagnoseEventDisplay() {
+  console.log('=== DIAGNOSTIC: Event Display Issues ===');
+  
+  // Check total events in database
+  const { data: allEvents, error: allEventsError } = await supabase
+    .from('events_date')
+    .select('id, nombre, fecha, parent_id', { count: 'exact' });
+  
+  if (allEventsError) {
+    console.error('Error fetching all events:', allEventsError);
+    return;
+  }
+  
+  console.log('Total events in database:', allEvents?.length || 0);
+  
+  // Check events by date range
+  const today = new Date().toISOString().split('T')[0];
+  const { data: futureEvents, error: futureError } = await supabase
+    .from('events_date')
+    .select('id, nombre, fecha', { count: 'exact' })
+    .gte('fecha', today);
+  
+  console.log('Future events (>= today):', futureEvents?.length || 0);
+  
+  // Check organizer approval status
+  const { data: eventsWithOrganizers, error: orgError } = await supabase
+    .from('events_date')
+    .select(`
+      id, nombre, fecha,
+      events_parent!inner(
+        id,
+        organizer_id,
+        profiles_organizer!inner(
+          id,
+          nombre_publico,
+          estado_aprobacion
+        )
+      )
+    `, { count: 'exact' })
+    .gte('fecha', today);
+  
+  if (orgError) {
+    console.error('Error fetching events with organizers:', orgError);
+    return;
+  }
+  
+  console.log('Events with approved organizers:', eventsWithOrganizers?.length || 0);
+  
+  // Check approval status breakdown
+  const { data: approvalBreakdown, error: approvalError } = await supabase
+    .from('profiles_organizer')
+    .select('estado_aprobacion', { count: 'exact' });
+  
+  if (!approvalError && approvalBreakdown) {
+    const breakdown = approvalBreakdown.reduce((acc: any, org: any) => {
+      acc[org.estado_aprobacion] = (acc[org.estado_aprobacion] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('Organizer approval breakdown:', breakdown);
+  }
+  
+  console.log('=== END DIAGNOSTIC ===');
+}
+
+// Make diagnostic function available in browser console for debugging
+if (typeof window !== 'undefined') {
+  (window as any).diagnoseEventDisplay = diagnoseEventDisplay;
 }
 

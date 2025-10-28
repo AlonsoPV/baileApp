@@ -67,7 +67,7 @@ export function MyRSVPsScreen() {
             return (
               <Link
                 key={rsvp.id}
-                to={`/events/date/${eventDate.id}`}
+                to={`/social/fecha/${eventDate.id}`}
                 style={{
                   display: 'block',
                   padding: '1.5rem',

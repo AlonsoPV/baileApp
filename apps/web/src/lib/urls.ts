@@ -20,7 +20,7 @@ export function organizerLive(id: number | string): string {
  * @param id ID de la fecha del evento (events_date.id)
  */
 export function eventDateLive(id: number | string): string {
-  return `/events/date/${id}`;
+  return `/social/fecha/${id}`;
 }
 
 /**

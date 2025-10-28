@@ -187,7 +187,7 @@ export function OrganizerDashboardDates() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/events/date/${d.id}`)}
+                    onClick={() => navigate(`/social/fecha/${d.id}`)}
                     style={{
                       padding: '8px 16px',
                       borderRadius: '20px',
