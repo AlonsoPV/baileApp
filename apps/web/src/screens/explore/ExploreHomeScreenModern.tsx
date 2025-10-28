@@ -132,10 +132,10 @@ export default function ExploreHomeScreen() {
             ) : eventos && eventos.pages?.[0]?.data?.length > 0 ? (
               <HorizontalSlider
                 items={eventos.pages[0].data}
-                renderItem={(evento: any, idx: number) => (
-                  <motion.div key={evento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                renderItem={(fechaEvento: any, idx: number) => (
+                  <motion.div key={fechaEvento.id ?? idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
-                    <EventCard item={evento} />
+                    <EventCard item={fechaEvento} />
                   </motion.div>
                 )}
               />
