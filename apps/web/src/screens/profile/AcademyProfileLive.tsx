@@ -517,7 +517,7 @@ export default function AcademyProfileLive() {
                 margin: '0 0 1.5rem 0',
                 lineHeight: 1.4
               }}>
-                Academia de Baile
+                Academia de Baile live
               </p>
 
               {/* Chips de Ritmos y Zonas dentro del banner */}

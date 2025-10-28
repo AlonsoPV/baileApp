@@ -1060,6 +1060,7 @@ export function OrganizerProfileLive() {
                        `}</style>
                           <div style={{ marginTop: spacing[3] }}>
                             <EventInfoGrid
+                            
                               date={{
                                 lugar: ev.place,
                                 direccion: undefined,

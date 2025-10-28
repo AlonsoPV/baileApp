@@ -49,6 +49,7 @@ export default function AcademyProfileEditor() {
       nombre_publico: "",
       bio: "",
       estilos: [] as number[],
+      zonas: [] as number[],
       redes_sociales: {
         instagram: "",
         facebook: "",
@@ -89,6 +90,14 @@ export default function AcademyProfileEditor() {
       ? currentEstilos.filter(id => id !== estiloId)
       : [...currentEstilos, estiloId];
     setField('estilos', newEstilos);
+  };
+
+  const toggleZona = (zonaId: number) => {
+    const currentZonas = (form as any).zonas || [];
+    const newZonas = currentZonas.includes(zonaId)
+      ? currentZonas.filter((id: number) => id !== zonaId)
+      : [...currentZonas, zonaId];
+    setField('zonas' as any, newZonas as any);
   };
 
   const uploadFile = async (file: File, slot: string) => {
@@ -211,6 +220,25 @@ export default function AcademyProfileEditor() {
                 active={form.estilos?.includes(tag.id) || false}
                 onClick={() => toggleEstilo(tag.id)}
                 variant="ritmo"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Zonas */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            📍 Zonas
+          </h2>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {allTags?.filter(tag => tag.tipo === 'zona').map(tag => (
+              <Chip
+                key={tag.id}
+                label={tag.nombre}
+                active={(form as any).zonas?.includes(tag.id) || false}
+                onClick={() => toggleZona(tag.id)}
+                variant="zona"
               />
             ))}
           </div>
