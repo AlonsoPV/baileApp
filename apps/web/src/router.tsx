@@ -179,7 +179,7 @@ export function AppRouter() {
         <Route path="/profile/teacher" element={<TeacherProfileEditor />} />
         
         {/* Academy Routes */}
-        <Route path="/academia/editar" element={<AcademyEditorScreen />} />
+        <Route path="/academia/editar" element={<AcademyProfileEditor />} />
         
         {/* Admin Routes */}
         <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
@@ -191,7 +191,8 @@ export function AppRouter() {
       {/* Public Routes (no authentication required) */}
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
-      <Route path="/profile/academy" element={<AcademyProfileLive />} />
+      <Route path="/profile/academy" element={<AcademyProfileEditor />} />
+      <Route path="/profile/academy/live" element={<AcademyProfileLive />} />
       <Route path="/u/:id" element={<UserPublicProfile />} />
       <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       

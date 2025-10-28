@@ -226,7 +226,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 objectFit: 'contain'
               }}
             />
-            
+
             {/* Botón de cerrar */}
             <button
               onClick={() => setIsFullscreen(false)}
@@ -262,13 +262,13 @@ export default function EventParentPublicScreen() {
   const parentIdParam = params.parentId ?? params.id;
   const navigate = useNavigate();
   const parentIdNum = parentIdParam ? parseInt(parentIdParam) : undefined;
-  
+
   const { data: parent, isLoading } = useEventParent(parentIdNum);
   const { data: dates } = useEventDatesByParent(parentIdNum);
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
   const { data: organizer } = useMyOrganizer();
-  
+
   // Verificar si el usuario es el dueño del social
   const isOwner = organizer?.id === parent?.organizer_id;
 
@@ -305,7 +305,7 @@ export default function EventParentPublicScreen() {
           borderRadius: '50%',
           animation: 'float 4s ease-in-out infinite reverse'
         }} />
-        
+
         <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <motion.div
             animate={{ rotate: 360 }}
@@ -461,713 +461,681 @@ export default function EventParentPublicScreen() {
             border: `1px solid ${colors.light}22`,
             backdropFilter: 'blur(10px)',
           }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-            <div style={{ flex: 1 }}>
-              <h1 style={{
-                fontSize: '3rem',
-                fontWeight: '700',
-                background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '16px',
-                lineHeight: 1.2,
-              }}>
-                {parent.nombre}
-              </h1>
-              
-              {parent.biografia && (
-                <p style={{
-                  fontSize: '1.2rem',
-                  color: colors.light,
-                  opacity: 0.9,
-                  lineHeight: 1.6,
-                  marginBottom: '20px',
-                }}>
-                  {parent.biografia}
-                </p>
-              )}
-
-              {parent.descripcion && (
-                <p style={{
-                  fontSize: '1rem',
-                  color: colors.light,
-                  opacity: 0.8,
-                  lineHeight: 1.5,
-                }}>
-                  {parent.descripcion}
-                </p>
-              )}
-            </div>
-
-            <div style={{ marginLeft: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {isOwner && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/social/${parentIdNum}/edit`)}
-                  style={{
-                    padding: '12px 20px',
-                    borderRadius: '25px',
-                    border: 'none',
-                    background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                    color: colors.light,
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  ✏️ Editar Social
-                </motion.button>
-              )}
-              
-              <ShareButton
-                url={window.location.href}
-                title={parent.nombre}
-                text={`¡Mira este social: ${parent.nombre}!`}
-              />
-            </div>
-          </div>
-
-          {/* Chips de Ritmos y Zonas */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
-            {parent.estilos?.map((ritmoId: number) => (
-              <motion.span
-                key={ritmoId}
-                whileHover={{ scale: 1.05 }}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                  color: colors.light,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                }}
-              >
-                🎵 {getRitmoName(ritmoId)}
-              </motion.span>
-            ))}
-            
-            {parent.zonas?.map((zonaId: number) => (
-              <motion.span
-                key={zonaId}
-                whileHover={{ scale: 1.05 }}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                  color: colors.light,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                }}
-              >
-                📍 {getZonaName(zonaId)}
-              </motion.span>
-            ))}
-          </div>
-
-          {/* Sede General */}
-          {parent.sede_general && (
-            <div style={{
-              padding: '16px',
-              background: `${colors.light}11`,
-              borderRadius: '12px',
-              border: `1px solid ${colors.light}22`,
-            }}>
-              <h3 style={{
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                color: colors.light,
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                📍 Sede General
-              </h3>
-              <p style={{
-                fontSize: '1rem',
-                color: colors.light,
-                opacity: 0.9,
-                margin: 0,
-              }}>
-                {parent.sede_general}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* FAQ Section - Estilo Organizer */}
-        {parent.faq && parent.faq.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="glass-card"
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              borderRadius: '20px'
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}>
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FB8C00, #FF7043)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
-              }}>
-                ❓
-              </div>
-              <div>
-                <h3 style={{
-                  fontSize: '1.75rem',
-                  fontWeight: '800',
-                  background: 'linear-gradient(135deg, #FF7043 0%, #FB8C00 100%)',
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+              <div style={{ flex: 1 }}>
+                <h1 style={{
+                  fontSize: '3rem',
+                  fontWeight: '700',
+                  background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
+                  backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  margin: 0,
-                  lineHeight: 1.2
+                  marginBottom: '16px',
+                  lineHeight: 1.2,
                 }}>
-                  Información para Asistentes
-                </h3>
-                <p style={{
-                  fontSize: '0.9rem',
-                  opacity: 0.8,
-                  margin: 0,
-                  fontWeight: '500'
-                }}>
-                  Preguntas frecuentes
-                </p>
-              </div>
-            </div>
+                  {parent.nombre}
+                </h1>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {parent.faq.map((faq: any, index: number) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                  style={{
-                    padding: '1rem 1.25rem',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.12)'
-                  }}
-                >
-                  <h4 style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    margin: 0,
-                    marginBottom: '0.5rem'
+                {parent.biografia && (
+                  <p style={{
+                    fontSize: '1.2rem',
+                    color: colors.light,
+                    opacity: 0.9,
+                    lineHeight: 1.6,
+                    marginBottom: '20px',
                   }}>
-                    {faq.q}
-                  </h4>
+                    {parent.biografia}
+                  </p>
+                )}
+
+                {parent.descripcion && (
                   <p style={{
                     fontSize: '1rem',
-                    opacity: 0.85,
-                    margin: 0,
-                    lineHeight: 1.6
+                    color: colors.light,
+                    opacity: 0.8,
+                    lineHeight: 1.5,
                   }}>
-                    {faq.a}
+                    {parent.descripcion}
                   </p>
-                </motion.div>
-              ))}
+                )}
+              </div>
+
+              <div style={{ marginLeft: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {isOwner && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(`/social/${parentIdNum}/edit`)}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '25px',
+                      border: 'none',
+                      background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                      color: colors.light,
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    ✏️ Editar Social
+                  </motion.button>
+                )}
+
+                <ShareButton
+                  url={window.location.href}
+                  title={parent.nombre}
+                  text={`¡Mira este social: ${parent.nombre}!`}
+                />
+              </div>
             </div>
-          </motion.section>
-        )}
 
-        {/* Fechas Section */}
-        <div style={{
-          background: `${colors.darkBase}66`,
-          borderRadius: '16px',
-          padding: '24px',
-          marginBottom: '32px',
-          border: `1px solid ${colors.light}22`,
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
-          }}>
-            <h2 style={{
-              fontSize: '1.8rem',
-              fontWeight: '600',
-              color: colors.light,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}>
-              📅 Fechas Disponibles
-            </h2>
-            
-            <button
-              onClick={() => navigate(`/social/${parentIdNum}/fecha/nueva`)}
-              style={{
-                padding: '12px 20px',
-                borderRadius: '25px',
-                border: 'none',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                color: colors.light,
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              ➕ Agregar Fecha
-            </button>
-          </div>
-
-          {dates && dates.length > 0 ? (
-            <div style={{ 
-              display: 'grid', 
-              gap: '1.5rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))'
-            }}>
-              {dates.map((date: any, index: number) => (
-                <motion.div
-                  key={date.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ 
-                    scale: 1.03, 
-                    y: -8,
-                    boxShadow: '0 16px 40px rgba(30, 136, 229, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)'
-                  }}
-                  onClick={() => navigate(`/social/fecha/${date.id}`)}
+            {/* Chips de Ritmos y Zonas */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+              {parent.estilos?.map((ritmoId: number) => (
+                <motion.span
+                  key={ritmoId}
+                  whileHover={{ scale: 1.05 }}
                   style={{
-                    padding: '2rem',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                    padding: '8px 16px',
                     borderRadius: '20px',
-                    border: '2px solid rgba(30, 136, 229, 0.2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 8px 32px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)'
+                    background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                    color: colors.light,
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
                   }}
                 >
-                  {/* Efecto de brillo en hover */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                    transition: 'left 0.6s ease',
-                    zIndex: 1
-                  }} />
-                  <div style={{ position: 'relative', zIndex: 2 }}>
-                    {/* Header con icono y nombre */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                      <div style={{
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.5rem',
-                        boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
-                      }}>
-                        📅
-                      </div>
-                      {isOwner && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            navigate(`/social/fecha/${date.id}/edit`);
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            background: 'transparent',
-                            color: colors.light,
-                            cursor: 'pointer'
-                          }}
-                          title="Editar fecha"
-                        >
-                          ✏️ Editar
-                        </button>
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{
-                          fontSize: '1.4rem',
-                          fontWeight: '800',
-                          color: colors.light,
-                          margin: 0,
-                          background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent'
-                        }}>
-                          {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                        </h3>
-                      </div>
-                    </div>
-                    
-                    {/* Información de la fecha */}
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: '1rem',
-                      marginBottom: '1.5rem'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '0.75rem 1rem',
-                        background: 'rgba(30, 136, 229, 0.1)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(30, 136, 229, 0.2)'
-                      }}>
-                        <span style={{ fontSize: '1.2rem' }}>📅</span>
-                        <span style={{ 
-                          fontSize: '1rem', 
-                          color: colors.blue,
-                          fontWeight: '700' 
-                        }}>
-                          {formatDate(date.fecha)}
-                        </span>
-                      </div>
-                      
-                      {date.hora_inicio && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '0.75rem 1rem',
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.1)'
-                        }}>
-                          <span style={{ fontSize: '1.2rem' }}>🕐</span>
-                          <span style={{ 
-                            fontSize: '1rem', 
-                            color: colors.light,
-                            fontWeight: '700' 
-                          }}>
-                            {date.hora_inicio} - {date.hora_fin || 'Sin hora fin'}
-                          </span>
-                        </div>
-                      )}
+                  🎵 {getRitmoName(ritmoId)}
+                </motion.span>
+              ))}
 
-                      {date.lugar && (
-                        <p style={{
-                          fontSize: '1rem',
-                          color: colors.light,
-                          opacity: 0.9,
-                          marginBottom: '8px',
-                        }}>
-                          📍 {date.lugar}
-                        </p>
-                      )}
-
-                      {date.ciudad && (
-                        <p style={{
-                          fontSize: '0.9rem',
-                          color: colors.light,
-                          opacity: 0.7,
-                        }}>
-                          {date.ciudad}
-                        </p>
-                      )}
-                    </div>
-
-                    <div style={{
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      background: date.estado_publicacion === 'publicado' 
-                        ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
-                        : `${colors.light}33`,
-                      color: colors.light,
-                      fontSize: '0.9rem',
-                      fontWeight: '600',
-                    }}>
-                      {date.estado_publicacion === 'publicado' ? '🌐 Público' : '📝 Borrador'}
-                    </div>
-                  </div>
-                </motion.div>
+              {parent.zonas?.map((zonaId: number) => (
+                <motion.span
+                  key={zonaId}
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                    color: colors.light,
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                  }}
+                >
+                  📍 {getZonaName(zonaId)}
+                </motion.span>
               ))}
             </div>
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              color: colors.light,
-              opacity: 0.6,
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📅</div>
-              <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
-                No hay fechas programadas aún
-              </p>
-              <p style={{ fontSize: '0.9rem' }}>
-                Haz clic en "Agregar Fecha" para crear la primera
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Galería de Fotos del Social */}
-        {(() => {
-          // Obtener fotos del carrusel usando los media slots
-          const carouselPhotos = PHOTO_SLOTS
-            .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
-            .filter(Boolean) as string[];
 
-          return carouselPhotos.length > 0 && (
+          </div>
+
+          {/* FAQ Section - Estilo Organizer */}
+          {parent.faq && parent.faq.length > 0 && (
             <motion.section
-              id="social-photo-gallery"
-              data-test-id="social-photo-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '2.5rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '24px',
-                border: '2px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <div style={{
-                position: 'relative',
-                zIndex: 1
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  marginBottom: '2rem'
-                }}>
-                  <div style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #E53935, #FB8C00)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.5rem',
-                    boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
-                  }}>
-                    📷
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontSize: '1.75rem',
-                      fontWeight: '800',
-                      background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      margin: 0,
-                      lineHeight: 1.2
-                    }}>
-                      Galería de Fotos
-                    </h3>
-                    <p style={{
-                      fontSize: '0.9rem',
-                      opacity: 0.8,
-                      margin: 0,
-                      fontWeight: '500'
-                    }}>
-                      Fotos del social
-                    </p>
-                  </div>
-                  <div style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
-                    borderRadius: '25px',
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    color: colors.light,
-                    border: '1px solid rgba(229, 57, 53, 0.3)',
-                    boxShadow: '0 4px 16px rgba(229, 57, 53, 0.2)',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
-                  </div>
-                </div>
-              
-                <CarouselComponent photos={carouselPhotos} />
-              </div>
-            </motion.section>
-          );
-        })()}
-
-        {/* Sección de Videos del Social */}
-        {(() => {
-          // Obtener videos
-          const videos = VIDEO_SLOTS
-            .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
-            .filter(Boolean) as string[];
-
-          return videos.length > 0 && (
-            <motion.section
-              id="social-video-gallery"
-              data-test-id="social-video-gallery"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
+              className="glass-card"
               style={{
                 marginBottom: '2rem',
-                padding: '2.5rem',
-                background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
-                borderRadius: '24px',
-                border: '2px solid rgba(30, 136, 229, 0.2)',
-                boxShadow: '0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
-                position: 'relative',
-                overflow: 'hidden'
+                padding: '2rem',
+                borderRadius: '20px'
               }}
             >
               <div style={{
-                position: 'relative',
-                zIndex: 1
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '1.5rem'
               }}>
                 <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FB8C00, #FF7043)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1rem',
-                  marginBottom: '2rem'
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
                 }}>
-                  <div style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.5rem',
-                    boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
-                  }}>
-                    🎥
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontSize: '1.75rem',
-                      fontWeight: '800',
-                      background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      margin: 0,
-                      lineHeight: 1.2
-                    }}>
-                      Videos del Social
-                    </h3>
-                    <p style={{
-                      fontSize: '0.9rem',
-                      opacity: 0.8,
-                      margin: 0,
-                      fontWeight: '500'
-                    }}>
-                      Videos promocionales y demostraciones
-                    </p>
-                  </div>
-                  <div style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
-                    borderRadius: '25px',
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    color: colors.light,
-                    border: '1px solid rgba(30, 136, 229, 0.3)',
-                    boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    {videos.length} video{videos.length !== 1 ? 's' : ''}
-                  </div>
+                  ❓
                 </div>
-              
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                  gap: '2rem',
-                  maxWidth: '1200px',
-                  margin: '0 auto'
-                }}>
-                  {videos.map((video, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{
-                        scale: 1.05,
-                        y: -8,
-                        boxShadow: '0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
-                      }}
-                      style={{
-                        aspectRatio: '16/9',
-                        borderRadius: '20px',
-                        overflow: 'hidden',
-                        border: '2px solid rgba(30, 136, 229, 0.3)',
-                        cursor: 'pointer',
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        background: 'rgba(0, 0, 0, 0.1)',
-                        boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <video
-                        src={video}
-                        controls
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: '1rem',
-                        right: '1rem',
-                        background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '12px',
-                        fontSize: '0.875rem',
-                        fontWeight: '700',
-                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                        backdropFilter: 'blur(10px)'
-                      }}>
-                        🎥 Video {index + 1}
-                      </div>
-                    </motion.div>
-                  ))}
+                <div>
+                  <h3 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #FF7043 0%, #FB8C00 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    Información para Asistentes
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: '500'
+                  }}>
+                    Preguntas frecuentes
+                  </p>
                 </div>
               </div>
+              {/* Sede General */}
+              {parent.sede_general && (
+                <div style={{
+                  padding: '16px',
+                  background: `${colors.light}11`,
+                  borderRadius: '12px',
+                  border: `1px solid ${colors.light}22`,
+                }}>
+                  <h3 style={{
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: colors.light,
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}>
+                    📍 Ubicación
+                  </h3>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: colors.light,
+                    opacity: 0.9,
+                    margin: 0,
+                  }}>
+                    {parent.sede_general}
+                  </p>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {parent.faq.map((faq: any, index: number) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                    style={{
+                      padding: '1rem 1.25rem',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.12)'
+                    }}
+                  >
+                    <h4 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      marginBottom: '0.5rem'
+                    }}>
+                      {faq.q}
+                    </h4>
+                    <p style={{
+                      fontSize: '1rem',
+                      opacity: 0.85,
+                      margin: 0,
+                      lineHeight: 1.6
+                    }}>
+                      {faq.a}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
             </motion.section>
-          );
-        })()}
+          )}
+
+          {/* Fechas Section */}
+          <div style={{
+            background: `${colors.darkBase}66`,
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '32px',
+            border: `1px solid ${colors.light}22`,
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px',
+            }}>
+              <h2 style={{
+                fontSize: '1.8rem',
+                fontWeight: '600',
+                color: colors.light,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                📅 Fechas Disponibles
+              </h2>
+
+              <button
+                onClick={() => navigate(`/social/${parentIdNum}/fecha/nueva`)}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '25px',
+                  border: 'none',
+                  background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                  color: colors.light,
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                ➕ Agregar Fecha
+              </button>
+            </div>
+
+            {dates && dates.length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gap: '1.5rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))'
+              }}>
+                {dates.map((date: any, index: number) => (
+                  <motion.div
+                    key={date.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{
+                      scale: 1.03,
+                      y: -8,
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.2)'
+                    }}
+                    onClick={() => navigate(`/social/fecha/${date.id}`)}
+                    style={{
+                      padding: '1.5rem',
+                      background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+                      borderRadius: '1.25rem',
+                      border: '1px solid rgba(240, 147, 251, 0.2)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)'
+                    }}
+                  >
+                    {/* Barra superior de acento */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
+                    <div style={{ position: 'relative', zIndex: 2 }}>
+                      {/* Avatar circular arriba a la derecha */}
+                      <div style={{ position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, fontSize: 14 }}>📅</span>
+                      </div>
+                      {/* Título */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                        {isOwner && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/social/fecha/${date.id}/edit`);
+                            }}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              background: 'transparent',
+                              color: colors.light,
+                              cursor: 'pointer'
+                            }}
+                            title="Editar fecha"
+                          >
+                            ✏️ Editar
+                          </button>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{
+                            fontSize: '1.375rem',
+                            fontWeight: 800,
+                            margin: 0,
+                            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            lineHeight: 1.3
+                          }}>
+                            {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Información de la fecha */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+                          color: 'rgba(255,255,255,0.92)', padding: '8px 10px',
+                          background: 'rgba(255,255,255,0.04)', borderRadius: 10,
+                          border: '1px solid rgba(255,255,255,0.06)'
+                        }}>
+                          <span style={{ fontSize: '1.2rem' }}>📅</span>
+                          <span style={{ fontWeight: 600 }}>{formatDate(date.fecha)}</span>
+                        </div>
+
+                        {date.hora_inicio && (
+                          <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+                            color: 'rgba(255,255,255,0.92)', padding: '8px 10px',
+                            background: 'rgba(255,255,255,0.04)', borderRadius: 10,
+                            border: '1px solid rgba(255,255,255,0.06)'
+                          }}>
+                            <span style={{ fontSize: '1.2rem' }}>🕐</span>
+                            <span style={{ opacity: 0.9 }}>🕒 {date.hora_inicio}{date.hora_fin ? ` – ${date.hora_fin}` : ''}</span>
+                          </div>
+                        )}
+
+                        {date.lugar && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.9)', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: 16 }}>📍</span>
+                            <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[date.lugar, date.ciudad].filter(Boolean).join(' • ')}</span>
+                          </div>
+                        )}
+
+                        {date.ciudad && (
+                          <div style={{ fontSize: 12, marginTop: 6, padding: 8, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 10 }}>
+                            🗺️ {date.ciudad}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{
+                          padding: '8px 12px',
+                          borderRadius: 12,
+                          background: date.estado_publicacion === 'publicado' ? 'linear-gradient(135deg, #1E88E5, #7C4DFF)' : 'rgba(255,255,255,0.08)',
+                          color: '#fff',
+                          textAlign: 'center',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          border: '1px solid rgba(255,255,255,0.08)'
+                        }}>
+                          {date.estado_publicacion === 'publicado' ? '🌐 Público' : '📝 Borrador'}
+                        </div>
+                        <div style={{
+                          padding: '8px 12px',
+                          borderRadius: 12,
+                          background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)',
+                          color: '#fff',
+                          textAlign: 'center',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          border: '1px solid rgba(255,255,255,0.08)'
+                        }}>Ver más →</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px',
+                color: colors.light,
+                opacity: 0.6,
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📅</div>
+                <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
+                  No hay fechas programadas aún
+                </p>
+                <p style={{ fontSize: '0.9rem' }}>
+                  Haz clic en "Agregar Fecha" para crear la primera
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Galería de Fotos del Social */}
+          {(() => {
+            // Obtener fotos del carrusel usando los media slots
+            const carouselPhotos = PHOTO_SLOTS
+              .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
+              .filter(Boolean) as string[];
+
+            return carouselPhotos.length > 0 && (
+              <motion.section
+                id="social-photo-gallery"
+                data-test-id="social-photo-gallery"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                style={{
+                  marginBottom: '2rem',
+                  padding: '2.5rem',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                  borderRadius: '24px',
+                  border: '2px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '2rem'
+                  }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
+                    }}>
+                      📷
+                    </div>
+                    <div>
+                      <h3 style={{
+                        fontSize: '1.75rem',
+                        fontWeight: '800',
+                        background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        margin: 0,
+                        lineHeight: 1.2
+                      }}>
+                        Galería de Fotos
+                      </h3>
+                      <p style={{
+                        fontSize: '0.9rem',
+                        opacity: 0.8,
+                        margin: 0,
+                        fontWeight: '500'
+                      }}>
+                        Fotos del social
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '0.75rem 1.5rem',
+                      background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
+                      borderRadius: '25px',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      color: colors.light,
+                      border: '1px solid rgba(229, 57, 53, 0.3)',
+                      boxShadow: '0 4px 16px rgba(229, 57, 53, 0.2)',
+                      backdropFilter: 'blur(10px)'
+                    }}>
+                      {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+
+                  <CarouselComponent photos={carouselPhotos} />
+                </div>
+              </motion.section>
+            );
+          })()}
+
+          {/* Sección de Videos del Social */}
+          {(() => {
+            // Obtener videos
+            const videos = VIDEO_SLOTS
+              .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
+              .filter(Boolean) as string[];
+
+            return videos.length > 0 && (
+              <motion.section
+                id="social-video-gallery"
+                data-test-id="social-video-gallery"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                style={{
+                  marginBottom: '2rem',
+                  padding: '2.5rem',
+                  background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
+                  borderRadius: '24px',
+                  border: '2px solid rgba(30, 136, 229, 0.2)',
+                  boxShadow: '0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '2rem'
+                  }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                    }}>
+                      🎥
+                    </div>
+                    <div>
+                      <h3 style={{
+                        fontSize: '1.75rem',
+                        fontWeight: '800',
+                        background: 'linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        margin: 0,
+                        lineHeight: 1.2
+                      }}>
+                        Videos del Social
+                      </h3>
+                      <p style={{
+                        fontSize: '0.9rem',
+                        opacity: 0.8,
+                        margin: 0,
+                        fontWeight: '500'
+                      }}>
+                        Videos promocionales y demostraciones
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '0.75rem 1.5rem',
+                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
+                      borderRadius: '25px',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      color: colors.light,
+                      border: '1px solid rgba(30, 136, 229, 0.3)',
+                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
+                      backdropFilter: 'blur(10px)'
+                    }}>
+                      {videos.length} video{videos.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                    gap: '2rem',
+                    maxWidth: '1200px',
+                    margin: '0 auto'
+                  }}>
+                    {videos.map((video, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{
+                          scale: 1.05,
+                          y: -8,
+                          boxShadow: '0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
+                        }}
+                        style={{
+                          aspectRatio: '16/9',
+                          borderRadius: '20px',
+                          overflow: 'hidden',
+                          border: '2px solid rgba(30, 136, 229, 0.3)',
+                          cursor: 'pointer',
+                          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                          position: 'relative',
+                          background: 'rgba(0, 0, 0, 0.1)',
+                          boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <video
+                          src={video}
+                          controls
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
+                          color: 'white',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '12px',
+                          fontSize: '0.875rem',
+                          fontWeight: '700',
+                          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                          backdropFilter: 'blur(10px)'
+                        }}>
+                          🎥 Video {index + 1}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </motion.section>
+            );
+          })()}
+        </div>
       </div>
-    </div>
     </>
   );
 }

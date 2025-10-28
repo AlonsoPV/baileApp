@@ -140,8 +140,8 @@ export default function AcademyProfileEditor() {
             onSave={handleSave}
             isSaving={upsert.isPending}
             saveDisabled={!form.nombre_publico?.trim()}
-            editHref="/profile/academy/edit"
-            liveHref="/profile/academy"
+            editHref="/profile/academy"
+            liveHref="/profile/academy/live"
           />
         </div>
 
