@@ -138,7 +138,7 @@ export default function AcademyProfileEditor() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando academia...</p>
+        <p>Cargando Maestro...</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function AcademyProfileEditor() {
         {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
-          <h1 className="org-editor__title">✏️ Editar Academia</h1>
+          <h1 className="org-editor__title">✏️ Editar Maestro</h1>
           <div style={{ width: 100 }} />
         </div>
 
@@ -300,13 +300,13 @@ export default function AcademyProfileEditor() {
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                🎓 Nombre de la Academia *
+                🎓 Nombre de la Maestro *
               </label>
               <input
                 type="text"
                 value={form.nombre_publico}
                 onChange={(e) => setField('nombre_publico', e.target.value)}
-                placeholder="Ej: Academia de Baile Moderno"
+                placeholder="Ej: Maestro de Baile Moderno"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -326,7 +326,7 @@ export default function AcademyProfileEditor() {
               <textarea
                 value={form.bio}
                 onChange={(e) => setField('bio', e.target.value)}
-                placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
+                placeholder="Cuéntanos sobre tus inicios dando clases, su historia, metodología y lo que la hace especial..."
                 rows={4}
                 style={{
                   width: '100%',
@@ -352,7 +352,7 @@ export default function AcademyProfileEditor() {
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Estilos que Enseñamos</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la academia</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la Maestro</div>
             </div>
           </div>
 
@@ -380,7 +380,7 @@ export default function AcademyProfileEditor() {
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #90CAF9 0%, #BBDEFB 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Zonas</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la academia</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la Maestro</div>
             </div>
           </div>
 
@@ -791,7 +791,7 @@ export default function AcademyProfileEditor() {
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Gestión de Fotos"
-          description="Sube fotos de tu academia, instalaciones, clases y eventos"
+          description="Sube fotos de tus clases y eventos"
           slots={['p1']}
           isMainPhoto={true}
         />
@@ -803,7 +803,7 @@ export default function AcademyProfileEditor() {
           uploadFile={uploadFile}
           removeFile={removeFile}
           title="📷 Fotos Adicionales (p4-p10)"
-          description="Más fotos para mostrar diferentes aspectos de tu academia"
+          description="Más fotos para mostrar diferentes aspectos de tu Maestro"
           slots={PHOTO_SLOTS.slice(3)} // p4-p10
         />
 
