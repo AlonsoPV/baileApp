@@ -59,14 +59,43 @@ export default function EventCard({ item }: EventCardProps) {
             description={undefined}
             location={lugar || ciudad || direccion}
             start={(() => {
-              if (!fecha) return new Date();
-              const hora = horaInicio || '20:00';
-              return new Date(`${fecha}T${hora}:00`);
+              try {
+                if (!fecha) return new Date();
+                // Asegurar formato ISO (YYYY-MM-DD)
+                const fechaStr = fecha.includes('T') ? fecha.split('T')[0] : fecha;
+                const hora = (horaInicio || '20:00').split(':').slice(0, 2).join(':');
+                const fechaCompleta = `${fechaStr}T${hora}:00`;
+                const parsed = new Date(fechaCompleta);
+                return isNaN(parsed.getTime()) ? new Date() : parsed;
+              } catch (err) {
+                console.error('[EventCard] Error parsing start date:', err);
+                return new Date();
+              }
             })()}
             end={(() => {
-              if (!fecha) return new Date();
-              const hora = horaFin || horaInicio || '23:59';
-              return new Date(`${fecha}T${hora}:00`);
+              try {
+                if (!fecha) {
+                  const defaultEnd = new Date();
+                  defaultEnd.setHours(defaultEnd.getHours() + 2);
+                  return defaultEnd;
+                }
+                // Asegurar formato ISO (YYYY-MM-DD)
+                const fechaStr = fecha.includes('T') ? fecha.split('T')[0] : fecha;
+                const hora = (horaFin || horaInicio || '23:59').split(':').slice(0, 2).join(':');
+                const fechaCompleta = `${fechaStr}T${hora}:00`;
+                const parsed = new Date(fechaCompleta);
+                if (isNaN(parsed.getTime())) {
+                  const defaultEnd = new Date();
+                  defaultEnd.setHours(defaultEnd.getHours() + 2);
+                  return defaultEnd;
+                }
+                return parsed;
+              } catch (err) {
+                console.error('[EventCard] Error parsing end date:', err);
+                const defaultEnd = new Date();
+                defaultEnd.setHours(defaultEnd.getHours() + 2);
+                return defaultEnd;
+              }
             })()}
             showAsIcon={true}
           />

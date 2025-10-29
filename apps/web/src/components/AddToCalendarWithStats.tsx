@@ -107,29 +107,93 @@ export default function AddToCalendarWithStats({
     }
   };
 
+  // Validar y normalizar fechas
+  const normalizedStart = useMemo(() => {
+    try {
+      if (!start) {
+        console.warn('[AddToCalendarWithStats] No start date provided');
+        return new Date(); // Fallback a fecha actual
+      }
+      const d = typeof start === 'string' ? new Date(start) : start;
+      if (isNaN(d.getTime())) {
+        console.warn('[AddToCalendarWithStats] Invalid start date:', start);
+        return new Date(); // Fallback
+      }
+      return d;
+    } catch (err) {
+      console.error('[AddToCalendarWithStats] Error normalizing start date:', err);
+      return new Date();
+    }
+  }, [start]);
+
+  const normalizedEnd = useMemo(() => {
+    try {
+      if (!end) {
+        console.warn('[AddToCalendarWithStats] No end date provided, using start + 2 hours');
+        const defaultEnd = new Date(normalizedStart);
+        defaultEnd.setHours(defaultEnd.getHours() + 2);
+        return defaultEnd;
+      }
+      const d = typeof end === 'string' ? new Date(end) : end;
+      if (isNaN(d.getTime())) {
+        console.warn('[AddToCalendarWithStats] Invalid end date:', end);
+        const defaultEnd = new Date(normalizedStart);
+        defaultEnd.setHours(defaultEnd.getHours() + 2);
+        return defaultEnd;
+      }
+      // Asegurar que end sea después de start
+      if (d.getTime() <= normalizedStart.getTime()) {
+        const correctedEnd = new Date(normalizedStart);
+        correctedEnd.setHours(correctedEnd.getHours() + 2);
+        return correctedEnd;
+      }
+      return d;
+    } catch (err) {
+      console.error('[AddToCalendarWithStats] Error normalizing end date:', err);
+      const defaultEnd = new Date(normalizedStart);
+      defaultEnd.setHours(defaultEnd.getHours() + 2);
+      return defaultEnd;
+    }
+  }, [end, normalizedStart]);
+
   // Construir URLs
   const icsBlobUrl = useMemo(() => {
     try {
-      const ics = buildICS({ title, description, location, start, end, allDay });
+      const ics = buildICS({ 
+        title, 
+        description, 
+        location, 
+        start: normalizedStart, 
+        end: normalizedEnd, 
+        allDay 
+      });
       return URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     } catch (err) {
-      console.error("Error building ICS:", err);
+      console.error("[AddToCalendarWithStats] Error building ICS:", err);
       return null;
     }
-  }, [title, description, location, start, end, allDay]);
+  }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
 
-  const googleUrl = useMemo(
-    () =>
-      buildGoogleUrl({
+  const googleUrl = useMemo(() => {
+    try {
+      return buildGoogleUrl({
         title,
         description: description || "",
         location: location || "",
-        start,
-        end,
+        start: normalizedStart,
+        end: normalizedEnd,
         allDay,
-      }),
-    [title, description, location, start, end, allDay]
-  );
+      });
+    } catch (err) {
+      console.error("[AddToCalendarWithStats] Error building Google URL:", err);
+      // Devolver URL genérica de Google Calendar como fallback
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: title,
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+  }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
 
   if (showAsIcon) {
     return (

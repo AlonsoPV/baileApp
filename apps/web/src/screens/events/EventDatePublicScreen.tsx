@@ -542,14 +542,52 @@ export default function EventDatePublicScreen() {
                 description={date.biografia || parent?.descripcion || undefined}
                 location={date.lugar || date.ciudad || date.direccion || undefined}
                 start={(() => {
-                  if (!date.fecha) return new Date();
-                  const horaInicio = date.hora_inicio || '20:00';
-                  return new Date(`${date.fecha}T${horaInicio}:00`);
+                  try {
+                    if (!date.fecha) return new Date();
+                    // Asegurar formato ISO (YYYY-MM-DD)
+                    const fechaStr = date.fecha.includes('T') 
+                      ? date.fecha.split('T')[0] 
+                      : date.fecha;
+                    const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                    const fechaCompleta = `${fechaStr}T${horaInicio}:00`;
+                    const parsed = new Date(fechaCompleta);
+                    if (isNaN(parsed.getTime())) {
+                      console.warn('[EventDatePublicScreen] Invalid date, using fallback:', fechaCompleta);
+                      return new Date();
+                    }
+                    return parsed;
+                  } catch (err) {
+                    console.error('[EventDatePublicScreen] Error parsing start date:', err);
+                    return new Date();
+                  }
                 })()}
                 end={(() => {
-                  if (!date.fecha) return new Date();
-                  const horaFin = date.hora_fin || date.hora_inicio || '23:59';
-                  return new Date(`${date.fecha}T${horaFin}:00`);
+                  try {
+                    if (!date.fecha) {
+                      const defaultEnd = new Date();
+                      defaultEnd.setHours(defaultEnd.getHours() + 2);
+                      return defaultEnd;
+                    }
+                    // Asegurar formato ISO (YYYY-MM-DD)
+                    const fechaStr = date.fecha.includes('T') 
+                      ? date.fecha.split('T')[0] 
+                      : date.fecha;
+                    const horaFin = (date.hora_fin || date.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
+                    const fechaCompleta = `${fechaStr}T${horaFin}:00`;
+                    const parsed = new Date(fechaCompleta);
+                    if (isNaN(parsed.getTime())) {
+                      console.warn('[EventDatePublicScreen] Invalid end date, using fallback:', fechaCompleta);
+                      const defaultEnd = new Date();
+                      defaultEnd.setHours(defaultEnd.getHours() + 2);
+                      return defaultEnd;
+                    }
+                    return parsed;
+                  } catch (err) {
+                    console.error('[EventDatePublicScreen] Error parsing end date:', err);
+                    const defaultEnd = new Date();
+                    defaultEnd.setHours(defaultEnd.getHours() + 2);
+                    return defaultEnd;
+                  }
                 })()}
                 showAsIcon={true}
               />
