@@ -131,8 +131,8 @@ export default function AcademyProfileEditor() {
   };
 
   if (isLoading) {
-    return (
-      <div style={{
+  return (
+    <div style={{
         padding: '48px 24px',
         textAlign: 'center',
         color: colors.light,
@@ -282,12 +282,12 @@ export default function AcademyProfileEditor() {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
             currentView="edit"
-            profileType="academy"
+            profileType="teacher"
             onSave={handleSave}
             isSaving={upsert.isPending}
             saveDisabled={!form.nombre_publico?.trim()}
-            editHref="/profile/academy/edit"
-            liveHref="/profile/academy"
+            editHref="/profile/teacher/edit"
+            liveHref="/profile/teacher"
           />
         </div>
 
@@ -334,7 +334,7 @@ export default function AcademyProfileEditor() {
                   borderRadius: '12px',
                   background: `${colors.dark}cc`,
                   border: `1px solid ${colors.light}33`,
-                  color: colors.light,
+      color: colors.light,
                   fontSize: '1rem',
                   resize: 'vertical',
                 }}

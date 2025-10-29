@@ -514,7 +514,12 @@ export default function TeacherProfileLive() {
       <div className="teacher-container">
         {/* Navigation Toggle */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle currentView="live" profileType="teacher" />
+          <ProfileNavigationToggle
+            currentView="live"
+            profileType="teacher"
+            liveHref="/profile/teacher"
+            editHref="/profile/teacher/edit"
+          />
         </div>
 
         {/* Banner Principal */}
