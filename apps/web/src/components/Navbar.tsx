@@ -70,146 +70,28 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         </Link>
       </div>
 
-      {/* Nav Links */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {user ? (
-          <>
-            <Link
-              to="/explore"
-              style={{
-                color: '#FFF',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                padding: '0.5rem 1rem',
-                borderRadius: borderRadius.md,
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              Explorar 🔍
-            </Link>
-            <Link
-              to="/app/profile"
-              style={{
-                color: '#FFF',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                padding: '0.5rem 1rem',
-                borderRadius: borderRadius.md,
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              Perfil 👤
-            </Link>
-            
-            {/* Admin Link - Solo visible para admins */}
-            {isAdmin && (
-              <Link
-                to="/admin/roles"
-                style={{
-                  color: '#FFD166',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: '700',
-                  padding: '0.5rem 1rem',
-                  borderRadius: borderRadius.md,
-                  transition: 'background 0.2s',
-                  border: '1px solid rgba(255, 214, 102, 0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 214, 102, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                Admin ⚙️
-              </Link>
-            )}
-            
-            <button
-              onClick={handleLogout}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: borderRadius.md,
-                padding: '0.5rem 1rem',
-                color: '#FFF',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }}
-            >
-              Salir 🚪
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/auth/login"
-              style={{
-                color: '#FFF',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                padding: '0.5rem 1rem',
-                borderRadius: borderRadius.md,
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              Login
-            </Link>
-            <Link
-              to="/auth/signup"
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: borderRadius.md,
-                padding: '0.5rem 1rem',
-                color: '#FFF',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                display: 'inline-block',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }}
-            >
-              Signup
-            </Link>
-          </>
-        )}
+      {/* Nav Icons Only */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Link
+          to="/explore"
+          aria-label="Explorar"
+          title="Explorar"
+          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          🔍
+        </Link>
+        <Link
+          to={user ? '/app/profile' : '/auth/login'}
+          aria-label="Perfil"
+          title="Perfil"
+          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          👤
+        </Link>
       </div>
     </nav>
   );

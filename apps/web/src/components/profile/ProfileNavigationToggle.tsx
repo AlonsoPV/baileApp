@@ -125,6 +125,13 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
       width: 'fit-content',
     }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .pnt-wrap { padding: 8px 10px !important; gap: 6px !important; }
+          .pnt-btn { padding: 8px 10px !important; font-size: 0.8rem !important; }
+          .pnt-text { display: none !important; }
+        }
+      `}</style>
       {/* Botón Ver Live */}
       <button
         onClick={() => navigate(getLiveRoute())}
@@ -156,9 +163,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
           }
         }}
+        className="pnt-btn"
       >
         <span>👁️</span>
-        <span>Ver Live</span>
+        <span className="pnt-text">Ver Live</span>
       </button>
 
       {/* Botón Editar */}
@@ -192,9 +200,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
           }
         }}
+        className="pnt-btn"
       >
         <span>✏️</span>
-        <span>Editar</span>
+        <span className="pnt-text">Editar</span>
       </button>
 
       {/* Botón Guardar (solo en modo edición) */}
@@ -240,9 +249,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
               e.currentTarget.style.transform = 'scale(1)';
             }
           }}
+          className="pnt-btn"
         >
           <span>{isSaving ? '⏳' : '💾'}</span>
-          <span>{isSaving ? 'Guardando...' : 'Guardar Todo'}</span>
+          <span className="pnt-text">{isSaving ? 'Guardando...' : 'Guardar Todo'}</span>
         </button>
       )}
 
