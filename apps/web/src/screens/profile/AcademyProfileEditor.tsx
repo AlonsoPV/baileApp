@@ -217,13 +217,21 @@ export default function AcademyProfileEditor() {
           </div>
         </div>
 
-        {/* Estilos de Baile */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            🎵 Estilos que Enseñamos
-          </h2>
+        {/* Estilos & Zonas - tarjeta mejorada */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          {/* Header Estilos */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '1.25rem 1.25rem 0.75rem' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Estilos que Enseñamos</h2>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la academia</div>
+            </div>
+          </div>
+
+          {/* Chips Estilos */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
             {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
               <Chip
                 key={tag.id}
@@ -231,18 +239,27 @@ export default function AcademyProfileEditor() {
                 active={form.estilos?.includes(tag.id) || false}
                 onClick={() => toggleEstilo(tag.id)}
                 variant="ritmo"
+                style={{
+                  background: (form.estilos?.includes(tag.id) ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255,255,255,0.04)'),
+                  border: (form.estilos?.includes(tag.id) ? '1px solid #E53935' : '1px solid rgba(255,255,255,0.15)'),
+                  color: (form.estilos?.includes(tag.id) ? '#E53935' : 'rgba(255,255,255,0.9)'),
+                  fontWeight: 600
+                }}
               />
             ))}
           </div>
-        </div>
 
-        {/* Zonas */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            📍 Zonas
-          </h2>
+          {/* Header Zonas */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.5rem 1.25rem 0.75rem' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #90CAF9 0%, #BBDEFB 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Zonas</h2>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la academia</div>
+            </div>
+          </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          {/* Chips Zonas */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1.25rem' }}>
             {allTags?.filter(tag => tag.tipo === 'zona').map(tag => (
               <Chip
                 key={tag.id}
@@ -250,10 +267,18 @@ export default function AcademyProfileEditor() {
                 active={(form as any).zonas?.includes(tag.id) || false}
                 onClick={() => toggleZona(tag.id)}
                 variant="zona"
+                style={{
+                  background: ((form as any).zonas?.includes(tag.id) ? 'rgba(25,118,210,0.2)' : 'rgba(255,255,255,0.04)'),
+                  border: ((form as any).zonas?.includes(tag.id) ? '1px solid #1976D2' : '1px solid rgba(255,255,255,0.15)'),
+                  color: ((form as any).zonas?.includes(tag.id) ? '#90CAF9' : 'rgba(255,255,255,0.9)'),
+                  fontWeight: 600
+                }}
               />
             ))}
           </div>
         </div>
+
+     
 
         {/* Horarios, Costos y Ubicación (unificado) */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>

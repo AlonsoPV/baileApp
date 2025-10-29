@@ -667,13 +667,7 @@ export default function AcademyProfileLive() {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🗓️</div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Clases & Tarifas</h3>
-                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.9rem' }}>Información de horarios, costos y ubicación</p>
-              </div>
-            </div>
+            
             <ClasesLive
               cronograma={(academy as any)?.cronograma || []}
               costos={(academy as any)?.costos || []}

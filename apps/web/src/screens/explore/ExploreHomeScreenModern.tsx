@@ -10,6 +10,7 @@ import AcademyCard from "../../components/explore/cards/AcademyCard";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import FilterBar from "../../components/FilterBar";
 import BrandCard from "../../components/explore/cards/BrandCard";
+import ClassCard from "../../components/explore/cards/ClassCard";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -111,6 +112,31 @@ export default function ExploreHomeScreen() {
     pageSize: 4
   });
 
+  // Construir clases desde academias y maestros (primer page)
+  const classesList = React.useMemo(() => {
+    const takeFrom = (arr: any[] | undefined) => (arr || []).slice(0, 1); // toma primer page
+    const a = takeFrom(academias?.pages?.[0]?.data);
+    const m = takeFrom(maestros?.pages?.[0]?.data);
+    const fromAcademies = (a || []).flatMap((ac: any) => (ac?.cronograma || []).map((c: any) => ({
+      titulo: c?.titulo,
+      fecha: c?.fecha,
+      diasSemana: c?.diasSemana,
+      inicio: c?.inicio,
+      fin: c?.fin,
+      ubicacion: c?.ubicacion
+    })));
+    const fromTeachers = (m || []).flatMap((tc: any) => (tc?.cronograma || []).map((c: any) => ({
+      titulo: c?.titulo,
+      fecha: c?.fecha,
+      diasSemana: c?.diasSemana,
+      inicio: c?.inicio,
+      fin: c?.fin,
+      ubicacion: c?.ubicacion
+    })));
+    const merged = [...fromAcademies, ...fromTeachers];
+    return merged.slice(0, 10);
+  }, [academias, maestros]);
+
   const handleFilterChange = (newFilters: typeof filters) => {
     set(newFilters);
   };
@@ -134,7 +160,7 @@ export default function ExploreHomeScreen() {
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
           </div>
 
-          <Section title="Fechas" toAll="/explore/list?type=fechas">
+          <Section title="Próximos Sociales" toAll="/explore/list?type=fechas">
             {fechasLoading ? (
               <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : fechas && fechas.pages?.[0]?.data?.length > 0 ? (
@@ -150,6 +176,25 @@ export default function ExploreHomeScreen() {
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
+          </Section>
+
+          <Section title="Encuentra tus clases" toAll="/explore/list?type=maestros">
+            {(() => {
+              const loading = academiasLoading || maestrosLoading;
+              if (loading) return <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
+              if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
+              return (
+                <HorizontalSlider
+                  items={classesList}
+                  renderItem={(clase: any, idx: number) => (
+                    <motion.div key={idx} whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 12 }}>
+                      <ClassCard item={clase} />
+                    </motion.div>
+                  )}
+                />
+              );
+            })()}
           </Section>
 
        
