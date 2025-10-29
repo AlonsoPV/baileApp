@@ -66,14 +66,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 12px 28px rgba(30,136,229,0.35)' }}>🗓️</div>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900, background: 'linear-gradient(135deg,#ffffff,#cde1ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{title}</h3>
-          <div style={{ fontSize: 12, opacity: 0.75 }}>Horarios de clases, costos y ubicación</div>
-        </div>
-      </div>
+      
 
       {/* Ubicación */}
       {hasUbicacion && (
