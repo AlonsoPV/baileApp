@@ -71,20 +71,34 @@ export default function AddToCalendarWithStats({
   }, [user, eventIdStr]);
 
   const handleAdd = async (href: string) => {
+    // Abrir ventana inmediatamente para evitar bloqueos de popups
+    const opened = window.open('', '_blank');
+
+    // Si no hay sesión, no bloqueamos: abrimos calendario sin registrar interés
     if (!user?.id) {
-      alert("Inicia sesión para añadir al calendario 🙌");
+      if (opened) {
+        opened.location.href = href;
+      } else {
+        window.location.href = href;
+      }
       setOpen(false);
       return;
     }
 
+    // Si ya estaba registrado, abrimos inmediatamente
     if (alreadyAdded) {
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
-      window.open(href, "_blank");
+      if (opened) {
+        opened.location.href = href;
+      } else {
+        window.open(href, "_blank");
+      }
       return;
     }
 
+    // Registrar interés y luego navegar (manteniendo la ventana abierta ya creada)
     setLoading(true);
     try {
       const { error } = await supabase.from("eventos_interesados").insert({
@@ -99,10 +113,19 @@ export default function AddToCalendarWithStats({
 
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
-      window.open(href, "_blank");
+      if (opened) {
+        opened.location.href = href;
+      } else {
+        window.open(href, "_blank");
+      }
     } catch (err) {
       console.error("Error al registrar interés:", err);
-      alert("Error al añadir al calendario. Intenta nuevamente.");
+      // Aunque falle el registro, llevamos al calendario
+      if (opened) {
+        opened.location.href = href;
+      } else {
+        window.open(href, "_blank");
+      }
     } finally {
       setLoading(false);
     }
