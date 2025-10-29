@@ -591,12 +591,7 @@ export default function TeacherProfileLive() {
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {(() => {
-                  const all = useTags().data as any[] | undefined;
-                  const ritmos = (teacher as any)?.ritmos || [];
-                  const names = (all || []).filter(t => t.tipo==='ritmo' && ritmos.includes(t.id)).map(t=>t.nombre);
-                  return names;
-                })().map((ritmo, index) => (
+                {getRitmoNombres().map((ritmo, index) => (
                   <Chip
                     key={`ritmo-${index}`}
                     label={ritmo}
@@ -610,12 +605,7 @@ export default function TeacherProfileLive() {
                     }}
                   />
                 ))}
-                {(() => {
-                  const all = useTags().data as any[] | undefined;
-                  const zonas = (teacher as any)?.zonas || [];
-                  const names = (all || []).filter(t => t.tipo==='zona' && zonas.includes(t.id)).map(t=>t.nombre);
-                  return names;
-                })().map((zona, index) => (
+                {getZonaNombres().map((zona, index) => (
                   <Chip
                     key={`zona-${index}`}
                     label={zona}
