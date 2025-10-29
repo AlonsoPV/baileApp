@@ -12,6 +12,7 @@ import CostosyHorarios from './CostosyHorarios';
 import ImageWithFallback from '../../components/ImageWithFallback';
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
 import ClasesLive from '../../components/events/ClasesLive';
+import { mapTeacherToVM } from './_shared/profileViewModels';
 
 const colors = themeColors;
 
@@ -41,10 +42,11 @@ export default function TeacherProfileLive() {
     );
   }
 
-  const ritmoNombres = getRitmoNombres(teacher.ritmos || []);
-  const zonaNombres = getZonaNombres(teacher.zonas || []);
-  const teacherPhotos: string[] = Array.isArray((teacher as any)?.media)
-    ? ((teacher as any).media as any[]).filter(m => m?.type === 'image').map(m => m.url).filter(Boolean)
+  const vm = mapTeacherToVM(teacher, teacher?.cronograma || [], teacher?.media || []);
+  const ritmoNombres = getRitmoNombres(vm.ritmos || []);
+  const zonaNombres = getZonaNombres(vm.ubicacion?.zonaIds || []);
+  const teacherPhotos: string[] = Array.isArray(vm.media)
+    ? (vm.media as any[]).filter((m: any) => m?.type === 'image').map((m: any) => m.url).filter(Boolean)
     : [];
 
   return (
@@ -64,8 +66,8 @@ export default function TeacherProfileLive() {
         <div className="org-banner-grid">
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div style={{ width: '220px', height: '220px', borderRadius: '50%', overflow: 'hidden', border: `4px solid rgba(255,255,255,0.2)`, background: 'linear-gradient(135deg,#1E88E5,#00BCD4)', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-              {teacher?.avatar_url ? (
-                <img src={teacher.avatar_url} alt="Foto del maestro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {vm?.avatar_url ? (
+                <img src={vm.avatar_url} alt="Foto del maestro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>🎓</div>
               )}
@@ -73,7 +75,7 @@ export default function TeacherProfileLive() {
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.6 }} style={{ display: 'flex', flexDirection: 'column', gap: spacing[6], justifyContent: 'center' }}>
-            <h1 className="gradient-text" style={{ fontSize: typography.fontSize['5xl'], fontWeight: typography.fontWeight.black, margin: 0, lineHeight: typography.lineHeight.tight }}> {teacher?.nombre_publico || 'Maestro'} </h1>
+            <h1 className="gradient-text" style={{ fontSize: typography.fontSize['5xl'], fontWeight: typography.fontWeight.black, margin: 0, lineHeight: typography.lineHeight.tight }}> {vm?.nombre_publico || 'Maestro'} </h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] }}>
               {ritmoNombres.map((nombre) => (<Chip key={`r-${nombre}`} label={nombre} icon="🎵" variant="ritmo" />))}
               {zonaNombres.map((nombre) => (<Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />))}
@@ -120,16 +122,16 @@ export default function TeacherProfileLive() {
             </div>
           </motion.section>
         )}
-        {teacher?.bio && (
+        {vm?.bio && (
           <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
             <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>💬 Sobre mí</h3>
-            <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.lg }}>{teacher.bio}</p>
+            <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.lg }}>{vm.bio}</p>
           </motion.section>
         )}
         <div>
           <SocialMediaSection
-            respuestas={{ redes: teacher?.redes_sociales || {} }}
-            redes_sociales={teacher?.redes_sociales}
+            respuestas={{ redes: vm?.redes || {} }}
+            redes_sociales={vm?.redes}
             title="Redes Sociales"
             availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']}
             style={{ marginBottom: spacing[8], padding: spacing[8], background: 'rgba(255,255,255,0.06)', borderRadius: borderRadius['2xl'], border: '1px solid rgba(255,255,255,0.14)' }}
@@ -156,17 +158,17 @@ export default function TeacherProfileLive() {
             </div>
           </motion.section>
         )}
-        {Array.isArray(teacher?.media) && teacher.media.length > 0 && (
+        {Array.isArray(vm?.media) && (vm.media as any[]).length > 0 && (
           <motion.section id="user-profile-photo-gallery" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
               <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
               <div>
                 <h3 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>Galería</h3>
-                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>{teacher.media.length} elemento{teacher.media.length !== 1 ? 's' : ''}</p>
+                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>{(vm.media as any[]).length} elemento{(vm.media as any[]).length !== 1 ? 's' : ''}</p>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
-              {teacher.media.map((item: any, index: number) => (
+              {(vm.media as any[]).map((item: any, index: number) => (
                 <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   {item.type === 'image' ? (
                     <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
@@ -190,6 +192,7 @@ export default function TeacherProfileLive() {
               ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
               referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
             }}
+            showCalendarButton={true}
           />
         </motion.section>
       </div>

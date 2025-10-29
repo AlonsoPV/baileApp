@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
@@ -195,9 +195,46 @@ export default function AddToCalendarWithStats({
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
 
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuWidth = 200;
+      const menuHeight = 120; // Estimado
+      
+      // Calcular posición, asegurándose de que esté dentro del viewport
+      let left = rect.right - menuWidth;
+      let top = rect.bottom + 8;
+      
+      // Ajustar si se sale por la derecha
+      if (left < 8) {
+        left = 8;
+      }
+      
+      // Ajustar si se sale por abajo
+      if (top + menuHeight > window.innerHeight - 8) {
+        top = rect.top - menuHeight - 8;
+      }
+      
+      // Ajustar si se sale por arriba
+      if (top < 8) {
+        top = 8;
+      }
+      
+      setMenuPosition({
+        top,
+        left,
+      });
+    } else {
+      setMenuPosition(null);
+    }
+  }, [open]);
+
   if (showAsIcon) {
     return (
-      <div style={{ position: "relative", display: "inline-block" }}>
+      <div ref={buttonRef} style={{ position: "relative", display: "inline-block" }}>
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -260,7 +297,7 @@ export default function AddToCalendarWithStats({
               style={{
                 position: 'fixed',
                 inset: 0,
-                zIndex: 999,
+                zIndex: 9998,
                 background: 'rgba(0, 0, 0, 0.3)',
               }}
               onClick={() => setOpen(false)}
@@ -268,25 +305,25 @@ export default function AddToCalendarWithStats({
           )}
         </AnimatePresence>
 
-        {/* Menú de opciones */}
+        {/* Menú de opciones guardadas - Usando position fixed para estar por encima de todo */}
         <AnimatePresence>
-          {open && (
+          {open && menuPosition && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
+                position: 'fixed',
+                top: `${menuPosition.top}px`,
+                left: `${menuPosition.left}px`,
                 minWidth: 200,
                 background: 'rgba(20,20,28,0.98)',
                 border: '1px solid rgba(255,255,255,0.15)',
                 borderRadius: 12,
                 boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
                 overflow: 'hidden',
-                zIndex: 1000,
+                zIndex: 9999,
                 backdropFilter: 'blur(20px)',
               }}
               onClick={(e) => e.stopPropagation()}
@@ -358,7 +395,7 @@ export default function AddToCalendarWithStats({
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 999,
+              zIndex: 9998,
               background: 'rgba(0, 0, 0, 0.3)',
             }}
             onClick={() => setOpen(false)}
@@ -366,7 +403,7 @@ export default function AddToCalendarWithStats({
         )}
       </AnimatePresence>
 
-      {/* Menú de opciones */}
+      {/* Menú de opciones - Versión completa del botón */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -375,16 +412,17 @@ export default function AddToCalendarWithStats({
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             style={{
-              position: "absolute",
-              top: "110%",
-              right: 0,
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
               minWidth: 240,
               background: "rgba(20,20,28,0.95)",
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 12,
               boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
               overflow: "hidden",
-              zIndex: 1000,
+              zIndex: 9999,
               backdropFilter: "blur(20px)",
             }}
             onClick={(e) => e.stopPropagation()}
