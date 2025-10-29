@@ -590,6 +590,7 @@ export default function EventDatePublicScreen() {
                   }
                 })()}
                 showAsIcon={true}
+                debug={true}
               />
               <ShareButton
                 url={window.location.href}

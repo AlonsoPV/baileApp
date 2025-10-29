@@ -13,6 +13,7 @@ type AddToCalendarProps = {
   end: string | Date;
   allDay?: boolean;
   showAsIcon?: boolean;
+  debug?: boolean;
 };
 
 export default function AddToCalendarWithStats({
@@ -24,6 +25,7 @@ export default function AddToCalendarWithStats({
   end,
   allDay,
   showAsIcon = false,
+  debug = false,
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
@@ -34,10 +36,15 @@ export default function AddToCalendarWithStats({
 
   const eventIdStr = String(eventId);
 
+  const dbg = (...args: any[]) => {
+    if (debug) console.log('[AddToCalendar]', ...args);
+  };
+
   // Cargar usuario actual
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null);
+      dbg('session', !!data.session?.user, data.session?.user?.id);
     });
   }, []);
 
@@ -50,6 +57,7 @@ export default function AddToCalendarWithStats({
         .eq("event_id", eventIdStr);
       if (!error && typeof count === "number") {
         setCount(count);
+        dbg('interest count', count);
       }
     };
     loadCount();
@@ -66,6 +74,7 @@ export default function AddToCalendarWithStats({
         .eq("user_id", user.id)
         .maybeSingle();
       setAlreadyAdded(!!data);
+      dbg('alreadyAdded', !!data);
     };
     checkIfAdded();
   }, [user, eventIdStr]);
@@ -143,6 +152,7 @@ export default function AddToCalendarWithStats({
         console.warn('[AddToCalendarWithStats] Invalid start date:', start);
         return new Date(); // Fallback
       }
+      dbg('normalizedStart', d.toString());
       return d;
     } catch (err) {
       console.error('[AddToCalendarWithStats] Error normalizing start date:', err);
@@ -169,8 +179,10 @@ export default function AddToCalendarWithStats({
       if (d.getTime() <= normalizedStart.getTime()) {
         const correctedEnd = new Date(normalizedStart);
         correctedEnd.setHours(correctedEnd.getHours() + 2);
+        dbg('normalizedEnd corrected +2h', correctedEnd.toString());
         return correctedEnd;
       }
+      dbg('normalizedEnd', d.toString());
       return d;
     } catch (err) {
       console.error('[AddToCalendarWithStats] Error normalizing end date:', err);
@@ -191,16 +203,18 @@ export default function AddToCalendarWithStats({
         end: normalizedEnd, 
         allDay 
       });
+      dbg('ICS built ok');
       return URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     } catch (err) {
       console.error("[AddToCalendarWithStats] Error building ICS:", err);
+      dbg('ICS build failed');
       return null;
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
 
   const googleUrl = useMemo(() => {
     try {
-      return buildGoogleUrl({
+      const url = buildGoogleUrl({
         title,
         description: description || "",
         location: location || "",
@@ -208,6 +222,8 @@ export default function AddToCalendarWithStats({
         end: normalizedEnd,
         allDay,
       });
+      dbg('google url', url);
+      return url;
     } catch (err) {
       console.error("[AddToCalendarWithStats] Error building Google URL:", err);
       // Devolver URL genérica de Google Calendar como fallback
@@ -215,6 +231,7 @@ export default function AddToCalendarWithStats({
         action: 'TEMPLATE',
         text: title,
       });
+      dbg('google url fallback');
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
@@ -251,8 +268,10 @@ export default function AddToCalendarWithStats({
         top,
         left,
       });
+      dbg('menu open', { top, left, rect });
     } else {
       setMenuPosition(null);
+      dbg('menu closed');
     }
   }, [open]);
 
@@ -262,7 +281,7 @@ export default function AddToCalendarWithStats({
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => { dbg('icon button click', { eventId: eventIdStr, userId: user?.id, alreadyAdded }); setOpen((v) => !v); }}
           disabled={loading}
           style={{
             width: '40px',
@@ -338,13 +357,13 @@ export default function AddToCalendarWithStats({
             >
               <MenuItem 
                 label="Google Calendar" 
-                onClick={() => handleAdd(googleUrl)} 
+                onClick={() => { dbg('menu: google', { googleUrl }); handleAdd(googleUrl); }} 
                 icon="📅"
               />
               {icsBlobUrl && (
                 <MenuItem 
                   label="Apple Calendar (.ics)" 
-                  onClick={() => handleAdd(icsBlobUrl)} 
+                  onClick={() => { dbg('menu: ics', { icsBlobUrl }); handleAdd(icsBlobUrl); }} 
                   icon="📱"
                 />
               )}
@@ -362,7 +381,7 @@ export default function AddToCalendarWithStats({
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { dbg('full button click', { eventId: eventIdStr, userId: user?.id, alreadyAdded }); setOpen((v) => !v); }}
         disabled={loading}
         style={{
           padding: "10px 14px",

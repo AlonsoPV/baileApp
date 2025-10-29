@@ -265,6 +265,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                       start={start}
                       end={end}
                       showAsIcon={true}
+                      debug={true}
                     />
                   );
                 })()}

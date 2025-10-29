@@ -98,6 +98,7 @@ export default function EventCard({ item }: EventCardProps) {
               }
             })()}
             showAsIcon={true}
+            debug={true}
           />
         </div>
 
