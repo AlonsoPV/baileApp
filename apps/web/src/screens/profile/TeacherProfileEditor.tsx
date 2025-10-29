@@ -6,8 +6,6 @@ import '@/styles/organizer.css';
 import { useNavigate } from "react-router-dom";
 import ChipPicker from "../../components/common/ChipPicker";
 import FAQEditor from "../../components/common/FAQEditor";
-import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import { useTeacherMy, useUpsertTeacher } from "@/hooks/useTeacher";
@@ -15,8 +13,11 @@ import { useTeacherMedia } from "@/hooks/useTeacherMedia";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
 import CostosyHorarios from './CostosyHorarios';
 import { useTags } from "@/hooks/useTags";
-import ScheduleEditor from "../../components/events/ScheduleEditor";
-import CostsEditor from "../../components/events/CostsEditor";
+import EditorHeader from "./teacher/editor/EditorHeader";
+import BasicInfoForm from "./teacher/editor/BasicInfoForm";
+import SocialLinksForm from "./teacher/editor/SocialLinksForm";
+import GalleryManager from "./teacher/editor/GalleryManager";
+import ClassesManager from "./teacher/editor/ClassesManager";
 
 const colors = {
   green: '#43e97b',
@@ -66,11 +67,7 @@ export default function TeacherProfileEditor() {
     <div className="org-editor" style={{ minHeight: '100vh', background: '#000000', color: '#F5F5F5', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-        <div className="org-editor__header">
-          <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
-          <h1 className="org-editor__title" style={{ margin: 0 }}>✏️ Editar Maestro</h1>
-          <div style={{ width: 100 }} />
-        </div>
+        <EditorHeader title="✏️ Editar Maestro" subtitle={form.nombre_publico} />
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
         <ProfileNavigationToggle
@@ -102,42 +99,19 @@ export default function TeacherProfileEditor() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Información básica */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="org-editor__card">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-              <input
-                className="org-editor__input"
-                placeholder="Nombre público"
-                value={form.nombre_publico}
-                onChange={(e)=>setField('nombre_publico', e.target.value)}
-              />
-              <textarea
-                className="org-editor__textarea"
-                placeholder="Biografía"
-                rows={3}
-                value={form.bio}
-                onChange={(e)=>setField('bio', e.target.value)}
-              />
-            </div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <BasicInfoForm value={{ nombre_publico: form.nombre_publico, bio: form.bio }} onChange={(patch)=>setForm(s=>({ ...s, ...patch }))} />
           </motion.div>
 
-          {/* Clases & Talleres (Cronograma) */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
-            <h3 style={{ margin: 0, marginBottom: 12 }}>🗓️ Clases & Talleres (Cronograma)</h3>
-            <ScheduleEditor 
-              value={(form as any).cronograma || []}
-              onChange={(v:any)=> setField('cronograma' as any, v as any)}
-              ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
-              locations={((form as any).ubicaciones||[]).map((u:any)=> u?.nombre || u?.lugar || '').filter(Boolean)}
-              costos={(form as any).costos || []}
-            />
-          </motion.div>
-
-          {/* Costos y Promociones */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
-            <h3 style={{ margin: 0, marginBottom: 12 }}>💰 Costos y Promociones</h3>
-            <CostsEditor value={(form as any).costos || []} onChange={(v:any)=> setField('costos' as any, v as any)} />
-          </motion.div>
+          {/* Clases & Costos */}
+          <ClassesManager
+            cronograma={(form as any).cronograma || []}
+            costos={(form as any).costos || []}
+            onCronogramaChange={(v:any)=> setField('cronograma' as any, v as any)}
+            onCostosChange={(v:any)=> setField('costos' as any, v as any)}
+            ritmos={(allTags||[]).filter((t:any)=>t.tipo==='ritmo').map((t:any)=>({ id: t.id, nombre: t.nombre }))}
+            locations={((form as any).ubicaciones||[]).map((u:any)=> u?.nombre || u?.lugar || '').filter(Boolean)}
+          />
 
           {/* Vista previa informativa (2x2) */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
@@ -182,13 +156,8 @@ export default function TeacherProfileEditor() {
           </motion.div>
 
           {/* Redes sociales */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="org-editor__card">
-            <h3 style={{ margin: 0, marginBottom: 12 }}>🔗 Redes</h3>
-            <SocialMediaSection availablePlatforms={[ 'instagram','tiktok','youtube','facebook','whatsapp' ]}
-              respuestas={{ redes: form.redes_sociales || {} }}
-              redes_sociales={form.redes_sociales || {}}
-            />
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
+            <SocialLinksForm value={form.redes_sociales || {}} onChange={(v)=> setField('redes_sociales', v)} />
           </motion.div>
 
           {/* Ubicaciones (opcional) */}
@@ -203,30 +172,13 @@ export default function TeacherProfileEditor() {
           {/* Gestión de Media (fotos y videos) */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="org-editor__card">
             <h3 style={{ margin: 0, marginBottom: 12 }}>📸 Media</h3>
-            <PhotoManagementSection
-              media={teacherMedia.media}
-              uploading={{}}
-              uploadFile={(file, slot) => teacherMedia.add.mutate({ file, slot })}
-              removeFile={(slot) => {
+            <GalleryManager
+              media={teacherMedia.media as any[]}
+              onAdd={(file, slot) => teacherMedia.add.mutate({ file, slot })}
+              onRemove={(slot) => {
                 const item = (teacherMedia.media as any[]).find((m:any)=> m.slot===slot);
                 if (item) teacherMedia.remove.mutate(item.id);
               }}
-              title="📷 Fotos del Maestro"
-              description="Sube tus fotos de clases, presentaciones o retratos"
-              slots={['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10']}
-            />
-
-            <VideoManagementSection
-              media={teacherMedia.media}
-              uploading={{}}
-              uploadFile={(file, slot) => teacherMedia.add.mutate({ file, slot })}
-              removeFile={(slot) => {
-                const item = (teacherMedia.media as any[]).find((m:any)=> m.slot===slot);
-                if (item) teacherMedia.remove.mutate(item.id);
-              }}
-              title="🎥 Videos del Maestro"
-              description="Comparte videos de clases, sociales o demos"
-              slots={['v1','v2','v3']}
             />
           </motion.div>
 
