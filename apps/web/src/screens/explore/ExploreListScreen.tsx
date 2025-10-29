@@ -24,25 +24,23 @@ const colors = {
 };
 
 const typeLabels: Record<string, string> = {
-  eventos: 'Eventos',
   fechas: 'Fechas',
-  organizadores: 'Organizadores',
-  usuarios: 'Bailarines',
-  maestros: 'Maestros',
-  academias: 'Academias',
-  marcas: 'Marcas',
   sociales: 'Sociales',
+  organizadores: 'Organizadores',
+  academias: 'Academias',
+  maestros: 'Maestros',
+  marcas: 'Marcas',
+  usuarios: 'Bailarines',
 };
 
 const typeIcons: Record<string, string> = {
-  eventos: '📅',
   fechas: '📆',
-  organizadores: '🎤',
-  usuarios: '💃',
-  maestros: '🎓',
-  academias: '🏫',
-  marcas: '🏷️',
   sociales: '🎉',
+  organizadores: '👤',
+  academias: '🏫',
+  maestros: '🎓',
+  marcas: '🏷️',
+  usuarios: '💃',
 };
 
 export default function ExploreListScreen() {
@@ -68,10 +66,6 @@ export default function ExploreListScreen() {
     let key;
 
     switch (filters.type) {
-      case "eventos":
-        CardComponent = EventCard;
-        key = item.id ?? i;
-        break;
       case "fechas":
         CardComponent = EventCard;
         key = item.id ?? i;

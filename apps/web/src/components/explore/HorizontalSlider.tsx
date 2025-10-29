@@ -21,11 +21,12 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', overflow: 'hidden' }} className="slider-container">
       {/* Left Arrow */}
       <button
         aria-label="Anterior"
         onClick={() => scrollBy(-320)}
+        className="slider-nav-btn slider-nav-left"
         style={{
           position: 'absolute', 
           left: -8, 
@@ -65,6 +66,7 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
       {/* Scrollable Container */}
       <div
         ref={ref}
+        className="slider-scroll-container"
         style={{
           display: 'flex',
           gap: '16px',
@@ -78,6 +80,7 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
         {items.map((it, i) => (
           <div 
             key={i} 
+            className="slider-item"
             style={{ 
               scrollSnapAlign: 'start',
               flexShrink: 0,
@@ -93,6 +96,7 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
       <button
         aria-label="Siguiente"
         onClick={() => scrollBy(320)}
+        className="slider-nav-btn slider-nav-right"
         style={{
           position: 'absolute', 
           right: -8, 
@@ -130,33 +134,56 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
       </button>
 
       <style>{`
-        div::-webkit-scrollbar {
+        .slider-container {
+          overflow: hidden;
+          width: 100%;
+        }
+        .slider-scroll-container::-webkit-scrollbar {
           display: none;
         }
+        /* Desktop: Mostrar 3 tarjetas completas + inicio de la siguiente (≈100px visible de la 4ta) */
+        .slider-container {
+          max-width: calc(280px * 3 + 16px * 2 + 100px);
+          margin: 0 auto;
+        }
         @media (max-width: 768px) {
-          button[aria-label="Anterior"],
-          button[aria-label="Siguiente"] {
+          /* Tablet: Mostrar 2 tarjetas completas + inicio de la siguiente */
+          .slider-container {
+            max-width: calc(280px * 2 + 16px * 1 + 80px);
+          }
+          .slider-nav-btn {
             width: 40px !important;
             height: 40px !important;
             font-size: 18px !important;
+          }
+          .slider-nav-left {
             left: 4px !important;
           }
-          button[aria-label="Siguiente"] {
+          .slider-nav-right {
             right: 4px !important;
-            left: auto !important;
+          }
+          .slider-scroll-container {
+            padding: 8px 44px !important;
           }
         }
         @media (max-width: 480px) {
-          button[aria-label="Anterior"],
-          button[aria-label="Siguiente"] {
+          /* Mobile: Mostrar 1 tarjeta completa + inicio de la siguiente (≈60px visible de la 2da) */
+          .slider-container {
+            max-width: calc(280px * 1 + 60px);
+          }
+          .slider-nav-btn {
             width: 36px !important;
             height: 36px !important;
             font-size: 16px !important;
+          }
+          .slider-nav-left {
             left: 2px !important;
           }
-          button[aria-label="Siguiente"] {
+          .slider-nav-right {
             right: 2px !important;
-            left: auto !important;
+          }
+          .slider-scroll-container {
+            padding: 8px 40px !important;
           }
         }
       `}</style>
