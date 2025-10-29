@@ -562,7 +562,12 @@ export default function CrearClase({
         {/* Acciones */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
           <button
-            onClick={onCancel}
+            onClick={() => {
+              setSubmitState('idle');
+              resetForm();
+              setIsOpen(false);
+              onCancel?.();
+            }}
             style={{
               padding: '10px 16px',
               borderRadius: 12,

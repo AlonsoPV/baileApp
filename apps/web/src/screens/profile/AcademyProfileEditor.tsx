@@ -17,7 +17,8 @@ import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import EventScheduleEditor from "../../components/events/ScheduleEditor";
 import EventCostsEditor from "../../components/events/CostsEditor";
-import CostosyHorarios from './CostosyHorarios';
+// import CostosyHorarios from './CostosyHorarios';
+import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
@@ -286,11 +287,11 @@ export default function AcademyProfileEditor() {
               <CrearClase
                 ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-                locations={((form as any).ubicaciones || []).map((u: any) => ({ id: u?.id, nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
+                locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({ id: u?.id || String(i), nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
                 editIndex={editingIndex}
                 editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
-                onCancel={() => { setEditingIndex(null); setEditInitial(undefined); }}
+                onCancel={() => { setEditingIndex(null); setEditInitial(undefined); setStatusMsg(null); }}
                 onSubmit={(c) => {
                   const currentCrono = ([...((form as any).cronograma || [])] as any[]);
                   const currentCostos = ([...((form as any).costos || [])] as any[]);
@@ -334,6 +335,7 @@ export default function AcademyProfileEditor() {
                       .mutateAsync(payload)
                       .then(() => {
                         setStatusMsg({ type: 'ok', text: '✅ Clase actualizada' });
+                        setTimeout(() => setStatusMsg(null), 2400);
                         setEditingIndex(null);
                         setEditInitial(undefined);
                         // eslint-disable-next-line no-console
@@ -376,6 +378,7 @@ export default function AcademyProfileEditor() {
                       .mutateAsync(payload)
                       .then(() => {
                         setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
+                        setTimeout(() => setStatusMsg(null), 2400);
                         // eslint-disable-next-line no-console
                         console.log('[AcademyProfileEditor] Clase creada y guardada');
                       })
@@ -483,7 +486,22 @@ export default function AcademyProfileEditor() {
               )}
             </div>
 
-
+            {/* Vista previa dentro del mismo contenedor */}
+            <div style={{ padding: '1rem', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span>👀</span>
+                <strong style={{ color: '#fff' }}>Vista previa</strong>
+              </div>
+              <ClasesLive
+                cronograma={(form as any)?.cronograma || []}
+                costos={(form as any)?.costos || []}
+                ubicacion={{
+                  nombre: (form as any)?.ubicaciones?.[0]?.nombre,
+                  direccion: (form as any)?.ubicaciones?.[0]?.direccion,
+                  referencias: (form as any)?.ubicaciones?.[0]?.referencias,
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -601,23 +619,6 @@ export default function AcademyProfileEditor() {
           </h2>
 
           <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
-        </div>
-
-        {/* Vista previa: Horarios y Costos */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            🗓️ Vista previa de horarios y costos
-          </h2>
-          <CostosyHorarios
-            title="Horarios & Costos"
-            date={{ cronograma: (form as any)?.cronograma || [], costos: (form as any)?.costos || [] }}
-            ubicacion={{
-              nombre: (form as any)?.ubicaciones?.[0]?.nombre,
-              direccion: (form as any)?.ubicaciones?.[0]?.direccion,
-              ciudad: (form as any)?.ubicaciones?.[0]?.ciudad,
-              referencias: (form as any)?.ubicaciones?.[0]?.referencias,
-            }}
-          />
         </div>
 
         {/* Gestión de Fotos */}
