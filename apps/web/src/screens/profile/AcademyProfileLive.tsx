@@ -777,44 +777,7 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Video Principal */}
-          {getMediaBySlot(media as unknown as MediaSlotItem[], 'v1') && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                display: 'flex',
-                justifyContent: 'center',
-                opacity: 1,
-                transform: 'none'
-              }}
-            >
-              <div style={{
-                width: '100%',
-                maxWidth: '600px',
-                aspectRatio: '16 / 9',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)'
-              }}>
-                <video
-                  src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')?.url || ''}
-                  controls
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-            </motion.section>
-          )}
+          
 
           {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
