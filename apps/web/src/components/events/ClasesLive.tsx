@@ -99,7 +99,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
             style={{
               position: 'relative',
               display: 'grid',
-              gridTemplateColumns: 'auto 1fr',
+              gridTemplateColumns: 'auto 1fr auto',
               alignItems: 'center',
               gap: 16,
               padding: '1.25rem 1.5rem',
@@ -200,7 +200,10 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
               )}
             </div>
             {showCalendarButton && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
+              <div
+                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {(() => {
                   const buildTimeDate = (time?: string) => {
                     const base = new Date();
