@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
@@ -234,7 +235,7 @@ export default function AddToCalendarWithStats({
 
   if (showAsIcon) {
     return (
-      <div ref={buttonRef} style={{ position: "relative", display: "inline-block" }}>
+      <div ref={buttonRef} style={{ position: "relative", display: "inline-block", zIndex: 10001 }}>
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -289,43 +290,27 @@ export default function AddToCalendarWithStats({
 
         {/* Overlay para cerrar menú */}
         <AnimatePresence>
-          {open && (
+          {open && createPortal(
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 9998,
-                background: 'rgba(0, 0, 0, 0.3)',
-              }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0, 0, 0, 0.3)' }}
               onClick={() => setOpen(false)}
-            />
+            />,
+            document.body
           )}
         </AnimatePresence>
 
         {/* Menú de opciones guardadas - Usando position fixed para estar por encima de todo */}
         <AnimatePresence>
-          {open && menuPosition && (
+          {open && menuPosition && createPortal(
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              style={{
-                position: 'fixed',
-                top: `${menuPosition.top}px`,
-                left: `${menuPosition.left}px`,
-                minWidth: 200,
-                background: 'rgba(20,20,28,0.98)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 12,
-                boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
-                overflow: 'hidden',
-                zIndex: 9999,
-                backdropFilter: 'blur(20px)',
-              }}
+              style={{ position: 'fixed', top: `${menuPosition.top}px`, left: `${menuPosition.left}px`, minWidth: 200, background: 'rgba(20,20,28,0.98)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, boxShadow: '0 18px 44px rgba(0,0,0,0.5)', overflow: 'hidden', zIndex: 9999, backdropFilter: 'blur(20px)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <MenuItem 
@@ -340,7 +325,8 @@ export default function AddToCalendarWithStats({
                   icon="📱"
                 />
               )}
-            </motion.div>
+            </motion.div>,
+            document.body
           )}
         </AnimatePresence>
       </div>

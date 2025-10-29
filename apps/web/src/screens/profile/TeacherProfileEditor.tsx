@@ -56,7 +56,7 @@ export default function TeacherProfileEditor() {
     defaults: {
       nombre_publico: "",
       bio: "",
-      estilos: [] as number[],
+      ritmos: [] as number[],
       zonas: [] as number[],
       cronograma: [] as any[],
       costos: [] as any[],
@@ -86,7 +86,7 @@ export default function TeacherProfileEditor() {
       console.log("📱 [AcademyProfileEditor] Redes sociales:", form.redes_sociales);
       console.log("📝 [AcademyProfileEditor] Nombre público:", form.nombre_publico);
       console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
-      console.log("🎵 [AcademyProfileEditor] Estilos:", form.estilos);
+      console.log("🎵 [TeacherProfileEditor] Ritmos:", (form as any).ritmos);
 
       await upsert.mutateAsync(form);
       console.log("✅ [AcademyProfileEditor] Guardado exitoso");
@@ -95,12 +95,12 @@ export default function TeacherProfileEditor() {
     }
   };
 
-  const toggleEstilo = (estiloId: number) => {
-    const currentEstilos = form.estilos || [];
-    const newEstilos = currentEstilos.includes(estiloId)
-      ? currentEstilos.filter(id => id !== estiloId)
-      : [...currentEstilos, estiloId];
-    setField('estilos', newEstilos);
+  const toggleRitmo = (ritmoId: number) => {
+    const current = (form as any).ritmos || [];
+    const next = current.includes(ritmoId)
+      ? current.filter((id: number) => id !== ritmoId)
+      : [...current, ritmoId];
+    setField('ritmos' as any, next as any);
   };
 
   const toggleZona = (zonaId: number) => {
@@ -352,7 +352,7 @@ export default function TeacherProfileEditor() {
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Estilos que Enseñamos</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la Maestro</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseñas</div>
             </div>
           </div>
 
@@ -362,13 +362,13 @@ export default function TeacherProfileEditor() {
               <Chip
                 key={tag.id}
                 label={tag.nombre}
-                active={form.estilos?.includes(tag.id) || false}
-                onClick={() => toggleEstilo(tag.id)}
+                active={(form as any).ritmos?.includes(tag.id) || false}
+                onClick={() => toggleRitmo(tag.id)}
                 variant="ritmo"
                 style={{
-                  background: (form.estilos?.includes(tag.id) ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255,255,255,0.04)'),
-                  border: (form.estilos?.includes(tag.id) ? '1px solid #E53935' : '1px solid rgba(255,255,255,0.15)'),
-                  color: (form.estilos?.includes(tag.id) ? '#E53935' : 'rgba(255,255,255,0.9)'),
+                  background: ((form as any).ritmos?.includes(tag.id) ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255,255,255,0.04)'),
+                  border: ((form as any).ritmos?.includes(tag.id) ? '1px solid #E53935' : '1px solid rgba(255,255,255,0.15)'),
+                  color: ((form as any).ritmos?.includes(tag.id) ? '#E53935' : 'rgba(255,255,255,0.9)'),
                   fontWeight: 600
                 }}
               />
