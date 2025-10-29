@@ -50,11 +50,16 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         data-test-id="user-profile-carousel-main"
         style={{
           position: 'relative',
-          aspectRatio: 'auto',
+          aspectRatio: '4 / 5', // 🔹 proporción vertical tipo retrato (Instagram-style)
           borderRadius: '16px',
           overflow: 'hidden',
-          border: '2px solid rgba(255, 255, 255, 0.2)',
-          background: 'rgba(0, 0, 0, 0.1)'
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: 'rgba(0, 0, 0, 0.2)',
+          maxHeight: '480px', // 🔹 evita que crezca demasiado
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
         <motion.div
@@ -690,10 +695,11 @@ export const UserProfileLive: React.FC = () => {
             <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
               {/* Foto */}
               <div style={{
-                aspectRatio: 'auto',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)',
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain', // 🔹 se ve completa
+                objectPosition: 'center',
+                transition: 'transform 0.3s ease',
               }}>
                 {getMediaBySlot(safeMedia as any, 'p2') ? (
                   <ImageWithFallback
@@ -775,10 +781,11 @@ export const UserProfileLive: React.FC = () => {
 
               {/* Foto */}
               <div style={{
-                aspectRatio: 'auto',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)',
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain', // 🔹 se ve completa
+                objectPosition: 'center',
+                transition: 'transform 0.3s ease',
               }}>
                 {getMediaBySlot(safeMedia as any, 'p3') ? (
                   <ImageWithFallback
@@ -1082,11 +1089,10 @@ export const UserProfileLive: React.FC = () => {
             >
               <div style={{
                 width: '100%',
-                maxWidth: '500px',
-                aspectRatio: 'auto',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)',
+                height: '100%',
+                objectFit: 'contain', // 🔹 se ve completa
+                objectPosition: 'center',
+                transition: 'transform 0.3s ease',
               }}>
                 <ImageWithFallback
                   src={getMediaBySlot(safeMedia as any, 'p1')!.url}
@@ -1131,9 +1137,10 @@ export const UserProfileLive: React.FC = () => {
                   style={{
                     width: '100%',
                     height: 'auto',
-                    aspectRatio: 'auto',
+                    aspectRatio: '4 / 5',
                     display: 'block',
-                    objectFit: 'contain'
+                    objectFit: 'contain',
+                    objectPosition: 'center',
                   }}
                 />
               </div>

@@ -458,6 +458,17 @@ export function OrganizerProfileLive() {
           || (Array.isArray(date.media) && date.media.length > 0
             ? (date.media[0] as any)?.url || date.media[0]
             : undefined),
+        price: (() => {
+          const costos = (date as any)?.costos;
+          if (Array.isArray(costos) && costos.length) {
+            const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+            if (nums.length) {
+              const min = Math.min(...(nums as number[]));
+              return min >= 0 ? `$${min.toLocaleString()}` : undefined;
+            }
+          }
+          return undefined;
+        })()
       };
 
       upcomingItems.push(item);
@@ -467,6 +478,47 @@ export function OrganizerProfileLive() {
   };
 
   const inviteItems = getUpcomingDates();
+  const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
+    const [idx, setIdx] = React.useState(0);
+    if (!items?.length) return null;
+    const ev = items[idx % items.length];
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', gap: spacing[3] }}>
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="glass-card"
+          onClick={() => onOpen(ev.href)}
+          style={{ position: 'relative', borderRadius: borderRadius.xl, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+        >
+          <div style={{ width: 350, maxWidth: '80vw' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.3)' }}>
+              {ev.flyer && (
+                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+              )}
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
+                <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700, marginBottom: spacing[2], textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], fontSize: typography.fontSize.sm }}>
+                  {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                  {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                  {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                  {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+        {items.length > 1 && (
+          <div style={{ width: 350, maxWidth: '80vw', display: 'flex', justifyContent: 'space-between' }}>
+            <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
+            <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -842,6 +894,7 @@ export function OrganizerProfileLive() {
               style={{
                 marginBottom: spacing[8],
                 padding: spacing[8],
+                textAlign: 'center',
                 background: colors.gradients.glass,
                 borderRadius: borderRadius['2xl'],
                 border: `1px solid ${colors.glass.medium}`,
@@ -916,187 +969,8 @@ export function OrganizerProfileLive() {
                 </div>
               </div>
 
-              {/* Cards de fechas */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr',
-                gap: spacing[4]
-              }}>
-                {inviteItems.map((ev, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -4, boxShadow: colors.shadows.lg }}
-                    onClick={() => navigate(ev.href)}
-                    className="glass-card"
-                    style={{
-                      // Card con imagen a full
-                      position: 'relative',
-                      borderRadius: borderRadius.xl,
-                      cursor: 'pointer',
-                      transition: transitions.normal,
-                      overflow: 'hidden',
-                      // Ratio + altura mínima para que el flyer se vea completo
-                      aspectRatio: 'auto',
-                      minHeight: 320,
-
-                      // Flyer como fondo
-                      backgroundImage: ev.flyer
-                        ? `url(${ev.flyer})`
-                        : 'linear-gradient(135deg, rgba(40,30,45,0.95), rgba(30,20,40,0.95))',
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-
-                      // Borde/sombra sutiles
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-
-                      // Para colocar el overlay al fondo
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      padding: 0
-                    }}
-                  >
-                    {/* Overlay inferior = 25% de la tarjeta */}
-                    <div
-                      style={{
-                        position: 'relative',
-                        zIndex: 1,
-                        width: '100%',
-                        height: '25%', // ~un cuarto de alto
-                        // Degradado que nace desde abajo para legibilidad
-                        background:
-                          'linear-gradient(0deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.0) 100%)',
-                        // Si quieres un toque glass muy sutil:
-                        // backdropFilter: 'blur(4px)',
-                        // borderTop: '1px solid rgba(255,255,255,0.08)',
-                        padding: spacing[6],
-                        display: 'flex',
-                        alignItems: 'flex-end'
-                      }}
-                    >
-                      {/* Mantengo tu grid y contenido tal cual */}
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr',
-                          gap: spacing[4],
-                          alignItems: 'start',
-                          width: '100%',
-                          // Evitar que el contenido “rompa” el 25%
-                          maxHeight: '100%',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <div style={{ minWidth: 0 }}>
-                          <h4
-                            style={{
-                              fontSize: typography.fontSize.lg,
-                              fontWeight: typography.fontWeight.semibold,
-                              marginBottom: spacing[3],
-                              color: 'rgba(255,255,255,0.95)',
-                              lineHeight: 1.2,
-                              textShadow: '0 1px 2px rgba(0,0,0,0.35)',
-                              letterSpacing: 0.2,
-                              // Evita saltos si es muy largo
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {ev.nombre}
-                          </h4>
-
-                          <p
-                            style={{
-                              fontSize: typography.fontSize.sm,
-                              color: 'rgba(255,255,255,0.9)',
-                              fontWeight: typography.fontWeight.medium,
-                              marginBottom: spacing[2],
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            📅 {ev.date}
-                          </p>
-
-                          {ev.time && (
-                            <p
-                              style={{
-                                fontSize: typography.fontSize.sm,
-                                color: 'rgba(255,255,255,0.85)',
-                                marginBottom: spacing[2],
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              🕐 {ev.time}
-                            </p>
-                          )}
-
-                          {ev.place && (
-                            <p
-                              style={{
-                                fontSize: typography.fontSize.sm,
-                                color: 'rgba(255,255,255,0.9)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              📍 {ev.place}
-                            </p>
-                          )}
-
-                          {/* Mantienes tu grid resumido (si ocupa mucho, se corta elegantemente) */}
-                          <style>{`
-                         .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-                         @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
-                       `}</style>
-                          <div style={{ marginTop: spacing[3] }}>
-                            <EventInfoGrid
-
-                              date={{
-                                lugar: ev.place,
-                                direccion: undefined,
-                                ciudad: undefined,
-                                referencias: undefined,
-                                requisitos: undefined,
-                                cronograma: [],
-                                costos: []
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Conservas el <img>, lo ocultamos para no duplicar el flyer */}
-                        {ev.flyer && (
-                          <div style={{ justifySelf: 'center' }}>
-                            <img
-                              src={ev.flyer}
-                              alt={`Flyer de ${ev.nombre}`}
-                              style={{
-                                width: 350,
-                                maxWidth: '100%',
-                                borderRadius: borderRadius.lg,
-                                boxShadow: colors.shadows.md,
-                                objectFit: 'cover',
-                                display: 'none'
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-
-                ))}
-              </div>
+              {/* Slider de 1 card con flyer vertical + info inferior */}
+              <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />
             </motion.section>
           )}
 
