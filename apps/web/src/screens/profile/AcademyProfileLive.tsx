@@ -368,27 +368,7 @@ export default function AcademyProfileLive() {
     );
   }
 
-  // Preparar chips de estado
-  const statusChip = (
-    <span
-      style={{
-        padding: '8px 16px',
-        borderRadius: '20px',
-        background: academy.estado_aprobacion === 'aprobado' ? '#10B981cc' : `${colors.orange}cc`,
-        border: `2px solid ${academy.estado_aprobacion === 'aprobado' ? '#10B981' : colors.orange}`,
-        color: colors.light,
-        fontSize: '0.875rem',
-        fontWeight: '700',
-        backdropFilter: 'blur(10px)',
-        boxShadow: `0 2px 10px ${academy.estado_aprobacion === 'aprobado' ? '#10B981' : colors.orange}66`,
-        display: 'inline',
-        alignItems: 'center',
-        gap: '6px',
-      }}
-    >
-      {academy.estado_aprobacion === 'aprobado' ? '✅' : '⏳'} {academy.estado_aprobacion}
-    </span>
-  );
+  
 
   return (
     <>
@@ -503,9 +483,7 @@ export default function AcademyProfileLive() {
             </div>
 
             <div>
-              <div style={{ marginBottom: '1rem' }}>
-                {statusChip}
-              </div>
+              
               <h1 style={{
                 fontSize: '3rem',
                 display: 'inline',
@@ -669,6 +647,7 @@ export default function AcademyProfileLive() {
           >
             
             <ClasesLive
+              title="🗓️ Clases"
               cronograma={(academy as any)?.cronograma || []}
               costos={(academy as any)?.costos || []}
               ubicacion={{
@@ -745,6 +724,7 @@ export default function AcademyProfileLive() {
               padding: '2rem',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
               borderRadius: '20px',
+              textAlign: 'center',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}

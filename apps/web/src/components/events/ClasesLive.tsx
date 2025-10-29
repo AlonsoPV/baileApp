@@ -69,7 +69,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
       
 
       {/* Ubicación */}
-      {hasUbicacion && (
+    {/*   {hasUbicacion && (
         <div style={{ padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span>📍</span>
@@ -80,7 +80,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
           {ubicacion?.ciudad ? <div style={{ fontSize: 12, opacity: 0.7 }}>{ubicacion.ciudad}</div> : null}
           {ubicacion?.referencias ? <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>💡 {ubicacion.referencias}</div> : null}
         </div>
-      )}
+      )} */}
 
       {/* Lista de clases */}
       <div style={{ display: 'grid', gap: 12 }}>
@@ -122,14 +122,14 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                 </div>
               )}
             </div>
-            {it.costos && it.costos.length === 1 && (
+          {/*   {it.costos && it.costos.length === 1 && (
               <div style={{ textAlign: 'right', minWidth: 90 }}>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>{it.costos[0].tipo ?? ''}</div>
                 <div style={{ fontSize: 18, fontWeight: 900 }}>
                   {it.costos[0].precio !== undefined && it.costos[0].precio !== null ? `$${it.costos[0].precio!.toLocaleString()}` : 'Gratis'}
                 </div>
               </div>
-            )}
+            )} */}
           </motion.div>
         ))}
       </div>

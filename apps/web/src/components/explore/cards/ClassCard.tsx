@@ -21,16 +21,18 @@ interface Props {
 
 const card: React.CSSProperties = {
   position: 'relative',
-  borderRadius: 16,
-  background: 'linear-gradient(135deg, rgba(19,21,27,0.9), rgba(16,18,24,0.9))',
-  border: '1px solid rgba(255,255,255,0.12)',
-  boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
-  color: '#fff',
-  padding: 14,
+  borderRadius: '1.25rem',
+  background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+  padding: '1.5rem',
+  cursor: 'pointer',
+  overflow: 'hidden',
+  border: '1px solid rgba(240, 147, 251, 0.2)',
+  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  minHeight: '200px',
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
-  minHeight: 160
+  color: '#fff'
 };
 
 const chip: React.CSSProperties = {
@@ -59,17 +61,30 @@ const fmtDate = (s?: string) => {
 export default function ClassCard({ item }: Props) {
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   const href = item.ownerType === 'academy'
-    ? `${urls.academyLive(item.ownerId || '')}#clases`
+    ? `/profile/academy/live#clases`
     : `${urls.teacherLive(item.ownerId || '')}#clases`;
 
   return (
     <LiveLink to={href} asCard={false}>
-      <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }} style={card}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #1E88E5, #7C4DFF, #FF7043)' }} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.2 } }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.15 }}
+        style={card}
+      >
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center' }}>📚</div>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, lineHeight: 1.2 }}>{item.titulo || 'Clase'}</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '50%',
+          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.5rem', fontWeight: 700, color: '#fff',
+          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)'
+        }}>📚</div>
+        <h3 style={{ margin: 0, fontSize: '1.375rem', fontWeight: 700, lineHeight: 1.2, background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{item.titulo || 'Clase'}</h3>
       </div>
 
         {item.ownerName && (
@@ -93,6 +108,21 @@ export default function ClassCard({ item }: Props) {
           <span>{item.ubicacion}</span>
         </div>
       )}
+
+      {/* CTA subtle */}
+      <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10 }}>
+        <div style={{
+          padding: '8px 12px',
+          borderRadius: 12,
+          background: 'rgba(240, 147, 251, 0.1)',
+          color: '#fff',
+          margin: '10px 0',
+          textAlign: 'center',
+          fontSize: 13,
+          fontWeight: 700,
+          border: '1px solid rgba(255,255,255,0.08)'
+        }}>Ver clase →</div>
+      </div>
       </motion.div>
     </LiveLink>
   );
