@@ -363,6 +363,19 @@ export const UserProfileLive: React.FC = () => {
           animation: shimmer 2s infinite;
         }
         
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        
         @media (max-width: 768px) {
           .user-container {
             max-width: 100% !important;
@@ -383,6 +396,18 @@ export const UserProfileLive: React.FC = () => {
           }
           .user-banner-avatar-fallback {
             font-size: 4rem !important;
+          }
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
           }
         }
       `}</style>
@@ -637,12 +662,7 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[6],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="glass-card-container"
             >
               <h3 style={{ 
                 fontSize: typography.fontSize['2xl'], 
@@ -667,20 +687,13 @@ export const UserProfileLive: React.FC = () => {
           <div
             id="user-social-media"
             data-test-id="user-social-media"
+            className="glass-card-container"
           >
             <SocialMediaSection 
               respuestas={profile?.respuestas}
               redes_sociales={profile?.redes_sociales}
               title="Redes Sociales"
               availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                background: colors.gradients.glass,
-                borderRadius: borderRadius['2xl'],
-                border: `1px solid ${colors.glass.medium}`,
-                boxShadow: colors.shadows.glass
-              }}
             />
           </div>
 
@@ -692,12 +705,7 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="glass-card-container"
             >
               <div style={{
                 display: 'flex',
@@ -750,12 +758,7 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="glass-card-container"
             >
               <div style={{
                 display: 'flex',

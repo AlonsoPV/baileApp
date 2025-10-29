@@ -261,6 +261,19 @@ export default function UserProfileEditor() {
           color: ${colors.light};
         }
         
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        
         @media (max-width: 768px) {
           .editor-container {
             padding: 1rem !important;
@@ -304,6 +317,11 @@ export default function UserProfileEditor() {
           .editor-chips {
             justify-content: center !important;
           }
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
         }
         
         @media (max-width: 480px) {
@@ -315,6 +333,10 @@ export default function UserProfileEditor() {
           }
           .editor-subsection-title {
             font-size: 1rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
           }
         }
       `}</style>
@@ -346,7 +368,7 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Información Personal */}
-        <div className="editor-section">
+        <div className="editor-section glass-card-container">
           <h2 className="editor-section-title">
             👤 Información Personal
           </h2>
@@ -381,7 +403,7 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Ritmos y Zonas */}
-        <div className="editor-section">
+        <div className="editor-section glass-card-container">
           <h2 className="editor-section-title">
             🎵 Ritmos y Zonas
           </h2>
@@ -424,7 +446,7 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Redes Sociales */}
-        <div className="editor-section">
+        <div className="editor-section glass-card-container">
           <h2 className="editor-section-title">
             📱 Redes Sociales
           </h2>
@@ -498,7 +520,7 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Preguntas Personalizadas */}
-        <div className="editor-section">
+        <div className="editor-section glass-card-container">
           <h2 className="editor-section-title">
             💬 Preguntas Personalizadas
           </h2>

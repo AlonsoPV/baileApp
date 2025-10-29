@@ -459,6 +459,19 @@ export const UserProfileLive: React.FC = () => {
           font-weight: 600;
         }
         
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        
         @media (max-width: 768px) {
           .profile-container {
             max-width: 100% !important;
@@ -550,6 +563,11 @@ export const UserProfileLive: React.FC = () => {
             padding: 1rem !important;
             margin-bottom: 1.5rem !important;
           }
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
         }
         
         @media (max-width: 480px) {
@@ -577,6 +595,10 @@ export const UserProfileLive: React.FC = () => {
           }
           .section-title {
             font-size: 1.1rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
           }
         }
       `}</style>
@@ -744,7 +766,7 @@ export const UserProfileLive: React.FC = () => {
             data-test-id="user-profile-bio"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bio-section"
+            className="bio-section glass-card-container"
           >
               <h3 className="section-title">
                 💬 Sobre mí
@@ -756,17 +778,19 @@ export const UserProfileLive: React.FC = () => {
           )}
 
           {/* Redes Sociales */}
-          <SocialMediaSection
-            respuestas={profile?.respuestas}
-            availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
-          />
+          <div className="glass-card-container">
+            <SocialMediaSection
+              respuestas={profile?.respuestas}
+              availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
+            />
+          </div>
 
           {/* Sección 1: Foto - Pregunta */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="section-content"
+            className="section-content glass-card-container"
           >
             <div className="question-section">
               {/* Foto */}
@@ -828,7 +852,7 @@ export const UserProfileLive: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="section-content"
+            className="section-content glass-card-container"
           >
             <div className="question-section">
               {/* Pregunta */}
@@ -894,7 +918,7 @@ export const UserProfileLive: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="events-section"
+            className="events-section glass-card-container"
           >
             <div style={{
               display: 'flex',
@@ -1224,7 +1248,7 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="gallery-section"
+              className="gallery-section glass-card-container"
             >
               <div style={{
                 display: 'flex',

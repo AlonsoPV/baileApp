@@ -120,7 +120,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       {/* Carrusel Principal */}
       <div style={{
         position: 'relative',
-        aspectRatio: 'auto',
+        aspectRatio: '16/9',
         borderRadius: borderRadius['2xl'],
         overflow: 'hidden',
         border: `2px solid ${colors.glass.medium}`,
@@ -1302,7 +1302,7 @@ export function OrganizerProfileLive() {
                     style={{
                       width: '100%',
                       height: 'auto',
-                      aspectRatio: 'auto',
+                      aspectRatio: '16/9',
                       borderRadius: borderRadius.xl,
                       overflow: 'hidden',
                       border: `2px solid ${colors.glass.medium}`,
