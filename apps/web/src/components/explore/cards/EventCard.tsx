@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
+import AddToCalendarWithStats from "../../AddToCalendarWithStats";
 
 interface EventCardProps {
   item: any;
@@ -41,6 +42,35 @@ export default function EventCard({ item }: EventCardProps) {
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
+
+        {/* Botón de calendario en esquina superior derecha */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            top: '12px', 
+            right: '12px', 
+            zIndex: 10 
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <AddToCalendarWithStats
+            eventId={eventId}
+            title={nombre}
+            description={undefined}
+            location={lugar || ciudad || direccion}
+            start={(() => {
+              if (!fecha) return new Date();
+              const hora = horaInicio || '20:00';
+              return new Date(`${fecha}T${hora}:00`);
+            })()}
+            end={(() => {
+              if (!fecha) return new Date();
+              const hora = horaFin || horaInicio || '23:59';
+              return new Date(`${fecha}T${hora}:00`);
+            })()}
+            showAsIcon={true}
+          />
+        </div>
 
         {(() => {
           // Priorizar flyer para fechas; fallback a primera media o avatar conocido

@@ -136,27 +136,14 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          position: 'relative',
-          overflow: 'hidden'
+          position: 'relative'
         }}
       >
-        {/* Top gradient bar */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
-          opacity: 0.9
-        }} />
-        
         <div style={{
           maxWidth: '1280px',
           margin: '0 auto',
           padding: '0',
-          position: 'relative',
-          zIndex: 1
+          position: 'relative'
         }} className="filters-wrap">
           {/* Barra Principal de Filtros */}
           <div style={{

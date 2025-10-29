@@ -186,6 +186,26 @@ export default function ExploreHomeScreen() {
           }
         }
         .wrap { max-width: 1280px; margin: 0 auto; padding: 0 ${spacing[6]} ${spacing[10]}; }
+        .panel { 
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          border-radius: 20px;
+          padding: ${spacing[5]};
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(10px);
+          position: relative;
+          overflow: hidden;
+        }
+        .panel::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166);
+          opacity: 0.9;
+        }
         .section-container {
           margin-bottom: 4rem;
           position: relative;
@@ -198,6 +218,11 @@ export default function ExploreHomeScreen() {
           .wrap {
             padding: 0 1rem 2rem !important;
           }
+          .panel {
+            margin: 1rem 0 !important;
+            padding: 1rem !important;
+            border-radius: 16px !important;
+          }
           .section-container {
             margin-bottom: 2.5rem !important;
           }
@@ -209,6 +234,11 @@ export default function ExploreHomeScreen() {
           }
           .wrap {
             padding: 0 0.75rem 1.5rem !important;
+          }
+          .panel {
+            margin: 0.75rem 0 !important;
+            padding: 0.875rem !important;
+            border-radius: 14px !important;
           }
           .section-container h2 {
             font-size: 1.5rem !important;
@@ -225,7 +255,9 @@ export default function ExploreHomeScreen() {
         {/* Hero removido para una vista más directa al contenido */}
 
         <div className="wrap">
-          <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
+          <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
+            <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
+          </div>
 
           {selectedType === 'fechas' && (
           <Section title="Próximos Sociales" toAll="/explore/list?type=fechas">

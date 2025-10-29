@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 
 const colors = {
@@ -425,19 +426,19 @@ export default function EventDatePublicScreen() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
                   onClick={() => navigate(`/social/${date.parent_id}`)}
-                  style={{
+          style={{
                     padding: '10px 16px',
                     borderRadius: '25px',
                     border: '1px solid rgba(240, 147, 251, 0.3)',
                     background: 'rgba(240, 147, 251, 0.1)',
                     color: '#f093fb',
                     fontSize: '0.9rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
+            fontWeight: '600',
+            cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -446,7 +447,7 @@ export default function EventDatePublicScreen() {
                   }}
                 >
                   ← Volver al Social
-                </motion.button>
+        </motion.button>
                 
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -467,18 +468,18 @@ export default function EventDatePublicScreen() {
                 </motion.div>
               </div>
 
-              <h1 style={{ 
-                fontSize: '2.5rem',
-                fontWeight: '800',
+        <h1 style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: '800', 
                 background: 'linear-gradient(135deg, #f093fb, #FFD166)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
                 marginBottom: '1rem',
-                lineHeight: 1.2,
-              }}>
+          lineHeight: 1.2,
+        }}>
                 {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-              </h1>
+        </h1>
 
               {date.biografia && (
                 <p style={{
@@ -499,10 +500,10 @@ export default function EventDatePublicScreen() {
                 marginBottom: '1.5rem',
                 flexWrap: 'wrap',
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
                   fontSize: '1.1rem',
                   color: '#fff',
                   fontWeight: '600',
@@ -512,13 +513,13 @@ export default function EventDatePublicScreen() {
                   border: '1px solid rgba(240, 147, 251, 0.2)'
                 }}>
                   📅 {formatDate(date.fecha)}
-                </div>
-                
+        </div>
+
                 {date.hora_inicio && (
-                  <div style={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
                     fontSize: '1.1rem',
                     color: '#fff',
                     fontWeight: '600',
@@ -529,12 +530,29 @@ export default function EventDatePublicScreen() {
                   }}>
                     🕐 {formatTime(date.hora_inicio)}
                     {date.hora_fin && ` - ${formatTime(date.hora_fin)}`}
-                  </div>
-                )}
+          </div>
+        )}
               </div>
             </div>
 
-            <div style={{ marginLeft: '24px' }}>
+            <div style={{ marginLeft: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <AddToCalendarWithStats
+                eventId={date.id}
+                title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                description={date.biografia || parent?.descripcion || undefined}
+                location={date.lugar || date.ciudad || date.direccion || undefined}
+                start={(() => {
+                  if (!date.fecha) return new Date();
+                  const horaInicio = date.hora_inicio || '20:00';
+                  return new Date(`${date.fecha}T${horaInicio}:00`);
+                })()}
+                end={(() => {
+                  if (!date.fecha) return new Date();
+                  const horaFin = date.hora_fin || date.hora_inicio || '23:59';
+                  return new Date(`${date.fecha}T${horaFin}:00`);
+                })()}
+                showAsIcon={true}
+              />
               <ShareButton
                 url={window.location.href}
                 title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
@@ -610,7 +628,7 @@ export default function EventDatePublicScreen() {
               }}
             >
               {/* Top gradient bar */}
-              <div style={{
+          <div style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
@@ -665,7 +683,7 @@ export default function EventDatePublicScreen() {
               }}
             >
               {/* Top gradient bar */}
-              <div style={{
+        <div style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
@@ -682,8 +700,8 @@ export default function EventDatePublicScreen() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
+          display: 'flex',
+          alignItems: 'center',
                 gap: '8px'
               }}>
                 📋 Requisitos
@@ -759,9 +777,9 @@ export default function EventDatePublicScreen() {
                         <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)' }}>🕐 {item.inicio} - {item.fin}</span>
                         {item.nivel && (
                           <span style={{ padding: '4px 8px', borderRadius: '12px', background: 'rgba(30, 136, 229, 0.2)', color: '#1E88E5', fontSize: '0.8rem', fontWeight: '600', border: '1px solid rgba(30, 136, 229, 0.3)' }}>{item.nivel}</span>
-                        )}
-                      </div>
-                    </div>
+          )}
+        </div>
+      </div>
                   </motion.div>
                 ))}
               </div>
@@ -771,10 +789,10 @@ export default function EventDatePublicScreen() {
           {/* Costos */}
           {date.costos && date.costos.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              style={{
+          style={{
                 position: 'relative',
                 background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
                 borderRadius: '1.25rem',
@@ -795,9 +813,9 @@ export default function EventDatePublicScreen() {
                 opacity: 0.8
               }} />
               
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: '700', 
                 background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -807,7 +825,7 @@ export default function EventDatePublicScreen() {
                 gap: '8px'
               }}>
                 💰 Costos y Promociones
-              </h2>
+          </h2>
               <div style={{ display: 'grid', gap: '1rem' }}>
                 {date.costos.map((costo: any, index: number) => (
                   <motion.div 
@@ -815,7 +833,7 @@ export default function EventDatePublicScreen() {
                     initial={{ opacity: 0, y: 10 }} 
                     animate={{ opacity: 1, y: 0 }} 
                     transition={{ delay: index * 0.1 }}
-                    style={{ 
+              style={{
                       padding: '1.25rem', 
                       background: 'rgba(255, 209, 102, 0.1)', 
                       borderRadius: '1rem', 
@@ -959,9 +977,9 @@ export default function EventDatePublicScreen() {
             opacity: 0.8
           }} />
           
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: '700', 
             background: 'linear-gradient(135deg, #f093fb, #FFD166)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
