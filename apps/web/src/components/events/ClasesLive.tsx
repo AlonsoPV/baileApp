@@ -40,7 +40,7 @@ const iconFor = (tipo?: string) => {
   return '🗂️';
 };
 
-export default function ClasesLive({ cronograma = [], costos = [], ubicacion, title = 'Clases & Tarifas' }: Props) {
+export default function ClasesLive({ cronograma = [], costos = [], ubicacion, title = 'Classes & Tarifas' }: Props) {
   const costoIndex = useMemo(() => {
     const map = new Map<string, CostoItem[]>();
     for (const c of costos) {
