@@ -1060,7 +1060,7 @@ export function OrganizerProfileLive() {
                        `}</style>
                           <div style={{ marginTop: spacing[3] }}>
                             <EventInfoGrid
-                            
+
                               date={{
                                 lugar: ev.place,
                                 direccion: undefined,
@@ -1346,7 +1346,9 @@ export function OrganizerProfileLive() {
                       boxShadow: colors.shadows.lg
                     }}
                     style={{
-                      aspectRatio: '16/9',
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: 'auto',
                       borderRadius: borderRadius.xl,
                       overflow: 'hidden',
                       border: `2px solid ${colors.glass.medium}`,

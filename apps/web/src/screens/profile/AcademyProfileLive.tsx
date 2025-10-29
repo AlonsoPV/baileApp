@@ -368,7 +368,7 @@ export default function AcademyProfileLive() {
     );
   }
 
-  
+
 
   return (
     <>
@@ -483,7 +483,7 @@ export default function AcademyProfileLive() {
             </div>
 
             <div>
-              
+
               <h1 style={{
                 fontSize: '3rem',
                 display: 'inline',
@@ -645,7 +645,7 @@ export default function AcademyProfileLive() {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
             }}
           >
-            
+
             <ClasesLive
               title="🗓️ Clases"
               cronograma={(academy as any)?.cronograma || []}
@@ -777,7 +777,7 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          
+
 
           {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
@@ -871,7 +871,9 @@ export default function AcademyProfileLive() {
                   <div
                     key={index}
                     style={{
-                      aspectRatio: '16 / 9',
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: 'auto',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       border: '2px solid rgba(255, 255, 255, 0.1)',
