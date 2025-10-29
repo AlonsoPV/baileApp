@@ -104,6 +104,69 @@ export function SocialLiveScreen() {
     );
   }
 
+  // Slider responsivo de flyers de fechas
+  const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
+    const [idx, setIdx] = React.useState(0);
+    if (!items?.length) return null;
+    const ev = items[idx % items.length];
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', gap: '0.75rem' }}>
+        <style>{`
+          @media (max-width: 640px) {
+            .dfs-wrap { width: 100% !important; max-width: 100% !important; }
+            .dfs-controls { width: 100% !important; }
+          }
+        `}</style>
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => onOpen(ev.href)}
+          style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+          className="dfs-wrap"
+        >
+          <div style={{ width: 360, maxWidth: '85vw' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
+              {ev.flyer && (
+                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              )}
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
+                  {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                  {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                  {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                  {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+        {items.length > 1 && (
+          <div className="dfs-controls" style={{ width: 360, maxWidth: '85vw', display: 'flex', justifyContent: 'space-between' }}>
+            <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
+            <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const dateItems = (dates || []).map((d: any) => {
+    const hora = d.hora_inicio && d.hora_fin ? `${fmtTime(d.hora_inicio)} - ${fmtTime(d.hora_fin)}` : (d.hora_inicio ? fmtTime(d.hora_inicio) : undefined);
+    const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+    const price = (() => {
+      const costos = (d as any)?.costos;
+      if (Array.isArray(costos) && costos.length) {
+        const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+        if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
+      }
+      return undefined;
+    })();
+    return { nombre: d.nombre || social.nombre, date: fmtDate(d.fecha), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+  });
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -307,84 +370,11 @@ export function SocialLiveScreen() {
             <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
               📅 Fechas Disponibles
             </h3>
-            <p style={{ marginBottom: '1.5rem', opacity: 0.7, fontSize: '0.9rem' }}>
+            <p style={{ marginBottom: '1.25rem', opacity: 0.7, fontSize: '0.9rem' }}>
               {dates.length} {dates.length === 1 ? 'fecha' : 'fechas'} disponibles
             </p>
 
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {dates.map(fecha => (
-                <Link
-                  key={fecha.id}
-                  to={`/social/fecha/${fecha.id}`}
-                  style={{
-                    display: 'block',
-                    padding: '1.5rem',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    textDecoration: 'none',
-                    color: colors.light,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>
-                      {fecha.nombre || social.nombre}
-                    </h4>
-                    <span style={{ 
-                      fontSize: '0.8rem', 
-                      padding: '0.25rem 0.5rem', 
-                      background: fecha.estado_publicacion === 'publicado' ? colors.blue : colors.orange,
-                      borderRadius: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {fecha.estado_publicacion === 'publicado' ? 'Publicado' : 'Borrador'}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <div>
-                      <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>📅 Fecha</p>
-                      <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
-                        {fmtDate(fecha.fecha)}
-                      </p>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>🕐 Horario</p>
-                      <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
-                        {fecha.hora_inicio && fecha.hora_fin 
-                          ? `${fmtTime(fecha.hora_inicio)} - ${fmtTime(fecha.hora_fin)}`
-                          : 'Por definir'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                    <div>
-                      <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>📍 Lugar</p>
-                      <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
-                        {fecha.lugar || 'Por definir'}
-                      </p>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.25rem 0' }}>🏙️ Ciudad</p>
-                      <p style={{ fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
-                        {fecha.ciudad || 'Por definir'}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
           </motion.section>
         )}
 

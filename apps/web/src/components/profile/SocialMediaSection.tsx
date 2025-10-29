@@ -199,6 +199,13 @@ export default function SocialMediaSection({
       style={defaultStyle}
       data-test-id="social-media-section"
     >
+      <style>{`
+        @media (max-width: 480px) {
+          .sm-pill { padding: 10px !important; border-radius: 999px !important; gap: 0 !important; }
+          .sm-pill span.sm-label { display: none !important; }
+          .sm-row { justify-content: center !important; gap: 0.6rem !important; }
+        }
+      `}</style>
       {showTitle && (
         <div style={{
           display: 'flex',
@@ -222,7 +229,7 @@ export default function SocialMediaSection({
           </h3>
         </div>
       )}
-      <div style={{ 
+      <div className="sm-row" style={{ 
         display: 'flex', 
         flexWrap: 'wrap', 
         gap: '1rem',
@@ -253,9 +260,9 @@ export default function SocialMediaSection({
                 e.currentTarget.style.boxShadow = getSocialStyle(k).boxShadow as string;
               }}
               data-test-id={`social-link-${k}`}
-            >
+            className="sm-pill">
               <span style={{ fontSize: '1.1rem' }}>{platformIcon}</span>
-              <span>{k[0].toUpperCase() + k.slice(1)}</span>
+              <span className="sm-label">{k[0].toUpperCase() + k.slice(1)}</span>
             </a>
           );
         })}

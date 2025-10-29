@@ -109,7 +109,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   const otherRoles = availableRoles.filter(role => role.id !== profileType);
 
   return (
-    <div style={{
+    <div className="pnt-wrap" style={{
       position: 'sticky',
       top: '80px', // Justo debajo de la navbar
       
@@ -130,6 +130,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           .pnt-wrap { padding: 8px 10px !important; gap: 6px !important; }
           .pnt-btn { padding: 8px 10px !important; font-size: 0.8rem !important; }
           .pnt-text { display: none !important; }
+          .pnt-role-name { width: 100%; justify-content: center; margin-top: 4px; }
         }
       `}</style>
       {/* Botón Ver Live */}
@@ -289,9 +290,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
               }}
+              className="pnt-btn"
             >
               <span>🔄</span>
-              <span>Cambio de Rol</span>
+              <span className="pnt-text">Rol</span>
               <span style={{ 
                 fontSize: '0.7rem',
                 transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -374,22 +376,12 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
         </>
       )}
 
-      {/* Indicador de perfil */}
+      {/* Indicador de perfil (segunda fila en mobile) */}
+      <div style={{ width: '100%' }} />
       <div style={{
-        height: '100%',
-        width: '1px',
-        background: 'rgba(255, 255, 255, 0.2)',
-        margin: '0 0.5rem'
-      }} />
-      
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.8rem',
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontWeight: '500'
-      }}>
+        display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem',
+        color: 'rgba(255, 255, 255, 0.7)', fontWeight: '500'
+      }} className="pnt-role-name">
         <span>{getProfileIcon()}</span>
         <span>{getProfileName()}</span>
       </div>
