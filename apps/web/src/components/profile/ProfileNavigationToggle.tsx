@@ -167,7 +167,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
         className="pnt-btn"
       >
         <span>👁️</span>
-        <span className="pnt-text">Ver Live</span>
+        <span className="pnt-text"> Live</span>
       </button>
 
       {/* Botón Editar */}

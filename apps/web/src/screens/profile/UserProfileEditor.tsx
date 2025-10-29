@@ -168,43 +168,167 @@ export default function UserProfileEditor() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: colors.dark,
-      color: colors.light,
-      padding: '2rem',
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <>
+      <style>{`
+        .editor-container {
+          min-height: 100vh;
+          background: ${colors.dark};
+          color: ${colors.light};
+          padding: 2rem;
+        }
+        .editor-content {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .editor-title {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 0;
+          flex: 1 1 0%;
+          text-align: center;
+        }
+        .editor-back-btn {
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: ${colors.light};
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+        .editor-section {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .editor-section-title {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+          color: ${colors.light};
+        }
+        .editor-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 2rem;
+        }
+        .editor-grid-small {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        .editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+        }
+        .editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+        }
+        .editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+          resize: vertical;
+        }
+        .editor-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .editor-subsection-title {
+          font-size: 1.2rem;
+          margin-bottom: 1rem;
+          color: ${colors.light};
+        }
+        
+        @media (max-width: 768px) {
+          .editor-container {
+            padding: 1rem !important;
+          }
+          .editor-content {
+            max-width: 100% !important;
+          }
+          .editor-header {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            text-align: center !important;
+          }
+          .editor-title {
+            font-size: 1.5rem !important;
+            order: 2 !important;
+          }
+          .editor-back-btn {
+            order: 1 !important;
+            align-self: flex-start !important;
+          }
+          .editor-section {
+            padding: 1rem !important;
+            margin-bottom: 2rem !important;
+          }
+          .editor-section-title {
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .editor-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .editor-grid-small {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .editor-subsection-title {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .editor-chips {
+            justify-content: center !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .editor-title {
+            font-size: 1.25rem !important;
+          }
+          .editor-section-title {
+            font-size: 1.1rem !important;
+          }
+          .editor-subsection-title {
+            font-size: 1rem !important;
+          }
+        }
+      `}</style>
+      <div className="editor-container">
+        <div className="editor-content">
         {/* Header con botón Volver */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem'
-        }}>
+        <div className="editor-header">
           <button
             onClick={() => navigate(-1)}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: colors.light,
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: '0.2s'
-            }}
+            className="editor-back-btn"
           >
             ← Volver
           </button>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: '700',
-            margin: '0',
-            flex: '1 1 0%',
-            textAlign: 'center'
-          }}>
+          <h1 className="editor-title">
             ✏️ Editar Perfil
           </h1>
           <div style={{ width: '100px' }}></div>
@@ -222,20 +346,14 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Información Personal */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+        <div className="editor-section">
+          <h2 className="editor-section-title">
             👤 Información Personal
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <div className="editor-grid">
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 Nombre de Usuario
               </label>
               <input
@@ -243,20 +361,12 @@ export default function UserProfileEditor() {
                 value={form.display_name}
                 onChange={(e) => setField('display_name', e.target.value)}
                 placeholder="Tu nombre de usuario"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 Biografía
               </label>
               <textarea
@@ -264,39 +374,24 @@ export default function UserProfileEditor() {
                 onChange={(e) => setField('bio', e.target.value)}
                 placeholder="Cuéntanos sobre ti..."
                 rows={4}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
+                className="editor-textarea"
               />
             </div>
           </div>
         </div>
 
         {/* Ritmos y Zonas */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+        <div className="editor-section">
+          <h2 className="editor-section-title">
             🎵 Ritmos y Zonas
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <div className="editor-grid">
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+              <h3 className="editor-subsection-title">
                 🎶 Ritmos que Bailas
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="editor-chips">
                 {ritmoTags.map((tag) => (
                   <Chip
                     key={tag.id}
@@ -310,10 +405,10 @@ export default function UserProfileEditor() {
             </div>
             
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+              <h3 className="editor-subsection-title">
                 📍 Zonas donde Bailas
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="editor-chips">
                 {zonaTags.map((tag) => (
                   <Chip
                     key={tag.id}
@@ -329,20 +424,14 @@ export default function UserProfileEditor() {
         </div>
 
         {/* Redes Sociales */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+        <div className="editor-section">
+          <h2 className="editor-section-title">
             📱 Redes Sociales
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+          <div className="editor-grid-small">
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 📸 Instagram
               </label>
               <input
@@ -350,20 +439,12 @@ export default function UserProfileEditor() {
                 value={form.respuestas?.redes?.instagram || ''}
                 onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
                 placeholder="@tu_usuario"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 🎵 TikTok
               </label>
               <input
@@ -371,20 +452,12 @@ export default function UserProfileEditor() {
                 value={form.respuestas?.redes?.tiktok || ''}
                 onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
                 placeholder="@tu_usuario"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 📺 YouTube
               </label>
               <input
@@ -392,20 +465,12 @@ export default function UserProfileEditor() {
                 value={form.respuestas?.redes?.youtube || ''}
                 onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
                 placeholder="Canal o enlace"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 👥 Facebook
               </label>
               <input
@@ -413,20 +478,12 @@ export default function UserProfileEditor() {
                 value={form.respuestas?.redes?.facebook || ''}
                 onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
                 placeholder="Perfil o página"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 💬 WhatsApp
               </label>
               <input
@@ -434,35 +491,21 @@ export default function UserProfileEditor() {
                 value={form.respuestas?.redes?.whatsapp || ''}
                 onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
                 placeholder="Número de teléfono"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
+                className="editor-input"
               />
             </div>
           </div>
         </div>
 
         {/* Preguntas Personalizadas */}
-        <div style={{
-          marginBottom: '3rem',
-          padding: '2rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+        <div className="editor-section">
+          <h2 className="editor-section-title">
             💬 Preguntas Personalizadas
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <div className="editor-grid">
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 🎭 ¿Cuál es tu dato curioso favorito?
               </label>
               <textarea
@@ -473,21 +516,12 @@ export default function UserProfileEditor() {
                 }}
                 placeholder="Comparte algo interesante sobre ti..."
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
+                className="editor-textarea"
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+              <label className="editor-field">
                 💃 ¿Qué te gusta más del baile?
               </label>
               <textarea
@@ -498,16 +532,7 @@ export default function UserProfileEditor() {
                 }}
                 placeholder="Cuéntanos qué te apasiona del baile..."
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
+                className="editor-textarea"
               />
             </div>
           </div>
@@ -559,7 +584,8 @@ export default function UserProfileEditor() {
           description="Los videos aparecerán en la sección de videos de tu perfil"
           slots={['v1', 'v2', 'v3']}
         />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -94,7 +94,7 @@ export default function ProfileToolbar() {
           boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
         }}
       >
-        {isEditRoute ? "👁️ Ver live" : "✏️ Editar"}
+        {isEditRoute ? "👁️ Live" : "✏️ Editar"}
       </motion.button>
 
       {/* Dropdown de Roles */}

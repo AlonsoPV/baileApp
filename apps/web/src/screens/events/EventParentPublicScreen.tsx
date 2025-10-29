@@ -715,7 +715,7 @@ export default function EventParentPublicScreen() {
               }}>
                 📅 Fechas Disponibles
               </h2>
-
+{/* Agregar nueva fecha */}
               <button
                 onClick={() => navigate(`/social/${parentIdNum}/fecha/nueva`)}
                 style={{

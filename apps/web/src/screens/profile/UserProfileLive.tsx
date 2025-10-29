@@ -41,26 +41,14 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       id="user-profile-carousel"
       data-baile-id="user-profile-carousel"
       data-test-id="user-profile-carousel"
-      style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}
+      className="carousel-container"
     >
       {/* Carrusel Principal */}
       <div
         id="user-profile-carousel-main"
         data-baile-id="user-profile-carousel-main"
         data-test-id="user-profile-carousel-main"
-        style={{
-          position: 'relative',
-          aspectRatio: '4 / 5', // 🔹 proporción vertical tipo retrato (Instagram-style)
-          borderRadius: '16px',
-          overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          background: 'rgba(0, 0, 0, 0.2)',
-          maxHeight: '480px', // 🔹 evita que crezca demasiado
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+        className="carousel-main"
       >
         <motion.div
           key={currentIndex}
@@ -90,17 +78,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         </motion.div>
 
         {/* Contador de fotos */}
-        <div style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          background: 'rgba(0, 0, 0, 0.7)',
-          color: 'white',
-          padding: '0.5rem 1rem',
-          borderRadius: '20px',
-          fontSize: '0.875rem',
-          fontWeight: '600'
-        }}>
+        <div className="carousel-counter">
           {currentIndex + 1} / {photos.length}
         </div>
 
@@ -112,32 +90,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               data-baile-id="user-profile-carousel-prev"
               data-test-id="user-profile-carousel-prev"
               onClick={prevPhoto}
-              style={{
-                position: 'absolute',
-                left: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '1.25rem',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              }}
+              className="carousel-nav-btn carousel-nav-prev"
             >
               ‹
             </button>
@@ -146,32 +99,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               data-baile-id="user-profile-carousel-next"
               data-test-id="user-profile-carousel-next"
               onClick={nextPhoto}
-              style={{
-                position: 'absolute',
-                right: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '1.25rem',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              }}
+              className="carousel-nav-btn carousel-nav-next"
             >
               ›
             </button>
@@ -185,13 +113,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           id="user-profile-carousel-thumbnails"
           data-baile-id="user-profile-carousel-thumbnails"
           data-test-id="user-profile-carousel-thumbnails"
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            marginTop: '1rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap'
-          }}
+          className="carousel-thumbnails"
         >
           {photos.map((photo, index) => (
             <motion.button
@@ -202,17 +124,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               onClick={() => goToPhoto(index)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                border: currentIndex === index ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
-                cursor: 'pointer',
-                background: 'transparent',
-                padding: 0,
-                transition: 'all 0.2s'
-              }}
+              className={`carousel-thumbnail ${currentIndex === index ? 'active' : ''}`}
             >
               <ImageWithFallback
                 src={photo}
@@ -458,29 +370,121 @@ export const UserProfileLive: React.FC = () => {
           gap: 3rem;
           align-items: center;
         }
+        .question-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: center;
+        }
+        .events-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.5rem;
+        }
+        .carousel-container {
+          position: relative;
+          max-width: 1000px;
+          margin: 0 auto;
+        }
+        .carousel-main {
+          position: relative;
+          aspect-ratio: 4 / 5;
+          border-radius: 16px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(0, 0, 0, 0.2);
+          max-height: 480px;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .carousel-thumbnails {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 1rem;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+        .carousel-thumbnail {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          cursor: pointer;
+          background: transparent;
+          padding: 0;
+          transition: all 0.2s;
+        }
+        .carousel-thumbnail.active {
+          border: 3px solid #E53935;
+        }
+        .carousel-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1.25rem;
+          transition: all 0.2s;
+        }
+        .carousel-nav-btn:hover {
+          background: rgba(0, 0, 0, 0.9);
+          transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-nav-prev {
+          left: 1rem;
+        }
+        .carousel-nav-next {
+          right: 1rem;
+        }
+        .carousel-counter {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+        
         @media (max-width: 768px) {
           .profile-container {
             max-width: 100% !important;
+            padding: 1rem !important;
           }
           .profile-banner {
             border-radius: 0 !important;
-            padding: 2rem 1rem !important;
+            padding: 1.5rem 1rem !important;
+            margin: 0 !important;
           }
           .banner-grid {
             grid-template-columns: 1fr !important;
-            gap: 2rem !important;
+            gap: 1.5rem !important;
             justify-items: center !important;
             text-align: center !important;
           }
           .banner-grid h1 {
             font-size: 2rem !important;
+            line-height: 1.2 !important;
           }
           .banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
+            width: 150px !important;
+            height: 150px !important;
           }
           .banner-avatar-fallback {
-            font-size: 4rem !important;
+            font-size: 3.5rem !important;
           }
           .question-section {
             grid-template-columns: 1fr !important;
@@ -489,6 +493,90 @@ export const UserProfileLive: React.FC = () => {
           .question-section h3 {
             font-size: 1.1rem !important;
             margin-bottom: 0.75rem !important;
+          }
+          .events-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .carousel-container {
+            max-width: 100% !important;
+            padding: 0 1rem !important;
+          }
+          .carousel-main {
+            max-height: 400px !important;
+            aspect-ratio: 3 / 4 !important;
+          }
+          .carousel-thumbnails {
+            gap: 0.25rem !important;
+            margin-top: 0.75rem !important;
+          }
+          .carousel-thumbnail {
+            width: 50px !important;
+            height: 50px !important;
+          }
+          .carousel-nav-btn {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 1rem !important;
+          }
+          .carousel-nav-prev {
+            left: 0.5rem !important;
+          }
+          .carousel-nav-next {
+            right: 0.5rem !important;
+          }
+          .carousel-counter {
+            top: 0.5rem !important;
+            right: 0.5rem !important;
+            padding: 0.25rem 0.75rem !important;
+            font-size: 0.75rem !important;
+          }
+          .section-title {
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .section-content {
+            padding: 1rem !important;
+          }
+          .bio-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .events-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .gallery-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .banner-grid h1 {
+            font-size: 1.75rem !important;
+          }
+          .banner-avatar {
+            width: 120px !important;
+            height: 120px !important;
+          }
+          .banner-avatar-fallback {
+            font-size: 3rem !important;
+          }
+          .carousel-main {
+            max-height: 350px !important;
+          }
+          .carousel-thumbnail {
+            width: 45px !important;
+            height: 45px !important;
+          }
+          .carousel-nav-btn {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 0.9rem !important;
+          }
+          .section-title {
+            font-size: 1.1rem !important;
           }
         }
       `}</style>
@@ -650,21 +738,15 @@ export const UserProfileLive: React.FC = () => {
 
           {/* Biografía */}
           {profile?.bio && (
-            <motion.section
-              id="user-profile-bio"
-              data-baile-id="user-profile-bio"
-              data-test-id="user-profile-bio"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
-            >
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: '600' }}>
+          <motion.section
+            id="user-profile-bio"
+            data-baile-id="user-profile-bio"
+            data-test-id="user-profile-bio"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bio-section"
+          >
+              <h3 className="section-title">
                 💬 Sobre mí
               </h3>
               <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1rem' }}>
@@ -684,15 +766,9 @@ export const UserProfileLive: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            className="section-content"
           >
-            <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            <div className="question-section">
               {/* Foto */}
               <div style={{
                 width: '100%',
@@ -752,15 +828,9 @@ export const UserProfileLive: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            className="section-content"
           >
-            <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            <div className="question-section">
               {/* Pregunta */}
               <div>
                 <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
@@ -824,14 +894,7 @@ export const UserProfileLive: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            }}
+            className="events-section"
           >
             <div style={{
               display: 'flex',
@@ -839,9 +902,7 @@ export const UserProfileLive: React.FC = () => {
               justifyContent: 'space-between',
               marginBottom: '1.5rem'
             }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
+              <h3 className="section-title" style={{
                 background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -866,11 +927,7 @@ export const UserProfileLive: React.FC = () => {
             </div>
 
             {rsvpEvents && rsvpEvents.length > 0 ? (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '1.5rem'
-              }}>
+              <div className="events-grid">
                 {rsvpEvents.map((rsvp: any, index: number) => {
                   // Acceder a los datos anidados correctamente
                   const evento = rsvp.events_date;
@@ -1167,14 +1224,7 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-              }}
+              className="gallery-section"
             >
               <div style={{
                 display: 'flex',
@@ -1182,9 +1232,7 @@ export const UserProfileLive: React.FC = () => {
                 justifyContent: 'space-between',
                 marginBottom: '1.5rem'
               }}>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
+                <h3 className="section-title" style={{
                   background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',

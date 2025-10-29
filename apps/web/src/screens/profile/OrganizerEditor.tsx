@@ -329,7 +329,7 @@ export const OrganizerEditor: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          👁️ Ver Live
+          👁️ Live
         </motion.button>
       </div>
 
