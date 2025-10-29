@@ -93,25 +93,71 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
     <div className={`sticky top-16 z-40 ${className}`}>
       <style>{`
         @media (max-width: 768px) {
-          .filters-wrap { padding: 0.75rem 1rem !important; }
-          .filters-row { flex-wrap: nowrap !important; overflow-x: auto; gap: 0.5rem !important; -webkit-overflow-scrolling: touch; }
+          .filters-wrap { padding: 1rem !important; }
+          .filters-row { 
+            flex-wrap: nowrap !important; 
+            overflow-x: auto; 
+            gap: 0.5rem !important; 
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.5rem;
+          }
           .filters-row::-webkit-scrollbar { display: none; }
-          .filters-search { flex: 1 0 80% !important; min-width: 70% !important; }
-          .dropdown-panel { width: 100% !important; padding: 1rem !important; }
+          .filters-search { 
+            flex: 1 0 85% !important; 
+            min-width: 85% !important; 
+          }
+          .dropdown-panel { 
+            width: 100% !important; 
+            padding: 1.25rem !important;
+            margin-top: 0.75rem !important;
+          }
+          input[type="text"] {
+            padding: 0.75rem 1rem 0.75rem 3rem !important;
+            font-size: 0.875rem !important;
+          }
+          button {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.825rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .filters-wrap { padding: 0.75rem !important; }
+          .filters-search { 
+            min-width: 100% !important;
+            margin-bottom: 0.5rem;
+          }
+          .dropdown-panel { 
+            padding: 1rem !important;
+          }
         }
       `}</style>
       <div 
         style={{
-          background: 'rgba(18, 18, 18, 0.95)',
+          background: 'linear-gradient(135deg, rgba(18, 18, 18, 0.98), rgba(20, 20, 25, 0.98))',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)'
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
+        {/* Top gradient bar */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3px',
+          background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
+          opacity: 0.9
+        }} />
+        
         <div style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          padding: '1rem 1.5rem'
+          padding: '1.25rem 1.5rem',
+          position: 'relative',
+          zIndex: 1
         }} className="filters-wrap">
           {/* Barra Principal de Filtros */}
           <div style={{
@@ -137,28 +183,30 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                 </span>
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="Buscar eventos, academias, maestros..."
                   value={filters.q}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem 0.75rem 3rem',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    padding: '0.875rem 1rem 0.875rem 3.25rem',
+                    borderRadius: '14px',
+                    border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    background: filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)',
                     color: 'white',
-                    fontSize: '0.875rem',
+                    fontSize: '0.9rem',
                     outline: 'none',
-                    transition: 'all 0.2s',
-                    boxShadow: filters.q ? 'rgba(59, 130, 246, 0.3) 0px 0px 0px 2px' : 'none'
+                    transition: 'all 0.3s ease',
+                    boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.border = '1px solid rgba(59, 130, 246, 0.5)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.border = '2px solid rgba(240, 147, 251, 0.6)';
+                    e.currentTarget.style.background = 'rgba(240, 147, 251, 0.12)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(240, 147, 251, 0.25), 0 6px 20px rgba(240, 147, 251, 0.3)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.border = filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.background = filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.boxShadow = filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)';
                   }}
                 />
               </div>
@@ -213,16 +261,18 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  color: '#EF4444',
-                  fontSize: '0.875rem',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '14px',
+                  border: '2px solid rgba(239, 68, 68, 0.4)',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))',
+                  color: '#F87171',
+                  fontSize: '0.9rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 16px rgba(239, 68, 68, 0.2)',
+                  backdropFilter: 'blur(10px)'
                 }}
               >
                 <span>🗑️</span>
@@ -418,16 +468,22 @@ function FilterButton({
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
-        padding: '0.75rem 1.25rem',
-        borderRadius: '12px',
-        border: isOpen ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-        background: isOpen ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+        padding: '0.875rem 1.5rem',
+        borderRadius: '14px',
+        border: isOpen ? '2px solid rgba(240, 147, 251, 0.6)' : '1px solid rgba(255, 255, 255, 0.15)',
+        background: isOpen 
+          ? 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.15))' 
+          : 'rgba(255, 255, 255, 0.06)',
         color: 'white',
-        fontSize: '0.875rem',
+        fontSize: '0.9rem',
         fontWeight: '600',
         cursor: 'pointer',
-        transition: 'all 0.2s',
-        whiteSpace: 'nowrap'
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        whiteSpace: 'nowrap',
+        boxShadow: isOpen 
+          ? '0 4px 16px rgba(240, 147, 251, 0.3), 0 0 0 2px rgba(240, 147, 251, 0.2)' 
+          : '0 2px 8px rgba(0, 0, 0, 0.2)',
+        backdropFilter: 'blur(10px)'
       }}
     >
       <span>{icon}</span>
@@ -438,12 +494,12 @@ function FilterButton({
           animate={{ scale: 1 }}
           style={{
             position: 'absolute',
-            top: '-6px',
-            right: '-6px',
-            minWidth: '20px',
-            height: '20px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+            top: '-8px',
+            right: '-8px',
+            minWidth: '24px',
+            height: '24px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #f093fb, #f5576c)',
             color: 'white',
             fontSize: '0.75rem',
             fontWeight: '700',
@@ -451,7 +507,9 @@ function FilterButton({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '0 6px',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4)'
+            boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5), 0 0 0 2px rgba(240, 147, 251, 0.3)',
+            border: '2px solid rgba(255, 255, 255, 0.9)',
+            zIndex: 10
           }}
         >
           {activeCount}
@@ -478,12 +536,14 @@ function DropdownPanel({ children, onClose }: { children: React.ReactNode; onClo
       transition={{ duration: 0.2 }}
       style={{
         marginTop: '1rem',
-        padding: '1.5rem',
-        borderRadius: '16px',
-        background: 'rgba(30, 30, 30, 0.98)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(20px)'
+        padding: '1.75rem',
+        borderRadius: '18px',
+        background: 'linear-gradient(135deg, rgba(30, 30, 35, 0.98), rgba(25, 25, 30, 0.98))',
+        border: '2px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+        backdropFilter: 'blur(20px)',
+        position: 'relative',
+        overflow: 'hidden'
       }}
       className="dropdown-panel"
     >

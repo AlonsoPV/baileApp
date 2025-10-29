@@ -83,40 +83,116 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
       )} */}
 
       {/* Lista de clases */}
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'grid', gap: 16 }}>
         {items.map((it, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.03 }}
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: '0 8px 24px rgba(229, 57, 53, 0.2)'
+            }}
             style={{
               position: 'relative',
               display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto',
+              gridTemplateColumns: 'auto 1fr',
               alignItems: 'center',
-              gap: 12,
-              padding: 14,
-              borderRadius: 14,
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.10)'
+              gap: 16,
+              padding: '1.25rem 1.5rem',
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease'
             }}
           >
-            <div style={{ fontSize: 22, width: 32, textAlign: 'center' }}>{iconFor(it.tipo)}</div>
+            {/* Icono destacado */}
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
+              border: '2px solid rgba(229, 57, 53, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)'
+            }}>
+              {iconFor(it.tipo)}
+            </div>
+            
+            {/* Contenido */}
             <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{it.titulo || 'Clase'}</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                <h4 style={{
+                  margin: 0,
+                  fontSize: '1.125rem',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  letterSpacing: '0.3px'
+                }}>
+                  {it.titulo || 'Clase'}
+                </h4>
                 {it.nivel && (
-                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)' }}>{it.nivel}</span>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '4px 10px',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {it.nivel}
+                  </span>
                 )}
               </div>
-              <div style={{ marginTop: 4, fontSize: 13, opacity: 0.9 }}>🕒 {it.inicio || '—'} – {it.fin || '—'}</div>
+              
+              <div style={{
+                marginBottom: 10,
+                fontSize: 14,
+                color: 'rgba(255, 255, 255, 0.85)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}>
+                <span style={{ fontSize: 16 }}>🕒</span>
+                <span style={{ fontWeight: 500 }}>
+                  {it.inicio || '—'} – {it.fin || '—'}
+                </span>
+              </div>
+              
               {it.costos && it.costos.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
                   {it.costos.map((c, i) => (
-                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, border: '1px solid rgba(255,255,255,0.16)', borderRadius: 10, padding: '4px 8px', background: 'rgba(255,255,255,0.05)' }}>
+                    <motion.span
+                      key={i}
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: idx * 0.03 + i * 0.05 }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        border: '1px solid rgba(255, 209, 102, 0.4)',
+                        borderRadius: 12,
+                        padding: '6px 12px',
+                        background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
+                        color: '#FFD166',
+                        boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>💰</span>
                       <strong>{c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}</strong>
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
               )}

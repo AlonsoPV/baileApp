@@ -32,30 +32,34 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
           top: '50%', 
           transform: 'translateY(-50%)',
           zIndex: 10, 
-          background: 'rgba(0,0,0,0.8)', 
-          border: '1px solid rgba(255,255,255,0.2)',
-          color: '#F5F5F5', 
+          background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))', 
+          border: '2px solid rgba(255,255,255,0.3)',
+          color: '#FFFFFF', 
           borderRadius: '50%', 
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          fontSize: '18px',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          fontSize: '20px',
+          fontWeight: 'bold',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)',
+          backdropFilter: 'blur(10px)'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.15)';
+          e.currentTarget.style.boxShadow = '0 8px 28px rgba(240, 147, 251, 0.6), 0 0 0 4px rgba(240, 147, 251, 0.3)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))';
           e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)';
         }}
       >
-        ←
+        ‹
       </button>
 
       {/* Scrollable Container */}
@@ -95,35 +99,65 @@ export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Si
           top: '50%', 
           transform: 'translateY(-50%)',
           zIndex: 10, 
-          background: 'rgba(0,0,0,0.8)', 
-          border: '1px solid rgba(255,255,255,0.2)',
-          color: '#F5F5F5', 
+          background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))', 
+          border: '2px solid rgba(255,255,255,0.3)',
+          color: '#FFFFFF', 
           borderRadius: '50%', 
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          fontSize: '18px',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          fontSize: '20px',
+          fontWeight: 'bold',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)',
+          backdropFilter: 'blur(10px)'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.15)';
+          e.currentTarget.style.boxShadow = '0 8px 28px rgba(240, 147, 251, 0.6), 0 0 0 4px rgba(240, 147, 251, 0.3)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))';
           e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)';
         }}
       >
-        →
+        ›
       </button>
 
       <style>{`
         div::-webkit-scrollbar {
           display: none;
+        }
+        @media (max-width: 768px) {
+          button[aria-label="Anterior"],
+          button[aria-label="Siguiente"] {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 18px !important;
+            left: 4px !important;
+          }
+          button[aria-label="Siguiente"] {
+            right: 4px !important;
+            left: auto !important;
+          }
+        }
+        @media (max-width: 480px) {
+          button[aria-label="Anterior"],
+          button[aria-label="Siguiente"] {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 16px !important;
+            left: 2px !important;
+          }
+          button[aria-label="Siguiente"] {
+            right: 2px !important;
+            left: auto !important;
+          }
         }
       `}</style>
     </div>

@@ -100,7 +100,7 @@ export default function AppRouter() {
         <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
-        <Route path="/profile/academy/live" element={<AcademyProfileLive />} />
+        <Route path="/profile/academy" element={<AcademyProfileLive />} />
         <Route path="/profile/teacher/live" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
@@ -126,7 +126,7 @@ export default function AppRouter() {
           <Route path="/social/fecha/:dateId/edit" element={<EventDateEditScreen />} />
           <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
           <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
-          <Route path="/profile/academy" element={<AcademyProfileEditor />} />
+          <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
           <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
           <Route path="/profile/roles" element={<RoleSelectorScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />

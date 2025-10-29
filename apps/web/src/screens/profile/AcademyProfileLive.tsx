@@ -383,16 +383,23 @@ export default function AcademyProfileLive() {
           max-width: 900px;
           margin: 0 auto;
           position: relative;
-          background: black;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(229, 57, 53, 0.4);
+        }
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
         }
         .academy-banner-grid {
           display: grid;
           grid-template-columns: 1fr 2fr;
           gap: 2rem;
-          padding: 2rem;
           align-items: center;
         }
         .academy-banner-avatar {
@@ -414,13 +421,24 @@ export default function AcademyProfileLive() {
           font-size: 6rem;
         }
         @media (max-width: 768px) {
+          .academy-container {
+            max-width: 100% !important;
+            padding: 1rem !important;
+          }
+          .academy-banner {
+            border-radius: 16px !important;
+            padding: 1.5rem 1rem !important;
+            margin: 0 !important;
+          }
           .academy-banner-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
             text-align: center;
-            gap: 1.5rem;
+            gap: 1.5rem !important;
+            justify-items: center !important;
           }
           .academy-banner h1 {
             font-size: 2rem !important;
+            line-height: 1.2 !important;
           }
           .academy-banner-avatar {
             width: 180px !important;
@@ -428,6 +446,69 @@ export default function AcademyProfileLive() {
           }
           .academy-banner-avatar-fallback {
             font-size: 4rem !important;
+          }
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .academy-banner h1 {
+            font-size: 1.75rem !important;
+          }
+          .academy-banner-avatar {
+            width: 150px !important;
+            height: 150px !important;
+          }
+          .academy-banner-avatar-fallback {
+            font-size: 3.5rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
+          }
+        }
+        
+        /* Responsive styles for sections */
+        .academy-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+        }
+        .academy-videos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+          .academy-container {
+            padding: 1rem !important;
+          }
+          .academy-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .academy-section h2, .academy-section h3 {
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .academy-videos-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .academy-section {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .academy-section h2, .academy-section h3 {
+            font-size: 1.1rem !important;
+          }
+          .academy-videos-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
           }
         }
       `}</style>
@@ -446,7 +527,12 @@ export default function AcademyProfileLive() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="academy-banner"
+          className="academy-banner glass-card-container"
+          style={{
+            position: 'relative',
+            margin: '0 auto',
+            overflow: 'hidden'
+          }}
         >
           <div className="academy-banner-grid">
             <div style={{
@@ -636,27 +722,90 @@ export default function AcademyProfileLive() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
+            className="academy-section"
             style={{
               marginBottom: '2rem',
-              padding: '2rem',
+              padding: '2.5rem',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+              borderRadius: '24px',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+              overflow: 'hidden',
+              backdropFilter: 'blur(10px)'
             }}
           >
+            {/* Top gradient bar */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #E53935, #FB8C00, #FFD166)',
+              opacity: 0.9
+            }} />
+            
+            {/* Header destacado */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '2rem',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.75rem',
+                boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
+              }}>
+                🎓
+              </div>
+              <div>
+                <h2 style={{
+                  fontSize: '1.75rem',
+                  fontWeight: '800',
+                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  margin: 0,
+                  lineHeight: 1.2
+                }}>
+                  Nuestras clases
+                </h2>
+                <p style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.8,
+                  margin: '0.25rem 0 0 0',
+                  fontWeight: '500',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  Horarios, costos y ubicaciones
+                </p>
+              </div>
+            </div>
 
-            <ClasesLive
-              title="🗓️ Clases"
-              cronograma={(academy as any)?.cronograma || []}
-              costos={(academy as any)?.costos || []}
-              ubicacion={{
-                nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-                direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-                ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-                referencias: (academy as any)?.ubicaciones?.[0]?.referencias
-              }}
-            />
+            {/* Contenido de clases */}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <ClasesLive
+                title=""
+                cronograma={(academy as any)?.cronograma || []}
+                costos={(academy as any)?.costos || []}
+                ubicacion={{
+                  nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                  direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                  ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                  referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+                }}
+              />
+            </div>
           </motion.section>
 
           {/* Ubicaciones (live) */}
@@ -839,6 +988,7 @@ export default function AcademyProfileLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
+              className="academy-section"
               style={{
                 marginBottom: '2rem',
                 padding: '2rem',
@@ -866,7 +1016,9 @@ export default function AcademyProfileLive() {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '1.5rem'
-              }}>
+              }}
+              className="academy-videos-grid"
+              >
                 {videos.map((video, index) => (
                   <div
                     key={index}

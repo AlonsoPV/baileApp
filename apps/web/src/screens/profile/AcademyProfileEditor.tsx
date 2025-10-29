@@ -144,8 +144,134 @@ export default function AcademyProfileEditor() {
   }
 
   return (
-    <div className="org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <>
+      <style>{`
+        .academy-editor-container {
+          min-height: 100vh;
+          padding: 2rem 1rem;
+        }
+        .academy-editor-inner {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .academy-editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .academy-editor-card {
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 3rem;
+        }
+        .academy-editor-grid {
+          display: grid;
+          gap: 1.5rem;
+        }
+        .academy-social-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+          .academy-editor-container {
+            padding: 1rem 0.75rem !important;
+          }
+          .academy-editor-inner {
+            max-width: 100% !important;
+            padding: 0 0.5rem !important;
+          }
+          .academy-editor-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+          }
+          .academy-editor-card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .academy-editor-card h2 {
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .academy-editor-grid {
+            gap: 1rem !important;
+          }
+          .academy-social-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .org-editor__header {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            text-align: center !important;
+          }
+          .org-editor__back {
+            align-self: flex-start !important;
+          }
+          .org-editor__title {
+            font-size: 1.5rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .academy-editor-container {
+            padding: 0.75rem 0.5rem !important;
+          }
+          .academy-editor-inner {
+            padding: 0 0.25rem !important;
+          }
+          .academy-editor-card {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .academy-editor-card h2 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .org-editor__title {
+            font-size: 1.25rem !important;
+          }
+          input, textarea {
+            font-size: 0.9rem !important;
+            padding: 0.625rem !important;
+          }
+          label {
+            font-size: 0.875rem !important;
+            margin-bottom: 0.375rem !important;
+          }
+          /* Chips responsive */
+          .academy-chips-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          /* Class buttons responsive */
+          .academy-class-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .academy-class-buttons {
+            width: 100% !important;
+            display: flex !important;
+            gap: 0.5rem !important;
+          }
+          .academy-class-buttons button {
+            flex: 1 !important;
+            padding: 0.5rem !important;
+            font-size: 0.875rem !important;
+          }
+        }
+      `}</style>
+      <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
+      <div className="academy-editor-inner" style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
@@ -160,8 +286,8 @@ export default function AcademyProfileEditor() {
             onSave={handleSave}
             isSaving={upsert.isPending}
             saveDisabled={!form.nombre_publico?.trim()}
-            editHref="/profile/academy"
-            liveHref="/profile/academy/live"
+            editHref="/profile/academy/edit"
+            liveHref="/profile/academy"
           />
         </div>
 
@@ -218,7 +344,7 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Estilos & Zonas - tarjeta mejorada */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
+        <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
           {/* Header Estilos */}
@@ -231,7 +357,7 @@ export default function AcademyProfileEditor() {
           </div>
 
           {/* Chips Estilos */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
+          <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
             {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
               <Chip
                 key={tag.id}
@@ -259,7 +385,7 @@ export default function AcademyProfileEditor() {
           </div>
 
           {/* Chips Zonas */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1.25rem' }}>
+          <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1.25rem' }}>
             {allTags?.filter(tag => tag.tipo === 'zona').map(tag => (
               <Chip
                 key={tag.id}
@@ -432,12 +558,12 @@ export default function AcademyProfileEditor() {
               {Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
                 <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
                   {(form as any).cronograma.map((it: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
                         <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'} {it.fecha ? `· 📅 ${it.fecha}` : ''}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
+                      <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -524,7 +650,7 @@ export default function AcademyProfileEditor() {
             </div>
 
             {/* Vista previa dentro del mismo contenedor */}
-            <div style={{ padding: '1rem', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            {/* <div style={{ padding: '1rem', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <span>👀</span>
                 <strong style={{ color: '#fff' }}>Vista previa</strong>
@@ -538,7 +664,7 @@ export default function AcademyProfileEditor() {
                   referencias: (form as any)?.ubicaciones?.[0]?.referencias,
                 }}
               />
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -558,7 +684,7 @@ export default function AcademyProfileEditor() {
             📱 Redes Sociales
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+          <div className="academy-social-grid">
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
                 📸 Instagram
@@ -693,5 +819,6 @@ export default function AcademyProfileEditor() {
         />
       </div>
     </div>
+    </>
   );
 }
