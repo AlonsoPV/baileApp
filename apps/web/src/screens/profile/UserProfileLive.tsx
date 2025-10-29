@@ -1130,7 +1130,18 @@ export const UserProfileLive: React.FC = () => {
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',
 
+              }}>   <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}>
+                🎥 Video Principal
+              </h3>
                 <video
                   src={getMediaBySlot(safeMedia as any, 'v1')!.url}
                   controls
