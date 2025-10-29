@@ -120,7 +120,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       {/* Carrusel Principal */}
       <div style={{
         position: 'relative',
-        aspectRatio: '16/9',
+        aspectRatio: 'auto',
         borderRadius: borderRadius['2xl'],
         overflow: 'hidden',
         border: `2px solid ${colors.glass.medium}`,
@@ -939,7 +939,7 @@ export function OrganizerProfileLive() {
                       transition: transitions.normal,
                       overflow: 'hidden',
                       // Ratio + altura mínima para que el flyer se vea completo
-                      aspectRatio: '16 / 9',
+                      aspectRatio: 'auto',
                       minHeight: 320,
 
                       // Flyer como fondo

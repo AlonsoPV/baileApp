@@ -525,6 +525,18 @@ export default function UserProfileEditor() {
           isMainPhoto={true}
         />
 
+        {/* Secciones destacadas (p2 - p3) */}
+        <PhotoManagementSection
+          media={media}
+          uploading={uploading}
+          uploadFile={uploadFile}
+          removeFile={removeFile}
+          title="📷 Fotos Destacadas (p2 - p3)"
+          description="Estas fotos se usan en las secciones destacadas de tu perfil"
+          slots={['p2', 'p3']}
+          isMainPhoto={false}
+        />
+
         {/* Sección de Fotos Adicionales */}
         <PhotoManagementSection
           media={media}

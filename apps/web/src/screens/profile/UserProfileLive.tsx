@@ -50,7 +50,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         data-test-id="user-profile-carousel-main"
         style={{
           position: 'relative',
-          aspectRatio: '16/9',
+          aspectRatio: 'auto',
           borderRadius: '16px',
           overflow: 'hidden',
           border: '2px solid rgba(255, 255, 255, 0.2)',
@@ -690,7 +690,7 @@ export const UserProfileLive: React.FC = () => {
             <div className="question-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
               {/* Foto */}
               <div style={{
-                aspectRatio: '4/3',
+                aspectRatio: 'auto',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',
@@ -775,7 +775,7 @@ export const UserProfileLive: React.FC = () => {
 
               {/* Foto */}
               <div style={{
-                aspectRatio: '4/3',
+                aspectRatio: 'auto',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',
@@ -1083,7 +1083,7 @@ export const UserProfileLive: React.FC = () => {
               <div style={{
                 width: '100%',
                 maxWidth: '500px',
-                aspectRatio: '4/3',
+                aspectRatio: 'auto',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',

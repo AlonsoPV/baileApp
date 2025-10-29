@@ -105,7 +105,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         {/* Imagen principal */}
         <div style={{
           position: 'relative',
-          aspectRatio: '16 / 9',
+          aspectRatio: 'auto',
           borderRadius: '16px',
           overflow: 'hidden',
           border: '2px solid rgba(255, 255, 255, 0.2)',
@@ -759,7 +759,7 @@ export default function AcademyProfileLive() {
               <div style={{
                 width: '100%',
                 maxWidth: '500px',
-                aspectRatio: '4 / 3',
+                aspectRatio: 'auto',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)'
