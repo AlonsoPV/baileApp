@@ -365,12 +365,25 @@ export default function EventDatePublicScreen() {
   };
 
   return (
-    <div style={{
+    <div className="date-public-root" style={{
       minHeight: '100vh',
       background: `linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)`,
       padding: '24px 0',
     }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+      <style>{`
+        .date-public-root { padding: 24px 0; }
+        .date-public-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        @media (max-width: 768px) {
+          .date-public-root { padding: 16px 0 !important; }
+          .date-public-inner { padding: 0 16px !important; }
+          .two-col-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+        }
+        @media (max-width: 480px) {
+          .date-public-root { padding: 12px 0 !important; }
+          .date-public-inner { padding: 0 12px !important; }
+        }
+      `}</style>
+      <div className="date-public-inner">
       {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

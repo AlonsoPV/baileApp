@@ -199,11 +199,26 @@ export const EventDateEditor: React.FC = () => {
   }
 
   return (
-    <div style={{
+    <div className="date-editor-container" style={{
       minHeight: '100vh',
       background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
       padding: '24px 0',
     }}>
+      <style>{`
+        .date-editor-container { padding: 24px 0; }
+        .date-editor-inner { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+        .date-media-section { margin-top: 48px; }
+
+        @media (max-width: 768px) {
+          .date-editor-container { padding: 16px 0 !important; }
+          .date-editor-inner { padding: 0 16px !important; }
+          .date-media-section { margin-top: 24px !important; }
+        }
+        @media (max-width: 480px) {
+          .date-editor-container { padding: 12px 0 !important; }
+          .date-editor-inner { padding: 0 12px !important; }
+        }
+      `}</style>
       <EventCreateForm
         mode="date"
         date={currentDate}
@@ -216,13 +231,9 @@ export const EventDateEditor: React.FC = () => {
 
       {/* Additional sections for editing existing dates */}
       {isEditing && currentDate && (
-        <div style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '0 24px',
-        }}>
+        <div className="date-editor-inner">
           {/* Photo Management Section */}
-          <div style={{ marginTop: '48px' }}>
+          <div className="date-media-section">
             <PhotoManagementSection
               media={media}
               uploading={uploading}
@@ -236,7 +247,7 @@ export const EventDateEditor: React.FC = () => {
           </div>
 
           {/* Video Management Section */}
-          <div style={{ marginTop: '48px' }}>
+          <div className="date-media-section">
             <VideoManagementSection
               media={media}
               uploading={uploading}
