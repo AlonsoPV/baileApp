@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import AddToCalendarWithStats from '../../components/AddToCalendarWithStats';
 
 type CronoItem = {
   tipo?: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro' | string;
@@ -30,6 +31,7 @@ type Props = {
   costos?: CostoItem[];
   ubicacion?: Ubicacion;
   title?: string;
+  showCalendarButton?: boolean;
 };
 
 const iconFor = (tipo?: string) => {
@@ -40,7 +42,7 @@ const iconFor = (tipo?: string) => {
   return '🗂️';
 };
 
-export default function ClasesLive({ cronograma = [], costos = [], ubicacion, title = 'Clases & Tarifas' }: Props) {
+export default function ClasesLive({ cronograma = [], costos = [], ubicacion, title = 'Clases & Tarifas', showCalendarButton = false }: Props) {
   const costoIndex = useMemo(() => {
     const map = new Map<string, CostoItem[]>();
     for (const c of costos) {
@@ -197,6 +199,41 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                 </div>
               )}
             </div>
+            {showCalendarButton && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
+                {(() => {
+                  const buildTimeDate = (time?: string) => {
+                    const base = new Date();
+                    const hhmm = (time || '').split(':').slice(0, 2).join(':');
+                    const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
+                    base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+                    return base;
+                  };
+                  const start = buildTimeDate((it as any).inicio);
+                  const end = (() => {
+                    const e = buildTimeDate((it as any).fin);
+                    if (e.getTime() <= start.getTime()) {
+                      const plus = new Date(start);
+                      plus.setHours(plus.getHours() + 2);
+                      return plus;
+                    }
+                    return e;
+                  })();
+                  const location = ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad;
+                  return (
+                    <AddToCalendarWithStats
+                      eventId={`class-${idx}`}
+                      title={(it as any).titulo || 'Clase'}
+                      description={(it as any).nivel || ''}
+                      location={location}
+                      start={start}
+                      end={end}
+                      showAsIcon={true}
+                    />
+                  );
+                })()}
+              </div>
+            )}
           {/*   {it.costos && it.costos.length === 1 && (
               <div style={{ textAlign: 'right', minWidth: 90 }}>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>{it.costos[0].tipo ?? ''}</div>

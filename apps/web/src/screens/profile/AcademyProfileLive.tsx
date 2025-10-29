@@ -105,7 +105,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         {/* Imagen principal */}
         <div style={{
           position: 'relative',
-          aspectRatio: 'auto',
+          aspectRatio: '16/9',
           borderRadius: '16px',
           overflow: 'hidden',
           border: '2px solid rgba(255, 255, 255, 0.2)',
@@ -804,6 +804,7 @@ export default function AcademyProfileLive() {
                   ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
                   referencias: (academy as any)?.ubicaciones?.[0]?.referencias
                 }}
+                showCalendarButton={true}
               />
             </div>
           </motion.section>
