@@ -21,7 +21,14 @@ export default function ClassesManager({
     <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.04)', display: 'grid', gap: 16 }}>
       <div>
         <h3 style={{ margin: 0, marginBottom: 12 }}>🗓️ Clases & Talleres (Cronograma)</h3>
-        <ScheduleEditor value={cronograma} onChange={onCronogramaChange} ritmos={ritmos} locations={locations} costos={costos} />
+        <ScheduleEditor
+          schedule={cronograma}
+          onChangeSchedule={onCronogramaChange}
+          costos={costos}
+          onChangeCostos={onCostosChange}
+          ritmos={ritmos}
+          zonas={[]}
+        />
       </div>
       <div>
         <h3 style={{ margin: 0, marginBottom: 12 }}>💰 Costos y Promociones</h3>
