@@ -530,10 +530,12 @@ export function OrganizerProfileLive() {
         @media (max-width: 768px) {
           .org-container {
             max-width: 100% !important;
+            padding: 1rem !important;
           }
           .org-banner {
             border-radius: 0 !important;
             padding: 2rem 1rem !important;
+            margin: 1rem auto 0 auto !important;
           }
           .org-banner-grid {
             grid-template-columns: 1fr !important;
@@ -547,6 +549,76 @@ export function OrganizerProfileLive() {
           }
           .org-banner-avatar-fallback {
             font-size: 4rem !important;
+          }
+          .org-banner h1 {
+            font-size: 2.5rem !important;
+            line-height: 1.2 !important;
+          }
+          .org-banner .org-chips {
+            justify-content: center !important;
+            margin-bottom: 1rem !important;
+          }
+          .glass-card {
+            margin-bottom: 1.5rem !important;
+            padding: 1.5rem !important;
+          }
+          .glass-card h3 {
+            font-size: 1.5rem !important;
+          }
+          .glass-card p {
+            font-size: 1rem !important;
+          }
+          .carousel-main {
+            aspect-ratio: 16/9 !important;
+            max-width: 100% !important;
+          }
+          .carousel-thumbnails {
+            gap: 0.5rem !important;
+            margin-top: 1rem !important;
+          }
+          .carousel-thumbnail {
+            width: 50px !important;
+            height: 50px !important;
+          }
+          .carousel-nav-btn {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 1rem !important;
+          }
+          .carousel-counter {
+            font-size: 0.8rem !important;
+            padding: 0.25rem 0.75rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .org-banner {
+            padding: 1.5rem 1rem !important;
+          }
+          .org-banner-avatar {
+            width: 150px !important;
+            height: 150px !important;
+          }
+          .org-banner-avatar-fallback {
+            font-size: 3rem !important;
+          }
+          .org-banner h1 {
+            font-size: 2rem !important;
+          }
+          .glass-card {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .glass-card h3 {
+            font-size: 1.25rem !important;
+          }
+          .carousel-thumbnail {
+            width: 40px !important;
+            height: 40px !important;
+          }
+          .carousel-nav-btn {
+            width: 36px !important;
+            height: 36px !important;
           }
         }
       `}</style>

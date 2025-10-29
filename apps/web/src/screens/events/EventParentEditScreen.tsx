@@ -141,12 +141,25 @@ export function EventParentEditScreen() {
   }
 
   return (
-    <div style={{
+    <div className="parent-edit" style={{
       padding: '24px',
       maxWidth: '800px',
       margin: '0 auto',
       color: colors.light,
     }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .parent-edit { padding: 16px !important; }
+          .parent-edit h1 { font-size: 1.5rem !important; }
+          .parent-edit input, .parent-edit textarea { font-size: 0.95rem !important; padding: 10px !important; }
+          .parent-edit .actions { flex-direction: column !important; }
+          .parent-edit .actions > * { width: 100% !important; min-width: 0 !important; }
+        }
+        @media (max-width: 480px) {
+          .parent-edit { padding: 12px !important; }
+          .parent-edit h1 { font-size: 1.25rem !important; }
+        }
+      `}</style>
       <Breadcrumbs
         items={[
           { label: 'Inicio', href: '/app/profile', icon: '🏠' },
@@ -223,7 +236,7 @@ export function EventParentEditScreen() {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <div className="actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

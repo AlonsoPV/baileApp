@@ -620,9 +620,14 @@ export const UserProfileLive: React.FC = () => {
 
         {/* Contenido Principal */}
         <div className="user-container" style={{ 
-          padding: spacing[8],
-          position: 'relative',
-          zIndex: 1
+        
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          marginBottom: '1.5rem',
+          paddingBottom: '0.75rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        
         }}>
           {/* Biografía */}
           {profile?.bio && (

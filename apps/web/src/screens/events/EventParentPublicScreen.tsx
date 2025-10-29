@@ -471,6 +471,16 @@ export default function EventParentPublicScreen() {
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
         }
+
+        /* Responsivo móvil */
+        @media (max-width: 768px) {
+          .glass-card { padding: 1rem !important; margin-bottom: 1rem !important; }
+          .dfs-wrap { width: 100% !important; max-width: 100% !important; }
+          .dfs-controls { width: 100% !important; max-width: 100% !important; }
+        }
+        @media (max-width: 480px) {
+          .glass-card { padding: 0.75rem !important; }
+        }
       `}</style>
       <div style={{
         minHeight: '100vh',

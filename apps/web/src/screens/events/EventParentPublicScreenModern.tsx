@@ -443,6 +443,20 @@ export default function EventParentPublicScreen() {
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
         }
+
+        /* Responsivo móvil */
+        @media (max-width: 768px) {
+          .social-hero { padding: 2rem !important; }
+          .glass-card { padding: 1.5rem !important; margin-bottom: 1.5rem !important; }
+          .glass-card h3 { font-size: 1.5rem !important; }
+          .glass-card p { font-size: 1rem !important; }
+          .social-hero h1 { font-size: 2.5rem !important; line-height: 1.2 !important; }
+        }
+        @media (max-width: 480px) {
+          .social-hero { padding: 1.5rem !important; }
+          .glass-card { padding: 1rem !important; }
+          .social-hero h1 { font-size: 2rem !important; }
+        }
       `}</style>
       
       <div style={{
