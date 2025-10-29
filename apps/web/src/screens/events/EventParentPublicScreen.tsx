@@ -472,14 +472,316 @@ export default function EventParentPublicScreen() {
           animation: shimmer 2s infinite;
         }
 
+        .social-container {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 2rem 4rem;
+        }
+        
+        .social-header {
+          background: linear-gradient(135deg, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.5));
+          border-radius: 20px;
+          padding: 32px;
+          margin-bottom: 32px;
+          border: 1px solid rgba(245, 245, 245, 0.13);
+          backdrop-filter: blur(10px);
+        }
+        
+        .social-header-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 24px;
+        }
+        
+        .social-title-section {
+          flex: 1;
+        }
+        
+        .social-actions {
+          margin-left: 24px;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+        
+        .social-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        
+        .social-section {
+          background: rgba(18, 18, 18, 0.4);
+          border-radius: 16px;
+          padding: 24px;
+          margin-bottom: 32px;
+          border: 1px solid rgba(245, 245, 245, 0.13);
+        }
+        
+        .social-section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+        }
+        
+        .social-gallery {
+          margin-bottom: 2rem;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 24px;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .social-gallery-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        
+        .social-gallery-count {
+          padding: 0.75rem 1.5rem;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2));
+          border-radius: 25px;
+          font-size: 1rem;
+          font-weight: 700;
+          color: #F5F5F5;
+          border: 1px solid rgba(229, 57, 53, 0.3);
+          box-shadow: 0 4px 16px rgba(229, 57, 53, 0.2);
+          backdrop-filter: blur(10px);
+        }
+        
+        .social-video-gallery {
+          margin-bottom: 2rem;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%);
+          border-radius: 24px;
+          border: 2px solid rgba(30, 136, 229, 0.2);
+          box-shadow: 0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .social-video-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        
+        .social-video-item {
+          aspect-ratio: 16/9;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 2px solid rgba(30, 136, 229, 0.3);
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          background: rgba(0, 0, 0, 0.1);
+          box-shadow: 0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .social-video-label {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9));
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.3);
+          backdrop-filter: blur(10px);
+        }
+
         /* Responsivo móvil */
         @media (max-width: 768px) {
-          .glass-card { padding: 1rem !important; margin-bottom: 1rem !important; }
-          .dfs-wrap { width: 100% !important; max-width: 100% !important; }
-          .dfs-controls { width: 100% !important; max-width: 100% !important; }
+          .social-container {
+            padding: 0 1rem 2rem !important;
+          }
+          
+          .social-header {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-header-content {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-title-section {
+            width: 100% !important;
+          }
+          
+          .social-actions {
+            margin-left: 0 !important;
+            width: 100% !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+          }
+          
+          .social-actions button {
+            flex: 1 !important;
+            min-width: 0 !important;
+            font-size: 0.9rem !important;
+            padding: 10px 16px !important;
+          }
+          
+          .social-header h1 {
+            font-size: 2rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .social-header p {
+            font-size: 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .social-chips {
+            justify-content: center !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-chips span {
+            font-size: 0.8rem !important;
+            padding: 6px 12px !important;
+          }
+          
+          .social-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-section-header {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            align-items: stretch !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-section-header h2 {
+            font-size: 1.5rem !important;
+            text-align: center !important;
+          }
+          
+          .social-section-header button {
+            width: 100% !important;
+            font-size: 0.9rem !important;
+            padding: 10px 16px !important;
+          }
+          
+          .social-gallery {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-gallery-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-gallery-header h3 {
+            font-size: 1.5rem !important;
+          }
+          
+          .social-gallery-count {
+            font-size: 0.9rem !important;
+            padding: 0.5rem 1rem !important;
+          }
+          
+          .social-video-gallery {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-video-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .glass-card {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .dfs-wrap {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          .dfs-controls {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
         }
+        
         @media (max-width: 480px) {
-          .glass-card { padding: 0.75rem !important; }
+          .social-container {
+            padding: 0 0.75rem 1.5rem !important;
+          }
+          
+          .social-header {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-header h1 {
+            font-size: 1.75rem !important;
+          }
+          
+          .social-header p {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-chips span {
+            font-size: 0.75rem !important;
+            padding: 4px 8px !important;
+          }
+          
+          .social-section {
+            padding: 0.75rem !important;
+            border-radius: 8px !important;
+          }
+          
+          .social-section-header h2 {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-gallery {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-gallery-header h3 {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-video-gallery {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .glass-card {
+            padding: 0.75rem !important;
+          }
         }
       `}</style>
       <div style={{
@@ -491,7 +793,7 @@ export default function EventParentPublicScreen() {
       }}>
 
         {/* Contenido Principal */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+        <div className="social-container">
           {/* Navegación de Secciones */}
           {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -529,16 +831,9 @@ export default function EventParentPublicScreen() {
           </motion.div> */}
 
           {/* Header Mejorado */}
-          <div style={{
-            background: `linear-gradient(135deg, ${colors.darkBase}cc, ${colors.darkBase}88)`,
-            borderRadius: '20px',
-            padding: '32px',
-            marginBottom: '32px',
-            border: `1px solid ${colors.light}22`,
-            backdropFilter: 'blur(10px)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-              <div style={{ flex: 1 }}>
+          <div className="social-header">
+            <div className="social-header-content">
+              <div className="social-title-section">
                 <h1 style={{
                   fontSize: '3rem',
                   fontWeight: '700',
@@ -576,7 +871,7 @@ export default function EventParentPublicScreen() {
                 )}
               </div>
 
-              <div style={{ marginLeft: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div className="social-actions">
                 {isOwner && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -609,7 +904,7 @@ export default function EventParentPublicScreen() {
             </div>
 
             {/* Chips de Ritmos y Zonas */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+            <div className="social-chips">
               {parent.estilos?.map((ritmoId: number) => (
                 <motion.span
                   key={ritmoId}
@@ -768,19 +1063,8 @@ export default function EventParentPublicScreen() {
           )}
 
           {/* Fechas Section */}
-          <div style={{
-            background: `${colors.darkBase}66`,
-            borderRadius: '16px',
-            padding: '24px',
-            marginBottom: '32px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px',
-            }}>
+          <div className="social-section">
+            <div className="social-section-header">
               <h2 style={{
                 fontSize: '1.8rem',
                 fontWeight: '600',
@@ -848,27 +1132,13 @@ export default function EventParentPublicScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                style={{
-                  marginBottom: '2rem',
-                  padding: '2.5rem',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                  borderRadius: '24px',
-                  border: '2px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
+                className="social-gallery"
               >
                 <div style={{
                   position: 'relative',
                   zIndex: 1
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    marginBottom: '2rem'
-                  }}>
+                  <div className="social-gallery-header">
                     <div style={{
                       width: '60px',
                       height: '60px',
@@ -903,17 +1173,7 @@ export default function EventParentPublicScreen() {
                         Fotos del social
                       </p>
                     </div>
-                    <div style={{
-                      padding: '0.75rem 1.5rem',
-                      background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
-                      borderRadius: '25px',
-                      fontSize: '1rem',
-                      fontWeight: '700',
-                      color: colors.light,
-                      border: '1px solid rgba(229, 57, 53, 0.3)',
-                      boxShadow: '0 4px 16px rgba(229, 57, 53, 0.2)',
-                      backdropFilter: 'blur(10px)'
-                    }}>
+                    <div className="social-gallery-count">
                       {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                     </div>
                   </div>
@@ -938,16 +1198,7 @@ export default function EventParentPublicScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                style={{
-                  marginBottom: '2rem',
-                  padding: '2.5rem',
-                  background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%)',
-                  borderRadius: '24px',
-                  border: '2px solid rgba(30, 136, 229, 0.2)',
-                  boxShadow: '0 12px 40px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
+                className="social-video-gallery"
               >
                 <div style={{
                   position: 'relative',
@@ -1008,13 +1259,7 @@ export default function EventParentPublicScreen() {
                     </div>
                   </div>
 
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                    gap: '2rem',
-                    maxWidth: '1200px',
-                    margin: '0 auto'
-                  }}>
+                  <div className="social-video-grid">
                     {videos.map((video, index) => (
                       <motion.div
                         key={index}
@@ -1026,17 +1271,7 @@ export default function EventParentPublicScreen() {
                           y: -8,
                           boxShadow: '0 16px 40px rgba(30, 136, 229, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
                         }}
-                        style={{
-                          aspectRatio: '16/9',
-                          borderRadius: '20px',
-                          overflow: 'hidden',
-                          border: '2px solid rgba(30, 136, 229, 0.3)',
-                          cursor: 'pointer',
-                          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                          position: 'relative',
-                          background: 'rgba(0, 0, 0, 0.1)',
-                          boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)'
-                        }}
+                        className="social-video-item"
                       >
                         <video
                           src={video}
@@ -1047,19 +1282,7 @@ export default function EventParentPublicScreen() {
                             objectFit: 'cover'
                           }}
                         />
-                        <div style={{
-                          position: 'absolute',
-                          top: '1rem',
-                          right: '1rem',
-                          background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
-                          color: 'white',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '12px',
-                          fontSize: '0.875rem',
-                          fontWeight: '700',
-                          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                          backdropFilter: 'blur(10px)'
-                        }}>
+                        <div className="social-video-label">
                           🎥 Video {index + 1}
                         </div>
                       </motion.div>

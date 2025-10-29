@@ -622,14 +622,11 @@ export const UserProfileLive: React.FC = () => {
           id="user-profile-banner"
           data-baile-id="user-profile-banner"
           data-test-id="user-profile-banner"
-          className="profile-banner"
+          className="profile-banner glass-card-container"
           style={{
             position: 'relative',
             margin: '0 auto',
-            background: '#000000',
-            overflow: 'hidden',
-            borderRadius: '16px',
-            padding: '3rem 2rem'
+            overflow: 'hidden'
           }}
         >
           <div
@@ -778,7 +775,7 @@ export const UserProfileLive: React.FC = () => {
           )}
 
           {/* Redes Sociales */}
-          <div className="glass-card-container">
+          <div >
             <SocialMediaSection
               respuestas={profile?.respuestas}
               availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
@@ -1203,7 +1200,18 @@ export const UserProfileLive: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'center'
               }}
-            >
+            ><h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              🎥 Video Principal
+            </h3>
               <div style={{
                 width: '100%',
                 maxWidth: '600px',
@@ -1211,18 +1219,7 @@ export const UserProfileLive: React.FC = () => {
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',
 
-              }}>   <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                🎥 Video Principal
-              </h3>
+              }}>   
                 <video
                   src={getMediaBySlot(safeMedia as any, 'v1')!.url}
                   controls

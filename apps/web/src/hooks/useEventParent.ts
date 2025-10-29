@@ -13,7 +13,7 @@ export function useEventParent(parentId?: number) {
       
       const { data, error } = await supabase
         .from("events_parent")
-        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, created_at, updated_at")
+        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, ubicaciones, faq, media, created_at, updated_at")
         .eq("id", parentId)
         .maybeSingle();
         
@@ -42,6 +42,7 @@ export function useCreateEventParent() {
       estilos?: number[];
       zonas?: number[];
       sede_general?: string;
+      ubicaciones?: any[];
       faq?: any[];
       media?: any;
     }) => {

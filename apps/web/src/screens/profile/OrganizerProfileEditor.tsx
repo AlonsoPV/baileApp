@@ -683,6 +683,243 @@ export default function OrganizerProfileEditor() {
   return (
     <>
       <style>{`
+        .org-editor-container {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        
+        .org-editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        
+        .org-editor-back {
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: #F5F5F5;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+        
+        .org-editor-title {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 0;
+          flex: 1 1 0%;
+          text-align: center;
+        }
+        
+        .org-editor-card {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .org-editor-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 2rem;
+        }
+        
+        .org-editor-grid-small {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        
+        .org-editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+        }
+        
+        .org-editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #F5F5F5;
+          font-size: 1rem;
+        }
+        
+        .org-editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #F5F5F5;
+          font-size: 1rem;
+          resize: vertical;
+        }
+        
+        .org-editor-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .org-events-section {
+          margin-bottom: 3rem;
+          padding: 2.5rem;
+          border-radius: 24px;
+          border: 2px solid rgba(255, 61, 87, 0.2);
+          box-shadow: 0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .org-create-button {
+          position: fixed;
+          bottom: 32px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 1000;
+          pointer-events: auto;
+        }
+        
+        @media (max-width: 768px) {
+          .org-editor-container {
+            max-width: 100% !important;
+            padding: 1rem !important;
+          }
+          
+          .org-editor-header {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .org-editor-back {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .org-editor-title {
+            font-size: 1.5rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .org-editor-card {
+            padding: 1.5rem !important;
+            margin-bottom: 2rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .org-editor-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+          
+          .org-editor-grid-small {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .org-editor-field {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .org-editor-input {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          
+          .org-editor-textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+            rows: 3 !important;
+          }
+          
+          .org-editor-chips {
+            justify-content: center !important;
+            gap: 0.4rem !important;
+          }
+          
+          .org-events-section {
+            padding: 1.5rem !important;
+            margin-bottom: 2rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .org-create-button {
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .org-editor-container {
+            padding: 0.75rem !important;
+          }
+          
+          .org-editor-header {
+            margin-bottom: 1rem !important;
+          }
+          
+          .org-editor-back {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.75rem !important;
+          }
+          
+          .org-editor-title {
+            font-size: 1.25rem !important;
+          }
+          
+          .org-editor-card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 10px !important;
+          }
+          
+          .org-editor-grid {
+            gap: 1rem !important;
+          }
+          
+          .org-editor-grid-small {
+            gap: 0.75rem !important;
+          }
+          
+          .org-editor-field {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .org-editor-input {
+            padding: 0.5rem !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .org-editor-textarea {
+            padding: 0.5rem !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .org-editor-chips {
+            gap: 0.3rem !important;
+          }
+          
+          .org-events-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .org-create-button {
+            bottom: 16px !important;
+          }
+        }
       `}</style>
       <div style={{
         minHeight: '100vh',
@@ -690,37 +927,16 @@ export default function OrganizerProfileEditor() {
         color: colors.light,
         padding: '2rem',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="org-editor-container">
           {/* Header con botón Volver */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '2rem'
-          }}>
+          <div className="org-editor-header">
             <button
               onClick={() => navigate(-1)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: colors.light,
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: '0.2s'
-              }}
+              className="org-editor-back"
             >
               ← Volver
             </button>
-            <h1 style={{
-              fontSize: '1.75rem',
-              fontWeight: '700',
-              margin: '0',
-              flex: '1 1 0%',
-              textAlign: 'center'
-            }}>
+            <h1 className="org-editor-title">
               ✏️ Editar Organizador
             </h1>
             <div style={{ width: '100px' }}></div>
@@ -741,21 +957,15 @@ export default function OrganizerProfileEditor() {
           <div
             id="organizer-basic-info"
             data-test-id="organizer-basic-info"
-            style={{
-              marginBottom: '3rem',
-              padding: '2rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            className="org-editor-card"
           >
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               🏢 Información del Organizador
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div className="org-editor-grid">
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   Nombre Público
                 </label>
                 <input
@@ -765,20 +975,12 @@ export default function OrganizerProfileEditor() {
                   value={form.nombre_publico}
                   onChange={(e) => setField('nombre_publico', e.target.value)}
                   placeholder="Nombre de tu organización"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
+                  className="org-editor-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   Biografía
                 </label>
                 <textarea
@@ -788,16 +990,7 @@ export default function OrganizerProfileEditor() {
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Cuéntanos sobre tu organización..."
                   rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem',
-                    resize: 'vertical'
-                  }}
+                  className="org-editor-textarea"
                 />
               </div>
             </div>
@@ -807,24 +1000,18 @@ export default function OrganizerProfileEditor() {
           <div
             id="organizer-rhythms-zones"
             data-test-id="organizer-rhythms-zones"
-            style={{
-              marginBottom: '3rem',
-              padding: '2rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            className="org-editor-card"
           >
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               🎵 Ritmos y Zonas
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div className="org-editor-grid">
               <div>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
                   🎶 Ritmos que Organizas
                 </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div className="org-editor-chips">
                   {ritmoTags.map((tag) => (
                     <Chip
                       key={tag.id}
@@ -841,7 +1028,7 @@ export default function OrganizerProfileEditor() {
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
                   📍 Zonas donde Organizas
                 </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div className="org-editor-chips">
                   {zonaTags.map((tag) => (
                     <Chip
                       key={tag.id}
@@ -860,21 +1047,15 @@ export default function OrganizerProfileEditor() {
           <div
             id="organizer-social-networks"
             data-test-id="organizer-social-networks"
-            style={{
-              marginBottom: '3rem',
-              padding: '2rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            className="org-editor-card"
           >
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               📱 Redes Sociales
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div className="org-editor-grid-small">
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   📸 Instagram
                 </label>
                 <input
@@ -882,20 +1063,12 @@ export default function OrganizerProfileEditor() {
                   value={form.redes_sociales.instagram}
                   onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
                   placeholder="@tu_organizacion"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
+                  className="org-editor-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   👥 Facebook
                 </label>
                 <input
@@ -903,20 +1076,12 @@ export default function OrganizerProfileEditor() {
                   value={form.redes_sociales.facebook}
                   onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
                   placeholder="Página o perfil"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
+                  className="org-editor-input"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   💬 WhatsApp
                 </label>
                 <input
@@ -924,15 +1089,7 @@ export default function OrganizerProfileEditor() {
                   value={form.redes_sociales.whatsapp}
                   onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
                   placeholder="Número de teléfono"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem'
-                  }}
+                  className="org-editor-input"
                 />
               </div>
             </div>
@@ -964,20 +1121,14 @@ export default function OrganizerProfileEditor() {
           />
 
           {/* Información para Asistentes */}
-          <div style={{
-            marginBottom: '3rem',
-            padding: '2rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}>
+          <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               💬 Información para Asistentes
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div className="org-editor-grid">
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   🎵 ¿Qué música tocarán?
                 </label>
                 <textarea
@@ -985,21 +1136,12 @@ export default function OrganizerProfileEditor() {
                   onChange={(e) => setNested('respuestas.musica_tocaran', e.target.value)}
                   placeholder="Describe el tipo de música que tocarán..."
                   rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem',
-                    resize: 'vertical'
-                  }}
+                  className="org-editor-textarea"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                <label className="org-editor-field">
                   🅿️ ¿Hay estacionamiento?
                 </label>
                 <textarea
@@ -1007,16 +1149,7 @@ export default function OrganizerProfileEditor() {
                   onChange={(e) => setNested('respuestas.hay_estacionamiento', e.target.value)}
                   placeholder="Información sobre estacionamiento..."
                   rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: colors.light,
-                    fontSize: '1rem',
-                    resize: 'vertical'
-                  }}
+                  className="org-editor-textarea"
                 />
               </div>
             </div>
@@ -1026,15 +1159,7 @@ export default function OrganizerProfileEditor() {
           <div
             id="organizer-events-list"
             data-test-id="organizer-events-list"
-            style={{
-              marginBottom: '3rem',
-              padding: '2.5rem',
-              borderRadius: '24px',
-              border: '2px solid rgba(255, 61, 87, 0.2)',
-              boxShadow: '0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
+            className="org-events-section"
           >
 
             <div style={{ position: 'relative', zIndex: 1 }}>
@@ -1135,14 +1260,7 @@ export default function OrganizerProfileEditor() {
           <div
             id="organizer-create-event-button"
             data-test-id="organizer-create-event-button"
-            style={{
-              position: 'fixed',
-              bottom: '32px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 1000,
-              pointerEvents: 'auto',
-            }}
+            className="org-create-button"
           >
             <motion.button
               initial={{ opacity: 0, y: 20 }}
@@ -1207,13 +1325,7 @@ export default function OrganizerProfileEditor() {
           />
 
           {/* Estado y Acciones */}
-          <div style={{
-            marginBottom: '3rem',
-            padding: '2rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}>
+          <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               ⚙️ Estado y Acciones
             </h2>

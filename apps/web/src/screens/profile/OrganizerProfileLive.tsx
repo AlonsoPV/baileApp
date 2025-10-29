@@ -584,6 +584,19 @@ export function OrganizerProfileLive() {
           animation: shimmer 2s infinite;
         }
         
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        
         @media (max-width: 768px) {
           .org-container {
             max-width: 100% !important;
@@ -654,6 +667,11 @@ export function OrganizerProfileLive() {
             width: 100% !important;
             max-width: 100% !important;
           }
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
         }
         
         @media (max-width: 480px) {
@@ -684,6 +702,10 @@ export function OrganizerProfileLive() {
           .carousel-nav-btn {
             width: 36px !important;
             height: 36px !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
           }
         }
       `}</style>
@@ -749,21 +771,16 @@ export function OrganizerProfileLive() {
         <motion.div
           id="organizer-banner"
           data-test-id="organizer-banner"
-          className="org-banner"
+          className="org-banner glass-card-container"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
             position: 'relative',
-            background: `linear-gradient(135deg, ${colors.dark[500]} 0%, ${colors.dark[400]} 100%)`,
             overflow: 'hidden',
-            borderRadius: borderRadius['2xl'],
-            padding: spacing[12],
             margin: `${spacing[20]} auto 0 auto`,
             maxWidth: '900px',
             width: '100%',
-            border: `1px solid ${colors.glass.medium}`,
-            boxShadow: colors.shadows.glass,
             zIndex: 1
           }}
         >

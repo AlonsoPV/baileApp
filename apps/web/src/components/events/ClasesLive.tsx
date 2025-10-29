@@ -116,7 +116,6 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                   {it.costos.map((c, i) => (
                     <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, border: '1px solid rgba(255,255,255,0.16)', borderRadius: 10, padding: '4px 8px', background: 'rgba(255,255,255,0.05)' }}>
                       <strong>{c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}</strong>
-                      {c.nombre && <span style={{ opacity: 0.75 }}>· {c.nombre}</span>}
                     </span>
                   ))}
                 </div>

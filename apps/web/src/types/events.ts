@@ -19,6 +19,7 @@ export type EventParent = {
   descripcion?: string|null;
   estilos: number[]; 
   sede_general?: string|null; 
+  ubicaciones?: any[]; // Ubicaciones del evento
   media: any[];
   created_at: string;
 };

@@ -5,6 +5,7 @@ import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useCreateParent, useUpdateParent, useParentsByOrganizer } from "../../hooks/useEvents";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
+import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -39,7 +40,8 @@ export function EventParentEditScreen() {
   const [form, setForm] = useState({
     nombre: "",
     descripcion: "",
-    sede_general: ""
+    sede_general: "",
+    ubicaciones: [] as any[]
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +51,8 @@ export function EventParentEditScreen() {
       setForm({
         nombre: currentEvent.nombre,
         descripcion: currentEvent.descripcion || "",
-        sede_general: currentEvent.sede_general || ""
+        sede_general: currentEvent.sede_general || "",
+        ubicaciones: (currentEvent as any).ubicaciones || []
       });
     }
   }, [currentEvent]);
@@ -76,8 +79,9 @@ export function EventParentEditScreen() {
           organizer_id: org.id,
           nombre: form.nombre.trim(),
           descripcion: form.descripcion.trim() || null,
-          sede_general: form.sede_general.trim() || null
-        });
+          sede_general: form.sede_general.trim() || null,
+          ubicaciones: form.ubicaciones
+        } as any);
         console.log('[EventParentEditScreen] Event created:', p);
         showToast('Evento creado ✅', 'success');
         navigate(`/events/parent/${p.id}/edit`);
@@ -88,8 +92,9 @@ export function EventParentEditScreen() {
           patch: {
             nombre: form.nombre.trim(),
             descripcion: form.descripcion.trim() || null,
-            sede_general: form.sede_general.trim() || null
-          }
+            sede_general: form.sede_general.trim() || null,
+            ubicaciones: form.ubicaciones
+          } as any
         });
         console.log('[EventParentEditScreen] Event updated successfully');
         showToast('Evento actualizado ✅', 'success');
@@ -141,23 +146,75 @@ export function EventParentEditScreen() {
   }
 
   return (
-    <div className="parent-edit" style={{
+    <div className="parent-edit parent-edit-container" style={{
       padding: '24px',
       maxWidth: '800px',
       margin: '0 auto',
       color: colors.light,
     }}>
       <style>{`
+        .parent-edit-container {
+          width: 100%;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        
+        .parent-edit-card {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .parent-edit-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+        }
+        
+        .parent-edit-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #F5F5F5;
+          font-size: 1rem;
+        }
+        
+        .parent-edit-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #F5F5F5;
+          font-size: 1rem;
+          resize: vertical;
+        }
+        
+        .parent-edit-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        
         @media (max-width: 768px) {
-          .parent-edit { padding: 16px !important; }
+          .parent-edit-container { padding: 16px !important; }
+          .parent-edit-card { padding: 1.5rem !important; margin-bottom: 1.5rem !important; }
           .parent-edit h1 { font-size: 1.5rem !important; }
-          .parent-edit input, .parent-edit textarea { font-size: 0.95rem !important; padding: 10px !important; }
-          .parent-edit .actions { flex-direction: column !important; }
-          .parent-edit .actions > * { width: 100% !important; min-width: 0 !important; }
+          .parent-edit-field { font-size: 0.9rem !important; margin-bottom: 0.75rem !important; }
+          .parent-edit-input, .parent-edit-textarea { font-size: 0.95rem !important; padding: 10px !important; }
+          .parent-edit-actions { flex-direction: column !important; }
+          .parent-edit-actions > * { width: 100% !important; min-width: 0 !important; }
         }
         @media (max-width: 480px) {
-          .parent-edit { padding: 12px !important; }
+          .parent-edit-container { padding: 12px !important; }
+          .parent-edit-card { padding: 1rem !important; margin-bottom: 1rem !important; }
           .parent-edit h1 { font-size: 1.25rem !important; }
+          .parent-edit-field { font-size: 0.8rem !important; margin-bottom: 0.5rem !important; }
+          .parent-edit-input, .parent-edit-textarea { font-size: 0.8rem !important; padding: 8px !important; }
         }
       `}</style>
       <Breadcrumbs
@@ -172,8 +229,8 @@ export function EventParentEditScreen() {
         {isEdit ? "✏️ Editar" : "➕ Crear"} Evento Padre
       </h1>
 
-      <div style={{ marginBottom: '24px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+      <div className="parent-edit-card">
+        <label className="parent-edit-field">
           Nombre *
         </label>
         <input
@@ -181,20 +238,12 @@ export function EventParentEditScreen() {
           value={form.nombre}
           onChange={e => setForm({...form, nombre: e.target.value})}
           placeholder="Ej: Festival de Salsa 2025"
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            background: `${colors.dark}cc`,
-            border: `1px solid ${colors.light}33`,
-            color: colors.light,
-            fontSize: '1rem',
-          }}
+          className="parent-edit-input"
         />
       </div>
 
-      <div style={{ marginBottom: '24px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+      <div className="parent-edit-card">
+        <label className="parent-edit-field">
           Descripción
         </label>
         <textarea
@@ -202,21 +251,12 @@ export function EventParentEditScreen() {
           onChange={e => setForm({...form, descripcion: e.target.value})}
           rows={4}
           placeholder="Describe tu evento..."
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            background: `${colors.dark}cc`,
-            border: `1px solid ${colors.light}33`,
-            color: colors.light,
-            fontSize: '1rem',
-            resize: 'vertical',
-          }}
+          className="parent-edit-textarea"
         />
       </div>
 
-      <div style={{ marginBottom: '32px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+      <div className="parent-edit-card">
+        <label className="parent-edit-field">
           Sede general
         </label>
         <input
@@ -224,19 +264,18 @@ export function EventParentEditScreen() {
           value={form.sede_general}
           onChange={e => setForm({...form, sede_general: e.target.value})}
           placeholder="Ej: Centro de Convenciones"
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            background: `${colors.dark}cc`,
-            border: `1px solid ${colors.light}33`,
-            color: colors.light,
-            fontSize: '1rem',
-          }}
+          className="parent-edit-input"
         />
       </div>
 
-      <div className="actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <div className="parent-edit-card">
+        <UbicacionesEditor
+          value={form.ubicaciones}
+          onChange={(ubicaciones) => setForm({...form, ubicaciones})}
+        />
+      </div>
+
+      <div className="parent-edit-actions">
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

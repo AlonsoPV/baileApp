@@ -9,6 +9,7 @@ import ShareButton from "../../components/events/ShareButton";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import UbicacionesLive from "../../components/locations/UbicacionesLive";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -444,18 +445,612 @@ export default function EventParentPublicScreen() {
           animation: shimmer 2s infinite;
         }
 
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+
+        .social-hero-modern {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(18, 18, 18, 0.9), rgba(18, 18, 18, 0.7));
+          padding: 4rem 2rem;
+          text-align: center;
+          border-radius: 24px;
+          margin: 2rem auto;
+          max-width: 1200px;
+        }
+        
+        .social-hero-modern::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 20% 80%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .social-hero-content {
+          position: relative;
+          z-index: 2;
+        }
+        
+        .social-hero-title {
+          font-size: 4rem;
+          font-weight: 900;
+          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 1.5rem;
+          text-shadow: 0 4px 20px rgba(30, 136, 229, 0.3);
+          letter-spacing: -0.02em;
+        }
+        
+        .social-hero-description {
+          font-size: 1.25rem;
+          opacity: 0.9;
+          max-width: 700px;
+          margin: 0 auto 2.5rem;
+          line-height: 1.6;
+          font-weight: 500;
+          color: rgba(245, 245, 245, 0.95);
+        }
+        
+        .social-hero-actions {
+          display: flex;
+          gap: 1rem;
+          justifyContent: center;
+          flex-wrap: wrap;
+        }
+        
+        .social-main-content {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+          position: relative;
+          z-index: 1;
+        }
+        
+        .social-info-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1.5rem;
+        }
+        
+        .social-info-section {
+          padding: 1.5rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .social-info-title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          margin-bottom: 0.75rem;
+          color: rgba(245, 245, 245, 0.95);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .social-info-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .social-info-chip {
+          padding: 0.5rem 0.75rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(255, 61, 87, 0.2));
+          border-radius: 999px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: rgba(245, 245, 245, 0.95);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .social-description-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .social-description-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          margin-bottom: 1rem;
+          color: rgba(245, 245, 245, 0.95);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .social-description-text {
+          line-height: 1.6;
+          font-size: 1.125rem;
+          color: rgba(245, 245, 245, 0.9);
+        }
+        
+        .social-faq-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .social-faq-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        
+        .social-faq-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #FB8C00, #FF7043);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          box-shadow: 0 8px 24px rgba(251, 140, 0, 0.4);
+        }
+        
+        .social-faq-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #FF7043 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0;
+          line-height: 1.2;
+        }
+        
+        .social-faq-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0;
+          font-weight: 500;
+        }
+        
+        .social-faq-item {
+          padding: 1rem 1.25rem;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          margin-bottom: 1rem;
+        }
+        
+        .social-faq-question {
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin: 0;
+          margin-bottom: 0.5rem;
+          color: rgba(245, 245, 245, 0.95);
+        }
+        
+        .social-faq-answer {
+          font-size: 1rem;
+          opacity: 0.85;
+          margin: 0;
+          line-height: 1.6;
+          color: rgba(245, 245, 245, 0.9);
+        }
+        
+        .social-gallery-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .social-gallery-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        
+        .social-gallery-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #E53935, #FB8C00);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+        }
+        
+        .social-gallery-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0;
+          line-height: 1.2;
+        }
+        
+        .social-gallery-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0;
+          font-weight: 500;
+        }
+        
+        .social-dates-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(30, 136, 229, 0.2);
+          box-shadow: 0 8px 32px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .social-dates-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        
+        .social-dates-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          box-shadow: 0 8px 24px rgba(30, 136, 229, 0.4);
+        }
+        
+        .social-dates-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0;
+          line-height: 1.2;
+        }
+        
+        .social-dates-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0;
+          font-weight: 500;
+        }
+        
+        .social-dates-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 1.5rem;
+        }
+        
+        .social-date-card {
+          padding: 1.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .social-date-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .social-date-title {
+          font-size: 1.125rem;
+          font-weight: 700;
+          margin-bottom: 0.75rem;
+          color: rgba(245, 245, 245, 0.95);
+        }
+        
+        .social-date-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .social-date-info-item {
+          font-size: 0.875rem;
+          color: rgba(30, 136, 229, 0.8);
+          font-weight: 600;
+        }
+        
+        .social-date-info-item.gray {
+          color: rgba(245, 245, 245, 0.7);
+        }
+
         /* Responsivo móvil */
         @media (max-width: 768px) {
-          .social-hero { padding: 2rem !important; }
-          .glass-card { padding: 1.5rem !important; margin-bottom: 1.5rem !important; }
-          .glass-card h3 { font-size: 1.5rem !important; }
-          .glass-card p { font-size: 1rem !important; }
-          .social-hero h1 { font-size: 2.5rem !important; line-height: 1.2 !important; }
+          .social-hero-modern {
+            padding: 2rem 1rem !important;
+            margin: 1rem auto !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-hero-title {
+            font-size: 2.5rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-hero-description {
+            font-size: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .social-hero-actions {
+            flex-direction: column !important;
+            align-items: center !important;
+          }
+          
+          .social-hero-actions button {
+            width: 100% !important;
+            max-width: 300px !important;
+            font-size: 0.9rem !important;
+            padding: 12px 20px !important;
+          }
+          
+          .social-main-content {
+            padding: 1rem !important;
+          }
+          
+          .social-info-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .social-info-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-info-title {
+            font-size: 1.125rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .social-info-chips {
+            justify-content: center !important;
+          }
+          
+          .social-info-chip {
+            font-size: 0.8rem !important;
+            padding: 0.375rem 0.625rem !important;
+          }
+          
+          .social-description-section {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-description-title {
+            font-size: 1.5rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .social-description-text {
+            font-size: 1rem !important;
+          }
+          
+          .social-faq-section {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-faq-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-faq-title {
+            font-size: 1.5rem !important;
+          }
+          
+          .social-faq-item {
+            padding: 0.75rem 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .social-faq-question {
+            font-size: 1rem !important;
+          }
+          
+          .social-faq-answer {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-gallery-section {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-gallery-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-gallery-title {
+            font-size: 1.5rem !important;
+          }
+          
+          .social-dates-section {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .social-dates-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .social-dates-title {
+            font-size: 1.5rem !important;
+          }
+          
+          .social-dates-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .social-date-card {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-date-title {
+            font-size: 1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
         }
+        
         @media (max-width: 480px) {
-          .social-hero { padding: 1.5rem !important; }
-          .glass-card { padding: 1rem !important; }
-          .social-hero h1 { font-size: 2rem !important; }
+          .social-hero-modern {
+            padding: 1.5rem 0.75rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-hero-title {
+            font-size: 2rem !important;
+          }
+          
+          .social-hero-description {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-main-content {
+            padding: 0.75rem !important;
+          }
+          
+          .social-info-section {
+            padding: 0.75rem !important;
+            border-radius: 8px !important;
+          }
+          
+          .social-info-title {
+            font-size: 1rem !important;
+          }
+          
+          .social-info-chip {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.5rem !important;
+          }
+          
+          .social-description-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-description-title {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-description-text {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-faq-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-faq-title {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-faq-item {
+            padding: 0.625rem 0.875rem !important;
+          }
+          
+          .social-faq-question {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-faq-answer {
+            font-size: 0.8rem !important;
+          }
+          
+          .social-gallery-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-gallery-title {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-dates-section {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .social-dates-title {
+            font-size: 1.25rem !important;
+          }
+          
+          .social-date-card {
+            padding: 0.75rem !important;
+            border-radius: 8px !important;
+          }
+          
+          .social-date-title {
+            font-size: 0.9rem !important;
+          }
+          
+          .social-date-info-item {
+            font-size: 0.8rem !important;
+          }
+          
+          .glass-card-container {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
+          }
         }
       `}</style>
       
@@ -508,107 +1103,35 @@ export default function EventParentPublicScreen() {
 
         {/* Hero Section */}
         <motion.div
-          className="social-hero"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{
-            padding: spacing[16],
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 1
-          }}
+          className="social-hero-modern"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          {/* Floating Elements */}
-          <div style={{
-            position: 'absolute',
-            top: '20%',
-            left: '10%',
-            width: '60px',
-            height: '60px',
-            background: colors.gradients.primary,
-            borderRadius: '50%',
-            animation: 'float 4s ease-in-out infinite',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${colors.glass.medium}`
-          }} />
-          
-          <div style={{
-            position: 'absolute',
-            top: '30%',
-            right: '15%',
-            width: '40px',
-            height: '40px',
-            background: colors.gradients.secondary,
-            borderRadius: '50%',
-            animation: 'float 3s ease-in-out infinite reverse',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${colors.glass.medium}`
-          }} />
-          
-          <div style={{
-            position: 'absolute',
-            bottom: '20%',
-            left: '20%',
-            width: '80px',
-            height: '80px',
-            background: colors.gradients.secondary,
-            borderRadius: '50%',
-            animation: 'float 5s ease-in-out infinite',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${colors.glass.medium}`
-          }} />
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            style={{ position: 'relative', zIndex: 2 }}
-          >
-            <h1 style={{
-              fontSize: typography.fontSize['6xl'],
-              fontWeight: typography.fontWeight.black,
-              background: colors.gradients.primary,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: spacing[6],
-              textShadow: `0 4px 20px ${colors.primary[500]}40`,
-              letterSpacing: '-0.02em'
-            }}>
+          <div className="social-hero-content">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="social-hero-title"
+            >
               {parent.nombre}
-            </h1>
-            
-            {parent.biografia && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                style={{
-                  fontSize: typography.fontSize.xl,
-                  opacity: 0.9,
-                  maxWidth: '700px',
-                  margin: `0 auto ${spacing[10]}`,
-                  lineHeight: typography.lineHeight.relaxed,
-                  fontWeight: typography.fontWeight.medium,
-                  color: colors.gray[100]
-                }}
-              >
-                {parent.biografia}
-              </motion.p>
-            )}
+            </motion.h1>
 
-            {/* Botones de acción */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="social-hero-description"
+            >
+              {parent.biografia || 'Descubre más sobre este evento especial'}
+            </motion.p>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-              style={{
-                display: 'flex',
-                gap: spacing[4],
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="social-hero-actions"
             >
               {isOwner && (
                 <motion.button
@@ -659,58 +1182,23 @@ export default function EventParentPublicScreen() {
         </motion.div>
 
         {/* Contenido Principal */}
-        <div style={{ 
-          maxWidth: '1200px', 
-          margin: '0 auto', 
-          padding: spacing[8],
-          position: 'relative',
-          zIndex: 1
-        }}>
+        <div className="social-main-content">
           {/* Información del Evento */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="glass-card"
-            style={{
-              marginBottom: spacing[8],
-              padding: spacing[8],
-              borderRadius: borderRadius['2xl']
-            }}
+            className="social-info-grid"
           >
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: spacing[6]
-            }}>
               {/* Ritmos */}
               {getRitmoNombres().length > 0 && (
-                <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize.lg,
-                    fontWeight: typography.fontWeight.semibold,
-                    marginBottom: spacing[3],
-                    color: colors.gray[50],
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2]
-                  }}>
+                <div className="social-info-section">
+                  <h3 className="social-info-title">
                     🎵 Ritmos
                   </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
+                  <div className="social-info-chips">
                     {getRitmoNombres().map((ritmo) => (
-                      <span
-                        key={ritmo}
-                        style={{
-                          padding: `${spacing[2]} ${spacing[3]}`,
-                          background: colors.gradients.primary,
-                          borderRadius: borderRadius.full,
-                          fontSize: typography.fontSize.sm,
-                          fontWeight: typography.fontWeight.medium,
-                          color: colors.gray[50],
-                          boxShadow: colors.shadows.md
-                        }}
-                      >
+                      <span key={ritmo} className="social-info-chip">
                         {ritmo}
                       </span>
                     ))}
@@ -720,32 +1208,13 @@ export default function EventParentPublicScreen() {
 
               {/* Zonas */}
               {getZonaNombres().length > 0 && (
-                <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize.lg,
-                    fontWeight: typography.fontWeight.semibold,
-                    marginBottom: spacing[3],
-                    color: colors.gray[50],
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2]
-                  }}>
+                <div className="social-info-section">
+                  <h3 className="social-info-title">
                     📍 Zonas
                   </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
+                  <div className="social-info-chips">
                     {getZonaNombres().map((zona) => (
-                      <span
-                        key={zona}
-                        style={{
-                          padding: `${spacing[2]} ${spacing[3]}`,
-                          background: colors.gradients.secondary,
-                          borderRadius: borderRadius.full,
-                          fontSize: typography.fontSize.sm,
-                          fontWeight: typography.fontWeight.medium,
-                          color: colors.gray[50],
-                          boxShadow: colors.shadows.md
-                        }}
-                      >
+                      <span key={zona} className="social-info-chip">
                         {zona}
                       </span>
                     ))}
@@ -761,31 +1230,29 @@ export default function EventParentPublicScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="social-description-section"
             >
-              <h3 style={{
-                fontSize: typography.fontSize['2xl'],
-                fontWeight: typography.fontWeight.bold,
-                marginBottom: spacing[4],
-                color: colors.gray[50],
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[2]
-              }}>
+              <h3 className="social-description-title">
                 📝 Descripción
               </h3>
-              <p style={{
-                lineHeight: typography.lineHeight.relaxed,
-                fontSize: typography.fontSize.lg,
-                color: colors.gray[100]
-              }}>
+              <p className="social-description-text">
                 {parent.descripcion}
               </p>
+            </motion.div>
+          )}
+
+          {/* Ubicaciones */}
+          {(parent as any).ubicaciones && Array.isArray((parent as any).ubicaciones) && (parent as any).ubicaciones.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="glass-card-container"
+            >
+              <UbicacionesLive 
+                ubicaciones={(parent as any).ubicaciones}
+                title="📍 Ubicaciones del Evento"
+              />
             </motion.div>
           )}
 
@@ -794,25 +1261,22 @@ export default function EventParentPublicScreen() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              transition={{ delay: 0.5 }}
+              className="social-faq-section"
             >
-              <h3 style={{
-                fontSize: typography.fontSize['2xl'],
-                fontWeight: typography.fontWeight.bold,
-                marginBottom: spacing[6],
-                color: colors.gray[50],
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[2]
-              }}>
-                ❓ Preguntas Frecuentes
-              </h3>
+              <div className="social-faq-header">
+                <div className="social-faq-icon">
+                  ❓
+                </div>
+                <div>
+                  <h3 className="social-faq-title">
+                    Preguntas Frecuentes
+                  </h3>
+                  <p className="social-faq-subtitle">
+                    {parent.faq.length} pregunta{parent.faq.length !== 1 ? 's' : ''} frecuente{parent.faq.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
                 {parent.faq.map((faq: any, index: number) => (
                   <motion.div
@@ -820,26 +1284,12 @@ export default function EventParentPublicScreen() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    style={{
-                      padding: spacing[5],
-                      background: colors.glass.light,
-                      borderRadius: borderRadius.xl,
-                      border: `1px solid ${colors.glass.medium}`
-                    }}
+                    className="social-faq-item"
                   >
-                    <h4 style={{
-                      fontSize: typography.fontSize.lg,
-                      fontWeight: typography.fontWeight.semibold,
-                      marginBottom: spacing[2],
-                      color: colors.gray[50]
-                    }}>
+                    <h4 className="social-faq-question">
                       {faq.pregunta}
                     </h4>
-                    <p style={{
-                      fontSize: typography.fontSize.base,
-                      color: colors.gray[200],
-                      lineHeight: typography.lineHeight.relaxed
-                    }}>
+                    <p className="social-faq-answer">
                       {faq.respuesta}
                     </p>
                   </motion.div>
@@ -854,47 +1304,17 @@ export default function EventParentPublicScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="social-gallery-section"
             >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[4],
-                marginBottom: spacing[6]
-              }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: colors.gradients.primary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: typography.fontSize['2xl'],
-                  boxShadow: colors.shadows.glow
-                }}>
+              <div className="social-gallery-header">
+                <div className="social-gallery-icon">
                   📷
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.gray[50]
-                  }}>
+                  <h3 className="social-gallery-title">
                     Galería de Fotos
                   </h3>
-                  <p style={{
-                    fontSize: typography.fontSize.sm,
-                    opacity: 0.8,
-                    margin: 0,
-                    color: colors.gray[300]
-                  }}>
+                  <p className="social-gallery-subtitle">
                     {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -910,57 +1330,23 @@ export default function EventParentPublicScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
+              className="social-dates-section"
             >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[4],
-                marginBottom: spacing[6]
-              }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: colors.gradients.secondary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: typography.fontSize['2xl'],
-                  boxShadow: `0 8px 24px ${colors.secondary[500]}40`
-                }}>
+              <div className="social-dates-header">
+                <div className="social-dates-icon">
                   📅
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.gray[50]
-                  }}>
+                  <h3 className="social-dates-title">
                     Próximas Fechas
                   </h3>
-                  <p style={{
-                    fontSize: typography.fontSize.sm,
-                    opacity: 0.8,
-                    margin: 0,
-                    color: colors.gray[300]
-                  }}>
+                  <p className="social-dates-subtitle">
                     {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
               
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                gap: spacing[6]
-              }}>
+              <div className="social-dates-grid">
                 {dates.map((date: any, index: number) => (
                   <motion.div
                     key={date.id}
@@ -969,38 +1355,16 @@ export default function EventParentPublicScreen() {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ 
                       scale: 1.02, 
-                      y: -4,
-                      boxShadow: colors.shadows.lg
+                      y: -4
                     }}
                     onClick={() => navigate(`/social/fecha/${date.id}`)}
-                    style={{
-                      padding: spacing[6],
-                      background: colors.gradients.glass,
-                      borderRadius: borderRadius.xl,
-                      border: `1px solid ${colors.glass.medium}`,
-                      cursor: 'pointer',
-                      transition: transitions.normal,
-                      boxShadow: colors.shadows.md
-                    }}
+                    className="social-date-card"
                   >
-                    <h4 style={{
-                      fontSize: typography.fontSize.lg,
-                      fontWeight: typography.fontWeight.semibold,
-                      marginBottom: spacing[3],
-                      color: colors.gray[50]
-                    }}>
+                    <h4 className="social-date-title">
                       {date.nombre || 'Fecha del evento'}
                     </h4>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: spacing[2]
-                    }}>
-                      <p style={{
-                        fontSize: typography.fontSize.sm,
-                        color: colors.primary[500],
-                        fontWeight: typography.fontWeight.medium
-                      }}>
+                    <div className="social-date-info">
+                      <p className="social-date-info-item">
                         📅 {new Date(date.fecha).toLocaleDateString('es-ES', {
                           weekday: 'long',
                           year: 'numeric',
@@ -1009,18 +1373,12 @@ export default function EventParentPublicScreen() {
                         })}
                       </p>
                       {date.hora_inicio && (
-                        <p style={{
-                          fontSize: typography.fontSize.sm,
-                          color: colors.gray[300]
-                        }}>
+                        <p className="social-date-info-item gray">
                           🕐 {date.hora_inicio}{date.hora_fin ? ` - ${date.hora_fin}` : ''}
                         </p>
                       )}
                       {date.lugar && (
-                        <p style={{
-                          fontSize: typography.fontSize.sm,
-                          color: colors.gray[300]
-                        }}>
+                        <p className="social-date-info-item gray">
                           📍 {date.lugar}
                         </p>
                       )}
