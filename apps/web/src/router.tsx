@@ -177,7 +177,6 @@ export function AppRouter() {
         
         {/* Additional Profile Types */}
         <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
-        <Route path="/profile/teacher" element={<TeacherProfileEditor />} />
         
         {/* Academy Routes */}
         <Route path="/academia/editar" element={<AcademyProfileEditor />} />

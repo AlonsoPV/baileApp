@@ -101,7 +101,7 @@ export default function AppRouter() {
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
         <Route path="/profile/academy" element={<AcademyProfileLive />} />
-        <Route path="/profile/teacher/live" element={<TeacherProfileLive />} />
+        <Route path="/profile/teacher" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
         <Route path="/u/:userId" element={<UserPublicProfile />} />
@@ -112,7 +112,7 @@ export default function AppRouter() {
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/profile/edit" element={<ProfileScreen />} />
           <Route path="/profile/settings" element={<ProfileScreen />} />
-          <Route path="/profile/teacher" element={<TeacherProfileEditor />} />
+          <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
           <Route path="/profile/brand" element={<BrandProfileEditor />} />
           <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
           <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />

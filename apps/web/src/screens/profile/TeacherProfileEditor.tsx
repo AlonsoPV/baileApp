@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAcademyMy, useUpsertAcademy } from "../../hooks/useAcademy";
-import { useAcademyMedia } from "../../hooks/useAcademyMedia";
+import { useTeacherMy, useUpsertTeacher } from "../../hooks/useTeacher";
+import { useTeacherMedia } from "../../hooks/useTeacherMedia";
 import { useTags } from "../../hooks/useTags";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
 import { Chip } from "../../components/profile/Chip";
@@ -36,13 +36,13 @@ const colors = {
   orange: '#FF9800'
 };
 
-export default function AcademyProfileEditor() {
+export default function TeacherProfileEditor() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: academy, isLoading } = useAcademyMy();
+  const { data: teacher, isLoading } = useTeacherMy();
   const { data: allTags } = useTags();
-  const { media, add, remove } = useAcademyMedia();
-  const upsert = useUpsertAcademy();
+  const { media, add, remove } = useTeacherMedia();
+  const upsert = useUpsertTeacher();
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
@@ -51,8 +51,8 @@ export default function AcademyProfileEditor() {
   useRoleChange();
 
   const { form, setField, setNested, setAll } = useHydratedForm({
-    draftKey: getDraftKey(user?.id, 'academy'),
-    serverData: academy,
+    draftKey: getDraftKey(user?.id, 'teacher'),
+    serverData: teacher,
     defaults: {
       nombre_publico: "",
       bio: "",
