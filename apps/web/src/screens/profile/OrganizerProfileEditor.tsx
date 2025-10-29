@@ -98,7 +98,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '1.2rem',
-              boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)'
+              boxShadow: '0 4px 12px rgba(252, 247, 248, 0.3)3)'
             }}>
               🎭
             </div>
@@ -106,7 +106,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               fontSize: '1.4rem',
               fontWeight: '800',
               margin: 0,
-              color: colors.light,
+              color: "white",
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
@@ -120,7 +120,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               marginBottom: '1rem',
               fontWeight: '500',
               lineHeight: 1.5,
-              color: colors.light
+              color: "white"
             }}>
               {parent.descripcion}
             </p>
@@ -128,13 +128,13 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           <div style={{
             fontSize: '0.85rem',
             opacity: 0.8,
-            color: colors.blue,
+            color: "white",
             fontWeight: '600',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             padding: '0.5rem 0.75rem',
-            background: 'rgba(30, 136, 229, 0.1)',
+            background: 'rgba(44, 148, 239, 0.38)',
             borderRadius: '10px',
             border: '1px solid rgba(30, 136, 229, 0.2)',
             width: 'fit-content'
@@ -153,7 +153,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             }}
             style={{
               padding: '0.75rem 1.25rem',
-              color: colors.light,
+              color: "black",
               border: '2px solid rgba(30, 136, 229, 0.3)',
               borderRadius: '12px',
               fontSize: '0.85rem',
@@ -1182,7 +1182,7 @@ export default function OrganizerProfileEditor() {
                     fontWeight: '800',
                     margin: 0,
                     color: colors.light,
-                    background: 'linear-gradient(135deg, #FF3D57 0%, #FF8C42 100%)',
+                    
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                   }}>

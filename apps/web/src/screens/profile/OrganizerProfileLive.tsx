@@ -14,6 +14,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -446,6 +447,7 @@ export function OrganizerProfileLive() {
         : date.hora_inicio || '';
 
       const item = {
+        id: date.id,
         nombre: fechaNombre,
         date: fmtDate(date.fecha),
         time: horaFormateada,
@@ -468,7 +470,12 @@ export function OrganizerProfileLive() {
             }
           }
           return undefined;
-        })()
+        })(),
+        fecha: date.fecha,
+        hora_inicio: date.hora_inicio,
+        hora_fin: date.hora_fin,
+        lugar: date.lugar || date.ciudad || date.direccion,
+        biografia: (date as any).biografia
       };
 
       upcomingItems.push(item);
@@ -482,6 +489,47 @@ export function OrganizerProfileLive() {
     const [idx, setIdx] = React.useState(0);
     if (!items?.length) return null;
     const ev = items[idx % items.length];
+    
+    // Construir fechas para el calendario
+    const calendarStart = (() => {
+      try {
+        if (!ev.fecha) return new Date();
+        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
+        const hora = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+        const fechaCompleta = `${fechaStr}T${hora}:00`;
+        const parsed = new Date(fechaCompleta);
+        return isNaN(parsed.getTime()) ? new Date() : parsed;
+      } catch (err) {
+        console.error('[DateFlyerSlider] Error parsing start date:', err);
+        return new Date();
+      }
+    })();
+
+    const calendarEnd = (() => {
+      try {
+        if (!ev.fecha) {
+          const defaultEnd = new Date(calendarStart);
+          defaultEnd.setHours(defaultEnd.getHours() + 2);
+          return defaultEnd;
+        }
+        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
+        const hora = (ev.hora_fin || ev.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
+        const fechaCompleta = `${fechaStr}T${hora}:00`;
+        const parsed = new Date(fechaCompleta);
+        if (isNaN(parsed.getTime())) {
+          const defaultEnd = new Date(calendarStart);
+          defaultEnd.setHours(defaultEnd.getHours() + 2);
+          return defaultEnd;
+        }
+        return parsed;
+      } catch (err) {
+        console.error('[DateFlyerSlider] Error parsing end date:', err);
+        const defaultEnd = new Date(calendarStart);
+        defaultEnd.setHours(defaultEnd.getHours() + 2);
+        return defaultEnd;
+      }
+    })();
+
     return (
       <div style={{ display: 'grid', placeItems: 'center', gap: spacing[3] }}>
         <motion.div
@@ -500,11 +548,23 @@ export function OrganizerProfileLive() {
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700, marginBottom: spacing[2], textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], fontSize: typography.fontSize.sm }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], fontSize: typography.fontSize.sm, marginBottom: spacing[2] }}>
                   {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
                   {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
                   {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
                   {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                </div>
+                {/* Botón de calendario */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2] }} onClick={(e) => e.stopPropagation()}>
+                  <AddToCalendarWithStats
+                    eventId={ev.id}
+                    title={ev.nombre}
+                    description={ev.biografia}
+                    location={ev.lugar}
+                    start={calendarStart}
+                    end={calendarEnd}
+                    showAsIcon={true}
+                  />
                 </div>
               </div>
             </div>

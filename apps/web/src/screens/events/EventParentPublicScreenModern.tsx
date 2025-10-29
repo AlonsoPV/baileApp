@@ -10,6 +10,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -259,6 +260,47 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
   const [idx, setIdx] = React.useState(0);
   if (!items?.length) return null;
   const ev = items[idx % items.length];
+  
+  // Construir fechas para el calendario
+  const calendarStart = (() => {
+    try {
+      if (!ev.fecha) return new Date();
+      const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
+      const hora = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+      const fechaCompleta = `${fechaStr}T${hora}:00`;
+      const parsed = new Date(fechaCompleta);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    } catch (err) {
+      console.error('[DateFlyerSlider] Error parsing start date:', err);
+      return new Date();
+    }
+  })();
+
+  const calendarEnd = (() => {
+    try {
+      if (!ev.fecha) {
+        const defaultEnd = new Date(calendarStart);
+        defaultEnd.setHours(defaultEnd.getHours() + 2);
+        return defaultEnd;
+      }
+      const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
+      const hora = (ev.hora_fin || ev.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
+      const fechaCompleta = `${fechaStr}T${hora}:00`;
+      const parsed = new Date(fechaCompleta);
+      if (isNaN(parsed.getTime())) {
+        const defaultEnd = new Date(calendarStart);
+        defaultEnd.setHours(defaultEnd.getHours() + 2);
+        return defaultEnd;
+      }
+      return parsed;
+    } catch (err) {
+      console.error('[DateFlyerSlider] Error parsing end date:', err);
+      const defaultEnd = new Date(calendarStart);
+      defaultEnd.setHours(defaultEnd.getHours() + 2);
+      return defaultEnd;
+    }
+  })();
+
   return (
     <div style={{ display: 'grid', placeItems: 'center', gap: '0.75rem' }}>
       <style>{`
@@ -283,11 +325,23 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
             )}
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
               <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem', marginBottom: 8 }}>
                 {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
                 {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
                 {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
                 {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+              </div>
+              {/* Botón de calendario */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }} onClick={(e) => e.stopPropagation()}>
+                <AddToCalendarWithStats
+                  eventId={ev.id}
+                  title={ev.nombre}
+                  description={ev.biografia || ev.parentDescripcion}
+                  location={ev.lugar}
+                  start={calendarStart}
+                  end={calendarEnd}
+                  showAsIcon={true}
+                />
               </div>
             </div>
           </div>
@@ -429,7 +483,22 @@ export default function EventParentPublicScreen() {
       }
       return undefined;
     })();
-    return { nombre: d.nombre || parent?.nombre, date: new Date(d.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+    return { 
+      id: d.id,
+      nombre: d.nombre || parent?.nombre, 
+      date: new Date(d.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), 
+      time: hora, 
+      place: d.lugar || d.ciudad || '', 
+      flyer, 
+      price, 
+      href: `/social/fecha/${d.id}`,
+      fecha: d.fecha,
+      hora_inicio: d.hora_inicio,
+      hora_fin: d.hora_fin,
+      lugar: d.lugar || d.ciudad || d.direccion,
+      biografia: d.biografia,
+      parentDescripcion: parent?.descripcion
+    };
   });
 
   // Obtener nombres de ritmos y zonas
