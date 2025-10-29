@@ -1178,7 +1178,7 @@ export default function EventParentPublicScreen() {
                 }}
               />
             </motion.div>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* Contenido Principal */}
@@ -1221,7 +1221,6 @@ export default function EventParentPublicScreen() {
                   </div>
                 </div>
               )}
-            </div>
           </motion.div>
 
           {/* Descripción */}
