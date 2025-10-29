@@ -257,6 +257,55 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
+// Slider responsivo para mostrar flyers de fechas
+const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
+  const [idx, setIdx] = React.useState(0);
+  if (!items?.length) return null;
+  const ev = items[idx % items.length];
+  return (
+    <div style={{ display: 'grid', placeItems: 'center', gap: '0.75rem' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .dfs-wrap { width: 100% !important; max-width: 100% !important; }
+          .dfs-controls { width: 100% !important; }
+        }
+      `}</style>
+      <motion.div
+        key={idx}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => onOpen(ev.href)}
+        style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+        className="dfs-wrap"
+      >
+        <div style={{ width: 360, maxWidth: '85vw' }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
+            {ev.flyer && (
+              <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            )}
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
+                {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      {items.length > 1 && (
+        <div className="dfs-controls" style={{ width: 360, maxWidth: '85vw', display: 'flex', justifyContent: 'space-between' }}>
+          <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
+          <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function EventParentPublicScreen() {
   const params = useParams<{ parentId?: string; id?: string }>();
   const parentIdParam = params.parentId ?? params.id;
@@ -373,6 +422,23 @@ export default function EventParentPublicScreen() {
       day: 'numeric'
     });
   };
+
+  // Construir items para el slider de fechas
+  const dateItems = (dates || []).map((d: any) => {
+    const hora = d.hora_inicio && d.hora_fin
+      ? `${d.hora_inicio} - ${d.hora_fin}`
+      : (d.hora_inicio ? d.hora_inicio : undefined);
+    const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+    const price = (() => {
+      const costos = (d as any)?.costos;
+      if (Array.isArray(costos) && costos.length) {
+        const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+        if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
+      }
+      return undefined;
+    })();
+    return { nombre: d.nombre || parent?.nombre, date: formatDate(d.fecha), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+  });
 
   return (
     <>
@@ -737,150 +803,9 @@ export default function EventParentPublicScreen() {
             </div>
 
             {dates && dates.length > 0 ? (
-              <div style={{
-                display: 'grid',
-                gap: '1.5rem',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))'
-              }}>
-                {dates.map((date: any, index: number) => (
-                  <motion.div
-                    key={date.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{
-                      scale: 1.03,
-                      y: -8,
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.2)'
-                    }}
-                    onClick={() => navigate(`/social/fecha/${date.id}`)}
-                    style={{
-                      padding: '1.5rem',
-                      background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-                      borderRadius: '1.25rem',
-                      border: '1px solid rgba(240, 147, 251, 0.2)',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)'
-                    }}
-                  >
-                    {/* Barra superior de acento */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-                    <div style={{ position: 'relative', zIndex: 2 }}>
-                      {/* Avatar circular arriba a la derecha */}
-                      <div style={{ position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, fontSize: 14 }}>📅</span>
-                      </div>
-                      {/* Título */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                        {isOwner && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate(`/social/fecha/${date.id}/edit`);
-                            }}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              background: 'transparent',
-                              color: colors.light,
-                              cursor: 'pointer'
-                            }}
-                            title="Editar fecha"
-                          >
-                            ✏️ Editar
-                          </button>
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <h3 style={{
-                            fontSize: '1.375rem',
-                            fontWeight: 800,
-                            margin: 0,
-                            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            lineHeight: 1.3
-                          }}>
-                            {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Información de la fecha */}
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        marginBottom: '1.5rem'
-                      }}>
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
-                          color: 'rgba(255,255,255,0.92)', padding: '8px 10px',
-                          background: 'rgba(255,255,255,0.04)', borderRadius: 10,
-                          border: '1px solid rgba(255,255,255,0.06)'
-                        }}>
-                          <span style={{ fontSize: '1.2rem' }}>📅</span>
-                          <span style={{ fontWeight: 600 }}>{formatDate(date.fecha)}</span>
-                        </div>
-
-                        {date.hora_inicio && (
-                          <div style={{
-                            display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
-                            color: 'rgba(255,255,255,0.92)', padding: '8px 10px',
-                            background: 'rgba(255,255,255,0.04)', borderRadius: 10,
-                            border: '1px solid rgba(255,255,255,0.06)'
-                          }}>
-                            <span style={{ fontSize: '1.2rem' }}>🕐</span>
-                            <span style={{ opacity: 0.9 }}>🕒 {date.hora_inicio}{date.hora_fin ? ` – ${date.hora_fin}` : ''}</span>
-                          </div>
-                        )}
-
-                        {date.lugar && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.9)', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <span style={{ fontSize: 16 }}>📍</span>
-                            <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[date.lugar, date.ciudad].filter(Boolean).join(' • ')}</span>
-                          </div>
-                        )}
-
-                        {date.ciudad && (
-                          <div style={{ fontSize: 12, marginTop: 6, padding: 8, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 10 }}>
-                            🗺️ {date.ciudad}
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{
-                          padding: '8px 12px',
-                          borderRadius: 12,
-                          background: date.estado_publicacion === 'publicado' ? 'linear-gradient(135deg, #1E88E5, #7C4DFF)' : 'rgba(255,255,255,0.08)',
-                          color: '#fff',
-                          textAlign: 'center',
-                          fontSize: 13,
-                          fontWeight: 700,
-                          border: '1px solid rgba(255,255,255,0.08)'
-                        }}>
-                          {date.estado_publicacion === 'publicado' ? '🌐 Público' : '📝 Borrador'}
-                        </div>
-                        <div style={{
-                          padding: '8px 12px',
-                          borderRadius: 12,
-                          background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)',
-                          color: '#fff',
-                          textAlign: 'center',
-                          fontSize: 13,
-                          fontWeight: 700,
-                          border: '1px solid rgba(255,255,255,0.08)'
-                        }}>Ver más →</div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              <>
+                <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
+              </>
             ) : (
               <div style={{
                 textAlign: 'center',
