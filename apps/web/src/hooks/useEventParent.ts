@@ -11,23 +11,53 @@ export function useEventParent(parentId?: number) {
         return null;
       }
       
-      const { data, error } = await supabase
+      // Try to fetch with ubicaciones first, fallback if column doesn't exist
+      let query = supabase
         .from("events_parent")
-        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, ubicaciones, faq, media, created_at, updated_at")
-        .eq("id", parentId)
-        .maybeSingle();
+        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, created_at, updated_at")
+        .eq("id", parentId);
+      
+      const { data, error } = await query.maybeSingle();
         
       console.log('[useEventParent] Supabase response:', { data, error });
       
       if (error) {
         console.error('[useEventParent] Supabase error:', error);
+        // If the error is about the record not existing, return null instead of throwing
+        if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
+          console.log('[useEventParent] Record not found, returning null');
+          return null;
+        }
+        // If the error is about a missing column (like ubicaciones), try without that column
+        if (error.code === '42703' && error.message?.includes('ubicaciones')) {
+          console.log('[useEventParent] Column ubicaciones does not exist, trying again without it');
+          // Fetch again without ubicaciones
+          const { data: retryData, error: retryError } = await supabase
+            .from("events_parent")
+            .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, created_at, updated_at")
+            .eq("id", parentId)
+            .maybeSingle();
+          
+          if (retryError) {
+            throw retryError;
+          }
+          console.log('[useEventParent] Returning data without ubicaciones:', retryData);
+          return retryData;
+        }
         throw error;
       }
       
       console.log('[useEventParent] Returning data:', data);
       return data;
     },
-    enabled: !!parentId
+    enabled: !!parentId,
+    retry: (failureCount, error: any) => {
+      // Don't retry if the record doesn't exist
+      if (error?.code === 'PGRST116' || error?.message?.includes('No rows found')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 }
 
