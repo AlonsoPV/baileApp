@@ -34,6 +34,7 @@ export type CrearClaseValue = {
   ubicacionNombre?: string;
   ubicacionDireccion?: string;
   ubicacionNotas?: string;
+  ubicacionId?: string | null;
 };
 
 type Tag = { id: number; nombre: string };
@@ -186,6 +187,7 @@ export default function CrearClase({
     ubicacionNombre: value?.ubicacionNombre || '',
     ubicacionDireccion: value?.ubicacionDireccion || '',
     ubicacionNotas: value?.ubicacionNotas || '',
+    ubicacionId: value?.ubicacionId ?? null,
   });
 
   // Synchronize form when editing value changes
@@ -208,6 +210,7 @@ export default function CrearClase({
         ubicacionNombre: effective?.ubicacionNombre || '',
         ubicacionDireccion: effective?.ubicacionDireccion || '',
         ubicacionNotas: effective?.ubicacionNotas || '',
+        ubicacionId: effective?.ubicacionId ?? null,
       });
       setIsOpen(true);
       setSelectedLocationId('');
@@ -266,6 +269,7 @@ export default function CrearClase({
       ubicacionNombre: '',
       ubicacionDireccion: '',
       ubicacionNotas: '',
+      ubicacionId: null,
     });
     setSelectedLocationId('');
   };
@@ -496,6 +500,7 @@ export default function CrearClase({
                     onChange={(e) => {
                       const nextId = e.target.value;
                       setSelectedLocationId(nextId);
+                      setField('ubicacionId', nextId || null);
                       const sel = locations.find(l => (l.id || '') === nextId);
                       if (sel && nextId) {
                         setField('ubicacionNombre', sel.nombre || '');

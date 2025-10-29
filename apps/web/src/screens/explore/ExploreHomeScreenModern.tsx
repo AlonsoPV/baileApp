@@ -112,29 +112,26 @@ export default function ExploreHomeScreen() {
     pageSize: 4
   });
 
-  // Construir clases desde academias y maestros (primer page)
+  // Construir clases desde academias y maestros (todas las páginas disponibles)
   const classesList = React.useMemo(() => {
-    const takeFrom = (arr: any[] | undefined) => (arr || []).slice(0, 1); // toma primer page
-    const a = takeFrom(academias?.pages?.[0]?.data);
-    const m = takeFrom(maestros?.pages?.[0]?.data);
-    const fromAcademies = (a || []).flatMap((ac: any) => (ac?.cronograma || []).map((c: any) => ({
+    const dayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const allA = (academias?.pages || []).flatMap(p => p?.data || []);
+    const allM = (maestros?.pages || []).flatMap(p => p?.data || []);
+
+    const mapClase = (owner: any, c: any) => ({
       titulo: c?.titulo,
       fecha: c?.fecha,
-      diasSemana: c?.diasSemana,
+      diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
       inicio: c?.inicio,
       fin: c?.fin,
-      ubicacion: c?.ubicacion
-    })));
-    const fromTeachers = (m || []).flatMap((tc: any) => (tc?.cronograma || []).map((c: any) => ({
-      titulo: c?.titulo,
-      fecha: c?.fecha,
-      diasSemana: c?.diasSemana,
-      inicio: c?.inicio,
-      fin: c?.fin,
-      ubicacion: c?.ubicacion
-    })));
-    const merged = [...fromAcademies, ...fromTeachers];
-    return merged.slice(0, 10);
+      ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || ''
+    });
+
+    const fromAcademies = allA.flatMap((ac: any) => (Array.isArray(ac?.cronograma) ? ac.cronograma.map((c: any) => mapClase(ac, c)) : []));
+    const fromTeachers = allM.flatMap((tc: any) => (Array.isArray(tc?.cronograma) ? tc.cronograma.map((c: any) => mapClase(tc, c)) : []));
+
+    const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
+    return merged.slice(0, 12);
   }, [academias, maestros]);
 
   const handleFilterChange = (newFilters: typeof filters) => {

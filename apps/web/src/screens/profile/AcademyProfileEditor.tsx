@@ -325,9 +325,15 @@ export default function AcademyProfileEditor() {
                     const prev = currentCrono[editingIndex];
                     const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
 
-                    const ubicacionStr = (
+                    let ubicacionStr = (
                       [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
                     ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+                    if (!ubicacionStr.trim() && c?.ubicacionId) {
+                      const match = ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId);
+                      if (match) {
+                        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+                      }
+                    }
 
                     const updatedItem = {
                       ...prev,
@@ -373,9 +379,15 @@ export default function AcademyProfileEditor() {
                         throw e;
                       });
                   } else {
-                    const ubicacionStr = (
+                    let ubicacionStr = (
                       [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
                     ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+                    if (!ubicacionStr.trim() && c?.ubicacionId) {
+                      const match = ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId);
+                      if (match) {
+                        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+                      }
+                    }
 
                     const nextCrono = ([...currentCrono, {
                       tipo: 'clase',
