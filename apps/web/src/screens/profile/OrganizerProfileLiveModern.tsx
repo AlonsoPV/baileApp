@@ -698,7 +698,7 @@ export function OrganizerProfileLive() {
             overflow: 'hidden',
             borderRadius: borderRadius['2xl'],
             padding: spacing[12],
-            margin: `${spacing[20]} auto 0 auto`,
+            margin: `0 auto 0 auto`,
             maxWidth: '900px',
             width: '100%',
             border: `1px solid ${colors.glass.medium}`,

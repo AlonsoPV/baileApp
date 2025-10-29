@@ -254,6 +254,55 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
+// Slider responsivo para mostrar flyers de fechas
+const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
+  const [idx, setIdx] = React.useState(0);
+  if (!items?.length) return null;
+  const ev = items[idx % items.length];
+  return (
+    <div style={{ display: 'grid', placeItems: 'center', gap: '0.75rem' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .dfs-wrap { width: 100% !important; max-width: 100% !important; }
+          .dfs-controls { width: 100% !important; }
+        }
+      `}</style>
+      <motion.div
+        key={idx}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => onOpen(ev.href)}
+        style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+        className="dfs-wrap"
+      >
+        <div style={{ width: 360, maxWidth: '85vw' }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
+            {ev.flyer && (
+              <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            )}
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
+                {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      {items.length > 1 && (
+        <div className="dfs-controls" style={{ width: 360, maxWidth: '85vw', display: 'flex', justifyContent: 'space-between' }}>
+          <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255, 255, 255, 0.08)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
+          <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255, 255, 255, 0.08)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function EventParentPublicScreen() {
   const params = useParams<{ parentId?: string; id?: string }>();
   const navigate = useNavigate();
@@ -365,6 +414,23 @@ export default function EventParentPublicScreen() {
   const videos = VIDEO_SLOTS
     .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
     .filter(Boolean) as string[];
+
+  // Construir items para el slider de fechas
+  const dateItems = (dates || []).map((d: any) => {
+    const hora = d.hora_inicio && d.hora_fin
+      ? `${d.hora_inicio} - ${d.hora_fin}`
+      : (d.hora_inicio ? d.hora_inicio : undefined);
+    const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+    const price = (() => {
+      const costos = (d as any)?.costos;
+      if (Array.isArray(costos) && costos.length) {
+        const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+        if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
+      }
+      return undefined;
+    })();
+    return { nombre: d.nombre || parent?.nombre, date: new Date(d.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+  });
 
   // Obtener nombres de ritmos y zonas
   const getRitmoNombres = () => {
@@ -1345,47 +1411,7 @@ export default function EventParentPublicScreen() {
                   </p>
                 </div>
               </div>
-              
-              <div className="social-dates-grid">
-                {dates.map((date: any, index: number) => (
-                  <motion.div
-                    key={date.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ 
-                      scale: 1.02, 
-                      y: -4
-                    }}
-                    onClick={() => navigate(`/social/fecha/${date.id}`)}
-                    className="social-date-card"
-                  >
-                    <h4 className="social-date-title">
-                      {date.nombre || 'Fecha del evento'}
-                    </h4>
-                    <div className="social-date-info">
-                      <p className="social-date-info-item">
-                        📅 {new Date(date.fecha).toLocaleDateString('es-ES', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      {date.hora_inicio && (
-                        <p className="social-date-info-item gray">
-                          🕐 {date.hora_inicio}{date.hora_fin ? ` - ${date.hora_fin}` : ''}
-                        </p>
-                      )}
-                      {date.lugar && (
-                        <p className="social-date-info-item gray">
-                          📍 {date.lugar}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
             </motion.div>
           )}
         </div>
