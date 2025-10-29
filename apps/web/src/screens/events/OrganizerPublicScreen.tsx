@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useTags } from "../../hooks/useTags";
 import { useAuth } from '@/contexts/AuthProvider';
 import ShareLink from '../../components/ShareLink';
+import { Chip } from '../../components/profile/Chip';
+import { fmtDate, fmtTime } from '../../utils/format';
 import { supabase } from '@/lib/supabase';
 import NotFound from '@/screens/system/NotFound';
 
@@ -40,6 +42,25 @@ export function OrganizerPublicScreen() {
       return data ?? null;
     }
   });
+
+  // Eventos (Sociales) creados por este organizador
+  const { data: eventParents = [] } = useQuery({
+    queryKey: ['org-event-parents', (org as any)?.id],
+    enabled: !!(org as any)?.id,
+    queryFn: async () => {
+      const organizerId = (org as any)?.id;
+      if (!organizerId) return [] as any[];
+      const { data, error } = await supabase
+        .from('events_parent')
+        .select('id, nombre, descripcion, sede_general, estado_aprobacion')
+        .eq('organizer_id', organizerId);
+      if (error) throw error;
+      return data ?? [];
+    }
+  });
+
+  // Fechas (por simplicidad, omitimos join complejo; se puede enriquecer luego)
+  const eventDates: any[] = [];
 
   // Get tag names from IDs
   const getRitmoNombres = () => {

@@ -513,7 +513,7 @@ export default function EventParentPublicScreen() {
         .social-hero-actions {
           display: flex;
           gap: 1rem;
-          justifyContent: center;
+          justify-content: center;
           flex-wrap: wrap;
         }
         

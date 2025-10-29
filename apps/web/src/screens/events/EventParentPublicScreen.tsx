@@ -480,12 +480,37 @@ export default function EventParentPublicScreen() {
         }
         
         .social-header {
-          background: linear-gradient(135deg, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.5));
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(18, 18, 18, 0.86), rgba(18, 18, 18, 0.6));
           border-radius: 20px;
           padding: 32px;
           margin-bottom: 32px;
           border: 1px solid rgba(245, 245, 245, 0.13);
           backdrop-filter: blur(10px);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .social-header::before {
+          content: '';
+          position: absolute;
+          top: -20%;
+          left: -10%;
+          width: 280px;
+          height: 280px;
+          background: radial-gradient(circle at center, rgba(30, 136, 229, 0.18), transparent 60%);
+          filter: blur(6px);
+          border-radius: 50%;
+        }
+        .social-header::after {
+          content: '';
+          position: absolute;
+          bottom: -15%;
+          right: -10%;
+          width: 220px;
+          height: 220px;
+          background: radial-gradient(circle at center, rgba(255, 61, 87, 0.16), transparent 60%);
+          filter: blur(6px);
+          border-radius: 50%;
         }
         
         .social-header-content {

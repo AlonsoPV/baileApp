@@ -778,7 +778,7 @@ export function OrganizerProfileLive() {
           style={{
             position: 'relative',
             overflow: 'hidden',
-            margin: `${spacing[20]} auto 0 auto`,
+            margin: `0 auto 0 auto`,
             maxWidth: '900px',
             width: '100%',
             zIndex: 1
