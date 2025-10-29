@@ -55,6 +55,7 @@ import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEdi
 import EventParentPublicScreenNew from './screens/events/EventParentPublicScreen';
 import EventDatePublicScreenNew from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
+import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
 import { DateLiveScreen } from './screens/events/DateLiveScreen';
 
 // Sprint 3 - Explore/Search
@@ -197,7 +198,7 @@ export function AppRouter() {
       <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       
       {/* Social and Date Live Routes */}
-      <Route path="/social/:id" element={<SocialLiveScreen />} />
+      <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
       <Route path="/social/fecha/:id" element={<DateLiveScreen />} />
       
       {/* Brand Public Route */}

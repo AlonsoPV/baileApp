@@ -34,6 +34,7 @@ import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventPar
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import EventParentPublicScreen from './screens/events/EventParentPublicScreen';
+import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
 import { DateLiveScreen } from './screens/events/DateLiveScreen';
@@ -95,7 +96,7 @@ export default function AppRouter() {
         <Route path="/explore/list" element={<ExploreListScreen />} />
         <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
         <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
-        <Route path="/social/:id" element={<EventParentPublicScreen />} />
+        <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
         <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
