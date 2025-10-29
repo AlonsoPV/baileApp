@@ -745,7 +745,7 @@ export default function AcademyProfileLive() {
               background: 'linear-gradient(90deg, #E53935, #FB8C00, #FFD166)',
               opacity: 0.9
             }} />
-            
+
             {/* Header destacado */}
             <div style={{
               display: 'flex',
@@ -908,7 +908,8 @@ export default function AcademyProfileLive() {
               <div style={{
                 width: '100%',
                 maxWidth: '500px',
-                aspectRatio: 'auto',
+                height: 'auto',
+                aspectRatio: '16/9',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)'
@@ -1017,7 +1018,7 @@ export default function AcademyProfileLive() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '1.5rem'
               }}
-              className="academy-videos-grid"
+                className="academy-videos-grid"
               >
                 {videos.map((video, index) => (
                   <div
@@ -1025,7 +1026,7 @@ export default function AcademyProfileLive() {
                     style={{
                       width: '100%',
                       height: 'auto',
-                      aspectRatio: 'auto',
+                      aspectRatio: '16/9',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       border: '2px solid rgba(255, 255, 255, 0.1)',

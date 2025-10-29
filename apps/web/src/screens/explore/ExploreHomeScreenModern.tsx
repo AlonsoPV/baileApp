@@ -264,8 +264,9 @@ export default function ExploreHomeScreen() {
             {fechasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : fechas && fechas.pages?.[0]?.data?.length > 0 ? (
-              <div className="cards-grid">
-                {fechas.pages[0].data.slice(0, 9).map((fechaEvento: any, idx: number) => (
+              <HorizontalSlider
+                items={fechas.pages[0].data}
+                renderItem={(fechaEvento: any, idx: number) => (
                   <motion.div 
                     key={fechaEvento.id ?? idx} 
                     initial={{ opacity: 0, y: 20 }}
@@ -283,8 +284,8 @@ export default function ExploreHomeScreen() {
                   >
                     <EventCard item={fechaEvento} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -297,8 +298,9 @@ export default function ExploreHomeScreen() {
               if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
               if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
               return (
-                <div className="cards-grid">
-                  {classesList.slice(0, 9).map((clase: any, idx: number) => (
+                <HorizontalSlider
+                  items={classesList}
+                  renderItem={(clase: any, idx: number) => (
                     <motion.div 
                       key={idx} 
                       initial={{ opacity: 0, y: 20 }}
@@ -316,8 +318,8 @@ export default function ExploreHomeScreen() {
                     >
                       <ClassCard item={clase} />
                     </motion.div>
-                  ))}
-                </div>
+                  )}
+                />
               );
             })()}
           </Section>
@@ -332,8 +334,9 @@ export default function ExploreHomeScreen() {
               if (isLoading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
               const list = data?.pages?.[0]?.data || [];
               return list.length ? (
-                <div className="cards-grid">
-                  {list.slice(0, 9).map((social: any, idx: number) => (
+                <HorizontalSlider
+                  items={list}
+                  renderItem={(social: any, idx: number) => (
                     <motion.div 
                       key={social.id ?? idx} 
                       initial={{ opacity: 0, y: 20 }}
@@ -346,14 +349,13 @@ export default function ExploreHomeScreen() {
                         borderRadius: 16, 
                         padding: 0,
                         overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-                        transition: 'all 0.3s ease'
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                       }}
                     >
                       <OrganizerCard item={{ id: social.organizer_id, nombre_publico: social.nombre, bio: social.descripcion }} />
                     </motion.div>
-                  ))}
-                </div>
+                  )}
+                />
               ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
             })()}
           </Section>
@@ -364,8 +366,9 @@ export default function ExploreHomeScreen() {
             {academiasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : academias && academias.pages?.[0]?.data?.length > 0 ? (
-              <div className="cards-grid">
-                {academias.pages[0].data.slice(0, 9).map((academia: any, idx: number) => (
+              <HorizontalSlider
+                items={academias.pages[0].data}
+                renderItem={(academia: any, idx: number) => (
                   <motion.div 
                     key={academia.id ?? idx} 
                     initial={{ opacity: 0, y: 20 }}
@@ -383,8 +386,8 @@ export default function ExploreHomeScreen() {
                   >
                     <AcademyCard item={academia} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -396,8 +399,9 @@ export default function ExploreHomeScreen() {
             {organizadoresLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
-              <div className="cards-grid">
-                {organizadores.pages[0].data.slice(0, 9).map((organizador: any, idx: number) => (
+              <HorizontalSlider
+                items={organizadores.pages[0].data}
+                renderItem={(organizador: any, idx: number) => (
                   <motion.div 
                     key={organizador.id ?? idx} 
                     initial={{ opacity: 0, y: 20 }}
@@ -415,8 +419,8 @@ export default function ExploreHomeScreen() {
                   >
                     <OrganizerCard item={organizador} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -428,8 +432,9 @@ export default function ExploreHomeScreen() {
             {maestrosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
-              <div className="cards-grid">
-                {maestros.pages[0].data.slice(0, 9).map((maestro: any, idx: number) => (
+              <HorizontalSlider
+                items={maestros.pages[0].data}
+                renderItem={(maestro: any, idx: number) => (
                   <motion.div 
                     key={maestro.id ?? idx} 
                     initial={{ opacity: 0, y: 20 }}
@@ -447,8 +452,8 @@ export default function ExploreHomeScreen() {
                   >
                     <TeacherCard item={maestro} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
@@ -460,8 +465,9 @@ export default function ExploreHomeScreen() {
             {marcasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
-              <div className="cards-grid">
-                {marcas.pages[0].data.slice(0, 9).map((brand: any, idx: number) => (
+              <HorizontalSlider
+                items={marcas.pages[0].data}
+                renderItem={(brand: any, idx: number) => (
                   <motion.div 
                     key={brand.id ?? idx} 
                     initial={{ opacity: 0, y: 20 }}
@@ -479,8 +485,8 @@ export default function ExploreHomeScreen() {
                   >
                     <BrandCard item={brand} />
                   </motion.div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}

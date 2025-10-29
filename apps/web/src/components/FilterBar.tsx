@@ -93,7 +93,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
     <div className={`sticky top-16 z-40 ${className}`}>
       <style>{`
         @media (max-width: 768px) {
-          .filters-wrap { padding: 1rem !important; }
+          .filters-wrap { padding: 0 !important; }
           .filters-row { 
             flex-wrap: nowrap !important; 
             overflow-x: auto; 
@@ -121,7 +121,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
           }
         }
         @media (max-width: 480px) {
-          .filters-wrap { padding: 0.75rem !important; }
+          .filters-wrap { padding: 0 !important; }
           .filters-search { 
             min-width: 100% !important;
             margin-bottom: 0.5rem;
@@ -155,7 +155,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
         <div style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          padding: '1.25rem 1.5rem',
+          padding: '0',
           position: 'relative',
           zIndex: 1
         }} className="filters-wrap">
