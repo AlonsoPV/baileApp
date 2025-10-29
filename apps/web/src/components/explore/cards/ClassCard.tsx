@@ -121,7 +121,7 @@ export default function ClassCard({ item }: Props) {
           fontSize: 13,
           fontWeight: 700,
           border: '1px solid rgba(255,255,255,0.08)'
-        }}>Ver clase →</div>
+        }}>Más Información →</div>
       </div>
       </motion.div>
     </LiveLink>
