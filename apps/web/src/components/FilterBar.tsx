@@ -91,6 +91,15 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
 
   return (
     <div className={`sticky top-16 z-40 ${className}`}>
+      <style>{`
+        @media (max-width: 768px) {
+          .filters-wrap { padding: 0.75rem 1rem !important; }
+          .filters-row { flex-wrap: nowrap !important; overflow-x: auto; gap: 0.5rem !important; -webkit-overflow-scrolling: touch; }
+          .filters-row::-webkit-scrollbar { display: none; }
+          .filters-search { flex: 1 0 80% !important; min-width: 70% !important; }
+          .dropdown-panel { width: 100% !important; padding: 1rem !important; }
+        }
+      `}</style>
       <div 
         style={{
           background: 'rgba(18, 18, 18, 0.95)',
@@ -103,16 +112,16 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
           maxWidth: '1280px',
           margin: '0 auto',
           padding: '1rem 1.5rem'
-        }}>
+        }} className="filters-wrap">
           {/* Barra Principal de Filtros */}
           <div style={{
             display: 'flex',
             gap: '0.75rem',
             alignItems: 'center',
             flexWrap: 'wrap'
-          }}>
+          }} className="filters-row">
             {/* Búsqueda por palabra clave */}
-            <div style={{ flex: '1 1 300px', minWidth: '200px', position: 'relative' }}>
+            <div style={{ flex: '1 1 300px', minWidth: '200px', position: 'relative' }} className="filters-search">
               <div style={{
                 position: 'relative',
                 display: 'flex',
@@ -476,6 +485,7 @@ function DropdownPanel({ children, onClose }: { children: React.ReactNode; onClo
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         backdropFilter: 'blur(20px)'
       }}
+      className="dropdown-panel"
     >
       {children}
     </motion.div>

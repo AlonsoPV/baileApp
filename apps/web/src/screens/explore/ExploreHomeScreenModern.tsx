@@ -68,6 +68,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
 export default function ExploreHomeScreen() {
   const navigate = useNavigate();
   const { filters, set } = useExploreFilters();
+  const selectedType = filters.type;
 
   const { data: fechas, isLoading: fechasLoading } = useExploreQuery({ 
     type: 'fechas', 
@@ -160,6 +161,7 @@ export default function ExploreHomeScreen() {
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
           </div>
 
+          {selectedType === 'fechas' && (
           <Section title="Próximos Sociales" toAll="/explore/list?type=fechas">
             {fechasLoading ? (
               <div className="grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -177,6 +179,7 @@ export default function ExploreHomeScreen() {
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
           </Section>
+          )}
 
           <Section title="Encuentra tus clases" toAll="/explore/list?type=maestros">
             {(() => {
@@ -199,6 +202,7 @@ export default function ExploreHomeScreen() {
 
        
 
+          {selectedType === 'sociales' && (
           <Section title="Sociales" toAll="/explore/list?type=sociales">
             {/* Usa el mismo hook pero con type 'sociales' */}
             {(() => {
@@ -219,7 +223,9 @@ export default function ExploreHomeScreen() {
               ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
             })()}
           </Section>
+          )}
 
+          {selectedType === 'academias' && (
           <Section title="Academias" toAll="/explore/list?type=academias">
             {academiasLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -237,7 +243,9 @@ export default function ExploreHomeScreen() {
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
           </Section>
+          )}
 
+          {selectedType === 'organizadores' && (
           <Section title="Organizadores" toAll="/explore/list?type=organizadores">
             {organizadoresLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -255,7 +263,9 @@ export default function ExploreHomeScreen() {
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
           </Section>
+          )}
 
+          {selectedType === 'maestros' && (
           <Section title="Maestros" toAll="/explore/list?type=maestros">
             {maestrosLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -273,7 +283,9 @@ export default function ExploreHomeScreen() {
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
           </Section>
+          )}
 
+          {selectedType === 'marcas' && (
           <Section title="Marcas" toAll="/explore/list?type=marcas">
             {marcasLoading ? (
               <div className="grid">{[...Array(4)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -291,6 +303,7 @@ export default function ExploreHomeScreen() {
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
             )}
           </Section>
+          )}
         </div>
       </div>
     </>
