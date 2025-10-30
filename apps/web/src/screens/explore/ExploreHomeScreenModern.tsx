@@ -11,6 +11,7 @@ import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import FilterBar from "../../components/FilterBar";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
+import SocialCard from "../../components/explore/cards/SocialCard";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -352,7 +353,7 @@ export default function ExploreHomeScreen() {
                         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                       }}
                     >
-                      <OrganizerCard item={{ id: social.organizer_id, nombre_publico: social.nombre, bio: social.descripcion }} />
+                      <SocialCard item={social} />
                     </motion.div>
                   )}
                 />
