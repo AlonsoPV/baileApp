@@ -8,12 +8,6 @@ interface OrganizerCardProps {
 }
 
 export default function OrganizerCard({ item }: OrganizerCardProps) {
-  const initials = item.nombre_publico
-    ?.split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || '??';
   const bannerUrl: string | undefined = (item.portada_url)
     || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
     || (item.avatar_url);
@@ -32,16 +26,22 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
         style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          background: bannerUrl
+            ? `url(${bannerUrl})`
+            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
           border: '1px solid rgba(240, 147, 251, 0.2)',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '200px',
+          minHeight: '280px',
+          height: '350px',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          justifyContent: 'flex-end'
         }}
       >
         {/* Top gradient bar */}
@@ -54,121 +54,36 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
           opacity: 0.9
         }} />
-
-        {/* Avatar circle with banner (fallback to initials) */}
-        <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: '2px solid rgba(240,147,251,0.35)',
-          background: 'rgba(240,147,251,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '1rem',
-          position: 'relative',
-          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.25)'
-        }}>
-          {bannerUrl ? (
-            <img src={bannerUrl} alt={item.nombre_publico} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>{initials}</span>
-          )}
-        </div>
-
-        {/* Nombre del organizador */}
-        <div style={{
-          fontSize: '1.375rem',
-          fontWeight: '700',
-          marginBottom: '0.5rem',
-          background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          lineHeight: '1.3',
-          flex: 'none'
-        }}>
-          {item.nombre_publico}
-        </div>
-
-        {/* Badge de verificación */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.375rem',
-          padding: '0.25rem 0.75rem',
-          background: 'rgba(240, 147, 251, 0.15)',
-          borderRadius: '9999px',
-          border: '1px solid rgba(240, 147, 251, 0.3)',
-          fontSize: '0.75rem',
-          color: '#f093fb',
-          fontWeight: '600',
-          marginBottom: '1rem',
-          width: 'fit-content'
-        }}>
-          <span>✓</span>
-          <span>Organizador Verificado</span>
-        </div>
-
-        {/* Biografía */}
-        {item.bio && (
-          <div style={{
-            fontSize: '0.875rem',
-            marginBottom: '1rem',
-            color: 'rgba(255, 255, 255, 0.7)',
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            lineHeight: '1.6',
-            flex: 1
-          }}>
-            {item.bio}
-          </div>
+        {/* Overlay global solo si NO hay banner */}
+        {!bannerUrl && (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
         )}
 
-        {/* Footer con fecha y CTA */}
-        <div style={{
-          marginTop: 'auto',
-          paddingTop: '1rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.5rem'
-        }}>
-         
-
-          {/* CTA button */}
-          <motion.div
-            whileHover={{ x: 3 }}
-          >
-            <div style={{
-              padding: '8px 12px',
-              borderRadius: 12,
-              background: 'rgba(240, 147, 251, 0.1)',
-              color: '#fff',
-              margin: '10px 0',
-              textAlign: 'center',
-              fontSize: 13,
-              fontWeight: 700,
-              border: '1px solid rgba(255,255,255,0.08)'
-            }}>Conoce más →</div>
-          </motion.div>
+        {/* Contenido sobre el fondo */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Título con alta legibilidad (igual a EventCard) */}
+          <div style={{
+            fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
+            display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
+          }}>
+            <span style={{
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              textShadow: '0 2px 8px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.55)',
+              background: 'rgba(0,0,0,0.45)',
+              padding: '4px 10px',
+              borderRadius: 10,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.35)'
+            }}>
+              {item.nombre_publico}
+            </span>
+          </div>
         </div>
-
-        {/* Decorative corner accent */}
-        <div style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          width: '40px',
-          height: '40px',
-          background: 'radial-gradient(circle, rgba(240, 147, 251, 0.2), transparent)',
-          borderRadius: '50%',
-          pointerEvents: 'none'
-        }} />
+        
+        <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
     </LiveLink>
   );
