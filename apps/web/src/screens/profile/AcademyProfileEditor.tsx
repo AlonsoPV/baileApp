@@ -23,6 +23,7 @@ import EventCostsEditor from "../../components/events/CostsEditor";
 import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import CrearClase from "../../components/events/CrearClase";
+import { useAllowedRitmos } from "@/hooks/useAllowedRitmos";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -43,6 +44,7 @@ export default function AcademyProfileEditor() {
   const { user } = useAuth();
   const { data: academy, isLoading } = useAcademyMy();
   const { data: allTags } = useTags();
+  const { allowedIds, isLoading: allowedLoading } = useAllowedRitmos();
   const { media, add, remove } = useAcademyMedia();
   const upsert = useUpsertAcademy();
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
@@ -59,6 +61,7 @@ export default function AcademyProfileEditor() {
       nombre_publico: "",
       bio: "",
       estilos: [] as number[],
+      ritmos_seleccionados: [] as string[],
       zonas: [] as number[],
       cronograma: [] as any[],
       costos: [] as any[],
@@ -90,7 +93,8 @@ export default function AcademyProfileEditor() {
       console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
       console.log("🎵 [AcademyProfileEditor] Estilos:", form.estilos);
 
-      await upsert.mutateAsync(form);
+      const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
+      await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: selectedCatalogIds } as any);
       console.log("✅ [AcademyProfileEditor] Guardado exitoso");
     } catch (error) {
       console.error("❌ [AcademyProfileEditor] Error guardando:", error);
@@ -377,33 +381,28 @@ export default function AcademyProfileEditor() {
             ))}
           </div>
 
-          {/* Nuevo catálogo agrupado (opcional) */}
+          {/* Catálogo agrupado (independiente de DB) */}
           <div style={{ padding: '0 1.25rem 1.25rem' }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
             {(() => {
-              const tagIdToName = new Map<number, string>(
-                (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.id, t.nombre])
-              );
-              const catalogIdByLabel = new Map<string, string>();
-              RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-              const selectedCatalogIds = (form.estilos || [])
-                .map((id: number) => tagIdToName.get(id))
-                .filter(Boolean)
-                .map((label: any) => catalogIdByLabel.get(label as string))
-                .filter(Boolean) as string[];
-
+              const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
               const onChangeCatalog = (ids: string[]) => {
-                const labelByCatalogId = new Map<string, string>();
-                RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                const nameToTagId = new Map<string, number>(
-                  (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
-                );
-                const mappedTagIds = ids
-                  .map(cid => labelByCatalogId.get(cid))
-                  .filter(Boolean)
-                  .map((label: any) => nameToTagId.get(label as string))
-                  .filter((n): n is number => typeof n === 'number');
-                setField('estilos', mappedTagIds);
+                // Guardar selección de catálogo directamente
+                setField('ritmos_seleccionados' as any, ids as any);
+                // Intentar mapear también a ids de tags si existen (no bloqueante)
+                try {
+                  const labelByCatalogId = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                  const nameToTagId = new Map<string, number>(
+                    (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
+                  );
+                  const mappedTagIds = ids
+                    .map(cid => labelByCatalogId.get(cid))
+                    .filter(Boolean)
+                    .map((label: any) => nameToTagId.get(label as string))
+                    .filter((n): n is number => typeof n === 'number');
+                  setField('estilos', mappedTagIds);
+                } catch {}
               };
 
               return (
@@ -473,7 +472,20 @@ export default function AcademyProfileEditor() {
               )}
 
               <CrearClase
-                ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                ritmos={(() => {
+                  const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+                  // Si hay restricción (allowedIds > 0), filtrar por etiquetas permitidas
+                  if (Array.isArray(allowedIds) && allowedIds.length > 0) {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                    return ritmoTags
+                      .filter((t: any) => allowedLabels.has(t.nombre))
+                      .map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                  }
+                  // Sin restricción: devolver todos
+                  return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({ id: u?.id || String(i), nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
                 editIndex={editingIndex}
