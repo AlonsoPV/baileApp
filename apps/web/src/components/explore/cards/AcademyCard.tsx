@@ -34,43 +34,61 @@ export default function AcademyCard({ item }: AcademyCardProps) {
         style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          background: avatar
+            ? `url(${avatar})`
+            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
           border: '1px solid rgba(240, 147, 251, 0.2)',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '200px',
+          minHeight: '280px',
+          height: '350px',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          justifyContent: 'flex-end'
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(30,136,229,0.35)', background: 'rgba(30,136,229,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {avatar ? (
-              <img src={avatar} alt={nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ fontSize: 20 }}>🎓</span>
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.25, background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{nombre}</div>
-            {bio && (
-              <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bio}</div>
-            )}
+        {/* Overlay global solo si NO hay banner */}
+        {!avatar && (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        )}
+
+        {/* Contenido */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
+            display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
+          }}>
+            <span style={{
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              textShadow: '0 2px 8px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.55)',
+              background: 'rgba(0,0,0,0.45)',
+              padding: '4px 10px',
+              borderRadius: 10,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.35)'
+            }}>
+              {nombre}
+            </span>
           </div>
         </div>
 
         {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
             {ritmoNombres.slice(0,3).map((name: string, i: number) => (
-              <span key={`r-${i}`} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(30,136,229,0.12)', border: '1px solid rgba(30,136,229,0.25)', padding: '4px 8px', borderRadius: 8 }}>🎵 {name}</span>
+              <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
             ))}
             {zonaNombres.slice(0,2).map((name: string, i: number) => (
-              <span key={`z-${i}`} style={{ fontSize: 11, color: '#F5F5F5', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', padding: '4px 8px', borderRadius: 8 }}>📍 {name}</span>
+              <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
             ))}
           </div>
         )}
