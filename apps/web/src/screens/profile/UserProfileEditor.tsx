@@ -113,6 +113,9 @@ export default function UserProfileEditor() {
     setField('zonas', newZonas);
   };
 
+  // Ritmos agrupados (UI anidada): estado para grupo expandido
+  const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
+
   // Función para guardar con normalización y rehidratación confiable
   const handleSave = async () => {
     try {
@@ -427,33 +430,68 @@ export default function UserProfileEditor() {
                 ))}
               </div>
 
-              {/* Catálogo agrupado de ritmos (selección alternativa) */}
-              <div style={{ marginTop: '1rem', textAlign: 'left' }}>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>Catálogo agrupado</div>
+              {/* Catálogo agrupado de ritmos (anidado con chips padre → hijas) */}
+              <div style={{ marginTop: '1rem', textAlign: 'left', display: 'grid', gap: 12 }}>
+                <div style={{ fontSize: 12, opacity: 0.8 }}>Catálogo agrupado</div>
                 {(() => {
-                  const tagIdToName = new Map<number, string>(ritmoTags.map((t) => [t.id, t.nombre]));
-                  const catalogIdByLabel = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-                  const selectedCatalogIds = (form.ritmos || [])
-                    .map((id: number) => tagIdToName.get(id))
-                    .filter(Boolean)
-                    .map((label: any) => catalogIdByLabel.get(label as string))
-                    .filter(Boolean) as string[];
-
-                  const onChangeCatalog = (ids: string[]) => {
-                    const labelByCatalogId = new Map<string, string>();
-                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                    const nameToTagId = new Map<string, number>(ritmoTags.map((t) => [t.nombre, t.id]));
-                    const mappedTagIds = ids
-                      .map(cid => labelByCatalogId.get(cid))
-                      .filter(Boolean)
-                      .map((label: any) => nameToTagId.get(label as string))
-                      .filter((n): n is number => typeof n === 'number');
-                    setField('ritmos', mappedTagIds);
+                  const tagIdByName = new Map<string, number>(ritmoTags.map((t) => [t.nombre, t.id]));
+                  const isActive = (name: string) => form.ritmos.includes(tagIdByName.get(name) || -999999);
+                  const toggleChild = (name: string) => {
+                    const id = tagIdByName.get(name);
+                    if (!id) return;
+                    toggleRitmo(id);
                   };
 
                   return (
-                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                    <>
+                      {/* Chips padres */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {RITMOS_CATALOG.map(group => {
+                          const groupHasActive = group.items.some(i => isActive(i.label));
+                          const open = expandedRitmoGroup === group.id;
+                          return (
+                            <button
+                              key={group.id}
+                              onClick={() => setExpandedRitmoGroup(prev => prev === group.id ? null : group.id)}
+                              style={{
+                                padding: '10px 14px',
+                                borderRadius: 999,
+                                border: open || groupHasActive ? '2px solid rgba(240,147,251,0.6)' : '1px solid rgba(255,255,255,0.15)',
+                                background: open || groupHasActive ? 'rgba(240,147,251,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {group.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Chips hijas del grupo expandido */}
+                      {expandedRitmoGroup && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                          {RITMOS_CATALOG.find(g => g.id === expandedRitmoGroup)?.items.map(child => (
+                            <button
+                              key={child.id}
+                              onClick={() => toggleChild(child.label)}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: 999,
+                                border: isActive(child.label) ? '1px solid #f093fb' : '1px solid rgba(255,255,255,0.15)',
+                                background: isActive(child.label) ? 'rgba(240,147,251,0.15)' : 'transparent',
+                                color: isActive(child.label) ? '#f093fb' : 'rgba(255,255,255,0.9)',
+                                fontSize: 13,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {child.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
               </div>
