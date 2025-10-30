@@ -65,7 +65,8 @@ export function useCreateRoleRequest() {
         ...payload,
         // Compat: algunos esquemas usan columna "role" en vez de "role_slug"
         role: (payload as any).role_slug,
-        status: 'pending',
+        // Esquema actual usa estados en español
+        status: 'pendiente',
       } as any);
       if (error) throw error;
     },
@@ -92,8 +93,15 @@ export function useUpdateRoleRequestStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { id: string; status: RoleRequestStatus; admin_note?: string }) => {
+      const statusMap: Record<string,string> = {
+        pending: 'pendiente',
+        approved: 'aprobado',
+        rejected: 'rechazado',
+        needs_review: 'pendiente', // sin 'en_revision' en constraint actual
+      };
+      const statusDb = statusMap[payload.status] ?? payload.status;
       const { error } = await supabase.from('role_requests').update({
-        status: payload.status,
+        status: statusDb,
         admin_note: payload.admin_note ?? null,
         reviewed_at: new Date().toISOString(),
       }).eq('id', payload.id);
