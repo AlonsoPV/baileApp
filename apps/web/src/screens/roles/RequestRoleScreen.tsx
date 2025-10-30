@@ -19,16 +19,35 @@ export default function RequestRoleScreen() {
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [socials, setSocials] = useState({ instagram: '', tiktok: '', youtube: '', facebook: '', whatsapp: '' });
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
 
   const submit = async () => {
-    await createReq.mutateAsync({ role_slug: role, full_name: fullName, email, phone, socials });
-    setFullName(''); setEmail(''); setPhone('');
-    setTimeout(() => navigate('/app/profile'), 800);
+    setErrorMsg(null); setOkMsg(null);
+    try {
+      await createReq.mutateAsync({ role_slug: role, full_name: fullName, email, phone, socials });
+      setOkMsg('Solicitud enviada. Te avisaremos al ser revisada.');
+      setFullName(''); setEmail(user?.email ?? ''); setPhone('');
+      setTimeout(() => navigate('/app/profile'), 1000);
+    } catch (e: any) {
+      console.error('[RequestRoleScreen] Insert error:', e);
+      setErrorMsg(e?.message || 'No se pudo enviar la solicitud');
+    }
   };
 
   return (
     <div style={{ maxWidth: 560, margin: '24px auto', padding: 16 }}>
       <h1>Solicitar rol</h1>
+      {errorMsg && (
+        <div style={{ marginTop: 12, padding: 10, border: '1px solid #ef4444', color: '#ef4444', borderRadius: 8 }}>
+          ❌ {errorMsg}
+        </div>
+      )}
+      {okMsg && (
+        <div style={{ marginTop: 12, padding: 10, border: '1px solid #10B981', color: '#10B981', borderRadius: 8 }}>
+          ✅ {okMsg}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gap: 12 }}>
         <label>
