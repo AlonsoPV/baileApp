@@ -25,7 +25,13 @@ export default function RequestRoleScreen() {
   const submit = async () => {
     setErrorMsg(null); setOkMsg(null);
     try {
-      await createReq.mutateAsync({ role_slug: role, full_name: fullName, email, phone, socials });
+      if (!fullName.trim() || !phone.trim()) {
+        setErrorMsg('Completa nombre completo y celular');
+        return;
+      }
+      const payload = { role_slug: role, full_name: fullName, email, phone, socials };
+      console.log('[RequestRoleScreen] payload', { ...payload, status: 'pending' });
+      await createReq.mutateAsync(payload);
       setOkMsg('Solicitud enviada. Te avisaremos al ser revisada.');
       setFullName(''); setEmail(user?.email ?? ''); setPhone('');
       setTimeout(() => navigate('/app/profile'), 1000);

@@ -23,7 +23,7 @@ export default function AppShell() {
     { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
     { id: 'me', label: 'Mi perfil', icon: '👤', onClick: () => navigate('/app/profile') },
     { id: 'default-profile', label: 'Configurar perfil por defecto', icon: '⚙️', onClick: () => navigate('/app/profile/settings') },
-    isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin') } : null,
+    isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
     { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') },
     { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') },
     { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: async () => { await signOut(); navigate('/auth/login'); } },
