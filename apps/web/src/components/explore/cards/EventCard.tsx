@@ -11,6 +11,7 @@ interface EventCardProps {
 export default function EventCard({ item }: EventCardProps) {
   const eventId = item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
+  const flyer = (item && (item.flyer_url || (Array.isArray(item.media) && (item.media[0]?.url || item.media[0])))) as string | undefined;
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const fecha = item.fecha || item.evento_fecha;
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
@@ -30,7 +31,11 @@ export default function EventCard({ item }: EventCardProps) {
         style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          background: flyer
+            ? `linear-gradient(135deg, rgba(30, 20, 40, 0.7), rgba(20, 10, 30, 0.7)), url(${flyer})`
+            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
@@ -43,7 +48,11 @@ export default function EventCard({ item }: EventCardProps) {
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
+        {/* Overlay para legibilidad sobre el flyer */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
 
+        {/* Contenido */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Botón de calendario en esquina superior derecha */}
         <div 
           style={{ 
@@ -102,44 +111,7 @@ export default function EventCard({ item }: EventCardProps) {
           />
         </div>
 
-        {(() => {
-          // Priorizar flyer para fechas; fallback a primera media o avatar conocido
-          const flyer = (item && (item.flyer_url || (Array.isArray(item.media) && (item.media[0]?.url || item.media[0])))) as string | undefined;
-          const avatarUrl = flyer || (item && (item.organizador_avatar || item.organizer_avatar_url || item.organizer_avatar || item.avatar_url)) as string | undefined;
-          const fallback = ((organizador || nombre || 'E') as string).charAt(0).toUpperCase();
-          return (
-            <div style={{ width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'white',
-              marginBottom: '1rem',
-              boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)',
-              position: 'relative' }}>  
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                style={{
-                  position: 'absolute',
-                  inset: '-4px',
-                  borderRadius: '50%',
-                  border: '2px solid rgba(240, 147, 251, 0.3)',
-                  pointerEvents: 'none'
-                }}
-              />
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : (
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, fontSize: 14 }}>{fallback}</span>
-              )}
-            </div>
-          );
-        })()}
+        {/* Sin avatar: el flyer queda como fondo del card */}
 
         <div style={{
           fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
@@ -205,6 +177,9 @@ export default function EventCard({ item }: EventCardProps) {
             fontWeight: 700,
             border: '1px solid rgba(255,255,255,0.08)'
           }}>Ver más →</div>
+        </div>
+
+        {/* Cierre del contenedor de contenido sobre el overlay */}
         </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
