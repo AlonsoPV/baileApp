@@ -555,7 +555,7 @@ export function OrganizerProfileLive() {
                   {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
                 </div>
                 {/* Botón de calendario */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2] }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2], position: 'relative', zIndex: 5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
                   <AddToCalendarWithStats
                     eventId={ev.id}
                     title={ev.nombre}

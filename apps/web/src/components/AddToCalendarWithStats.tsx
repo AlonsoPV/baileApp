@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
@@ -287,62 +288,64 @@ export default function AddToCalendarWithStats({
           </div>
         )}
 
-        {/* Overlay para cerrar menú */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 9998,
-                background: 'rgba(0, 0, 0, 0.3)',
-              }}
-              onClick={() => setOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Menú de opciones guardadas - Usando position fixed para estar por encima de todo */}
-        <AnimatePresence>
-          {open && menuPosition && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              style={{
-                position: 'fixed',
-                top: `${menuPosition.top}px`,
-                left: `${menuPosition.left}px`,
-                minWidth: 200,
-                background: 'rgba(20,20,28,0.98)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 12,
-                boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
-                overflow: 'hidden',
-                zIndex: 9999,
-                backdropFilter: 'blur(20px)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MenuItem 
-                label="Google Calendar" 
-                onClick={() => handleAdd(googleUrl)} 
-                icon="📅"
-              />
-              {icsBlobUrl && (
-                <MenuItem 
-                  label="Apple Calendar (.ics)" 
-                  onClick={() => handleAdd(icsBlobUrl)} 
-                  icon="📱"
+        {createPortal(
+          <>
+            <AnimatePresence>
+              {open && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9998,
+                    background: 'rgba(0, 0, 0, 0.3)',
+                  }}
+                  onClick={() => setOpen(false)}
                 />
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </AnimatePresence>
+            <AnimatePresence>
+              {open && menuPosition && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    position: 'fixed',
+                    top: `${menuPosition.top}px`,
+                    left: `${menuPosition.left}px`,
+                    minWidth: 200,
+                    background: 'rgba(20,20,28,0.98)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 12,
+                    boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
+                    overflow: 'hidden',
+                    zIndex: 9999,
+                    backdropFilter: 'blur(20px)',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MenuItem 
+                    label="Google Calendar" 
+                    onClick={() => handleAdd(googleUrl)} 
+                    icon="📅"
+                  />
+                  {icsBlobUrl && (
+                    <MenuItem 
+                      label="Apple Calendar (.ics)" 
+                      onClick={() => handleAdd(icsBlobUrl)} 
+                      icon="📱"
+                    />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>,
+          document.body
+        )}
       </div>
     );
   }
@@ -385,7 +388,8 @@ export default function AddToCalendarWithStats({
         </div>
       )}
 
-      {/* Overlay para cerrar menú */}
+  {createPortal(
+    <>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -402,8 +406,6 @@ export default function AddToCalendarWithStats({
           />
         )}
       </AnimatePresence>
-
-      {/* Menú de opciones - Versión completa del botón */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -434,6 +436,9 @@ export default function AddToCalendarWithStats({
           </motion.div>
         )}
       </AnimatePresence>
+    </>,
+    document.body
+  )}
     </div>
   );
 }
