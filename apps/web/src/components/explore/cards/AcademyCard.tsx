@@ -10,13 +10,21 @@ interface AcademyCardProps {
 
 export default function AcademyCard({ item }: AcademyCardProps) {
   const { data: allTags } = useTags() as any;
+  const normalizeUrl = (u?: string) => {
+    if (!u) return u;
+    const v = String(u).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
+    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
+    return v;
+  };
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Academia";
   const bio = item.bio || "";
   // Priorizar el avatar usado en el banner (equivalente a academy-banner-avatar): avatar_url -> portada_url -> media[0]
-  const avatar = (item.avatar_url)
+  const avatar = normalizeUrl((item.avatar_url)
     || (item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
+    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined))
     || null;
 
   // En editor a veces llega como 'estilos'; en live como 'ritmos'

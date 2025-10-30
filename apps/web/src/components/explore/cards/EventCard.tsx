@@ -11,7 +11,15 @@ interface EventCardProps {
 export default function EventCard({ item }: EventCardProps) {
   const eventId = item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
-  const flyer = (item && (item.flyer_url || (Array.isArray(item.media) && (item.media[0]?.url || item.media[0])))) as string | undefined;
+  const normalizeUrl = (u?: string) => {
+    if (!u) return u;
+    const v = String(u).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
+    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
+    return v;
+  };
+  const flyer = normalizeUrl((item && (item.flyer_url || (Array.isArray(item.media) && (item.media[0]?.url || item.media[0])))) as string | undefined);
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const fecha = item.fecha || item.evento_fecha;
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
