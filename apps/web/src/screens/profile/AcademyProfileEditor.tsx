@@ -474,16 +474,23 @@ export default function AcademyProfileEditor() {
               <CrearClase
                 ritmos={(() => {
                   const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
-                  // Si hay restricción (allowedIds > 0), filtrar por etiquetas permitidas
-                  if (Array.isArray(allowedIds) && allowedIds.length > 0) {
-                    const labelByCatalogId = new Map<string, string>();
-                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                    const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                    return ritmoTags
-                      .filter((t: any) => allowedLabels.has(t.nombre))
-                      .map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                  const labelByCatalogId = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                  // 1) Priorizar selección local del formulario (sin guardar)
+                  const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
+                  if (Array.isArray(localSelected) && localSelected.length > 0) {
+                    const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                    const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
+                    // Si por alguna razón no mapea nada, caemos a allowedIds o todos
+                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                   }
-                  // Sin restricción: devolver todos
+                  // 2) Si no hay selección local, usar restricción desde DB (allowedIds)
+                  if (Array.isArray(allowedIds) && allowedIds.length > 0) {
+                    const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                    const filtered = ritmoTags.filter((t: any) => allowedLabels.has(t.nombre));
+                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                  }
+                  // 3) Fallback: todos
                   return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                 })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
