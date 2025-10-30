@@ -27,6 +27,13 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
   userAvatar,
   displayName,
 }) => {
+  const normalizeAvatar = (src?: string) => {
+    if (!src) return undefined;
+    const v = String(src).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    return undefined; // evita usar valores tipo 'FFFFFF?text=ABM'
+  };
+  const safeUserAvatar = normalizeAvatar(userAvatar);
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -91,11 +98,11 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
               width: "64px",
               height: "64px",
               borderRadius: "50%",
-              background: userAvatar 
-                ? `url(${userAvatar})` 
+            background: safeUserAvatar 
+              ? `url(${safeUserAvatar})` 
                 : "linear-gradient(135deg, #1E88E5 0%, #FDD835 100%)",
-              backgroundSize: userAvatar ? "cover" : "auto",
-              backgroundPosition: userAvatar ? "center" : "auto",
+            backgroundSize: safeUserAvatar ? "cover" : "auto",
+            backgroundPosition: safeUserAvatar ? "center" : "auto",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -104,10 +111,10 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
               color: "#FFF",
               marginBottom: "1rem",
               boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
-              border: userAvatar ? "2px solid rgba(255, 255, 255, 0.3)" : "none",
+            border: safeUserAvatar ? "2px solid rgba(255, 255, 255, 0.3)" : "none",
             }}
           >
-            {!userAvatar && (displayName || userName).charAt(0).toUpperCase()}
+          {!safeUserAvatar && (displayName || userName).charAt(0).toUpperCase()}
           </div>
           <div style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "0.25rem" }}>
             {displayName || userName}
