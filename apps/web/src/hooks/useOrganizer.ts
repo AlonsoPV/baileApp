@@ -160,7 +160,10 @@ export function useUpsertMyOrganizer() {
         return data.id as number;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["organizer"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["organizer"] });
+      qc.invalidateQueries({ queryKey: ["organizer", "me"] });
+    },
   });
 }
 

@@ -6,6 +6,7 @@ import { useTeacherMedia } from "../../hooks/useTeacherMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
@@ -302,11 +303,27 @@ export default function TeacherProfileLive() {
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
 
-  // Get tag names from IDs
+  // Get rhythm names from numeric tag IDs or fallback to catalog IDs (ritmos_seleccionados)
   const getRitmoNombres = () => {
+    const names: string[] = [];
     const ritmos = (teacher as any)?.ritmos || [];
-    if (!allTags || !ritmos) return [];
-    return ritmos.map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre).filter(Boolean);
+    if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
+      names.push(
+        ...ritmos
+          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+          .filter(Boolean) as string[]
+      );
+    }
+    if (names.length === 0 && Array.isArray((teacher as any)?.ritmos_seleccionados)) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      names.push(
+        ...((teacher as any).ritmos_seleccionados as string[])
+          .map(id => labelById.get(id))
+          .filter(Boolean) as string[]
+      );
+    }
+    return names;
   };
 
   const getZonaNombres = () => {

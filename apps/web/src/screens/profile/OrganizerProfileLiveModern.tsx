@@ -5,6 +5,7 @@ import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
@@ -358,11 +359,27 @@ export function OrganizerProfileLive() {
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !(org as any)?.estilos) return [];
-    return (org as any).estilos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
+    const names: string[] = [];
+    if (allTags) {
+      const ritmosIds = (org as any)?.ritmos || [];
+      const estilosIds = (org as any)?.estilos || [];
+      const mapIds = (ids: number[]) => ids
+        .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
+        .filter(Boolean)
+        .map(tag => (tag as any).nombre) as string[];
+      if (Array.isArray(ritmosIds) && ritmosIds.length) names.push(...mapIds(ritmosIds));
+      else if (Array.isArray(estilosIds) && estilosIds.length) names.push(...mapIds(estilosIds));
+    }
+    if (names.length === 0 && Array.isArray((org as any)?.ritmos_seleccionados)) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      names.push(
+        ...((org as any).ritmos_seleccionados as string[])
+          .map(id => labelById.get(id))
+          .filter(Boolean) as string[]
+      );
+    }
+    return names;
   };
 
   const getZonaNombres = () => {

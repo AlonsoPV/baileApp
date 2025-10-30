@@ -20,6 +20,7 @@ export type EventParent = {
   estilos: number[]; 
   sede_general?: string|null; 
   ubicaciones?: any[]; // Ubicaciones del evento
+  ritmos_seleccionados?: string[]; // IDs de catálogo (RITMOS_CATALOG)
   media: any[];
   created_at: string;
 };

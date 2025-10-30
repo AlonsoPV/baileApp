@@ -58,6 +58,7 @@ export default function TeacherProfileEditor() {
     defaults: {
       nombre_publico: "",
       bio: "",
+      ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
       cronograma: [] as any[],
@@ -377,33 +378,28 @@ export default function TeacherProfileEditor() {
             ))}
           </div>
 
-          {/* Nuevo catálogo agrupado (opcional) */}
+          {/* Catálogo agrupado (independiente de DB) */}
           <div style={{ padding: '0 1.25rem 1.25rem' }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
             {(() => {
-              const tagIdToName = new Map<number, string>(
-                (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.id, t.nombre])
-              );
-              const catalogIdByLabel = new Map<string, string>();
-              RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-              const selectedCatalogIds = ((form as any).ritmos || [])
-                .map((id: number) => tagIdToName.get(id))
-                .filter(Boolean)
-                .map((label: any) => catalogIdByLabel.get(label as string))
-                .filter(Boolean) as string[];
-
+              const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
               const onChangeCatalog = (ids: string[]) => {
-                const labelByCatalogId = new Map<string, string>();
-                RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                const nameToTagId = new Map<string, number>(
-                  (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
-                );
-                const mappedTagIds = ids
-                  .map(cid => labelByCatalogId.get(cid))
-                  .filter(Boolean)
-                  .map((label: any) => nameToTagId.get(label as string))
-                  .filter((n): n is number => typeof n === 'number');
-                setField('ritmos', mappedTagIds as any);
+                // Guardar selección de catálogo directamente
+                setField('ritmos_seleccionados' as any, ids as any);
+                // Intentar mapear también a ids de tags si existen (no bloqueante)
+                try {
+                  const labelByCatalogId = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                  const nameToTagId = new Map<string, number>(
+                    (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
+                  );
+                  const mappedTagIds = ids
+                    .map(cid => labelByCatalogId.get(cid))
+                    .filter(Boolean)
+                    .map((label: any) => nameToTagId.get(label as string))
+                    .filter((n): n is number => typeof n === 'number');
+                  setField('ritmos', mappedTagIds as any);
+                } catch {}
               };
 
               return (
@@ -473,7 +469,20 @@ export default function TeacherProfileEditor() {
               )}
 
               <CrearClase
-                ritmos={(allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
+                ritmos={(() => {
+                  const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+                  const labelByCatalogId = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                  // 1) Priorizar selección local del formulario (sin guardar)
+                  const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
+                  if (Array.isArray(localSelected) && localSelected.length > 0) {
+                    const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                    const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
+                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                  }
+                  // 2) Fallback: todos
+                  return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({ id: u?.id || String(i), nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
                 editIndex={editingIndex}

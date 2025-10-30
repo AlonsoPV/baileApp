@@ -22,6 +22,8 @@ import InvitedMastersSection from "../../components/profile/InvitedMastersSectio
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import RitmosChips from "@/components/RitmosChips";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 
 const colors = {
   coral: '#FF3D57',
@@ -542,6 +544,7 @@ export default function OrganizerProfileEditor() {
     defaults: {
       nombre_publico: "",
       bio: "",
+      ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
       redes_sociales: {
@@ -1032,6 +1035,36 @@ export default function OrganizerProfileEditor() {
                     />
                   ))}
                 </div>
+
+            {/* Catálogo agrupado (independiente de DB) */}
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+              {(() => {
+                const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+                const onChangeCatalog = (ids: string[]) => {
+                  // Guardar selección de catálogo directamente
+                  setField('ritmos_seleccionados' as any, ids as any);
+                  // Intentar mapear también a ids de tags si existen (no bloqueante)
+                  try {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    const nameToTagId = new Map<string, number>(
+                      ritmoTags.map((t: any) => [t.nombre, t.id])
+                    );
+                    const mappedTagIds = ids
+                      .map(cid => labelByCatalogId.get(cid))
+                      .filter(Boolean)
+                      .map((label: any) => nameToTagId.get(label as string))
+                      .filter((n): n is number => typeof n === 'number');
+                    setField('ritmos' as any, mappedTagIds as any);
+                  } catch {}
+                };
+
+                return (
+                  <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                );
+              })()}
+            </div>
               </div>
 
               <div>

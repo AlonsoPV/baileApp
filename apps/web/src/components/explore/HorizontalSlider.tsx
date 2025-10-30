@@ -93,7 +93,8 @@ export default function HorizontalSlider<T>({
           style={{
             display: "grid",
             gridAutoFlow: "column",
-            gridAutoColumns: "minmax(280px, 1fr)",
+            // Fijar ancho de card para que no se estiren cuando hay <= 3
+            gridAutoColumns: "280px",
             gap
           }}
         >

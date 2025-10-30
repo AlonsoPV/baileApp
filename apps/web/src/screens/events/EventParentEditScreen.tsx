@@ -6,6 +6,7 @@ import { useCreateParent, useUpdateParent, useParentsByOrganizer } from "../../h
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import RitmosChips from "@/components/RitmosChips";
 
 const colors = {
   coral: '#FF3D57',
@@ -41,7 +42,8 @@ export function EventParentEditScreen() {
     nombre: "",
     descripcion: "",
     sede_general: "",
-    ubicaciones: [] as any[]
+    ubicaciones: [] as any[],
+    ritmos_seleccionados: [] as string[]
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,8 @@ export function EventParentEditScreen() {
         nombre: currentEvent.nombre,
         descripcion: currentEvent.descripcion || "",
         sede_general: currentEvent.sede_general || "",
-        ubicaciones: (currentEvent as any).ubicaciones || []
+        ubicaciones: (currentEvent as any).ubicaciones || [],
+        ritmos_seleccionados: ((currentEvent as any).ritmos_seleccionados || []) as string[]
       });
     }
   }, [currentEvent]);
@@ -80,7 +83,8 @@ export function EventParentEditScreen() {
           nombre: form.nombre.trim(),
           descripcion: form.descripcion.trim() || null,
           sede_general: form.sede_general.trim() || null,
-          ubicaciones: form.ubicaciones
+          ubicaciones: form.ubicaciones,
+          ritmos_seleccionados: form.ritmos_seleccionados
         } as any);
         console.log('[EventParentEditScreen] Event created:', p);
         showToast('Evento creado ✅', 'success');
@@ -93,7 +97,8 @@ export function EventParentEditScreen() {
             nombre: form.nombre.trim(),
             descripcion: form.descripcion.trim() || null,
             sede_general: form.sede_general.trim() || null,
-            ubicaciones: form.ubicaciones
+            ubicaciones: form.ubicaciones,
+            ritmos_seleccionados: form.ritmos_seleccionados
           } as any
         });
         console.log('[EventParentEditScreen] Event updated successfully');
@@ -266,6 +271,18 @@ export function EventParentEditScreen() {
           placeholder="Ej: Centro de Convenciones"
           className="parent-edit-input"
         />
+      </div>
+
+      <div className="parent-edit-card">
+        <label className="parent-edit-field">
+          Estilos que bailarán
+        </label>
+        <div style={{ marginTop: 8 }}>
+          <RitmosChips
+            selected={form.ritmos_seleccionados}
+            onChange={(ids) => setForm({ ...form, ritmos_seleccionados: ids })}
+          />
+        </div>
       </div>
 
       <div className="parent-edit-card">
