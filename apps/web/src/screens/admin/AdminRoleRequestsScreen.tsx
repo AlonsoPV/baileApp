@@ -37,7 +37,7 @@ export default function AdminRoleRequestsScreen() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: colors.dark,
+      background: 'linear-gradient(135deg, #0f172a 0%, #0b1020 100%)',
       color: colors.light,
       padding: '1.5rem'
     }}>
@@ -56,12 +56,15 @@ export default function AdminRoleRequestsScreen() {
           animate={{ opacity: 1, y: 0 }}
           style={{ marginBottom: '2rem' }}
         >
-          <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-            ⚙️ Solicitudes de Rol
-          </h1>
-          <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-            Aprueba o rechaza solicitudes de usuarios para convertirse en organizadores, maestros, academias o marcas.
-          </p>
+          <div style={{
+            padding: '18px 16px',
+            borderRadius: 16,
+            background: 'linear-gradient(90deg,#1E88E5, #FF8C42, #FFD166)',
+            color: '#0b1020'
+          }}>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>⚙️ Solicitudes de Rol</h1>
+            <div style={{ opacity: .9, marginTop: 4, fontWeight: 600 }}>Aprueba o rechaza solicitudes para organizador, maestro, academia o marca.</div>
+          </div>
         </motion.div>
 
         {/* Filtro de estado */}
@@ -78,8 +81,8 @@ export default function AdminRoleRequestsScreen() {
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '20px',
-                border: filter === status ? `2px solid ${colors.coral}` : '1px solid rgba(255, 255, 255, 0.2)',
-                background: filter === status ? 'rgba(255, 61, 87, 0.2)' : 'rgba(38, 38, 38, 0.6)',
+                border: filter === status ? `2px solid #93c5fd` : '1px solid rgba(255, 255, 255, 0.2)',
+                background: filter === status ? 'rgba(147,197,253,0.18)' : 'rgba(38, 38, 38, 0.6)',
                 color: colors.light,
                 fontSize: '0.875rem',
                 fontWeight: '600',

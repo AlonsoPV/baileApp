@@ -15,6 +15,12 @@ export default function RequestRoleScreen() {
 
   const initialRole = (sp.get('role') as RoleSlug) || 'organizador';
   const [role, setRole] = useState<RoleSlug>(initialRole);
+  // Limitar el selector al rol que llega por query (si aplica)
+  const roleFromQuery = sp.get('role') as RoleSlug | null;
+  const enforceSingleRole = !!roleFromQuery && ['organizador','academia','maestro','marca'].includes(roleFromQuery);
+  const rolesToShow = enforceSingleRole
+    ? catalog.filter(r => r.slug === roleFromQuery)
+    : catalog.filter(r => r.slug !== 'usuario');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
@@ -105,8 +111,13 @@ export default function RequestRoleScreen() {
               <div style={{ display: 'grid', gap: 12 }}>
                 <div>
                   <label className="rr-label">Rol</label>
-                  <select value={role} onChange={(e) => setRole(e.target.value as RoleSlug)} className="rr-input">
-                    {catalog.filter(r => r.slug !== 'usuario').map(r => (
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as RoleSlug)}
+                    className="rr-input"
+                    disabled={enforceSingleRole}
+                  >
+                    {rolesToShow.map(r => (
                       <option key={r.slug} value={r.slug}>{r.name}</option>
                     ))}
                   </select>

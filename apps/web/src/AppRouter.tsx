@@ -39,6 +39,9 @@ import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
 import { DateLiveScreen } from './screens/events/DateLiveScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
+import QuienesSomosScreen from './screens/static/QuienesSomosScreen';
+import AboutScreen from './screens/static/AboutScreen';
+import LegalScreen from './screens/static/LegalScreen';
 
 // Academy Screens
 import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
@@ -97,6 +100,9 @@ export default function AppRouter() {
         {/* Public */}
         <Route path="/explore" element={<ExploreHomeScreen />} />
         <Route path="/explore/list" element={<ExploreListScreen />} />
+        <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
+        <Route path="/about" element={<AboutScreen />} />
+        <Route path="/legal" element={<LegalScreen />} />
         <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
         <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
         <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
