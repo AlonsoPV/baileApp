@@ -410,6 +410,9 @@ export function OrganizerProfileLive() {
         <p style={{ marginBottom: spacing[6], opacity: 0.7, fontSize: typography.fontSize.lg }}>
           Crea uno para organizar eventos
         </p>
+        <p style={{ marginBottom: spacing[4], opacity: 0.85 }}>
+          Para crear tu rol ve a edición y guarda tu nombre.
+        </p>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

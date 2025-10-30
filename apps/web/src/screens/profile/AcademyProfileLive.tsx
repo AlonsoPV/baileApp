@@ -346,6 +346,9 @@ export default function AcademyProfileLive() {
         <p style={{ marginBottom: '24px', opacity: 0.7 }}>
           Crea uno para dar clases
         </p>
+        <p style={{ marginBottom: '16px', opacity: 0.8, fontSize: '0.95rem' }}>
+          Para crear tu rol ve a edición y guarda tu nombre.
+        </p>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
