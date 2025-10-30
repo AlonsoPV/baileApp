@@ -1,194 +1,130 @@
-import React from "react";
+// components/explore/HorizontalSlider.tsx
+import React, { useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 
-type Props<T> = {
+type Props<T = any> = {
   items: T[];
   renderItem: (item: T, index: number) => React.ReactNode;
-  emptyText?: string;
+  gap?: number;            // px entre cards
+  scrollStep?: number;     // 0..1 del ancho visible a desplazar por click
+  className?: string;
+  style?: React.CSSProperties;
 };
 
-export default function HorizontalSlider<T>({ items, renderItem, emptyText = "Sin resultados" }: Props<T>) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
+export default function HorizontalSlider<T>({
+  items,
+  renderItem,
+  gap = 16,
+  scrollStep = 0.85,
+  className,
+  style
+}: Props<T>) {
+  const viewportRef = useRef<HTMLDivElement>(null);
 
-  const scrollBy = (delta: number) => {
-    if (!ref.current) return;
-    ref.current.scrollBy({ left: delta, behavior: 'smooth' });
+  const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
+
+  const scrollByAmount = (dir: 1 | -1) => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * scrollStep * dir;
+    el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
-  if (!items || items.length === 0) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.6 }}>{emptyText}</div>
-    );
-  }
-
   return (
-    <div style={{ position: 'relative', overflow: 'hidden' }} className="slider-container">
-      {/* Left Arrow */}
-      <button
+    <div
+      className={className}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "auto 1fr auto",
+        alignItems: "center",
+        gap: 12,
+        // Asegura que las flechas estén FUERA visualmente
+        // y no se encimen a las cards
+        ...style
+      }}
+    >
+      {/* Flecha izquierda (fuera del contenedor) */}
+      <motion.button
+        type="button"
         aria-label="Anterior"
-        onClick={() => scrollBy(-320)}
-        className="slider-nav-btn slider-nav-left"
+        whileTap={{ scale: 0.96 }}
+        onClick={() => scrollByAmount(-1)}
+        disabled={!canScroll}
         style={{
-          position: 'absolute', 
-          left: -8, 
-          top: '50%', 
-          transform: 'translateY(-50%)',
-          zIndex: 10, 
-          background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))', 
-          border: '2px solid rgba(255,255,255,0.3)',
-          color: '#FFFFFF', 
-          borderRadius: '50%', 
-          width: 48,
-          height: 48,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          fontSize: '20px',
-          fontWeight: 'bold',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)',
-          backdropFilter: 'blur(10px)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1.15)';
-          e.currentTarget.style.boxShadow = '0 8px 28px rgba(240, 147, 251, 0.6), 0 0 0 4px rgba(240, 147, 251, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)';
+          width: 40,
+          height: 40,
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.18)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          display: "grid",
+          placeItems: "center",
+          cursor: canScroll ? "pointer" : "not-allowed",
+          opacity: canScroll ? 1 : 0.4,
+          // separa visualmente la flecha del carrusel
+          marginRight: 6,
+          backdropFilter: "blur(6px)"
         }}
       >
-        ‹
-      </button>
+        ◀
+      </motion.button>
 
-      {/* Scrollable Container */}
+      {/* Viewport central */}
       <div
-        ref={ref}
-        className="slider-scroll-container"
+        ref={viewportRef}
         style={{
-          display: 'flex',
-          gap: '16px',
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          padding: '8px 48px',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          position: "relative",
+          overflowX: "auto",
+          overflowY: "hidden",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          paddingBottom: 4
         }}
       >
-        {items.map((it, i) => (
-          <div 
-            key={i} 
-            className="slider-item"
-            style={{ 
-              scrollSnapAlign: 'start',
-              flexShrink: 0,
-              width: '280px'
-            }}
-          >
-            {renderItem(it, i)}
-          </div>
-        ))}
+        {/* Oculta scrollbar nativo en webkit */}
+        <style>{`
+          div::-webkit-scrollbar { display: none; }
+          @media (max-width: 768px) {
+            .hs-hide-arrows-on-mobile { display: none !important; }
+          }
+        `}</style>
+
+        <div
+          style={{
+            display: "grid",
+            gridAutoFlow: "column",
+            gridAutoColumns: "minmax(280px, 1fr)",
+            gap
+          }}
+        >
+          {items?.map((it, idx) => renderItem(it, idx))}
+        </div>
       </div>
 
-      {/* Right Arrow */}
-      <button
+      {/* Flecha derecha (fuera del contenedor) */}
+      <motion.button
+        type="button"
         aria-label="Siguiente"
-        onClick={() => scrollBy(320)}
-        className="slider-nav-btn slider-nav-right"
+        whileTap={{ scale: 0.96 }}
+        onClick={() => scrollByAmount(1)}
+        disabled={!canScroll}
         style={{
-          position: 'absolute', 
-          right: -8, 
-          top: '50%', 
-          transform: 'translateY(-50%)',
-          zIndex: 10, 
-          background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))', 
-          border: '2px solid rgba(255,255,255,0.3)',
-          color: '#FFFFFF', 
-          borderRadius: '50%', 
-          width: 48,
-          height: 48,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          fontSize: '20px',
-          fontWeight: 'bold',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)',
-          backdropFilter: 'blur(10px)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1.15)';
-          e.currentTarget.style.boxShadow = '0 8px 28px rgba(240, 147, 251, 0.6), 0 0 0 4px rgba(240, 147, 251, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.9), rgba(245, 87, 108, 0.9))';
-          e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(240, 147, 251, 0.4), 0 0 0 0 rgba(240, 147, 251, 0.2)';
+          width: 40,
+          height: 40,
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.18)",
+          background: "rgba(255,255,255,0.06)",
+          color: "#fff",
+          display: "grid",
+          placeItems: "center",
+          cursor: canScroll ? "pointer" : "not-allowed",
+          opacity: canScroll ? 1 : 0.4,
+          marginLeft: 6,
+          backdropFilter: "blur(6px)"
         }}
       >
-        ›
-      </button>
-
-      <style>{`
-        .slider-container {
-          overflow: hidden;
-          width: 100%;
-        }
-        .slider-scroll-container::-webkit-scrollbar {
-          display: none;
-        }
-        /* Desktop: Mostrar 3 tarjetas completas + inicio de la siguiente (≈100px visible de la 4ta) */
-        .slider-container {
-          max-width: calc(280px * 3 + 16px * 2 + 100px);
-          margin: 0 auto;
-        }
-        @media (max-width: 768px) {
-          /* Tablet: Mostrar 2 tarjetas completas + inicio de la siguiente */
-          .slider-container {
-            max-width: calc(280px * 2 + 16px * 1 + 80px);
-          }
-          .slider-nav-btn {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 18px !important;
-          }
-          .slider-nav-left {
-            left: 4px !important;
-          }
-          .slider-nav-right {
-            right: 4px !important;
-          }
-          .slider-scroll-container {
-            padding: 8px 44px !important;
-          }
-        }
-        @media (max-width: 480px) {
-          /* Mobile: Mostrar 1 tarjeta completa + inicio de la siguiente (≈60px visible de la 2da) */
-          .slider-container {
-            max-width: calc(280px * 1 + 60px);
-          }
-          .slider-nav-btn {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 16px !important;
-          }
-          .slider-nav-left {
-            left: 2px !important;
-          }
-          .slider-nav-right {
-            right: 2px !important;
-          }
-          .slider-scroll-container {
-            padding: 8px 40px !important;
-          }
-        }
-      `}</style>
+        ▶
+      </motion.button>
     </div>
   );
 }
-
-
