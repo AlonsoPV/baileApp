@@ -32,7 +32,7 @@ export default function EventCard({ item }: EventCardProps) {
           position: 'relative',
           borderRadius: '1.25rem',
           background: flyer
-            ? `linear-gradient(135deg, rgba(30, 20, 40, 0.7), rgba(20, 10, 30, 0.7)), url(${flyer})`
+            ? `url(${flyer})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -50,8 +50,10 @@ export default function EventCard({ item }: EventCardProps) {
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        {/* Overlay para legibilidad sobre el flyer */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        {/* Overlay global solo si NO hay flyer */}
+        {!flyer && (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        )}
 
         {/* Contenido */}
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -166,7 +168,7 @@ export default function EventCard({ item }: EventCardProps) {
         )}
 
         {/* CTA */}
-        <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+{/*         <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
           
           <div style={{
             padding: '8px 12px',
@@ -179,7 +181,7 @@ export default function EventCard({ item }: EventCardProps) {
             fontWeight: 700,
             border: '1px solid rgba(255,255,255,0.08)'
           }}>Ver más →</div>
-        </div>
+        </div> */}
 
         {/* Cierre del contenedor de contenido sobre el overlay */}
         </div>
