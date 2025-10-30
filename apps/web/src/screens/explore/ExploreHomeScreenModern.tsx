@@ -138,6 +138,15 @@ export default function ExploreHomeScreen() {
     pageSize: 4
   });
 
+  // Sociales (event parents)
+  const { data: sociales, isLoading: socialesLoading } = useExploreQuery({
+    type: 'sociales' as any,
+    q: filters.q,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 8
+  });
+
   // Construir clases desde academias y maestros (todas las páginas disponibles)
   const classesList = React.useMemo(() => {
     const dayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -325,15 +334,12 @@ export default function ExploreHomeScreen() {
             })()}
           </Section>
 
-       
-
           {selectedType === 'sociales' && (
           <Section title="Sociales" toAll="/explore/list?type=sociales">
-            {/* Usa el mismo hook pero con type 'sociales' */}
-            {(() => {
-              const { data, isLoading } = useExploreQuery({ type: 'sociales' as any, q: filters.q, ritmos: filters.ritmos, zonas: filters.zonas, pageSize: 8 });
-              if (isLoading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
-              const list = data?.pages?.[0]?.data || [];
+            {socialesLoading ? (
+              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+            ) : (() => {
+              const list = sociales?.pages?.[0]?.data || [];
               return list.length ? (
                 <HorizontalSlider
                   items={list}
