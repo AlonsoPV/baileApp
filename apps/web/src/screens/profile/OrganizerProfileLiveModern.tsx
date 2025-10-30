@@ -1025,7 +1025,11 @@ export function OrganizerProfileLive() {
                       fontSize: typography.fontSize.sm,
                       color: colors.primary[500],
                       fontWeight: typography.fontWeight.medium,
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
+                      border: '1px solid rgb(255 255 255 / 48%)',
+                        background: 'rgb(25 25 25 / 89%)',
+                        padding: 10,
+                    
                     }}>
                       📅 {ev.date}
                     </p>
@@ -1033,7 +1037,10 @@ export function OrganizerProfileLive() {
                       <p style={{
                         fontSize: typography.fontSize.sm,
                         color: '#0277BD',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
+                        border: '1px solid rgb(255 255 255 / 48%)',
+                        background: 'rgb(25 25 25 / 89%)',
+                        padding: 10,
                       }}>
                         🕐 {ev.time}
                       </p>
@@ -1041,7 +1048,10 @@ export function OrganizerProfileLive() {
                     {ev.place && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
-                        color: '#0277BD'
+                        color: '#0277BD',
+                        border: '1px solid rgb(255 255 255 / 48%)',
+                        background: 'rgb(25 25 25 / 89%)',
+                        padding: 10,
                       }}>
                         📍 {ev.place}
                       </p>

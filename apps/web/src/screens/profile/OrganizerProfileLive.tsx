@@ -547,12 +547,12 @@ export function OrganizerProfileLive() {
                 <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
-                <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700, marginBottom: spacing[2], textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+                <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700, marginBottom: spacing[2], textShadow: '0 2px 4px rgba(0,0,0)' }}>{ev.nombre}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], fontSize: typography.fontSize.sm, marginBottom: spacing[2] }}>
-                  {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
-                  {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
-                  {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
-                  {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                  {ev.date && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                  {ev.time && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                  {ev.place && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                  {ev.price && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
                 </div>
                 {/* Botón de calendario */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2], position: 'relative', zIndex: 5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
