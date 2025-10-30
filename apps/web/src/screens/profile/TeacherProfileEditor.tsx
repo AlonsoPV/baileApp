@@ -454,11 +454,11 @@ export default function TeacherProfileEditor() {
                     let ubicacionStr = (
                       [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
                     ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                    if (!ubicacionStr.trim() && c?.ubicacionId) {
-                      const match = ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId);
-                      if (match) {
-                        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                      }
+                    const match = c?.ubicacionId
+                      ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+                      : undefined;
+                    if (!ubicacionStr.trim() && match) {
+                      ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                     }
 
                     const updatedItem = {
@@ -466,12 +466,15 @@ export default function TeacherProfileEditor() {
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
+                      diaSemana: c.fechaModo === 'semanal' ? c.diaSemana : null,
+                      recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
                       inicio: c.inicio,
                       fin: c.fin,
                       referenciaCosto: c.nombre,
                       ritmoId: c.ritmoId,
                       zonaId: c.zonaId,
-                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+                      ubicacionId: c.ubicacionId || (match?.id || null)
                     };
                     currentCrono[editingIndex] = updatedItem;
 
@@ -508,24 +511,27 @@ export default function TeacherProfileEditor() {
                     let ubicacionStr = (
                       [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
                     ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                    if (!ubicacionStr.trim() && c?.ubicacionId) {
-                      const match = ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId);
-                      if (match) {
-                        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                      }
+                    const match = c?.ubicacionId
+                      ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+                      : undefined;
+                    if (!ubicacionStr.trim() && match) {
+                      ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                     }
 
                     const nextCrono = ([...currentCrono, {
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
+                      diaSemana: c.fechaModo === 'semanal' ? c.diaSemana : null,
+                      recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
                       inicio: c.inicio,
                       fin: c.fin,
                       nivel: undefined,
                       referenciaCosto: c.nombre,
                       ritmoId: c.ritmoId,
                       zonaId: c.zonaId,
-                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || ''
+                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+                      ubicacionId: c.ubicacionId || (match?.id || null)
                     }] as any);
                     const nextCostos = ([...currentCostos, {
                       nombre: c.nombre,
@@ -576,12 +582,13 @@ export default function TeacherProfileEditor() {
                               regla: costo?.regla || '',
                               fechaModo: it.fecha ? 'especifica' : 'semanal',
                               fecha: it.fecha || '',
-                              diaSemana: null,
+                          diaSemana: (it as any)?.diaSemana ?? null,
                               inicio: it.inicio || '',
                               fin: it.fin || '',
                               ritmoId: it.ritmoId ?? null,
                               zonaId: it.zonaId ?? null,
-                              ubicacion: it.ubicacion || ''
+                          ubicacion: it.ubicacion || '',
+                          ubicacionId: (it as any)?.ubicacionId || null
                             });
                             setStatusMsg(null);
                           }}

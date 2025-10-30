@@ -213,9 +213,32 @@ export default function CrearClase({
         ubicacionId: effective?.ubicacionId ?? null,
       });
       setIsOpen(true);
-      setSelectedLocationId('');
+      setSelectedLocationId((effective?.ubicacionId as any) || '');
     }
   }, [value, editValue]);
+
+  // Sincronizar campos de ubicación cuando cambia la selección del dropdown
+  useEffect(() => {
+    if (!locations || !Array.isArray(locations)) return;
+    if (selectedLocationId) {
+      const sel = locations.find(l => (l.id || '') === selectedLocationId);
+      if (sel) {
+        setForm(prev => ({
+          ...prev,
+          ubicacionId: selectedLocationId,
+          ubicacionNombre: sel.nombre || '',
+          ubicacionDireccion: sel.direccion || '',
+          ubicacionNotas: sel.referencias || ''
+        }));
+      }
+    } else {
+      // Modo manual
+      setForm(prev => ({
+        ...prev,
+        ubicacionId: null
+      }));
+    }
+  }, [selectedLocationId, locations]);
 
   const setField = (k: keyof CrearClaseValue, v: any) => {
     const next = { ...form, [k]: v };
