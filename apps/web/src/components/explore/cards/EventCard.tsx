@@ -123,7 +123,19 @@ export default function EventCard({ item }: EventCardProps) {
           display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
         }}>
 
-          <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: '0 2px 6px rgba(0,0,0,0.65)' }}>{nombre}</span>
+          <span style={{
+            flex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textShadow: '0 2px 8px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.55)',
+            background: 'rgba(0,0,0,0.45)',
+            padding: '4px 10px',
+            borderRadius: 10,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.35)'
+          }}>
+            {nombre}
+          </span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
