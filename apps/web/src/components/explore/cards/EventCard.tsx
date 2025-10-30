@@ -58,11 +58,11 @@ export default function EventCard({ item }: EventCardProps) {
         {/* Contenido */}
         <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Botón de calendario en esquina superior derecha */}
-        <div 
+     {/*    <div 
           style={{ 
             position: 'absolute', 
             top: '12px', 
-            right: '12px', 
+            right: '-12px', 
             zIndex: 10 
           }}
           onClick={(e) => e.stopPropagation()}
@@ -113,7 +113,7 @@ export default function EventCard({ item }: EventCardProps) {
             })()}
             showAsIcon={true}
           />
-        </div>
+        </div> */}
 
         {/* Sin avatar: el flyer queda como fondo del card */}
 
