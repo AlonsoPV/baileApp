@@ -69,7 +69,7 @@ export default function PinLogin() {
           <div style={{ marginTop: 12, textAlign: 'center' }}>
             <button
               type="button"
-              onClick={() => navigate('/auth/pin/setup')}
+              onClick={() => navigate(user ? '/auth/pin/setup' : '/auth/login')}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -80,7 +80,7 @@ export default function PinLogin() {
                 padding: 6,
               }}
             >
-              ¿Olvidaste tu NIP? Restablecer
+              ¿Olvidaste tu NIP? {user ? 'Restablecer' : 'Inicia sesión para restablecer'}
             </button>
           </div>
         </form>

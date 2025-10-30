@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
 import { hashPin, setPinVerified } from '@/lib/pin';
 import { supabase } from '@/lib/supabase';
 
 export default function PinSetup() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -13,6 +13,12 @@ export default function PinSetup() {
   const [saving, setSaving] = useState(false);
 
   const disabled = saving;
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth/pin', { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   const onSave = async () => {
     setError(null);
