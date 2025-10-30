@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
@@ -13,7 +12,6 @@ type AddToCalendarProps = {
   end: string | Date;
   allDay?: boolean;
   showAsIcon?: boolean;
-  debug?: boolean;
 };
 
 export default function AddToCalendarWithStats({
@@ -25,7 +23,6 @@ export default function AddToCalendarWithStats({
   end,
   allDay,
   showAsIcon = false,
-  debug = false,
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
@@ -36,15 +33,10 @@ export default function AddToCalendarWithStats({
 
   const eventIdStr = String(eventId);
 
-  const dbg = (...args: any[]) => {
-    if (debug) console.log('[AddToCalendar]', ...args);
-  };
-
   // Cargar usuario actual
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null);
-      dbg('session', !!data.session?.user, data.session?.user?.id);
     });
   }, []);
 
@@ -57,7 +49,6 @@ export default function AddToCalendarWithStats({
         .eq("event_id", eventIdStr);
       if (!error && typeof count === "number") {
         setCount(count);
-        dbg('interest count', count);
       }
     };
     loadCount();
@@ -74,40 +65,25 @@ export default function AddToCalendarWithStats({
         .eq("user_id", user.id)
         .maybeSingle();
       setAlreadyAdded(!!data);
-      dbg('alreadyAdded', !!data);
     };
     checkIfAdded();
   }, [user, eventIdStr]);
 
   const handleAdd = async (href: string) => {
-    // Abrir ventana inmediatamente para evitar bloqueos de popups
-    const opened = window.open('', '_blank');
-
-    // Si no hay sesión, no bloqueamos: abrimos calendario sin registrar interés
     if (!user?.id) {
-      if (opened) {
-        opened.location.href = href;
-      } else {
-        window.location.href = href;
-      }
+      alert("Inicia sesión para añadir al calendario 🙌");
       setOpen(false);
       return;
     }
 
-    // Si ya estaba registrado, abrimos inmediatamente
     if (alreadyAdded) {
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
-      if (opened) {
-        opened.location.href = href;
-      } else {
-        window.open(href, "_blank");
-      }
+      window.open(href, "_blank");
       return;
     }
 
-    // Registrar interés y luego navegar (manteniendo la ventana abierta ya creada)
     setLoading(true);
     try {
       const { error } = await supabase.from("eventos_interesados").insert({
@@ -122,19 +98,10 @@ export default function AddToCalendarWithStats({
 
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
-      if (opened) {
-        opened.location.href = href;
-      } else {
-        window.open(href, "_blank");
-      }
+      window.open(href, "_blank");
     } catch (err) {
       console.error("Error al registrar interés:", err);
-      // Aunque falle el registro, llevamos al calendario
-      if (opened) {
-        opened.location.href = href;
-      } else {
-        window.open(href, "_blank");
-      }
+      alert("Error al añadir al calendario. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -152,7 +119,6 @@ export default function AddToCalendarWithStats({
         console.warn('[AddToCalendarWithStats] Invalid start date:', start);
         return new Date(); // Fallback
       }
-      dbg('normalizedStart', d.toString());
       return d;
     } catch (err) {
       console.error('[AddToCalendarWithStats] Error normalizing start date:', err);
@@ -179,10 +145,8 @@ export default function AddToCalendarWithStats({
       if (d.getTime() <= normalizedStart.getTime()) {
         const correctedEnd = new Date(normalizedStart);
         correctedEnd.setHours(correctedEnd.getHours() + 2);
-        dbg('normalizedEnd corrected +2h', correctedEnd.toString());
         return correctedEnd;
       }
-      dbg('normalizedEnd', d.toString());
       return d;
     } catch (err) {
       console.error('[AddToCalendarWithStats] Error normalizing end date:', err);
@@ -203,18 +167,16 @@ export default function AddToCalendarWithStats({
         end: normalizedEnd, 
         allDay 
       });
-      dbg('ICS built ok');
       return URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     } catch (err) {
       console.error("[AddToCalendarWithStats] Error building ICS:", err);
-      dbg('ICS build failed');
       return null;
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
 
   const googleUrl = useMemo(() => {
     try {
-      const url = buildGoogleUrl({
+      return buildGoogleUrl({
         title,
         description: description || "",
         location: location || "",
@@ -222,8 +184,6 @@ export default function AddToCalendarWithStats({
         end: normalizedEnd,
         allDay,
       });
-      dbg('google url', url);
-      return url;
     } catch (err) {
       console.error("[AddToCalendarWithStats] Error building Google URL:", err);
       // Devolver URL genérica de Google Calendar como fallback
@@ -231,7 +191,6 @@ export default function AddToCalendarWithStats({
         action: 'TEMPLATE',
         text: title,
       });
-      dbg('google url fallback');
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
@@ -268,48 +227,18 @@ export default function AddToCalendarWithStats({
         top,
         left,
       });
-      dbg('menu open', { top, left, rect });
     } else {
       setMenuPosition(null);
-      dbg('menu closed');
     }
-  }, [open]);
-
-  // Reposicionar en scroll/resize mientras esté abierto
-  useEffect(() => {
-    if (!open) return;
-    const recalc = () => {
-      if (!buttonRef.current) return;
-      const rect = buttonRef.current.getBoundingClientRect();
-      const menuWidth = 200;
-      const menuHeight = 120;
-      let left = rect.right - menuWidth;
-      let top = rect.bottom + 8;
-      if (left < 8) left = 8;
-      if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
-      if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 8;
-      if (top < 8) top = 8;
-      setMenuPosition({ top, left });
-      dbg('menu reposition', { top, left });
-    };
-    window.addEventListener('scroll', recalc, true);
-    window.addEventListener('resize', recalc);
-    const id = window.setInterval(recalc, 300);
-    recalc();
-    return () => {
-      window.removeEventListener('scroll', recalc, true);
-      window.removeEventListener('resize', recalc);
-      clearInterval(id);
-    };
   }, [open]);
 
   if (showAsIcon) {
     return (
-      <div ref={buttonRef} style={{ position: "relative", display: "inline-block", zIndex: 10001 }}>
+      <div ref={buttonRef} style={{ position: "relative", display: "inline-block" }}>
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => { dbg('icon button click', { eventId: eventIdStr, userId: user?.id, alreadyAdded }); setOpen((v) => !v); }}
+          onClick={() => setOpen((v) => !v)}
           disabled={loading}
           style={{
             width: '40px',
@@ -360,40 +289,31 @@ export default function AddToCalendarWithStats({
 
         {/* Overlay para cerrar menú */}
         <AnimatePresence>
-          {open && createPortal(
+          {open && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 2147483640, background: 'rgba(0, 0, 0, 0.3)' }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9998,
+                background: 'rgba(0, 0, 0, 0.3)',
+              }}
               onClick={() => setOpen(false)}
-            />,
-            document.body
+            />
           )}
         </AnimatePresence>
 
         {/* Menú de opciones guardadas - Usando position fixed para estar por encima de todo */}
         <AnimatePresence>
-          {open && menuPosition && createPortal(
+          {open && menuPosition && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              style={debug ? {
-                position: 'fixed',
-                top: `${menuPosition.top}px`,
-                left: `${menuPosition.left}px`,
-                minWidth: 220,
-                background: '#fff',
-                color: '#000',
-                border: '2px solid #f00',
-                borderRadius: 12,
-                boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
-                overflow: 'hidden',
-                zIndex: 2147483641,
-                pointerEvents: 'auto'
-              } : {
+              style={{
                 position: 'fixed',
                 top: `${menuPosition.top}px`,
                 left: `${menuPosition.left}px`,
@@ -403,34 +323,26 @@ export default function AddToCalendarWithStats({
                 borderRadius: 12,
                 boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
                 overflow: 'hidden',
-                zIndex: 2147483641,
+                zIndex: 9999,
                 backdropFilter: 'blur(20px)',
-                pointerEvents: 'auto'
               }}
               onClick={(e) => e.stopPropagation()}
             >
               <MenuItem 
                 label="Google Calendar" 
-                onClick={() => { dbg('menu: google', { googleUrl }); handleAdd(googleUrl); }} 
+                onClick={() => handleAdd(googleUrl)} 
                 icon="📅"
               />
               {icsBlobUrl && (
                 <MenuItem 
                   label="Apple Calendar (.ics)" 
-                  onClick={() => { dbg('menu: ics', { icsBlobUrl }); handleAdd(icsBlobUrl); }} 
+                  onClick={() => handleAdd(icsBlobUrl)} 
                   icon="📱"
                 />
               )}
-            </motion.div>,
-            document.body
+            </motion.div>
           )}
         </AnimatePresence>
-        {debug && open && menuPosition && createPortal(
-          <div style={{ position: 'fixed', top: 8, left: 8, zIndex: 2147483642, background: '#111', color: '#0f0', padding: '4px 6px', borderRadius: 6, fontSize: 11, border: '1px solid #0f0' }}>
-            CAL MENU at {Math.round(menuPosition.left)},{Math.round(menuPosition.top)}
-          </div>,
-          document.body
-        )}
       </div>
     );
   }
@@ -441,7 +353,7 @@ export default function AddToCalendarWithStats({
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        onClick={() => { dbg('full button click', { eventId: eventIdStr, userId: user?.id, alreadyAdded }); setOpen((v) => !v); }}
+        onClick={() => setOpen((v) => !v)}
         disabled={loading}
         style={{
           padding: "10px 14px",

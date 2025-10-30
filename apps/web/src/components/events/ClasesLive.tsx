@@ -201,60 +201,27 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
             </div>
             {showCalendarButton && (
               <div
-                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}
+                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', position: 'relative', zIndex: 5, pointerEvents: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {(() => {
-                  const parseLocalYMD = (s: string) => {
-                    const [y, m, d] = s.split('-').map(n => parseInt(n, 10));
-                    return new Date(y, (m - 1), d, 0, 0, 0, 0); // local date (no TZ shift)
-                  };
-                  const parseAnyDate = (s?: string | null) => {
-                    if (!s) return null;
-                    const str = String(s).trim();
-                    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return parseLocalYMD(str);
-                    const m = str.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-                    if (m) {
-                      const dd = parseInt(m[1], 10);
-                      const mm = parseInt(m[2], 10);
-                      const yy = parseInt(m[3], 10);
-                      return new Date(yy, mm - 1, dd, 0, 0, 0, 0);
-                    }
-                    // Fallback: Date may still parse, but can shift; avoid if invalid
-                    const t = new Date(str);
-                    return isNaN(t.getTime()) ? null : t;
-                  };
-                  const nextWeekday = (weekday: number) => {
-                    const now = new Date();
-                    const day = now.getDay();
-                    let delta = (weekday - day + 7) % 7;
-                    if (delta === 0) delta = 7; // siguiente semana si es hoy
-                    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + delta);
-                    return next;
-                  };
-                  const buildDateWithTime = (base: Date, time?: string) => {
+                  const buildTimeDate = (time?: string) => {
+                    const base = new Date();
                     const hhmm = (time || '').split(':').slice(0, 2).join(':');
                     const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
-                    const y = base.getFullYear();
-                    const m = base.getMonth();
-                    const d = base.getDate();
-                    return new Date(y, m, d, isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+                    base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+                    return base;
                   };
-
-                  const item: any = it as any;
-                  // 1) Si hay fecha específica, usarla (soporta YYYY-MM-DD o DD-MM-YYYY/DD/MM/YYYY)
-                  let baseDate = parseAnyDate(item.fecha);
-                  // 2) Si no hay fecha y hay diaSemana (0=Domingo..6=Sábado), usar el siguiente día disponible
-                  if (!baseDate && (item.diaSemana !== undefined && item.diaSemana !== null)) {
-                    const wd = typeof item.diaSemana === 'string' ? parseInt(item.diaSemana, 10) : item.diaSemana;
-                    if (!isNaN(wd)) baseDate = nextWeekday(wd);
-                  }
-                  // 3) Fallback: hoy
-                  if (!baseDate) baseDate = new Date();
-
-                  const start = buildDateWithTime(baseDate, item.inicio);
-                  const endCandidate = buildDateWithTime(baseDate, item.fin);
-                  const end = endCandidate.getTime() <= start.getTime() ? new Date(start.getTime() + 2 * 60 * 60 * 1000) : endCandidate;
+                  const start = buildTimeDate((it as any).inicio);
+                  const end = (() => {
+                    const e = buildTimeDate((it as any).fin);
+                    if (e.getTime() <= start.getTime()) {
+                      const plus = new Date(start);
+                      plus.setHours(plus.getHours() + 2);
+                      return plus;
+                    }
+                    return e;
+                  })();
                   const location = ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad;
                   return (
                     <AddToCalendarWithStats
@@ -265,7 +232,6 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                       start={start}
                       end={end}
                       showAsIcon={true}
-                      debug={true}
                     />
                   );
                 })()}

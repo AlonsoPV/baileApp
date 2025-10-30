@@ -32,7 +32,7 @@ export default function EventCard({ item }: EventCardProps) {
           background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           padding: '1.5rem',
           cursor: 'pointer',
-          overflow: 'visible',
+          overflow: 'hidden',
           border: '1px solid rgba(240, 147, 251, 0.2)',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -98,7 +98,6 @@ export default function EventCard({ item }: EventCardProps) {
               }
             })()}
             showAsIcon={true}
-            debug={true}
           />
         </div>
 
