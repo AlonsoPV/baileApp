@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ExploreType = "fechas" | "sociales" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
+export type ExploreType = "all" | "fechas" | "sociales" | "clases" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
 
 export type ExploreFilters = {
   type: ExploreType;
@@ -21,7 +21,7 @@ type Store = {
 const KEY = "ba_explore_filters_v1";
 
 const defaultFilters: ExploreFilters = {
-  type: "fechas",
+  type: "all",
   q: "",
   ritmos: [],
   zonas: [],

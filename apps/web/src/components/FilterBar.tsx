@@ -11,8 +11,10 @@ interface FilterBarProps {
 }
 
 const PERFIL_OPTIONS = [
+  { value: 'all', label: 'Todos', icon: '✨' },
   { value: 'fechas', label: 'Fechas', icon: '📆' },
   { value: 'sociales', label: 'Sociales', icon: '🎉' },
+  { value: 'clases', label: 'Clases', icon: '🎓' },
   { value: 'organizadores', label: 'Organizadores', icon: '👤' },
   { value: 'academias', label: 'Academias', icon: '🏫' },
   { value: 'maestros', label: 'Maestros', icon: '🎓' },
@@ -60,7 +62,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
 
   const clearFilters = () => {
     onFiltersChange({
-      type: 'fechas',
+      type: 'all' as any,
       q: '',
       ritmos: [],
       zonas: [],
@@ -71,7 +73,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
 
   const hasActiveFilters = () => {
     return filters.q !== '' || 
-           filters.type !== 'fechas' ||
+           filters.type !== 'all' ||
            filters.ritmos.length > 0 || 
            filters.zonas.length > 0 || 
            filters.dateFrom || 
@@ -81,7 +83,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
   const getActiveFilterCount = () => {
     let count = 0;
     if (filters.q) count++;
-    if (filters.type !== 'fechas') count++;
+    if (filters.type !== 'all') count++;
     count += filters.ritmos.length;
     count += filters.zonas.length;
     if (filters.dateFrom || filters.dateTo) count++;
@@ -204,7 +206,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
               icon="👥"
               isOpen={openDropdown === 'tipos'}
               onClick={() => toggleDropdown('tipos')}
-              activeCount={filters.type !== 'fechas' ? 1 : 0}
+              activeCount={filters.type !== 'all' ? 1 : 0}
             />
 
             {/* Botón Ritmos */}

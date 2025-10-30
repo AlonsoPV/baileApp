@@ -17,7 +17,9 @@ export default function AcademyCard({ item }: AcademyCardProps) {
     || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
     || item.avatar_url || null;
 
-  const ritmoNombres: string[] = (item.ritmos || [])
+  // En editor a veces llega como 'estilos'; en live como 'ritmos'
+  const ritmoIds: number[] = (item.ritmos && Array.isArray(item.ritmos) ? item.ritmos : (item.estilos && Array.isArray(item.estilos) ? item.estilos : []));
+  const ritmoNombres: string[] = (ritmoIds || [])
     .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
     .filter(Boolean);
   const zonaNombres: string[] = (item.zonas || [])
