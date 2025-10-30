@@ -43,20 +43,47 @@ export default function PinLogin() {
       <div style={{ width: 360, padding: 24, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12 }}>
         <h1 style={{ margin: 0, marginBottom: 16 }}>Ingresar con PIN</h1>
         <p style={{ opacity: 0.8, marginTop: 0, marginBottom: 16 }}>Introduce tu PIN de 4 dígitos para continuar.</p>
-        <input
-          type="password"
-          inputMode="numeric"
-          pattern="\\d{4}"
-          placeholder="PIN de 4 dígitos"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
-          onKeyDown={(e) => { if (e.key === 'Enter') onVerify(); }}
-          style={{ width: '100%', padding: 12, borderRadius: 10, background: '#111418', border: '1px solid #222', color: '#e5e7eb', marginBottom: 12 }}
-        />
-        {error && <div style={{ color: '#ef4444', marginBottom: 12 }}>{error}</div>}
-        <button onClick={onVerify} disabled={disabled} style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: disabled ? '#374151' : '#2563EB', color: '#fff', fontWeight: 700 }}>
-          {loading ? 'Verificando…' : 'Continuar'}
-        </button>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (!disabled) { onVerify(); } }}
+          autoComplete="off"
+          noValidate
+        >
+          <label htmlFor="pin-input" style={{ position: 'absolute', width: 1, height: 1, margin: -1, padding: 0, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}>PIN</label>
+          <input
+            id="pin-input"
+            name="pin"
+            type="password"
+            inputMode="numeric"
+            pattern="\\d{4}"
+            placeholder="PIN de 4 dígitos"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+            autoComplete="one-time-code"
+            autoFocus
+            style={{ width: '100%', padding: 12, borderRadius: 10, background: '#111418', border: '1px solid #222', color: '#e5e7eb', marginBottom: 12 }}
+          />
+          {error && <div style={{ color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+          <button type="submit" disabled={disabled} style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: disabled ? '#374151' : '#2563EB', color: '#fff', fontWeight: 700 }}>
+            {loading ? 'Verificando…' : 'Continuar'}
+          </button>
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/auth/pin/setup')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#93c5fd',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: 6,
+              }}
+            >
+              ¿Olvidaste tu NIP? Restablecer
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
