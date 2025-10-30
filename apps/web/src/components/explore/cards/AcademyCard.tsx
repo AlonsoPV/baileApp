@@ -13,9 +13,11 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Academia";
   const bio = item.bio || "";
-  const avatar = (item.portada_url)
+  // Priorizar el avatar usado en el banner (equivalente a academy-banner-avatar): avatar_url -> portada_url -> media[0]
+  const avatar = (item.avatar_url)
+    || (item.portada_url)
     || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
-    || item.avatar_url || null;
+    || null;
 
   // En editor a veces llega como 'estilos'; en live como 'ritmos'
   const ritmoIds: number[] = (item.ritmos && Array.isArray(item.ritmos) ? item.ritmos : (item.estilos && Array.isArray(item.estilos) ? item.estilos : []));

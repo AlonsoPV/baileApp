@@ -6,9 +6,10 @@ import { useTags } from "../../../hooks/useTags";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
-  const bannerUrl: string | undefined = (item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
-    || (item.avatar_url);
+  // Priorizar el avatar usado en el banner (equivalente a teacher-banner-avatar): avatar_url -> portada_url -> media[0]
+  const bannerUrl: string | undefined = (item.avatar_url)
+    || (item.portada_url)
+    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined);
   const ritmoNombres: string[] = (item.ritmos || [])
     .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
     .filter(Boolean);
