@@ -68,12 +68,14 @@ import Unauthorized from './screens/system/Unauthorized';
 import InfoScreen from './screens/InfoScreen';
 import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
 import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
+import RequestRoleScreen from './screens/roles/RequestRoleScreen';
 import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
 
 // Dev-only components
 import RouteDiagnostics from './dev/RouteDiagnostics';
 import PinSetup from './screens/auth/PinSetup';
 import PinLogin from './screens/auth/PinLogin';
+import AuthCallback from './screens/auth/AuthCallback';
 
 export default function AppRouter() {
   return (
@@ -81,6 +83,7 @@ export default function AppRouter() {
       {/* Auth */}
       <Route path={routes.auth.login} element={<Login />} />
       <Route path={routes.auth.signup} element={<Signup />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/auth/pin/setup" element={<PinSetup />} />
       <Route path="/auth/pin" element={<PinLogin />} />
 
@@ -129,7 +132,10 @@ export default function AppRouter() {
           <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
           <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
           <Route path="/profile/roles" element={<RoleSelectorScreen />} />
+          <Route path="/profile/roles/request" element={<RequestRoleScreen />} />
+          <Route path="/app/roles/request" element={<RequestRoleScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
+          <Route path="/admin" element={<AdminRoleRequestsScreen />} />
           <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
         </Route>
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OffCanvasMenu as UIOffCanvasMenu } from '../../../packages/ui/src/OffCanvasMenu';
+import { OffCanvasMenu as UIOffCanvasMenu } from '@ui/index';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 
@@ -19,7 +19,8 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
     { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
     { id: 'me', label: 'Mi perfil', icon: '👤', onClick: () => navigate('/app/profile') },
     { id: 'default-profile', label: 'Configurar perfil por defecto', icon: '⚙️', onClick: () => navigate('/app/profile/settings') },
-    isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin') } : null,
+    { id: 'request-role', label: 'Solicitar rol', icon: '📝', onClick: () => navigate('/app/roles/request') },
+    isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
     { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') },
     { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;

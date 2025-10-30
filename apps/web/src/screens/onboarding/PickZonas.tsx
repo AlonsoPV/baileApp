@@ -34,6 +34,8 @@ export function PickZonas() {
     },
     onSuccess: async () => {
       // 🔁 Asegura que el guard vea el cambio
+      qc.setQueryData(["onboarding-status", user?.id], { onboarding_complete: true });
+      await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
       navigate(routes.app.profile, { replace: true });
     }
