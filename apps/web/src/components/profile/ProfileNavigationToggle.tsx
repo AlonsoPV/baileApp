@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
@@ -30,6 +32,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   editHref,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: roles } = useUserRoles(user?.id);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +108,30 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher', available: true },
     { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand', available: true },
   ];
+  const hasRole = (roleId: string) => {
+    const map: Record<string, 'usuario'|'organizador'|'academia'|'maestro'|'marca'> = {
+      user: 'usuario',
+      organizer: 'organizador',
+      academy: 'academia',
+      teacher: 'maestro',
+      brand: 'marca',
+    };
+    const slug = map[roleId] as any;
+    return !!roles?.some(r => r.role_slug === slug);
+  };
+
+  const getRequestRoute = (roleId: string) => {
+    const map: Record<string, string> = {
+      organizer: 'organizador',
+      academy: 'academia',
+      teacher: 'maestro',
+      brand: 'marca',
+      user: 'usuario',
+    };
+    const slug = map[roleId] || 'organizador';
+    return `/app/roles/request?role=${slug}`;
+  };
+
 
   const currentRole = availableRoles.find(role => role.id === profileType);
   const otherRoles = availableRoles.filter(role => role.id !== profileType);
@@ -135,7 +163,15 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       `}</style>
       {/* Botón Ver Live */}
       <button
-        onClick={() => navigate(getLiveRoute())}
+        onClick={() => {
+          const target = getLiveRoute();
+          const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
+          if (needsRole && !hasRole(profileType)) {
+            navigate(getRequestRoute(profileType));
+          } else {
+            navigate(target);
+          }
+        }}
         style={{
           padding: '0.5rem 1rem',
           borderRadius: '20px',
@@ -172,7 +208,15 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
 
       {/* Botón Editar */}
       <button
-        onClick={() => navigate(getEditRoute())}
+        onClick={() => {
+          const target = getEditRoute();
+          const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
+          if (needsRole && !hasRole(profileType)) {
+            navigate(getRequestRoute(profileType));
+          } else {
+            navigate(target);
+          }
+        }}
         style={{
           padding: '0.5rem 1rem',
           borderRadius: '20px',
@@ -325,13 +369,13 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                     key={role.id}
                     onClick={() => {
                       console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
-                      if (role.available) {
-                        console.log('✅ Navegando a:', role.route);
+                      if (!role.available) return;
+                      if (hasRole(role.id)) {
                         navigate(role.route);
-                        setIsRoleDropdownOpen(false);
                       } else {
-                        console.log('❌ Rol no disponible:', role.name);
+                        navigate(getRequestRoute(role.id));
                       }
+                      setIsRoleDropdownOpen(false);
                     }}
                     disabled={!role.available}
                     style={{

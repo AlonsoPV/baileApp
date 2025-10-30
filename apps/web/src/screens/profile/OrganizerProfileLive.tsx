@@ -415,7 +415,7 @@ export function OrganizerProfileLive() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/profile/organizer/edit')}
+          onClick={() => navigate('/app/roles/request?role=organizador')}
           style={{
             padding: `${spacing[4]} ${spacing[7]}`,
             borderRadius: borderRadius.full,

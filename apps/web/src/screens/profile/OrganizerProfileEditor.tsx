@@ -663,6 +663,16 @@ export default function OrganizerProfileEditor() {
   }
 
   if (!org) {
+    // Auto-creación de perfil si no existe
+    const [creating, setCreating] = React.useState(false);
+    React.useEffect(() => {
+      if (!creating) {
+        setCreating(true);
+        upsert.mutateAsync({ nombre_publico: 'Mi Organizador' }).catch(() => {
+          setCreating(false);
+        });
+      }
+    }, [creating, upsert]);
     return (
       <div style={{
         minHeight: '100vh',
@@ -673,8 +683,8 @@ export default function OrganizerProfileEditor() {
         justifyContent: 'center'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌</div>
-          <div>No se encontró el perfil del organizador</div>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+          <div>Creando tu perfil de organizador…</div>
         </div>
       </div>
     );
