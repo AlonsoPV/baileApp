@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useTags } from "../../hooks/useTags";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useUserMedia } from "../../hooks/useUserMedia";
 import { useUserRSVPEvents } from "../../hooks/useRSVP";
 import { useAuth } from '@/contexts/AuthProvider';
@@ -582,33 +583,39 @@ export const UserProfileLive: React.FC = () => {
                 {profile?.display_name || 'Usuario'}
               </h1>
 
-              {/* Chips de ritmos y zonas */}
-              <div 
-                id="user-chips"
-                data-test-id="user-chips"
-                style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: spacing[2],
-                  marginBottom: spacing[2]
-                }}
-              >
-                {getRitmoNombres().map((nombre) => (
-                  <Chip 
-                    key={`r-${nombre}`} 
-                    label={nombre} 
-                    icon="🎵" 
-                    variant="ritmo" 
-                  />
-                ))}
-                {getZonaNombres().map((nombre) => (
-                  <Chip 
-                    key={`z-${nombre}`} 
-                    label={nombre} 
-                    icon="📍" 
-                    variant="zona" 
-                  />
-                ))}
+              {/* Chips de ritmos (agrupados) y zonas */}
+              <div id="user-chips" data-test-id="user-chips" style={{ display: 'grid', gap: spacing[2], marginBottom: spacing[2] }}>
+                {/* Ritmos agrupados */}
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {(() => {
+                    const selectedNames = new Set(getRitmoNombres());
+                    return RITMOS_CATALOG.map(group => {
+                      const children = group.items.filter(i => selectedNames.has(i.label));
+                      if (children.length === 0) return null;
+                      return (
+                        <div key={group.id} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                          <span style={{
+                            padding: '6px 10px',
+                            borderRadius: 999,
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            background: 'rgba(255,255,255,0.06)',
+                            fontWeight: 700
+                          }}>{group.label}</span>
+                          {children.map(ch => (
+                            <Chip key={ch.id} label={ch.label} icon="🎵" variant="ritmo" />
+                          ))}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* Zonas */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
+                  {getZonaNombres().map((nombre) => (
+                    <Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />
+                  ))}
+                </div>
               </div>
 
               {/* Estado del perfil */}
