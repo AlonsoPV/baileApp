@@ -154,6 +154,20 @@ export default function ExploreHomeScreen() {
     const allA = (academias?.pages || []).flatMap(p => p?.data || []);
     const allM = (maestros?.pages || []).flatMap(p => p?.data || []);
 
+    const resolveOwnerCover = (owner: any) => {
+      const direct = owner?.avatar_url || owner?.portada_url || owner?.banner_url || owner?.avatar || owner?.portada || owner?.banner;
+      if (direct) return String(direct);
+      const media = Array.isArray(owner?.media) ? owner.media : [];
+      if (media.length) {
+        const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
+        if (bySlot?.url) return String(bySlot.url);
+        if ((bySlot as any)?.path) return String((bySlot as any).path);
+        const first = media[0];
+        return String(first?.url || (first as any)?.path || (typeof first === 'string' ? first : ''));
+      }
+      return undefined as unknown as string | undefined;
+    };
+
     const mapClase = (owner: any, c: any, ownerType: 'academy'|'teacher') => ({
       titulo: c?.titulo,
       fecha: c?.fecha,
@@ -163,7 +177,8 @@ export default function ExploreHomeScreen() {
       ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || '',
       ownerType,
       ownerId: owner?.id,
-      ownerName: owner?.nombre_publico
+      ownerName: owner?.nombre_publico,
+      ownerCoverUrl: resolveOwnerCover(owner)
     });
 
     const fromAcademies = allA.flatMap((ac: any) => (Array.isArray(ac?.cronograma) ? ac.cronograma.map((c: any) => mapClase(ac, c, 'academy')) : []));

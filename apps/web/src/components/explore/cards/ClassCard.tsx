@@ -13,6 +13,7 @@ type ClaseItem = {
   ownerType?: 'academy' | 'teacher';
   ownerId?: number | string;
   ownerName?: string;
+  ownerCoverUrl?: string;
 };
 
 interface Props {
@@ -63,6 +64,7 @@ export default function ClassCard({ item }: Props) {
   const href = item.ownerType === 'academy'
     ? `/profile/academy/live#clases`
     : `${urls.teacherLive(item.ownerId || '')}#clases`;
+  const bg = item.ownerCoverUrl;
 
   return (
     <LiveLink to={href} asCard={false}>
@@ -72,11 +74,20 @@ export default function ClassCard({ item }: Props) {
         whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.2 } }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.15 }}
-        style={card}
+        style={{
+          ...card,
+          background: bg
+            ? `url(${bg})`
+            : card.background,
+          backgroundSize: bg ? 'cover' : undefined,
+          backgroundPosition: bg ? 'center' : undefined
+        }}
       >
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
+      {/* Overlay siempre presente para legibilidad */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem', position: 'relative', zIndex: 1 }}>
         <div style={{
           width: '64px', height: '64px', borderRadius: '50%',
           background: 'linear-gradient(135deg, #f093fb, #f5576c)',
@@ -88,10 +99,10 @@ export default function ClassCard({ item }: Props) {
       </div>
 
         {item.ownerName && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
         )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, position: 'relative', zIndex: 1 }}>
         {isSemanal ? (
           <span style={chip}>🗓️ {item.diasSemana!.join(', ')}</span>
         ) : (
@@ -103,14 +114,14 @@ export default function ClassCard({ item }: Props) {
       </div>
 
       {item.ubicacion && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 13, color: 'rgba(255,255,255,0.9)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 13, color: 'rgba(255,255,255,0.9)', position: 'relative', zIndex: 1 }}>
           <span>📍</span>
           <span>{item.ubicacion}</span>
         </div>
       )}
 
       {/* CTA subtle */}
-      <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10 }}>
+      <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10, position: 'relative', zIndex: 1 }}>
         <div style={{
           padding: '8px 12px',
           borderRadius: 12,

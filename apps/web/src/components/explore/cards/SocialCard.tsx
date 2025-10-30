@@ -18,9 +18,14 @@ export default function SocialCard({ item }: { item: SocialItem }) {
   const title = item?.nombre || "Social";
   const desc = item?.descripcion || "";
 
-  const cover = (item?.portada_url
-    || (Array.isArray(item?.media) && (item!.media![0] as any)?.url)
-    || (Array.isArray(item?.media) && typeof item!.media![0] === 'string' && (item!.media![0] as string))
+  // Preferir la misma imagen que usa OrganizerCard: portada del organizador, luego media del organizador, luego portada/media del social
+  const organizer = (item as any)?.profiles_organizer;
+  const cover = (
+    organizer?.portada_url
+      || (Array.isArray(organizer?.media) && ((organizer.media[0] as any)?.url || (typeof organizer.media[0] === 'string' ? organizer.media[0] : undefined)))
+      || organizer?.avatar_url
+      || item?.portada_url
+      || (Array.isArray(item?.media) && ((item.media[0] as any)?.url || (typeof item.media[0] === 'string' ? item.media[0] : undefined)))
   ) as string | undefined;
 
   const firstLocation = Array.isArray(item?.ubicaciones) && item!.ubicaciones!.length > 0
