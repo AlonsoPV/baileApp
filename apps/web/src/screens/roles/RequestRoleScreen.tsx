@@ -19,7 +19,7 @@ export default function RequestRoleScreen() {
   const [socials, setSocials] = useState({ instagram: '', tiktok: '', youtube: '', facebook: '', whatsapp: '' });
 
   const submit = async () => {
-    await createReq.mutateAsync({ role_slug: role, full_name: fullName, phone, socials });
+    await createReq.mutateAsync({ role_slug: role, full_name: fullName, email, phone, socials });
     setFullName(''); setEmail(''); setPhone('');
     setTimeout(() => navigate('/app/profile'), 800);
   };

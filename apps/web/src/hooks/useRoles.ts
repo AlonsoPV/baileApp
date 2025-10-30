@@ -56,6 +56,7 @@ export function useCreateRoleRequest() {
     mutationFn: async (payload: {
       role_slug: RoleSlug;
       full_name: string;
+      email: string;
       phone: string;
       socials: RoleRequest['socials'];
     }) => {
