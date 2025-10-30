@@ -438,7 +438,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'maestros') && (
-          <Section title="Maestros" toAll="/explore/list?type=teachers">
+          <Section title="Maestros" toAll="/explore/list?type=teacher">
             {maestrosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
