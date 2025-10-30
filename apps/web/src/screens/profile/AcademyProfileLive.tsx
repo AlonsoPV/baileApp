@@ -10,6 +10,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import CostosyHorarios from './CostosyHorarios';
@@ -302,12 +303,30 @@ export default function AcademyProfileLive() {
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
 
-  // Get tag names from IDs
+  // Get rhythm names from either numeric tag IDs (ritmos/estilos) or catalog IDs (ritmos_seleccionados)
   const getRitmoNombres = () => {
-    if (!allTags || !academy?.ritmos) return [];
-    return academy.ritmos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo')?.nombre)
-      .filter(Boolean);
+    const names: string[] = [];
+    if (allTags) {
+      const tagToName = (ids?: number[]) => (ids || [])
+        .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+        .filter(Boolean) as string[];
+      // Prefer explicit ritmos, then estilos
+      if (Array.isArray((academy as any)?.ritmos) && (academy as any).ritmos.length) {
+        names.push(...tagToName((academy as any).ritmos));
+      } else if (Array.isArray((academy as any)?.estilos) && (academy as any).estilos.length) {
+        names.push(...tagToName((academy as any).estilos));
+      }
+    }
+    // If no tag-based names, fallback to catalog IDs stored in ritmos_seleccionados
+    if (names.length === 0 && Array.isArray((academy as any)?.ritmos_seleccionados)) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      const extra = ((academy as any).ritmos_seleccionados as string[])
+        .map(id => labelById.get(id))
+        .filter(Boolean) as string[];
+      names.push(...extra);
+    }
+    return names;
   };
 
   const getZonaNombres = () => {
