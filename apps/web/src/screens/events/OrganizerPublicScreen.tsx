@@ -97,7 +97,7 @@ export function OrganizerPublicScreen() {
         gap: '6px',
       }}
     >
-      {org.estado_aprobacion === 'aprobado' ? '✅' : '⏳'} {org.estado_aprobacion}
+      {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}
     </span>
   ) : null;
 
@@ -422,7 +422,7 @@ export function OrganizerPublicScreen() {
                         borderRadius: '12px',
                         fontWeight: '500'
                       }}>
-                        {evento.estado_aprobacion === 'aprobado' ? 'Aprobado' : 'En revisión'}
+                        {evento.estado_aprobacion === 'aprobado' ? 'Verificado' : 'En revisión'}
                       </span>
                     </div>
                     

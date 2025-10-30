@@ -989,7 +989,7 @@ export function OrganizerProfileLive() {
                     letterSpacing: '0.05em'
                   }}
                 >
-                  {org.estado_aprobacion === 'aprobado' ? '✅' : '⏳'} {org.estado_aprobacion}
+                  {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}
                 </motion.span>
               </div>
             </motion.div>

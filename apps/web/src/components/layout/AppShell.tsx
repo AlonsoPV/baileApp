@@ -26,7 +26,7 @@ export default function AppShell() {
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin') } : null,
     { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') },
     { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') },
-    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: async () => { await signOut(); navigate('/explore'); } },
+    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: async () => { await signOut(); navigate('/auth/login'); } },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (

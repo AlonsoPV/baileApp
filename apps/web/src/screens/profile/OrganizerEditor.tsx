@@ -69,7 +69,7 @@ export const OrganizerEditor: React.FC = () => {
     const badges: Record<string, { bg: string; text: string; icon: string }> = {
       borrador: { bg: '#94A3B8', text: 'Borrador', icon: '📝' },
       en_revision: { bg: colors.orange, text: 'En Revisión', icon: '⏳' },
-      aprobado: { bg: '#10B981', text: 'Aprobado', icon: '✅' },
+      aprobado: { bg: '#10B981', text: 'Verificado', icon: '✅' },
       rechazado: { bg: colors.coral, text: 'Rechazado', icon: '❌' },
     };
 

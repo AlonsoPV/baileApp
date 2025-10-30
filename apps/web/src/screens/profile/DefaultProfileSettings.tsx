@@ -175,10 +175,10 @@ export default function DefaultProfileSettings() {
                   {option.hasProfile && (option.id === 'organizer' || option.id === 'academy') && (
                     <Chip
                       label={option.id === 'organizer' ? 
-                        (organizerProfile?.estado_aprobacion === 'aprobado' ? '✅ Aprobado' :
+                        (organizerProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
                          organizerProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
                          organizerProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador') :
-                        (academyProfile?.estado_aprobacion === 'aprobado' ? '✅ Aprobado' :
+                        (academyProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
                          academyProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
                          academyProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador')
                       }

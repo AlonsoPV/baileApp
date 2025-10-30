@@ -79,7 +79,7 @@ export default function AppRouter() {
   return (
     <Routes>
       {/* Auth */}
-      <Route path={routes.auth.login} element={<Login />} />
+      <Route path={routes.auth.login} element={<Navigate to={routes.auth.pin} replace />} />
       <Route path={routes.auth.signup} element={<Signup />} />
       <Route path="/auth/pin/setup" element={<PinSetup />} />
       <Route path="/auth/pin" element={<PinLogin />} />
