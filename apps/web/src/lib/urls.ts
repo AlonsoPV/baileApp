@@ -44,7 +44,7 @@ export function userLive(userId: string): string {
  * @param id ID de la academia
  */
 export function academyLive(id: number | string): string {
-  return `/academia/${id}`;
+  return `/profile/academy/${id}`;
 }
 
 /**
