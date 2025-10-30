@@ -14,6 +14,10 @@ export function useUserRoles(userId?: string) {
       if (error) throw error;
       return (data || []) as UserRole[];
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 

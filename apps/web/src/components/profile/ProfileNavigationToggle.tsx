@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
@@ -34,6 +35,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: roles } = useUserRoles(user?.id);
+  const qc = useQueryClient();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -164,6 +166,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       {/* Botón Ver Live */}
       <button
         onClick={() => {
+          if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
           const target = getLiveRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
           if (needsRole && !hasRole(profileType)) {
@@ -209,6 +212,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       {/* Botón Editar */}
       <button
         onClick={() => {
+          if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
           const target = getEditRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
           if (needsRole && !hasRole(profileType)) {
@@ -313,7 +317,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <button
-              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              onClick={() => {
+                if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+                setIsRoleDropdownOpen(!isRoleDropdownOpen);
+              }}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '20px',
