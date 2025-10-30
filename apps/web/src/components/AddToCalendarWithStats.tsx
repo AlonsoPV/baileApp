@@ -275,6 +275,34 @@ export default function AddToCalendarWithStats({
     }
   }, [open]);
 
+  // Reposicionar en scroll/resize mientras esté abierto
+  useEffect(() => {
+    if (!open) return;
+    const recalc = () => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuWidth = 200;
+      const menuHeight = 120;
+      let left = rect.right - menuWidth;
+      let top = rect.bottom + 8;
+      if (left < 8) left = 8;
+      if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+      if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 8;
+      if (top < 8) top = 8;
+      setMenuPosition({ top, left });
+      dbg('menu reposition', { top, left });
+    };
+    window.addEventListener('scroll', recalc, true);
+    window.addEventListener('resize', recalc);
+    const id = window.setInterval(recalc, 300);
+    recalc();
+    return () => {
+      window.removeEventListener('scroll', recalc, true);
+      window.removeEventListener('resize', recalc);
+      clearInterval(id);
+    };
+  }, [open]);
+
   if (showAsIcon) {
     return (
       <div ref={buttonRef} style={{ position: "relative", display: "inline-block", zIndex: 10001 }}>
@@ -337,7 +365,7 @@ export default function AddToCalendarWithStats({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0, 0, 0, 0.3)' }}
+              style={{ position: 'fixed', inset: 0, zIndex: 2147480000, background: 'rgba(0, 0, 0, 0.3)' }}
               onClick={() => setOpen(false)}
             />,
             document.body
@@ -352,7 +380,7 @@ export default function AddToCalendarWithStats({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              style={{ position: 'fixed', top: `${menuPosition.top}px`, left: `${menuPosition.left}px`, minWidth: 200, background: 'rgba(20,20,28,0.98)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, boxShadow: '0 18px 44px rgba(0,0,0,0.5)', overflow: 'hidden', zIndex: 9999, backdropFilter: 'blur(20px)' }}
+              style={{ position: 'fixed', top: `${menuPosition.top}px`, left: `${menuPosition.left}px`, minWidth: 200, background: 'rgba(20,20,28,0.98)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, boxShadow: '0 18px 44px rgba(0,0,0,0.5)', overflow: 'hidden', zIndex: 2147480001, backdropFilter: 'blur(20px)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <MenuItem 
@@ -371,6 +399,12 @@ export default function AddToCalendarWithStats({
             document.body
           )}
         </AnimatePresence>
+        {debug && open && menuPosition && createPortal(
+          <div style={{ position: 'fixed', top: 8, left: 8, zIndex: 2147480002, background: '#111', color: '#0f0', padding: '4px 6px', borderRadius: 6, fontSize: 11, border: '1px solid #0f0' }}>
+            CAL MENU at {Math.round(menuPosition.left)},{Math.round(menuPosition.top)}
+          </div>,
+          document.body
+        )}
       </div>
     );
   }
