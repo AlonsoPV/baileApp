@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
 import { useCreateRoleRequest, useRolesCatalog, useMyRoleRequests } from '@/hooks/useRoles';
 import type { RoleSlug } from '@/types/roles';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export default function RequestRoleScreen() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: catalog = [] } = useRolesCatalog();
   const { data: myReqs = [] } = useMyRoleRequests();
   const createReq = useCreateRoleRequest();
