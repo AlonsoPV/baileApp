@@ -6,10 +6,20 @@ import { useTags } from "../../../hooks/useTags";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
-  // Priorizar el avatar usado en el banner (equivalente a teacher-banner-avatar): avatar_url -> portada_url -> media[0]
-  const bannerUrl: string | undefined = (item.avatar_url)
-    || (item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined);
+  // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
+  const bannerUrl: string | undefined = (() => {
+    const direct = item?.avatar_url || item?.banner_url || item?.portada_url;
+    if (direct) return direct as string;
+    const media = Array.isArray(item?.media) ? item.media : [];
+    if (media.length) {
+      // Buscar por slot común
+      const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
+      if (bySlot?.url) return bySlot.url as string;
+      const first = media[0];
+      return (first?.url || (typeof first === 'string' ? first : undefined)) as string | undefined;
+    }
+    return undefined;
+  })();
   const ritmoNombres: string[] = (item.ritmos || [])
     .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
     .filter(Boolean);
