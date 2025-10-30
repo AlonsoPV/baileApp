@@ -25,6 +25,7 @@ const PERFIL_OPTIONS = [
 
 export default function FilterBar({ filters, onFiltersChange, className = '' }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const { ritmos, zonas } = useTags();
 
   const toggleDropdown = (dropdown: string) => {
@@ -298,14 +299,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
             {openDropdown === 'ritmos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 {(() => {
-                  const [expanded, setExpanded] = [null, null] as any; // placeholder to avoid linter in inline IIFE
                   // Mapeos nombre<->id para enlazar catálogo a tags
                   const tagNameById = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
                   const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
 
                   // UI estado: chip padre expandida
-                  const [expandedGroup, _setExpandedGroup] = React.useState<string | null>(null);
-                  const toggleGroup = (gid: string) => _setExpandedGroup(prev => prev === gid ? null : gid);
+                  const expandedGroup = expandedRitmoGroup;
+                  const toggleGroup = (gid: string) => setExpandedRitmoGroup(prev => prev === gid ? null : gid);
 
                   // Helpers para activar/desactivar ritmos hijos
                   const isTagActive = (name: string) => {
