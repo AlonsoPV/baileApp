@@ -1,4 +1,5 @@
 import React from 'react';
+import Avatar from '@/components/Avatar';
 
 export default function ProfileHeader({
   nombre,
@@ -15,7 +16,7 @@ export default function ProfileHeader({
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
       <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)' }}>
         {avatar ? (
-          <img src={avatar} alt={nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <Avatar src={avatar} name={nombre} size={72} />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.08)' }}>🎓</div>
         )}
