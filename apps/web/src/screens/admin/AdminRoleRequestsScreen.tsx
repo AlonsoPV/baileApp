@@ -15,10 +15,10 @@ const colors = {
 };
 
 export default function AdminRoleRequestsScreen() {
-  const { data, isLoading } = useAdminRoleRequests("pendiente");
+  const [filter, setFilter] = useState<'pendiente' | 'aprobado' | 'rechazado'>('pendiente');
+  const { data, isLoading } = useAdminRoleRequests(filter);
   const approve = useApproveRoleRequest();
   const { showToast } = useToast();
-  const [filter, setFilter] = useState<'pendiente' | 'aprobado' | 'rechazado'>('pendiente');
 
   const handleApprove = async (id: number, shouldApprove: boolean, role: string) => {
     try {
@@ -145,16 +145,27 @@ export default function AdminRoleRequestsScreen() {
                     padding: '1rem'
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: '200px' }}>
+                  <div style={{ flex: 1, minWidth: '260px' }}>
                     <div style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>
-                      {r.role.toUpperCase()}
+                      {(((r as any).role || (r as any).role_slug) || '').toString().toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+                      <b>{(r as any).full_name || '—'}</b>
+                    </div>
+                    <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+                      {(r as any).email || '—'} · {(r as any).phone || '—'}
                     </div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>
-                      Usuario: {r.user_id.slice(0, 8)}...
+                      Usuario: {r.user_id?.slice(0, 8)}...
                     </div>
-                    {r.note && (
+                    {(r as any).socials && (
+                      <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '0.25rem' }}>
+                        IG: {(r as any).socials?.instagram || '—'} · TT: {(r as any).socials?.tiktok || '—'} · YT: {(r as any).socials?.youtube || '—'} · FB: {(r as any).socials?.facebook || '—'} · WA: {(r as any).socials?.whatsapp || '—'}
+                      </div>
+                    )}
+                    {((r as any).note || (r as any).admin_note) && (
                       <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>
-                        Nota: {r.note}
+                        Nota: {(r as any).note || (r as any).admin_note}
                       </div>
                     )}
                     <div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.25rem' }}>

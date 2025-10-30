@@ -145,9 +145,9 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       academy: 'academia',
       teacher: 'maestro',
       brand: 'marca',
-      user: 'usuario',
     };
-    const slug = map[roleId] || 'organizador';
+    const slug = map[roleId];
+    if (!slug) return '/profile'; // usuario nunca solicita
     return `/app/roles/request?role=${slug}`;
   };
 
@@ -403,7 +403,9 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                     onClick={() => {
                       console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
                       if (!role.available) return;
-                      if (isSuperAdmin || hasRole(role.id) || hasApprovedRequest(role.id)) {
+                      if (role.id === 'user') {
+                        navigate(role.route);
+                      } else if (isSuperAdmin || hasRole(role.id) || hasApprovedRequest(role.id)) {
                         navigate(role.route);
                       } else {
                         navigate(getRequestRoute(role.id));
