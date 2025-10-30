@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useTeacherMy, useUpsertTeacher } from "../../hooks/useTeacher";
 import { useTeacherMedia } from "../../hooks/useTeacherMedia";
 import { useTags } from "../../hooks/useTags";
+import RitmosChips from "@/components/RitmosChips";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
@@ -373,6 +375,41 @@ export default function TeacherProfileEditor() {
                 }}
               />
             ))}
+          </div>
+
+          {/* Nuevo catálogo agrupado (opcional) */}
+          <div style={{ padding: '0 1.25rem 1.25rem' }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+            {(() => {
+              const tagIdToName = new Map<number, string>(
+                (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.id, t.nombre])
+              );
+              const catalogIdByLabel = new Map<string, string>();
+              RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
+              const selectedCatalogIds = ((form as any).ritmos || [])
+                .map((id: number) => tagIdToName.get(id))
+                .filter(Boolean)
+                .map((label: any) => catalogIdByLabel.get(label as string))
+                .filter(Boolean) as string[];
+
+              const onChangeCatalog = (ids: string[]) => {
+                const labelByCatalogId = new Map<string, string>();
+                RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                const nameToTagId = new Map<string, number>(
+                  (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
+                );
+                const mappedTagIds = ids
+                  .map(cid => labelByCatalogId.get(cid))
+                  .filter(Boolean)
+                  .map((label: any) => nameToTagId.get(label as string))
+                  .filter((n): n is number => typeof n === 'number');
+                setField('ritmos', mappedTagIds as any);
+              };
+
+              return (
+                <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+              );
+            })()}
           </div>
 
           {/* Header Zonas */}

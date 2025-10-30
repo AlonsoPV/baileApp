@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTags } from "../hooks/useTags";
+import RitmosChips from "@/components/RitmosChips";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
 
@@ -296,25 +298,32 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
             {/* Dropdown Ritmos */}
             {openDropdown === 'ritmos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  padding: '4px'
-                }}>
-                  {ritmos?.map((ritmo) => (
-                    <Chip
-                      key={ritmo.id}
-                      label={ritmo.nombre}
-                      icon="🎵"
-                      variant="ritmo"
-                      active={filters.ritmos.includes(ritmo.id)}
-                      onClick={() => handleRitmoToggle(ritmo.id)}
-                    />
-                  ))}
-                </div>
+                {(() => {
+                  const etiquetaPorId = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
+                  const catalogIdByLabel = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
+                  const selectedCatalogIds = (filters.ritmos || [])
+                    .map(id => etiquetaPorId.get(id))
+                    .filter(Boolean)
+                    .map(label => catalogIdByLabel.get(label as string))
+                    .filter(Boolean) as string[];
+
+                  const onChangeCatalog = (ids: string[]) => {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
+                    const mappedIds = ids
+                      .map(cid => labelByCatalogId.get(cid))
+                      .filter(Boolean)
+                      .map(label => tagIdByName.get(label as string))
+                      .filter((n): n is number => typeof n === 'number');
+                    onFiltersChange({ ...filters, ritmos: mappedIds });
+                  };
+
+                  return (
+                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                  );
+                })()}
               </DropdownPanel>
             )}
 
