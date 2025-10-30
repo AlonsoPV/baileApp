@@ -129,7 +129,15 @@ async function fetchPage(params: QueryParams, page: number) {
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
     
     query = query.order("created_at", { ascending: false });
-  } 
+  }
+  else if (type === "maestros" || type === "academias") {
+    if (q) query = query.ilike("nombre_publico", `%${q}%`);
+    if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
+    if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
+    // Mostrar perfiles en cualquier estado visible (evita lista vacía si aún están en edición)
+    query = query.in("estado_aprobacion", ["aprobado", "en_revision", "borrador"] as any);
+    query = query.order("created_at", { ascending: false });
+  }
   else if (type === "sociales") {
     // Eventos padre (sociales) - usar estilos y zonas
     if (q) query = query.ilike("nombre", `%${q}%`);
