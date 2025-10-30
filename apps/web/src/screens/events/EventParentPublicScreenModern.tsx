@@ -302,37 +302,154 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
   })();
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center', gap: '0.75rem' }}>
+    <div style={{ display: 'grid', placeItems: 'center', gap: '1.5rem', width: '100%' }}>
       <style>{`
         @media (max-width: 640px) {
           .dfs-wrap { width: 100% !important; max-width: 100% !important; }
           .dfs-controls { width: 100% !important; }
         }
+        .dfs-flyer-card {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dfs-flyer-card:hover {
+          transform: translateY(-8px) scale(1.02);
+        }
       `}</style>
       <motion.div
         key={idx}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         onClick={() => onOpen(ev.href)}
-        style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
-        className="dfs-wrap"
+        style={{ 
+          position: 'relative', 
+          borderRadius: 24, 
+          cursor: 'pointer', 
+          overflow: 'hidden', 
+          border: '1px solid rgba(255,255,255,0.2)', 
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1) inset',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)',
+          backdropFilter: 'blur(20px)'
+        }}
+        className="dfs-wrap dfs-flyer-card"
       >
-        <div style={{ width: 360, maxWidth: '85vw' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
-            {ev.flyer && (
-              <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'linear-gradient(135deg, rgba(30,136,229,0.2) 0%, rgba(255,61,87,0.2) 100%)', borderRadius: 20, overflow: 'hidden' }}>
+            {ev.flyer ? (
+              <img 
+                src={ev.flyer} 
+                alt={ev.nombre} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover', 
+                  display: 'block',
+                  transition: 'transform 0.4s ease'
+                }} 
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              />
+            ) : (
+              <div style={{ 
+                width: '100%', 
+                height: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, rgba(30,136,229,0.3) 0%, rgba(255,61,87,0.3) 100%)',
+                color: '#fff',
+                fontSize: '3rem'
+              }}>
+                📅
+              </div>
             )}
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem', marginBottom: 8 }}>
-                {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
-                {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
-                {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
-                {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+            <div style={{ 
+              position: 'absolute', 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              padding: '1.5rem', 
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.0) 100%)', 
+              color: '#fff' 
+            }}>
+              <div style={{ 
+                fontSize: '1.35rem', 
+                fontWeight: 900, 
+                marginBottom: '0.75rem', 
+                textShadow: '0 2px 12px rgba(0,0,0,0.6), 0 0 20px rgba(30,136,229,0.3)',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em'
+              }}>
+                {ev.nombre}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: '0.5rem', 
+                fontSize: '0.9rem', 
+                marginBottom: '1rem' 
+              }}>
+                {ev.date && (
+                  <span style={{ 
+                    border: '1px solid rgba(255,255,255,0.25)', 
+                    background: 'linear-gradient(135deg, rgba(30,136,229,0.3), rgba(0,188,212,0.3))', 
+                    padding: '0.5rem 1rem', 
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    📅 {ev.date}
+                  </span>
+                )}
+                {ev.time && (
+                  <span style={{ 
+                    border: '1px solid rgba(255,255,255,0.25)', 
+                    background: 'linear-gradient(135deg, rgba(255,61,87,0.3), rgba(255,140,66,0.3))', 
+                    padding: '0.5rem 1rem', 
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    🕒 {ev.time}
+                  </span>
+                )}
+                {ev.place && (
+                  <span style={{ 
+                    border: '1px solid rgba(255,255,255,0.25)', 
+                    background: 'linear-gradient(135deg, rgba(255,140,66,0.3), rgba(229,57,53,0.3))', 
+                    padding: '0.5rem 1rem', 
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    📍 {ev.place}
+                  </span>
+                )}
+                {ev.price && (
+                  <span style={{ 
+                    border: '1px solid rgba(255,255,255,0.25)', 
+                    background: 'linear-gradient(135deg, rgba(76,175,80,0.3), rgba(139,195,74,0.3))', 
+                    padding: '0.5rem 1rem', 
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    💰 {ev.price}
+                  </span>
+                )}
               </div>
               {/* Botón de calendario */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                marginTop: '0.75rem',
+                position: 'relative',
+                zIndex: 5
+              }} onClick={(e) => e.stopPropagation()}>
                 <AddToCalendarWithStats
                   eventId={ev.id}
                   title={ev.nombre}
@@ -348,9 +465,56 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
         </div>
       </motion.div>
       {items.length > 1 && (
-        <div className="dfs-controls" style={{ width: 360, maxWidth: '85vw', display: 'flex', justifyContent: 'space-between' }}>
-          <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255, 255, 255, 0.08)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
-          <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255, 255, 255, 0.08)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+        <div className="dfs-controls" style={{ 
+          width: '100%', 
+          maxWidth: 420, 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          gap: '1rem',
+          margin: '0 auto'
+        }}>
+          <motion.button 
+            type="button" 
+            onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{ 
+              padding: '1rem 1.5rem', 
+              borderRadius: 16, 
+              border: '1px solid rgba(255,255,255,0.25)', 
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))', 
+              color: '#fff', 
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(15px)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            ‹ Anterior
+          </motion.button>
+          <motion.button 
+            type="button" 
+            onClick={() => setIdx((p) => (p + 1) % items.length)} 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{ 
+              padding: '1rem 1.5rem', 
+              borderRadius: 16, 
+              border: '1px solid rgba(255,255,255,0.25)', 
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))', 
+              color: '#fff', 
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(15px)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            Siguiente ›
+          </motion.button>
         </div>
       )}
     </div>
@@ -584,25 +748,31 @@ export default function EventParentPublicScreen() {
         .glass-card-container {
           opacity: 1;
           margin-bottom: 2rem;
-          padding: 2rem;
-          text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+          backdrop-filter: blur(20px);
+          transition: all 0.3s ease;
+        }
+
+        .glass-card-container:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
         }
 
         .social-hero-modern {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(18, 18, 18, 0.9), rgba(18, 18, 18, 0.7));
-          padding: 4rem 2rem;
+          background: linear-gradient(135deg, rgba(11, 13, 16, 0.95), rgba(18, 22, 27, 0.9));
+          padding: 5rem 3rem;
           text-align: center;
-          border-radius: 24px;
+          border-radius: 32px;
           margin: 2rem auto;
-          max-width: 1200px;
+          max-width: 1400px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
         }
         
         .social-hero-modern::before {
@@ -613,10 +783,21 @@ export default function EventParentPublicScreen() {
           right: 0;
           bottom: 0;
           background: 
-            radial-gradient(circle at 20% 80%, rgba(30, 136, 229, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 61, 87, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
-          animation: float 6s ease-in-out infinite;
+            radial-gradient(circle at 20% 80%, rgba(30, 136, 229, 0.15) 0%, transparent 60%),
+            radial-gradient(circle at 80% 20%, rgba(255, 61, 87, 0.15) 0%, transparent 60%),
+            radial-gradient(circle at 50% 50%, rgba(255, 140, 66, 0.08) 0%, transparent 70%);
+          animation: float 8s ease-in-out infinite;
+        }
+        
+        .social-hero-modern::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+          animation: shimmer 8s linear infinite;
         }
         
         .social-hero-content {
@@ -625,305 +806,385 @@ export default function EventParentPublicScreen() {
         }
         
         .social-hero-title {
-          font-size: 4rem;
+          font-size: 4.5rem;
           font-weight: 900;
-          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          background: linear-gradient(135deg, #1E88E5 0%, #00BCD4 50%, #FF3D57 100%);
           background-clip: text;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           margin-bottom: 1.5rem;
-          text-shadow: 0 4px 20px rgba(30, 136, 229, 0.3);
-          letter-spacing: -0.02em;
+          text-shadow: 0 0 40px rgba(30, 136, 229, 0.3);
+          letter-spacing: -0.03em;
+          line-height: 1.1;
         }
         
         .social-hero-description {
-          font-size: 1.25rem;
-          opacity: 0.9;
-          max-width: 700px;
-          margin: 0 auto 2.5rem;
-          line-height: 1.6;
-          font-weight: 500;
-          color: rgba(245, 245, 245, 0.95);
+          font-size: 1.35rem;
+          opacity: 0.95;
+          max-width: 800px;
+          margin: 0 auto 3rem;
+          line-height: 1.7;
+          font-weight: 400;
+          color: rgba(255, 255, 255, 0.9);
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         
         .social-hero-actions {
           display: flex;
-          gap: 1rem;
+          gap: 1.25rem;
           justify-content: center;
           flex-wrap: wrap;
         }
         
+        .social-hero-actions button {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .social-hero-actions button::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+        
+        .social-hero-actions button:hover::before {
+          width: 300px;
+          height: 300px;
+        }
+        
         .social-main-content {
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
-          padding: 2rem;
+          padding: 3rem 2rem;
           position: relative;
           z-index: 1;
         }
         
         .social-info-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 1.5rem;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 2rem;
+          margin-bottom: 3rem;
         }
         
         .social-info-section {
-          padding: 1.5rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(20px);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .social-info-section:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+          border-color: rgba(255, 255, 255, 0.25);
         }
         
         .social-info-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-          color: rgba(245, 245, 245, 0.95);
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin-bottom: 1rem;
+          color: rgba(255, 255, 255, 0.98);
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.75rem;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         
         .social-info-chips {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
         
         .social-info-chip {
-          padding: 0.5rem 0.75rem;
-          background: linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(255, 61, 87, 0.2));
+          padding: 0.625rem 1rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.25), rgba(255, 61, 87, 0.25));
           border-radius: 999px;
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: rgba(245, 245, 245, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.98);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease;
+          backdrop-filter: blur(10px);
+        }
+        
+        .social-info-chip:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
         
         .social-description-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 3rem;
+          padding: 3rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+          backdrop-filter: blur(20px);
         }
         
         .social-description-title {
-          font-size: 1.75rem;
-          font-weight: 800;
-          margin-bottom: 1rem;
-          color: rgba(245, 245, 245, 0.95);
+          font-size: 2rem;
+          font-weight: 900;
+          margin-bottom: 1.25rem;
+          background: linear-gradient(135deg, #1E88E5 0%, #FF3D57 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.75rem;
+          letter-spacing: -0.02em;
         }
         
         .social-description-text {
-          line-height: 1.6;
-          font-size: 1.125rem;
-          color: rgba(245, 245, 245, 0.9);
+          line-height: 1.8;
+          font-size: 1.2rem;
+          color: rgba(255, 255, 255, 0.92);
+          font-weight: 400;
         }
         
         .social-faq-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 3rem;
+          padding: 3rem;
+          background: linear-gradient(135deg, rgba(255, 140, 66, 0.08) 0%, rgba(255, 112, 67, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(255, 140, 66, 0.2);
+          box-shadow: 0 12px 40px rgba(255, 140, 66, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(20px);
         }
         
         .social-faq-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
         }
         
         .social-faq-icon {
-          width: 60px;
-          height: 60px;
+          width: 72px;
+          height: 72px;
           border-radius: 50%;
           background: linear-gradient(135deg, #FB8C00, #FF7043);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
-          box-shadow: 0 8px 24px rgba(251, 140, 0, 0.4);
+          font-size: 2rem;
+          box-shadow: 0 12px 32px rgba(251, 140, 0, 0.5);
+          animation: float 4s ease-in-out infinite;
         }
         
         .social-faq-title {
-          font-size: 1.75rem;
-          font-weight: 800;
+          font-size: 2rem;
+          font-weight: 900;
           background: linear-gradient(135deg, #FF7043 0%, #FB8C00 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           margin: 0;
           line-height: 1.2;
+          letter-spacing: -0.02em;
         }
         
         .social-faq-subtitle {
-          font-size: 0.9rem;
-          opacity: 0.8;
-          margin: 0;
+          font-size: 1rem;
+          opacity: 0.85;
+          margin: 0.25rem 0 0 0;
           font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
         }
         
         .social-faq-item {
-          padding: 1rem 1.25rem;
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          margin-bottom: 1rem;
+          padding: 1.5rem 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          margin-bottom: 1.25rem;
+          transition: all 0.3s ease;
+          backdrop-filter: blur(10px);
+        }
+        
+        .social-faq-item:hover {
+          transform: translateX(4px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          border-color: rgba(255, 140, 66, 0.3);
         }
         
         .social-faq-question {
-          font-size: 1.1rem;
-          font-weight: 700;
+          font-size: 1.25rem;
+          font-weight: 800;
           margin: 0;
-          margin-bottom: 0.5rem;
-          color: rgba(245, 245, 245, 0.95);
+          margin-bottom: 0.75rem;
+          color: rgba(255, 255, 255, 0.98);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
         
         .social-faq-answer {
-          font-size: 1rem;
-          opacity: 0.85;
+          font-size: 1.05rem;
+          opacity: 0.9;
           margin: 0;
-          line-height: 1.6;
-          color: rgba(245, 245, 245, 0.9);
+          line-height: 1.7;
+          color: rgba(255, 255, 255, 0.92);
+          font-weight: 400;
         }
         
         .social-gallery-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          margin-bottom: 3rem;
+          padding: 3rem;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.08) 0%, rgba(251, 140, 0, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(229, 57, 53, 0.2);
+          box-shadow: 0 12px 40px rgba(229, 57, 53, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(20px);
         }
         
         .social-gallery-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
         }
         
         .social-gallery-icon {
-          width: 60px;
-          height: 60px;
+          width: 72px;
+          height: 72px;
           border-radius: 50%;
           background: linear-gradient(135deg, #E53935, #FB8C00);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
-          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+          font-size: 2rem;
+          box-shadow: 0 12px 32px rgba(229, 57, 53, 0.5);
+          animation: float 4s ease-in-out infinite;
         }
         
         .social-gallery-title {
-          font-size: 1.75rem;
-          font-weight: 800;
+          font-size: 2rem;
+          font-weight: 900;
           background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           margin: 0;
           line-height: 1.2;
+          letter-spacing: -0.02em;
         }
         
         .social-gallery-subtitle {
-          font-size: 0.9rem;
-          opacity: 0.8;
-          margin: 0;
+          font-size: 1rem;
+          opacity: 0.85;
+          margin: 0.25rem 0 0 0;
           font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
         }
         
         .social-dates-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-          background: linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(0, 188, 212, 0.05) 50%, rgba(255, 255, 255, 0.08) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(30, 136, 229, 0.2);
-          box-shadow: 0 8px 32px rgba(30, 136, 229, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+          margin-bottom: 3rem;
+          padding: 3rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.12) 0%, rgba(0, 188, 212, 0.08) 50%, rgba(255, 255, 255, 0.1) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(30, 136, 229, 0.25);
+          box-shadow: 0 12px 40px rgba(30, 136, 229, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(20px);
         }
         
         .social-dates-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
         }
         
         .social-dates-icon {
-          width: 60px;
-          height: 60px;
+          width: 72px;
+          height: 72px;
           border-radius: 50%;
           background: linear-gradient(135deg, #1E88E5, #00BCD4);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
-          box-shadow: 0 8px 24px rgba(30, 136, 229, 0.4);
+          font-size: 2rem;
+          box-shadow: 0 12px 32px rgba(30, 136, 229, 0.5);
+          animation: float 4s ease-in-out infinite;
         }
         
         .social-dates-title {
-          font-size: 1.75rem;
-          font-weight: 800;
+          font-size: 2rem;
+          font-weight: 900;
           background: linear-gradient(135deg, #1E88E5 0%, #00BCD4 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           margin: 0;
           line-height: 1.2;
+          letter-spacing: -0.02em;
         }
         
         .social-dates-subtitle {
-          font-size: 0.9rem;
-          opacity: 0.8;
-          margin: 0;
+          font-size: 1rem;
+          opacity: 0.85;
+          margin: 0.25rem 0 0 0;
           font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
         }
         
         .social-dates-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 1.5rem;
+          gap: 2rem;
         }
         
         .social-date-card {
-          padding: 1.5rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
           cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(15px);
         }
         
         .social-date-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          transform: translateY(-6px) scale(1.02);
+          box-shadow: 0 16px 48px rgba(30, 136, 229, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+          border-color: rgba(30, 136, 229, 0.4);
         }
         
         .social-date-title {
-          font-size: 1.125rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-          color: rgba(245, 245, 245, 0.95);
+          font-size: 1.35rem;
+          font-weight: 800;
+          margin-bottom: 1rem;
+          color: rgba(255, 255, 255, 0.98);
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         
         .social-date-info {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.625rem;
         }
         
         .social-date-info-item {
-          font-size: 0.875rem;
-          color: rgba(30, 136, 229, 0.8);
-          font-weight: 600;
+          font-size: 0.95rem;
+          color: rgba(30, 136, 229, 0.95);
+          font-weight: 700;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         }
         
         .social-date-info-item.gray {
-          color: rgba(245, 245, 245, 0.7);
+          color: rgba(255, 255, 255, 0.75);
         }
 
         /* Responsivo móvil */
@@ -1271,48 +1532,60 @@ export default function EventParentPublicScreen() {
             >
               {isOwner && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.08, y: -2 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => navigate(`/social/${parent.id}/edit`)}
                   style={{
-                    padding: `${spacing[4]} ${spacing[8]}`,
+                    padding: '1.125rem 2.5rem',
                     borderRadius: borderRadius.full,
-                    border: 'none',
-                    background: colors.gradients.secondary,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'linear-gradient(135deg, rgba(255,61,87,0.9), rgba(255,140,66,0.9))',
                     color: colors.gray[50],
                     fontSize: typography.fontSize.lg,
                     fontWeight: typography.fontWeight.bold,
                     cursor: 'pointer',
-                    boxShadow: colors.shadows.glow,
-                    transition: transitions.normal,
+                    boxShadow: '0 8px 24px rgba(255,61,87,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: spacing[2]
+                    gap: spacing[2],
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(20px)',
+                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
                   }}
                 >
-                  ✏️ Editar Social
+                  <span style={{ position: 'relative', zIndex: 2 }}>✏️</span>
+                  <span style={{ position: 'relative', zIndex: 2 }}>Editar Social</span>
                 </motion.button>
               )}
               
-              <ShareButton 
-                url={window.location.href}
-                title={parent.nombre}
-                style={{
-                  padding: `${spacing[4]} ${spacing[8]}`,
-                  borderRadius: borderRadius.full,
-                  border: 'none',
-                  background: colors.gradients.deep,
-                  color: colors.gray[50],
-                  fontSize: typography.fontSize.lg,
-                  fontWeight: typography.fontWeight.bold,
-                  cursor: 'pointer',
-                  boxShadow: colors.shadows.glow,
-                  transition: transitions.normal,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing[2]
-                }}
-              />
+              <motion.div
+                whileHover={{ scale: 1.08, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                <ShareButton 
+                  url={window.location.href}
+                  title={parent.nombre}
+                  style={{
+                    padding: '1.125rem 2.5rem',
+                    borderRadius: borderRadius.full,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(0,188,212,0.9))',
+                    color: colors.gray[50],
+                    fontSize: typography.fontSize.lg,
+                    fontWeight: typography.fontWeight.bold,
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 24px rgba(30,136,229,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                    backdropFilter: 'blur(20px)',
+                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}
+                />
+              </motion.div>
             </motion.div>
           </div>
         </motion.div>
@@ -1416,16 +1689,35 @@ export default function EventParentPublicScreen() {
                 {parent.faq.map((faq: any, index: number) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    initial={{ opacity: 0, x: -20, scale: 0.98 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ delay: index * 0.1, duration: 0.4 }}
+                    whileHover={{ scale: 1.02, x: 4 }}
                     className="social-faq-item"
+                    style={{ position: 'relative' }}
                   >
                     <h4 className="social-faq-question">
-                      {faq.pregunta}
+                      <span style={{ 
+                        display: 'inline-flex',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, rgba(255,140,66,0.3), rgba(255,112,67,0.3))',
+                        border: '2px solid rgba(255,140,66,0.5)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '0.75rem',
+                        fontSize: '1rem',
+                        fontWeight: 800,
+                        boxShadow: '0 4px 12px rgba(255,140,66,0.3)',
+                        flexShrink: 0
+                      }}>
+                        {index + 1}
+                      </span>
+                      {faq.pregunta || faq.q}
                     </h4>
                     <p className="social-faq-answer">
-                      {faq.respuesta}
+                      {faq.respuesta || faq.a}
                     </p>
                   </motion.div>
                 ))}
