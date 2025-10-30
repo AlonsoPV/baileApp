@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { useIsAdmin } from '@/hooks/useRoleRequests';
+import { useMyRoleRequests } from '@/hooks/useRoles';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
@@ -35,6 +37,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: roles } = useUserRoles(user?.id);
+  const { data: isSuperAdmin } = useIsAdmin();
+  const { data: myReqs } = useMyRoleRequests();
   const qc = useQueryClient();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -110,7 +114,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher', available: true },
     { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand', available: true },
   ];
-  const hasRole = (roleId: string) => {
+  const slugForRoleId = (roleId: string) => {
     const map: Record<string, 'usuario'|'organizador'|'academia'|'maestro'|'marca'> = {
       user: 'usuario',
       organizer: 'organizador',
@@ -118,8 +122,21 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       teacher: 'maestro',
       brand: 'marca',
     };
-    const slug = map[roleId] as any;
-    return !!roles?.some(r => r.role_slug === slug);
+    return map[roleId];
+  };
+
+  const hasRole = (roleId: string) => {
+    const slug = slugForRoleId(roleId);
+    if (!slug) return false;
+    return !!roles?.some((r: any) => r.role_slug === slug || r.role === slug);
+  };
+
+  const hasApprovedRequest = (roleId: string) => {
+    const slug = slugForRoleId(roleId);
+    if (!slug) return false;
+    return !!myReqs?.some((req: any) => (
+      (req.role_slug === slug || req.role === slug) && (req.status === 'aprobado' || req.status === 'approved')
+    ));
   };
 
   const getRequestRoute = (roleId: string) => {
@@ -166,10 +183,13 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       {/* Botón Ver Live */}
       <button
         onClick={() => {
-          if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+          if (user?.id) {
+            qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+            qc.invalidateQueries({ queryKey: ['role_requests_me', user.id] });
+          }
           const target = getLiveRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
-          if (needsRole && !hasRole(profileType)) {
+          if (!isSuperAdmin && needsRole && !(hasRole(profileType) || hasApprovedRequest(profileType))) {
             navigate(getRequestRoute(profileType));
           } else {
             navigate(target);
@@ -212,10 +232,13 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       {/* Botón Editar */}
       <button
         onClick={() => {
-          if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+          if (user?.id) {
+            qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+            qc.invalidateQueries({ queryKey: ['role_requests_me', user.id] });
+          }
           const target = getEditRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
-          if (needsRole && !hasRole(profileType)) {
+          if (!isSuperAdmin && needsRole && !(hasRole(profileType) || hasApprovedRequest(profileType))) {
             navigate(getRequestRoute(profileType));
           } else {
             navigate(target);
@@ -318,7 +341,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <button
               onClick={() => {
-                if (user?.id) qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+                if (user?.id) {
+                  qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
+                  qc.invalidateQueries({ queryKey: ['role_requests_me', user.id] });
+                }
                 setIsRoleDropdownOpen(!isRoleDropdownOpen);
               }}
               style={{
@@ -377,7 +403,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                     onClick={() => {
                       console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
                       if (!role.available) return;
-                      if (hasRole(role.id)) {
+                      if (isSuperAdmin || hasRole(role.id) || hasApprovedRequest(role.id)) {
                         navigate(role.route);
                       } else {
                         navigate(getRequestRoute(role.id));
