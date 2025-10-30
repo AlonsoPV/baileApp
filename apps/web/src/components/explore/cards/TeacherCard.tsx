@@ -8,15 +8,17 @@ export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
   // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
   const bannerUrl: string | undefined = (() => {
-    const direct = item?.avatar_url || item?.banner_url || item?.portada_url;
+    // Intentar múltiples claves comunes
+    const direct = item?.avatar_url || item?.banner_url || item?.portada_url || item?.avatar || item?.portada || item?.banner;
     if (direct) return direct as string;
     const media = Array.isArray(item?.media) ? item.media : [];
     if (media.length) {
       // Buscar por slot común
       const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
       if (bySlot?.url) return bySlot.url as string;
+      if (bySlot?.path) return bySlot.path as string;
       const first = media[0];
-      return (first?.url || (typeof first === 'string' ? first : undefined)) as string | undefined;
+      return (first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
     }
     return undefined;
   })();

@@ -132,7 +132,18 @@ async function fetchPage(params: QueryParams, page: number) {
   }
   else if (type === "maestros" || type === "academias") {
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
-    if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
+    if (ritmos?.length) {
+      if (type === "academias") {
+        // Algunas academias guardan ritmos en 'estilos' en lugar de 'ritmos'
+        const set = `{${(ritmos as number[]).join(',')}}`;
+        // or: ritmos overlaps OR estilos overlaps
+        query = query.or(
+          `ritmos.ov.${set},estilos.ov.${set}`
+        );
+      } else {
+        query = query.overlaps("ritmos", ritmos as any);
+      }
+    }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     // Solo mostrar perfiles aprobados
     query = query.eq("estado_aprobacion", "aprobado");
