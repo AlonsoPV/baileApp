@@ -9,7 +9,7 @@ export type RoleRequest = {
   user_id: string;
   role_slug: RoleSlug;
   full_name: string;
-  email: string;
+  email?: string | null;
   phone: string;
   socials: Partial<Record<'instagram'|'tiktok'|'youtube'|'facebook'|'whatsapp', string>>;
   status: RoleRequestStatus;

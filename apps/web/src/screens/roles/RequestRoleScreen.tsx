@@ -14,12 +14,12 @@ export default function RequestRoleScreen() {
   const initialRole = (sp.get('role') as RoleSlug) || 'organizador';
   const [role, setRole] = useState<RoleSlug>(initialRole);
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [socials, setSocials] = useState({ instagram: '', tiktok: '', youtube: '', facebook: '', whatsapp: '' });
 
   const submit = async () => {
-    await createReq.mutateAsync({ role_slug: role, full_name: fullName, email, phone, socials });
+    await createReq.mutateAsync({ role_slug: role, full_name: fullName, phone, socials });
     setFullName(''); setEmail(''); setPhone('');
     setTimeout(() => navigate('/app/profile'), 800);
   };
@@ -39,7 +39,7 @@ export default function RequestRoleScreen() {
         </label>
 
         <label>Nombre completo<input value={fullName} onChange={(e) => setFullName(e.target.value)} style={{ width: '100%' }} /></label>
-        <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%' }} /></label>
+        <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%' }} disabled /></label>
         <label>Celular<input value={phone} onChange={(e) => setPhone(e.target.value)} style={{ width: '100%' }} /></label>
 
         <fieldset style={{ border: '1px solid #333', padding: 12 }}>
