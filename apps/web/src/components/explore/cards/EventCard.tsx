@@ -10,6 +10,7 @@ interface EventCardProps {
 
 export default function EventCard({ item }: EventCardProps) {
   const eventId = item.id ?? item.event_date_id;
+  const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const fecha = item.fecha || item.evento_fecha;
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
@@ -20,7 +21,7 @@ export default function EventCard({ item }: EventCardProps) {
   const organizador = item.organizador_nombre || item.organizer_name;
 
   return (
-    <LiveLink to={urls.eventDateLive(eventId)} asCard={false}>
+    <LiveLink to={linkTo} asCard={false}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}

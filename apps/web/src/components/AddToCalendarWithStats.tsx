@@ -288,7 +288,7 @@ export default function AddToCalendarWithStats({
           </div>
         )}
 
-        {createPortal(
+        {typeof document !== 'undefined' && document.body && createPortal(
           <>
             <AnimatePresence>
               {open && (
@@ -388,7 +388,7 @@ export default function AddToCalendarWithStats({
         </div>
       )}
 
-  {createPortal(
+  {typeof document !== 'undefined' && document.body && createPortal(
     <>
       <AnimatePresence>
         {open && (
