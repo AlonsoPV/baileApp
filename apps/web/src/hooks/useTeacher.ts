@@ -9,6 +9,7 @@ export type TeacherProfile = {
   avatar_url?: string | null;
   portada_url?: string | null;
   ritmos: number[];
+  ritmos_seleccionados?: string[]; // IDs de catálogo (RITMOS_CATALOG)
   zonas: number[];
   redes_sociales?: { instagram?: string|null; tiktok?: string|null; youtube?: string|null; facebook?: string|null; whatsapp?: string|null };
   ubicaciones?: any[];

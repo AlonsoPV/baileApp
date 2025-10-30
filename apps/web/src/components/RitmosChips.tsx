@@ -8,9 +8,23 @@ interface Props {
 }
 
 export default function RitmosChips({ selected, onChange }: Props) {
-  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const isReadOnly = onChange.toString() === '() => {}' || onChange.toString().includes('() => {}');
+  // En modo solo lectura, expandir automáticamente todos los grupos que tienen ritmos seleccionados
+  const autoExpanded = React.useMemo(() => {
+    if (!isReadOnly) return null;
+    return RITMOS_CATALOG.find(g => g.items.some(i => selected.includes(i.id)))?.id || null;
+  }, [isReadOnly, selected]);
+  
+  const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
+
+  React.useEffect(() => {
+    if (isReadOnly && autoExpanded) {
+      setExpanded(autoExpanded);
+    }
+  }, [isReadOnly, autoExpanded]);
 
   const toggleChild = (id: string) => {
+    if (isReadOnly) return; // No hacer nada en modo solo lectura
     if (selected.includes(id)) onChange(selected.filter(r => r !== id));
     else onChange([...selected, id]);
   };
@@ -20,6 +34,44 @@ export default function RitmosChips({ selected, onChange }: Props) {
     if (!g) return false;
     return g.items.some(i => selected.includes(i.id));
   };
+
+  // En modo solo lectura, mostrar todos los ritmos seleccionados directamente
+  if (isReadOnly) {
+    const allSelectedItems = RITMOS_CATALOG.flatMap(g => g.items).filter(r => selected.includes(r.id));
+    if (allSelectedItems.length === 0) return null;
+    
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {allSelectedItems.map(r => {
+          const group = RITMOS_CATALOG.find(g => g.items.some(i => i.id === r.id));
+          return (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 20,
+                border: '1px solid rgba(240,147,251,0.4)',
+                background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))',
+                color: '#f093fb',
+                fontSize: 14,
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
+                backdropFilter: 'blur(10px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              {group && <span style={{ fontSize: 12, opacity: 0.8 }}>{group.label}</span>}
+              <span>{r.label}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>

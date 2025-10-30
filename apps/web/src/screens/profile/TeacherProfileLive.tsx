@@ -306,15 +306,8 @@ export default function TeacherProfileLive() {
   // Get rhythm names from numeric tag IDs or fallback to catalog IDs (ritmos_seleccionados)
   const getRitmoNombres = () => {
     const names: string[] = [];
-    const ritmos = (teacher as any)?.ritmos || [];
-    if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
-      names.push(
-        ...ritmos
-          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre)
-          .filter(Boolean) as string[]
-      );
-    }
-    if (names.length === 0 && Array.isArray((teacher as any)?.ritmos_seleccionados)) {
+    // 1) Priorizar ritmos_seleccionados (IDs del catálogo) ya que es lo que edita el usuario con RitmosChips
+    if (Array.isArray((teacher as any)?.ritmos_seleccionados) && (teacher as any).ritmos_seleccionados.length > 0) {
       const labelById = new Map<string, string>();
       RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
       names.push(
@@ -322,6 +315,17 @@ export default function TeacherProfileLive() {
           .map(id => labelById.get(id))
           .filter(Boolean) as string[]
       );
+    }
+    // 2) Si no hay ritmos_seleccionados, usar ritmos (IDs numéricos de tags)
+    if (names.length === 0) {
+      const ritmos = (teacher as any)?.ritmos || [];
+      if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
+        names.push(
+          ...ritmos
+            .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+            .filter(Boolean) as string[]
+        );
+      }
     }
     return names;
   };

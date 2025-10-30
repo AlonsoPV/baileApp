@@ -15,6 +15,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -360,11 +361,29 @@ export function OrganizerProfileLive() {
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    if (!allTags || !(org as any)?.estilos) return [];
-    return (org as any).estilos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
+    const names: string[] = [];
+    // 1) Priorizar ritmos_seleccionados (IDs del catálogo) ya que es lo que edita el usuario con RitmosChips
+    if (Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      names.push(
+        ...((org as any).ritmos_seleccionados as string[])
+          .map(id => labelById.get(id))
+          .filter(Boolean) as string[]
+      );
+    }
+    // 2) Si no hay ritmos_seleccionados, usar ritmos/estilos (IDs numéricos de tags)
+    if (names.length === 0) {
+      const ritmos = (org as any)?.ritmos || (org as any)?.estilos || [];
+      if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
+        names.push(
+          ...ritmos
+            .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+            .filter(Boolean) as string[]
+        );
+      }
+    }
+    return names;
   };
 
   const getZonaNombres = () => {

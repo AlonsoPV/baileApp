@@ -360,7 +360,7 @@ export default function TeacherProfileEditor() {
           </div>
 
           {/* Chips Estilos */}
-          <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
+          {/* <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
             {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
               <Chip
                 key={tag.id}
@@ -376,7 +376,7 @@ export default function TeacherProfileEditor() {
                 }}
               />
             ))}
-          </div>
+          </div> */}
 
           {/* Catálogo agrupado (independiente de DB) */}
           <div style={{ padding: '0 1.25rem 1.25rem' }}>

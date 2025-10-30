@@ -9,6 +9,10 @@ export type Organizer = {
   bio?: string|null;
   media: any[]; 
   estado_aprobacion: Aprobacion; 
+  ritmos_seleccionados?: string[]; // IDs de catálogo (RITMOS_CATALOG)
+  ritmos?: number[]; // IDs numéricos de tags (legacy)
+  estilos?: number[]; // IDs numéricos de tags (legacy)
+  zonas?: number[];
   created_at: string;
 };
 

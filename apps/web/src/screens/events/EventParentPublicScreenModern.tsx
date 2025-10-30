@@ -11,6 +11,7 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import RitmosChips from "../../components/RitmosChips";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -1600,18 +1601,15 @@ export default function EventParentPublicScreen() {
             className="social-info-grid"
           >
               {/* Ritmos */}
-              {getRitmoNombres().length > 0 && (
+              {(((parent as any).ritmos_seleccionados && (parent as any).ritmos_seleccionados.length > 0) || getRitmoNombres().length > 0) && (
                 <div className="social-info-section">
                   <h3 className="social-info-title">
                     🎵 Ritmos
                   </h3>
-                  <div className="social-info-chips">
-                    {getRitmoNombres().map((ritmo) => (
-                      <span key={ritmo} className="social-info-chip">
-                        {ritmo}
-                      </span>
-                    ))}
-                  </div>
+                  <RitmosChips
+                    selected={(parent as any).ritmos_seleccionados || []}
+                    onChange={() => {}}
+                  />
                 </div>
               )}
 

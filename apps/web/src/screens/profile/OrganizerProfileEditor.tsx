@@ -232,9 +232,9 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           </button>
 
           {expanded && (
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: '1rem',
               marginTop: '1rem',
               padding: '1rem',
@@ -248,10 +248,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                 console.log('[EventParentCard] Date item:', date);
                 console.log('[EventParentCard] Date nombre:', date.nombre);
                 console.log('[EventParentCard] Date fecha:', date.fecha);
-                
+
                 return (
-                  <motion.div 
-                    key={date.id} 
+                  <motion.div
+                    key={date.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
@@ -274,7 +274,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                       backdropFilter: 'blur(10px)',
                       boxShadow: '0 8px 24px rgba(30, 136, 229, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)'
                     }}
-                    whileHover={{ 
+                    whileHover={{
                       y: -4,
                       scale: 1.02,
                       boxShadow: '0 16px 40px rgba(30, 136, 229, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)',
@@ -291,7 +291,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                       transition: 'left 0.6s ease',
                       zIndex: 1
                     }} />
-                    
+
                     <div style={{ flex: 1, position: 'relative', zIndex: 2 }}>
                       {/* Header con icono y nombre */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -311,10 +311,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           {date.nombre || 'Fecha sin nombre'}
                         </div>
                       </div>
-                      
+
                       {/* Información de la fecha */}
-                      <div style={{ 
-                        fontSize: '0.9rem', 
+                      <div style={{
+                        fontSize: '0.9rem',
                         color: colors.blue,
                         fontWeight: '600',
                         marginBottom: '0.5rem',
@@ -335,11 +335,11 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           day: 'numeric'
                         })}
                       </div>
-                      
+
                       {/* Hora */}
                       {date.hora_inicio && date.hora_fin && (
-                        <div style={{ 
-                          fontSize: '0.85rem', 
+                        <div style={{
+                          fontSize: '0.85rem',
                           color: colors.light,
                           display: 'flex',
                           alignItems: 'center',
@@ -355,11 +355,11 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           {date.hora_inicio} - {date.hora_fin}
                         </div>
                       )}
-                      
+
                       {/* Lugar */}
                       {date.lugar && (
-                        <div style={{ 
-                          fontSize: '0.85rem', 
+                        <div style={{
+                          fontSize: '0.85rem',
                           color: colors.light,
                           display: 'flex',
                           alignItems: 'center',
@@ -375,11 +375,11 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           {date.lugar}
                         </div>
                       )}
-                      
+
                       {/* Ciudad */}
                       {date.ciudad && (
-                        <div style={{ 
-                          fontSize: '0.8rem', 
+                        <div style={{
+                          fontSize: '0.8rem',
                           color: colors.light,
                           opacity: 0.8,
                           display: 'flex',
@@ -395,10 +395,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           {date.ciudad}
                         </div>
                       )}
-                      
+
                       {/* CTA */}
-                      <div style={{ 
-                        fontSize: '0.75rem', 
+                      <div style={{
+                        fontSize: '0.75rem',
                         color: colors.blue,
                         fontWeight: '600',
                         display: 'flex',
@@ -415,7 +415,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                         Click para ver detalles
                       </div>
                     </div>
-                    
+
                     {/* Botones de acción */}
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 2 }}>
                       <motion.button
@@ -957,13 +957,13 @@ export default function OrganizerProfileEditor() {
 
           {/* Componente de navegación flotante */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle
-            currentView="edit"
-            profileType="organizer"
-            onSave={handleSave}
-            isSaving={upsert.isPending}
-            saveDisabled={!form.nombre_publico?.trim()}
-          />
+            <ProfileNavigationToggle
+              currentView="edit"
+              profileType="organizer"
+              onSave={handleSave}
+              isSaving={upsert.isPending}
+              saveDisabled={!form.nombre_publico?.trim()}
+            />
           </div>
 
           {/* Información del Organizador */}
@@ -1021,7 +1021,7 @@ export default function OrganizerProfileEditor() {
 
             <div className="org-editor-grid">
               <div>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+              {/*   <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
                   🎶 Ritmos que Organizas
                 </h3>
                 <div className="org-editor-chips">
@@ -1034,37 +1034,37 @@ export default function OrganizerProfileEditor() {
                       variant="ritmo"
                     />
                   ))}
-                </div>
+                </div> */}
 
-            {/* Catálogo agrupado (independiente de DB) */}
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
-              {(() => {
-                const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
-                const onChangeCatalog = (ids: string[]) => {
-                  // Guardar selección de catálogo directamente
-                  setField('ritmos_seleccionados' as any, ids as any);
-                  // Intentar mapear también a ids de tags si existen (no bloqueante)
-                  try {
-                    const labelByCatalogId = new Map<string, string>();
-                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                    const nameToTagId = new Map<string, number>(
-                      ritmoTags.map((t: any) => [t.nombre, t.id])
+                {/* Catálogo agrupado (independiente de DB) */}
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+                  {(() => {
+                    const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+                    const onChangeCatalog = (ids: string[]) => {
+                      // Guardar selección de catálogo directamente
+                      setField('ritmos_seleccionados' as any, ids as any);
+                      // Intentar mapear también a ids de tags si existen (no bloqueante)
+                      try {
+                        const labelByCatalogId = new Map<string, string>();
+                        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                        const nameToTagId = new Map<string, number>(
+                          ritmoTags.map((t: any) => [t.nombre, t.id])
+                        );
+                        const mappedTagIds = ids
+                          .map(cid => labelByCatalogId.get(cid))
+                          .filter(Boolean)
+                          .map((label: any) => nameToTagId.get(label as string))
+                          .filter((n): n is number => typeof n === 'number');
+                        setField('ritmos' as any, mappedTagIds as any);
+                      } catch { }
+                    };
+
+                    return (
+                      <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
                     );
-                    const mappedTagIds = ids
-                      .map(cid => labelByCatalogId.get(cid))
-                      .filter(Boolean)
-                      .map((label: any) => nameToTagId.get(label as string))
-                      .filter((n): n is number => typeof n === 'number');
-                    setField('ritmos' as any, mappedTagIds as any);
-                  } catch {}
-                };
-
-                return (
-                  <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
-                );
-              })()}
-            </div>
+                  })()}
+                </div>
               </div>
 
               <div>
@@ -1225,7 +1225,7 @@ export default function OrganizerProfileEditor() {
                     fontWeight: '800',
                     margin: 0,
                     color: colors.light,
-                    
+
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                   }}>
@@ -1266,7 +1266,7 @@ export default function OrganizerProfileEditor() {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    
+
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1281,7 +1281,7 @@ export default function OrganizerProfileEditor() {
                     fontWeight: '700',
                     marginBottom: '0.75rem',
                     color: colors.light,
-                    
+
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                   }}>
