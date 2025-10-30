@@ -13,7 +13,7 @@ export interface RitmoGroup {
 export const RITMOS_CATALOG: RitmoGroup[] = [
   {
     id: 'latinos',
-    label: 'Ritmos latinos',
+    label: 'Latinos',
     items: [
       { id: 'salsa_on1', label: 'Salsa On 1', parent: 'latinos' },
       { id: 'salsa_on2', label: 'Salsa On 2', parent: 'latinos' },
@@ -27,7 +27,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
   },
   {
     id: 'afro_latinos',
-    label: 'Bailes afro-latinos y de fusión moderna',
+    label: 'Afro-latinos',
     items: [
       { id: 'kizomba', label: 'Kizomba', parent: 'afro_latinos' },
       { id: 'semba', label: 'Semba', parent: 'afro_latinos' },
@@ -36,7 +36,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
   },
   {
     id: 'urbanos',
-    label: 'Bailes urbanos y contemporáneos',
+    label: 'Urbanos y Contemporáneos',
     items: [
       { id: 'hiphop', label: 'Hip hop', parent: 'urbanos' },
       { id: 'breakdance', label: 'Break dance', parent: 'urbanos' },
@@ -46,7 +46,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
   },
   {
     id: 'clasicos',
-    label: 'Bailes de época y clásicos urbanos',
+    label: 'Época y Clásicos Urbanos',
     items: [
       { id: 'danzon', label: 'Danzón', parent: 'clasicos' },
       { id: 'rockandroll', label: 'Rock and Roll', parent: 'clasicos' },

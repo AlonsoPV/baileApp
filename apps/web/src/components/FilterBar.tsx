@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTags } from "../hooks/useTags";
-import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
@@ -299,29 +298,85 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
             {openDropdown === 'ritmos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 {(() => {
-                  const etiquetaPorId = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
-                  const catalogIdByLabel = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-                  const selectedCatalogIds = (filters.ritmos || [])
-                    .map(id => etiquetaPorId.get(id))
-                    .filter(Boolean)
-                    .map(label => catalogIdByLabel.get(label as string))
-                    .filter(Boolean) as string[];
+                  const [expanded, setExpanded] = [null, null] as any; // placeholder to avoid linter in inline IIFE
+                  // Mapeos nombre<->id para enlazar catálogo a tags
+                  const tagNameById = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
+                  const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
 
-                  const onChangeCatalog = (ids: string[]) => {
-                    const labelByCatalogId = new Map<string, string>();
-                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                    const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
-                    const mappedIds = ids
-                      .map(cid => labelByCatalogId.get(cid))
-                      .filter(Boolean)
-                      .map(label => tagIdByName.get(label as string))
-                      .filter((n): n is number => typeof n === 'number');
-                    onFiltersChange({ ...filters, ritmos: mappedIds });
+                  // UI estado: chip padre expandida
+                  const [expandedGroup, _setExpandedGroup] = React.useState<string | null>(null);
+                  const toggleGroup = (gid: string) => _setExpandedGroup(prev => prev === gid ? null : gid);
+
+                  // Helpers para activar/desactivar ritmos hijos
+                  const isTagActive = (name: string) => {
+                    const id = tagIdByName.get(name);
+                    return id ? filters.ritmos.includes(id) : false;
+                  };
+                  const toggleChild = (name: string) => {
+                    const id = tagIdByName.get(name);
+                    if (!id) return;
+                    const newRitmos = filters.ritmos.includes(id)
+                      ? filters.ritmos.filter(r => r !== id)
+                      : [...filters.ritmos, id];
+                    onFiltersChange({ ...filters, ritmos: newRitmos });
                   };
 
                   return (
-                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {/* Chips padres */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {RITMOS_CATALOG.map(group => {
+                          const activeInGroup = group.items.some(i => isTagActive(i.label));
+                          const isOpen = expandedGroup === group.id;
+                          return (
+                            <button
+                              key={group.id}
+                              onClick={() => toggleGroup(group.id)}
+                              style={{
+                                padding: '10px 14px',
+                                borderRadius: 999,
+                                border: isOpen || activeInGroup ? '2px solid rgba(240,147,251,0.6)' : '1px solid rgba(255,255,255,0.15)',
+                                background: isOpen || activeInGroup ? 'rgba(240,147,251,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: 'white',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {group.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Chips hijas del grupo expandido */}
+                      {expandedGroup && (
+                        <div style={{
+                          display: 'flex', flexWrap: 'wrap', gap: '0.5rem',
+                          borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12
+                        }}>
+                          {RITMOS_CATALOG.find(g => g.id === expandedGroup)?.items.map(child => {
+                            const active = isTagActive(child.label);
+                            return (
+                              <button
+                                key={child.id}
+                                onClick={() => toggleChild(child.label)}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: 999,
+                                  border: active ? '1px solid #f093fb' : '1px solid rgba(255,255,255,0.15)',
+                                  background: active ? 'rgba(240,147,251,0.15)' : 'transparent',
+                                  color: active ? '#f093fb' : 'rgba(255,255,255,0.9)',
+                                  fontSize: 13,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {child.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })()}
               </DropdownPanel>
