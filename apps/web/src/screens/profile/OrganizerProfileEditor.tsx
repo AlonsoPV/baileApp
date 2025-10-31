@@ -919,14 +919,27 @@ export default function OrganizerProfileEditor() {
         
         .org-events-section {
           margin-bottom: 3rem;
-          padding: 2.5rem;
-          border-radius: 24px;
-          border: 2px solid rgba(30, 136, 229, 0.3);
-          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)', 0 4px 16px rgba(0, 0, 0, 0.2);
+          padding: 2.25rem;
+          border-radius: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
           position: relative;
           overflow: hidden;
-          background: rgba(255, 255, 255, 0.08);
+          background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
           color: #FFFFFF;
+        }
+
+        .org-events-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 8px;
+          background: linear-gradient(90deg, #1E88E5, #00BCD4, #FF3D57);
+          opacity: 0.9;
         }
         
         .org-events-section h2,
