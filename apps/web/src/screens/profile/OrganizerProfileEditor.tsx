@@ -736,7 +736,21 @@ export default function OrganizerProfileEditor() {
       console.log("📍 [OrganizerProfileEditor] Ubicaciones:", (form as any).ubicaciones);
       console.log("💬 [OrganizerProfileEditor] Respuestas:", form.respuestas);
 
-      await upsert.mutateAsync(form);
+      // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
+      let outSelected = ((((form as any)?.ritmos_seleccionados) || []) as string[]);
+      if ((!outSelected || outSelected.length === 0) && Array.isArray(form.ritmos) && form.ritmos.length > 0) {
+        const labelToItemId = new Map<string, string>();
+        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.label, i.id)));
+        const names = form.ritmos
+          .map(id => ritmoTags.find(t => t.id === id)?.nombre)
+          .filter(Boolean) as string[];
+        const mapped = names
+          .map(n => labelToItemId.get(n))
+          .filter(Boolean) as string[];
+        if (mapped.length > 0) outSelected = mapped;
+      }
+
+      await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
       console.log("✅ [OrganizerProfileEditor] Guardado exitoso");
       showToast('Organizador actualizado ✅', 'success');
     } catch (err: any) {

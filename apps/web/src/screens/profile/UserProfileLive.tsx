@@ -775,7 +775,7 @@ export const UserProfileLive: React.FC = () => {
             className="bio-section glass-card-container"
           >
               <h3 className="section-title">
-                💬 Sobre mí Live 1
+                💬 Sobre mí
               </h3>
               <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1rem' }}>
                 {profile.bio}
