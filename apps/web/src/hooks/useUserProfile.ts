@@ -9,6 +9,7 @@ export type ProfileUser = {
   display_name?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  ritmos_seleccionados?: string[]; // catálogo (RITMOS_CATALOG)
   ritmos?: number[];
   zonas?: number[];
   media?: any[]; // ⚠️ NO actualizar desde este hook
@@ -30,7 +31,7 @@ export function useUserProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles_user")
-        .select("user_id, display_name, bio, avatar_url, ritmos, zonas, respuestas, updated_at")
+        .select("user_id, display_name, bio, avatar_url, ritmos_seleccionados, ritmos, zonas, respuestas, updated_at")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
@@ -60,7 +61,7 @@ export function useUserProfile() {
 
         // Usar buildSafePatch para merge inteligente
         const patch = buildSafePatch(prev, normalizedCandidate, { 
-          allowEmptyArrays: ["ritmos", "zonas"] as any 
+          allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any 
         });
 
         if (Object.keys(patch).length === 0) {
