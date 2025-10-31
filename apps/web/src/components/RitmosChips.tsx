@@ -17,11 +17,21 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
         const fnStr = onChange.toString().replace(/\s/g, '');
         return fnStr === '()=>{}' || fnStr.includes('()=>{}') || fnStr === '()=>{}' || onChange.name === '';
       })();
+
+  // Catálogo filtrado por allowedIds (si se provee) - DEBE DEFINIRSE PRIMERO
+  const filteredCatalog = React.useMemo(() => {
+    if (!allowedIds || allowedIds.length === 0) return RITMOS_CATALOG;
+    return RITMOS_CATALOG.map(g => ({
+      ...g,
+      items: g.items.filter(i => allowedIds.includes(i.id))
+    })).filter(g => g.items.length > 0);
+  }, [allowedIds]);
+
   // En modo solo lectura, expandir automáticamente todos los grupos que tienen ritmos seleccionados
   const autoExpanded = React.useMemo(() => {
     if (!isReadOnly) return null;
     return filteredCatalog.find(g => g.items.some(i => selected.includes(i.id)))?.id || null;
-  }, [isReadOnly, selected]);
+  }, [isReadOnly, selected, filteredCatalog]);
   
   const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
 
@@ -42,15 +52,6 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
     if (!g) return false;
     return g.items.some(i => selected.includes(i.id));
   };
-
-  // Catálogo filtrado por allowedIds (si se provee)
-  const filteredCatalog = React.useMemo(() => {
-    if (!allowedIds || allowedIds.length === 0) return RITMOS_CATALOG;
-    return RITMOS_CATALOG.map(g => ({
-      ...g,
-      items: g.items.filter(i => allowedIds.includes(i.id))
-    })).filter(g => g.items.length > 0);
-  }, [allowedIds]);
 
   // En modo solo lectura, mostrar todos los ritmos seleccionados directamente
   if (isReadOnly) {
