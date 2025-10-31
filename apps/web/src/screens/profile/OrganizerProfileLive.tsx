@@ -7,6 +7,7 @@ import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
+import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
@@ -968,14 +969,13 @@ export function OrganizerProfileLive() {
                   marginBottom: spacing[2]
                 }}
               >
-                {getRitmoNombres().map((nombre) => (
-                  <Chip
-                    key={`r-${nombre}`}
-                    label={nombre}
-                    icon="🎵"
-                    variant="ritmo"
+                {Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0 && (
+                  <RitmosChips
+                    selected={((org as any).ritmos_seleccionados || []) as string[]}
+                    onChange={() => {}}
+                    readOnly
                   />
-                ))}
+                )}
                 {getZonaNombres().map((nombre) => (
                   <Chip
                     key={`z-${nombre}`}

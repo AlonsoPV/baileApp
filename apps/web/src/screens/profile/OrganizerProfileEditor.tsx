@@ -30,6 +30,7 @@ import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -1339,31 +1340,13 @@ export default function OrganizerProfileEditor() {
                   {/* <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
                   🎵 Ritmos de Baile
                 </h3> */}
-                  {(() => {
-                    const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
-                    const onChangeCatalog = (ids: string[]) => {
-                      // Guardar selección de catálogo directamente
-                      setField('ritmos_seleccionados' as any, ids as any);
-                      // Intentar mapear también a ids de tags si existen (no bloqueante)
-                      try {
-                        const labelByCatalogId = new Map<string, string>();
-                        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                        const nameToTagId = new Map<string, number>(
-                          ritmoTags.map((t: any) => [t.nombre, t.id])
-                        );
-                        const mappedTagIds = ids
-                          .map(cid => labelByCatalogId.get(cid))
-                          .filter(Boolean)
-                          .map((label: any) => nameToTagId.get(label as string))
-                          .filter((n): n is number => typeof n === 'number');
-                        setField('ritmos' as any, mappedTagIds as any);
-                      } catch { }
-                    };
-
-                    return (
-                      <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
-                    );
-                  })()}
+                  {(
+                    <RitmosSelectorEditor 
+                      selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
+                      ritmoTags={ritmoTags as any}
+                      setField={setField as any}
+                    />
+                  )}
                 </div>
               </div>
 

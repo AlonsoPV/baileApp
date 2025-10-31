@@ -29,7 +29,6 @@ import EventPublicScreen from './screens/events/EventPublicScreen';
 // Sprint 3 - Profile editors
 import { EventEditor } from './screens/profile/EventEditor';
 import { EventDateEditor } from './screens/profile/EventDateEditor';
-import { OrganizerEditor } from './screens/profile/OrganizerEditor';
 import { OrganizerProfileLive as OrganizerProfileLiveNew } from './screens/profile/OrganizerProfileLive';
 import OrganizerProfileEditor from './screens/profile/OrganizerProfileEditor';
 import { OrganizerDashboardDates } from './screens/profile/OrganizerDashboardDates';

@@ -632,27 +632,12 @@ export default function TeacherProfileLive() {
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {Array.isArray((teacher as any)?.ritmos_seleccionados) && (teacher as any).ritmos_seleccionados.length > 0 ? (
+                {Array.isArray((teacher as any)?.ritmos_seleccionados) && (teacher as any).ritmos_seleccionados.length > 0 && (
                   <RitmosChips
                     selected={((teacher as any).ritmos_seleccionados || []) as string[]}
                     onChange={() => {}}
                     readOnly
                   />
-                ) : (
-                  getRitmoNombres().map((ritmo, index) => (
-                    <Chip
-                      key={`ritmo-${index}`}
-                      label={ritmo}
-                      active={true}
-                      variant="ritmo"
-                      style={{
-                        background: 'rgba(229, 57, 53, 0.2)',
-                        border: '1px solid #E53935',
-                        color: '#E53935',
-                        fontWeight: '600'
-                      }}
-                    />
-                  ))
                 )}
                 {getZonaNombres().map((zona, index) => (
                   <Chip
