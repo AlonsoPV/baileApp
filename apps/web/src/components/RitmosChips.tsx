@@ -5,14 +5,15 @@ import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 interface Props {
   selected: string[];
   onChange: (ritmos: string[]) => void;
+  allowedIds?: string[]; // opcional: restringe qué ritmos se muestran/pueden elegirse
 }
 
-export default function RitmosChips({ selected, onChange }: Props) {
+function RitrosChipsInternal({ selected, onChange, allowedIds }: Props) {
   const isReadOnly = onChange.toString() === '() => {}' || onChange.toString().includes('() => {}');
   // En modo solo lectura, expandir automáticamente todos los grupos que tienen ritmos seleccionados
   const autoExpanded = React.useMemo(() => {
     if (!isReadOnly) return null;
-    return RITMOS_CATALOG.find(g => g.items.some(i => selected.includes(i.id)))?.id || null;
+    return filteredCatalog.find(g => g.items.some(i => selected.includes(i.id)))?.id || null;
   }, [isReadOnly, selected]);
   
   const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
@@ -30,20 +31,30 @@ export default function RitmosChips({ selected, onChange }: Props) {
   };
 
   const groupHasActive = (groupId: string) => {
-    const g = RITMOS_CATALOG.find(x => x.id === groupId);
+    const g = filteredCatalog.find(x => x.id === groupId);
     if (!g) return false;
     return g.items.some(i => selected.includes(i.id));
   };
 
+  // Catálogo filtrado por allowedIds (si se provee)
+  const filteredCatalog = React.useMemo(() => {
+    if (!allowedIds || allowedIds.length === 0) return RITMOS_CATALOG;
+    return RITMOS_CATALOG.map(g => ({
+      ...g,
+      items: g.items.filter(i => allowedIds.includes(i.id))
+    })).filter(g => g.items.length > 0);
+  }, [allowedIds]);
+
   // En modo solo lectura, mostrar todos los ritmos seleccionados directamente
   if (isReadOnly) {
-    const allSelectedItems = RITMOS_CATALOG.flatMap(g => g.items).filter(r => selected.includes(r.id));
+    const baseItems = filteredCatalog.flatMap(g => g.items);
+    const allSelectedItems = baseItems.filter(r => selected.includes(r.id));
     if (allSelectedItems.length === 0) return null;
     
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {allSelectedItems.map(r => {
-          const group = RITMOS_CATALOG.find(g => g.items.some(i => i.id === r.id));
+          const group = filteredCatalog.find(g => g.items.some(i => i.id === r.id));
           return (
             <motion.div
               key={r.id}
@@ -77,7 +88,7 @@ export default function RitmosChips({ selected, onChange }: Props) {
     <div style={{ display: 'grid', gap: 12 }}>
       {/* Chips padre */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {RITMOS_CATALOG.map(group => {
+        {filteredCatalog.map(group => {
           const isOpen = expanded === group.id;
           const active = groupHasActive(group.id);
           return (
@@ -106,7 +117,7 @@ export default function RitmosChips({ selected, onChange }: Props) {
           display: 'flex', flexWrap: 'wrap', gap: 8,
           borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10
         }}>
-          {RITMOS_CATALOG.find(g => g.id === expanded)?.items.map(r => {
+          {filteredCatalog.find(g => g.id === expanded)?.items.map(r => {
             const isActive = selected.includes(r.id);
             return (
               <motion.button
@@ -131,6 +142,11 @@ export default function RitmosChips({ selected, onChange }: Props) {
       )}
     </div>
   );
+}
+
+// Re-export con nombre correcto (para no romper imports existentes)
+export default function RitmosChips(props: Props) {
+  return <RitrosChipsInternal {...props} />;
 }
 
 

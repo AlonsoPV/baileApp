@@ -127,6 +127,19 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   // Obtener tags para mapear ritmos
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
+  // Limitar ritmos permitidos según configuración del organizador
+  const { data: myOrg } = useMyOrganizer();
+  const allowedCatalogIds = ((myOrg as any)?.ritmos_seleccionados || []) as string[];
+
+  // Efecto: si hay allowed, purgar selecciones no permitidas
+  useEffect(() => {
+    if (!allowedCatalogIds || allowedCatalogIds.length === 0) return;
+    const current = ((values as any)?.ritmos_seleccionados || []) as string[];
+    const filtered = current.filter((id) => allowedCatalogIds.includes(id));
+    if (filtered.length !== current.length) {
+      setValue('ritmos_seleccionados' as any, filtered as any);
+    }
+  }, [allowedCatalogIds]);
   const editMode = isActuallyEditing;
 
   const handleSubmit = async () => {
@@ -327,9 +340,18 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             
             <div style={{ marginTop: 8 }}>
               <RitmosChips
-                selected={((values as any)?.ritmos_seleccionados || []) as string[]}
+                selected={(() => {
+                  const selected = ((values as any)?.ritmos_seleccionados || []) as string[];
+                  return (allowedCatalogIds && allowedCatalogIds.length)
+                    ? selected.filter(id => allowedCatalogIds.includes(id))
+                    : selected;
+                })()}
+                allowedIds={allowedCatalogIds}
                 onChange={(ids) => {
-                  setValue('ritmos_seleccionados' as any, ids as any);
+                  const next = (allowedCatalogIds && allowedCatalogIds.length)
+                    ? ids.filter(id => allowedCatalogIds.includes(id))
+                    : ids;
+                  setValue('ritmos_seleccionados' as any, next as any);
                   // Mapear también a estilos (tag IDs) si es posible
                   try {
                     const labelByCatalogId = new Map<string, string>();
@@ -337,7 +359,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     const nameToTagId = new Map<string, number>(
                       ritmoTags.map((t: any) => [t.nombre, t.id])
                     );
-                    const mappedTagIds = ids
+                    const mappedTagIds = next
                       .map(cid => labelByCatalogId.get(cid))
                       .filter(Boolean)
                       .map((label: any) => nameToTagId.get(label as string))

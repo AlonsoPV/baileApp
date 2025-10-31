@@ -31,7 +31,7 @@ type ZonaTag = { id: number; nombre: string };
 
 type CostoItem = {
   nombre?: string; // etiqueta y clave de referencia
-  tipo?: 'paquetes' | 'clases sueltas' | 'coreografia' | 'entrenamiento' | 'otro';
+  tipo?: 'Taquilla' | 'Preventa' | 'Promoción' | 'Otro';
   precio?: number | null;
   regla?: string;
 };
@@ -69,7 +69,7 @@ type Props = {
 };
 
 const tiposCosto: NonNullable<CostoItem['tipo']>[] = [
-  'paquetes', 'clases sueltas', 'coreografia', 'entrenamiento', 'otro'
+  'Taquilla', 'Preventa', 'Promoción', 'Otro'
 ];
 
 const niveles = ['Inicial', 'Intermedio', 'Avanzado', 'Todos'] as const;
@@ -207,7 +207,7 @@ export default function ScheduleEditorPlus({
   const addCosto = () => {
     onChangeCostos([
       ...costos,
-      { nombre: '', tipo: 'otro', precio: null, regla: '' }
+      { nombre: '', tipo: 'Otro', precio: null, regla: '' }
     ]);
   };
 
@@ -373,18 +373,6 @@ export default function ScheduleEditorPlus({
                     </div>
                   </div>
 
-                  {/* ubicación texto */}
-                  <div>
-                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Ubicación (texto)</div>
-                    <input
-                      type="text"
-                      value={item.ubicacion || ''}
-                      onChange={(e)=> updateItem(index, 'ubicacion', e.target.value)}
-                      placeholder="Ej. Estudio Central, Av. Reforma 123, CDMX"
-                      style={input}
-                    />
-                  </div>
-
                   {/* referencia costo */}
                   <div>
                     <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Referencia de costo (opcional)</div>
@@ -513,7 +501,7 @@ export default function ScheduleEditorPlus({
               style={input}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {/*   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fecha</div>
                 <input
@@ -524,7 +512,7 @@ export default function ScheduleEditorPlus({
                 />
               </div>
               <div />
-            </div>
+            </div> */}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
@@ -547,7 +535,7 @@ export default function ScheduleEditorPlus({
               </div>
             </div>
 
-            <div>
+            {/* <div>
               <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Ubicación (texto)</div>
               <input
                 type="text"
@@ -556,9 +544,9 @@ export default function ScheduleEditorPlus({
                 placeholder="Ej. Estudio Central, Av. Reforma 123, CDMX"
                 style={input}
               />
-            </div>
+            </div> */}
 
-            <div>
+       {/*      <div>
               <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Referencia de costo (opcional)</div>
               <select
                 value={newItem.referenciaCosto || ''}
@@ -571,7 +559,7 @@ export default function ScheduleEditorPlus({
                 ))}
               </select>
             </div>
-
+ */}
             <div style={{ display: 'flex', gap: 8 }}>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={addItem}

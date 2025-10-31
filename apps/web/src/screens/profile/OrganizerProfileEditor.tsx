@@ -453,7 +453,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                         style={{
                           padding: '0.5rem 0.75rem',
                           color: colors.light,
-                          border: '2px solid rgba(255, 61, 87, 0.3)',
+                          border: '2px solid rgba(30, 136, 229, 0.3)',
                           borderRadius: '10px',
                           fontSize: '0.75rem',
                           fontWeight: '700',
@@ -462,7 +462,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           alignItems: 'center',
                           gap: '4px',
                           transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(255, 61, 87, 0.2)',
+                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
@@ -921,8 +921,8 @@ export default function OrganizerProfileEditor() {
           margin-bottom: 3rem;
           padding: 2.5rem;
           border-radius: 24px;
-          border: 2px solid rgba(255, 61, 87, 0.3);
-          box-shadow: 0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+          border: 2px solid rgba(30, 136, 229, 0.3);
+          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)', 0 4px 16px rgba(0, 0, 0, 0.2);
           position: relative;
           overflow: hidden;
           background: rgba(255, 255, 255, 0.08);
@@ -1185,7 +1185,9 @@ export default function OrganizerProfileEditor() {
 
                 {/* Catálogo agrupado (independiente de DB) */}
                 <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+                {/* <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+                  🎵 Ritmos de Baile
+                </h3> */}
                   {(() => {
                     const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
                     const onChangeCatalog = (ids: string[]) => {
@@ -1215,9 +1217,9 @@ export default function OrganizerProfileEditor() {
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
+               {/*  <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
                   📍 Zonas donde Organizas
-                </h3>
+                </h3> */}
                 <div className="org-editor-chips">
                   {zonaTags.map((tag) => (
                     <Chip
@@ -1378,7 +1380,7 @@ export default function OrganizerProfileEditor() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '1.5rem',
-                    boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
+                    boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
                   }}>
                     🎭
                   </div>
@@ -1401,38 +1403,70 @@ export default function OrganizerProfileEditor() {
                     </p>
                   </div>
                 </div>
-                {parents && parents.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {parents && parents.length > 0 && (
+                    <motion.button
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setShowDateForm(!showDateForm);
+                        if (!showDateForm && parents.length === 1) {
+                          setSelectedParentId(parents[0].id);
+                        }
+                      }}
+                      style={{
+                        padding: '0.9rem 1.6rem',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(255, 255, 255, 0.28)',
+                        background: showDateForm
+                          ? 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12))'
+                          : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                        color: '#FFFFFF',
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: showDateForm
+                          ? '0 8px 24px rgba(255,255,255,0.08)'
+                          : '0 8px 24px rgba(30,136,229,0.45)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        letterSpacing: '0.2px'
+                      }}
+                    >
+                      <span>{showDateForm ? '✖️' : '📅'}</span>
+                      <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
+                    </motion.button>
+                  )}
+
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.06 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setShowDateForm(!showDateForm);
-                      if (!showDateForm && parents.length === 1) {
-                        setSelectedParentId(parents[0].id);
-                      }
-                    }}
+                    onClick={() => navigate('/social/new')}
                     style={{
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      background: showDateForm
-                        ? 'rgba(255, 255, 255, 0.2)'
-                        : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
+                      padding: '0.9rem 1.6rem',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.28)',
+                      background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
                       color: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      fontWeight: '700',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
                       cursor: 'pointer',
-                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                      
+                      boxShadow: '0 8px 24px rgba(255,61,87,0.4)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem'
+                      gap: '0.6rem',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      letterSpacing: '0.2px'
                     }}
                   >
-                    <span>{showDateForm ? '✖️' : '➕'}</span>
-                    <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
+                    <span>🎉</span>
+                    <span>Crear Evento</span>
                   </motion.button>
-                )}
+                </div>
               </div>
 
               {/* Formulario de crear fecha */}
@@ -1518,6 +1552,7 @@ export default function OrganizerProfileEditor() {
                     <div style={{ marginTop: 8 }}>
                       <RitmosChips
                         selected={dateForm.ritmos_seleccionados || []}
+                        allowedIds={((form as any)?.ritmos_seleccionados || []) as string[]}
                         onChange={(ids) => {
                           setDateForm({ ...dateForm, ritmos_seleccionados: ids });
                           // Mapear también a estilos (tag IDs) si es posible
@@ -1875,38 +1910,7 @@ export default function OrganizerProfileEditor() {
               )}
             </div>
           </div>
-          {/* Botón Discreto: Crear Evento - Centro Abajo */}
-          <div
-            id="organizer-create-event-button"
-            data-test-id="organizer-create-event-button"
-            className="org-create-button"
-          >
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/social/new')}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '25px',
-                background: `${colors.dark}dd`,
-                backdropFilter: 'blur(10px)',
-                color: colors.light,
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                border: `1px solid ${colors.light}33`,
-              }}
-            >
-              <span style={{ fontSize: '1.1rem' }}>📅</span>
-              Crear Evento
-            </motion.button>
-          </div>
+          {/* Botón Crear Evento (movido a cabecera, se elimina el flotante) */}
 
           {/* Sección de Fotos */}
           <PhotoManagementSection
