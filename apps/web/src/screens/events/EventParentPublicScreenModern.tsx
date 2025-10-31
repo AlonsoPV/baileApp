@@ -634,6 +634,13 @@ export default function EventParentPublicScreen() {
     .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
     .filter(Boolean) as string[];
 
+  // Resolver avatar del evento (slot dedicado 'avatar' -> avatar_url -> portada_url -> primera foto)
+  const avatarUrl =
+    getMediaBySlot(parent.media as any, 'avatar')?.url ||
+    (parent as any).avatar_url ||
+    (parent as any).portada_url ||
+    carouselPhotos[0];
+
   // Construir items para el slider de fechas
   const dateItems = (dates || []).map((d: any) => {
     const hora = d.hora_inicio && d.hora_fin
@@ -1506,89 +1513,126 @@ export default function EventParentPublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="social-hero-content">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="social-hero-title"
-            >
-              {parent.nombre}
-            </motion.h1>
+          <div className="social-hero-content" style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '2rem', alignItems: 'center' }}>
+            {/* Columna izquierda: título, descripción, acciones */}
+            <div>
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="social-hero-title"
+                style={{ textAlign: 'left' }}
+              >
+                {parent.nombre}
+              </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="social-hero-description"
-            >
-              {parent.biografia || 'Descubre más sobre este evento especial'}
-            </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="social-hero-description"
+                style={{ textAlign: 'left' }}
+              >
+                {parent.biografia || 'Descubre más sobre este evento especial'}
+              </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              className="social-hero-actions"
-            >
-              {isOwner && (
-                <motion.button
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="social-hero-actions"
+                style={{ justifyContent: 'flex-start' }}
+              >
+                {isOwner && (
+                  <motion.button
+                    whileHover={{ scale: 1.08, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => navigate(`/social/${parent.id}/edit`)}
+                    style={{
+                      padding: '1.125rem 2.5rem',
+                      borderRadius: borderRadius.full,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'linear-gradient(135deg, rgba(255,61,87,0.9), rgba(255,140,66,0.9))',
+                      color: colors.gray[50],
+                      fontSize: typography.fontSize.lg,
+                      fontWeight: typography.fontWeight.bold,
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 24px rgba(255,61,87,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing[2],
+                      position: 'relative',
+                      overflow: 'hidden',
+                      backdropFilter: 'blur(20px)',
+                      textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    <span style={{ position: 'relative', zIndex: 2 }}>✏️</span>
+                    <span style={{ position: 'relative', zIndex: 2 }}>Editar Social</span>
+                  </motion.button>
+                )}
+                
+                <motion.div
                   whileHover={{ scale: 1.08, y: -2 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => navigate(`/social/${parent.id}/edit`)}
-                  style={{
-                    padding: '1.125rem 2.5rem',
-                    borderRadius: borderRadius.full,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'linear-gradient(135deg, rgba(255,61,87,0.9), rgba(255,140,66,0.9))',
-                    color: colors.gray[50],
-                    fontSize: typography.fontSize.lg,
-                    fontWeight: typography.fontWeight.bold,
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 24px rgba(255,61,87,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(20px)',
-                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}
                 >
-                  <span style={{ position: 'relative', zIndex: 2 }}>✏️</span>
-                  <span style={{ position: 'relative', zIndex: 2 }}>Editar Social</span>
-                </motion.button>
-              )}
-              
-              <motion.div
-                whileHover={{ scale: 1.08, y: -2 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                <ShareButton 
-                  url={window.location.href}
-                  title={parent.nombre}
-                  style={{
-                    padding: '1.125rem 2.5rem',
-                    borderRadius: borderRadius.full,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(0,188,212,0.9))',
-                    color: colors.gray[50],
-                    fontSize: typography.fontSize.lg,
-                    fontWeight: typography.fontWeight.bold,
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 24px rgba(30,136,229,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                    backdropFilter: 'blur(20px)',
-                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}
-                />
+                  <ShareButton 
+                    url={typeof window !== 'undefined' ? window.location.href : ''}
+                    title={parent.nombre}
+                    style={{
+                      padding: '1.125rem 2.5rem',
+                      borderRadius: borderRadius.full,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(0,188,212,0.9))',
+                      color: colors.gray[50],
+                      fontSize: typography.fontSize.lg,
+                      fontWeight: typography.fontWeight.bold,
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 24px rgba(30,136,229,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing[2],
+                      backdropFilter: 'blur(20px)',
+                      textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                    }}
+                  />
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </div>
+
+            {/* Columna derecha: Avatar */}
+            <div style={{ display: 'grid', placeItems: 'center' }}>
+              <div style={{
+                width: '100%',
+                maxWidth: 420,
+                aspectRatio: '1 / 1',
+                borderRadius: 24,
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.15)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                background: 'linear-gradient(135deg, rgba(30,136,229,0.12) 0%, rgba(255,61,87,0.12) 100%)'
+              }}>
+                {avatarUrl ? (
+                  <ImageWithFallback
+                    src={avatarUrl}
+                    alt={`${parent.nombre} avatar`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '3rem' }}>🖼️</div>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Responsive: 1 columna en móviles */}
+          <style>{`
+            @media (max-width: 1024px) {
+              .social-hero-content { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
         </motion.div>
 
         {/* Contenido Principal */}
@@ -1661,7 +1705,30 @@ export default function EventParentPublicScreen() {
               />
             </motion.div>
           )}
-
+ {/* Próximas Fechas */}
+ {dates && dates.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="social-dates-section"
+            >
+              <div className="social-dates-header">
+                <div className="social-dates-icon">
+                  📅
+                </div>
+                <div>
+                  <h3 className="social-dates-title">
+                    Próximas Fechas
+                  </h3>
+                  <p className="social-dates-subtitle">
+                    {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
+            </motion.div>
+          )}
           {/* FAQ */}
           {parent.faq && Array.isArray(parent.faq) && parent.faq.length > 0 && (
             <motion.div
@@ -1749,30 +1816,7 @@ export default function EventParentPublicScreen() {
             </motion.div>
           )}
 
-          {/* Próximas Fechas */}
-          {dates && dates.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="social-dates-section"
-            >
-              <div className="social-dates-header">
-                <div className="social-dates-icon">
-                  📅
-                </div>
-                <div>
-                  <h3 className="social-dates-title">
-                    Próximas Fechas
-                  </h3>
-                  <p className="social-dates-subtitle">
-                    {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
-            </motion.div>
-          )}
+         
         </div>
       </div>
     </>

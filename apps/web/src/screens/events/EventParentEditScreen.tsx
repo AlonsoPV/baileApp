@@ -7,6 +7,8 @@ import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
 import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import RitmosChips from "@/components/RitmosChips";
+import ImageWithFallback from "../../components/ImageWithFallback";
+import { useEventParentMedia } from "../../hooks/useEventParentMedia";
 
 const colors = {
   coral: '#FF3D57',
@@ -47,6 +49,10 @@ export function EventParentEditScreen() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // Media (solo en modo edición con ID existente)
+  const parentMedia = isEdit && idParam ? useEventParentMedia(Number(idParam)) : (null as any);
+  const avatarMedia = parentMedia?.media?.find((m: any) => m.slot === 'avatar');
 
   useEffect(() => {
     if (currentEvent) {
@@ -245,6 +251,60 @@ export function EventParentEditScreen() {
           placeholder="Ej: Festival de Salsa 2025"
           className="parent-edit-input"
         />
+      </div>
+
+      <div className="parent-edit-card">
+        <label className="parent-edit-field">
+          Foto de avatar del evento
+        </label>
+        {!isEdit && (
+          <div style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+            Crea el evento para habilitar la subida de la foto de avatar.
+          </div>
+        )}
+        {isEdit && (
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ width: 128, height: 128, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)' }}>
+                {avatarMedia?.url ? (
+                  <ImageWithFallback src={avatarMedia.url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#fff', opacity: 0.7 }}>🖼️</div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <label style={{
+                  padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)',
+                  cursor: 'pointer', background: 'rgba(255,255,255,0.06)'
+                }}>
+                  Subir imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) parentMedia?.add?.mutate({ file, slot: 'avatar' } as any);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
+                {avatarMedia && (
+                  <button
+                    type="button"
+                    onClick={() => parentMedia?.remove?.mutate(avatarMedia.id)}
+                    style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#F5F5F5', cursor: 'pointer' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+            </div>
+            <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+              Recomendado: imagen cuadrada (1:1), mínimo 600×600px.
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="parent-edit-card">

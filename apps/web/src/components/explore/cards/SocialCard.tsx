@@ -9,7 +9,7 @@ type SocialItem = {
   descripcion?: string | null;
   portada_url?: string | null;
   avatar_url?: string | null;
-  media?: Array<{ url?: string } | string>;
+  media?: Array<{ url?: string; slot?: string } | string>;
   ubicaciones?: Array<{ nombre?: string; direccion?: string; ciudad?: string; referencias?: string }>;
   estilos?: number[]; // ritmos ids (como en organizer)
   zonas?: number[];
@@ -22,15 +22,26 @@ export default function SocialCard({ item }: { item: SocialItem }) {
   const desc = item?.descripcion || "";
   const { data: allTags } = useTags() as any;
 
-  // Preferir la misma imagen que usa OrganizerCard: portada del organizador, luego media del organizador, luego portada/media del social
+  // Priorizar avatar del social como fondo. Si no hay, usar portada/media del social. Último recurso: portada/media del organizador
   const organizer = (item as any)?.profiles_organizer;
-  const cover = (
+  const avatarFromMedia = Array.isArray(item?.media)
+    ? (item!.media!.find((m: any) => typeof m === 'object' && (m as any).slot === 'avatar') as any)
+    : undefined;
+  const firstSocialMedia = Array.isArray(item?.media)
+    ? (((item!.media![0] as any)?.url) || (typeof item!.media![0] === 'string' ? (item!.media![0] as string) : undefined))
+    : undefined;
+  const organizerCover = (
     organizer?.portada_url
       || (Array.isArray(organizer?.media) && ((organizer.media[0] as any)?.url || (typeof organizer.media[0] === 'string' ? organizer.media[0] : undefined)))
       || organizer?.avatar_url
-      || item?.portada_url
-      || (Array.isArray(item?.media) && ((item.media[0] as any)?.url || (typeof item.media[0] === 'string' ? item.media[0] : undefined)))
   ) as string | undefined;
+  const cover = (
+    (avatarFromMedia?.url as string | undefined)
+      || (item?.avatar_url as string | undefined)
+      || (item?.portada_url as string | undefined)
+      || (firstSocialMedia as string | undefined)
+      || organizerCover
+  );
 
   const firstLocation = Array.isArray(item?.ubicaciones) && item!.ubicaciones!.length > 0
     ? item!.ubicaciones![0]
