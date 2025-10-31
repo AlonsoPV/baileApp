@@ -14,6 +14,9 @@ import DateFlyerUploader from "./DateFlyerUploader";
 import { MediaGrid } from "../MediaGrid";
 import { MediaUploader } from "../MediaUploader";
 import { useEventParentMedia } from "../../hooks/useEventParentMedia";
+import RitmosChips from "../RitmosChips";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import UbicacionesEditor from "../academy/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -91,6 +94,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       nombre: '',
       biografia: '',
       estilos: [],
+      ritmos_seleccionados: [] as string[],
       zonas: [],
       media: [],
       
@@ -113,11 +117,16 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       costos: [],
       flyer_url: null,
       estado_publicacion: 'borrador',
+      ubicaciones: [] as any[],
     }
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
+  
+  // Obtener tags para mapear ritmos
+  const { data: allTags } = useTags();
+  const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const editMode = isActuallyEditing;
 
   const handleSubmit = async () => {
@@ -300,7 +309,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             </div>
           </div>
 
-          {/* Ritmos y Zonas */}
+          {/* Ritmos */}
           <div style={{
             padding: '24px',
             background: `${colors.dark}66`,
@@ -313,28 +322,57 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               color: colors.light,
               marginBottom: '20px',
             }}>
-              🎵 Ritmos y Ubicaciones
+              🎵 Ritmos de Baile
             </h2>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <ChipPicker
-                tipo="ritmo"
-                selected={values?.estilos || []}
-                onChange={(selected) => setValue('estilos', selected)}
-                label="Ritmos de Baile"
-                placeholder="Selecciona los ritmos que se bailarán"
-                maxSelections={5}
-              />
-              
-              <ChipPicker
-                tipo="zona"
-                selected={values?.zonas || []}
-                onChange={(selected) => setValue('zonas', selected)}
-                label="Zonas de la Ciudad"
-                placeholder="Selecciona las zonas donde se realizará"
-                maxSelections={3}
+            <div style={{ marginTop: 8 }}>
+              <RitmosChips
+                selected={((values as any)?.ritmos_seleccionados || []) as string[]}
+                onChange={(ids) => {
+                  setValue('ritmos_seleccionados' as any, ids as any);
+                  // Mapear también a estilos (tag IDs) si es posible
+                  try {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    const nameToTagId = new Map<string, number>(
+                      ritmoTags.map((t: any) => [t.nombre, t.id])
+                    );
+                    const mappedTagIds = ids
+                      .map(cid => labelByCatalogId.get(cid))
+                      .filter(Boolean)
+                      .map((label: any) => nameToTagId.get(label as string))
+                      .filter((n): n is number => typeof n === 'number');
+                    setValue('estilos' as any, mappedTagIds as any);
+                  } catch {}
+                }}
               />
             </div>
+          </div>
+
+          {/* Zonas */}
+          <div style={{
+            padding: '24px',
+            background: `${colors.dark}66`,
+            borderRadius: '16px',
+            border: `1px solid ${colors.light}22`,
+          }}>
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              color: colors.light,
+              marginBottom: '20px',
+            }}>
+              📍 Zonas de la Ciudad
+            </h2>
+            
+            <ChipPicker
+              tipo="zona"
+              selected={values?.zonas || []}
+              onChange={(selected) => setValue('zonas', selected)}
+              label="Zonas de la Ciudad"
+              placeholder="Selecciona las zonas donde se realizará"
+              maxSelections={3}
+            />
           </div>
 
           {/* Campos específicos de parent */}
@@ -697,6 +735,19 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Ubicaciones Múltiples */}
+              <div style={{
+                padding: '24px',
+                background: `${colors.dark}66`,
+                borderRadius: '16px',
+                border: `1px solid ${colors.light}22`,
+              }}>
+                <UbicacionesEditor
+                  value={(values as any)?.ubicaciones || []}
+                  onChange={(ubicaciones) => setValue('ubicaciones' as any, ubicaciones as any)}
+                />
               </div>
 
               {/* Cronograma */}

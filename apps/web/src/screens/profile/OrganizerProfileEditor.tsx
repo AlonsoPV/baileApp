@@ -29,6 +29,7 @@ import ChipPicker from "../../components/common/ChipPicker";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -509,11 +510,13 @@ export default function OrganizerProfileEditor() {
     requisitos: '',
     zona: null as number | null,
     estilos: [] as number[],
+    ritmos_seleccionados: [] as string[],
     zonas: [] as number[],
     cronograma: [] as any[],
     costos: [] as any[],
     flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+    ubicaciones: [] as any[]
   });
 
   // Función para subir archivo
@@ -666,11 +669,13 @@ export default function OrganizerProfileEditor() {
         referencias: dateForm.referencias || null,
         requisitos: dateForm.requisitos || null,
         estilos: dateForm.estilos || [],
+        ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
         zonas: dateForm.zonas || [],
         cronograma: dateForm.cronograma || [],
         costos: dateForm.costos || [],
         flyer_url: dateForm.flyer_url || null,
-        estado_publicacion: dateForm.estado_publicacion || 'borrador'
+        estado_publicacion: dateForm.estado_publicacion || 'borrador',
+        ubicaciones: dateForm.ubicaciones || []
       });
       showToast('Fecha creada ✅', 'success');
       setShowDateForm(false);
@@ -687,11 +692,13 @@ export default function OrganizerProfileEditor() {
         requisitos: '',
         zona: null,
         estilos: [],
+        ritmos_seleccionados: [],
         zonas: [],
         cronograma: [],
         costos: [],
         flyer_url: null,
-        estado_publicacion: 'borrador'
+        estado_publicacion: 'borrador',
+        ubicaciones: []
       });
       setSelectedParentId(null);
     } catch (err: any) {
@@ -1487,29 +1494,48 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Ritmos y Zonas */}
+                  {/* Ritmos */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🎵 Ritmos y Ubicaciones
+                      🎵 Ritmos de Baile
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <ChipPicker
-                        tipo="ritmo"
-                        selected={dateForm.estilos || []}
-                        onChange={(selected) => setDateForm({ ...dateForm, estilos: selected as number[] })}
-                        label="Ritmos de Baile"
-                        placeholder="Selecciona los ritmos que se bailarán"
-                        maxSelections={5}
-                      />
-                      <ChipPicker
-                        tipo="zona"
-                        selected={dateForm.zonas || []}
-                        onChange={(selected) => setDateForm({ ...dateForm, zonas: selected as number[] })}
-                        label="Zonas de la Ciudad"
-                        placeholder="Selecciona las zonas donde se realizará"
-                        maxSelections={3}
+                    <div style={{ marginTop: 8 }}>
+                      <RitmosChips
+                        selected={dateForm.ritmos_seleccionados || []}
+                        onChange={(ids) => {
+                          setDateForm({ ...dateForm, ritmos_seleccionados: ids });
+                          // Mapear también a estilos (tag IDs) si es posible
+                          try {
+                            const labelByCatalogId = new Map<string, string>();
+                            RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                            const nameToTagId = new Map<string, number>(
+                              ritmoTags.map((t: any) => [t.nombre, t.id])
+                            );
+                            const mappedTagIds = ids
+                              .map(cid => labelByCatalogId.get(cid))
+                              .filter(Boolean)
+                              .map((label: any) => nameToTagId.get(label as string))
+                              .filter((n): n is number => typeof n === 'number');
+                            setDateForm(prev => ({ ...prev, estilos: mappedTagIds }));
+                          } catch {}
+                        }}
                       />
                     </div>
+                  </div>
+
+                  {/* Zonas */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📍 Zonas de la Ciudad
+                    </h3>
+                    <ChipPicker
+                      tipo="zona"
+                      selected={dateForm.zonas || []}
+                      onChange={(selected) => setDateForm({ ...dateForm, zonas: selected as number[] })}
+                      label="Zonas de la Ciudad"
+                      placeholder="Selecciona las zonas donde se realizará"
+                      maxSelections={3}
+                    />
                   </div>
 
                   {/* Fecha y Hora */}
@@ -1627,6 +1653,14 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
+                  {/* Ubicaciones Múltiples */}
+                  <div className="org-editor-card">
+                    <UbicacionesEditor
+                      value={dateForm.ubicaciones || []}
+                      onChange={(ubicaciones) => setDateForm({ ...dateForm, ubicaciones })}
+                    />
+                  </div>
+
                   {/* Cronograma */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
@@ -1728,11 +1762,13 @@ export default function OrganizerProfileEditor() {
                           requisitos: '',
                           zona: null,
                           estilos: [],
+                          ritmos_seleccionados: [],
                           zonas: [],
                           cronograma: [],
                           costos: [],
                           flyer_url: null,
-                          estado_publicacion: 'borrador'
+                          estado_publicacion: 'borrador',
+                          ubicaciones: []
                         });
                         setSelectedParentId(null);
                       }}
