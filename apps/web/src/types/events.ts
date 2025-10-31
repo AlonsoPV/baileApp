@@ -13,6 +13,7 @@ export type Organizer = {
   ritmos?: number[]; // IDs numéricos de tags (legacy)
   estilos?: number[]; // IDs numéricos de tags (legacy)
   zonas?: number[];
+  ubicaciones?: any[]; // Ubicaciones del organizador
   created_at: string;
 };
 
