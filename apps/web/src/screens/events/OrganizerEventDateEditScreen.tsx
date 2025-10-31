@@ -166,15 +166,84 @@ export default function OrganizerEventDateEditScreen() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+      background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
       padding: '24px 0',
       color: colors.light,
+      position: 'relative',
     }}>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px' }}>
+      {/* Efecto de fondo decorativo */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `radial-gradient(circle at 20% 50%, rgba(30, 136, 229, 0.05) 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, rgba(255, 61, 87, 0.05) 0%, transparent 50%)`,
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+      
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
+        {/* Header con título */}
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            marginBottom: '2rem',
+            paddingBottom: '1.5rem',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <motion.button
+              whileHover={{ scale: 1.05, x: -4 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(-1)}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#FFFFFF',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              ← Volver
+            </motion.button>
+          </div>
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: '800',
+            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+          }}>
+            📅 Editar Fecha de Evento
+          </h1>
+          <p style={{
+            fontSize: '1rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            margin: 0,
+          }}>
+            Modifica la información de esta fecha del evento
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           style={{
             marginBottom: '2rem',
             padding: 0,
@@ -189,9 +258,41 @@ export default function OrganizerEventDateEditScreen() {
         >
 
           {/* Información Básica */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              📝 Información Básica
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Barra decorativa superior */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.blue}, ${colors.coral}, ${colors.yellow})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(30, 136, 229, 0.3))',
+              }}>📝</span>
+              Información Básica
             </h3>
             <div className="org-editor-grid">
               <div>
@@ -219,12 +320,43 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Ritmos */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              🎵 Ritmos de Baile
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(255, 61, 87, 0.3))',
+              }}>🎵</span>
+              Ritmos de Baile
             </h3>
             <div style={{ marginTop: 8 }}>
               <RitmosChips
@@ -249,12 +381,43 @@ export default function OrganizerEventDateEditScreen() {
                 }}
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Zonas */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              📍 Zonas de la Ciudad
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.yellow}, ${colors.orange}, ${colors.coral})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(255, 209, 102, 0.3))',
+              }}>📍</span>
+              Zonas de la Ciudad
             </h3>
             <ChipPicker
               tipo="zona"
@@ -264,12 +427,43 @@ export default function OrganizerEventDateEditScreen() {
               placeholder="Selecciona las zonas donde se realizará"
               maxSelections={3}
             />
-          </div>
+          </motion.div>
 
           {/* Fecha y Hora */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              📅 Fecha y Hora
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(30, 136, 229, 0.3))',
+              }}>📅</span>
+              Fecha y Hora
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
               <div>
@@ -310,12 +504,43 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Ubicación Específica */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              📍 Ubicación Específica
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(255, 61, 87, 0.3))',
+              }}>📍</span>
+              Ubicación Específica
             </h3>
             <div className="org-editor-grid">
               <div>
@@ -379,12 +604,43 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Cronograma */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              📅 Cronograma del Evento
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(30, 136, 229, 0.3))',
+              }}>📅</span>
+              Cronograma del Evento
             </h3>
             <ScheduleEditor
               schedule={form.cronograma || []}
@@ -394,12 +650,43 @@ export default function OrganizerEventDateEditScreen() {
               ritmos={ritmoTags}
               zonas={zonaTags}
             />
-          </div>
+          </motion.div>
 
           {/* Flyer */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              🖼️ Flyer del Evento
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(255, 61, 87, 0.3))',
+              }}>🖼️</span>
+              Flyer del Evento
             </h3>
             <DateFlyerUploader
               value={form.flyer_url || null}
@@ -407,12 +694,43 @@ export default function OrganizerEventDateEditScreen() {
               dateId={dateIdNum}
               parentId={(date as any).parent_id}
             />
-          </div>
+          </motion.div>
 
           {/* Estado de Publicación */}
-          <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-              🌐 Estado de Publicación
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="org-editor-card"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${colors.blue}, ${colors.coral}, ${colors.yellow})`,
+              borderRadius: '16px 16px 0 0',
+            }} />
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: '700',
+              marginBottom: '1.5rem',
+              marginTop: '0.5rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{
+                fontSize: '1.5rem',
+                filter: 'drop-shadow(0 2px 4px rgba(30, 136, 229, 0.3))',
+              }}>🌐</span>
+              Estado de Publicación
             </h3>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -442,49 +760,69 @@ export default function OrganizerEventDateEditScreen() {
                 </span>
               </label>
             </div>
-          </div>
+          </motion.div>
 
           {/* Botones */}
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
             className="org-editor-card"
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              marginTop: '0.5rem',
+            }}
           >
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05, x: -4 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate(-1)}
               style={{
-                padding: '12px 24px',
+                padding: '14px 28px',
                 borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                background: 'transparent',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                background: 'rgba(255, 255, 255, 0.05)',
                 color: '#FFFFFF',
-                fontSize: '0.9rem',
-                fontWeight: '700',
-                cursor: 'pointer'
-              }}
-            >
-              ← Volver
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSave}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))',
-                color: '#FFFFFF',
-                fontSize: '0.9rem',
+                fontSize: '1rem',
                 fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)'
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)',
               }}
             >
-              💾 Guardar cambios
+              ← Cancelar
             </motion.button>
-          </div>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSave}
+              style={{
+                padding: '14px 32px',
+                borderRadius: '12px',
+                border: 'none',
+                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: `0 8px 24px rgba(30, 136, 229, 0.4),
+                            0 4px 12px rgba(255, 61, 87, 0.3)`,
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <span style={{ position: 'relative', zIndex: 2 }}>
+                💾 Guardar Cambios
+              </span>
+            </motion.button>
+          </motion.div>
         </motion.div>
       </div>
     </div>

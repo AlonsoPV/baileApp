@@ -1306,9 +1306,9 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-ubicaciones"
             className="org-editor-card"
           >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            {/* <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               📍 Ubicaciones
-            </h2>
+            </h2> */}
             <UbicacionesEditor
               value={(form as any).ubicaciones || []}
               onChange={(ubicaciones) => setField('ubicaciones' as any, ubicaciones as any)}
@@ -1316,7 +1316,7 @@ export default function OrganizerProfileEditor() {
           </div>
 
           {/* Maestros Invitados */}
-          <InvitedMastersSection
+          {/* <InvitedMastersSection
             masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
             title="🎭 Maestros Invitados"
             showTitle={true}
@@ -1338,7 +1338,7 @@ export default function OrganizerProfileEditor() {
               // TODO: Implementar confirmación y eliminación
               console.log('Eliminar maestro:', masterId);
             }}
-          />
+          /> */}
 
           {/* Información para Asistentes */}
           <div className="org-editor-card">
