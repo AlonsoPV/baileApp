@@ -88,14 +88,15 @@ export function useUserProfile() {
         });
         
         if (error) {
-          console.error("[useUserProfile] Error updating profile:", error);
-          console.error("[useUserProfile] Error details:", {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-            hint: error.hint
-          });
-          throw error;
+          console.warn("[useUserProfile] RPC merge_profiles_user failed, attempting direct update fallback", error);
+          const { error: updError } = await supabase
+            .from("profiles_user")
+            .update(patch as any)
+            .eq("user_id", user.id);
+          if (updError) {
+            console.error("[useUserProfile] Fallback direct update failed:", updError);
+            throw updError;
+          }
         }
         
         console.log("[useUserProfile] Profile updated successfully");
