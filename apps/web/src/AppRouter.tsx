@@ -61,7 +61,6 @@ import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 // import TeacherPublicScreen from './screens/teacher/TeacherPublicScreen';
 
 // User Screens
-import UserPublicProfile from './screens/profile/UserPublicProfile';
 import UserProfileEditor from './screens/profile/UserProfileEditor';
 
 // System Screens
@@ -116,7 +115,7 @@ export default function AppRouter() {
         <Route path="/profile/teacher" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
-        <Route path="/u/:userId" element={<UserPublicProfile />} />
+        {/** Public user profile by id was removed along with UserPublicProfile.tsx */}
 
         {/* Protected */}
         <Route element={<OnboardingGate />}>

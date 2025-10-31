@@ -33,7 +33,7 @@ import { OrganizerEditor } from './screens/profile/OrganizerEditor';
 import { OrganizerProfileLive as OrganizerProfileLiveNew } from './screens/profile/OrganizerProfileLive';
 import OrganizerProfileEditor from './screens/profile/OrganizerProfileEditor';
 import { OrganizerDashboardDates } from './screens/profile/OrganizerDashboardDates';
-import UserPublicProfile from './screens/profile/UserPublicProfile';
+// UserPublicProfile removed
 import UserProfileEditor from './screens/profile/UserProfileEditor';
 import AcademyProfileLive from './screens/profile/AcademyProfileLive';
 import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
@@ -192,7 +192,7 @@ export function AppRouter() {
       <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
       <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
       <Route path="/profile/academy" element={<AcademyProfileLive />} />
-      <Route path="/u/:id" element={<UserPublicProfile />} />
+      {/** Public user profile by id route removed */}
       <Route path="/profile/user/edit" element={<UserProfileEditor />} />
       
       {/* Social and Date Live Routes */}
