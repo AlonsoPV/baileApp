@@ -9,8 +9,7 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, upsertMediaSlot, removeMediaS
 import ImageWithFallback from '../../components/ImageWithFallback';
 import { useToast } from '../../components/Toast';
 import { Chip } from '../../components/profile/Chip';
-import RitmosChips from '@/components/RitmosChips';
-import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
+import RitmosSelectorEditor from '@/components/profile/RitmosSelectorEditor';
 import { useTags } from '../../hooks/useTags';
 import { PhotoManagementSection } from '../../components/profile/PhotoManagementSection';
 import { VideoManagementSection } from '../../components/profile/VideoManagementSection';
@@ -50,6 +49,7 @@ export default function UserProfileEditor() {
     defaults: {
       display_name: "",
       bio: "",
+      ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
       respuestas: {
@@ -107,30 +107,7 @@ export default function UserProfileEditor() {
     setField('zonas', newZonas);
   };
 
-  // Mapeo entre catálogo (ids string) y tags numéricos
-  const itemIdToTagId = React.useMemo(() => {
-    const map = new Map<string, number>();
-    RITMOS_CATALOG.forEach(group => {
-      group.items.forEach(child => {
-        const tag = ritmoTags.find(t => t.nombre === child.label);
-        if (tag) map.set(child.id, tag.id);
-      });
-    });
-    return map;
-  }, [ritmoTags]);
-
-  const selectedRitmoItemIds = React.useMemo(() => {
-    const tagIdToItemId = new Map<number, string>();
-    itemIdToTagId.forEach((tagId, itemId) => tagIdToItemId.set(tagId, itemId));
-    return (form.ritmos || [])
-      .map(tagId => tagIdToItemId.get(tagId))
-      .filter(Boolean) as string[];
-  }, [form.ritmos, itemIdToTagId]);
-
-  const handleRitmosChange = React.useCallback((ids: string[]) => {
-    const mapped = ids.map(id => itemIdToTagId.get(id)).filter(Boolean) as number[];
-    setField('ritmos', mapped);
-  }, [itemIdToTagId, setField]);
+  // Ritmos: usar componente unificado que guarda catálogo y mapea a tags
 
   // Función para guardar con normalización y rehidratación confiable
   const handleSave = async () => {
@@ -145,6 +122,7 @@ export default function UserProfileEditor() {
       const candidate = {
         display_name: form.display_name,
         bio: form.bio,
+        ritmos_seleccionados: (form as any).ritmos_seleccionados || [],
         ritmos: form.ritmos,
         zonas: form.zonas,
         respuestas: { 
@@ -158,7 +136,7 @@ export default function UserProfileEditor() {
 
       // Crear patch inteligente
       const patch = buildSafePatch(profile || {}, candidate, { 
-        allowEmptyArrays: ["ritmos", "zonas"] as any 
+        allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any 
       });
 
       console.log('[UserProfileEditor] Patch generado:', patch);
@@ -435,9 +413,10 @@ export default function UserProfileEditor() {
                 🎶 Ritmos que Bailas
               </h3>
               <div style={{ textAlign: 'left' }}>
-                <RitmosChips
-                  selected={selectedRitmoItemIds}
-                  onChange={handleRitmosChange}
+                <RitmosSelectorEditor
+                  selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
+                  ritmoTags={ritmoTags}
+                  setField={setField as any}
                 />
               </div>
             </div>
