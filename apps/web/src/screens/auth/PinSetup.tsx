@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
-import { hashPin, setPinVerified } from '@/lib/pin';
+import { hashPin, setNeedsPinVerify, clearPinVerified } from '@/lib/pin';
 import { supabase } from '@/lib/supabase';
 
 export default function PinSetup() {
@@ -16,7 +16,7 @@ export default function PinSetup() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/auth/pin', { replace: true });
+      navigate('/auth/login', { replace: true });
     }
   }, [loading, user, navigate]);
 
@@ -33,8 +33,10 @@ export default function PinSetup() {
         .update({ pin_hash: hash })
         .eq('user_id', user.id);
       if (error) throw error;
-      setPinVerified(user.id);
-      navigate('/app/profile', { replace: true });
+      // Obligar verificación inmediata del nuevo PIN
+      setNeedsPinVerify(user.id);
+      clearPinVerified(user.id);
+      navigate('/auth/pin', { replace: true });
     } catch (e: any) {
       setError(e?.message || 'Error al guardar PIN');
     } finally {

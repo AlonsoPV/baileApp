@@ -16,10 +16,22 @@ export default function AuthCallback() {
         if (error) throw error;
         const user = data.session?.user;
         if (user) {
-          // Exigir verificación de PIN para esta sesión
+          // Consultar vista ligera para saber si tiene PIN
+          const { data: light, error: e2 } = await supabase
+            .from('profiles_user_light')
+            .select('has_pin')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (e2) throw e2;
+          // Marcar que esta sesión requiere verificación de PIN
           setNeedsPinVerify(user.id);
-          // Ir a una ruta protegida para que OnboardingGate dirija a PIN/Onboarding
-          navigate('/profile', { replace: true });
+          // Redirigir según tenga/nó PIN configurado
+          if (!light?.has_pin) {
+            navigate('/auth/pin/setup', { replace: true });
+          } else {
+            // Ir a una ruta protegida; OnboardingGate forzará el PIN
+            navigate('/app/profile', { replace: true });
+          }
           return;
         }
         setMessage('No se pudo recuperar la sesión. Redirigiendo a login…');
