@@ -29,8 +29,8 @@ export default function AuthCallback() {
           if (!light?.has_pin) {
             navigate('/auth/pin/setup', { replace: true });
           } else {
-            // Ir a una ruta protegida; OnboardingGate forzará el PIN
-            navigate('/app/profile', { replace: true });
+            // Ir directo a la pantalla de PIN (no protegida) para evitar rebote si aún no hidrata el user
+            navigate('/auth/pin', { replace: true });
           }
           return;
         }
