@@ -8,6 +8,7 @@ import RitmosChips from "../../components/RitmosChips";
 import ChipPicker from "../../components/common/ChipPicker";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
 const colors = {
   coral: '#FF3D57',
@@ -51,6 +52,7 @@ export default function OrganizerEventDateEditScreen() {
     costos: [] as any[],
     flyer_url: null as string | null,
     estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+    ubicaciones: [] as any[],
   });
 
   useEffect(() => {
@@ -74,6 +76,7 @@ export default function OrganizerEventDateEditScreen() {
         costos: (date as any).costos || [],
         flyer_url: (date as any).flyer_url || null,
         estado_publicacion: (date as any).estado_publicacion || 'borrador',
+        ubicaciones: (date as any).ubicaciones || [],
       });
     }
   }, [date]);
@@ -99,6 +102,7 @@ export default function OrganizerEventDateEditScreen() {
       costos: form.costos || [],
       flyer_url: form.flyer_url || null,
       estado_publicacion: form.estado_publicacion || 'borrador',
+      ubicaciones: form.ubicaciones || [],
     } as any;
 
     const updated = await updateDate.mutateAsync({ id: dateIdNum, patch });
@@ -186,12 +190,14 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Información Básica */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📝 Información Básica
             </h3>
             <div className="org-editor-grid">
               <div>
-                <label className="org-editor-field">Nombre del Evento *</label>
+                <label className="org-editor-field">
+                  Nombre del Evento *
+                </label>
                 <input
                   type="text"
                   value={form.nombre}
@@ -201,12 +207,14 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">Biografía</label>
+                <label className="org-editor-field">
+                  Biografía
+                </label>
                 <textarea
-                  rows={4}
                   value={form.biografia}
                   onChange={(e) => setForm({ ...form, biografia: e.target.value })}
-                  placeholder="Describe el evento..."
+                  placeholder="Describe el evento, su propósito, qué esperar..."
+                  rows={4}
                   className="org-editor-textarea"
                 />
               </div>
@@ -215,21 +223,37 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Ritmos */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               🎵 Ritmos de Baile
             </h3>
             <div style={{ marginTop: 8 }}>
               <RitmosChips
                 selected={form.ritmos_seleccionados || []}
                 allowedIds={allowedCatalogIds}
-                onChange={(ids) => setForm({ ...form, ritmos_seleccionados: ids })}
+                onChange={(ids) => {
+                  setForm({ ...form, ritmos_seleccionados: ids });
+                  // Mapear también a estilos (tag IDs) si es posible
+                  try {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    const nameToTagId = new Map<string, number>(
+                      ritmoTags.map((t: any) => [t.nombre, t.id])
+                    );
+                    const mappedTagIds = ids
+                      .map(cid => labelByCatalogId.get(cid))
+                      .filter(Boolean)
+                      .map((label: any) => nameToTagId.get(label as string))
+                      .filter((n): n is number => typeof n === 'number');
+                    setForm(prev => ({ ...prev, estilos: mappedTagIds }));
+                  } catch {}
+                }}
               />
             </div>
           </div>
 
           {/* Zonas */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📍 Zonas de la Ciudad
             </h3>
             <ChipPicker
@@ -244,12 +268,14 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Fecha y Hora */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📅 Fecha y Hora
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
               <div>
-                <label className="org-editor-field">Fecha *</label>
+                <label className="org-editor-field">
+                  Fecha *
+                </label>
                 <input
                   type="date"
                   value={form.fecha}
@@ -260,7 +286,9 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div>
-                <label className="org-editor-field">Hora Inicio</label>
+                <label className="org-editor-field">
+                  Hora Inicio
+                </label>
                 <input
                   type="time"
                   value={form.hora_inicio}
@@ -270,7 +298,9 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div>
-                <label className="org-editor-field">Hora Fin</label>
+                <label className="org-editor-field">
+                  Hora Fin
+                </label>
                 <input
                   type="time"
                   value={form.hora_fin}
@@ -284,12 +314,14 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Ubicación Específica */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📍 Ubicación Específica
             </h3>
             <div className="org-editor-grid">
               <div>
-                <label className="org-editor-field">Lugar</label>
+                <label className="org-editor-field">
+                  Lugar
+                </label>
                 <input
                   type="text"
                   value={form.lugar}
@@ -299,7 +331,9 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div>
-                <label className="org-editor-field">Ciudad</label>
+                <label className="org-editor-field">
+                  Ciudad
+                </label>
                 <input
                   type="text"
                   value={form.ciudad}
@@ -309,7 +343,9 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">Dirección</label>
+                <label className="org-editor-field">
+                  Dirección
+                </label>
                 <input
                   type="text"
                   value={form.direccion}
@@ -319,7 +355,9 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">Referencias</label>
+                <label className="org-editor-field">
+                  Referencias
+                </label>
                 <input
                   type="text"
                   value={form.referencias}
@@ -329,12 +367,14 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">Requisitos</label>
+                <label className="org-editor-field">
+                  Requisitos
+                </label>
                 <textarea
-                  rows={3}
                   value={form.requisitos}
                   onChange={(e) => setForm({ ...form, requisitos: e.target.value })}
                   placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
+                  rows={3}
                   className="org-editor-textarea"
                 />
               </div>
@@ -343,7 +383,7 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Cronograma */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📅 Cronograma del Evento
             </h3>
             <ScheduleEditor
@@ -358,7 +398,7 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Flyer */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               🖼️ Flyer del Evento
             </h3>
             <DateFlyerUploader
@@ -371,11 +411,11 @@ export default function OrganizerEventDateEditScreen() {
 
           {/* Estado de Publicación */}
           <div className="org-editor-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               🌐 Estado de Publicación
             </h3>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input
                   type="radio"
                   name="estado_publicacion"
@@ -384,9 +424,11 @@ export default function OrganizerEventDateEditScreen() {
                   onChange={(e) => setForm({ ...form, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
                   style={{ transform: 'scale(1.2)' }}
                 />
-                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>📝 Borrador (solo tú puedes verlo)</span>
+                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                  📝 Borrador (solo tú puedes verlo)
+                </span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input
                   type="radio"
                   name="estado_publicacion"
@@ -395,7 +437,9 @@ export default function OrganizerEventDateEditScreen() {
                   onChange={(e) => setForm({ ...form, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
                   style={{ transform: 'scale(1.2)' }}
                 />
-                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>🌐 Público (visible para todos)</span>
+                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                  🌐 Público (visible para todos)
+                </span>
               </label>
             </div>
           </div>
@@ -412,11 +456,11 @@ export default function OrganizerEventDateEditScreen() {
               style={{
                 padding: '12px 24px',
                 borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
                 background: 'transparent',
                 color: '#FFFFFF',
                 fontSize: '0.9rem',
-                fontWeight: 700,
+                fontWeight: '700',
                 cursor: 'pointer'
               }}
             >
@@ -430,12 +474,12 @@ export default function OrganizerEventDateEditScreen() {
                 padding: '12px 24px',
                 borderRadius: '12px',
                 border: 'none',
-                background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(255,61,87,0.9))',
+                background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))',
                 color: '#FFFFFF',
                 fontSize: '0.9rem',
-                fontWeight: 700,
+                fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(30,136,229,0.3)'
+                boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)'
               }}
             >
               💾 Guardar cambios
