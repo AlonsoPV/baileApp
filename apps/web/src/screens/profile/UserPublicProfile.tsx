@@ -142,7 +142,7 @@ export default function UserPublicProfile() {
             }}
           >
             <h3 style={{ fontSize: '1.25rem', marginBottom: '12px', fontWeight: '600' }}>
-              💬 Sobre mí
+              💬 Sobre mí Live 3
             </h3>
             <p style={{ lineHeight: 1.6, opacity: 0.85 }}>
               {profile.bio}

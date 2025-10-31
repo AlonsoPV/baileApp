@@ -16,6 +16,7 @@ import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import RitmosChips from "../../components/RitmosChips";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -722,14 +723,22 @@ export const UserProfileLive: React.FC = () => {
                 data-test-id="user-profile-tags"
                 style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
               >
-                {getRitmoNombres().map((nombre) => (
-                  <Chip
-                    key={`r-${nombre}`}
-                    label={nombre}
-                    icon="🎵"
-                    variant="ritmo"
+                {Array.isArray((profile as any)?.ritmos_seleccionados) && (profile as any).ritmos_seleccionados.length > 0 ? (
+                  <RitmosChips
+                    selected={((profile as any).ritmos_seleccionados || []) as string[]}
+                    onChange={() => {}}
+                    readOnly
                   />
-                ))}
+                ) : (
+                  getRitmoNombres().map((nombre) => (
+                    <Chip
+                      key={`r-${nombre}`}
+                      label={nombre}
+                      icon="🎵"
+                      variant="ritmo"
+                    />
+                  ))
+                )}
                 {getZonaNombres().map((nombre) => (
                   <Chip
                     key={`z-${nombre}`}
@@ -766,7 +775,7 @@ export const UserProfileLive: React.FC = () => {
             className="bio-section glass-card-container"
           >
               <h3 className="section-title">
-                💬 Sobre mí
+                💬 Sobre mí Live 1
               </h3>
               <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1rem' }}>
                 {profile.bio}

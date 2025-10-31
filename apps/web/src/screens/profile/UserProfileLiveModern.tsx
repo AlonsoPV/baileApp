@@ -671,7 +671,7 @@ export const UserProfileLive: React.FC = () => {
                 fontWeight: typography.fontWeight.bold,
                 color: colors.gray[50]
               }}>
-                💬 Sobre mí
+                💬 Sobre mí live 2
               </h3>
               <p style={{ 
                 lineHeight: typography.lineHeight.relaxed, 

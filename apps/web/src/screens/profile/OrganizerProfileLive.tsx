@@ -1047,7 +1047,7 @@ export function OrganizerProfileLive() {
                 fontWeight: typography.fontWeight.bold,
                 color: colors.light
               }}>
-                💬 Sobre nosotros
+                💬 Sobre nosotros live 1
               </h3>
               <p style={{
                 lineHeight: typography.lineHeight.relaxed,
