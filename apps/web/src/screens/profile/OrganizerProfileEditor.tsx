@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
 import { useParentsByOrganizer, useDeleteParent, useDatesByParent } from "../../hooks/useEvents";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
+import { useCreateEventDate } from "../../hooks/useEventDate";
 import { MediaUploader } from "../../components/MediaUploader";
 import { MediaGrid } from "../../components/MediaGrid";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
@@ -491,6 +492,21 @@ export default function OrganizerProfileEditor() {
 
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  
+  // Estado para formulario de crear fecha
+  const [showDateForm, setShowDateForm] = useState(false);
+  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+  const createEventDate = useCreateEventDate();
+  const [dateForm, setDateForm] = useState({
+    nombre: '',
+    fecha: '',
+    hora_inicio: '',
+    hora_fin: '',
+    lugar: '',
+    ciudad: '',
+    direccion: '',
+    biografia: ''
+  });
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
@@ -613,6 +629,49 @@ export default function OrganizerProfileEditor() {
     } catch (err: any) {
       console.error('Error deleting event:', err);
       showToast('Error al eliminar evento', 'error');
+    }
+  };
+
+  // Función para crear fecha
+  const handleCreateDate = async () => {
+    if (!selectedParentId) {
+      showToast('Selecciona un evento social', 'error');
+      return;
+    }
+    if (!dateForm.fecha) {
+      showToast('La fecha es obligatoria', 'error');
+      return;
+    }
+
+    try {
+      await createEventDate.mutateAsync({
+        parent_id: selectedParentId,
+        nombre: dateForm.nombre || null,
+        fecha: dateForm.fecha,
+        hora_inicio: dateForm.hora_inicio || null,
+        hora_fin: dateForm.hora_fin || null,
+        lugar: dateForm.lugar || null,
+        ciudad: dateForm.ciudad || null,
+        direccion: dateForm.direccion || null,
+        biografia: dateForm.biografia || null,
+        estado_publicacion: 'borrador'
+      });
+      showToast('Fecha creada ✅', 'success');
+      setShowDateForm(false);
+      setDateForm({
+        nombre: '',
+        fecha: '',
+        hora_inicio: '',
+        hora_fin: '',
+        lugar: '',
+        ciudad: '',
+        direccion: '',
+        biografia: ''
+      });
+      setSelectedParentId(null);
+    } catch (err: any) {
+      console.error('Error creating date:', err);
+      showToast('Error al crear fecha', 'error');
     }
   };
 
@@ -1261,38 +1320,279 @@ export default function OrganizerProfileEditor() {
           >
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
-                }}>
-                  🎭
-                </div>
-                <div>
-                  <h2 style={{
-                    fontSize: '1.75rem',
-                    fontWeight: '800',
-                    margin: 0,
-                    color: '#FFFFFF',
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)'
                   }}>
-                    Mis Sociales
-                  </h2>
-                  <p style={{
-                    fontSize: '0.9rem',
-                    opacity: 0.8,
-                    margin: 0,
-                    fontWeight: '500'
-                  }}>
-                    Gestiona tus eventos sociales
-                  </p>
+                    🎭
+                  </div>
+                  <div>
+                    <h2 style={{
+                      fontSize: '1.75rem',
+                      fontWeight: '800',
+                      margin: 0,
+                      color: '#FFFFFF',
+                    }}>
+                      Mis Sociales
+                    </h2>
+                    <p style={{
+                      fontSize: '0.9rem',
+                      opacity: 0.8,
+                      margin: 0,
+                      fontWeight: '500'
+                    }}>
+                      Gestiona tus eventos sociales
+                    </p>
+                  </div>
                 </div>
+                {parents && parents.length > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setShowDateForm(!showDateForm);
+                      if (!showDateForm && parents.length === 1) {
+                        setSelectedParentId(parents[0].id);
+                      }
+                    }}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      background: showDateForm
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
+                      color: '#FFFFFF',
+                      fontSize: '0.9rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                      
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <span>{showDateForm ? '✖️' : '➕'}</span>
+                    <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
+                  </motion.button>
+                )}
               </div>
+
+              {/* Formulario de crear fecha */}
+              {showDateForm && parents && parents.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{
+                    marginBottom: '2rem',
+                    padding: '2rem',
+                    borderRadius: '16px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#FFFFFF'
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                    📅 Nueva Fecha del Evento
+                  </h3>
+                  
+                  <div className="org-editor-grid">
+                    {/* Selector de evento padre */}
+                    {parents.length > 1 && (
+                      <div>
+                        <label className="org-editor-field">
+                          Evento Social *
+                        </label>
+                        <select
+                          value={selectedParentId || ''}
+                          onChange={(e) => setSelectedParentId(Number(e.target.value))}
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF', cursor: 'pointer' }}
+                        >
+                          <option value="" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                            Selecciona un evento
+                          </option>
+                          {parents.map((parent: any) => (
+                            <option key={parent.id} value={parent.id} style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                              {parent.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="org-editor-field">
+                        Nombre de la Fecha
+                      </label>
+                      <input
+                        type="text"
+                        value={dateForm.nombre}
+                        onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
+                        placeholder="Ej: Noche de Salsa"
+                        className="org-editor-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Fecha * <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(YYYY-MM-DD)</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={dateForm.fecha}
+                        onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
+                        required
+                        className="org-editor-input"
+                        style={{ color: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Hora de Inicio
+                      </label>
+                      <input
+                        type="time"
+                        value={dateForm.hora_inicio}
+                        onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
+                        className="org-editor-input"
+                        style={{ color: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Hora de Fin
+                      </label>
+                      <input
+                        type="time"
+                        value={dateForm.hora_fin}
+                        onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
+                        className="org-editor-input"
+                        style={{ color: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Lugar
+                      </label>
+                      <input
+                        type="text"
+                        value={dateForm.lugar}
+                        onChange={(e) => setDateForm({ ...dateForm, lugar: e.target.value })}
+                        placeholder="Ej: Centro de Convenciones"
+                        className="org-editor-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Ciudad
+                      </label>
+                      <input
+                        type="text"
+                        value={dateForm.ciudad}
+                        onChange={(e) => setDateForm({ ...dateForm, ciudad: e.target.value })}
+                        placeholder="Ej: Bogotá"
+                        className="org-editor-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="org-editor-field">
+                        Dirección
+                      </label>
+                      <input
+                        type="text"
+                        value={dateForm.direccion}
+                        onChange={(e) => setDateForm({ ...dateForm, direccion: e.target.value })}
+                        placeholder="Ej: Calle 123 #45-67"
+                        className="org-editor-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <label className="org-editor-field">
+                      Biografía / Descripción
+                    </label>
+                    <textarea
+                      value={dateForm.biografia}
+                      onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
+                      placeholder="Describe esta fecha del evento..."
+                      rows={4}
+                      className="org-editor-textarea"
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCreateDate}
+                      disabled={createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
+                          ? 'rgba(255, 255, 255, 0.2)'
+                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
+                        color: '#FFFFFF',
+                        fontSize: '0.9rem',
+                        fontWeight: '700',
+                        cursor: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                        opacity: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 0.6 : 1
+                      }}
+                    >
+                      {createEventDate.isPending ? '⏳ Creando...' : '💾 Crear Fecha'}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setShowDateForm(false);
+                        setDateForm({
+                          nombre: '',
+                          fecha: '',
+                          hora_inicio: '',
+                          hora_fin: '',
+                          lugar: '',
+                          ciudad: '',
+                          direccion: '',
+                          biografia: ''
+                        });
+                        setSelectedParentId(null);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        background: 'transparent',
+                        color: '#FFFFFF',
+                        fontSize: '0.9rem',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancelar
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
 
               {parents && parents.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
