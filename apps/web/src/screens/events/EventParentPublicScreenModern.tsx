@@ -1653,6 +1653,7 @@ export default function EventParentPublicScreen() {
                   <RitmosChips
                     selected={(parent as any).ritmos_seleccionados || []}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                 </div>
               )}

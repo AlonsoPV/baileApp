@@ -6,10 +6,17 @@ interface Props {
   selected: string[];
   onChange: (ritmos: string[]) => void;
   allowedIds?: string[]; // opcional: restringe qué ritmos se muestran/pueden elegirse
+  readOnly?: boolean; // opcional: modo solo lectura explícito
 }
 
-function RitrosChipsInternal({ selected, onChange, allowedIds }: Props) {
-  const isReadOnly = onChange.toString() === '() => {}' || onChange.toString().includes('() => {}');
+function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props) {
+  // Detectar modo solo lectura: función vacía o prop explícita
+  const isReadOnly = readOnly !== undefined 
+    ? readOnly 
+    : (() => {
+        const fnStr = onChange.toString().replace(/\s/g, '');
+        return fnStr === '()=>{}' || fnStr.includes('()=>{}') || fnStr === '()=>{}' || onChange.name === '';
+      })();
   // En modo solo lectura, expandir automáticamente todos los grupos que tienen ritmos seleccionados
   const autoExpanded = React.useMemo(() => {
     if (!isReadOnly) return null;
