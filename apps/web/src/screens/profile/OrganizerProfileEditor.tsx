@@ -25,6 +25,10 @@ import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import ChipPicker from "../../components/common/ChipPicker";
+import ScheduleEditor from "../../components/events/ScheduleEditor";
+import CostsEditor from "../../components/events/CostsEditor";
+import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 
 const colors = {
   coral: '#FF3D57',
@@ -101,7 +105,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '1.2rem',
-              boxShadow: '0 4px 12px rgba(252, 247, 248, 0.3)3)'
+              
             }}>
               🎭
             </div>
@@ -140,7 +144,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             border: '1px solid rgba(30, 136, 229, 0.2)',
             width: 'fit-content'
           }}>
-            <span>👁️</span>
+            
             Click para ver el social
           </div>
         </div>
@@ -161,8 +165,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               fontWeight: '700',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
-              backdropFilter: 'blur(10px)'
+              
             }}
           >
             ✏️ Editar
@@ -190,10 +193,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               cursor: isDeleting ? 'not-allowed' : 'pointer',
               opacity: isDeleting ? 0.5 : 1,
               transition: 'all 0.3s ease',
-              boxShadow: isDeleting
-                ? 'none'
-                : '0 4px 16px rgba(255, 61, 87, 0.2)',
-              backdropFilter: 'blur(10px)'
+           
             }}
           >
             {isDeleting ? '⏳' : '🗑️'} Eliminar
@@ -276,8 +276,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                     whileHover={{
                       y: -4,
                       scale: 1.02,
-                      boxShadow: '0 16px 40px rgba(30, 136, 229, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)',
-                      borderColor: 'rgba(30, 136, 229, 0.4)'
+                      
                     }}
                   >
                     {/* Efecto de brillo en hover */}
@@ -302,7 +301,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '0.9rem',
-                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)'
+                          
                         }}>
                           📅
                         </div>
@@ -499,13 +498,22 @@ export default function OrganizerProfileEditor() {
   const createEventDate = useCreateEventDate();
   const [dateForm, setDateForm] = useState({
     nombre: '',
+    biografia: '',
     fecha: '',
     hora_inicio: '',
     hora_fin: '',
     lugar: '',
     ciudad: '',
     direccion: '',
-    biografia: ''
+    referencias: '',
+    requisitos: '',
+    zona: null as number | null,
+    estilos: [] as number[],
+    zonas: [] as number[],
+    cronograma: [] as any[],
+    costos: [] as any[],
+    flyer_url: null as string | null,
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
   });
 
   // Función para subir archivo
@@ -647,26 +655,43 @@ export default function OrganizerProfileEditor() {
       await createEventDate.mutateAsync({
         parent_id: selectedParentId,
         nombre: dateForm.nombre || null,
+        biografia: dateForm.biografia || null,
         fecha: dateForm.fecha,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: dateForm.lugar || null,
-        ciudad: dateForm.ciudad || null,
         direccion: dateForm.direccion || null,
-        biografia: dateForm.biografia || null,
-        estado_publicacion: 'borrador'
+        ciudad: dateForm.ciudad || null,
+        zona: dateForm.zona || null,
+        referencias: dateForm.referencias || null,
+        requisitos: dateForm.requisitos || null,
+        estilos: dateForm.estilos || [],
+        zonas: dateForm.zonas || [],
+        cronograma: dateForm.cronograma || [],
+        costos: dateForm.costos || [],
+        flyer_url: dateForm.flyer_url || null,
+        estado_publicacion: dateForm.estado_publicacion || 'borrador'
       });
       showToast('Fecha creada ✅', 'success');
       setShowDateForm(false);
       setDateForm({
         nombre: '',
+        biografia: '',
         fecha: '',
         hora_inicio: '',
         hora_fin: '',
         lugar: '',
         ciudad: '',
         direccion: '',
-        biografia: ''
+        referencias: '',
+        requisitos: '',
+        zona: null,
+        estilos: [],
+        zonas: [],
+        cronograma: [],
+        costos: [],
+        flyer_url: null,
+        estado_publicacion: 'borrador'
       });
       setSelectedParentId(null);
     } catch (err: any) {
@@ -1395,171 +1420,296 @@ export default function OrganizerProfileEditor() {
                   exit={{ opacity: 0, height: 0 }}
                   style={{
                     marginBottom: '2rem',
-                    padding: '2rem',
+                    padding: '0',
                     borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#FFFFFF'
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.5rem'
                   }}
                 >
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                    📅 Nueva Fecha del Evento
-                  </h3>
-                  
-                  <div className="org-editor-grid">
-                    {/* Selector de evento padre */}
-                    {parents.length > 1 && (
+                  {/* Selector de evento padre */}
+                  {parents.length > 1 && (
+                    <div className="org-editor-card">
+                      <label className="org-editor-field">
+                        Evento Social *
+                      </label>
+                      <select
+                        value={selectedParentId || ''}
+                        onChange={(e) => setSelectedParentId(Number(e.target.value))}
+                        className="org-editor-input"
+                        style={{ color: '#FFFFFF', cursor: 'pointer' }}
+                      >
+                        <option value="" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                          Selecciona un evento
+                        </option>
+                        {parents.map((parent: any) => (
+                          <option key={parent.id} value={parent.id} style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                            {parent.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Información Básica */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📝 Información Básica
+                    </h3>
+                    <div className="org-editor-grid">
                       <div>
                         <label className="org-editor-field">
-                          Evento Social *
+                          Nombre del Evento *
                         </label>
-                        <select
-                          value={selectedParentId || ''}
-                          onChange={(e) => setSelectedParentId(Number(e.target.value))}
+                        <input
+                          type="text"
+                          value={dateForm.nombre}
+                          onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
+                          placeholder="Nombre del evento"
                           className="org-editor-input"
-                          style={{ color: '#FFFFFF', cursor: 'pointer' }}
-                        >
-                          <option value="" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
-                            Selecciona un evento
-                          </option>
-                          {parents.map((parent: any) => (
-                            <option key={parent.id} value={parent.id} style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
-                              {parent.nombre}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
-                    )}
-
-                    <div>
-                      <label className="org-editor-field">
-                        Nombre de la Fecha
-                      </label>
-                      <input
-                        type="text"
-                        value={dateForm.nombre}
-                        onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
-                        placeholder="Ej: Noche de Salsa"
-                        className="org-editor-input"
-                      />
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          Biografía
+                        </label>
+                        <textarea
+                          value={dateForm.biografia}
+                          onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
+                          placeholder="Describe el evento, su propósito, qué esperar..."
+                          rows={4}
+                          className="org-editor-textarea"
+                        />
+                      </div>
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="org-editor-field">
-                        Fecha * <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(YYYY-MM-DD)</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={dateForm.fecha}
-                        onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
-                        required
-                        className="org-editor-input"
-                        style={{ color: '#FFFFFF' }}
+                  {/* Ritmos y Zonas */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      🎵 Ritmos y Ubicaciones
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <ChipPicker
+                        tipo="ritmo"
+                        selected={dateForm.estilos || []}
+                        onChange={(selected) => setDateForm({ ...dateForm, estilos: selected as number[] })}
+                        label="Ritmos de Baile"
+                        placeholder="Selecciona los ritmos que se bailarán"
+                        maxSelections={5}
                       />
-                    </div>
-
-                    <div>
-                      <label className="org-editor-field">
-                        Hora de Inicio
-                      </label>
-                      <input
-                        type="time"
-                        value={dateForm.hora_inicio}
-                        onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
-                        className="org-editor-input"
-                        style={{ color: '#FFFFFF' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="org-editor-field">
-                        Hora de Fin
-                      </label>
-                      <input
-                        type="time"
-                        value={dateForm.hora_fin}
-                        onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
-                        className="org-editor-input"
-                        style={{ color: '#FFFFFF' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="org-editor-field">
-                        Lugar
-                      </label>
-                      <input
-                        type="text"
-                        value={dateForm.lugar}
-                        onChange={(e) => setDateForm({ ...dateForm, lugar: e.target.value })}
-                        placeholder="Ej: Centro de Convenciones"
-                        className="org-editor-input"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="org-editor-field">
-                        Ciudad
-                      </label>
-                      <input
-                        type="text"
-                        value={dateForm.ciudad}
-                        onChange={(e) => setDateForm({ ...dateForm, ciudad: e.target.value })}
-                        placeholder="Ej: Bogotá"
-                        className="org-editor-input"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="org-editor-field">
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={dateForm.direccion}
-                        onChange={(e) => setDateForm({ ...dateForm, direccion: e.target.value })}
-                        placeholder="Ej: Calle 123 #45-67"
-                        className="org-editor-input"
+                      <ChipPicker
+                        tipo="zona"
+                        selected={dateForm.zonas || []}
+                        onChange={(selected) => setDateForm({ ...dateForm, zonas: selected as number[] })}
+                        label="Zonas de la Ciudad"
+                        placeholder="Selecciona las zonas donde se realizará"
+                        maxSelections={3}
                       />
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '1.5rem' }}>
-                    <label className="org-editor-field">
-                      Biografía / Descripción
-                    </label>
-                    <textarea
-                      value={dateForm.biografia}
-                      onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
-                      placeholder="Describe esta fecha del evento..."
-                      rows={4}
-                      className="org-editor-textarea"
+                  {/* Fecha y Hora */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📅 Fecha y Hora
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label className="org-editor-field">
+                          Fecha *
+                        </label>
+                        <input
+                          type="date"
+                          value={dateForm.fecha}
+                          onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
+                          required
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Hora Inicio
+                        </label>
+                        <input
+                          type="time"
+                          value={dateForm.hora_inicio}
+                          onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Hora Fin
+                        </label>
+                        <input
+                          type="time"
+                          value={dateForm.hora_fin}
+                          onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ubicación Específica */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📍 Ubicación Específica
+                    </h3>
+                    <div className="org-editor-grid">
+                      <div>
+                        <label className="org-editor-field">
+                          Lugar
+                        </label>
+                        <input
+                          type="text"
+                          value={dateForm.lugar}
+                          onChange={(e) => setDateForm({ ...dateForm, lugar: e.target.value })}
+                          placeholder="Nombre del lugar"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Ciudad
+                        </label>
+                        <input
+                          type="text"
+                          value={dateForm.ciudad}
+                          onChange={(e) => setDateForm({ ...dateForm, ciudad: e.target.value })}
+                          placeholder="Ciudad"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          Dirección
+                        </label>
+                        <input
+                          type="text"
+                          value={dateForm.direccion}
+                          onChange={(e) => setDateForm({ ...dateForm, direccion: e.target.value })}
+                          placeholder="Dirección completa"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          Referencias
+                        </label>
+                        <input
+                          type="text"
+                          value={dateForm.referencias}
+                          onChange={(e) => setDateForm({ ...dateForm, referencias: e.target.value })}
+                          placeholder="Puntos de referencia, cómo llegar..."
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          Requisitos
+                        </label>
+                        <textarea
+                          value={dateForm.requisitos}
+                          onChange={(e) => setDateForm({ ...dateForm, requisitos: e.target.value })}
+                          placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
+                          rows={3}
+                          className="org-editor-textarea"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cronograma */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📅 Cronograma del Evento
+                    </h3>
+                    <ScheduleEditor
+                      schedule={dateForm.cronograma || []}
+                      onChangeSchedule={(cronograma) => setDateForm({ ...dateForm, cronograma })}
+                      costos={dateForm.costos || []}
+                      onChangeCostos={(costos) => setDateForm({ ...dateForm, costos })}
+                      ritmos={ritmoTags}
+                      zonas={zonaTags}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCreateDate}
-                      disabled={createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
-                          ? 'rgba(255, 255, 255, 0.2)'
-                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(0, 188, 212, 0.9))',
-                        color: '#FFFFFF',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        cursor: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                        opacity: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 0.6 : 1
-                      }}
-                    >
-                      {createEventDate.isPending ? '⏳ Creando...' : '💾 Crear Fecha'}
-                    </motion.button>
+                  {/* Costos */}
+                  <div className="org-editor-card">
+                    <CostsEditor
+                      value={dateForm.costos || []}
+                      onChange={(costos) => setDateForm({ ...dateForm, costos })}
+                    />
+                  </div>
+
+                  {/* Flyer */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      🖼️ Flyer del Evento
+                    </h3>
+                    <DateFlyerUploader
+                      value={dateForm.flyer_url || null}
+                      onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
+                      dateId={null}
+                      parentId={selectedParentId || undefined}
+                    />
+                  </div>
+
+                  {/* Estado de Publicación */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      🌐 Estado de Publicación
+                    </h3>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}>
+                        <input
+                          type="radio"
+                          name="estado_publicacion"
+                          value="borrador"
+                          checked={dateForm.estado_publicacion === 'borrador'}
+                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                          style={{ transform: 'scale(1.2)' }}
+                        />
+                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                          📝 Borrador (solo tú puedes verlo)
+                        </span>
+                      </label>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}>
+                        <input
+                          type="radio"
+                          name="estado_publicacion"
+                          value="publicado"
+                          checked={dateForm.estado_publicacion === 'publicado'}
+                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                          style={{ transform: 'scale(1.2)' }}
+                        />
+                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                          🌐 Público (visible para todos)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Botones */}
+                  <div className="org-editor-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -1567,13 +1717,22 @@ export default function OrganizerProfileEditor() {
                         setShowDateForm(false);
                         setDateForm({
                           nombre: '',
+                          biografia: '',
                           fecha: '',
                           hora_inicio: '',
                           hora_fin: '',
                           lugar: '',
                           ciudad: '',
                           direccion: '',
-                          biografia: ''
+                          referencias: '',
+                          requisitos: '',
+                          zona: null,
+                          estilos: [],
+                          zonas: [],
+                          cronograma: [],
+                          costos: [],
+                          flyer_url: null,
+                          estado_publicacion: 'borrador'
                         });
                         setSelectedParentId(null);
                       }}
@@ -1588,7 +1747,29 @@ export default function OrganizerProfileEditor() {
                         cursor: 'pointer'
                       }}
                     >
-                      Cancelar
+                      ❌ Cancelar
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCreateDate}
+                      disabled={createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
+                          ? 'rgba(255, 255, 255, 0.2)'
+                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))',
+                        color: '#FFFFFF',
+                        fontSize: '0.9rem',
+                        fontWeight: '700',
+                        cursor: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                        opacity: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 0.6 : 1
+                      }}
+                    >
+                      {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
                     </motion.button>
                   </div>
                 </motion.div>
