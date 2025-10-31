@@ -220,7 +220,7 @@ export default function ScheduleEditorPlus({
   return (
     <div style={{ ...style }} className={className}>
       {/* === Metadatos globales para “defaults” (compacto) === */}
-      <div style={{ ...card, marginBottom: 12 }}>
+      {/* <div style={{ ...card, marginBottom: 12 }}>
         <div style={{ display: 'grid', gap: 10 }}>
           <div>
             <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
@@ -240,8 +240,8 @@ export default function ScheduleEditorPlus({
                 setMetaField({ ritmoId: tagId });
               }}
             />
-          </div>
-          <div>
+          </div> */}
+       {/*    <div>
             <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ubicación (texto)</div>
             <input
               style={input}
@@ -249,9 +249,9 @@ export default function ScheduleEditorPlus({
               value={meta.ubicacion || ''}
               onChange={(e)=> setMetaField({ ubicacion: e.target.value })}
             />
-          </div>
-        </div>
-      </div>
+          </div> */}
+        {/* </div> */}
+      {/* </div> */}
 
       {/* === Cronograma === */}
       <div style={{ marginBottom: 16 }}>
