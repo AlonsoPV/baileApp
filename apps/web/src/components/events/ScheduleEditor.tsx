@@ -1,6 +1,8 @@
 // ScheduleEditorPlus.tsx
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import RitmosChips from "../RitmosChips";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
 const colors = {
   coral: '#FF3D57',
@@ -79,7 +81,7 @@ const normalizeTime = (t?: string) => {
 };
 
 const card: React.CSSProperties = {
-  padding: 16,
+  padding: 12,
   borderRadius: 12,
   background: `${colors.dark}66`,
   border: `1px solid ${colors.light}22`,
@@ -87,7 +89,7 @@ const card: React.CSSProperties = {
 
 const input: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px',
+  padding: '8px 10px',
   borderRadius: 8,
   background: `${colors.dark}cc`,
   border: `1px solid ${colors.light}33`,
@@ -217,40 +219,28 @@ export default function ScheduleEditorPlus({
 
   return (
     <div style={{ ...style }} className={className}>
-      {/* === Metadatos globales para “defaults” === */}
-      <div style={{ ...card, marginBottom: 16 }}>
-        <h3 style={{ margin: 0, marginBottom: 12, color: colors.light, fontSize: '1rem', fontWeight: 700 }}>Meta (por defecto para nuevas clases)</h3>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {!!ritmos.length && (
-            <div>
-              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo (chips)</div>
-              <div style={pillWrap}>
-                {ritmos.map(r => (
-                  <div
-                    key={r.id}
-                    style={pill(meta.ritmoId === r.id)}
-                    onClick={() => setMetaField({ ritmoId: r.id })}
-                  >{r.nombre}</div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!!zonas.length && (
-            <div>
-              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona (chips)</div>
-              <div style={pillWrap}>
-                {zonas.map(z => (
-                  <div
-                    key={z.id}
-                    style={pill(meta.zonaId === z.id)}
-                    onClick={() => setMetaField({ zonaId: z.id })}
-                  >{z.nombre}</div>
-                ))}
-              </div>
-            </div>
-          )}
-
+      {/* === Metadatos globales para “defaults” (compacto) === */}
+      <div style={{ ...card, marginBottom: 12 }}>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div>
+            <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+            <RitmosChips
+              selected={(() => {
+                if (!meta.ritmoId) return [];
+                const tag = (ritmos || []).find(r => r.id === meta.ritmoId);
+                if (!tag) return [];
+                const match = RITMOS_CATALOG.flatMap(g => g.items).find(i => i.label === tag.nombre);
+                return match ? [match.id] : [];
+              })()}
+              onChange={(ids) => {
+                const first = ids[0];
+                if (!first) { setMetaField({ ritmoId: null }); return; }
+                const catalogLabel = RITMOS_CATALOG.flatMap(g => g.items).find(i => i.id === first)?.label;
+                const tagId = (ritmos || []).find(r => r.nombre === catalogLabel)?.id ?? null;
+                setMetaField({ ritmoId: tagId });
+              }}
+            />
+          </div>
           <div>
             <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ubicación (texto)</div>
             <input
@@ -292,7 +282,7 @@ export default function ScheduleEditorPlus({
               {editingIndex === index ? (
                 <div style={{ display: 'grid', gap: 12 }}>
                   {/* tipo y nivel */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <div>
                       <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
                       <select
@@ -319,36 +309,25 @@ export default function ScheduleEditorPlus({
                     </div>
                   </div>
 
-                  {/* chips ritmo y zona */}
-                  {!!ritmos.length && (
-                    <div>
-                      <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-                      <div style={pillWrap}>
-                        {ritmos.map(r => (
-                          <div
-                            key={r.id}
-                            style={pill(item.ritmoId === r.id)}
-                            onClick={()=> updateItem(index, 'ritmoId', r.id)}
-                          >{r.nombre}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {!!zonas.length && (
-                    <div>
-                      <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona</div>
-                      <div style={pillWrap}>
-                        {zonas.map(z => (
-                          <div
-                            key={z.id}
-                            style={pill(item.zonaId === z.id)}
-                            onClick={()=> updateItem(index, 'zonaId', z.id)}
-                          >{z.nombre}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Ritmo (RitmosChips) */}
+                  <div>
+                    <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+                    <RitmosChips
+                      selected={(() => {
+                        if (!item.ritmoId) return [];
+                        const tag = (ritmos || []).find(r => r.id === item.ritmoId);
+                        if (!tag) return [];
+                        const match = RITMOS_CATALOG.flatMap(g => g.items).find(i => i.label === tag.nombre);
+                        return match ? [match.id] : [];
+                      })()}
+                      onChange={(ids) => {
+                        const first = ids[0];
+                        const catalogLabel = first ? RITMOS_CATALOG.flatMap(g => g.items).find(i => i.id === first)?.label : undefined;
+                        const tagId = catalogLabel ? (ritmos || []).find(r => r.nombre === catalogLabel)?.id ?? null : null;
+                        updateItem(index, 'ritmoId', tagId);
+                      }}
+                    />
+                  </div>
 
                   {/* título manual */}
                   <input
@@ -433,9 +412,9 @@ export default function ScheduleEditorPlus({
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                       <span style={{ fontSize: '1.2rem' }}>📚</span>
                       {item.nivel && (
                         <span style={{
@@ -482,7 +461,7 @@ export default function ScheduleEditorPlus({
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
           <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 12 }}>➕ Nueva Actividad</h4>
           <div style={{ display: 'grid', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
                 <select
@@ -507,35 +486,24 @@ export default function ScheduleEditorPlus({
               </div>
             </div>
 
-            {!!ritmos.length && (
-              <div>
-                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-                <div style={pillWrap}>
-                  {ritmos.map(r => (
-                    <div
-                      key={r.id}
-                      style={pill(newItem.ritmoId === r.id)}
-                      onClick={()=> setNewItem(s => ({ ...s, ritmoId: r.id }))}
-                    >{r.nombre}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!!zonas.length && (
-              <div>
-                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Zona</div>
-                <div style={pillWrap}>
-                  {zonas.map(z => (
-                    <div
-                      key={z.id}
-                      style={pill(newItem.zonaId === z.id)}
-                      onClick={()=> setNewItem(s => ({ ...s, zonaId: z.id }))}
-                    >{z.nombre}</div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div>
+              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+              <RitmosChips
+                selected={(() => {
+                  if (!newItem.ritmoId) return [];
+                  const tag = (ritmos || []).find(r => r.id === newItem.ritmoId);
+                  if (!tag) return [];
+                  const match = RITMOS_CATALOG.flatMap(g => g.items).find(i => i.label === tag.nombre);
+                  return match ? [match.id] : [];
+                })()}
+                onChange={(ids) => {
+                  const first = ids[0];
+                  const catalogLabel = first ? RITMOS_CATALOG.flatMap(g => g.items).find(i => i.id === first)?.label : undefined;
+                  const tagId = catalogLabel ? (ritmos || []).find(r => r.nombre === catalogLabel)?.id ?? null : null;
+                  setNewItem(s => ({ ...s, ritmoId: tagId }));
+                }}
+              />
+            </div>
 
             <input
               type="text"
@@ -545,7 +513,7 @@ export default function ScheduleEditorPlus({
               style={input}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fecha</div>
                 <input

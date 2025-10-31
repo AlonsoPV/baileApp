@@ -572,6 +572,7 @@ export default function OrganizerProfileEditor() {
       ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
+      ubicaciones: [] as any[],
       redes_sociales: {
         instagram: "",
         facebook: "",
@@ -1284,6 +1285,21 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
+          {/* Ubicaciones del Organizador */}
+          <div
+            id="organizer-ubicaciones"
+            data-test-id="organizer-ubicaciones"
+            className="org-editor-card"
+          >
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📍 Ubicaciones
+            </h2>
+            <UbicacionesEditor
+              value={(form as any).ubicaciones || []}
+              onChange={(ubicaciones) => setField('ubicaciones' as any, ubicaciones as any)}
+            />
+          </div>
+
           {/* Maestros Invitados */}
           <InvitedMastersSection
             masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
@@ -1653,13 +1669,7 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Ubicaciones Múltiples */}
-                  <div className="org-editor-card">
-                    <UbicacionesEditor
-                      value={dateForm.ubicaciones || []}
-                      onChange={(ubicaciones) => setDateForm({ ...dateForm, ubicaciones })}
-                    />
-                  </div>
+                  {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
 
                   {/* Cronograma */}
                   <div className="org-editor-card">
@@ -1677,12 +1687,12 @@ export default function OrganizerProfileEditor() {
                   </div>
 
                   {/* Costos */}
-                  <div className="org-editor-card">
+                 {/*  <div className="org-editor-card">
                     <CostsEditor
                       value={dateForm.costos || []}
                       onChange={(costos) => setDateForm({ ...dateForm, costos })}
                     />
-                  </div>
+                  </div> */}
 
                   {/* Flyer */}
                   <div className="org-editor-card">
