@@ -10,6 +10,7 @@ import ImageWithFallback from '../../components/ImageWithFallback';
 import { useToast } from '../../components/Toast';
 import { Chip } from '../../components/profile/Chip';
 import RitmosSelectorEditor from '@/components/profile/RitmosSelectorEditor';
+import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { useTags } from '../../hooks/useTags';
 import { PhotoManagementSection } from '../../components/profile/PhotoManagementSection';
 import { VideoManagementSection } from '../../components/profile/VideoManagementSection';
@@ -119,10 +120,24 @@ export default function UserProfileEditor() {
       console.log('[UserProfileEditor] Respuestas:', form.respuestas);
       console.log('[UserProfileEditor] Redes normalizadas:', redes);
       
+      // Fallback: si no hay ritmos_seleccionados pero sí hay ritmos numéricos, mapear a catálogo por etiqueta
+      let outRitmosSeleccionados = ((form as any).ritmos_seleccionados || []) as string[];
+      if ((!outRitmosSeleccionados || outRitmosSeleccionados.length === 0) && Array.isArray(form.ritmos) && form.ritmos.length > 0) {
+        const labelToItemId = new Map<string, string>();
+        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.label, i.id)));
+        const names = form.ritmos
+          .map(id => ritmoTags.find(t => t.id === id)?.nombre)
+          .filter(Boolean) as string[];
+        const mapped = names
+          .map(n => labelToItemId.get(n))
+          .filter(Boolean) as string[];
+        if (mapped.length > 0) outRitmosSeleccionados = mapped;
+      }
+
       const candidate = {
         display_name: form.display_name,
         bio: form.bio,
-        ritmos_seleccionados: (form as any).ritmos_seleccionados || [],
+        ritmos_seleccionados: outRitmosSeleccionados || [],
         ritmos: form.ritmos,
         zonas: form.zonas,
         respuestas: { 
