@@ -412,139 +412,156 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                         </div>
                       </div>
 
-                      {/* Información de la fecha */}
+                      {/* Información agrupada de la fecha */}
                       <div style={{
-                        fontSize: '0.9rem',
-                        color: colors.blue,
-                        fontWeight: '600',
-                        marginBottom: '0.5rem',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '0.5rem 0.75rem',
-                        background: 'rgba(30, 136, 229, 0.1)',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(30, 136, 229, 0.2)',
-                        width: 'fit-content'
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        marginBottom: '1rem'
                       }}>
-                        <span>📅</span>
-                        {new Date(date.fecha).toLocaleDateString('es-ES', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {/* Fecha */}
+                        <div style={{
+                          fontSize: '0.95rem',
+                          color: colors.blue,
+                          fontWeight: '700',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '0.65rem 1rem',
+                          background: 'rgba(30, 136, 229, 0.15)',
+                          borderRadius: '12px',
+                          border: '2px solid rgba(30, 136, 229, 0.25)',
+                          width: 'fit-content',
+                          boxShadow: '0 2px 8px rgba(30, 136, 229, 0.2)'
+                        }}>
+                          <span style={{ fontSize: '1.1rem' }}>📅</span>
+                          <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}</span>
+                        </div>
+
+                        {/* Hora y lugar en fila */}
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                          alignItems: 'center'
+                        }}>
+                          {date.hora_inicio && date.hora_fin && (
+                            <div style={{
+                              fontSize: '0.875rem',
+                              color: colors.light,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.5rem 0.875rem',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              width: 'fit-content'
+                            }}>
+                              <span>🕐</span>
+                              <span>{date.hora_inicio} - {date.hora_fin}</span>
+                            </div>
+                          )}
+
+                          {date.lugar && (
+                            <div style={{
+                              fontSize: '0.875rem',
+                              color: colors.light,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.5rem 0.875rem',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              width: 'fit-content'
+                            }}>
+                              <span>📍</span>
+                              <span>{date.lugar}</span>
+                            </div>
+                          )}
+
+                          {date.ciudad && (
+                            <div style={{
+                              fontSize: '0.8rem',
+                              color: 'rgba(255, 255, 255, 0.8)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.4rem 0.75rem',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              borderRadius: '8px',
+                              width: 'fit-content'
+                            }}>
+                              <span>🏙️</span>
+                              <span>{date.ciudad}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Hora */}
-                      {date.hora_inicio && date.hora_fin && (
-                        <div style={{
-                          fontSize: '0.85rem',
-                          color: colors.light,
-                          display: 'flex',
+                      {/* CTA mejorado */}
+                      <motion.div
+                        whileHover={{ scale: 1.05, x: 4 }}
+                        style={{
+                          fontSize: '0.875rem',
+                          color: colors.blue,
+                          fontWeight: '700',
+                          display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          marginBottom: '0.5rem',
-                          padding: '0.4rem 0.6rem',
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          width: 'fit-content'
-                        }}>
-                          <span>🕐</span>
-                          {date.hora_inicio} - {date.hora_fin}
-                        </div>
-                      )}
-
-                      {/* Lugar */}
-                      {date.lugar && (
-                        <div style={{
-                          fontSize: '0.85rem',
-                          color: colors.light,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          marginBottom: '0.5rem',
-                          padding: '0.4rem 0.6rem',
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          width: 'fit-content'
-                        }}>
-                          <span>📍</span>
-                          {date.lugar}
-                        </div>
-                      )}
-
-                      {/* Ciudad */}
-                      {date.ciudad && (
-                        <div style={{
-                          fontSize: '0.8rem',
-                          color: colors.light,
-                          opacity: 0.8,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          marginBottom: '0.75rem',
-                          padding: '0.3rem 0.5rem',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          borderRadius: '6px',
-                          width: 'fit-content'
-                        }}>
-                          <span>🏙️</span>
-                          {date.ciudad}
-                        </div>
-                      )}
-
-                      {/* CTA */}
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: colors.blue,
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '0.4rem 0.6rem',
-                        background: 'rgba(30, 136, 229, 0.1)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(30, 136, 229, 0.2)',
-                        width: 'fit-content',
-                        transition: 'all 0.2s ease'
-                      }}>
+                          padding: '0.6rem 1rem',
+                          background: 'rgba(30, 136, 229, 0.15)',
+                          borderRadius: '10px',
+                          border: '2px solid rgba(30, 136, 229, 0.25)',
+                          width: 'fit-content',
+                          transition: 'all 0.2s ease',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(30, 136, 229, 0.2)'
+                        }}
+                      >
                         <span>👁️</span>
-                        Click para ver detalles
-                      </div>
+                        <span>Ver detalles</span>
+                        <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>→</span>
+                      </motion.div>
                     </div>
 
                     {/* Botones de acción */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 2 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 2 }}>
                       <motion.button
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.08, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/social/fecha/${date.id}/edit`);
                         }}
                         style={{
-                          padding: '0.5rem 0.75rem',
-                          color: colors.light,
-                          border: '2px solid rgba(30, 136, 229, 0.3)',
-                          borderRadius: '10px',
-                          fontSize: '0.75rem',
+                          padding: '0.65rem 1rem',
+                          background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '0.8rem',
                           fontWeight: '700',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '6px',
                           transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-                          backdropFilter: 'blur(10px)'
+                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
+                          whiteSpace: 'nowrap'
                         }}
                       >
-                        ✏️ Editar
+                        <span>✏️</span>
+                        <span>Editar</span>
                       </motion.button>
                       <motion.button
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.08, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -552,28 +569,30 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                           console.log('Eliminar fecha:', date.id);
                         }}
                         style={{
-                          padding: '0.5rem 0.75rem',
-                          color: colors.light,
-                          border: '2px solid rgba(30, 136, 229, 0.3)',
-                          borderRadius: '10px',
-                          fontSize: '0.75rem',
+                          padding: '0.65rem 1rem',
+                          background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '0.8rem',
                           fontWeight: '700',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '6px',
                           transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                          backdropFilter: 'blur(10px)'
+                          boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
+                          whiteSpace: 'nowrap'
                         }}
                       >
-                        🗑️ Eliminar
+                        <span>🗑️</span>
+                        <span>Eliminar</span>
                       </motion.button>
                     </div>
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </div>
       )}
@@ -1054,6 +1073,12 @@ export default function OrganizerProfileEditor() {
         .org-events-section p {
           color: rgba(255, 255, 255, 0.9);
         }
+
+        .org-events-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 450px), 1fr));
+          gap: 1.5rem;
+        }
         
         .org-create-button {
           position: fixed;
@@ -1129,6 +1154,11 @@ export default function OrganizerProfileEditor() {
             border-radius: 16px !important;
           }
           
+          .org-events-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.25rem !important;
+          }
+          
           .org-create-button {
             bottom: 20px !important;
             left: 50% !important;
@@ -1190,6 +1220,11 @@ export default function OrganizerProfileEditor() {
           .org-events-section {
             padding: 1rem !important;
             border-radius: 12px !important;
+          }
+          
+          .org-events-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
           }
           
           .org-create-button {
@@ -1977,14 +2012,7 @@ export default function OrganizerProfileEditor() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-                    gap: '1.5rem',
-                    '@media (max-width: 768px)': {
-                      gridTemplateColumns: '1fr'
-                    }
-                  }}
+                  className="org-events-grid"
                 >
                   {parents.map((parent: any, index: number) => (
                     <motion.div
