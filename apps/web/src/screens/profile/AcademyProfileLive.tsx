@@ -18,6 +18,7 @@ import ClasesLive from '../../components/events/ClasesLive';
 import CrearClase from "../../components/events/CrearClase";
 import { useUpsertAcademy } from "../../hooks/useAcademy";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
+import RitmosChips from "../../components/RitmosChips";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -629,20 +630,28 @@ export default function AcademyProfileLive() {
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {getRitmoNombres().map((ritmo, index) => (
-                  <Chip
-                    key={`ritmo-${index}`}
-                    label={ritmo}
-                    active={true}
-                    variant="ritmo"
-                    style={{
-                      background: 'rgba(229, 57, 53, 0.2)',
-                      border: '1px solid #E53935',
-                      color: '#E53935',
-                      fontWeight: '600'
-                    }}
+                {Array.isArray((academy as any)?.ritmos_seleccionados) && (academy as any).ritmos_seleccionados.length > 0 ? (
+                  <RitmosChips
+                    selected={((academy as any).ritmos_seleccionados || []) as string[]}
+                    onChange={() => {}}
+                    readOnly
                   />
-                ))}
+                ) : (
+                  getRitmoNombres().map((ritmo, index) => (
+                    <Chip
+                      key={`ritmo-${index}`}
+                      label={ritmo}
+                      active={true}
+                      variant="ritmo"
+                      style={{
+                        background: 'rgba(229, 57, 53, 0.2)',
+                        border: '1px solid #E53935',
+                        color: '#E53935',
+                        fontWeight: '600'
+                      }}
+                    />
+                  ))
+                )}
                 {getZonaNombres().map((zona, index) => (
                   <Chip
                     key={`zona-${index}`}

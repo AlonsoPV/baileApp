@@ -14,6 +14,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import RitmosChips from "../../components/RitmosChips";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -828,14 +829,22 @@ export function OrganizerProfileLive() {
                   marginBottom: spacing[2]
                 }}
               >
-                {getRitmoNombres().map((nombre) => (
-                  <Chip 
-                    key={`r-${nombre}`} 
-                    label={nombre} 
-                    icon="🎵" 
-                    variant="ritmo" 
+                {Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0 ? (
+                  <RitmosChips
+                    selected={((org as any).ritmos_seleccionados || []) as string[]}
+                    onChange={() => {}}
+                    readOnly
                   />
-                ))}
+                ) : (
+                  getRitmoNombres().map((nombre) => (
+                    <Chip 
+                      key={`r-${nombre}`} 
+                      label={nombre} 
+                      icon="🎵" 
+                      variant="ritmo" 
+                    />
+                  ))
+                )}
                 {getZonaNombres().map((nombre) => (
                   <Chip 
                     key={`z-${nombre}`} 

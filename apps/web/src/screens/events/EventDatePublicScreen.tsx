@@ -10,6 +10,7 @@ import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import RitmosChips from "../../components/RitmosChips";
 
 const colors = {
   coral: '#FF3D57',
@@ -599,47 +600,58 @@ export default function EventDatePublicScreen() {
             </div>
           </div>
 
-          {/* Chips de Ritmos y Zonas */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '1.5rem' }}>
-            {date.estilos?.map((ritmoId: number) => (
-              <motion.span
-                key={ritmoId}
-                whileHover={{ scale: 1.05 }}
-                style={{
-                  padding: '10px 18px',
-                  borderRadius: '25px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
-                  color: '#f093fb',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  border: '1px solid rgba(240, 147, 251, 0.3)',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)'
-                }}
-              >
-                🎵 {getRitmoName(ritmoId)}
-              </motion.span>
-            ))}
-            
-            {date.zonas?.map((zonaId: number) => (
-              <motion.span
-                key={zonaId}
-                whileHover={{ scale: 1.05 }}
-                style={{
-                  padding: '10px 18px',
-                  borderRadius: '25px',
-                  background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 140, 66, 0.2))',
-                  color: '#FFD166',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  border: '1px solid rgba(255, 209, 102, 0.3)',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 4px 16px rgba(255, 209, 102, 0.2)'
-                }}
-              >
-                📍 {getZonaName(zonaId)}
-              </motion.span>
-            ))}
+          {/* Chips de Ritmos (catálogo) y Zonas */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
+            {Array.isArray((date as any)?.ritmos_seleccionados) && (date as any).ritmos_seleccionados.length > 0 ? (
+              <RitmosChips
+                selected={((date as any).ritmos_seleccionados || []) as string[]}
+                onChange={() => {}}
+                readOnly
+              />
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                {date.estilos?.map((ritmoId: number) => (
+                  <motion.span
+                    key={ritmoId}
+                    whileHover={{ scale: 1.05 }}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '25px',
+                      background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
+                      color: '#f093fb',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      border: '1px solid rgba(240, 147, 251, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)'
+                    }}
+                  >
+                    🎵 {getRitmoName(ritmoId)}
+                  </motion.span>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {date.zonas?.map((zonaId: number) => (
+                <motion.span
+                  key={zonaId}
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '25px',
+                    background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 140, 66, 0.2))',
+                    color: '#FFD166',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    border: '1px solid rgba(255, 209, 102, 0.3)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 16px rgba(255, 209, 102, 0.2)'
+                  }}
+                >
+                  📍 {getZonaName(zonaId)}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </motion.div>
 

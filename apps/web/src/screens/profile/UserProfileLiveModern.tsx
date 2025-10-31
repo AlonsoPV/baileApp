@@ -17,6 +17,7 @@ import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import RitmosChips from "../../components/RitmosChips";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -586,14 +587,22 @@ export const UserProfileLive: React.FC = () => {
               {/* Chips de ritmos (agrupados) y zonas */}
               <div id="user-chips" data-test-id="user-chips" style={{ display: 'grid', gap: spacing[2], marginBottom: spacing[2] }}>
                 {/* Ritmos agrupados */}
-                {getRitmoNombres().map((nombre) => (
-                  <Chip 
-                    key={`r-${nombre}`} 
-                    label={nombre} 
-                    icon="🎵" 
-                    variant="ritmo" 
+                {Array.isArray((profile as any)?.ritmos_seleccionados) && (profile as any).ritmos_seleccionados.length > 0 ? (
+                  <RitmosChips
+                    selected={((profile as any).ritmos_seleccionados || []) as string[]}
+                    onChange={() => {}}
+                    readOnly
                   />
-                ))}
+                ) : (
+                  getRitmoNombres().map((nombre) => (
+                    <Chip 
+                      key={`r-${nombre}`} 
+                      label={nombre} 
+                      icon="🎵" 
+                      variant="ritmo" 
+                    />
+                  ))
+                )}
 
                 {/* Zonas */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
