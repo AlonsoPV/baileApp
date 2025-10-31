@@ -286,7 +286,7 @@ export default function ExploreHomeScreen() {
           </div>
 
           {(showAll || selectedType === 'fechas') && (
-          <Section title="Próximos Sociales" toAll="/explore/list?type=fechas">
+          <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
             {fechasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : fechas && fechas.pages?.[0]?.data?.length > 0 ? (

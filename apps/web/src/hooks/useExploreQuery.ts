@@ -67,27 +67,8 @@ function baseSelect(type: ExploreType) {
     case "marcas":         
       return { table: "profiles_brand", select: "*" };     // idem
     case "sociales":
-      // Eventos padre (sociales) + datos del organizador para poder mostrar portada/avatar/medios
-      return { table: "events_parent", select: `
-        id,
-        organizer_id,
-        nombre,
-        descripcion,
-        biografia,
-        sede_general,
-        estilos,
-        zonas,
-        media,
-        created_at,
-        profiles_organizer:profiles_organizer!events_parent_organizer_id_fkey(
-          id,
-          nombre_publico,
-          avatar_url,
-          portada_url,
-          media,
-          estado_aprobacion
-        )
-      ` };
+      // Eventos padre (sociales) — simplificado para asegurar retorno de filas
+      return { table: "events_parent", select: `*` };
     case "usuarios":       
       return { table: "profiles_user", select: "user_id, display_name, avatar_url, ritmos, zonas, bio" };
     default:               
