@@ -27,28 +27,45 @@ export default function ShareButton({
   className,
   children
 }: ShareButtonProps) {
+  const [open, setOpen] = React.useState(false);
+  const safeUrl = React.useMemo(() => {
+    try {
+      const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : undefined);
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }, [url]);
+
   const onShare = async () => {
-    if (navigator.share) {
+    if ((navigator as any).share) {
       try {
-        await navigator.share({
-          url,
+        await (navigator as any).share({
+          url: safeUrl,
           title: title || 'Compartir evento',
           text: text || '¡Mira este evento!'
         });
-      } catch (error) {
-        // Usuario canceló o error, no hacer nada
-        console.log('Share cancelled or failed:', error);
-      }
-    } else {
-      // Fallback: copiar al portapapeles
-      try {
-        await navigator.clipboard.writeText(url);
-        alert("Enlace copiado al portapapeles");
-      } catch (error) {
-        // Fallback final: mostrar URL
-        alert(`Compartir: ${url}`);
+        return;
+      } catch (error: any) {
+        // Si usuario cancela, no abrir fallback; si es error de soporte, abrimos fallback
+        if (error?.name === 'AbortError' || error?.message?.includes('cancel')) return;
       }
     }
+    setOpen(true);
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(safeUrl);
+      alert('Enlace copiado al portapapeles');
+      setOpen(false);
+    } catch {
+      // noop
+    }
+  };
+
+  const openWin = (href: string) => {
+    window.open(href, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -79,6 +96,32 @@ export default function ShareButton({
           <span>📤</span>
           <span>Compartir</span>
         </>
+      )}
+      {open && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+            display: 'grid', placeItems: 'center', zIndex: 1000
+          }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 320, maxWidth: '92vw', padding: 16,
+              borderRadius: 14, background: '#101418',
+              border: '1px solid rgba(255,255,255,0.12)', color: '#e5e7eb'
+            }}
+          >
+            <div style={{ fontWeight: 800, marginBottom: 12 }}>Compartir</div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              <button onClick={copyLink} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Copiar enlace</button>
+              <button onClick={() => openWin(`https://api.whatsapp.com/send?text=${encodeURIComponent((title || '') + ' ' + safeUrl)}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>WhatsApp</button>
+              <button onClick={() => openWin(`https://twitter.com/intent/tweet?url=${encodeURIComponent(safeUrl)}&text=${encodeURIComponent(title || '')}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Twitter / X</button>
+              <button onClick={() => openWin(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(safeUrl)}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Facebook</button>
+            </div>
+          </div>
+        </div>
       )}
     </motion.button>
   );

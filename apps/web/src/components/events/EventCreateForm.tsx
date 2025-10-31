@@ -13,6 +13,7 @@ import CostsEditor from "./CostsEditor";
 import DateFlyerUploader from "./DateFlyerUploader";
 import { MediaGrid } from "../MediaGrid";
 import { MediaUploader } from "../MediaUploader";
+import { useEventParentMedia } from "../../hooks/useEventParentMedia";
 
 const colors = {
   coral: '#FF3D57',
@@ -58,6 +59,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   // Mantener el estado de edición basado en si tenemos un ID
   const hasId = initialData?.id;
   const isActuallyEditing = isEditing && hasId;
+
+  // Media para parent (social) cuando estamos editando un existente
+  const parentMedia = isParent && isActuallyEditing && initialData?.id
+    ? useEventParentMedia(initialData.id)
+    : null;
 
   // Safety check para evitar errores de undefined
   if (!initialData && isEditing) {
@@ -401,22 +407,34 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   📷 Galería de Medios
                 </h2>
                 <MediaUploader onPick={(files) => {
-                  const now = Date.now();
-                  const picked = Array.from(files).map((f, i) => ({
-                    id: `${now}-${i}`,
-                    type: f.type.startsWith('video') ? 'video' : 'image',
-                    url: URL.createObjectURL(f)
-                  }));
-                  const current = (values?.media as any[]) || [];
-                  setValue('media', [...picked, ...current]);
+                  // Si estamos editando un parent existente, subir directo al storage y persistir en DB
+                  if (parentMedia) {
+                    Array.from(files).forEach((file, idx) => {
+                      parentMedia.add.mutate({ file, slot: `p${idx + 1}` });
+                    });
+                  } else {
+                    // Fallback para modo creación: previsualizar en estado local
+                    const now = Date.now();
+                    const picked = Array.from(files).map((f, i) => ({
+                      id: `${now}-${i}`,
+                      type: f.type.startsWith('video') ? 'video' : 'image',
+                      url: URL.createObjectURL(f)
+                    }));
+                    const current = (values?.media as any[]) || [];
+                    setValue('media', [...picked, ...current]);
+                  }
                 }} />
 
                 <div style={{ marginTop: 16 }}>
                   <MediaGrid
-                    items={(values?.media as any[]) || []}
+                    items={parentMedia ? (parentMedia.media as any[]) : ((values?.media as any[]) || [])}
                     onRemove={(id) => {
-                      const next = ((values?.media as any[]) || []).filter((m: any) => m.id !== id);
-                      setValue('media', next);
+                      if (parentMedia) {
+                        parentMedia.remove.mutate(id as string);
+                      } else {
+                        const next = ((values?.media as any[]) || []).filter((m: any) => m.id !== id);
+                        setValue('media', next);
+                      }
                     }}
                   />
                 </div>
@@ -696,10 +714,10 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   📅 Cronograma del Evento
                 </h2>
-                <ScheduleEditor
-                  value={values?.cronograma || []}
-                  onChange={(cronograma) => setValue('cronograma', cronograma)}
-                />
+                {(ScheduleEditor as any)({
+                  value: values?.cronograma || [],
+                  onChange: (cronograma: any) => setValue('cronograma', cronograma)
+                })}
               </div>
 
               {/* Costos - Solo para fechas */}
