@@ -284,7 +284,15 @@ export function EventParentEditScreen() {
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) parentMedia?.add?.mutate({ file, slot: 'avatar' } as any);
+                      if (!file) return;
+                      const sizeMB = file.size / (1024 * 1024);
+                      const MAX_IMAGE_SIZE_MB = 5;
+                      if (file.type.startsWith('image/') && sizeMB > MAX_IMAGE_SIZE_MB) {
+                        alert(`La imagen supera el límite de ${MAX_IMAGE_SIZE_MB} MB`);
+                        e.currentTarget.value = '';
+                        return;
+                      }
+                      parentMedia?.add?.mutate({ file, slot: 'avatar' } as any);
                       e.currentTarget.value = '';
                     }}
                   />

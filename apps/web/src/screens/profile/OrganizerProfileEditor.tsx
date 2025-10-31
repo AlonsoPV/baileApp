@@ -108,9 +108,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               fontSize: '1.4rem',
               fontWeight: '800',
               margin: 0,
-              color: "white",
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
+              color: "#FFFFFF",
             }}>
               {parent.nombre}
             </h4>
@@ -711,14 +709,19 @@ export default function OrganizerProfileEditor() {
         
         .org-editor-back {
           padding: 0.75rem 1.5rem;
-          background: rgba(255, 255, 255, 0.1);
-          color: #F5F5F5;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.15);
+          color: #FFFFFF;
+          border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 12px;
           font-size: 0.9rem;
           font-weight: 600;
           cursor: pointer;
           transition: 0.2s;
+        }
+        
+        .org-editor-back:hover {
+          background: rgba(255, 255, 255, 0.25);
+          border-color: rgba(255, 255, 255, 0.4);
         }
         
         .org-editor-title {
@@ -727,14 +730,28 @@ export default function OrganizerProfileEditor() {
           margin: 0;
           flex: 1 1 0%;
           text-align: center;
+          color: #FFFFFF;
         }
         
         .org-editor-card {
           margin-bottom: 3rem;
           padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.08);
           border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #FFFFFF;
+        }
+        
+        .org-editor-card h2 {
+          color: #FFFFFF;
+        }
+        
+        .org-editor-card h3 {
+          color: #FFFFFF;
+        }
+        
+        .org-editor-card p {
+          color: rgba(255, 255, 255, 0.9);
         }
         
         .org-editor-grid {
@@ -753,27 +770,53 @@ export default function OrganizerProfileEditor() {
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 600;
+          color: #FFFFFF;
+          font-size: 0.95rem;
         }
         
         .org-editor-input {
           width: 100%;
           padding: 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 8px;
-          color: #F5F5F5;
+          color: #FFFFFF;
           font-size: 1rem;
+        }
+        
+        .org-editor-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+        }
+        
+        .org-editor-input:focus {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+          outline: none;
+          color: #FFFFFF;
         }
         
         .org-editor-textarea {
           width: 100%;
           padding: 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 8px;
-          color: #F5F5F5;
+          color: #FFFFFF;
           font-size: 1rem;
           resize: vertical;
+        }
+        
+        .org-editor-textarea::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+        }
+        
+        .org-editor-textarea:focus {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+          outline: none;
+          color: #FFFFFF;
         }
         
         .org-editor-chips {
@@ -786,10 +829,22 @@ export default function OrganizerProfileEditor() {
           margin-bottom: 3rem;
           padding: 2.5rem;
           border-radius: 24px;
-          border: 2px solid rgba(255, 61, 87, 0.2);
+          border: 2px solid rgba(255, 61, 87, 0.3);
           box-shadow: 0 12px 40px rgba(255, 61, 87, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
           position: relative;
           overflow: hidden;
+          background: rgba(255, 255, 255, 0.08);
+          color: #FFFFFF;
+        }
+        
+        .org-events-section h2,
+        .org-events-section h3,
+        .org-events-section h4 {
+          color: #FFFFFF;
+        }
+        
+        .org-events-section p {
+          color: rgba(255, 255, 255, 0.9);
         }
         
         .org-create-button {
@@ -1224,10 +1279,7 @@ export default function OrganizerProfileEditor() {
                     fontSize: '1.75rem',
                     fontWeight: '800',
                     margin: 0,
-                    color: colors.light,
-
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
+                    color: '#FFFFFF',
                   }}>
                     Mis Sociales
                   </h2>
@@ -1280,10 +1332,7 @@ export default function OrganizerProfileEditor() {
                     fontSize: '1.4rem',
                     fontWeight: '700',
                     marginBottom: '0.75rem',
-                    color: colors.light,
-
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
+                    color: '#FFFFFF',
                   }}>
                     No tienes sociales creados
                   </h3>

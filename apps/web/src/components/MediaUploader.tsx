@@ -10,6 +10,21 @@ const colors = {
 
 export function MediaUploader({ onPick }:{ onPick:(files:FileList)=>void }) {
   const ref = useRef<HTMLInputElement | null>(null);
+  const MAX_IMAGE_SIZE_MB = 5;   // 5 MB
+  const MAX_VIDEO_SIZE_MB = 20;  // 20 MB
+
+  function validateFile(file: File): boolean {
+    const sizeMB = file.size / (1024 * 1024);
+    if (file.type.startsWith("image/") && sizeMB > MAX_IMAGE_SIZE_MB) {
+      alert(`La imagen supera el límite de ${MAX_IMAGE_SIZE_MB} MB`);
+      return false;
+    }
+    if (file.type.startsWith("video/") && sizeMB > MAX_VIDEO_SIZE_MB) {
+      alert(`El video supera el límite de ${MAX_VIDEO_SIZE_MB} MB`);
+      return false;
+    }
+    return true;
+  }
   
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -39,7 +54,18 @@ export function MediaUploader({ onPick }:{ onPick:(files:FileList)=>void }) {
         accept="image/*,video/mp4,video/quicktime,video/webm"
         multiple
         hidden
-        onChange={(e) => e.target.files && onPick(e.target.files)}
+        onChange={(e) => {
+          const files = e.target.files;
+          if (!files) return;
+          const arr = Array.from(files);
+          const allValid = arr.every(validateFile);
+          if (!allValid) {
+            e.currentTarget.value = '';
+            return;
+          }
+          onPick(files);
+          e.currentTarget.value = '';
+        }}
       />
       
       <p style={{ 

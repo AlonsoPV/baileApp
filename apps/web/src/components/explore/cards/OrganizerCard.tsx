@@ -100,7 +100,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
             }}>
               {item.nombre_publico}
             </span>
-            {item?.estado_aprobacion === 'aprobado' && (
+       {/*      {item?.estado_aprobacion === 'aprobado' && (
               <span style={{
                 marginLeft: 8,
                 border: '1px solid rgb(255 255 255 / 40%)',
@@ -113,7 +113,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
               }}>
                 ✅ Verificado
               </span>
-            )}
+            )} */}
           </div>
 
           {(ritmoNames.length > 0 || zonaNames.length > 0) && (
