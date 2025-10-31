@@ -164,27 +164,155 @@ export default function OrganizerEventDateEditScreen() {
 
   // ====== UI con la estructura/diseño solicitados ======
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
-      padding: '24px 0',
-      color: colors.light,
-      position: 'relative',
-    }}>
-      {/* Efecto de fondo decorativo */}
+    <>
+      <style>{`
+        .date-editor-input {
+          width: 100%;
+          padding: 0.875rem 1.125rem;
+          background: rgba(255, 255, 255, 0.12);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          color: #FFFFFF;
+          font-size: 1rem;
+          font-weight: 400;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+        
+        .date-editor-input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+          opacity: 1;
+        }
+        
+        .date-editor-input:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+        }
+        
+        .date-editor-input:focus {
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(30, 136, 229, 0.6);
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2),
+                      0 4px 16px rgba(30, 136, 229, 0.3),
+                      inset 0 1px 2px rgba(255, 255, 255, 0.1);
+          transform: translateY(-1px);
+        }
+        
+        .date-editor-textarea {
+          width: 100%;
+          padding: 0.875rem 1.125rem;
+          background: rgba(255, 255, 255, 0.12);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          color: #FFFFFF;
+          font-size: 1rem;
+          font-weight: 400;
+          resize: vertical;
+          min-height: 100px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+          font-family: inherit;
+          line-height: 1.6;
+        }
+        
+        .date-editor-textarea::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+          opacity: 1;
+        }
+        
+        .date-editor-textarea:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+        }
+        
+        .date-editor-textarea:focus {
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(30, 136, 229, 0.6);
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2),
+                      0 4px 16px rgba(30, 136, 229, 0.3),
+                      inset 0 1px 2px rgba(255, 255, 255, 0.1);
+          transform: translateY(-1px);
+        }
+        
+        .date-editor-field {
+          display: block;
+          margin-bottom: 0.75rem;
+          font-weight: 600;
+          color: #FFFFFF;
+          font-size: 0.95rem;
+          letter-spacing: -0.01em;
+        }
+        
+        input[type="date"].date-editor-input,
+        input[type="time"].date-editor-input {
+          cursor: pointer;
+        }
+        
+        input[type="date"].date-editor-input::-webkit-calendar-picker-indicator,
+        input[type="time"].date-editor-input::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          opacity: 0.7;
+          cursor: pointer;
+        }
+        
+        input[type="date"].date-editor-input::-webkit-calendar-picker-indicator:hover,
+        input[type="time"].date-editor-input::-webkit-calendar-picker-indicator:hover {
+          opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+          .date-editor-input,
+          .date-editor-textarea {
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 10px;
+          }
+          
+          .date-editor-field {
+            font-size: 0.9rem;
+            margin-bottom: 0.625rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .date-editor-input,
+          .date-editor-textarea {
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9rem;
+            border-radius: 8px;
+          }
+          
+          .date-editor-field {
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+          }
+        }
+      `}</style>
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: `radial-gradient(circle at 20% 50%, rgba(30, 136, 229, 0.05) 0%, transparent 50%),
-                     radial-gradient(circle at 80% 80%, rgba(255, 61, 87, 0.05) 0%, transparent 50%)`,
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
-      
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
+        padding: '24px 0',
+        color: colors.light,
+        position: 'relative',
+      }}>
+        {/* Efecto de fondo decorativo */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `radial-gradient(circle at 20% 50%, rgba(30, 136, 229, 0.05) 0%, transparent 50%),
+                       radial-gradient(circle at 80% 80%, rgba(255, 61, 87, 0.05) 0%, transparent 50%)`,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }} />
+        
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
         {/* Header con título */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -296,7 +424,7 @@ export default function OrganizerEventDateEditScreen() {
             </h3>
             <div className="org-editor-grid">
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Nombre del Evento *
                 </label>
                 <input
@@ -304,11 +432,11 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   placeholder="Nombre del evento"
-                  className="org-editor-input"
+                  className="date-editor-input"
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Biografía
                 </label>
                 <textarea
@@ -316,7 +444,7 @@ export default function OrganizerEventDateEditScreen() {
                   onChange={(e) => setForm({ ...form, biografia: e.target.value })}
                   placeholder="Describe el evento, su propósito, qué esperar..."
                   rows={4}
-                  className="org-editor-textarea"
+                  className="date-editor-textarea"
                 />
               </div>
             </div>
@@ -467,7 +595,7 @@ export default function OrganizerEventDateEditScreen() {
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Fecha *
                 </label>
                 <input
@@ -475,32 +603,29 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.fecha}
                   onChange={(e) => setForm({ ...form, fecha: e.target.value })}
                   required
-                  className="org-editor-input"
-                  style={{ color: '#FFFFFF' }}
+                  className="date-editor-input"
                 />
               </div>
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Hora Inicio
                 </label>
                 <input
                   type="time"
                   value={form.hora_inicio}
                   onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                  className="org-editor-input"
-                  style={{ color: '#FFFFFF' }}
+                  className="date-editor-input"
                 />
               </div>
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Hora Fin
                 </label>
                 <input
                   type="time"
                   value={form.hora_fin}
                   onChange={(e) => setForm({ ...form, hora_fin: e.target.value })}
-                  className="org-editor-input"
-                  style={{ color: '#FFFFFF' }}
+                  className="date-editor-input"
                 />
               </div>
             </div>
@@ -544,7 +669,7 @@ export default function OrganizerEventDateEditScreen() {
             </h3>
             <div className="org-editor-grid">
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Lugar
                 </label>
                 <input
@@ -552,11 +677,11 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.lugar}
                   onChange={(e) => setForm({ ...form, lugar: e.target.value })}
                   placeholder="Nombre del lugar"
-                  className="org-editor-input"
+                  className="date-editor-input"
                 />
               </div>
               <div>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Ciudad
                 </label>
                 <input
@@ -564,11 +689,11 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.ciudad}
                   onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
                   placeholder="Ciudad"
-                  className="org-editor-input"
+                  className="date-editor-input"
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Dirección
                 </label>
                 <input
@@ -576,11 +701,11 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.direccion}
                   onChange={(e) => setForm({ ...form, direccion: e.target.value })}
                   placeholder="Dirección completa"
-                  className="org-editor-input"
+                  className="date-editor-input"
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Referencias
                 </label>
                 <input
@@ -588,11 +713,11 @@ export default function OrganizerEventDateEditScreen() {
                   value={form.referencias}
                   onChange={(e) => setForm({ ...form, referencias: e.target.value })}
                   placeholder="Puntos de referencia, cómo llegar..."
-                  className="org-editor-input"
+                  className="date-editor-input"
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">
+                <label className="date-editor-field">
                   Requisitos
                 </label>
                 <textarea
@@ -600,7 +725,7 @@ export default function OrganizerEventDateEditScreen() {
                   onChange={(e) => setForm({ ...form, requisitos: e.target.value })}
                   placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
                   rows={3}
-                  className="org-editor-textarea"
+                  className="date-editor-textarea"
                 />
               </div>
             </div>
@@ -826,5 +951,6 @@ export default function OrganizerEventDateEditScreen() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }
