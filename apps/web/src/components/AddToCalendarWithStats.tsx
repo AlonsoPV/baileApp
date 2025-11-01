@@ -372,22 +372,43 @@ export default function AddToCalendarWithStats({
         onClick={() => setOpen((v) => !v)}
         disabled={loading}
         style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.14)",
+          padding: "12px 16px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.18)",
           background: added
-            ? "linear-gradient(135deg, rgba(76,175,80,.25), rgba(76,175,80,.15))"
-            : "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))",
+            ? "linear-gradient(135deg, rgba(76,175,80,.30), rgba(76,175,80,.18))"
+            : "linear-gradient(135deg, rgba(127,124,255,0.18), rgba(33,212,253,0.14))",
           color: "#fff",
-          fontWeight: 800,
+          fontWeight: 900,
+          letterSpacing: '.01em',
           cursor: loading ? "not-allowed" : "pointer",
-          boxShadow: added ? "0 8px 22px rgba(76,175,80,0.28)" : "0 8px 22px rgba(0,0,0,0.35)",
+          boxShadow: added ? "0 10px 26px rgba(76,175,80,0.30)" : "0 10px 28px rgba(0,0,0,0.35)",
           backdropFilter: "blur(8px)",
           opacity: loading ? 0.7 : 1,
         }}
         aria-label={added ? "Evento añadido al calendario" : "Añadir evento al calendario"}
       >
-        {added ? "✅ Añadido" : loading ? "⏳ Cargando..." : "📅 Añadir a calendario"}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span
+            aria-hidden
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              background: added
+                ? 'linear-gradient(135deg, #4CAF50, #81C784)'
+                : 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
+              boxShadow: added
+                ? '0 4px 10px rgba(129,199,132,0.35)'
+                : '0 4px 10px rgba(33,212,253,0.35)'
+            }}
+          >
+            📅
+          </span>
+          <span>{added ? "Añadido" : loading ? "Cargando..." : "Añadir a calendario"}</span>
+        </span>
       </motion.button>
 
       {/* Contador de interesados en formato pill */}
@@ -402,20 +423,34 @@ export default function AddToCalendarWithStats({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
-              padding: '6px 10px',
+              gap: 8,
+              padding: '7px 12px',
               borderRadius: 999,
-              background: 'linear-gradient(135deg, rgba(127,124,255,.25), rgba(33,212,253,.20))',
-              border: '1px solid rgba(255,255,255,0.18)',
+              background: 'linear-gradient(135deg, rgba(127,124,255,.28), rgba(33,212,253,.22))',
+              border: '1px solid rgba(255,255,255,0.22)',
               color: '#fff',
               fontSize: 13,
-              fontWeight: 800,
-              boxShadow: '0 6px 18px rgba(33,212,253,0.20)'
+              fontWeight: 900,
+              boxShadow: '0 8px 22px rgba(33,212,253,0.25)',
+              backdropFilter: 'blur(8px)'
             }}
             aria-live="polite"
           >
-            <span>👥</span>
-            <span>{count}</span>
+            <span
+              aria-hidden
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
+                boxShadow: '0 2px 8px rgba(33,212,253,0.35)'
+              }}
+            >
+              👥
+            </span>
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{count}</span>
             <span style={{ opacity: 0.9 }}>interesado{count !== 1 ? 's' : ''}</span>
           </motion.div>
         )}

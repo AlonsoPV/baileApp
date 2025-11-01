@@ -547,6 +547,9 @@ export default function EventDatePublicScreen() {
     .card{border-radius:14px;padding:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10)}
     .loc{border-color:rgba(240,147,251,0.22);background:linear-gradient(135deg,rgba(240,147,251,.08),rgba(240,147,251,.04))}
     .req{border-color:rgba(255,209,102,0.22);background:linear-gradient(135deg,rgba(255,209,102,.08),rgba(255,209,102,.04))}
+    .loc-inline{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+    .loc-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .75rem;border-radius:999px;font-weight:800;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#fff}
     .row{display:grid;grid-template-columns:22px 1fr;gap:.5rem;align-items:start;color:rgba(255,255,255,.92)}
     .row+.row{margin-top:.5rem}
     .muted{color:rgba(255,255,255,.72)}
@@ -575,10 +578,20 @@ export default function EventDatePublicScreen() {
             <div className="card loc" aria-label="Ubicación">
               {date.lugar || date.direccion || date.ciudad || date.referencias ? (
                 <>
-                  <div className="row"><span>🏷️</span><div><b>Lugar</b><div className="muted">{date.lugar || '—'}</div></div></div>
-                  <div className="row"><span>🧭</span><div><b>Dirección</b><div className="muted">{date.direccion || '—'}</div></div></div>
-                  <div className="row"><span>🏙️</span><div><b>Ciudad</b><div className="muted">{date.ciudad || '—'}</div></div></div>
-                  {date.referencias && <div className="row"><span>📌</span><div><b>Referencias</b><div className="muted">{date.referencias}</div></div></div>}
+                  <div className="loc-inline">
+                    {date.lugar && (
+                      <span className="loc-chip">🏷️ <b>Lugar:</b> <span className="muted">{date.lugar}</span></span>
+                    )}
+                    {date.direccion && (
+                      <span className="loc-chip">🧭 <b>Dirección:</b> <span className="muted">{date.direccion}</span></span>
+                    )}
+                    {date.ciudad && (
+                      <span className="loc-chip">🏙️ <b>Ciudad:</b> <span className="muted">{date.ciudad}</span></span>
+                    )}
+                    {date.referencias && (
+                      <span className="loc-chip">📌 <b>Referencias:</b> <span className="muted">{date.referencias}</span></span>
+                    )}
+                  </div>
                   {(date.lugar || date.direccion || date.ciudad) && <div className="divider" />}
                   <div className="actions">
                     {(date.direccion || date.lugar || date.ciudad) && (
@@ -664,7 +677,7 @@ export default function EventDatePublicScreen() {
     }
     .avatar + .avatar { margin-left:-8px }
     .muted { color:rgba(255,255,255,.75); font-size:.9rem }
-    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center }
+    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
     .btn-ghost {
       display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .95rem; border-radius:999px;
       border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-weight:800
@@ -704,11 +717,9 @@ export default function EventDatePublicScreen() {
             {/* Fila 2: Agregar a calendario (solo si interesado) */}
             {userStatus === 'interesado' && (
               <div className="card" aria-label="Agregar evento a calendario">
-                <div style={{ display: 'grid', gap: '.75rem' }}>
+                <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
                   <h3 className="headline">🗓️ Calendario</h3>
-                  <p className="muted" style={{ margin: 0 }}>
-                    Agrega la fecha a tu agenda en un clic.
-                  </p>
+                 
 
                   <div className="cta-row">
                     <AddToCalendarWithStats
