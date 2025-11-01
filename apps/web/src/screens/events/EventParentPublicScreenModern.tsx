@@ -12,6 +12,7 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RitmosChips from "../../components/RitmosChips";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -1645,18 +1646,36 @@ export default function EventParentPublicScreen() {
             className="social-info-grid"
           >
               {/* Ritmos */}
-              {(((parent as any).ritmos_seleccionados && (parent as any).ritmos_seleccionados.length > 0) || getRitmoNombres().length > 0) && (
-                <div className="social-info-section">
-                  <h3 className="social-info-title">
-                    🎵 Ritmos
-                  </h3>
-                  <RitmosChips
-                    selected={(parent as any).ritmos_seleccionados || []}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                </div>
-              )}
+              {(() => {
+                let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
+                  ? ((parent as any).ritmos_seleccionados as string[])
+                  : [];
+                if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray(parent.estilos) && parent.estilos.length > 0 && Array.isArray(ritmos)) {
+                  const nameByTagId = new Map<number, string>();
+                  ritmos.forEach((t: any) => nameByTagId.set(t.id, t.nombre));
+                  const catalogIdByLabel = new Map<string, string>();
+                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
+                  selectedCatalogIds = (parent.estilos as number[])
+                    .map(tagId => nameByTagId.get(tagId))
+                    .filter(Boolean)
+                    .map(label => catalogIdByLabel.get(label as string))
+                    .filter(Boolean) as string[];
+                }
+
+                if ((selectedCatalogIds?.length || 0) === 0) return null;
+                return (
+                  <div className="social-info-section">
+                    <h3 className="social-info-title">
+                      🎵 Ritmos
+                    </h3>
+                    <RitmosChips
+                      selected={selectedCatalogIds}
+                      onChange={() => {}}
+                      readOnly={true}
+                    />
+                  </div>
+                );
+              })()}
 
               {/* Zonas */}
               {getZonaNombres().length > 0 && (

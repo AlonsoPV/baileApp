@@ -9,6 +9,8 @@ import ShareButton from "../../components/events/ShareButton";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import RitmosChips from "../../components/RitmosChips";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -929,41 +931,65 @@ export default function EventParentPublicScreen() {
             </div>
 
             {/* Chips de Ritmos y Zonas */}
-            <div className="social-chips">
-              {parent.estilos?.map((ritmoId: number) => (
-                <motion.span
-                  key={ritmoId}
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                  }}
-                >
-                  🎵 {getRitmoName(ritmoId)}
-                </motion.span>
-              ))}
+            {(() => {
+              // Resolver ritmos seleccionados: preferir catálogo (string ids), si no hay, mapear desde estilos (tags)
+              let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
+                ? ((parent as any).ritmos_seleccionados as string[])
+                : [];
+              if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((parent as any)?.estilos) && (parent as any).estilos.length > 0 && Array.isArray(ritmos)) {
+                const nameByTagId = new Map<number, string>();
+                ritmos.forEach((t: any) => nameByTagId.set(t.id, t.nombre));
+                const catalogIdByLabel = new Map<string, string>();
+                RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
+                selectedCatalogIds = ((parent as any).estilos as number[])
+                  .map(tagId => nameByTagId.get(tagId))
+                  .filter(Boolean)
+                  .map(label => catalogIdByLabel.get(label as string))
+                  .filter(Boolean) as string[];
+              }
 
-              {parent.zonas?.map((zonaId: number) => (
-                <motion.span
-                  key={zonaId}
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                  }}
-                >
-                  📍 {getZonaName(zonaId)}
-                </motion.span>
-              ))}
-            </div>
+              return (
+                <div className="social-chips">
+                  {Array.isArray(selectedCatalogIds) && selectedCatalogIds.length > 0 ? (
+                    <RitmosChips selected={selectedCatalogIds} onChange={() => {}} readOnly={true} />
+                  ) : (
+                    (parent.estilos || []).map((ritmoId: number) => (
+                      <motion.span
+                        key={ritmoId}
+                        whileHover={{ scale: 1.05 }}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '20px',
+                          background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                          color: colors.light,
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                        }}
+                      >
+                        🎵 {getRitmoName(ritmoId)}
+                      </motion.span>
+                    ))
+                  )}
+
+                  {(parent.zonas || []).map((zonaId: number) => (
+                    <motion.span
+                      key={zonaId}
+                      whileHover={{ scale: 1.05 }}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                      }}
+                    >
+                      📍 {getZonaName(zonaId)}
+                    </motion.span>
+                  ))}
+                </div>
+              );
+            })()}
 
 
           </div>
