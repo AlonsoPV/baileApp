@@ -930,7 +930,7 @@ export default function EventParentPublicScreen() {
             </motion.div>
           )}
 
-          {/* Galería */}
+          {/* Galería  */}
           {carouselPhotos.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
