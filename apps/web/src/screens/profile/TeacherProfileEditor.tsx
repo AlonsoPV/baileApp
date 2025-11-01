@@ -84,11 +84,11 @@ export default function TeacherProfileEditor() {
 
   const handleSave = async () => {
     try {
-      console.log("🚀 [AcademyProfileEditor] ===== INICIANDO GUARDADO =====");
-      console.log("📤 [AcademyProfileEditor] Datos a enviar:", form);
-      console.log("📱 [AcademyProfileEditor] Redes sociales:", form.redes_sociales);
-      console.log("📝 [AcademyProfileEditor] Nombre público:", form.nombre_publico);
-      console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
+      console.log("🚀 [teacherProfileEditor] ===== INICIANDO GUARDADO =====");
+      console.log("📤 [teacherProfileEditor] Datos a enviar:", form);
+      console.log("📱 [teacherProfileEditor] Redes sociales:", form.redes_sociales);
+      console.log("📝 [teacherProfileEditor] Nombre público:", form.nombre_publico);
+      console.log("📄 [teacherProfileEditor] Bio:", form.bio);
       console.log("🎵 [TeacherProfileEditor] Ritmos:", (form as any).ritmos);
       // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
       let outSelected = ((((form as any)?.ritmos_seleccionados) || []) as string[]);
@@ -106,9 +106,9 @@ export default function TeacherProfileEditor() {
       }
 
       await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
-      console.log("✅ [AcademyProfileEditor] Guardado exitoso");
+      console.log("✅ [teacherProfileEditor] Guardado exitoso");
     } catch (error) {
-      console.error("❌ [AcademyProfileEditor] Error guardando:", error);
+      console.error("❌ [teacherProfileEditor] Error guardando:", error);
     }
   };
 
@@ -559,12 +559,12 @@ export default function TeacherProfileEditor() {
                         setEditingIndex(null);
                         setEditInitial(undefined);
                         // eslint-disable-next-line no-console
-                        console.log('[AcademyProfileEditor] Clase editada y guardada');
+                        console.log('[teacherProfileEditor] Clase editada y guardada');
                       })
                       .catch((e) => {
                         setStatusMsg({ type: 'err', text: '❌ Error al actualizar clase' });
                         // eslint-disable-next-line no-console
-                        console.error('[AcademyProfileEditor] Error editando clase', e);
+                        console.error('[teacherProfileEditor] Error editando clase', e);
                         throw e;
                       });
                   } else {
@@ -609,12 +609,12 @@ export default function TeacherProfileEditor() {
                         setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
                         setTimeout(() => setStatusMsg(null), 2400);
                         // eslint-disable-next-line no-console
-                        console.log('[AcademyProfileEditor] Clase creada y guardada');
+                        console.log('[teacherProfileEditor] Clase creada y guardada');
                       })
                       .catch((e) => {
                         setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });
                         // eslint-disable-next-line no-console
-                        console.error('[AcademyProfileEditor] Error guardando clase', e);
+                        console.error('[teacherProfileEditor] Error guardando clase', e);
                         throw e;
                       });
                   }
@@ -695,7 +695,7 @@ export default function TeacherProfileEditor() {
                               .catch((e) => {
                                 setStatusMsg({ type: 'err', text: '❌ Error al eliminar clase' });
                                 // eslint-disable-next-line no-console
-                                console.error('[AcademyProfileEditor] Error eliminando clase', e);
+                                console.error('[teacherProfileEditor] Error eliminando clase', e);
                               });
                           }}
                           style={{
