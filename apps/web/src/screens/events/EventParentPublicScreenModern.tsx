@@ -698,7 +698,7 @@ export default function EventParentPublicScreen() {
               </motion.p>
 
               {/* Barra de datos clave (sin RSVP) */}
-        {/*       {nextDate && (
+              {/*       {nextDate && (
                 <div className="info-strip" aria-label="Datos clave de la próxima fecha">
                   <span className="info-chip">📅 {new Date(nextDate.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                   {nextDate.hora_inicio && <span className="info-chip">🕒 {nextDate.hora_inicio}{nextDate.hora_fin ? ` – ${nextDate.hora_fin}` : ''}</span>}
@@ -773,16 +773,16 @@ export default function EventParentPublicScreen() {
                     <div>
                       <h3 style={{
                         margin: 0, fontSize: '1.25rem', fontWeight: 900,
-                        background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                        background: 'white',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
                       }}>
-                        Conoce el enfoque musical y las áreas donde se realizamos nuestros eventos
+                        Conoce el enfoque musical y donde se realizamos nuestros socialess
                       </h3>
-                      
+
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gap: '.9rem' }}>
+                  <div style={{ display: 'flex', gap: '.9rem' }}>
                     {selectedCatalogIds.length > 0 && (
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
@@ -804,7 +804,7 @@ export default function EventParentPublicScreen() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
                           <strong style={{ fontSize: '.95rem' }}>📍 Zonas</strong>
-                        {/*   <span style={{
+                          {/*   <span style={{
                             fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
                             border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
                           }}>
