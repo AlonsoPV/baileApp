@@ -90,8 +90,22 @@ export default function TeacherProfileEditor() {
       console.log("📝 [AcademyProfileEditor] Nombre público:", form.nombre_publico);
       console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
       console.log("🎵 [TeacherProfileEditor] Ritmos:", (form as any).ritmos);
+      // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
+      let outSelected = ((((form as any)?.ritmos_seleccionados) || []) as string[]);
+      const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+      if ((!outSelected || outSelected.length === 0) && Array.isArray((form as any).ritmos) && (form as any).ritmos.length > 0) {
+        const labelToItemId = new Map<string, string>();
+        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.label, i.id)));
+        const names = ((form as any).ritmos as number[])
+          .map(id => ritmoTags.find((t: any) => t.id === id)?.nombre)
+          .filter(Boolean) as string[];
+        const mapped = names
+          .map(n => labelToItemId.get(n))
+          .filter(Boolean) as string[];
+        if (mapped.length > 0) outSelected = mapped;
+      }
 
-      await upsert.mutateAsync(form);
+      await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
       console.log("✅ [AcademyProfileEditor] Guardado exitoso");
     } catch (error) {
       console.error("❌ [AcademyProfileEditor] Error guardando:", error);
