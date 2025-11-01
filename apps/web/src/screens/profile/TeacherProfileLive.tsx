@@ -646,7 +646,7 @@ export default function TeacherProfileLive() {
               }}>
                 {(teacher as any)?.nombre_publico}
               </h1>
-              {(teacher as any)?.estado_aprobacion === 'aprobado' && (
+             {/*  {(teacher as any)?.estado_aprobacion === 'aprobado' && (
                 <span style={{
                   marginLeft: 12,
                   border: '1px solid rgb(255 255 255 / 40%)',
@@ -661,7 +661,7 @@ export default function TeacherProfileLive() {
                 }}>
                   ✅ Verificado
                 </span>
-              )}
+              )} */}
               <p style={{
                 fontSize: '1.25rem',
                 color: 'rgba(255, 255, 255, 0.9)',
