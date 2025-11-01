@@ -572,28 +572,49 @@ export default function EventDatePublicScreen() {
   <div style={{ position:'relative' }}>
     <div style={{ position:'absolute', top:0, left:0, right:0, height:4, borderRadius:12, background:'linear-gradient(90deg, #1E88E5, #00BCD4)' }} />
     <h3 style={{ marginTop:10, fontSize:'1.3rem', fontWeight:800, display:'flex', alignItems:'center', gap:8, color:'#fff' }}>🎯 Asistencia y Calendario</h3>
-    <div style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
-      <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
-      <AddToCalendarWithStats
-        eventId={date.id}
-        title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-        description={date.biografia || parent?.descripcion || undefined}
-        location={date.lugar || date.ciudad || date.direccion || undefined}
-        start={(() => {
-          const fechaStr = (date.fecha || '').split('T')[0] || '';
-          const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
-          const d = new Date(`${fechaStr}T${h}:00`);
-          return isNaN(d.getTime()) ? new Date() : d;
-        })()}
-        end={(() => {
-          const fechaStr = (date.fecha || '').split('T')[0] || '';
-          const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
-          const d = new Date(`${fechaStr}T${h}:00`);
-          if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
-          return d;
-        })()}
-        showAsIcon={false}
-      />
+    <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:12, alignItems:'center' }}>
+      {/* Centro: RSVP y, si procede, botón de calendario */}
+      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+        <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+        {userStatus === 'interesado' && (
+          <AddToCalendarWithStats
+            eventId={date.id}
+            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+            description={date.biografia || parent?.descripcion || undefined}
+            location={date.lugar || date.ciudad || date.direccion || undefined}
+            start={(() => {
+              const fechaStr = (date.fecha || '').split('T')[0] || '';
+              const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
+              const d = new Date(`${fechaStr}T${h}:00`);
+              return isNaN(d.getTime()) ? new Date() : d;
+            })()}
+            end={(() => {
+              const fechaStr = (date.fecha || '').split('T')[0] || '';
+              const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
+              const d = new Date(`${fechaStr}T${h}:00`);
+              if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
+              return d;
+            })()}
+            showAsIcon={false}
+          />
+        )}
+      </div>
+      {/* Contador más visible */}
+      {stats && (
+        <div style={{
+          justifySelf:'end',
+          padding: '.5rem .9rem',
+          borderRadius: 999,
+          background: 'linear-gradient(135deg, rgba(30,136,229,0.2), rgba(0,188,212,0.2))',
+          border: '1px solid rgba(30,136,229,0.35)',
+          boxShadow: '0 6px 18px rgba(30,136,229,0.25)',
+          color: '#fff',
+          fontWeight: 800,
+          fontSize: '.95rem'
+        }}>
+          {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   </div>
 </motion.section>
