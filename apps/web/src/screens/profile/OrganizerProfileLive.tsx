@@ -887,7 +887,9 @@ export function OrganizerProfileLive() {
               style={{
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '10px'
               }}
             >
               <div
@@ -941,8 +943,9 @@ export function OrganizerProfileLive() {
                 }} />
               </div>
               {/* Estado debajo del avatar */}
-              <div style={{ marginTop: spacing[3], display: 'flex', justifyContent: 'center' }}>
-                <span
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
                   style={{
                     padding: `${spacing[2]} ${spacing[4]}`,
                     borderRadius: borderRadius.full,
@@ -965,7 +968,7 @@ export function OrganizerProfileLive() {
                   }}
                 >
                   {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}
-                </span>
+                </motion.span>
               </div>
             </motion.div>
 

@@ -573,6 +573,8 @@ export default function AcademyProfileLive() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
+              flexDirection: 'column',
+              gap: '10px'
             }}>
               <div className="academy-banner-avatar">
                 {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
@@ -599,6 +601,34 @@ export default function AcademyProfileLive() {
                     {academy.nombre_publico?.[0]?.toUpperCase() || '🎓'}
                   </div>
                 )}
+              </div>
+              {/* Estado debajo del avatar */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 9999,
+                    background: (academy as any)?.estado_aprobacion === 'aprobado'
+                      ? 'linear-gradient(135deg, #10B981cc, #10B98199)'
+                      : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                    border: `2px solid ${(academy as any)?.estado_aprobacion === 'aprobado' ? '#10B981' : '#1E88E5'}`,
+                    color: '#FFFFFF',
+                    fontSize: '0.875rem',
+                    fontWeight: 800,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: (academy as any)?.estado_aprobacion === 'aprobado'
+                      ? '0 4px 16px rgba(16,185,129,0.4)'
+                      : '0 4px 16px rgba(30,136,229,0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}
+                </motion.span>
               </div>
             </div>
 
