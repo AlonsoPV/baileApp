@@ -412,7 +412,7 @@ export default function AddToCalendarWithStats({
       </motion.button>
 
       {/* Contador de interesados en formato pill */}
-      <AnimatePresence initial={false}>
+      {/* <AnimatePresence initial={false}>
         {count > 0 && (
           <motion.div
             key={count}
@@ -454,7 +454,7 @@ export default function AddToCalendarWithStats({
             <span style={{ opacity: 0.9 }}>interesado{count !== 1 ? 's' : ''}</span>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
 
   {typeof document !== 'undefined' && document.body && createPortal(
     <>

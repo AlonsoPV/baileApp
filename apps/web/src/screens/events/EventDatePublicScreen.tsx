@@ -710,14 +710,8 @@ export default function EventDatePublicScreen() {
                   currentStatus={userStatus}
                   onStatusChange={toggleInterested}
                   disabled={isUpdating}
+                  interestedCount={interestedCount}
                 />
-
-                {/* Contador de interesados */}
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div className="chip-count" aria-live="polite">
-                    👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
-                  </div>
-                </div>
 
                 {/* Prueba social + microcopy */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>

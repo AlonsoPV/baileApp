@@ -18,6 +18,7 @@ interface RSVPButtonsProps {
   style?: React.CSSProperties;
   className?: string;
   disabled?: boolean;
+  interestedCount?: number;
 }
 
 export default function RSVPButtons({
@@ -25,7 +26,8 @@ export default function RSVPButtons({
   onStatusChange,
   style,
   className,
-  disabled = false
+  disabled = false,
+  interestedCount
 }: RSVPButtonsProps) {
   const isInterested = currentStatus === 'interesado';
 
@@ -121,6 +123,26 @@ export default function RSVPButtons({
           </motion.div>
         )}
       </motion.button>
+
+      {typeof interestedCount === 'number' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginLeft: 12 }}>
+          <div
+            aria-live="polite"
+            style={{
+              padding: '.5rem .85rem',
+              borderRadius: 999,
+              fontWeight: 900,
+              fontSize: '.95rem',
+              background: 'linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28))',
+              border: '1px solid rgba(30,136,229,.45)',
+              color: '#fff',
+              boxShadow: '0 8px 22px rgba(30,136,229,.30)'
+            }}
+          >
+            👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

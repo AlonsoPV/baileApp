@@ -665,6 +665,22 @@ export default function EventParentPublicScreen() {
     (parent as any).portada_url ||
     carouselPhotos[0];
 
+  // Ritmos seleccionados (catálogo)
+  let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
+    ? ((parent as any).ritmos_seleccionados as string[])
+    : [];
+  if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray(parent.estilos) && parent.estilos.length > 0 && Array.isArray(ritmos)) {
+    const nameByTagId = new Map<number, string>();
+    ritmos.forEach((t: any) => nameByTagId.set(t.id, t.nombre));
+    const catalogIdByLabel = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
+    selectedCatalogIds = (parent.estilos as number[])
+      .map(tagId => nameByTagId.get(tagId))
+      .filter(Boolean)
+      .map(label => catalogIdByLabel.get(label as string))
+      .filter(Boolean) as string[];
+  }
+
   // Construir items para el slider de fechas
   const dateItems = (dates || []).map((d: any) => {
     const hora = d.hora_inicio && d.hora_fin
@@ -1624,6 +1640,28 @@ export default function EventParentPublicScreen() {
                   />
                 </motion.div>
               </motion.div>
+
+              {/* Ritmos y Zonas integrados en el hero */}
+              {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
+                <div style={{ marginTop: '1rem', display: 'grid', gap: '.75rem' }}>
+                  {selectedCatalogIds.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '.9rem', opacity: .85, marginBottom: '.35rem' }}>🎵 Ritmos</div>
+                      <RitmosChips selected={selectedCatalogIds} onChange={() => {}} readOnly={true} />
+                    </div>
+                  )}
+                  {getZonaNombres().length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '.9rem', opacity: .85, marginBottom: '.35rem' }}>📍 Zonas</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+                        {getZonaNombres().map((zona) => (
+                          <span key={zona} className="social-info-chip">{zona}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Columna derecha: Avatar */}
@@ -1661,61 +1699,6 @@ export default function EventParentPublicScreen() {
 
         {/* Contenido Principal */}
         <div className="social-main-content">
-          {/* Información del Evento */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="social-info-grid"
-          >
-              {/* Ritmos */}
-              {(() => {
-                let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
-                  ? ((parent as any).ritmos_seleccionados as string[])
-                  : [];
-                if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray(parent.estilos) && parent.estilos.length > 0 && Array.isArray(ritmos)) {
-                  const nameByTagId = new Map<number, string>();
-                  ritmos.forEach((t: any) => nameByTagId.set(t.id, t.nombre));
-                  const catalogIdByLabel = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-                  selectedCatalogIds = (parent.estilos as number[])
-                    .map(tagId => nameByTagId.get(tagId))
-                    .filter(Boolean)
-                    .map(label => catalogIdByLabel.get(label as string))
-                    .filter(Boolean) as string[];
-                }
-
-                if ((selectedCatalogIds?.length || 0) === 0) return null;
-                return (
-                  <div className="social-info-section">
-                    <h3 className="social-info-title">
-                      🎵 Ritmos
-                    </h3>
-                    <RitmosChips
-                      selected={selectedCatalogIds}
-                      onChange={() => {}}
-                      readOnly={true}
-                    />
-                  </div>
-                );
-              })()}
-
-              {/* Zonas */}
-              {getZonaNombres().length > 0 && (
-                <div className="social-info-section">
-                  <h3 className="social-info-title">
-                    📍 Zonas
-                  </h3>
-                  <div className="social-info-chips">
-                    {getZonaNombres().map((zona) => (
-                      <span key={zona} className="social-info-chip">
-                        {zona}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-          </motion.div>
 
           {/* Descripción */}
           {parent.descripcion && (
@@ -1734,6 +1717,27 @@ export default function EventParentPublicScreen() {
             </motion.div>
           )}
 
+          {/* Próximas Fechas (debajo de descripción) */}
+          {dates && dates.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="social-dates-section"
+            >
+              <div className="social-dates-header">
+                <div className="social-dates-icon">📅</div>
+                <div>
+                  <h3 className="social-dates-title">Próximas Fechas</h3>
+                  <p className="social-dates-subtitle">
+                    {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
+            </motion.div>
+          )}
+
           {/* Ubicaciones */}
           {(parent as any).ubicaciones && Array.isArray((parent as any).ubicaciones) && (parent as any).ubicaciones.length > 0 && (
             <motion.div
@@ -1749,104 +1753,7 @@ export default function EventParentPublicScreen() {
             </motion.div>
           )}
 
-        {/* Asistencia y Calendario (para la próxima fecha) */}
-        {nextDate && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="glass-card-container"
-            aria-label="Asistencia y calendario"
-            style={{ padding: '1.25rem' }}
-          >
-            <style>{`
-      .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
-      .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
-      .chip-count {
-        padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
-        background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
-        border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
-      }
-      .muted { color:rgba(255,255,255,.75); font-size:.9rem }
-      .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
-      .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
-    `}</style>
-
-            <div className="rsvp-grid">
-              <div className="card" aria-label="Confirmar asistencia">
-                <div style={{ display: 'grid', gap: '.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
-                    <h3 className="headline">🎯 Asistencia</h3>
-                  </div>
-                  <RSVPButtons
-                    currentStatus={userStatus}
-                    onStatusChange={toggleInterested}
-                    disabled={isUpdating}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <div className="chip-count" aria-live="polite">
-                      👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {userStatus === 'interesado' && (
-                <div className="card" aria-label="Agregar evento a calendario">
-                  <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
-                    <h3 className="headline">🗓️ Calendario</h3>
-                    <div className="cta-row">
-                      <AddToCalendarWithStats
-                        eventId={nextDate.id}
-                        title={nextDate.nombre || parent.nombre}
-                        description={nextDate.biografia || parent.descripcion}
-                        location={nextDate.lugar || nextDate.ciudad || nextDate.direccion}
-                        start={(() => {
-                          const fechaStr = (nextDate.fecha || '').split('T')[0] || '';
-                          const h = (nextDate.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                          const d = new Date(`${fechaStr}T${h}:00`);
-                          return isNaN(d.getTime()) ? new Date() : d;
-                        })()}
-                        end={(() => {
-                          const fechaStr = (nextDate.fecha || '').split('T')[0] || '';
-                          const h = (nextDate.hora_fin || nextDate.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-                          const d = new Date(`${fechaStr}T${h}:00`);
-                          if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
-                          return d;
-                        })()}
-                        showAsIcon={false}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
- {/* Próximas Fechas */}
- {dates && dates.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="social-dates-section"
-            >
-              <div className="social-dates-header">
-                <div className="social-dates-icon">
-                  📅
-                </div>
-                <div>
-                  <h3 className="social-dates-title">
-                    Próximas Fechas
-                  </h3>
-                  <p className="social-dates-subtitle">
-                    {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
-            </motion.div>
-          )}
+      
           {/* FAQ */}
           {parent.faq && Array.isArray(parent.faq) && parent.faq.length > 0 && (
             <motion.div
