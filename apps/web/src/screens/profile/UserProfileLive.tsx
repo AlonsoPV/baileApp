@@ -12,6 +12,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -959,150 +960,11 @@ export const UserProfileLive: React.FC = () => {
             {rsvpEvents && rsvpEvents.length > 0 ? (
               <div className="events-grid">
                 {rsvpEvents.map((rsvp: any, index: number) => {
-                  // Acceder a los datos anidados correctamente
                   const evento = rsvp.events_date;
-                  const parent = evento?.events_parent;
-                  const eventoNombre = parent?.nombre || evento?.lugar || 'Evento';
-                  const eventoFecha = evento?.fecha;
-                  const eventoCiudad = evento?.ciudad;
-                  const eventoDescripcion = parent?.descripcion;
-
-                  const fechaValida = eventoFecha && !isNaN(new Date(eventoFecha).getTime());
-                  const fechaFormateada = fechaValida
-                    ? format(new Date(eventoFecha), "EEE d MMM", { locale: es })
-                    : "Fecha por confirmar";
-
-                  const fechaCompleta = fechaValida
-                    ? format(new Date(eventoFecha), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
-                    : "Fecha por confirmar";
-
+                  if (!evento) return null;
                   return (
-                    <motion.div
-                      key={rsvp.id}
-                      id={`user-profile-event-${rsvp.event_date_id}`}
-                      data-baile-id={`user-profile-event-${rsvp.event_date_id}`}
-                      data-test-id={`user-profile-event-${rsvp.event_date_id}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{
-                        scale: 1.03,
-                        y: -5,
-                        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
-                      }}
-                      onClick={() => navigate(`/social/fecha/${rsvp.event_date_id}`)}
-                      style={{
-                        padding: '1.5rem',
-                        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {/* Efecto de brillo en hover */}
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '-100%',
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                        transition: 'left 0.5s'
-                      }} />
-
-                      {/* Header del evento */}
-                      <div style={{ marginBottom: '1rem' }}>
-                        <h4 style={{
-                          fontSize: '1.125rem',
-                          fontWeight: '700',
-                          marginBottom: '0.5rem',
-                          color: colors.light,
-                          lineHeight: '1.3'
-                        }}>
-                          {eventoNombre}
-                        </h4>
-
-                        {eventoDescripcion && (
-                          <p style={{
-                            fontSize: '0.875rem',
-                            opacity: 0.8,
-                            lineHeight: '1.4',
-                            marginBottom: '0.75rem',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}>
-                            {eventoDescripcion}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Información del evento */}
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem',
-                        marginBottom: '1rem'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.875rem',
-                          color: colors.light
-                        }}>
-                          <span style={{ fontSize: '1rem' }}>📅</span>
-                          <span style={{ fontWeight: '500' }}>{fechaFormateada}</span>
-                          <span style={{ opacity: 0.6 }}>•</span>
-                          <span style={{ opacity: 0.8 }}>{fechaCompleta}</span>
-                        </div>
-
-                        {eventoCiudad && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.875rem',
-                            color: colors.light
-                          }}>
-                            <span style={{ fontSize: '1rem' }}>📍</span>
-                            <span style={{ opacity: 0.8 }}>{eventoCiudad}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer con estado RSVP */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingTop: '1rem',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.875rem',
-                          fontWeight: '600',
-                          color: '#4CAF50'
-                        }}>
-                          <span>✅</span>
-                          <span>Interesado</span>
-                        </div>
-
-                        <div style={{
-                          fontSize: '0.75rem',
-                          opacity: 0.6,
-                          color: colors.light
-                        }}>
-                          Haz clic para ver detalles
-                        </div>
-                      </div>
+                    <motion.div key={rsvp.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}>
+                      <EventCard item={evento} />
                     </motion.div>
                   );
                 })}

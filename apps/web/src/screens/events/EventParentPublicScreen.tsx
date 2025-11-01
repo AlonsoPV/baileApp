@@ -859,6 +859,82 @@ export default function EventParentPublicScreen() {
 
           {/* Header Mejorado */}
           <div className="social-header">
+          {/* Summary Table - info clave visible al inicio */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              marginBottom: 16,
+              padding: '14px 16px',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 16,
+              boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(14px)'
+            }}
+          >
+            <style>{`
+              .p-summary-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; }
+              .p-summary-row { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 10px; }
+              .p-key { color: rgba(255,255,255,0.82); font-weight: 700; font-size: 0.95rem; }
+              .p-val { color: rgba(255,255,255,0.92); font-size: 0.98rem; }
+              .p-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+              @media (max-width: 960px) { .p-summary-grid { grid-template-columns: 1fr; } }
+              @media (max-width: 640px) { .p-summary-row { grid-template-columns: 1fr; align-items: flex-start; } }
+            `}</style>
+            <div className="p-summary-grid">
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div className="p-summary-row">
+                  <div className="p-key">Nombre</div>
+                  <div className="p-val">{parent.nombre}</div>
+                </div>
+                {parent.biografia && (
+                  <div className="p-summary-row">
+                    <div className="p-key">Descripción</div>
+                    <div className="p-val" style={{ lineHeight: 1.5 }}>{parent.biografia}</div>
+                  </div>
+                )}
+                {(Array.isArray((parent as any).ubicaciones) && (parent as any).ubicaciones.length > 0) && (
+                  <div className="p-summary-row">
+                    <div className="p-key">Ubicaciones</div>
+                    <div className="p-val">{(parent as any).ubicaciones.length} registrada{(parent as any).ubicaciones.length !== 1 ? 's' : ''}</div>
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div className="p-summary-row">
+                  <div className="p-key">Acciones</div>
+                  <div className="p-actions">
+                    {isOwner && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate(`/social/${parentIdNum}/edit`)}
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: 12,
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          background: 'linear-gradient(135deg, rgba(255,61,87,0.9), rgba(255,140,66,0.9))',
+                          color: '#fff', fontWeight: 700, cursor: 'pointer'
+                        }}
+                      >
+                        ✏️ Editar
+                      </motion.button>
+                    )}
+                    <ShareButton
+                      url={typeof window !== 'undefined' ? window.location.href : ''}
+                      title={parent.nombre}
+                    />
+                  </div>
+                </div>
+                <div className="p-summary-row">
+                  <div className="p-key">Fechas</div>
+                  <div className="p-val">{(dates?.length || 0)} programada{(dates?.length || 0) !== 1 ? 's' : ''}</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
             <div className="social-header-content">
               <div className="social-title-section">
                 <h1 style={{

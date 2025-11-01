@@ -386,6 +386,123 @@ export default function EventDatePublicScreen() {
         }
       `}</style>
       <div className="date-public-inner">
+      {/* Summary Table - info clave y acciones arriba del fold */}
+      {date && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          style={{
+            marginBottom: '1.5rem',
+            padding: '1.25rem 1.25rem',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: '18px',
+            boxShadow: '0 10px 32px rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(18px)'
+          }}
+        >
+          <style>{`
+            .summary-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; }
+            .summary-row { display: grid; grid-template-columns: 180px 1fr; align-items: center; gap: 10px; }
+            .summary-key { color: rgba(255,255,255,0.82); font-weight: 700; font-size: 0.95rem; }
+            .summary-val { color: rgba(255,255,255,0.92); font-size: 0.98rem; }
+            .summary-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+            @media (max-width: 960px) { .summary-grid { grid-template-columns: 1fr; } }
+            @media (max-width: 640px) { .summary-row { grid-template-columns: 1fr; align-items: flex-start; } }
+          `}</style>
+          <div className="summary-grid">
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div className="summary-row">
+                <div className="summary-key">Nombre</div>
+                <div className="summary-val">{date.nombre || `Fecha: ${formatDate(date.fecha)}`}</div>
+              </div>
+              {date.biografia && (
+                <div className="summary-row">
+                  <div className="summary-key">Descripción</div>
+                  <div className="summary-val" style={{ lineHeight: 1.5 }}>{date.biografia}</div>
+                </div>
+              )}
+              <div className="summary-row">
+                <div className="summary-key">Fecha y hora</div>
+                <div className="summary-val">
+                  📅 {formatDate(date.fecha)}{date.hora_inicio && (
+                    <> • 🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` - ${formatTime(date.hora_fin)}` : ''}</>
+                  )}
+                </div>
+              </div>
+              {(date.lugar || date.direccion || date.ciudad) && (
+                <div className="summary-row">
+                  <div className="summary-key">Ubicación</div>
+                  <div className="summary-val">
+                    {[date.lugar, date.direccion, date.ciudad].filter(Boolean).join(' • ')}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div className="summary-row" style={{ alignItems: 'start' }}>
+                <div className="summary-key">Acciones</div>
+                <div className="summary-actions">
+                  <AddToCalendarWithStats
+                    eventId={date.id}
+                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                    description={date.biografia || parent?.descripcion || undefined}
+                    location={date.lugar || date.ciudad || date.direccion || undefined}
+                    start={(() => {
+                      try {
+                        if (!date.fecha) return new Date();
+                        const fechaStr = date.fecha.includes('T') ? date.fecha.split('T')[0] : date.fecha;
+                        const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                        const fechaCompleta = `${fechaStr}T${horaInicio}:00`;
+                        const parsed = new Date(fechaCompleta);
+                        return isNaN(parsed.getTime()) ? new Date() : parsed;
+                      } catch { return new Date(); }
+                    })()}
+                    end={(() => {
+                      try {
+                        if (!date.fecha) {
+                          const def = new Date(); def.setHours(def.getHours() + 2); return def;
+                        }
+                        const fechaStr = date.fecha.includes('T') ? date.fecha.split('T')[0] : date.fecha;
+                        const horaFin = (date.hora_fin || date.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
+                        const fechaCompleta = `${fechaStr}T${horaFin}:00`;
+                        const parsed = new Date(fechaCompleta);
+                        if (isNaN(parsed.getTime())) { const def = new Date(); def.setHours(def.getHours() + 2); return def; }
+                        return parsed;
+                      } catch { const def = new Date(); def.setHours(def.getHours() + 2); return def; }
+                    })()}
+                    showAsIcon={false}
+                  />
+                  <ShareButton
+                    url={typeof window !== 'undefined' ? window.location.href : ''}
+                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                    text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
+                  />
+                </div>
+              </div>
+              <div className="summary-row" style={{ alignItems: 'center' }}>
+                <div className="summary-key">Asistencia</div>
+                <div className="summary-actions" style={{ gap: 12 }}>
+                  <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+                </div>
+              </div>
+              {(date.cronograma?.length || 0) > 0 && (
+                <div className="summary-row">
+                  <div className="summary-key">Cronograma</div>
+                  <div className="summary-val">{date.cronograma.length} elemento{date.cronograma.length !== 1 ? 's' : ''}</div>
+                </div>
+              )}
+              {(date.costos?.length || 0) > 0 && (
+                <div className="summary-row">
+                  <div className="summary-key">Costos</div>
+                  <div className="summary-val">{date.costos.length} opción{date.costos.length !== 1 ? 'es' : ''}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
       {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
