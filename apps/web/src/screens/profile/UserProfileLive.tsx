@@ -383,6 +383,17 @@ export const UserProfileLive: React.FC = () => {
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 1.5rem;
         }
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
         .carousel-container {
           position: relative;
           max-width: 1000px;
@@ -836,9 +847,7 @@ export const UserProfileLive: React.FC = () => {
 
               {/* Pregunta */}
               <div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
-                  💡 Dime un dato curioso de ti
-                </h3>
+              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
                 <div style={{
                   padding: '1rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -864,9 +873,7 @@ export const UserProfileLive: React.FC = () => {
             <div className="question-section">
               {/* Pregunta */}
               <div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600', color: colors.light }}>
-                  💃 ¿Qué es lo que más te gusta bailar?
-                </h3>
+              <h3 className="section-title">💃 ¿Qué es lo que más te gusta bailar?</h3>
                 <div style={{
                   padding: '1rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -933,14 +940,7 @@ export const UserProfileLive: React.FC = () => {
               justifyContent: 'space-between',
               marginBottom: '1.5rem'
             }}>
-              <h3 className="section-title" style={{
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
+              <h3 className="section-title">
                 ✨ Eventos de Interés
               </h3>
               {rsvpEvents && rsvpEvents.length > 0 && (
@@ -1071,18 +1071,7 @@ export const UserProfileLive: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'center'
               }}
-            ><h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              🎥 Video Principal
-            </h3>
+            ><h3 className="section-title">🎥 Video Principal</h3>
               <div style={{
                 width: '100%',
                 maxWidth: '600px',
@@ -1124,14 +1113,7 @@ export const UserProfileLive: React.FC = () => {
                 justifyContent: 'space-between',
                 marginBottom: '1.5rem'
               }}>
-                <h3 className="section-title" style={{
-                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
+                <h3 className="section-title">
                   📷 Galería de Fotos
                 </h3>
                 <div style={{

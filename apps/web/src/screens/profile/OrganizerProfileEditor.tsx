@@ -773,8 +773,10 @@ export default function OrganizerProfileEditor() {
   // Función para eliminar evento
   const handleDeleteEvent = async (parentId: string) => {
     try {
+      const confirmDelete = window.confirm('¿Seguro que deseas eliminar este social? Esta acción no se puede deshacer.');
+      if (!confirmDelete) return;
       await deleteParent.mutateAsync(Number(parentId));
-      showToast('Evento eliminado', 'success');
+      showToast('Evento eliminado ✅', 'success');
     } catch (err: any) {
       console.error('Error deleting event:', err);
       showToast('Error al eliminar evento', 'error');
