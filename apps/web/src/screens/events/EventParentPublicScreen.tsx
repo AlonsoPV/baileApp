@@ -877,7 +877,7 @@ export default function EventParentPublicScreen() {
                     onClick={() => navigate(-1)}
                     style={{ padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    ← Volver
+                    ← Volver DOS
                   </motion.button>
                   {(((parent as any)?.profiles_organizer?.estado_aprobacion === 'aprobado') || ((parent as any)?.estado_aprobacion === 'aprobado')) && (
                     <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12 }}>✅ Verificado</span>

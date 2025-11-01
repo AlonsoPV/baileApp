@@ -1703,7 +1703,7 @@ export default function EventParentPublicScreen() {
               className="social-description-section"
             >
               <h3 className="social-description-title">
-                📝 Descripción
+                📝 Descripción MODERN
               </h3>
               <p className="social-description-text">
                 {parent.descripcion}
