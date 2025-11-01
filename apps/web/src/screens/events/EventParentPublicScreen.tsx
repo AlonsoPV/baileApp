@@ -895,20 +895,7 @@ export default function EventParentPublicScreen() {
                     )}
                   </div>
                 )}
-                {nextDate && (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <RSVPButtons currentStatus={rsvp.userStatus} onStatusChange={rsvp.toggleInterested} disabled={rsvp.isUpdating} />
-                    <AddToCalendarWithStats
-                      eventId={nextDate.id}
-                      title={nextDate.nombre || parent.nombre}
-                      description={nextDate.biografia || parent.descripcion}
-                      location={nextDate.lugar || nextDate.ciudad || nextDate.direccion}
-                      start={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hi = (nextDate.hora_inicio || '20:00').slice(0,5); return new Date(`${f}T${hi}:00`); } catch { return new Date(); } })()}
-                      end={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hf = (nextDate.hora_fin || nextDate.hora_inicio || '23:59').slice(0,5); return new Date(`${f}T${hf}:00`); } catch { const d = new Date(); d.setHours(d.getHours()+2); return d; } })()}
-                      showAsIcon={false}
-                    />
-                  </div>
-                )}
+                {/* RSVP y Calendario movidos debajo de Ubicación y Requisitos */}
               </div>
               {/* Columna derecha */}
               <div>
@@ -942,17 +929,55 @@ export default function EventParentPublicScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
               className="social-section"
-              style={{ padding: 16, marginBottom: 16, borderRadius: 14 }}
+              style={{ padding: 18, marginBottom: 16, borderRadius: 16, background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)', border: '1px solid rgba(255,255,255,0.18)' }}
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, marginBottom: 10, color: '#fff' }}>📍 Ubicación y Requisitos</h3>
-              {(nextDate.lugar || nextDate.ciudad || nextDate.direccion) && (
-                <div style={{ marginBottom: nextDate.requisitos ? 8 : 0, color: 'rgba(255,255,255,0.92)' }}>
-                  {[nextDate.lugar, nextDate.direccion, nextDate.ciudad].filter(Boolean).join(' • ')}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#fff' }}>📍 Ubicación y Requisitos</h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  {(nextDate.lugar || nextDate.ciudad || nextDate.direccion) && (
+                    <div style={{ color: 'rgba(255,255,255,0.92)' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {nextDate.lugar && (<span style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', padding: '6px 10px', borderRadius: 999, fontSize: 12, color: '#fff' }}>🏢 {nextDate.lugar}</span>)}
+                        {nextDate.direccion && (<span style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', padding: '6px 10px', borderRadius: 999, fontSize: 12, color: '#fff' }}>📍 {nextDate.direccion}</span>)}
+                        {nextDate.ciudad && (<span style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', padding: '6px 10px', borderRadius: 999, fontSize: 12, color: '#fff' }}>🏙️ {nextDate.ciudad}</span>)}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {nextDate.requisitos && (
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>📋 {nextDate.requisitos}</div>
-              )}
+                <div>
+                  {nextDate.requisitos && (
+                    <div style={{ color: 'rgba(255,255,255,0.90)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.18)', padding: 10, borderRadius: 12, fontSize: 13, lineHeight: 1.5 }}>📋 {nextDate.requisitos}</div>
+                  )}
+                </div>
+              </div>
+              <style>{`@media (max-width: 768px){ .loc-grid { grid-template-columns: 1fr !important; } }`}</style>
+            </motion.section>
+          )}
+
+          {/* Contenedor: Asistencia y Calendario (después de Ubicación) */}
+          {nextDate && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="social-section"
+              style={{ padding: 16, marginBottom: 16, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'linear-gradient(135deg, rgba(30,136,229,0.08) 0%, rgba(255,61,87,0.08) 100%)', border: '1px solid rgba(255,255,255,0.18)' }}
+            >
+              <div style={{ fontWeight: 900, color: '#fff' }}>🎯 Confirmación</div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <RSVPButtons currentStatus={rsvp.userStatus} onStatusChange={rsvp.toggleInterested} disabled={rsvp.isUpdating} />
+                <AddToCalendarWithStats
+                  eventId={nextDate.id}
+                  title={nextDate.nombre || parent.nombre}
+                  description={nextDate.biografia || parent.descripcion}
+                  location={nextDate.lugar || nextDate.ciudad || nextDate.direccion}
+                  start={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hi = (nextDate.hora_inicio || '20:00').slice(0,5); return new Date(`${f}T${hi}:00`); } catch { return new Date(); } })()}
+                  end={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hf = (nextDate.hora_fin || nextDate.hora_inicio || '23:59').slice(0,5); return new Date(`${f}T${hf}:00`); } catch { const d = new Date(); d.setHours(d.getHours()+2); return d; } })()}
+                  showAsIcon={false}
+                />
+              </div>
             </motion.section>
           )}
 

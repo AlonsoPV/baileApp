@@ -387,7 +387,7 @@ export default function EventDatePublicScreen() {
       `}</style>
       <div className="date-public-inner">
         
-      /*** ⬇️ REEMPLAZA el header grande por este bloque compacto ***/
+    
 <motion.header
   initial={{ opacity: 0, y: 12 }}
   animate={{ opacity: 1, y: 0 }}
@@ -557,7 +557,6 @@ export default function EventDatePublicScreen() {
   </div>
 </motion.header>
 
-/*** ⬇️ AÑADE estas dos secciones COMPACTAS justo después del header ***/
 <section style={{display:'grid', gridTemplateColumns:'1fr', gap:'1rem', marginBottom:'1.25rem'}}>
   <div className="mini-card" style={{display:'grid', gap:'.5rem'}}>
     <strong>📍 Ubicación y Requisitos</strong>
@@ -573,21 +572,7 @@ export default function EventDatePublicScreen() {
     </div>
   </div>
 
-  {date.flyer_url && (
-    <div className="mini-card" style={{display:'grid', gap:'.75rem'}}>
-      <strong>🎟️ Flyer del Evento</strong>
-      <div style={{display:'grid', placeItems:'center'}}>
-        <img
-          src={date.flyer_url}
-          alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
-          style={{
-            width:'100%', maxWidth:420, aspectRatio:'4/5', objectFit:'cover',
-            borderRadius:16, boxShadow:'0 12px 32px rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.12)'
-          }}
-        />
-      </div>
-    </div>
-  )}
+  
 </section>
 
 
@@ -676,86 +661,7 @@ export default function EventDatePublicScreen() {
           </motion.section>
         )}
 
-        {/* RSVP Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          style={{
-            position: 'relative',
-            background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
-            borderRadius: '1.25rem',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            border: '1px solid rgba(240, 147, 251, 0.2)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Top gradient bar */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '3px',
-            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
-            opacity: 0.8
-          }} />
-
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            🎯 ¿Vas a asistir?
-          </h2>
-
-          <RSVPButtons
-            currentStatus={userStatus}
-            onStatusChange={toggleInterested}
-            disabled={isUpdating}
-          />
-
-          {/* Estadísticas de RSVP */}
-          {stats && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8 }}
-              style={{
-                marginTop: '1.5rem',
-                padding: '1rem',
-                background: 'rgba(240, 147, 251, 0.1)',
-                borderRadius: '1rem',
-                border: '1px solid rgba(240, 147, 251, 0.2)',
-                textAlign: 'center',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <div style={{
-                fontSize: '1rem',
-                color: '#f093fb',
-                fontWeight: '600',
-                marginBottom: '0.5rem'
-              }}>
-                {stats.interesado} persona{stats.interesado !== 1 ? 's' : ''} interesada{stats.interesado !== 1 ? 's' : ''}
-              </div>
-              <div style={{
-                fontSize: '0.9rem',
-                color: 'rgba(255, 255, 255, 0.7)'
-              }}>
-                Total: {stats.total} visualizaciones
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
+       
 
         {/* Galería de Fotos de la Fecha */}
         {(() => {
