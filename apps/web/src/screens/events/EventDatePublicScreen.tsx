@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import AddToCalendarButton from "../../components/AddToCalendarButton";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
 
@@ -679,13 +679,8 @@ export default function EventDatePublicScreen() {
             {/* Columna izquierda: RSVP + prueba social */}
             <div className="card" aria-label="Confirmar asistencia">
               <div style={{ display: 'grid', gap: '.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
                   <h3 className="headline">🎯 Asistencia</h3>
-                  {stats && (
-                    <div className="chip-count" aria-live="polite">
-                      {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
-                    </div>
-                  )}
                 </div>
 
                 {/* Botones RSVP */}
@@ -707,7 +702,8 @@ export default function EventDatePublicScreen() {
               </div>
             </div>
 
-            {/* Columna derecha: Agregar a calendario */}
+            {/* Columna derecha: Agregar a calendario (solo si interesado) */}
+            {userStatus === 'interesado' && (
             <div className="card" aria-label="Agregar evento a calendario">
               <div style={{ display: 'grid', gap: '.75rem' }}>
                 <h3 className="headline">🗓️ Calendario</h3>
@@ -716,36 +712,24 @@ export default function EventDatePublicScreen() {
                 </p>
 
                 <div className="cta-row">
-                  <AddToCalendarWithStats
-                    eventId={date.id}
-                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                    description={date.biografia || parent?.descripcion || undefined}
-                    location={date.lugar || date.ciudad || date.direccion || undefined}
-                    start={(() => {
-                      const fechaStr = (date.fecha || '').split('T')[0] || '';
-                      const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                      const d = new Date(`${fechaStr}T${h}:00`);
-                      return isNaN(d.getTime()) ? new Date() : d;
-                    })()}
-                    end={(() => {
-                      const fechaStr = (date.fecha || '').split('T')[0] || '';
-                      const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-                      const d = new Date(`${fechaStr}T${h}:00`);
-                      if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
-                      return d;
-                    })()}
-                    showAsIcon={false}
+                  <AddToCalendarButton
+                    event={{
+                      titulo: date.nombre || `Fecha: ${formatDate(date.fecha)}`,
+                      descripcion: date.biografia || parent?.descripcion || undefined,
+                      fecha: date.fecha,
+                      hora_inicio: date.hora_inicio,
+                      hora_fin: date.hora_fin,
+                      lugar: (date.lugar || date.ciudad || date.direccion || undefined) as string | undefined,
+                    }}
                   />
 
                   {/* botón compartir removido en contenedor calendario */}
                 </div>
 
-                {/* Nota contextual cuando el usuario ya marcó interés */}
-                {userStatus === 'interesado' && (
-                  <div className="subtle">Te recomendamos añadirlo a tu calendario para no olvidarlo.</div>
-                )}
+               
               </div>
             </div>
+            )}
           </div>
         </motion.section>
 
