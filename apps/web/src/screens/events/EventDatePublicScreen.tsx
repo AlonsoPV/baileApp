@@ -386,21 +386,21 @@ export default function EventDatePublicScreen() {
         }
       `}</style>
       <div className="date-public-inner">
-        
-    
-<motion.header
-  initial={{ opacity: 0, y: 12 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.4 }}
-  className="social-header"
-  style={{
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: '1rem',
-    marginBottom: '1.25rem',
-  }}
->
-  <style>{`
+
+
+        <motion.header
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="social-header"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '1rem',
+            marginBottom: '1.25rem',
+          }}
+        >
+          <style>{`
     .social-header-card {
       position: relative;
       border-radius: 16px;
@@ -434,190 +434,190 @@ export default function EventDatePublicScreen() {
     .list-compact li { display:flex; justify-content:space-between; gap:.75rem; font-size:.9rem }
   `}</style>
 
-  <div className="social-header-card">
-    <div className="social-header-grid">
-      {/* Columna izquierda */}
-      <div style={{display:'grid', gap:'.75rem'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'.5rem', flexWrap:'wrap'}}>
-          <button
-            onClick={() => navigate(`/social/${date.parent_id}`)}
-            style={{
-              padding: '8px 12px', borderRadius: '999px',
-              border: '1px solid rgba(240,147,251,0.28)',
-              background: 'rgba(240,147,251,0.10)', color:'#f093fb',
-              fontWeight:700, cursor:'pointer'
-            }}
-          >
-            ← Volver
-          </button>
-          <span className="chip chip-date">✅ Verificado</span>
-        </div>
+          <div className="social-header-card">
+            <div className="social-header-grid">
+              {/* Columna izquierda */}
+              <div style={{ display: 'grid', gap: '.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => navigate(`/social/${date.parent_id}`)}
+                    style={{
+                      padding: '8px 12px', borderRadius: '999px',
+                      border: '1px solid rgba(240,147,251,0.28)',
+                      background: 'rgba(240,147,251,0.10)', color: '#f093fb',
+                      fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    ← Volver
+                  </button>
+                  <span className="chip chip-date">✅ Verificado</span>
+                </div>
 
-        <h1 style={{
-          margin:0, fontSize:'1.8rem', lineHeight:1.2, fontWeight:800,
-          background:'linear-gradient(135deg,#f093fb,#FFD166)',
-          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'
-        }}>
-          {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-        </h1>
+                <h1 style={{
+                  margin: 0, fontSize: '1.8rem', lineHeight: 1.2, fontWeight: 800,
+                  background: 'linear-gradient(135deg,#f093fb,#FFD166)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                }}>
+                  {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                </h1>
 
-        {date.biografia && (
-          <p style={{margin:0, color:'rgba(255,255,255,0.82)', fontSize:'.95rem', lineHeight:1.4}}>
-            {date.biografia}
-          </p>
-        )}
+                {date.biografia && (
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.82)', fontSize: '.95rem', lineHeight: 1.4 }}>
+                    {date.biografia}
+                  </p>
+                )}
 
-        {/* Chips fecha/hora compactos */}
-        <div style={{display:'flex', gap:'.5rem', flexWrap:'wrap'}}>
-          <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
-          {date.hora_inicio && (
-            <span className="chip chip-time">
-              🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
-            </span>
-          )}
-        </div>
+                {/* Chips fecha/hora compactos */}
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                  <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
+                  {date.hora_inicio && (
+                    <span className="chip chip-time">
+                      🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
+                    </span>
+                  )}
+                </div>
 
-        {/* RSVP + Add to Calendar se mueve más abajo (después de Ubicación y Requisitos) */}
-      </div>
+                {/* RSVP + Add to Calendar se mueve más abajo (después de Ubicación y Requisitos) */}
+              </div>
 
-      {/* Columna derecha */}
-      <div style={{display:'grid', gap:'.75rem', alignContent:'start'}}>
-        <div style={{display:'flex', justifyContent:'flex-end'}}>
-          <ShareButton
-            url={typeof window !== 'undefined' ? window.location.href : ''}
-            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-            text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
-          />
-        </div>
+              {/* Columna derecha */}
+              <div style={{ display: 'grid', gap: '.75rem', alignContent: 'start' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <ShareButton
+                    url={typeof window !== 'undefined' ? window.location.href : ''}
+                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                    text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
+                  />
+                </div>
 
-        {/* Resumen compacto Cronograma */}
-        {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
-          <div className="mini-card">
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.5rem'}}>
-              <strong>📅 Cronograma</strong>
-              <span style={{opacity:.7, fontSize:'.85rem'}}>{date.cronograma.length} item(s)</span>
+                {/* Resumen compacto Cronograma */}
+                {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
+                  <div className="mini-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
+                      <strong>📅 Cronograma</strong>
+                      <span style={{ opacity: .7, fontSize: '.85rem' }}>{date.cronograma.length} item(s)</span>
+                    </div>
+                    <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                      {date.cronograma.slice(0, 4).map((it: any, i: number) => (
+                        <li key={i}>
+                          <span style={{ opacity: .9 }}>
+                            {it.tipo === 'clase' ? '📚' : it.tipo === 'show' ? '🎭' : '🗂️'} {it.titulo || it.tipo}
+                          </span>
+                          <span style={{ opacity: .7 }}>{it.inicio}{it.fin ? ` - ${it.fin}` : ''}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Resumen compacto Costos */}
+                {Array.isArray(date.costos) && date.costos.length > 0 && (
+                  <div className="mini-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
+                      <strong>💰 Costos</strong>
+                      <span style={{ opacity: .7, fontSize: '.85rem' }}>{date.costos.length} opción(es)</span>
+                    </div>
+                    <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                      {date.costos.slice(0, 4).map((c: any, i: number) => (
+                        <li key={i}>
+                          <span style={{ opacity: .9 }}>{c.nombre || c.tipo}</span>
+                          <span style={{ fontWeight: 700, color: '#FFD166' }}>
+                            {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
-            <ul className="list-compact" style={{margin:0, padding:0, listStyle:'none'}}>
-              {date.cronograma.slice(0,4).map((it:any, i:number) => (
-                <li key={i}>
-                  <span style={{opacity:.9}}>
-                    {it.tipo === 'clase' ? '📚' : it.tipo === 'show' ? '🎭' : '🗂️'} {it.titulo || it.tipo}
-                  </span>
-                  <span style={{opacity:.7}}>{it.inicio}{it.fin ? ` - ${it.fin}` : ''}</span>
-                </li>
-              ))}
-            </ul>
           </div>
-        )}
+        </motion.header>
 
-        {/* Resumen compacto Costos */}
-        {Array.isArray(date.costos) && date.costos.length > 0 && (
-          <div className="mini-card">
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.5rem'}}>
-              <strong>💰 Costos</strong>
-              <span style={{opacity:.7, fontSize:'.85rem'}}>{date.costos.length} opción(es)</span>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="social-section"
+          style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))', boxShadow: '0 10px 28px rgba(0,0,0,0.35)', backdropFilter: 'blur(14px)' }}
+        >
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, borderRadius: 12, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
+            <h3 style={{ marginTop: 12, fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.35)' }}>📍 Ubicación y Requisitos</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gap: '.5rem' }}>
+                {date.lugar && <div style={{ padding: '.6rem .85rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>🏷️ <b>Lugar:</b> {date.lugar}</div>}
+                {date.direccion && <div style={{ padding: '.6rem .85rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>🧭 <b>Dirección:</b> {date.direccion}</div>}
+                {date.ciudad && <div style={{ padding: '.6rem .85rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>🏙️ <b>Ciudad:</b> {date.ciudad}</div>}
+              </div>
+              <div style={{ display: 'grid', gap: '.5rem' }}>
+                {date.referencias && <div style={{ padding: '.6rem .85rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>📌 <b>Referencias:</b> {date.referencias}</div>}
+                {date.requisitos && <div style={{ padding: '.6rem .85rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>📋 <b>Requisitos:</b> {date.requisitos}</div>}
+                {(!date.lugar && !date.direccion && !date.ciudad && !date.referencias && !date.requisitos) && (
+                  <div style={{ opacity: .7 }}>Sin información adicional.</div>
+                )}
+              </div>
             </div>
-            <ul className="list-compact" style={{margin:0, padding:0, listStyle:'none'}}>
-              {date.costos.slice(0,4).map((c:any, i:number) => (
-                <li key={i}>
-                  <span style={{opacity:.9}}>{c.nombre || c.tipo}</span>
-                  <span style={{fontWeight:700, color:'#FFD166'}}>
-                    {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-</motion.header>
+        </motion.section>
 
-<motion.section
-  initial={{ opacity: 0, y: 12 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.3 }}
-  className="social-section"
-  style={{ padding: '1.25rem', marginBottom: '1rem', borderRadius: 16 }}
->
-  <div style={{ position: 'relative' }}>
-    <div style={{ position:'absolute', top:0, left:0, right:0, height:4, borderRadius:12, background:'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
-    <h3 style={{ marginTop:10, fontSize:'1.3rem', fontWeight:800, display:'flex', alignItems:'center', gap:8, color:'#fff' }}>📍 Ubicación y Requisitos</h3>
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-      <div style={{ display:'grid', gap:'.5rem' }}>
-        {date.lugar && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🏷️ <b>Lugar:</b> {date.lugar}</div>}
-        {date.direccion && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🧭 <b>Dirección:</b> {date.direccion}</div>}
-        {date.ciudad && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🏙️ <b>Ciudad:</b> {date.ciudad}</div>}
-      </div>
-      <div style={{ display:'grid', gap:'.5rem' }}>
-        {date.referencias && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>📌 <b>Referencias:</b> {date.referencias}</div>}
-        {date.requisitos && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>📋 <b>Requisitos:</b> {date.requisitos}</div>}
-        {(!date.lugar && !date.direccion && !date.ciudad && !date.referencias && !date.requisitos) && (
-          <div style={{opacity:.7}}>Sin información adicional.</div>
-        )}
-      </div>
-    </div>
-  </div>
-</motion.section>
-
-{/* Contenedor compacto: RSVP + Agregar al calendario */}
-<motion.section
-  initial={{ opacity: 0, y: 12 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.3 }}
-  className="social-section"
-  style={{ padding: '1.25rem', marginBottom: '1rem', borderRadius: 16 }}
->
-  <div style={{ position:'relative' }}>
-    <div style={{ position:'absolute', top:0, left:0, right:0, height:4, borderRadius:12, background:'linear-gradient(90deg, #1E88E5, #00BCD4)' }} />
-    <h3 style={{ marginTop:10, fontSize:'1.3rem', fontWeight:800, display:'flex', alignItems:'center', gap:8, color:'#fff' }}>🎯 Asistencia y Calendario</h3>
-    <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:12, alignItems:'center' }}>
-      {/* Centro: RSVP y, si procede, botón de calendario */}
-      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-        <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
-        {userStatus === 'interesado' && (
-          <AddToCalendarWithStats
-            eventId={date.id}
-            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-            description={date.biografia || parent?.descripcion || undefined}
-            location={date.lugar || date.ciudad || date.direccion || undefined}
-            start={(() => {
-              const fechaStr = (date.fecha || '').split('T')[0] || '';
-              const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
-              const d = new Date(`${fechaStr}T${h}:00`);
-              return isNaN(d.getTime()) ? new Date() : d;
-            })()}
-            end={(() => {
-              const fechaStr = (date.fecha || '').split('T')[0] || '';
-              const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
-              const d = new Date(`${fechaStr}T${h}:00`);
-              if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
-              return d;
-            })()}
-            showAsIcon={false}
-          />
-        )}
-      </div>
-      {/* Contador más visible */}
-      {stats && (
-        <div style={{
-          justifySelf:'end',
-          padding: '.5rem .9rem',
-          borderRadius: 999,
-          background: 'linear-gradient(135deg, rgba(30,136,229,0.2), rgba(0,188,212,0.2))',
-          border: '1px solid rgba(30,136,229,0.35)',
-          boxShadow: '0 6px 18px rgba(30,136,229,0.25)',
-          color: '#fff',
-          fontWeight: 800,
-          fontSize: '.95rem'
-        }}>
-          {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
-        </div>
-      )}
-    </div>
-  </div>
-</motion.section>
+        {/* Contenedor compacto: RSVP + Agregar al calendario */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="social-section"
+          style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))', boxShadow: '0 10px 28px rgba(0,0,0,0.35)', backdropFilter: 'blur(14px)' }}
+        >
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, borderRadius: 12, background: 'linear-gradient(90deg, #1E88E5, #00BCD4)' }} />
+            <h3 style={{ marginTop: 12, fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.35)' }}>🎯 Asistencia y Calendario</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, alignItems: 'center' }}>
+              {/* Centro: RSVP y, si procede, botón de calendario */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+                {userStatus === 'interesado' && (
+                  <AddToCalendarWithStats
+                    eventId={date.id}
+                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                    description={date.biografia || parent?.descripcion || undefined}
+                    location={date.lugar || date.ciudad || date.direccion || undefined}
+                    start={(() => {
+                      const fechaStr = (date.fecha || '').split('T')[0] || '';
+                      const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                      const d = new Date(`${fechaStr}T${h}:00`);
+                      return isNaN(d.getTime()) ? new Date() : d;
+                    })()}
+                    end={(() => {
+                      const fechaStr = (date.fecha || '').split('T')[0] || '';
+                      const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                      const d = new Date(`${fechaStr}T${h}:00`);
+                      if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                      return d;
+                    })()}
+                    showAsIcon={false}
+                  />
+                )}
+              </div>
+              {/* Contador más visible */}
+              {stats && (
+                <div style={{
+                  justifySelf: 'end',
+                  padding: '.6rem 1rem',
+                  borderRadius: 999,
+                  background: 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(0,188,212,0.25))',
+                  border: '1px solid rgba(30,136,229,0.4)',
+                  boxShadow: '0 8px 22px rgba(30,136,229,0.3)',
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '1rem'
+                }}>
+                  {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.section>
 
 
         {/* Flyer de la Fecha */}
@@ -705,7 +705,7 @@ export default function EventDatePublicScreen() {
           </motion.section>
         )}
 
-       
+
 
         {/* Galería de Fotos de la Fecha */}
         {(() => {
