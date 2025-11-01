@@ -11,6 +11,9 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import RSVPButtons from "../../components/rsvp/RSVPButtons";
+import { useEventRSVP } from "../../hooks/useRSVP";
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -322,6 +325,11 @@ export default function EventParentPublicScreen() {
 
   // Verificar si el usuario es el dueño del social
   const isOwner = organizer?.id === parent?.organizer_id;
+
+  // Próxima fecha (si existe)
+  const nextDate = Array.isArray(dates) && dates.length > 0 ? dates[0] as any : undefined;
+  const nextDateId = nextDate?.id as number | undefined;
+  const rsvp = useEventRSVP(nextDateId);
 
   if (isLoading) {
     return (
@@ -859,216 +867,110 @@ export default function EventParentPublicScreen() {
 
           {/* Header Mejorado */}
           <div className="social-header">
-          {/* Summary Table - info clave visible al inicio */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            style={{
-              marginBottom: 16,
-              padding: '14px 16px',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: 16,
-              boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
-              backdropFilter: 'blur(14px)'
-            }}
-          >
-            <style>{`
-              .p-summary-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; }
-              .p-summary-row { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 10px; }
-              .p-key { color: rgba(255,255,255,0.82); font-weight: 700; font-size: 0.95rem; }
-              .p-val { color: rgba(255,255,255,0.92); font-size: 0.98rem; }
-              .p-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-              @media (max-width: 960px) { .p-summary-grid { grid-template-columns: 1fr; } }
-              @media (max-width: 640px) { .p-summary-row { grid-template-columns: 1fr; align-items: flex-start; } }
-            `}</style>
-            <div className="p-summary-grid">
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div className="p-summary-row">
-                  <div className="p-key">Nombre</div>
-                  <div className="p-val">{parent.nombre}</div>
-                </div>
-                {parent.biografia && (
-                  <div className="p-summary-row">
-                    <div className="p-key">Descripción</div>
-                    <div className="p-val" style={{ lineHeight: 1.5 }}>{parent.biografia}</div>
-                  </div>
-                )}
-                {(Array.isArray((parent as any).ubicaciones) && (parent as any).ubicaciones.length > 0) && (
-                  <div className="p-summary-row">
-                    <div className="p-key">Ubicaciones</div>
-                    <div className="p-val">{(parent as any).ubicaciones.length} registrada{(parent as any).ubicaciones.length !== 1 ? 's' : ''}</div>
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div className="p-summary-row">
-                  <div className="p-key">Acciones</div>
-                  <div className="p-actions">
-                    {isOwner && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(`/social/${parentIdNum}/edit`)}
-                        style={{
-                          padding: '10px 16px',
-                          borderRadius: 12,
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          background: 'linear-gradient(135deg, rgba(255,61,87,0.9), rgba(255,140,66,0.9))',
-                          color: '#fff', fontWeight: 700, cursor: 'pointer'
-                        }}
-                      >
-                        ✏️ Editar
-                      </motion.button>
-                    )}
-                    <ShareButton
-                      url={typeof window !== 'undefined' ? window.location.href : ''}
-                      title={parent.nombre}
-                    />
-                  </div>
-                </div>
-                <div className="p-summary-row">
-                  <div className="p-key">Fechas</div>
-                  <div className="p-val">{(dates?.length || 0)} programada{(dates?.length || 0) !== 1 ? 's' : ''}</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-            <div className="social-header-content">
-              <div className="social-title-section">
-                <h1 style={{
-                  fontSize: '3rem',
-                  fontWeight: '700',
-                  background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  marginBottom: '16px',
-                  lineHeight: 1.2,
-                }}>
-                  {parent.nombre}
-                </h1>
-
-                {parent.biografia && (
-                  <p style={{
-                    fontSize: '1.2rem',
-                    color: colors.light,
-                    opacity: 0.9,
-                    lineHeight: 1.6,
-                    marginBottom: '20px',
-                  }}>
-                    {parent.biografia}
-                  </p>
-                )}
-
-                {parent.descripcion && (
-                  <p style={{
-                    fontSize: '1rem',
-                    color: colors.light,
-                    opacity: 0.8,
-                    lineHeight: 1.5,
-                  }}>
-                    {parent.descripcion}
-                  </p>
-                )}
-              </div>
-
-              <div className="social-actions">
-                {isOwner && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16 }}>
+              {/* Columna izquierda */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/social/${parentIdNum}/edit`)}
-                    style={{
-                      padding: '12px 20px',
-                      borderRadius: '25px',
-                      border: 'none',
-                      background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                      color: colors.light,
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
+                    onClick={() => navigate(-1)}
+                    style={{ padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    ✏️ Editar Social
+                    ← Volver
                   </motion.button>
+                  {(((parent as any)?.profiles_organizer?.estado_aprobacion === 'aprobado') || ((parent as any)?.estado_aprobacion === 'aprobado')) && (
+                    <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12 }}>✅ Verificado</span>
+                  )}
+                </div>
+                <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: 0, marginBottom: 10, color: '#fff', lineHeight: 1.2 }}>{parent.nombre}</h1>
+                {parent.descripcion && (
+                  <p style={{ margin: 0, marginBottom: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>{parent.descripcion}</p>
                 )}
-
-                <ShareButton
-                  url={window.location.href}
-                  title={parent.nombre}
-                  text={`¡Mira este social: ${parent.nombre}!`}
-                />
+                {nextDate && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                    <span style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', padding: '6px 10px', borderRadius: 999, fontSize: 12, color: '#fff' }}>📅 {new Date(nextDate.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long' })}</span>
+                    {(nextDate.hora_inicio || nextDate.hora_fin) && (
+                      <span style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', padding: '6px 10px', borderRadius: 999, fontSize: 12, color: '#fff' }}>🕒 {nextDate.hora_inicio || ''}{nextDate.hora_fin ? ` - ${nextDate.hora_fin}` : ''}</span>
+                    )}
+                  </div>
+                )}
+                {nextDate && (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <RSVPButtons currentStatus={rsvp.userStatus} onStatusChange={rsvp.toggleInterested} disabled={rsvp.isUpdating} />
+                    <AddToCalendarWithStats
+                      eventId={nextDate.id}
+                      title={nextDate.nombre || parent.nombre}
+                      description={nextDate.biografia || parent.descripcion}
+                      location={nextDate.lugar || nextDate.ciudad || nextDate.direccion}
+                      start={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hi = (nextDate.hora_inicio || '20:00').slice(0,5); return new Date(`${f}T${hi}:00`); } catch { return new Date(); } })()}
+                      end={(() => { try { const f = nextDate.fecha?.split('T')[0]; const hf = (nextDate.hora_fin || nextDate.hora_inicio || '23:59').slice(0,5); return new Date(`${f}T${hf}:00`); } catch { const d = new Date(); d.setHours(d.getHours()+2); return d; } })()}
+                      showAsIcon={false}
+                    />
+                  </div>
+                )}
+              </div>
+              {/* Columna derecha */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+                  <ShareButton url={typeof window !== 'undefined' ? window.location.href : ''} title={parent.nombre} />
+                </div>
+                {nextDate && (
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    {(Array.isArray(nextDate.cronograma) && nextDate.cronograma.length > 0) && (
+                      <div style={{ padding: '10px 12px', border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', borderRadius: 12, color: '#fff' }}>
+                        <div style={{ fontWeight: 800, marginBottom: 6 }}>📅 Cronograma</div>
+                        <div style={{ fontSize: 13, opacity: 0.9 }}>{nextDate.cronograma.length} elemento{nextDate.cronograma.length !== 1 ? 's' : ''}</div>
+                      </div>
+                    )}
+                    {(Array.isArray(nextDate.costos) && nextDate.costos.length > 0) && (
+                      <div style={{ padding: '10px 12px', border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', borderRadius: 12, color: '#fff' }}>
+                        <div style={{ fontWeight: 800, marginBottom: 6 }}>💰 Costos y Promociones</div>
+                        <div style={{ fontSize: 13, opacity: 0.9 }}>{nextDate.costos.length} opción{nextDate.costos.length !== 1 ? 'es' : ''}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Chips de Ritmos y Zonas */}
-            {(() => {
-              // Resolver ritmos seleccionados: preferir catálogo (string ids), si no hay, mapear desde estilos (tags)
-              let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
-                ? ((parent as any).ritmos_seleccionados as string[])
-                : [];
-              if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((parent as any)?.estilos) && (parent as any).estilos.length > 0 && Array.isArray(ritmos)) {
-                const nameByTagId = new Map<number, string>();
-                ritmos.forEach((t: any) => nameByTagId.set(t.id, t.nombre));
-                const catalogIdByLabel = new Map<string, string>();
-                RITMOS_CATALOG.forEach(g => g.items.forEach(i => catalogIdByLabel.set(i.label, i.id)));
-                selectedCatalogIds = ((parent as any).estilos as number[])
-                  .map(tagId => nameByTagId.get(tagId))
-                  .filter(Boolean)
-                  .map(label => catalogIdByLabel.get(label as string))
-                  .filter(Boolean) as string[];
-              }
-
-              return (
-                <div className="social-chips">
-                  {Array.isArray(selectedCatalogIds) && selectedCatalogIds.length > 0 ? (
-                    <RitmosChips selected={selectedCatalogIds} onChange={() => {}} readOnly={true} />
-                  ) : (
-                    (parent.estilos || []).map((ritmoId: number) => (
-                      <motion.span
-                        key={ritmoId}
-                        whileHover={{ scale: 1.05 }}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '20px',
-                          background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                          color: colors.light,
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                        }}
-                      >
-                        🎵 {getRitmoName(ritmoId)}
-                      </motion.span>
-                    ))
-                  )}
-
-                  {(parent.zonas || []).map((zonaId: number) => (
-                    <motion.span
-                      key={zonaId}
-                      whileHover={{ scale: 1.05 }}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                        color: colors.light,
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                      }}
-                    >
-                      📍 {getZonaName(zonaId)}
-                    </motion.span>
-                  ))}
-                </div>
-              );
-            })()}
-
-
           </div>
+
+          {/* Ubicación y Requisitos (compacto) */}
+          {nextDate && (nextDate.lugar || nextDate.direccion || nextDate.ciudad || nextDate.requisitos) && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="social-section"
+              style={{ padding: 16, marginBottom: 16, borderRadius: 14 }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, marginBottom: 10, color: '#fff' }}>📍 Ubicación y Requisitos</h3>
+              {(nextDate.lugar || nextDate.ciudad || nextDate.direccion) && (
+                <div style={{ marginBottom: nextDate.requisitos ? 8 : 0, color: 'rgba(255,255,255,0.92)' }}>
+                  {[nextDate.lugar, nextDate.direccion, nextDate.ciudad].filter(Boolean).join(' • ')}
+                </div>
+              )}
+              {nextDate.requisitos && (
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>📋 {nextDate.requisitos}</div>
+              )}
+            </motion.section>
+          )}
+
+          {/* Flyer del evento (compacto) */}
+          {nextDate?.flyer_url && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="social-section"
+              style={{ padding: 16, marginBottom: 16, borderRadius: 14 }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, marginBottom: 10, color: '#fff' }}>🖼️ Flyer del Evento</h3>
+              <div style={{ display: 'grid', placeItems: 'center' }}>
+                <img src={nextDate.flyer_url} alt={`Flyer de ${nextDate.nombre || parent.nombre}`} style={{ width: '100%', maxWidth: 420, borderRadius: 12, boxShadow: '0 10px 28px rgba(0,0,0,0.35)', aspectRatio: '4 / 5', objectFit: 'cover' }} />
+              </div>
+            </motion.section>
+          )}
 
           {/* FAQ Section - Estilo Organizer */}
           {parent.faq && parent.faq.length > 0 && (
