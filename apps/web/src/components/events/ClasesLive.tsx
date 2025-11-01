@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import AddToCalendarWithStats from '../../components/AddToCalendarWithStats';
+import RequireLogin from '@/components/auth/RequireLogin';
 
 type CronoItem = {
   tipo?: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro' | string;
@@ -224,15 +225,17 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                   })();
                   const location = ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad;
                   return (
-                    <AddToCalendarWithStats
-                      eventId={`class-${idx}`}
-                      title={(it as any).titulo || 'Clase'}
-                      description={(it as any).nivel || ''}
-                      location={location}
-                      start={start}
-                      end={end}
-                      showAsIcon={true}
-                    />
+                    <RequireLogin>
+                      <AddToCalendarWithStats
+                        eventId={`class-${idx}`}
+                        title={(it as any).titulo || 'Clase'}
+                        description={(it as any).nivel || ''}
+                        location={location}
+                        start={start}
+                        end={end}
+                        showAsIcon={true}
+                      />
+                    </RequireLogin>
                   );
                 })()}
               </div>

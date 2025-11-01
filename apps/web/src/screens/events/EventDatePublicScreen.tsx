@@ -9,6 +9,7 @@ import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import RequireLogin from "@/components/auth/RequireLogin";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
 
@@ -696,6 +697,9 @@ export default function EventDatePublicScreen() {
     .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
     .subtle { font-size:.85rem; color:rgba(255,255,255,.6) }
   `}</style>
+          
+          {/* Auth guard util */}
+          
 
           <div className="rsvp-grid">
             {/* Columna izquierda: RSVP + prueba social */}
@@ -706,12 +710,14 @@ export default function EventDatePublicScreen() {
                 </div>
 
                 {/* Botones RSVP */}
-                <RSVPButtons
-                  currentStatus={userStatus}
-                  onStatusChange={toggleInterested}
-                  disabled={isUpdating}
-                  interestedCount={interestedCount}
-                />
+                <RequireLogin>
+                  <RSVPButtons
+                    currentStatus={userStatus}
+                    onStatusChange={toggleInterested}
+                    disabled={isUpdating}
+                    interestedCount={interestedCount}
+                  />
+                </RequireLogin>
 
                 {/* Prueba social + microcopy */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
@@ -733,26 +739,28 @@ export default function EventDatePublicScreen() {
                  
 
                   <div className="cta-row">
-                    <AddToCalendarWithStats
-                      eventId={date.id}
-                      title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                      description={date.biografia || parent?.descripcion || undefined}
-                      location={date.lugar || date.ciudad || date.direccion || undefined}
-                      start={(() => {
-                        const fechaStr = (date.fecha || '').split('T')[0] || '';
-                        const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                        const d = new Date(`${fechaStr}T${h}:00`);
-                        return isNaN(d.getTime()) ? new Date() : d;
-                      })()}
-                      end={(() => {
-                        const fechaStr = (date.fecha || '').split('T')[0] || '';
-                        const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-                        const d = new Date(`${fechaStr}T${h}:00`);
-                        if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
-                        return d;
-                      })()}
-                      showAsIcon={false}
-                    />
+                    <RequireLogin>
+                      <AddToCalendarWithStats
+                        eventId={date.id}
+                        title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                        description={date.biografia || parent?.descripcion || undefined}
+                        location={date.lugar || date.ciudad || date.direccion || undefined}
+                        start={(() => {
+                          const fechaStr = (date.fecha || '').split('T')[0] || '';
+                          const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          return isNaN(d.getTime()) ? new Date() : d;
+                        })()}
+                        end={(() => {
+                          const fechaStr = (date.fecha || '').split('T')[0] || '';
+                          const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                          return d;
+                        })()}
+                        showAsIcon={false}
+                      />
+                    </RequireLogin>
 
                     {/* botón compartir removido en contenedor calendario */}
                   </div>

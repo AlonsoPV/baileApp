@@ -159,8 +159,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     <div className="pnt-wrap" style={{
       position: 'sticky',
       top: '80px', // Justo debajo de la navbar
-      
-      zIndex: 1000,
+      zIndex: 10,
       display: 'inline-flex',
       alignItems: 'center',
       gap: '0.75rem',

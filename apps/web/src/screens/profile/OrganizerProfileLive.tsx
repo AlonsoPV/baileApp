@@ -16,6 +16,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 
 // Componente FAQ Accordion Moderno
@@ -579,15 +580,17 @@ export function OrganizerProfileLive() {
                 </div>
                 {/* Botón de calendario */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2], position: 'relative', zIndex: 5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
-                  <AddToCalendarWithStats
-                    eventId={ev.id}
-                    title={ev.nombre}
-                    description={ev.biografia}
-                    location={ev.lugar}
-                    start={calendarStart}
-                    end={calendarEnd}
-                    showAsIcon={true}
-                  />
+                  <RequireLogin>
+                    <AddToCalendarWithStats
+                      eventId={ev.id}
+                      title={ev.nombre}
+                      description={ev.biografia}
+                      location={ev.lugar}
+                      start={calendarStart}
+                      end={calendarEnd}
+                      showAsIcon={true}
+                    />
+                  </RequireLogin>
                 </div>
               </div>
             </div>

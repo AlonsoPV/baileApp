@@ -11,6 +11,7 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import RequireLogin from "@/components/auth/RequireLogin";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
@@ -387,15 +388,17 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
                 style={{ display: 'flex', justifyContent: 'center' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <AddToCalendarWithStats
-                  eventId={ev.id}
-                  title={ev.nombre}
-                  description={ev.biografia || ev.parentDescripcion}
-                  location={ev.lugar}
-                  start={calendarStart}
-                  end={calendarEnd}
-                  showAsIcon={false}
-                />
+                <RequireLogin>
+                  <AddToCalendarWithStats
+                    eventId={ev.id}
+                    title={ev.nombre}
+                    description={ev.biografia || ev.parentDescripcion}
+                    location={ev.lugar}
+                    start={calendarStart}
+                    end={calendarEnd}
+                    showAsIcon={false}
+                  />
+                </RequireLogin>
               </div>
             </div>
           </div>
