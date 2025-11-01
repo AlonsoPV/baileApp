@@ -776,11 +776,9 @@ export default function EventParentPublicScreen() {
                         background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
                       }}>
-                        Ritmos y Zonas
+                        Conoce el enfoque musical y las áreas donde se realizamos nuestros eventos
                       </h3>
-                      <p style={{ margin: 0, opacity: .9, fontSize: '.95rem' }}>
-                        Conoce el enfoque musical y las áreas donde se realiza este social
-                      </p>
+                      
                     </div>
                   </div>
 
@@ -793,7 +791,7 @@ export default function EventParentPublicScreen() {
                             fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
                             border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
                           }}>
-                            {selectedCatalogIds.length} seleccionado{selectedCatalogIds.length !== 1 ? 's' : ''}
+                            
                           </span>
                         </div>
                         <div style={{
@@ -813,7 +811,7 @@ export default function EventParentPublicScreen() {
                             fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
                             border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
                           }}>
-                            {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''}
+                            {/* {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''} */}
                           </span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
