@@ -477,30 +477,7 @@ export default function EventDatePublicScreen() {
           )}
         </div>
 
-        {/* RSVP + Add to Calendar (compacto) */}
-        <div style={{display:'flex', gap:'.75rem', alignItems:'center', flexWrap:'wrap'}}>
-          <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
-          <AddToCalendarWithStats
-            eventId={date.id}
-            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-            description={date.biografia || parent?.descripcion || undefined}
-            location={date.lugar || date.ciudad || date.direccion || undefined}
-            start={(() => {
-              const fechaStr = (date.fecha || '').split('T')[0] || '';
-              const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
-              const d = new Date(`${fechaStr}T${h}:00`);
-              return isNaN(d.getTime()) ? new Date() : d;
-            })()}
-            end={(() => {
-              const fechaStr = (date.fecha || '').split('T')[0] || '';
-              const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
-              const d = new Date(`${fechaStr}T${h}:00`);
-              if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
-              return d;
-            })()}
-            showAsIcon
-          />
-        </div>
+        {/* RSVP + Add to Calendar se mueve más abajo (después de Ubicación y Requisitos) */}
       </div>
 
       {/* Columna derecha */}
@@ -557,23 +534,69 @@ export default function EventDatePublicScreen() {
   </div>
 </motion.header>
 
-<section style={{display:'grid', gridTemplateColumns:'1fr', gap:'1rem', marginBottom:'1.25rem'}}>
-  <div className="mini-card" style={{display:'grid', gap:'.5rem'}}>
-    <strong>📍 Ubicación y Requisitos</strong>
-    <div style={{display:'grid', gap:'.25rem', fontSize:'.95rem', color:'rgba(255,255,255,0.9)'}}>
-      {date.lugar && <div>• <b>Lugar:</b> {date.lugar}</div>}
-      {date.direccion && <div>• <b>Dirección:</b> {date.direccion}</div>}
-      {date.ciudad && <div>• <b>Ciudad:</b> {date.ciudad}</div>}
-      {date.referencias && <div>• <b>Referencias:</b> {date.referencias}</div>}
-      {date.requisitos && <div>• <b>Requisitos:</b> {date.requisitos}</div>}
-      {(!date.lugar && !date.direccion && !date.ciudad && !date.referencias && !date.requisitos) && (
-        <div style={{opacity:.7}}>Sin información adicional.</div>
-      )}
+<motion.section
+  initial={{ opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.3 }}
+  className="social-section"
+  style={{ padding: '1.25rem', marginBottom: '1rem', borderRadius: 16 }}
+>
+  <div style={{ position: 'relative' }}>
+    <div style={{ position:'absolute', top:0, left:0, right:0, height:4, borderRadius:12, background:'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
+    <h3 style={{ marginTop:10, fontSize:'1.3rem', fontWeight:800, display:'flex', alignItems:'center', gap:8, color:'#fff' }}>📍 Ubicación y Requisitos</h3>
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+      <div style={{ display:'grid', gap:'.5rem' }}>
+        {date.lugar && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🏷️ <b>Lugar:</b> {date.lugar}</div>}
+        {date.direccion && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🧭 <b>Dirección:</b> {date.direccion}</div>}
+        {date.ciudad && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>🏙️ <b>Ciudad:</b> {date.ciudad}</div>}
+      </div>
+      <div style={{ display:'grid', gap:'.5rem' }}>
+        {date.referencias && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>📌 <b>Referencias:</b> {date.referencias}</div>}
+        {date.requisitos && <div style={{ padding:'.5rem .75rem', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.05)' }}>📋 <b>Requisitos:</b> {date.requisitos}</div>}
+        {(!date.lugar && !date.direccion && !date.ciudad && !date.referencias && !date.requisitos) && (
+          <div style={{opacity:.7}}>Sin información adicional.</div>
+        )}
+      </div>
     </div>
   </div>
+</motion.section>
 
-  
-</section>
+{/* Contenedor compacto: RSVP + Agregar al calendario */}
+<motion.section
+  initial={{ opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.3 }}
+  className="social-section"
+  style={{ padding: '1.25rem', marginBottom: '1rem', borderRadius: 16 }}
+>
+  <div style={{ position:'relative' }}>
+    <div style={{ position:'absolute', top:0, left:0, right:0, height:4, borderRadius:12, background:'linear-gradient(90deg, #1E88E5, #00BCD4)' }} />
+    <h3 style={{ marginTop:10, fontSize:'1.3rem', fontWeight:800, display:'flex', alignItems:'center', gap:8, color:'#fff' }}>🎯 Asistencia y Calendario</h3>
+    <div style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
+      <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+      <AddToCalendarWithStats
+        eventId={date.id}
+        title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+        description={date.biografia || parent?.descripcion || undefined}
+        location={date.lugar || date.ciudad || date.direccion || undefined}
+        start={(() => {
+          const fechaStr = (date.fecha || '').split('T')[0] || '';
+          const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
+          const d = new Date(`${fechaStr}T${h}:00`);
+          return isNaN(d.getTime()) ? new Date() : d;
+        })()}
+        end={(() => {
+          const fechaStr = (date.fecha || '').split('T')[0] || '';
+          const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
+          const d = new Date(`${fechaStr}T${h}:00`);
+          if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
+          return d;
+        })()}
+        showAsIcon={false}
+      />
+    </div>
+  </div>
+</motion.section>
 
 
         {/* Flyer de la Fecha */}
