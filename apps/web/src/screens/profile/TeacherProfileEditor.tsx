@@ -396,7 +396,25 @@ export default function TeacherProfileEditor() {
           <div style={{ padding: '0 1.25rem 1.25rem' }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
             {(() => {
-              const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+              // Derivar selección inicial: usar ritmos_seleccionados si existe; si no, mapear desde ritmos numéricos
+              let selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+              if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((form as any)?.ritmos)) {
+                const labelToItemId = new Map<string, string>();
+                RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.id, i.label)));
+                const names = ((form as any).ritmos as number[])
+                  .map(id => (allTags || []).find((t: any) => t.id === id && t.tipo === 'ritmo')?.nombre)
+                  .filter(Boolean) as string[];
+                const mapped = names
+                  .map(n => {
+                    // invertir labelToItemId: label -> id
+                    for (const [itemId, label] of Array.from(labelToItemId.entries())) {
+                      if (label === n) return itemId;
+                    }
+                    return undefined;
+                  })
+                  .filter(Boolean) as string[];
+                if (mapped.length > 0) selectedCatalogIds = mapped;
+              }
               const onChangeCatalog = (ids: string[]) => {
                 // Guardar selección de catálogo directamente
                 setField('ritmos_seleccionados' as any, ids as any);
