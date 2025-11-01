@@ -13,6 +13,7 @@ type SocialItem = {
   ubicaciones?: Array<{ nombre?: string; direccion?: string; ciudad?: string; referencias?: string }>;
   estilos?: number[]; // ritmos ids (como en organizer)
   zonas?: number[];
+  ownerName?: string;
 };
 
 export default function SocialCard({ item }: { item: SocialItem }) {
@@ -122,6 +123,10 @@ export default function SocialCard({ item }: { item: SocialItem }) {
             </span>
           </div>
 
+          {item.ownerName && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
+          )}
+
           {desc && (
             <div style={{ fontSize: 12, marginBottom: 10, color: 'rgba(255,255,255,0.78)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
               {desc}
@@ -162,9 +167,9 @@ export default function SocialCard({ item }: { item: SocialItem }) {
             </div>
           )}
 
-          <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Descubre más del social</div>
-            <div style={{
+       {/*    <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Descubre más del social</div>
+             *<div style={{
               padding: '8px 12px',
               borderRadius: 12,
               background: 'rgba(240, 147, 251, 0.1)',
@@ -175,7 +180,7 @@ export default function SocialCard({ item }: { item: SocialItem }) {
               fontWeight: 700,
               border: '1px solid rgba(255,255,255,0.08)'
             }}>Ver más →</div>
-          </div>
+          </div> */}
         </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />

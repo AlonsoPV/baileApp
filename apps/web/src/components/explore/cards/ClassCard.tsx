@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { urls } from '../../../lib/urls';
+import { useTags } from '../../../hooks/useTags';
+import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 
 type ClaseItem = {
   titulo?: string;
@@ -14,6 +16,8 @@ type ClaseItem = {
   ownerId?: number | string;
   ownerName?: string;
   ownerCoverUrl?: string;
+  ritmos?: number[];
+  ritmosSeleccionados?: string[];
 };
 
 interface Props {
@@ -65,6 +69,26 @@ export default function ClassCard({ item }: Props) {
     ? `/profile/academy/live#clases`
     : `${urls.teacherLive(item.ownerId || '')}#clases`;
   const bg = item.ownerCoverUrl;
+  const { data: allTags } = useTags() as any;
+
+  const ritmoNames: string[] = React.useMemo(() => {
+    try {
+      const labelByCatalogId = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+      const catalogIds = (item.ritmosSeleccionados || []) as string[];
+      if (Array.isArray(catalogIds) && catalogIds.length > 0) {
+        return catalogIds.map(id => labelByCatalogId.get(id)!).filter(Boolean) as string[];
+      }
+      const nums = (item.ritmos || []) as number[];
+      if (Array.isArray(allTags) && nums.length > 0) {
+        return nums
+          .map((id: number) => allTags.find((t: any) => t.id === id && t.tipo === 'ritmo'))
+          .filter(Boolean)
+          .map((t: any) => t.nombre as string);
+      }
+    } catch {}
+    return [] as string[];
+  }, [item, allTags]);
 
   return (
     <LiveLink to={href} asCard={false}>
@@ -103,6 +127,13 @@ export default function ClassCard({ item }: Props) {
         )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, position: 'relative', zIndex: 1 }}>
+        {ritmoNames.length > 0 && (
+          <>
+            {ritmoNames.slice(0, 3).map((name, i) => (
+              <span key={`r-${i}`} style={chip}>🎵 {name}</span>
+            ))}
+          </>
+        )}
         {isSemanal ? (
           <span style={chip}>🗓️ {item.diasSemana!.join(', ')}</span>
         ) : (
@@ -121,7 +152,7 @@ export default function ClassCard({ item }: Props) {
       )}
 
       {/* CTA subtle */}
-      <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10, position: 'relative', zIndex: 1 }}>
+     {/*  <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10, position: 'relative', zIndex: 1 }}>
         <div style={{
           padding: '8px 12px',
           borderRadius: 12,
@@ -133,7 +164,7 @@ export default function ClassCard({ item }: Props) {
           fontWeight: 700,
           border: '1px solid rgba(255,255,255,0.08)'
         }}>Más Información →</div>
-      </div>
+      </div> */}
       </motion.div>
     </LiveLink>
   );

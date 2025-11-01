@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import AddToCalendarWithStats from "../../AddToCalendarWithStats";
+import { useTags } from "../../../hooks/useTags";
+import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
 interface EventCardProps {
   item: any;
@@ -11,6 +13,7 @@ interface EventCardProps {
 export default function EventCard({ item }: EventCardProps) {
   const eventId = item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
+  const { data: allTags } = useTags() as any;
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();
@@ -28,6 +31,33 @@ export default function EventCard({ item }: EventCardProps) {
   const ciudad = item.ciudad || item.evento_ciudad;
   const direccion = item.direccion || item.evento_direccion;
   const organizador = item.organizador_nombre || item.organizer_name;
+
+  const ritmoNames: string[] = React.useMemo(() => {
+    try {
+      const labelByCatalogId = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+
+      const selectedCatalog: string[] =
+        (Array.isArray(item?.ritmos_seleccionados) && item.ritmos_seleccionados)
+        || (Array.isArray(item?.events_parent?.ritmos_seleccionados) && item.events_parent.ritmos_seleccionados)
+        || [];
+      if (selectedCatalog.length > 0) {
+        return selectedCatalog.map(id => labelByCatalogId.get(id)!).filter(Boolean) as string[];
+      }
+
+      const estilosNums: number[] =
+        (Array.isArray(item?.estilos) && item.estilos)
+        || (Array.isArray(item?.events_parent?.estilos) && item.events_parent.estilos)
+        || [];
+      if (Array.isArray(allTags) && estilosNums.length > 0) {
+        return estilosNums
+          .map((id: number) => allTags.find((t: any) => t.id === id && t.tipo === 'ritmo'))
+          .filter(Boolean)
+          .map((t: any) => t.nombre as string);
+      }
+    } catch {}
+    return [] as string[];
+  }, [item, allTags]);
 
   return (
     <LiveLink to={linkTo} asCard={false}>
@@ -142,6 +172,20 @@ export default function EventCard({ item }: EventCardProps) {
             {nombre}
           </span>
         </div>
+
+        {item.ownerName && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
+        )}
+
+        {ritmoNames.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+            {ritmoNames.slice(0, 3).map((name, i) => (
+              <span key={`r-${i}`} style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 12, color: 'rgba(255,255,255,0.92)' }}>
+                🎵 {name}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
