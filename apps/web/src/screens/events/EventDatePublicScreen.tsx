@@ -414,7 +414,7 @@ export default function EventDatePublicScreen() {
           <div className="summary-grid">
             <div style={{ display: 'grid', gap: 10 }}>
               <div className="summary-row">
-                <div className="summary-key">Nombre</div>
+                <div className="summary-key">Nombre TARJETA 1</div>
                 <div className="summary-val">{date.nombre || `Fecha: ${formatDate(date.fecha)}`}</div>
               </div>
               {date.biografia && (
