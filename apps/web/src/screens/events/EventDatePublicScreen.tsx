@@ -387,534 +387,209 @@ export default function EventDatePublicScreen() {
       `}</style>
       <div className="date-public-inner">
         
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{
-            position: 'relative',
-            borderRadius: '1.5rem',
-            background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-            padding: '2rem',
-            marginBottom: '2rem',
-            border: '1px solid rgba(240, 147, 251, 0.2)',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Top gradient bar */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '4px',
-            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
-            opacity: 0.9
-          }} />
+      /*** ⬇️ REEMPLAZA el header grande por este bloque compacto ***/
+<motion.header
+  initial={{ opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.4 }}
+  className="social-header"
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: '1rem',
+    marginBottom: '1.25rem',
+  }}
+>
+  <style>{`
+    .social-header-card {
+      position: relative;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(40,30,45,0.92), rgba(30,20,40,0.92));
+      border: 1px solid rgba(240,147,251,0.18);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+      padding: 1rem;
+    }
+    .social-header-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      .social-header-grid {
+        grid-template-columns: 1.25fr 1fr;
+      }
+    }
+    .chip {
+      display:inline-flex;align-items:center;gap:.5rem;
+      padding:.4rem .75rem;border-radius:999px;font-weight:700;font-size:.85rem
+    }
+    .chip-date{background:rgba(240,147,251,.12);border:1px solid rgba(240,147,251,.25);color:#f093fb}
+    .chip-time{background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.25);color:#FFD166}
+    .mini-card {
+      border-radius:12px; padding:.75rem; 
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.08);
+    }
+    .list-compact { display:grid; gap:.5rem }
+    .list-compact li { display:flex; justify-content:space-between; gap:.75rem; font-size:.9rem }
+  `}</style>
 
-          {/* Decorative corner accent */}
-          <div style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            width: '60px',
-            height: '60px',
-            background: 'radial-gradient(circle, rgba(240, 147, 251, 0.2), transparent)',
-            borderRadius: '50%',
-            pointerEvents: 'none'
-          }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/social/${date.parent_id}`)}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '25px',
-                    border: '1px solid rgba(240, 147, 251, 0.3)',
-                    background: 'rgba(240, 147, 251, 0.1)',
-                    color: '#f093fb',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backdropFilter: 'blur(10px)',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  ← Volver al Social
-                </motion.button>
+  <div className="social-header-card">
+    <div className="social-header-grid">
+      {/* Columna izquierda */}
+      <div style={{display:'grid', gap:'.75rem'}}>
+        <div style={{display:'flex', alignItems:'center', gap:'.5rem', flexWrap:'wrap'}}>
+          <button
+            onClick={() => navigate(`/social/${date.parent_id}`)}
+            style={{
+              padding: '8px 12px', borderRadius: '999px',
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)', color:'#f093fb',
+              fontWeight:700, cursor:'pointer'
+            }}
+          >
+            ← Volver
+          </button>
+          <span className="chip chip-date">✅ Verificado</span>
+        </div>
 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '25px',
-                    background: date.estado_publicacion === 'publicado'
-                      ? 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))'
-                      : 'rgba(255, 255, 255, 0.1)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    border: '1px solid rgba(240, 147, 251, 0.2)',
-                    backdropFilter: 'blur(10px)'
-                  }}
-                >
-                  {date.estado_publicacion === 'publicado' ? '🌐 Público' : '📝 Borrador'}
-                </motion.div>
-              </div>
+        <h1 style={{
+          margin:0, fontSize:'1.8rem', lineHeight:1.2, fontWeight:800,
+          background:'linear-gradient(135deg,#f093fb,#FFD166)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'
+        }}>
+          {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+        </h1>
 
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: '800',
-                background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '1rem',
-                lineHeight: 1.2,
-              }}>
-                {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-              </h1>
+        {date.biografia && (
+          <p style={{margin:0, color:'rgba(255,255,255,0.82)', fontSize:'.95rem', lineHeight:1.4}}>
+            {date.biografia}
+          </p>
+        )}
 
-              {date.biografia && (
-                <p style={{
-                  fontSize: '1.1rem',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  lineHeight: 1.6,
-                  marginBottom: '1.5rem',
-                }}>
-                  {date.biografia}
-                </p>
-              )}
-
-              {/* Fecha y Hora */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2rem',
-                marginBottom: '1.5rem',
-                flexWrap: 'wrap',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '1.1rem',
-                  color: '#fff',
-                  fontWeight: '600',
-                  padding: '8px 16px',
-                  background: 'rgba(240, 147, 251, 0.1)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(240, 147, 251, 0.2)'
-                }}>
-                  📅 {formatDate(date.fecha)}
-                </div>
-
-                {date.hora_inicio && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '1.1rem',
-                    color: '#fff',
-                    fontWeight: '600',
-                    padding: '8px 16px',
-                    background: 'rgba(255, 209, 102, 0.1)',
-                    borderRadius: '20px',
-                    border: '1px solid rgba(255, 209, 102, 0.2)'
-                  }}>
-                    🕐 {formatTime(date.hora_inicio)}
-                    {date.hora_fin && ` - ${formatTime(date.hora_fin)}`}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ marginLeft: '24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <AddToCalendarWithStats
-                eventId={date.id}
-                title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                description={date.biografia || parent?.descripcion || undefined}
-                location={date.lugar || date.ciudad || date.direccion || undefined}
-                start={(() => {
-                  try {
-                    if (!date.fecha) return new Date();
-                    // Asegurar formato ISO (YYYY-MM-DD)
-                    const fechaStr = date.fecha.includes('T')
-                      ? date.fecha.split('T')[0]
-                      : date.fecha;
-                    const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                    const fechaCompleta = `${fechaStr}T${horaInicio}:00`;
-                    const parsed = new Date(fechaCompleta);
-                    if (isNaN(parsed.getTime())) {
-                      console.warn('[EventDatePublicScreen] Invalid date, using fallback:', fechaCompleta);
-                      return new Date();
-                    }
-                    return parsed;
-                  } catch (err) {
-                    console.error('[EventDatePublicScreen] Error parsing start date:', err);
-                    return new Date();
-                  }
-                })()}
-                end={(() => {
-                  try {
-                    if (!date.fecha) {
-                      const defaultEnd = new Date();
-                      defaultEnd.setHours(defaultEnd.getHours() + 2);
-                      return defaultEnd;
-                    }
-                    // Asegurar formato ISO (YYYY-MM-DD)
-                    const fechaStr = date.fecha.includes('T')
-                      ? date.fecha.split('T')[0]
-                      : date.fecha;
-                    const horaFin = (date.hora_fin || date.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
-                    const fechaCompleta = `${fechaStr}T${horaFin}:00`;
-                    const parsed = new Date(fechaCompleta);
-                    if (isNaN(parsed.getTime())) {
-                      console.warn('[EventDatePublicScreen] Invalid end date, using fallback:', fechaCompleta);
-                      const defaultEnd = new Date();
-                      defaultEnd.setHours(defaultEnd.getHours() + 2);
-                      return defaultEnd;
-                    }
-                    return parsed;
-                  } catch (err) {
-                    console.error('[EventDatePublicScreen] Error parsing end date:', err);
-                    const defaultEnd = new Date();
-                    defaultEnd.setHours(defaultEnd.getHours() + 2);
-                    return defaultEnd;
-                  }
-                })()}
-                showAsIcon={true}
-              />
-              <ShareButton
-                url={window.location.href}
-                title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
-              />
-            </div>
-          </div>
-
-          {/* Chips de Ritmos (catálogo) y Zonas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
-            {Array.isArray((date as any)?.ritmos_seleccionados) && (date as any).ritmos_seleccionados.length > 0 ? (
-              <RitmosChips
-                selected={((date as any).ritmos_seleccionados || []) as string[]}
-                onChange={() => { }}
-                readOnly
-              />
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {date.estilos?.map((ritmoId: number) => (
-                  <motion.span
-                    key={ritmoId}
-                    whileHover={{ scale: 1.05 }}
-                    style={{
-                      padding: '10px 18px',
-                      borderRadius: '25px',
-                      background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
-                      color: '#f093fb',
-                      fontSize: '0.9rem',
-                      fontWeight: '600',
-                      border: '1px solid rgba(240, 147, 251, 0.3)',
-                      backdropFilter: 'blur(10px)',
-                      boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)'
-                    }}
-                  >
-                    🎵 {getRitmoName(ritmoId)}
-                  </motion.span>
-                ))}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              {date.zonas?.map((zonaId: number) => (
-                <motion.span
-                  key={zonaId}
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: '25px',
-                    background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 140, 66, 0.2))',
-                    color: '#FFD166',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    border: '1px solid rgba(255, 209, 102, 0.3)',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 4px 16px rgba(255, 209, 102, 0.2)'
-                  }}
-                >
-                  📍 {getZonaName(zonaId)}
-                </motion.span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Contenedor responsive 2x2: Ubicación | Requisitos  y  Cronograma | Costos */}
-        <style>{`
-          .two-col-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-          @media (min-width: 768px) { .two-col-grid { grid-template-columns: 1fr 1fr; } }
-        `}</style>
-        <div className="two-col-grid">
-          {/* Ubicación */}
-          {(date.lugar || date.direccion || date.ciudad) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              style={{
-                position: 'relative',
-                padding: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
-                borderRadius: '1.25rem',
-                border: '1px solid rgba(240, 147, 251, 0.2)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Top gradient bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, #f093fb, #f5576c)',
-                opacity: 0.8
-              }} />
-
-              <h3 style={{
-                fontSize: '1.25rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                📍 Ubicación
-              </h3>
-              {date.lugar && (
-                <p style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem', fontWeight: '600' }}>{date.lugar}</p>
-              )}
-              {date.direccion && (
-                <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.5rem' }}>{date.direccion}</p>
-              )}
-              {date.ciudad && (
-                <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>{date.ciudad}</p>
-              )}
-              {date.referencias && (
-                <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)', marginTop: '1rem', fontStyle: 'italic', padding: '0.75rem', background: 'rgba(240, 147, 251, 0.1)', borderRadius: '12px', border: '1px solid rgba(240, 147, 251, 0.2)' }}>💡 {date.referencias}</p>
-              )}
-            </motion.div>
-          )}
-
-          {/* Requisitos */}
-          {date.requisitos && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              style={{
-                position: 'relative',
-                padding: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
-                borderRadius: '1.25rem',
-                border: '1px solid rgba(240, 147, 251, 0.2)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Top gradient bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, #FFD166, #FF8C42)',
-                opacity: 0.8
-              }} />
-
-              <h3 style={{
-                fontSize: '1.25rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                📋 Requisitos
-              </h3>
-              <p style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.6, margin: 0 }}>{date.requisitos}</p>
-            </motion.div>
-          )}
-
-          {/* Cronograma */}
-          {date.cronograma && date.cronograma.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                position: 'relative',
-                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
-                borderRadius: '1.25rem',
-                padding: '1.5rem',
-                border: '1px solid rgba(240, 147, 251, 0.2)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Top gradient bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, #1E88E5, #00BCD4)',
-                opacity: 0.8
-              }} />
-
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '1.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                📅 Cronograma
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {date.cronograma.map((item: any, index: number) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    style={{
-                      padding: '1.25rem',
-                      background: 'rgba(30, 136, 229, 0.1)',
-                      borderRadius: '1rem',
-                      border: '1px solid rgba(30, 136, 229, 0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      backdropFilter: 'blur(10px)'
-                    }}
-                  >
-                    <div style={{ fontSize: '1.5rem', minWidth: '40px' }}>
-                      {item.tipo === 'clase' ? '📚' : item.tipo === 'show' ? '🎭' : '📋'}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', marginBottom: '0.5rem' }}>{item.titulo}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)' }}>🕐 {item.inicio} - {item.fin}</span>
-                        {item.nivel && (
-                          <span style={{ padding: '4px 8px', borderRadius: '12px', background: 'rgba(30, 136, 229, 0.2)', color: '#1E88E5', fontSize: '0.8rem', fontWeight: '600', border: '1px solid rgba(30, 136, 229, 0.3)' }}>{item.nivel}</span>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Costos */}
-          {date.costos && date.costos.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              style={{
-                position: 'relative',
-                background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.8), rgba(30, 20, 40, 0.8))',
-                borderRadius: '1.25rem',
-                padding: '1.5rem',
-                border: '1px solid rgba(240, 147, 251, 0.2)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Top gradient bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, #FFD166, #FF8C42)',
-                opacity: 0.8
-              }} />
-
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #FFD166, #FF8C42)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '1.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                💰 Costos y Promociones
-              </h2>
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {date.costos.map((costo: any, index: number) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    style={{
-                      padding: '1.25rem',
-                      background: 'rgba(255, 209, 102, 0.1)',
-                      borderRadius: '1rem',
-                      border: '1px solid rgba(255, 209, 102, 0.2)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      backdropFilter: 'blur(10px)'
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', marginBottom: '0.5rem' }}>{costo.nombre}</h3>
-                      {costo.regla && (
-                        <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.8)', margin: 0 }}>{costo.regla}</p>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '1.5rem' }}>
-                        {costo.tipo === 'preventa' ? '🎫' : costo.tipo === 'taquilla' ? '💰' : '🎁'}
-                      </span>
-                      <span style={{ fontSize: '1.3rem', fontWeight: '700', color: '#FFD166' }}>
-                        {costo.precio !== undefined && costo.precio !== null ? `$${costo.precio.toLocaleString()}` : 'Gratis'}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+        {/* Chips fecha/hora compactos */}
+        <div style={{display:'flex', gap:'.5rem', flexWrap:'wrap'}}>
+          <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
+          {date.hora_inicio && (
+            <span className="chip chip-time">
+              🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
+            </span>
           )}
         </div>
+
+        {/* RSVP + Add to Calendar (compacto) */}
+        <div style={{display:'flex', gap:'.75rem', alignItems:'center', flexWrap:'wrap'}}>
+          <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+          <AddToCalendarWithStats
+            eventId={date.id}
+            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+            description={date.biografia || parent?.descripcion || undefined}
+            location={date.lugar || date.ciudad || date.direccion || undefined}
+            start={(() => {
+              const fechaStr = (date.fecha || '').split('T')[0] || '';
+              const h = (date.hora_inicio || '20:00').split(':').slice(0,2).join(':');
+              const d = new Date(`${fechaStr}T${h}:00`);
+              return isNaN(d.getTime()) ? new Date() : d;
+            })()}
+            end={(() => {
+              const fechaStr = (date.fecha || '').split('T')[0] || '';
+              const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0,2).join(':');
+              const d = new Date(`${fechaStr}T${h}:00`);
+              if (isNaN(d.getTime())) { const t=new Date(); t.setHours(t.getHours()+2); return t; }
+              return d;
+            })()}
+            showAsIcon
+          />
+        </div>
+      </div>
+
+      {/* Columna derecha */}
+      <div style={{display:'grid', gap:'.75rem', alignContent:'start'}}>
+        <div style={{display:'flex', justifyContent:'flex-end'}}>
+          <ShareButton
+            url={typeof window !== 'undefined' ? window.location.href : ''}
+            title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+            text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
+          />
+        </div>
+
+        {/* Resumen compacto Cronograma */}
+        {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
+          <div className="mini-card">
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.5rem'}}>
+              <strong>📅 Cronograma</strong>
+              <span style={{opacity:.7, fontSize:'.85rem'}}>{date.cronograma.length} item(s)</span>
+            </div>
+            <ul className="list-compact" style={{margin:0, padding:0, listStyle:'none'}}>
+              {date.cronograma.slice(0,4).map((it:any, i:number) => (
+                <li key={i}>
+                  <span style={{opacity:.9}}>
+                    {it.tipo === 'clase' ? '📚' : it.tipo === 'show' ? '🎭' : '🗂️'} {it.titulo || it.tipo}
+                  </span>
+                  <span style={{opacity:.7}}>{it.inicio}{it.fin ? ` - ${it.fin}` : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Resumen compacto Costos */}
+        {Array.isArray(date.costos) && date.costos.length > 0 && (
+          <div className="mini-card">
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.5rem'}}>
+              <strong>💰 Costos</strong>
+              <span style={{opacity:.7, fontSize:'.85rem'}}>{date.costos.length} opción(es)</span>
+            </div>
+            <ul className="list-compact" style={{margin:0, padding:0, listStyle:'none'}}>
+              {date.costos.slice(0,4).map((c:any, i:number) => (
+                <li key={i}>
+                  <span style={{opacity:.9}}>{c.nombre || c.tipo}</span>
+                  <span style={{fontWeight:700, color:'#FFD166'}}>
+                    {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</motion.header>
+
+/*** ⬇️ AÑADE estas dos secciones COMPACTAS justo después del header ***/
+<section style={{display:'grid', gridTemplateColumns:'1fr', gap:'1rem', marginBottom:'1.25rem'}}>
+  <div className="mini-card" style={{display:'grid', gap:'.5rem'}}>
+    <strong>📍 Ubicación y Requisitos</strong>
+    <div style={{display:'grid', gap:'.25rem', fontSize:'.95rem', color:'rgba(255,255,255,0.9)'}}>
+      {date.lugar && <div>• <b>Lugar:</b> {date.lugar}</div>}
+      {date.direccion && <div>• <b>Dirección:</b> {date.direccion}</div>}
+      {date.ciudad && <div>• <b>Ciudad:</b> {date.ciudad}</div>}
+      {date.referencias && <div>• <b>Referencias:</b> {date.referencias}</div>}
+      {date.requisitos && <div>• <b>Requisitos:</b> {date.requisitos}</div>}
+      {(!date.lugar && !date.direccion && !date.ciudad && !date.referencias && !date.requisitos) && (
+        <div style={{opacity:.7}}>Sin información adicional.</div>
+      )}
+    </div>
+  </div>
+
+  {date.flyer_url && (
+    <div className="mini-card" style={{display:'grid', gap:'.75rem'}}>
+      <strong>🎟️ Flyer del Evento</strong>
+      <div style={{display:'grid', placeItems:'center'}}>
+        <img
+          src={date.flyer_url}
+          alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
+          style={{
+            width:'100%', maxWidth:420, aspectRatio:'4/5', objectFit:'cover',
+            borderRadius:16, boxShadow:'0 12px 32px rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.12)'
+          }}
+        />
+      </div>
+    </div>
+  )}
+</section>
+
 
         {/* Flyer de la Fecha */}
         {date.flyer_url && (
