@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import AddToCalendarButton from "../../components/AddToCalendarButton";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
 
@@ -526,7 +526,7 @@ export default function EventDatePublicScreen() {
           </div>
         </motion.header>
 
-{/* uBICACIONES Y REQUISITOS */}
+        {/* uBICACIONES Y REQUISITOS */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -543,8 +543,7 @@ export default function EventDatePublicScreen() {
           }}
         >
           <style>{`
-    .ur-grid{display:grid;grid-template-columns:1fr;gap:1rem}
-    @media(min-width:768px){.ur-grid{grid-template-columns:1.25fr 1fr}}
+    .ur-col { display:grid; grid-template-columns: 1fr; gap: 1rem; }
     .card{border-radius:14px;padding:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10)}
     .loc{border-color:rgba(240,147,251,0.22);background:linear-gradient(135deg,rgba(240,147,251,.08),rgba(240,147,251,.04))}
     .req{border-color:rgba(255,209,102,0.22);background:linear-gradient(135deg,rgba(255,209,102,.08),rgba(255,209,102,.04))}
@@ -571,8 +570,8 @@ export default function EventDatePublicScreen() {
             📍 Ubicación y requisitos
           </h3>
 
-          <div className="ur-grid">
-            {/* Columna izquierda: Ubicación */}
+          <div className="ur-col">
+            {/* Fila 1: Ubicación */}
             <div className="card loc" aria-label="Ubicación">
               {date.lugar || date.direccion || date.ciudad || date.referencias ? (
                 <>
@@ -614,7 +613,7 @@ export default function EventDatePublicScreen() {
               )}
             </div>
 
-            {/* Columna derecha: Requisitos */}
+            {/* Fila 2: Requisitos */}
             <div className="card req" aria-label="Requisitos">
               {date.requisitos ? (
                 <>
@@ -631,7 +630,8 @@ export default function EventDatePublicScreen() {
         </motion.section>
 
 
-{/* RSVP */}
+
+        {/* RSVP */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -648,8 +648,7 @@ export default function EventDatePublicScreen() {
           }}
         >
           <style>{`
-    .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
-    @media (min-width: 768px) { .rsvp-grid { grid-template-columns: 1.1fr .9fr } }
+     .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
     .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
     .metrics { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap }
     .chip-count {
@@ -692,7 +691,7 @@ export default function EventDatePublicScreen() {
 
                 {/* Prueba social + microcopy */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
-                  
+
 
                   {/* Estado actual del usuario */}
                   <div className="subtle" aria-live="polite">
@@ -702,33 +701,43 @@ export default function EventDatePublicScreen() {
               </div>
             </div>
 
-            {/* Columna derecha: Agregar a calendario (solo si interesado) */}
+            {/* Fila 2: Agregar a calendario (solo si interesado) */}
             {userStatus === 'interesado' && (
-            <div className="card" aria-label="Agregar evento a calendario">
-              <div style={{ display: 'grid', gap: '.75rem' }}>
-                <h3 className="headline">🗓️ Calendario</h3>
-                <p className="muted" style={{ margin: 0 }}>
-                  Agrega la fecha a tu agenda en un clic.
-                </p>
+              <div className="card" aria-label="Agregar evento a calendario">
+                <div style={{ display: 'grid', gap: '.75rem' }}>
+                  <h3 className="headline">🗓️ Calendario</h3>
+                  <p className="muted" style={{ margin: 0 }}>
+                    Agrega la fecha a tu agenda en un clic.
+                  </p>
 
-                <div className="cta-row">
-                  <AddToCalendarButton
-                    event={{
-                      titulo: date.nombre || `Fecha: ${formatDate(date.fecha)}`,
-                      descripcion: date.biografia || parent?.descripcion || undefined,
-                      fecha: date.fecha,
-                      hora_inicio: date.hora_inicio,
-                      hora_fin: date.hora_fin,
-                      lugar: (date.lugar || date.ciudad || date.direccion || undefined) as string | undefined,
-                    }}
-                  />
+                  <div className="cta-row">
+                    <AddToCalendarWithStats
+                      eventId={date.id}
+                      title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                      description={date.biografia || parent?.descripcion || undefined}
+                      location={date.lugar || date.ciudad || date.direccion || undefined}
+                      start={(() => {
+                        const fechaStr = (date.fecha || '').split('T')[0] || '';
+                        const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                        const d = new Date(`${fechaStr}T${h}:00`);
+                        return isNaN(d.getTime()) ? new Date() : d;
+                      })()}
+                      end={(() => {
+                        const fechaStr = (date.fecha || '').split('T')[0] || '';
+                        const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                        const d = new Date(`${fechaStr}T${h}:00`);
+                        if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                        return d;
+                      })()}
+                      showAsIcon={false}
+                    />
 
-                  {/* botón compartir removido en contenedor calendario */}
+                    {/* botón compartir removido en contenedor calendario */}
+                  </div>
+
+
                 </div>
-
-               
               </div>
-            </div>
             )}
           </div>
         </motion.section>

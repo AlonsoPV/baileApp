@@ -245,10 +245,10 @@ export default function AddToCalendarWithStats({
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            border: '1px solid rgba(255,255,255,0.2)',
-            background: added 
-              ? 'rgba(76, 175, 80, 0.2)' 
-              : 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: added
+              ? 'linear-gradient(135deg, rgba(76,175,80,.25), rgba(76,175,80,.15))'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))',
             color: '#fff',
             fontSize: '20px',
             cursor: loading ? 'not-allowed' : 'pointer',
@@ -256,7 +256,10 @@ export default function AddToCalendarWithStats({
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease',
-            opacity: loading ? 0.6 : 1,
+            opacity: loading ? 0.7 : 1,
+            boxShadow: added
+              ? '0 6px 16px rgba(76,175,80,0.25)'
+              : '0 6px 16px rgba(0,0,0,0.25)',
           }}
           title={added ? "✅ Añadido al calendario" : "📅 Añadir a calendario"}
         >
@@ -264,29 +267,39 @@ export default function AddToCalendarWithStats({
         </motion.button>
 
         {/* Contador en tooltip/modal pequeño */}
-        {count > 0 && (
-          <div style={{
-            position: 'absolute',
-            top: '-8px',
-            right: '-8px',
-            minWidth: '20px',
-            height: '20px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 4px',
-            boxShadow: '0 2px 8px rgba(240, 147, 251, 0.4)',
-            border: '2px solid rgba(255, 255, 255, 0.9)',
-            zIndex: 5
-          }}>
-            {count > 99 ? '99+' : count}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {count > 0 && (
+            <motion.div
+              key={count}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                minWidth: '20px',
+                height: '20px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
+                color: 'white',
+                fontSize: '10px',
+                fontWeight: '800',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 6px',
+                boxShadow: '0 2px 10px rgba(33, 212, 253, 0.35)',
+                border: '2px solid rgba(255, 255, 255, 0.95)',
+                zIndex: 5
+              }}
+              aria-live="polite"
+            >
+              {count > 99 ? '99+' : count}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {typeof document !== 'undefined' && document.body && createPortal(
           <>
@@ -352,7 +365,7 @@ export default function AddToCalendarWithStats({
 
   // Versión con botón completo y contador
   return (
-    <div style={{ position: "relative", display: "inline-block", textAlign: "center" }}>
+    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 12, flexWrap: 'wrap' }}>
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
@@ -362,31 +375,51 @@ export default function AddToCalendarWithStats({
           padding: "10px 14px",
           borderRadius: 12,
           border: "1px solid rgba(255,255,255,0.14)",
-          background: added 
-            ? "rgba(76, 175, 80, 0.2)" 
-            : "rgba(255,255,255,0.06)",
+          background: added
+            ? "linear-gradient(135deg, rgba(76,175,80,.25), rgba(76,175,80,.15))"
+            : "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))",
           color: "#fff",
-          fontWeight: 700,
+          fontWeight: 800,
           cursor: loading ? "not-allowed" : "pointer",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+          boxShadow: added ? "0 8px 22px rgba(76,175,80,0.28)" : "0 8px 22px rgba(0,0,0,0.35)",
           backdropFilter: "blur(8px)",
-          opacity: loading ? 0.6 : 1,
+          opacity: loading ? 0.7 : 1,
         }}
+        aria-label={added ? "Evento añadido al calendario" : "Añadir evento al calendario"}
       >
         {added ? "✅ Añadido" : loading ? "⏳ Cargando..." : "📅 Añadir a calendario"}
       </motion.button>
 
-      {/* Contador de interesados */}
-      {count > 0 && (
-        <div style={{ 
-          fontSize: 13, 
-          color: "rgba(255,255,255,0.8)", 
-          marginTop: 4, 
-          textAlign: "center" 
-        }}>
-          👯‍♀️ {count} persona{count !== 1 ? "s" : ""} planean asistir
-        </div>
-      )}
+      {/* Contador de interesados en formato pill */}
+      <AnimatePresence initial={false}>
+        {count > 0 && (
+          <motion.div
+            key={count}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 10px',
+              borderRadius: 999,
+              background: 'linear-gradient(135deg, rgba(127,124,255,.25), rgba(33,212,253,.20))',
+              border: '1px solid rgba(255,255,255,0.18)',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 800,
+              boxShadow: '0 6px 18px rgba(33,212,253,0.20)'
+            }}
+            aria-live="polite"
+          >
+            <span>👥</span>
+            <span>{count}</span>
+            <span style={{ opacity: 0.9 }}>interesado{count !== 1 ? 's' : ''}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
   {typeof document !== 'undefined' && document.body && createPortal(
     <>
