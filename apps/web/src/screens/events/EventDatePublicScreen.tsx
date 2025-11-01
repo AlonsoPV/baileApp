@@ -388,169 +388,135 @@ export default function EventDatePublicScreen() {
       <div className="date-public-inner">
 
 
-        <motion.header
-          initial={{ opacity: 0, y: 12 }}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="social-header"
+          transition={{ duration: 0.25 }}
+          aria-label="Ubicación y requisitos"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: '1.25rem',
-            marginBottom: '1.5rem',
+            padding: '1.25rem',
+            marginBottom: '1.25rem',
+            borderRadius: 18,
+            border: '1px solid rgba(255,255,255,0.10)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
+            backdropFilter: 'blur(12px)'
           }}
         >
           <style>{`
-    .social-header-card {
-      position: relative;
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(40,30,45,0.92), rgba(30,20,40,0.92));
-      border: 1px solid rgba(240,147,251,0.18);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-      padding: 1.25rem 1.25rem 1rem;
+    .ur-grid{display:grid;grid-template-columns:1fr;gap:1rem}
+    @media(min-width:768px){.ur-grid{grid-template-columns:1.25fr 1fr}}
+    .card{border-radius:14px;padding:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10)}
+    .loc{border-color:rgba(240,147,251,0.22);background:linear-gradient(135deg,rgba(240,147,251,.08),rgba(240,147,251,.04))}
+    .req{border-color:rgba(255,209,102,0.22);background:linear-gradient(135deg,rgba(255,209,102,.08),rgba(255,209,102,.04))}
+    .row{display:grid;grid-template-columns:22px 1fr;gap:.5rem;align-items:start;color:rgba(255,255,255,.92)}
+    .row+.row{margin-top:.5rem}
+    .muted{color:rgba(255,255,255,.72)}
+    .divider{height:1px;background:rgba(255,255,255,.12);margin:.75rem 0}
+    .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em}
+    .btn-maps{border:1px solid rgba(240,147,251,.4);color:#f7d9ff;
+      background:radial-gradient(120% 120% at 0% 0%,rgba(240,147,251,.18),rgba(240,147,251,.08));
+      box-shadow:0 6px 18px rgba(240,147,251,.20)
     }
-    .social-header-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.25rem;
-    }
-    @media (min-width: 768px) {
-       .social-header-grid { grid-template-columns: 1.3fr 1fr; }
-    }
-    .chip {
-      display:inline-flex;align-items:center;gap:.5rem;
-      padding:.5rem .85rem;border-radius:999px;font-weight:700;font-size:.9rem
-    }
-    .chip-date { background:rgba(240,147,251,.12);border:1px solid rgba(240,147,251,.25);color:#f093fb }
-    .chip-time { background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.25);color:#FFD166 }
-    .mini-card {
-      border-radius:14px; padding:1rem; 
-      background: rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.08);
-    }
-    .list-compact { display:grid; gap:.6rem }
-    .list-compact li { display:flex; justify-content:space-between; gap:.75rem; font-size:.95rem }
+    .btn-maps:hover{transform:translateY(-1px);border-color:rgba(240,147,251,.6);
+      box-shadow:0 10px 26px rgba(240,147,251,.28)}
+    .pin{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;
+      background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:.9rem;
+      box-shadow:0 4px 10px rgba(245,87,108,.35)}
+    .btn-copy{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06)}
+    .btn-copy:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.1)}
   `}</style>
 
-          <div className="social-header-card">
-            <div className="social-header-grid">
-              {/* Columna izquierda */}
-              <div style={{ display: 'grid', gap: '.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => navigate(`/social/${date.parent_id}`)}
-                    style={{
-                      padding: '8px 12px', borderRadius: 999,
-                      border: '1px solid rgba(240,147,251,0.28)',
-                      background: 'rgba(240,147,251,0.10)', color: '#f093fb',
-                      fontWeight: 700, cursor: 'pointer'
-                    }}
-                  >
-                    ← Volver
-                  </button>
-                </div>
+          <h3 style={{ margin: 0, marginBottom: '.9rem', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>
+            📍 Ubicación y requisitos
+          </h3>
 
-                <h1 style={{
-                  margin: 0, fontSize: '2rem', lineHeight: 1.2, fontWeight: 800,
-                  background: 'linear-gradient(135deg,#f093fb,#FFD166)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-                }}>
-                  {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                </h1>
+          <div className="ur-grid">
+            {/* Columna izquierda: Ubicación */}
+            <div className="card loc" aria-label="Ubicación">
+              {date.lugar || date.direccion || date.ciudad || date.referencias ? (
+                <>
+                  <div className="row"><span>🏷️</span><div><b>Lugar</b><div className="muted">{date.lugar || '—'}</div></div></div>
+                  <div className="row"><span>🧭</span><div><b>Dirección</b><div className="muted">{date.direccion || '—'}</div></div></div>
+                  <div className="row"><span>🏙️</span><div><b>Ciudad</b><div className="muted">{date.ciudad || '—'}</div></div></div>
+                  {date.referencias && <div className="row"><span>📌</span><div><b>Referencias</b><div className="muted">{date.referencias}</div></div></div>}
+                  {(date.lugar || date.direccion || date.ciudad) && <div className="divider" />}
+                  <div className="actions">
+                    {(date.direccion || date.lugar || date.ciudad) && (
+                      <a
+                        className="btn btn-maps"
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
+                        )}`}
+                        target="_blank" rel="noopener noreferrer"
+                        aria-label="Abrir ubicación en Google Maps (nueva pestaña)"
+                      >
+                        <span className="pin">📍</span> Ver en Maps <span aria-hidden>↗</span>
+                      </a>
+                    )}
+                    {date.direccion && (
+                      <button
+                        type="button"
+                        className="btn btn-copy"
+                        onClick={() => {
+                          const text = `${date.lugar ?? ''}\n${date.direccion ?? ''}\n${date.ciudad ?? ''}`.trim();
+                          navigator.clipboard?.writeText(text).catch(() => { });
+                        }}
+                        aria-label="Copiar dirección al portapapeles"
+                      >
+                        📋 Copiar dirección
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="muted">Sin información de ubicación.</div>
+              )}
+            </div>
 
-                {date.biografia && (
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.5 }}>
-                    {date.biografia}
+            {/* Columna derecha: Requisitos */}
+            <div className="card req" aria-label="Requisitos">
+              {date.requisitos ? (
+                <>
+                  <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
+                  <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)' }}>
+                    {date.requisitos}
                   </p>
-                )}
-
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
-                  <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
-                  {date.hora_inicio && (
-                    <span className="chip chip-time">
-                      🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Columna derecha */}
-              <div style={{ display: 'grid', gap: '.85rem', alignContent: 'start' }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <ShareButton
-                    url={typeof window !== 'undefined' ? window.location.href : ''}
-                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                    text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
-                  />
-                </div>
-
-                {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
-                  <div className="mini-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
-                      <strong>📅 Cronograma</strong>
-                      <span style={{ opacity: .7, fontSize: '.9rem' }}>{date.cronograma.length} item(s)</span>
-                    </div>
-                    <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {date.cronograma.slice(0, 4).map((it: any, i: number) => (
-                        <li key={i}>
-                          <span style={{ opacity: .9 }}>
-                            {it.tipo === 'clase' ? '📚' : it.tipo === 'show' ? '🎭' : '🗂️'} {it.titulo || it.tipo}
-                          </span>
-                          <span style={{ opacity: .7 }}>{it.inicio}{it.fin ? ` - ${it.fin}` : ''}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {Array.isArray(date.costos) && date.costos.length > 0 && (
-                  <div className="mini-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
-                      <strong>💰 Costos</strong>
-                      <span style={{ opacity: .7, fontSize: '.9rem' }}>{date.costos.length} opción(es)</span>
-                    </div>
-                    <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {date.costos.slice(0, 4).map((c: any, i: number) => (
-                        <li key={i}>
-                          <span style={{ opacity: .9 }}>{c.nombre || c.tipo}</span>
-                          <span style={{ fontWeight: 700, color: '#FFD166' }}>
-                            {c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <div className="muted">Sin requisitos específicos.</div>
+              )}
             </div>
           </div>
-        </motion.header>
+        </motion.section>
+
 
 
         <motion.section
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.25 }}
-  aria-label="Ubicación y requisitos"
-  style={{
-    padding: '1.25rem',
-    marginBottom: '1.25rem',
-    borderRadius: 18,
-    border: '1px solid rgba(255,255,255,0.10)',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
-    backdropFilter: 'blur(12px)'
-  }}
->
-  <h3 style={{
-    margin: 0, marginBottom: '0.9rem',
-    fontSize: '1.3rem', fontWeight: 800,
-    letterSpacing: '-0.01em', color: '#fff'
-  }}>
-    📍 Ubicación y requisitos
-  </h3>
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          aria-label="Ubicación y requisitos"
+          style={{
+            padding: '1.25rem',
+            marginBottom: '1.25rem',
+            borderRadius: 18,
+            border: '1px solid rgba(255,255,255,0.10)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
+            backdropFilter: 'blur(12px)'
+          }}
+        >
+          <h3 style={{
+            margin: 0, marginBottom: '0.9rem',
+            fontSize: '1.3rem', fontWeight: 800,
+            letterSpacing: '-0.01em', color: '#fff'
+          }}>
+            📍 Ubicación y requisitos
+          </h3>
 
-  <style>{`
+          <style>{`
     .ur-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -608,72 +574,72 @@ export default function EventDatePublicScreen() {
     .muted { color: rgba(255,255,255,0.65); }
   `}</style>
 
-  <div className="ur-grid">
-    {/* Columna izquierda: Ubicación */}
-    {(date.lugar || date.direccion || date.ciudad || date.referencias) ? (
-      <div className="card card--loc" aria-label="Ubicación">
-        <div className="field">
-          <span>🏷️</span>
-          <div><b>Lugar</b><div className="muted">{date.lugar || '—'}</div></div>
-        </div>
+          <div className="ur-grid">
+            {/* Columna izquierda: Ubicación */}
+            {(date.lugar || date.direccion || date.ciudad || date.referencias) ? (
+              <div className="card card--loc" aria-label="Ubicación">
+                <div className="field">
+                  <span>🏷️</span>
+                  <div><b>Lugar</b><div className="muted">{date.lugar || '—'}</div></div>
+                </div>
 
-        <div className="field">
-          <span>🧭</span>
-          <div><b>Dirección</b><div className="muted">{date.direccion || '—'}</div></div>
-        </div>
+                <div className="field">
+                  <span>🧭</span>
+                  <div><b>Dirección</b><div className="muted">{date.direccion || '—'}</div></div>
+                </div>
 
-        <div className="field">
-          <span>🏙️</span>
-          <div><b>Ciudad</b><div className="muted">{date.ciudad || '—'}</div></div>
-        </div>
+                <div className="field">
+                  <span>🏙️</span>
+                  <div><b>Ciudad</b><div className="muted">{date.ciudad || '—'}</div></div>
+                </div>
 
-        {date.referencias && (
-          <div className="field">
-            <span>📌</span>
-            <div><b>Referencias</b><div className="muted">{date.referencias}</div></div>
+                {date.referencias && (
+                  <div className="field">
+                    <span>📌</span>
+                    <div><b>Referencias</b><div className="muted">{date.referencias}</div></div>
+                  </div>
+                )}
+
+                {(date.lugar || date.direccion || date.ciudad) && <div className="divider" />}
+
+                {/* Botón Maps mejorado */}
+                {(date.direccion || date.lugar || date.ciudad) && (
+                  <a
+                    className="maps-btn"
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Abrir ubicación en Google Maps (se abre en una nueva pestaña)"
+                  >
+                    <span className="maps-pin">📍</span>
+                    Ver en Maps
+                    <span aria-hidden>↗</span>
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="card card--loc" aria-label="Ubicación">
+                <div className="muted">Sin información de ubicación.</div>
+              </div>
+            )}
+
+            {/* Columna derecha: Requisitos */}
+            {date.requisitos ? (
+              <div className="card card--req" aria-label="Requisitos">
+                <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
+                <p style={{ margin: 0, lineHeight: 1.55, color: 'rgba(255,255,255,0.92)' }}>
+                  {date.requisitos}
+                </p>
+              </div>
+            ) : (
+              <div className="card card--req" aria-label="Requisitos">
+                <div className="muted">Sin requisitos específicos.</div>
+              </div>
+            )}
           </div>
-        )}
-
-        {(date.lugar || date.direccion || date.ciudad) && <div className="divider" />}
-
-        {/* Botón Maps mejorado */}
-        {(date.direccion || date.lugar || date.ciudad) && (
-          <a
-            className="maps-btn"
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Abrir ubicación en Google Maps (se abre en una nueva pestaña)"
-          >
-            <span className="maps-pin">📍</span>
-            Ver en Maps
-            <span aria-hidden>↗</span>
-          </a>
-        )}
-      </div>
-    ) : (
-      <div className="card card--loc" aria-label="Ubicación">
-        <div className="muted">Sin información de ubicación.</div>
-      </div>
-    )}
-
-    {/* Columna derecha: Requisitos */}
-    {date.requisitos ? (
-      <div className="card card--req" aria-label="Requisitos">
-        <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
-        <p style={{ margin: 0, lineHeight: 1.55, color: 'rgba(255,255,255,0.92)' }}>
-          {date.requisitos}
-        </p>
-      </div>
-    ) : (
-      <div className="card card--req" aria-label="Requisitos">
-        <div className="muted">Sin requisitos específicos.</div>
-      </div>
-    )}
-  </div>
-</motion.section>
+        </motion.section>
 
 
         <motion.section
@@ -691,50 +657,137 @@ export default function EventDatePublicScreen() {
             backdropFilter: 'blur(12px)'
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: '#fff' }}>🎯 Asistencia y calendario</h3>
-            {/* RSVP centrado */}
-            <RSVPButtons currentStatus={userStatus} onStatusChange={toggleInterested} disabled={isUpdating} />
+          <style>{`
+    .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
+    @media (min-width: 768px) { .rsvp-grid { grid-template-columns: 1.1fr .9fr } }
+    .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
+    .metrics { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap }
+    .chip-count {
+      padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
+      background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
+      border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
+    }
+    .avatars { display:flex; align-items:center }
+    .avatar {
+      width:28px; height:28px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.25);
+      display:grid; place-items:center; font-size:.75rem; font-weight:800; color:#0b0d10;
+      background:linear-gradient(135deg,#f093fb,#FFD166)
+    }
+    .avatar + .avatar { margin-left:-8px }
+    .muted { color:rgba(255,255,255,.75); font-size:.9rem }
+    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center }
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .95rem; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-weight:800
+    }
+    .btn-ghost:hover { border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.1) }
+    .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
+    .subtle { font-size:.85rem; color:rgba(255,255,255,.6) }
+  `}</style>
 
-            {/* Contador visible debajo del botón */}
-            {stats && (
-              <div style={{
-                padding: '.7rem 1.1rem',
-                borderRadius: 999,
-                background: 'linear-gradient(135deg, rgba(30,136,229,0.3), rgba(0,188,212,0.3))',
-                border: '1px solid rgba(30,136,229,0.45)',
-                boxShadow: '0 10px 26px rgba(30,136,229,0.35)',
-                color: '#fff',
-                fontWeight: 900,
-                fontSize: '1.05rem'
-              }}>
-                {stats.interesado} persona{stats.interesado !== 1 ? 's' : ''} asistirán
+          <div className="rsvp-grid">
+            {/* Columna izquierda: RSVP + prueba social */}
+            <div className="card" aria-label="Confirmar asistencia">
+              <div style={{ display: 'grid', gap: '.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem' }}>
+                  <h3 className="headline">🎯 Asistencia</h3>
+                  {stats && (
+                    <div className="chip-count" aria-live="polite">
+                      {stats.interesado} interesado{stats.interesado !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botones RSVP */}
+                <RSVPButtons
+                  currentStatus={userStatus}
+                  onStatusChange={toggleInterested}
+                  disabled={isUpdating}
+                />
+
+                {/* Prueba social + microcopy */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
+                  <div className="metrics">
+                    {/* Muestra algunos avatares sintéticos si tu hook no trae fotos; puedes reemplazar con tus imágenes */}
+                    <div className="avatars" aria-hidden="true">
+                      <div className="avatar">A</div>
+                      <div className="avatar">L</div>
+                      <div className="avatar">M</div>
+                      <div className="avatar">R</div>
+                    </div>
+                    <span className="muted">
+                      Súmate y recibe recordatorio.
+                    </span>
+                  </div>
+
+                  {/* Estado actual del usuario */}
+                  <div className="subtle" aria-live="polite">
+                    {userStatus === 'interesado' ? '✅ Estás marcado como interesado' : 'Marca “Me interesa” para añadirlo a tus eventos'}
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* Botón de calendario */}
-            <AddToCalendarWithStats
-              eventId={date.id}
-              title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-              description={date.biografia || parent?.descripcion || undefined}
-              location={date.lugar || date.ciudad || date.direccion || undefined}
-              start={(() => {
-                const fechaStr = (date.fecha || '').split('T')[0] || '';
-                const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                const d = new Date(`${fechaStr}T${h}:00`);
-                return isNaN(d.getTime()) ? new Date() : d;
-              })()}
-              end={(() => {
-                const fechaStr = (date.fecha || '').split('T')[0] || '';
-                const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-                const d = new Date(`${fechaStr}T${h}:00`);
-                if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
-                return d;
-              })()}
-              showAsIcon={false}
-            />
+            {/* Columna derecha: Agregar a calendario */}
+            <div className="card" aria-label="Agregar evento a calendario">
+              <div style={{ display: 'grid', gap: '.75rem' }}>
+                <h3 className="headline">🗓️ Calendario</h3>
+                <p className="muted" style={{ margin: 0 }}>
+                  Agrega la fecha a tu agenda en un clic.
+                </p>
+
+                <div className="cta-row">
+                  <AddToCalendarWithStats
+                    eventId={date.id}
+                    title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                    description={date.biografia || parent?.descripcion || undefined}
+                    location={date.lugar || date.ciudad || date.direccion || undefined}
+                    start={(() => {
+                      const fechaStr = (date.fecha || '').split('T')[0] || '';
+                      const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                      const d = new Date(`${fechaStr}T${h}:00`);
+                      return isNaN(d.getTime()) ? new Date() : d;
+                    })()}
+                    end={(() => {
+                      const fechaStr = (date.fecha || '').split('T')[0] || '';
+                      const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                      const d = new Date(`${fechaStr}T${h}:00`);
+                      if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                      return d;
+                    })()}
+                    showAsIcon={false}
+                  />
+
+                  {/* Acción secundaria: compartir (opcional aquí si no lo tienes arriba) */}
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: date.nombre || `Fecha: ${formatDate(date.fecha)}`,
+                          text: `¡Mira esta fecha!`,
+                          url: typeof window !== 'undefined' ? window.location.href : ''
+                        }).catch(() => { });
+                      } else {
+                        navigator.clipboard?.writeText(typeof window !== 'undefined' ? window.location.href : '');
+                      }
+                    }}
+                    aria-label="Compartir evento"
+                  >
+                    🔗 Compartir
+                  </button>
+                </div>
+
+                {/* Nota contextual cuando el usuario ya marcó interés */}
+                {userStatus === 'interesado' && (
+                  <div className="subtle">Te recomendamos añadirlo a tu calendario para no olvidarlo.</div>
+                )}
+              </div>
+            </div>
           </div>
         </motion.section>
+
 
 
 
