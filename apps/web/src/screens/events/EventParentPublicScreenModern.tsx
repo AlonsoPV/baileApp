@@ -698,13 +698,13 @@ export default function EventParentPublicScreen() {
               </motion.p>
 
               {/* Barra de datos clave (sin RSVP) */}
-              {nextDate && (
+        {/*       {nextDate && (
                 <div className="info-strip" aria-label="Datos clave de la próxima fecha">
                   <span className="info-chip">📅 {new Date(nextDate.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                   {nextDate.hora_inicio && <span className="info-chip">🕒 {nextDate.hora_inicio}{nextDate.hora_fin ? ` – ${nextDate.hora_fin}` : ''}</span>}
                   {(nextDate.lugar || nextDate.ciudad) && <span className="info-chip">📍 {nextDate.lugar || nextDate.ciudad}</span>}
                 </div>
-              )}
+              )} */}
 
               {/* Acciones */}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
