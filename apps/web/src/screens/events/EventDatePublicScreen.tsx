@@ -526,7 +526,7 @@ export default function EventDatePublicScreen() {
           </div>
         </motion.header>
 
-
+{/* uBICACIONES Y REQUISITOS */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -631,7 +631,7 @@ export default function EventDatePublicScreen() {
         </motion.section>
 
 
-
+{/* RSVP */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -697,22 +697,11 @@ export default function EventDatePublicScreen() {
 
                 {/* Prueba social + microcopy */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
-                  <div className="metrics">
-                    {/* Muestra algunos avatares sintéticos si tu hook no trae fotos; puedes reemplazar con tus imágenes */}
-                    <div className="avatars" aria-hidden="true">
-                      <div className="avatar">A</div>
-                      <div className="avatar">L</div>
-                      <div className="avatar">M</div>
-                      <div className="avatar">R</div>
-                    </div>
-                    <span className="muted">
-                      Súmate y recibe recordatorio.
-                    </span>
-                  </div>
+                  
 
                   {/* Estado actual del usuario */}
                   <div className="subtle" aria-live="polite">
-                    {userStatus === 'interesado' ? '✅ Estás marcado como interesado' : 'Marca “Me interesa” para añadirlo a tus eventos'}
+                    {userStatus === 'interesado' ? '✅ Este evento es de tu interés' : 'Marca “Me interesa” para añadirlo a tus eventos'}
                   </div>
                 </div>
               </div>
@@ -748,25 +737,7 @@ export default function EventDatePublicScreen() {
                     showAsIcon={false}
                   />
 
-                  {/* Acción secundaria: compartir (opcional aquí si no lo tienes arriba) */}
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: date.nombre || `Fecha: ${formatDate(date.fecha)}`,
-                          text: `¡Mira esta fecha!`,
-                          url: typeof window !== 'undefined' ? window.location.href : ''
-                        }).catch(() => { });
-                      } else {
-                        navigator.clipboard?.writeText(typeof window !== 'undefined' ? window.location.href : '');
-                      }
-                    }}
-                    aria-label="Compartir evento"
-                  >
-                    🔗 Compartir
-                  </button>
+                  {/* botón compartir removido en contenedor calendario */}
                 </div>
 
                 {/* Nota contextual cuando el usuario ya marcó interés */}
