@@ -75,12 +75,27 @@ export function useUpsertTeacher() {
       for (const k of Object.keys(base)) {
         if (allowed.has(k) && base[k] !== undefined) filtered[k] = base[k];
       }
-      const { data, error } = await supabase
+      // Intentar UPSERT por user_id; si falla por conflicto, hacer UPDATE
+      let { data, error } = await supabase
         .from(TABLE)
-        .upsert(filtered, { onConflict: 'id', ignoreDuplicates: false })
+        .upsert(filtered, { onConflict: 'user_id', ignoreDuplicates: false })
         .select('*')
         .single();
-      if (error) throw error;
+      if (error) {
+        // Fallback: update directo por user_id
+        const { error: updError } = await supabase
+          .from(TABLE)
+          .update(filtered)
+          .eq('user_id', user.id);
+        if (updError) throw updError;
+        const { data: refetch, error: refErr } = await supabase
+          .from(TABLE)
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (refErr) throw refErr;
+        return refetch as TeacherProfile;
+      }
       return data as TeacherProfile;
     },
     onSuccess: () => {
