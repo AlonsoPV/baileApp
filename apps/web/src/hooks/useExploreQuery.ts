@@ -31,6 +31,8 @@ function baseSelect(type: ExploreType) {
           zona,
           referencias,
           requisitos,
+          estilos,
+          ritmos_seleccionados,
           cronograma,
           costos,
           media,
@@ -43,6 +45,7 @@ function baseSelect(type: ExploreType) {
             descripcion,
             biografia,
             estilos,
+            ritmos_seleccionados,
             zonas,
             sede_general,
             faq,
@@ -123,13 +126,20 @@ async function fetchPage(params: QueryParams, page: number) {
     if (dateFrom) query = query.gte("fecha", dateFrom);
     if (dateTo)   query = query.lte("fecha", dateTo);
     
-    // filtrar por estilos/ritmos - usar la relación con events_parent
-    if ((ritmos?.length || 0) > 0 && (selectedCatalogIds?.length || 0) > 0) {
-      const setTags = `{${(ritmos as number[]).join(',')}}`;
-      const setCat  = `{${selectedCatalogIds.join(',')}}`;
-      query = query.or(`events_parent.estilos.ov.${setTags},events_parent.ritmos_seleccionados.ov.${setCat}`);
-    } else if ((ritmos?.length || 0) > 0) {
-      query = query.overlaps("events_parent.estilos", ritmos as any);
+    // filtrar por estilos/ritmos - a nivel de fecha y de parent
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
+        const setTags = `{${(ritmos as number[]).join(',')}}`;
+        parts.push(`estilos.ov.${setTags}`); // fecha.estilos
+        parts.push(`events_parent.estilos.ov.${setTags}`); // parent.estilos
+      }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`); // fecha.ritmos_seleccionados
+        parts.push(`events_parent.ritmos_seleccionados.ov.${setCat}`); // parent.ritmos_seleccionados
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
     }
     // zonas específicas de la fecha (campo zona numérico)
     if (zonas?.length)   query = query.in("zona", zonas as any);
