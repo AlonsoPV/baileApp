@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { ExploreFilters, ExploreType } from "../state/exploreFilters";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 
 const PAGE_LIMIT = 12;
 
@@ -85,6 +86,28 @@ async function fetchPage(params: QueryParams, page: number) {
   // Construir query
   let query = supabase.from(table).select(select, { count: "exact" });
 
+  // Mapeo opcional: de ritmos (tags numéricos) a catálogo (string IDs) para permitir OR sobre ritmos_seleccionados
+  let selectedCatalogIds: string[] = [];
+  try {
+    if (ritmos && ritmos.length > 0) {
+      // Obtener nombres de tags seleccionados
+      const { data: tagRows, error: tagErr } = await supabase
+        .from('tags')
+        .select('id,nombre,tipo')
+        .in('id', ritmos as any)
+        .eq('tipo', 'ritmo');
+      if (!tagErr && tagRows && tagRows.length > 0) {
+        const labelToId = new Map<string, string>();
+        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
+        selectedCatalogIds = (tagRows as any[])
+          .map(r => labelToId.get(r.nombre))
+          .filter(Boolean) as string[];
+      }
+    }
+  } catch (e) {
+    console.warn('[useExploreQuery] Catalog mapping failed, continuing with numeric only', e);
+  }
+
   // Filtros por tipo
   if (type === "fechas") {
     // DEBUG: Log the current date filter
@@ -101,7 +124,14 @@ async function fetchPage(params: QueryParams, page: number) {
     if (dateTo)   query = query.lte("fecha", dateTo);
     
     // filtrar por estilos/ritmos - usar la relación con events_parent
-    if (ritmos?.length)  query = query.overlaps("events_parent.estilos", ritmos as any);
+    if ((ritmos?.length || 0) > 0 && (selectedCatalogIds?.length || 0) > 0) {
+      const setTags = `{${(ritmos as number[]).join(',')}}`;
+      const setCat  = `{${selectedCatalogIds.join(',')}}`;
+      query = query.or(`events_parent.estilos.ov.${setTags},events_parent.ritmos_seleccionados.ov.${setCat}`);
+    } else if ((ritmos?.length || 0) > 0) {
+      query = query.overlaps("events_parent.estilos", ritmos as any);
+    }
+    // zonas específicas de la fecha (campo zona numérico)
     if (zonas?.length)   query = query.in("zona", zonas as any);
     
     // búsqueda textual básica (lugar/ciudad/direccion)
@@ -122,17 +152,18 @@ async function fetchPage(params: QueryParams, page: number) {
   }
   else if (type === "maestros" || type === "academias") {
     if (q) query = query.ilike("nombre_publico", `%${q}%`);
-    if (ritmos?.length) {
-      if (type === "academias") {
-        // Algunas academias guardan ritmos en 'estilos' en lugar de 'ritmos'
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
         const set = `{${(ritmos as number[]).join(',')}}`;
-        // or: ritmos overlaps OR estilos overlaps
-        query = query.or(
-          `ritmos.ov.${set},estilos.ov.${set}`
-        );
-      } else {
-        query = query.overlaps("ritmos", ritmos as any);
+        parts.push(`ritmos.ov.${set}`);
+        if (type === 'academias') parts.push(`estilos.ov.${set}`);
       }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`);
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
     }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     // Solo mostrar perfiles aprobados
@@ -142,14 +173,36 @@ async function fetchPage(params: QueryParams, page: number) {
   else if (type === "sociales") {
     // Eventos padre (sociales) - usar estilos y zonas
     if (q) query = query.ilike("nombre", `%${q}%`);
-    if (ritmos?.length) query = query.overlaps("estilos", ritmos as any);
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
+        const set = `{${(ritmos as number[]).join(',')}}`;
+        parts.push(`estilos.ov.${set}`);
+      }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`);
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
+    }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     
     query = query.order("created_at", { ascending: false });
   }
   else if (type === "usuarios") {
     if (q) query = query.ilike("display_name", `%${q}%`);
-    if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
+        const set = `{${(ritmos as number[]).join(',')}}`;
+        parts.push(`ritmos.ov.${set}`);
+      }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`);
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
+    }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     
     query = query.order("created_at", { ascending: false });
