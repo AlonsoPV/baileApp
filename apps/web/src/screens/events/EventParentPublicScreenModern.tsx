@@ -13,6 +13,8 @@ import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import RSVPButtons from "../../components/rsvp/RSVPButtons";
+import { useEventRSVP } from "../../hooks/useRSVP";
 
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -444,13 +446,14 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
                   </span>
                 )}
               </div>
-              {/* Botón de calendario */}
+              {/* Botón de calendario (centrado y estilo completo) */}
               <div style={{ 
                 display: 'flex', 
-                justifyContent: 'flex-end', 
+                justifyContent: 'center', 
                 marginTop: '0.75rem',
                 position: 'relative',
-                zIndex: 5
+                zIndex: 5,
+                textAlign: 'center'
               }} onClick={(e) => e.stopPropagation()}>
                 <AddToCalendarWithStats
                   eventId={ev.id}
@@ -459,7 +462,7 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
                   location={ev.lugar}
                   start={calendarStart}
                   end={calendarEnd}
-                  showAsIcon={true}
+                  showAsIcon={false}
                 />
               </div>
             </div>
@@ -534,6 +537,26 @@ export default function EventParentPublicScreen() {
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
   const { data: organizer } = useMyOrganizer();
+  
+  // Próxima fecha (primera por fecha)
+  const nextDate = React.useMemo(() => {
+    if (!dates || !dates.length) return null as any;
+    try {
+      return [...dates].sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())[0];
+    } catch {
+      return dates[0] as any;
+    }
+  }, [dates]);
+
+  // RSVP para la próxima fecha
+  const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(nextDate?.id);
+  const interestedCount = React.useMemo(() => {
+    try {
+      const anyStats: any = stats as any;
+      const val = anyStats?.interesados ?? anyStats?.count ?? anyStats?.interested ?? 0;
+      return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
+    } catch { return 0; }
+  }, [stats]);
   
   // Verificar si el usuario es el dueño del social
   const isOwner = organizer?.id === parent?.organizer_id;
@@ -1725,6 +1748,81 @@ export default function EventParentPublicScreen() {
               />
             </motion.div>
           )}
+
+        {/* Asistencia y Calendario (para la próxima fecha) */}
+        {nextDate && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="glass-card-container"
+            aria-label="Asistencia y calendario"
+            style={{ padding: '1.25rem' }}
+          >
+            <style>{`
+      .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
+      .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
+      .chip-count {
+        padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
+        background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
+        border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
+      }
+      .muted { color:rgba(255,255,255,.75); font-size:.9rem }
+      .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
+      .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
+    `}</style>
+
+            <div className="rsvp-grid">
+              <div className="card" aria-label="Confirmar asistencia">
+                <div style={{ display: 'grid', gap: '.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
+                    <h3 className="headline">🎯 Asistencia</h3>
+                  </div>
+                  <RSVPButtons
+                    currentStatus={userStatus}
+                    onStatusChange={toggleInterested}
+                    disabled={isUpdating}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div className="chip-count" aria-live="polite">
+                      👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {userStatus === 'interesado' && (
+                <div className="card" aria-label="Agregar evento a calendario">
+                  <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
+                    <h3 className="headline">🗓️ Calendario</h3>
+                    <div className="cta-row">
+                      <AddToCalendarWithStats
+                        eventId={nextDate.id}
+                        title={nextDate.nombre || parent.nombre}
+                        description={nextDate.biografia || parent.descripcion}
+                        location={nextDate.lugar || nextDate.ciudad || nextDate.direccion}
+                        start={(() => {
+                          const fechaStr = (nextDate.fecha || '').split('T')[0] || '';
+                          const h = (nextDate.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          return isNaN(d.getTime()) ? new Date() : d;
+                        })()}
+                        end={(() => {
+                          const fechaStr = (nextDate.fecha || '').split('T')[0] || '';
+                          const h = (nextDate.hora_fin || nextDate.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                          return d;
+                        })()}
+                        showAsIcon={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
  {/* Próximas Fechas */}
  {dates && dates.length > 0 && (
             <motion.div

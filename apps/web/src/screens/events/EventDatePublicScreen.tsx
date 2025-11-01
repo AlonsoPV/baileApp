@@ -287,6 +287,16 @@ export default function EventDatePublicScreen() {
     isUpdating
   } = useEventRSVP(dateIdNum);
 
+  const interestedCount = (() => {
+    try {
+      const anyStats: any = stats as any;
+      const val = anyStats?.interesados ?? anyStats?.count ?? anyStats?.interested ?? 0;
+      return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
+    } catch {
+      return 0;
+    }
+  })();
+
   if (isLoading) {
     return (
       <div style={{
@@ -701,6 +711,13 @@ export default function EventDatePublicScreen() {
                   onStatusChange={toggleInterested}
                   disabled={isUpdating}
                 />
+
+                {/* Contador de interesados */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <div className="chip-count" aria-live="polite">
+                    👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
 
                 {/* Prueba social + microcopy */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
