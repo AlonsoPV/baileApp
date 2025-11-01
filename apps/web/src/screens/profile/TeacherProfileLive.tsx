@@ -419,6 +419,17 @@ export default function TeacherProfileLive() {
           backdrop-filter: blur(10px);
           transform: none;
         }
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
         .teacher-banner-grid {
           display: grid;
           grid-template-columns: 1fr 2fr;
@@ -687,19 +698,7 @@ export default function TeacherProfileLive() {
                 backdropFilter: 'blur(10px)'
               }}
             >
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                margin: '0 0 1rem 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                💬 Sobre mí
-              </h2>
+              <h3 className="section-title">💬 Sobre mí</h3>
               <p style={{
                 fontSize: '1.1rem',
                 lineHeight: 1.6,
@@ -814,17 +813,7 @@ export default function TeacherProfileLive() {
                 🎓
               </div>
               <div>
-                <h2 style={{
-                  fontSize: '1.75rem',
-                  fontWeight: '800',
-                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  margin: 0,
-                  lineHeight: 1.2
-                }}>
-                  Mis clases
-                </h2>
+                <h3 className="section-title" style={{ margin: 0 }}>Mis clases</h3>
                 <p style={{
                   fontSize: '0.9rem',
                   opacity: 0.8,
@@ -883,7 +872,7 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
                 <div>
-                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.2 }}>Información para Estudiantes</h3>
+                  <h3 className="section-title" style={{ margin: 0 }}>Información para Estudiantes</h3>
                   <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
                 </div>
               </div>
@@ -1033,19 +1022,7 @@ export default function TeacherProfileLive() {
                 backdropFilter: 'blur(10px)'
               }}
             >
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                margin: '0 0 1.5rem 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                🎥 Videos
-              </h3>
+              <h3 className="section-title">🎥 Videos</h3>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',

@@ -679,6 +679,17 @@ export function OrganizerProfileLive() {
           backdrop-filter: blur(10px);
           transform: none;
         }
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
         
         @media (max-width: 768px) {
           .org-container {
@@ -929,6 +940,33 @@ export function OrganizerProfileLive() {
                   borderRadius: '50%'
                 }} />
               </div>
+              {/* Estado debajo del avatar */}
+              <div style={{ marginTop: spacing[3], display: 'flex', justifyContent: 'center' }}>
+                <span
+                  style={{
+                    padding: `${spacing[2]} ${spacing[4]}`,
+                    borderRadius: borderRadius.full,
+                    background: org.estado_aprobacion === 'aprobado'
+                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)`
+                      : colors.gradients.secondary,
+                    border: `2px solid ${org.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
+                    color: colors.light,
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.bold,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: org.estado_aprobacion === 'aprobado'
+                      ? `0 4px 16px ${colors.success}66`
+                      : `0 4px 16px ${colors.secondary[500]}66`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}
+                </span>
+              </div>
             </motion.div>
 
             {/* Columna 2: Nombre, Chips y Estado */}
@@ -986,34 +1024,6 @@ export function OrganizerProfileLive() {
                 ))}
               </div>
 
-              {/* Estado del organizador */}
-              <div style={{ display: 'flex', gap: spacing[2] }}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: `${spacing[2]} ${spacing[4]}`,
-                    borderRadius: borderRadius.full,
-                    background: org.estado_aprobacion === 'aprobado'
-                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)`
-                      : colors.gradients.secondary,
-                    border: `2px solid ${org.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
-                    color: colors.light,
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.bold,
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: org.estado_aprobacion === 'aprobado'
-                      ? `0 4px 16px ${colors.success}66`
-                      : `0 4px 16px ${colors.secondary[500]}66`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[1],
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}
-                >
-                  {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}
-                </motion.span>
-              </div>
             </motion.div>
           </div>
         </motion.div>
@@ -1041,14 +1051,7 @@ export function OrganizerProfileLive() {
                 borderRadius: borderRadius['2xl']
               }}
             >
-              <h3 style={{
-                fontSize: typography.fontSize['2xl'],
-                marginBottom: spacing[4],
-                fontWeight: typography.fontWeight.bold,
-                color: colors.light
-              }}>
-                💬 Sobre nosotros
-              </h3>
+              <h3 className="section-title">💬 Sobre nosotros</h3>
               <p style={{
                 lineHeight: typography.lineHeight.relaxed,
                 opacity: 0.9,
@@ -1129,14 +1132,7 @@ export function OrganizerProfileLive() {
                   📅
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    Próximas Fechas
-                  </h3>
+                  <h3 className="section-title">Próximas Fechas</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1188,14 +1184,7 @@ export function OrganizerProfileLive() {
                   🎭
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    Sociales que organizamos
-                  </h3>
+                  <h3 className="section-title">Sociales que organizamos</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1305,14 +1294,7 @@ export function OrganizerProfileLive() {
                   📷
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    Galería de Fotos
-                  </h3>
+                  <h3 className="section-title">📷 Galería de Fotos</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1363,14 +1345,7 @@ export function OrganizerProfileLive() {
                   🎥
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    Videos del Organizador
-                  </h3>
+                  <h3 className="section-title">🎥 Videos del Organizador</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
@@ -1475,14 +1450,7 @@ export function OrganizerProfileLive() {
                   ❓
                 </div>
                 <div>
-                  <h3 style={{
-                    fontSize: typography.fontSize['2xl'],
-                    fontWeight: typography.fontWeight.bold,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    Información para Asistentes
-                  </h3>
+                  <h3 className="section-title">❓ Información para Asistentes</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
