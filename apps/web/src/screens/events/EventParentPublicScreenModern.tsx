@@ -764,7 +764,7 @@ export default function EventParentPublicScreen() {
                     boxShadow: '0 10px 28px rgba(0,0,0,.35)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'left', gap: '.75rem', marginBottom: '.85rem' }}>
                     <div style={{
                       width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
                       background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
@@ -787,17 +787,14 @@ export default function EventParentPublicScreen() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
                           <strong style={{ fontSize: '.95rem' }}>🎵 Ritmos</strong>
-                          <span style={{
+                          {/* <span style={{
                             fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
                             border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
                           }}>
                             
-                          </span>
+                          </span> */}
                         </div>
-                        <div style={{
-                          padding: '.6rem', borderRadius: 12,
-                          background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)'
-                        }}>
+                        <div >
                           <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
                         </div>
                       </div>
@@ -807,12 +804,12 @@ export default function EventParentPublicScreen() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
                           <strong style={{ fontSize: '.95rem' }}>📍 Zonas</strong>
-                          <span style={{
+                        {/*   <span style={{
                             fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
                             border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
                           }}>
-                            {/* {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''} */}
-                          </span>
+                             {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''} 
+                          </span> */}
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
                           {getZonaNombres().map((zona) => (
