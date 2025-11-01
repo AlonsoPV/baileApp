@@ -748,32 +748,94 @@ export default function EventParentPublicScreen() {
                 </motion.div>
               </div>
 
-              {/* Ritmos / Zonas */}
+              {/* Ritmos / Zonas - más visible e informativo */}
               {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
-                <div style={{ marginTop: '1rem', display: 'grid', gap: '.6rem' }}>
-                  {selectedCatalogIds.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28 }}
+                  aria-label="Ritmos y zonas del evento"
+                  style={{
+                    marginTop: '1.25rem',
+                    padding: '1.25rem',
+                    borderRadius: 18,
+                    border: '1px solid rgba(255,255,255,.15)',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))',
+                    boxShadow: '0 10px 28px rgba(0,0,0,.35)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.85rem' }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
+                      background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                      color: '#fff', boxShadow: '0 10px 24px rgba(30,136,229,.35)'
+                    }}>🎵</div>
                     <div>
-                      <div style={{ fontSize: '.9rem', opacity: .85, marginBottom: '.35rem' }}>🎵 Ritmos</div>
-                      <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
+                      <h3 style={{
+                        margin: 0, fontSize: '1.25rem', fontWeight: 900,
+                        background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                      }}>
+                        Ritmos y Zonas
+                      </h3>
+                      <p style={{ margin: 0, opacity: .9, fontSize: '.95rem' }}>
+                        Conoce el enfoque musical y las áreas donde se realiza este social
+                      </p>
                     </div>
-                  )}
-                  {getZonaNombres().length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '.9rem', opacity: .85, marginBottom: '.35rem' }}>📍 Zonas</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
-                        {getZonaNombres().map((zona) => (
-                          <span key={zona} style={{
-                            padding: '.45rem .8rem',
-                            borderRadius: 999,
-                            border: '1px solid rgba(255,255,255,.18)',
-                            background: 'rgba(255,255,255,.08)',
-                            fontWeight: 800
-                          }}>{zona}</span>
-                        ))}
+                  </div>
+
+                  <div style={{ display: 'grid', gap: '.9rem' }}>
+                    {selectedCatalogIds.length > 0 && (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
+                          <strong style={{ fontSize: '.95rem' }}>🎵 Ritmos</strong>
+                          <span style={{
+                            fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
+                            border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
+                          }}>
+                            {selectedCatalogIds.length} seleccionado{selectedCatalogIds.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div style={{
+                          padding: '.6rem', borderRadius: 12,
+                          background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)'
+                        }}>
+                          <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+
+                    {getZonaNombres().length > 0 && (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
+                          <strong style={{ fontSize: '.95rem' }}>📍 Zonas</strong>
+                          <span style={{
+                            fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
+                            border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
+                          }}>
+                            {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+                          {getZonaNombres().map((zona) => (
+                            <span
+                              key={zona}
+                              style={{
+                                padding: '.5rem .85rem',
+                                borderRadius: 999,
+                                border: '1px solid rgba(255,255,255,.28)',
+                                background: 'rgba(255,255,255,.10)',
+                                fontWeight: 800
+                              }}
+                            >
+                              {zona}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
               )}
             </div>
 
