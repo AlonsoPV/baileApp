@@ -63,10 +63,21 @@ export function useUpsertTeacher() {
     mutationFn: async (payload: Partial<TeacherProfile>): Promise<TeacherProfile> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No session');
-      const base = { user_id: user.id, estado_aprobacion: 'borrador', ...payload };
+      const base = { user_id: user.id, estado_aprobacion: 'borrador', ...payload } as any;
+      // Filtrar claves no existentes en la tabla (evita PGRST204 con columnas como "estilos")
+      const allowed = new Set([
+        'user_id','nombre_publico','bio','avatar_url','portada_url',
+        'ritmos','ritmos_seleccionados','zonas',
+        'redes_sociales','ubicaciones','cronograma','costos','faq',
+        'estado_aprobacion','updated_at','created_at'
+      ]);
+      const filtered: any = {};
+      for (const k of Object.keys(base)) {
+        if (allowed.has(k) && base[k] !== undefined) filtered[k] = base[k];
+      }
       const { data, error } = await supabase
         .from(TABLE)
-        .upsert(base, { onConflict: 'id', ignoreDuplicates: false })
+        .upsert(filtered, { onConflict: 'id', ignoreDuplicates: false })
         .select('*')
         .single();
       if (error) throw error;
