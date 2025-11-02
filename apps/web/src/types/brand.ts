@@ -5,6 +5,7 @@ export type BrandProduct = {
   moneda?: 'MXN'|'USD'|'EUR'|string;
   url_externa?: string;
   imagen_url?: string;
+  category?: 'calzado'|'ropa'|'accesorios'|string;
 };
 
 export type BrandProfile = {
@@ -29,7 +30,7 @@ export type BrandProfile = {
   size_guide?: { mx: string; us: string; eu: string }[];
   fit_tips?: { style: string; tip: string }[];
   policies?: { shipping?: string; returns?: string; warranty?: string };
-  conversion?: { headline?: string; subtitle?: string; coupon?: string };
+  conversion?: { headline?: string; subtitle?: string; coupons?: string[] };
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
   created_at?: string;
   updated_at?: string;

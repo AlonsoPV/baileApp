@@ -27,7 +27,7 @@ export default function BrandProfileEditor() {
     size_guide?: { mx: string; us: string; eu: string }[];
     fit_tips?: { style: string; tip: string }[];
     policies?: { shipping?: string; returns?: string; warranty?: string };
-    conversion?: { headline?: string; subtitle?: string; coupon?: string };
+    conversion?: { headline?: string; subtitle?: string; coupons?: string[] };
   }>({ nombre_publico: '', bio: '', redes_sociales: {}, productos: [], avatar_url: null, size_guide: [], fit_tips: [], policies: {}, conversion: {} });
   const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
 
@@ -80,7 +80,7 @@ export default function BrandProfileEditor() {
     const onlyImages = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (onlyImages.length === 0) return;
 
-    const uploaded: { imagen_url: string; id: string; titulo: string }[] = [];
+    const uploaded: { imagen_url: string; id: string; titulo: string; category: 'calzado'|'ropa'|'accesorios' }[] = [];
     for (const file of onlyImages) {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
@@ -95,7 +95,7 @@ export default function BrandProfileEditor() {
         continue;
       }
       const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
-      uploaded.push({ imagen_url: pub.publicUrl, id: path, titulo: '' });
+      uploaded.push({ imagen_url: pub.publicUrl, id: path, titulo: '', category: 'ropa' });
     }
 
     if (uploaded.length > 0) {
@@ -103,7 +103,7 @@ export default function BrandProfileEditor() {
         ...s,
         productos: [
           ...(Array.isArray(s.productos) ? s.productos : []),
-          ...uploaded.map(u => ({ id: u.id, titulo: u.titulo, imagen_url: u.imagen_url }))
+          ...uploaded.map(u => ({ id: u.id, titulo: u.titulo, imagen_url: u.imagen_url, category: u.category }))
         ]
       }));
     }
@@ -166,18 +166,7 @@ export default function BrandProfileEditor() {
   const media: string[] = Array.isArray((brand as any)?.media)
     ? ((brand as any).media as any[]).map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
     : [];
-  const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];
-  const featured = productos.map((p: any) => ({
-    id: p.id || Math.random().toString(36).slice(2),
-    name: p.titulo || 'Producto',
-    price: typeof p.precio === 'number' ? `$${p.precio.toLocaleString()}` : (p.precio || ''),
-    image: p.imagen_url,
-    category: (p.categoria || p.category || 'ropa') as 'calzado'|'ropa'|'accesorios',
-    sizes: Array.isArray(p.sizes) ? p.sizes : [],
-  }));
   const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
-  const policies = { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
-  const partners: any[] = [];
 
   return (
     <>
@@ -255,7 +244,7 @@ export default function BrandProfileEditor() {
                 </div>
                 {/* Logo uploader */}
                 <div style={{ marginTop: '1rem', display:'flex', gap:'1rem', alignItems:'center' }}>
-                  <ImageWithFallback src={(form as any).avatar_url} alt="logo" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'1px solid rgba(255,255,255,.2)' }} />
+                  <ImageWithFallback src={form.avatar_url || ''} alt="logo" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'1px solid rgba(255,255,255,.2)' }} />
                   <label className="editor-back-btn" style={{ cursor:'pointer' }}>
                     <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
                     Subir logo
@@ -335,6 +324,10 @@ export default function BrandProfileEditor() {
                       ...s,
                       size_guide: [ ...(s.size_guide||[]), { mx:'', us:'', eu:'' } ]
                     }))}>+ Agregar fila</button>
+                  <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
+                    if (!(brand as any)?.id) return;
+                    await supabase.from('profiles_brand').update({ size_guide: form.size_guide || [] }).eq('id', (brand as any).id);
+                  }}>Guardar guía</button>
                   </div>
                 </div>
                 {/* Editor de Tips de ajuste */}
@@ -360,6 +353,10 @@ export default function BrandProfileEditor() {
                     ...s,
                     fit_tips: [ ...(s.fit_tips||[]), { style:'', tip:'' } ]
                   }))}>+ Agregar tip</button>
+                  <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
+                    if (!(brand as any)?.id) return;
+                    await supabase.from('profiles_brand').update({ fit_tips: form.fit_tips || [] }).eq('id', (brand as any).id);
+                  }}>Guardar tips</button>
                 </div>
 
                 {/* Vista previa */}
@@ -381,14 +378,23 @@ export default function BrandProfileEditor() {
                     <label className="editor-field">Subtítulo / Mensaje</label>
                     <input className="editor-input" value={form.conversion?.subtitle || ''} onChange={(e)=>setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), subtitle: e.target.value } }))} placeholder="Usa el cupón BAILE10" />
                   </div>
-                  <div>
-                    <label className="editor-field">Cupón</label>
-                    <input className="editor-input" value={form.conversion?.coupon || ''} onChange={(e)=>setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), coupon: e.target.value } }))} placeholder="BAILE10" />
-                  </div>
+                </div>
+                {/* Múltiples cupones */}
+                <div style={{ marginTop: '.6rem' }}>
+                  <label className="editor-field">Cupones</label>
+                  <CouponEditor
+                    coupons={(form.conversion?.coupons || []) as string[]}
+                    onChange={(arr)=> setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), coupons: arr } }))}
+                    onSave={async (arr)=>{
+                      if (!(brand as any)?.id) return;
+                      const next = { ...(form.conversion||{}), coupons: arr };
+                      await supabase.from('profiles_brand').update({ conversion: next }).eq('id', (brand as any).id);
+                    }}
+                  />
                 </div>
                 <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '.75rem' }}>
                   <span style={{ fontWeight: 900 }}>{form.conversion?.headline || '10% primera compra'}</span>
-                  <span style={{ opacity: .85 }}>{form.conversion?.subtitle || <>Usa el cupón <b>BAILE10</b></>}</span>
+                  <span style={{ opacity: .85 }}>{form.conversion?.subtitle || <>Usa uno de tus cupones</>}</span>
                 </div>
               </div>
             </>
@@ -446,8 +452,10 @@ export default function BrandProfileEditor() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', marginTop: '.75rem' }}>
                 {form.productos.map((p: any) => (
                   <article key={p.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
-                    <ImageWithFallback src={p.imagen_url} alt={p.titulo || 'Producto'} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12 }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem', gap: '.5rem' }}>
+                    <div style={{ display:'flex', justifyContent:'center' }}>
+                      <ImageWithFallback src={p.imagen_url} alt={p.titulo || 'Producto'} style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display:'block' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns:'1fr 1fr auto', alignItems: 'center', marginTop: '.5rem', gap: '.5rem' }}>
                       <input
                         value={p.titulo || ''}
                         onChange={(e) => setForm(s => ({
@@ -456,8 +464,20 @@ export default function BrandProfileEditor() {
                         }))}
                         placeholder="Nombre del producto (opcional)"
                         className="editor-input"
-                        style={{ flex: 1 }}
+                        style={{ width: '100%' }}
                       />
+                      <select
+                        className="editor-input"
+                        value={p.category || 'ropa'}
+                        onChange={(e)=> setForm(s => ({
+                          ...s,
+                          productos: (s.productos || []).map((it:any)=> it.id===p.id ? { ...it, category: e.target.value } : it)
+                        }))}
+                      >
+                        <option value="calzado">Calzado</option>
+                        <option value="ropa">Ropa</option>
+                        <option value="accesorios">Accesorios</option>
+                      </select>
                       <button type="button" onClick={() => removeCatalogItem(p.id)} className="editor-back-btn" style={{ whiteSpace: 'nowrap' }}>Eliminar</button>
                     </div>
                   </article>
@@ -470,7 +490,7 @@ export default function BrandProfileEditor() {
             {/* Vista previa con pestañas (usa los datos del formulario) */}
             <div style={{ marginTop: '1.5rem' }}>
               <h3 className="editor-section-title" style={{ fontSize: '1.25rem' }}>👀 Vista previa</h3>
-              <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: 'ropa', sizes: [] }))} />
+              <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: (p.category || 'ropa') as any, sizes: [] }))} />
             </div>
           </div>
           )}
@@ -521,6 +541,12 @@ export default function BrandProfileEditor() {
                   <textarea className="editor-textarea" rows={3} value={form.policies?.warranty || ''} onChange={(e)=>setForm(s=>({ ...s, policies:{ ...(s.policies||{}), warranty: e.target.value } }))} placeholder="Cobertura de garantía" />
                 </div>
               </div>
+              <div style={{ marginTop: '.6rem' }}>
+                <button type="button" className="editor-back-btn" onClick={async ()=>{
+                  if (!(brand as any)?.id) return;
+                  await supabase.from('profiles_brand').update({ policies: form.policies || {} }).eq('id', (brand as any).id);
+                }}>Guardar políticas</button>
+              </div>
               <div style={{ marginTop: '.75rem' }}>
                 <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
                   <li><b>Envíos:</b> {form.policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
@@ -566,7 +592,7 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   const tabs = ['calzado','ropa','accesorios'] as const;
   const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
   const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
   const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
   const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
   return (
@@ -580,7 +606,7 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
           {filtered.map((p: any) => (
             <article key={p.id} style={prodCard}>
-              <ImageWithFallback src={p.image} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12 }} />
+              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
               <div style={{ marginTop: '.6rem' }}>
                 <div style={{ fontWeight: 800 }}>{p.name}</div>
                 <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
@@ -636,6 +662,35 @@ function FitTips({ tips = [] as { style:string; tip:string }[] }){
           <li key={i}><b>{it.style}:</b> {it.tip}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function CouponEditor({ coupons = [] as string[], onChange, onSave }:{ coupons?: string[]; onChange:(arr:string[])=>void; onSave?:(arr:string[])=>Promise<void>|void }){
+  const [val, setVal] = React.useState('');
+  const add = () => {
+    const v = val.trim();
+    if (!v) return;
+    if (coupons.includes(v)) return;
+    onChange([ ...coupons, v ]);
+    setVal('');
+  };
+  const remove = (c:string) => onChange(coupons.filter(x=>x!==c));
+  return (
+    <div>
+      <div style={{ display:'flex', gap:'.5rem', alignItems:'center', marginBottom:'.5rem' }}>
+        <input className="editor-input" placeholder="Código (p. ej. BAILE10)" value={val} onChange={(e)=>setVal(e.target.value)} />
+        <button type="button" className="editor-back-btn" onClick={add}>Agregar</button>
+        {onSave && <button type="button" className="editor-back-btn" onClick={()=>onSave(coupons)}>Guardar cupones</button>}
+      </div>
+      <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
+        {coupons.map(c => (
+          <span key={c} style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.25rem .6rem', display:'inline-flex', alignItems:'center', gap:'.4rem' }}>
+            <b>{c}</b>
+            <button type="button" className="editor-back-btn" onClick={()=>remove(c)}>✕</button>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
