@@ -18,7 +18,17 @@ export default function BrandProfileEditor() {
   const { user } = useAuth();
   const { data: brand } = useMyBrand();
   const upsert = useUpsertBrand();
-  const [form, setForm] = React.useState<{ nombre_publico?: string; bio?: string | null; redes_sociales: any; productos?: any[] }>({ nombre_publico: '', bio: '', redes_sociales: {}, productos: [] });
+  const [form, setForm] = React.useState<{ 
+    nombre_publico?: string; 
+    bio?: string | null; 
+    redes_sociales: any; 
+    productos?: any[]; 
+    avatar_url?: string | null;
+    size_guide?: { mx: string; us: string; eu: string }[];
+    fit_tips?: { style: string; tip: string }[];
+    policies?: { shipping?: string; returns?: string; warranty?: string };
+    conversion?: { headline?: string; subtitle?: string; coupon?: string };
+  }>({ nombre_publico: '', bio: '', redes_sociales: {}, productos: [], avatar_url: null, size_guide: [], fit_tips: [], policies: {}, conversion: {} });
   const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
 
   React.useEffect(() => {
@@ -27,7 +37,12 @@ export default function BrandProfileEditor() {
         nombre_publico: (brand as any).nombre_publico || '',
         bio: (brand as any).bio || '',
         redes_sociales: (brand as any).redes_sociales || {},
-        productos: Array.isArray((brand as any).productos) ? (brand as any).productos : []
+        productos: Array.isArray((brand as any).productos) ? (brand as any).productos : [],
+        avatar_url: (brand as any).avatar_url || null,
+        size_guide: Array.isArray((brand as any).size_guide) ? (brand as any).size_guide : [],
+        fit_tips: Array.isArray((brand as any).fit_tips) ? (brand as any).fit_tips : [],
+        policies: (brand as any).policies || {},
+        conversion: (brand as any).conversion || {},
       });
     }
   }, [brand]);
@@ -40,7 +55,19 @@ export default function BrandProfileEditor() {
   };
 
   const handleSave = async () => {
-    await upsert.mutateAsync({ id: (brand as any)?.id, nombre_publico: form.nombre_publico, bio: form.bio, redes_sociales: form.redes_sociales, productos: form.productos || [] });
+    const payload = { 
+      id: (brand as any)?.id, 
+      nombre_publico: form.nombre_publico, 
+      bio: form.bio, 
+      redes_sociales: form.redes_sociales, 
+      productos: form.productos || [],
+      avatar_url: form.avatar_url || null,
+      size_guide: form.size_guide || [],
+      fit_tips: form.fit_tips || [],
+      policies: form.policies || {},
+      conversion: form.conversion || {}
+    } as any;
+    await upsert.mutateAsync(payload);
   };
 
   // --- Catálogo (fotos) ---
@@ -104,7 +131,7 @@ export default function BrandProfileEditor() {
     const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
     if (error) { alert(error.message); return; }
     const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
-    setForm(s => ({ ...s, avatar_url: pub.publicUrl } as any));
+    setForm(s => ({ ...s, avatar_url: pub.publicUrl }));
   };
 
   // --- Lookbook manager (imágenes) ---
@@ -273,6 +300,97 @@ export default function BrandProfileEditor() {
                   />
                 </div>
               </div>
+
+              {/* Guía de tallas y ajuste (editable + vista previa) */}
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">📏 Guía de tallas y ajuste</h2>
+                {/* Editor de Guía de tallas */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Equivalencias (MX / US / EU)</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '.5rem', alignItems: 'center' }}>
+                    <b>MX</b><b>US</b><b>EU</b><span />
+                    {(form.size_guide || []).map((row, idx) => (
+                      <React.Fragment key={idx}>
+                        <input className="editor-input" value={row.mx} onChange={(e)=>setForm(s=>({
+                          ...s,
+                          size_guide: (s.size_guide||[]).map((r,i)=> i===idx ? { ...r, mx: e.target.value } : r)
+                        }))} />
+                        <input className="editor-input" value={row.us} onChange={(e)=>setForm(s=>({
+                          ...s,
+                          size_guide: (s.size_guide||[]).map((r,i)=> i===idx ? { ...r, us: e.target.value } : r)
+                        }))} />
+                        <input className="editor-input" value={row.eu} onChange={(e)=>setForm(s=>({
+                          ...s,
+                          size_guide: (s.size_guide||[]).map((r,i)=> i===idx ? { ...r, eu: e.target.value } : r)
+                        }))} />
+                        <button type="button" className="editor-back-btn" onClick={()=>setForm(s=>({
+                          ...s,
+                          size_guide: (s.size_guide||[]).filter((_,i)=> i!==idx)
+                        }))}>Eliminar</button>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '.6rem' }}>
+                    <button type="button" className="editor-back-btn" onClick={()=>setForm(s=>({
+                      ...s,
+                      size_guide: [ ...(s.size_guide||[]), { mx:'', us:'', eu:'' } ]
+                    }))}>+ Agregar fila</button>
+                  </div>
+                </div>
+                {/* Editor de Tips de ajuste */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Consejos de ajuste por estilo</h3>
+                  {(form.fit_tips || []).map((it, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 3fr auto', gap: '.5rem', alignItems: 'center', marginBottom: '.5rem' }}>
+                      <input className="editor-input" placeholder="Estilo (p. ej. Bachata)" value={it.style} onChange={(e)=>setForm(s=>({
+                        ...s,
+                        fit_tips: (s.fit_tips||[]).map((r,i)=> i===idx ? { ...r, style: e.target.value } : r)
+                      }))} />
+                      <input className="editor-input" placeholder="Tip (p. ej. tacón estable, suela flexible)" value={it.tip} onChange={(e)=>setForm(s=>({
+                        ...s,
+                        fit_tips: (s.fit_tips||[]).map((r,i)=> i===idx ? { ...r, tip: e.target.value } : r)
+                      }))} />
+                      <button type="button" className="editor-back-btn" onClick={()=>setForm(s=>({
+                        ...s,
+                        fit_tips: (s.fit_tips||[]).filter((_,i)=> i!==idx)
+                      }))}>Eliminar</button>
+                    </div>
+                  ))}
+                  <button type="button" className="editor-back-btn" onClick={()=>setForm(s=>({
+                    ...s,
+                    fit_tips: [ ...(s.fit_tips||[]), { style:'', tip:'' } ]
+                  }))}>+ Agregar tip</button>
+                </div>
+
+                {/* Vista previa */}
+                <div className="editor-grid-small">
+                  <SizeGuide rows={form.size_guide || []} />
+                  <FitTips tips={form.fit_tips || []} />
+                </div>
+              </div>
+
+              {/* Conversión (editable + vista previa) */}
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">🎁 Conversión</h2>
+                <div className="editor-grid-small">
+                  <div>
+                    <label className="editor-field">Encabezado</label>
+                    <input className="editor-input" value={form.conversion?.headline || ''} onChange={(e)=>setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), headline: e.target.value } }))} placeholder="10% primera compra" />
+                  </div>
+                  <div>
+                    <label className="editor-field">Subtítulo / Mensaje</label>
+                    <input className="editor-input" value={form.conversion?.subtitle || ''} onChange={(e)=>setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), subtitle: e.target.value } }))} placeholder="Usa el cupón BAILE10" />
+                  </div>
+                  <div>
+                    <label className="editor-field">Cupón</label>
+                    <input className="editor-input" value={form.conversion?.coupon || ''} onChange={(e)=>setForm(s=>({ ...s, conversion:{ ...(s.conversion||{}), coupon: e.target.value } }))} placeholder="BAILE10" />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '.75rem' }}>
+                  <span style={{ fontWeight: 900 }}>{form.conversion?.headline || '10% primera compra'}</span>
+                  <span style={{ opacity: .85 }}>{form.conversion?.subtitle || <>Usa el cupón <b>BAILE10</b></>}</span>
+                </div>
+              </div>
             </>
           )}
 
@@ -389,11 +507,27 @@ export default function BrandProfileEditor() {
           {tab==='policies' && (
             <div className="editor-section glass-card-container">
               <h2 className="editor-section-title">🔒 Políticas</h2>
-              <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
-                <li><b>Envíos:</b> {policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
-                <li><b>Cambios/Devoluciones:</b> {policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
-                <li><b>Garantía:</b> {policies?.warranty || '30 días por defectos de fabricación.'}</li>
-              </ul>
+              <div className="editor-grid">
+                <div>
+                  <label className="editor-field">Envíos</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.shipping || ''} onChange={(e)=>setForm(s=>({ ...s, policies:{ ...(s.policies||{}), shipping: e.target.value } }))} placeholder="Tiempos y zonas de envío" />
+                </div>
+                <div>
+                  <label className="editor-field">Cambios / Devoluciones</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.returns || ''} onChange={(e)=>setForm(s=>({ ...s, policies:{ ...(s.policies||{}), returns: e.target.value } }))} placeholder="Condiciones para cambios y devoluciones" />
+                </div>
+                <div>
+                  <label className="editor-field">Garantía</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.warranty || ''} onChange={(e)=>setForm(s=>({ ...s, policies:{ ...(s.policies||{}), warranty: e.target.value } }))} placeholder="Cobertura de garantía" />
+                </div>
+              </div>
+              <div style={{ marginTop: '.75rem' }}>
+                <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
+                  <li><b>Envíos:</b> {form.policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
+                  <li><b>Cambios/Devoluciones:</b> {form.policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
+                  <li><b>Garantía:</b> {form.policies?.warranty || '30 días por defectos de fabricación.'}</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -465,30 +599,42 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   );
 }
 
-function SizeGuide(){
+function SizeGuide({ rows = [] as { mx:string; us:string; eu:string }[] }){
+  const data = rows.length > 0 ? rows : [
+    { mx:'22', us:'5', eu:'35' },
+    { mx:'23', us:'6', eu:'36-37' },
+    { mx:'24', us:'7', eu:'38' },
+    { mx:'25', us:'8', eu:'39-40' },
+    { mx:'26', us:'9', eu:'41-42' },
+  ];
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Equivalencias (Calzado)</b>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.35rem', marginTop: '.5rem', fontSize: '.92rem' }}>
         <div>MX</div><div>US</div><div>EU</div>
-        <div>22</div><div>5</div><div>35</div>
-        <div>23</div><div>6</div><div>36-37</div>
-        <div>24</div><div>7</div><div>38</div>
-        <div>25</div><div>8</div><div>39-40</div>
-        <div>26</div><div>9</div><div>41-42</div>
+        {data.map((r, i) => (
+          <React.Fragment key={i}>
+            <div>{r.mx}</div><div>{r.us}</div><div>{r.eu}</div>
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
 }
 
-function FitTips(){
+function FitTips({ tips = [] as { style:string; tip:string }[] }){
+  const data = tips.length > 0 ? tips : [
+    { style: 'Bachata', tip: 'Tacón estable, suela flexible, punta reforzada.' },
+    { style: 'Salsa', tip: 'Mayor soporte lateral, giro suave (suela gamuza).' },
+    { style: 'Kizomba', tip: 'Confort prolongado, amortiguación talón.' },
+  ];
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Fit recomendado por estilo</b>
       <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
-        <li><b>Bachata:</b> tacón estable, suela flexible, punta reforzada.</li>
-        <li><b>Salsa:</b> mayor soporte lateral, giro suave (suela gamuza).</li>
-        <li><b>Kizomba:</b> confort prolongado, amortiguación talón.</li>
+        {data.map((it, i) => (
+          <li key={i}><b>{it.style}:</b> {it.tip}</li>
+        ))}
       </ul>
     </div>
   );

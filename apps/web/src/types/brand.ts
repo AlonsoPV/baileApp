@@ -26,6 +26,10 @@ export type BrandProfile = {
   };
   media: { type: 'image'|'video'; url: string }[];
   productos: BrandProduct[];
+  size_guide?: { mx: string; us: string; eu: string }[];
+  fit_tips?: { style: string; tip: string }[];
+  policies?: { shipping?: string; returns?: string; warranty?: string };
+  conversion?: { headline?: string; subtitle?: string; coupon?: string };
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
   created_at?: string;
   updated_at?: string;
