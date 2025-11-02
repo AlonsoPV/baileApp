@@ -9,36 +9,16 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { MediaUploader } from "../../components/MediaUploader";
 import { supabase } from "../../lib/supabase";
 
-/** Por qué: Tipos fuertes evitan keys mal escritas y facilitan refactor. */
+/* Por qué: Tipos fuertes + reducer = menos bugs al mutar estructuras anidadas. */
 type Category = "calzado" | "ropa" | "accesorios";
-
-type BrandPolicies = {
-  shipping?: string;
-  returns?: string;
-  warranty?: string;
-};
-
+type BrandPolicies = { shipping?: string; returns?: string; warranty?: string };
 type FitTip = { style: string; tip: string };
 type SizeRow = { mx: string; us: string; eu: string };
-
-type ProductItem = {
-  id: string;                // path en storage
-  titulo: string;
-  imagen_url: string;
-  category: Category;
-  price?: string;
-  sizes?: string[];
-};
-
-type Conversion = {
-  headline?: string;
-  subtitle?: string;
-  coupons?: string[];
-};
-
+type ProductItem = { id: string; titulo: string; imagen_url: string; category: Category; price?: string; sizes?: string[] };
+type Conversion = { headline?: string; subtitle?: string; coupons?: string[] };
 type BrandForm = {
   nombre_publico: string;
-  bio: string;
+  bio: string | null;
   redes_sociales: Record<string, string>;
   productos: ProductItem[];
   avatar_url: string | null;
@@ -48,30 +28,28 @@ type BrandForm = {
   conversion: Conversion;
 };
 
-const colors = { dark: "#121212", light: "#F5F5F5" };
+const colors = { dark: '#121212', light: '#F5F5F5' };
 
 type Action =
-  | { type: "SET_ALL"; payload: Partial<BrandForm> }
-  | { type: "SET_FIELD"; key: keyof Pick<BrandForm, "nombre_publico" | "bio">; value: string }
-  | { type: "SET_RS"; key: string; value: string }
-  | { type: "SET_AVATAR"; url: string | null }
-  | { type: "ADD_SIZE" }
-  | { type: "UPDATE_SIZE"; index: number; key: keyof SizeRow; value: string }
-  | { type: "REMOVE_SIZE"; index: number }
-  | { type: "ADD_FIT_TIP" }
-  | { type: "UPDATE_FIT_TIP"; index: number; key: keyof FitTip; value: string }
-  | { type: "REMOVE_FIT_TIP"; index: number }
-  | { type: "SET_CONVERSION"; value: Partial<Conversion> }
-  | { type: "ADD_COUPON"; code: string }
-  | { type: "REMOVE_COUPON"; code: string }
-  | { type: "SET_PRODUCTS"; value: ProductItem[] }
-  | { type: "UPDATE_PRODUCT"; id: string; value: Partial<ProductItem> }
-  | { type: "REMOVE_PRODUCT"; id: string }
-  | { type: "SET_POLICIES"; value: Partial<BrandPolicies> };
+  | { type: 'SET_ALL'; payload: Partial<BrandForm> }
+  | { type: 'SET_FIELD'; key: 'nombre_publico' | 'bio'; value: string }
+  | { type: 'SET_RS'; key: string; value: string }
+  | { type: 'SET_AVATAR'; url: string | null }
+  | { type: 'ADD_SIZE' }
+  | { type: 'UPDATE_SIZE'; index: number; key: keyof SizeRow; value: string }
+  | { type: 'REMOVE_SIZE'; index: number }
+  | { type: 'ADD_FIT_TIP' }
+  | { type: 'UPDATE_FIT_TIP'; index: number; key: keyof FitTip; value: string }
+  | { type: 'REMOVE_FIT_TIP'; index: number }
+  | { type: 'SET_CONVERSION'; value: Partial<Conversion> }
+  | { type: 'SET_POLICIES'; value: Partial<BrandPolicies> }
+  | { type: 'SET_PRODUCTS'; value: ProductItem[] }
+  | { type: 'UPDATE_PRODUCT'; id: string; value: Partial<ProductItem> }
+  | { type: 'REMOVE_PRODUCT'; id: string };
 
 const initialForm: BrandForm = {
-  nombre_publico: "",
-  bio: "",
+  nombre_publico: '',
+  bio: '',
   redes_sociales: {},
   productos: [],
   avatar_url: null,
@@ -83,59 +61,24 @@ const initialForm: BrandForm = {
 
 function formReducer(state: BrandForm, action: Action): BrandForm {
   switch (action.type) {
-    case "SET_ALL":
-      return { ...state, ...action.payload };
-    case "SET_FIELD":
-      return { ...state, [action.key]: action.value } as BrandForm;
-    case "SET_RS":
-      return { ...state, redes_sociales: { ...state.redes_sociales, [action.key]: action.value } };
-    case "SET_AVATAR":
-      return { ...state, avatar_url: action.url };
-    case "ADD_SIZE":
-      return { ...state, size_guide: [...state.size_guide, { mx: "", us: "", eu: "" }] };
-    case "UPDATE_SIZE":
-      return {
-        ...state,
-        size_guide: state.size_guide.map((r, i) => (i === action.index ? { ...r, [action.key]: action.value } : r)),
-      };
-    case "REMOVE_SIZE":
-      return { ...state, size_guide: state.size_guide.filter((_, i) => i !== action.index) };
-    case "ADD_FIT_TIP":
-      return { ...state, fit_tips: [...state.fit_tips, { style: "", tip: "" }] };
-    case "UPDATE_FIT_TIP":
-      return {
-        ...state,
-        fit_tips: state.fit_tips.map((r, i) => (i === action.index ? { ...r, [action.key]: action.value } : r)),
-      };
-    case "REMOVE_FIT_TIP":
-      return { ...state, fit_tips: state.fit_tips.filter((_, i) => i !== action.index) };
-    case "SET_CONVERSION":
-      return { ...state, conversion: { ...(state.conversion || {}), ...action.value } };
-    case "ADD_COUPON":
-      return state.conversion?.coupons?.includes(action.code)
-        ? state
-        : { ...state, conversion: { ...state.conversion, coupons: [...(state.conversion.coupons || []), action.code] } };
-    case "REMOVE_COUPON":
-      return {
-        ...state,
-        conversion: {
-          ...state.conversion,
-          coupons: (state.conversion.coupons || []).filter((c) => c !== action.code),
-        },
-      };
-    case "SET_PRODUCTS":
-      return { ...state, productos: action.value };
-    case "UPDATE_PRODUCT":
-      return {
-        ...state,
-        productos: state.productos.map((p) => (p.id === action.id ? { ...p, ...action.value } : p)),
-      };
-    case "REMOVE_PRODUCT":
-      return { ...state, productos: state.productos.filter((p) => p.id !== action.id) };
-    case "SET_POLICIES":
-      return { ...state, policies: { ...(state.policies || {}), ...action.value } };
-    default:
-      return state;
+    case 'SET_ALL': return { ...state, ...action.payload };
+    case 'SET_FIELD': return { ...state, [action.key]: action.value } as BrandForm;
+    case 'SET_RS': return { ...state, redes_sociales: { ...state.redes_sociales, [action.key]: action.value } };
+    case 'SET_AVATAR': return { ...state, avatar_url: action.url };
+    case 'ADD_SIZE': return { ...state, size_guide: [...state.size_guide, { mx:'', us:'', eu:'' }] };
+    case 'UPDATE_SIZE':
+      return { ...state, size_guide: state.size_guide.map((r,i)=> i===action.index ? { ...r, [action.key]: action.value } : r) };
+    case 'REMOVE_SIZE': return { ...state, size_guide: state.size_guide.filter((_,i)=> i!==action.index) };
+    case 'ADD_FIT_TIP': return { ...state, fit_tips: [...state.fit_tips, { style:'', tip:'' }] };
+    case 'UPDATE_FIT_TIP':
+      return { ...state, fit_tips: state.fit_tips.map((r,i)=> i===action.index ? { ...r, [action.key]: action.value } : r) };
+    case 'REMOVE_FIT_TIP': return { ...state, fit_tips: state.fit_tips.filter((_,i)=> i!==action.index) };
+    case 'SET_CONVERSION': return { ...state, conversion: { ...(state.conversion||{}), ...action.value } };
+    case 'SET_POLICIES': return { ...state, policies: { ...(state.policies||{}), ...action.value } };
+    case 'SET_PRODUCTS': return { ...state, productos: action.value };
+    case 'UPDATE_PRODUCT': return { ...state, productos: state.productos.map(p=> p.id===action.id ? { ...p, ...action.value } : p) };
+    case 'REMOVE_PRODUCT': return { ...state, productos: state.productos.filter(p=> p.id!==action.id) };
+    default: return state;
   }
 }
 
@@ -146,143 +89,111 @@ export default function BrandProfileEditor() {
   const upsert = useUpsertBrand();
 
   const [form, dispatch] = React.useReducer(formReducer, initialForm);
-  const [tab, setTab] = React.useState<"info" | "products" | "lookbook" | "policies">("info");
-  const [catFilter, setCatFilter] = React.useState<Category | "all">("all");
+  const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
+  const [catFilter, setCatFilter] = React.useState<Category | 'all'>('all');
 
   React.useEffect(() => {
-    if (!brand) return;
-    // Por qué: Normalizar datos entrantes evita condicionales por todo el árbol.
-    dispatch({
-      type: "SET_ALL",
-      payload: {
-        nombre_publico: (brand as any).nombre_publico || "",
-        bio: (brand as any).bio || "",
-        redes_sociales: (brand as any).redes_sociales || {},
-        productos: Array.isArray((brand as any).productos) ? (brand as any).productos : [],
-        avatar_url: (brand as any).avatar_url || null,
-        size_guide: Array.isArray((brand as any).size_guide) ? (brand as any).size_guide : [],
-        fit_tips: Array.isArray((brand as any).fit_tips) ? (brand as any).fit_tips : [],
-        policies: (brand as any).policies || {},
-        conversion: (brand as any).conversion || {},
-      },
-    });
+    if (brand) {
+      dispatch({
+        type: 'SET_ALL',
+        payload: {
+          nombre_publico: (brand as any).nombre_publico || '',
+          bio: (brand as any).bio || '',
+          redes_sociales: (brand as any).redes_sociales || {},
+          productos: Array.isArray((brand as any).productos) ? (brand as any).productos : [],
+          avatar_url: (brand as any).avatar_url || null,
+          size_guide: Array.isArray((brand as any).size_guide) ? (brand as any).size_guide : [],
+          fit_tips: Array.isArray((brand as any).fit_tips) ? (brand as any).fit_tips : [],
+          policies: (brand as any).policies || {},
+          conversion: (brand as any).conversion || {},
+        }
+      });
+    }
   }, [brand]);
 
+  const setField = (key: 'nombre_publico'|'bio', value: string) => dispatch({ type:'SET_FIELD', key, value });
+  const setRS = (key: string, value: string) => dispatch({ type:'SET_RS', key, value });
+
   const handleSave = async () => {
-    const payload: any = {
-      id: (brand as any)?.id,
-      nombre_publico: form.nombre_publico,
-      bio: form.bio,
-      redes_sociales: form.redes_sociales,
+    const payload: any = { 
+      id: (brand as any)?.id, 
+      nombre_publico: form.nombre_publico, 
+      bio: form.bio, 
+      redes_sociales: form.redes_sociales, 
       productos: form.productos || [],
       avatar_url: form.avatar_url || null,
       size_guide: form.size_guide || [],
       fit_tips: form.fit_tips || [],
       policies: form.policies || {},
-      conversion: form.conversion || {},
+      conversion: form.conversion || {}
     };
     await upsert.mutateAsync(payload);
   };
 
-  const media: string[] = Array.isArray((brand as any)?.media)
-    ? ((brand as any).media as any[]).map((m) => (typeof m === "string" ? m : m?.url)).filter(Boolean)
-    : [];
-  const lookbook = media.map((url, i) => ({ id: i, image: url, caption: "", style: "" }));
-
-  // ---------- Uploaders ----------
+  // --- Uploaders (manteniendo UX/UI original) ---
   const onPickCatalog = async (files: FileList) => {
-    if (!(brand as any)?.id) {
-      alert("Primero guarda la información básica para habilitar el catálogo.");
-      return;
-    }
+    if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el catálogo.'); return; }
     const brandId = (brand as any).id as number;
-    const onlyImages = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const onlyImages = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (onlyImages.length === 0) return;
 
     const uploaded: ProductItem[] = [];
     for (const file of onlyImages) {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("brand-media")
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
-      if (error) {
-        console.error("[BrandCatalogUpload] Error:", error);
-        alert(`Error al subir una imagen: ${error.message}`);
-        continue;
-      }
-      const { data: pub } = supabase.storage.from("brand-media").getPublicUrl(path);
-      uploaded.push({ id: path, titulo: "", imagen_url: pub.publicUrl, category: "ropa" });
+      const { error } = await supabase.storage.from('brand-media').upload(path, file, {
+        cacheControl: '3600', upsert: false, contentType: file.type || undefined,
+      });
+      if (error) { console.error('[BrandCatalogUpload] Error:', error); alert(`Error al subir una imagen: ${error.message}`); continue; }
+      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+      uploaded.push({ id: path, titulo: '', imagen_url: pub.publicUrl, category: 'ropa' });
     }
-    if (uploaded.length > 0) {
-      dispatch({ type: "SET_PRODUCTS", value: [...form.productos, ...uploaded] });
-    }
+    if (uploaded.length > 0) dispatch({ type:'SET_PRODUCTS', value: [...form.productos, ...uploaded] });
   };
 
   const removeCatalogItem = async (prodIdOrPath: string) => {
-    try {
-      await supabase.storage.from("brand-media").remove([prodIdOrPath]);
-    } catch (e) {
-      console.warn("[BrandCatalogRemove] No se pudo eliminar del storage (continuando):", e);
-    }
-    dispatch({ type: "REMOVE_PRODUCT", id: prodIdOrPath });
+    try { await supabase.storage.from('brand-media').remove([prodIdOrPath]); }
+    catch (e) { console.warn('[BrandCatalogRemove] No se pudo eliminar del storage (continuando):', e); }
+    dispatch({ type:'REMOVE_PRODUCT', id: prodIdOrPath });
   };
 
   const onUploadLogo = async (file: File) => {
-    if (!(brand as any)?.id) {
-      alert("Primero guarda la información básica para habilitar el logo.");
-      return;
-    }
+    if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el logo.'); return; }
     const brandId = (brand as any).id as number;
-    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
     const path = `${brandId}/logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("brand-media")
-      .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type || undefined });
-    if (error) {
-      alert(error.message);
-      return;
-    }
-    const { data: pub } = supabase.storage.from("brand-media").getPublicUrl(path);
-    dispatch({ type: "SET_AVATAR", url: pub.publicUrl });
+    const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
+    if (error) { alert(error.message); return; }
+    const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+    dispatch({ type:'SET_AVATAR', url: pub.publicUrl });
   };
 
   const onPickLookbook = async (files: FileList) => {
-    if (!(brand as any)?.id) {
-      alert("Primero guarda la información básica para habilitar el lookbook.");
-      return;
-    }
+    if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el lookbook.'); return; }
     const brandId = (brand as any).id as number;
-    const imgs = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (imgs.length === 0) return;
     const uploadedUrls: string[] = [];
     for (const file of imgs) {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${brandId}/lookbook/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("brand-media")
-        .upload(path, file, { upsert: false, cacheControl: "3600", contentType: file.type || undefined });
-      if (error) {
-        console.error(error);
-        continue;
-      }
-      const { data: pub } = supabase.storage.from("brand-media").getPublicUrl(path);
+      const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
+      if (error) { console.error(error); continue; }
+      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
       uploadedUrls.push(pub.publicUrl);
     }
     if (uploadedUrls.length > 0) {
       const prev = Array.isArray((brand as any)?.media) ? ((brand as any).media as any[]) : [];
-      const next = [...uploadedUrls.map((url) => ({ type: "image", url })), ...prev];
-      await supabase.from("profiles_brand").update({ media: next }).eq("id", (brand as any).id);
+      const next = [ ...uploadedUrls.map(url => ({ type: 'image', url })), ...prev ];
+      await supabase.from('profiles_brand').update({ media: next }).eq('id', (brand as any).id);
     }
   };
 
-  // ---------- Estilos base ----------
-  const btn = "px-4 py-3 rounded-xl font-semibold border transition";
-  const btnGhost = `${btn} border-white/20 bg-white/10 text-white hover:bg-white/15`;
-  const btnPrimary = `${btn} border-white/20 bg-gradient-to-tr from-blue-600/90 to-cyan-600/90 text-white`;
-  const input = "w-full px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white";
-  const card = "border border-white/15 rounded-2xl bg-white/5 p-4";
-  const h2 = "text-xl mb-4";
+  // Datos para vistas previas (igual que tu Live)
+  const media: string[] = Array.isArray((brand as any)?.media)
+    ? ((brand as any).media as any[]).map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
+    : [];
+  const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
 
   return (
     <>
@@ -290,370 +201,336 @@ export default function BrandProfileEditor() {
         .editor-container { min-height: 100vh; background: ${colors.dark}; color: ${colors.light}; padding: 2rem; }
         .editor-content { max-width: 1200px; margin: 0 auto; }
         .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .editor-title { font-size: 1.75rem; font-weight: 700; margin: 0; flex: 1 1 0%; text-align: center; }
+        .editor-back-btn { padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.1); color: ${colors.light}; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .editor-section { margin-bottom: 3rem; padding: 2rem; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+        .editor-section-title { font-size: 1.5rem; margin-bottom: 1.5rem; color: ${colors.light}; }
+        .editor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .editor-grid-small { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .editor-field { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .editor-input { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: ${colors.light}; font-size: 1rem; }
+        .editor-textarea { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: ${colors.light}; font-size: 1rem; resize: vertical; }
+        .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
         @media (max-width: 768px) {
           .editor-container { padding: 1rem !important; }
           .editor-content { max-width: 100% !important; }
           .editor-header { flex-direction: column !important; gap: 1rem !important; text-align: center !important; }
+          .editor-title { font-size: 1.5rem !important; order: 2 !important; }
+          .editor-back-btn { order: 1 !important; align-self: flex-start !important; }
+          .editor-section { padding: 1rem !important; margin-bottom: 2rem !important; }
+          .editor-section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
+          .editor-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .editor-grid-small { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .editor-title { font-size: 1.25rem !important; }
+          .editor-section-title { font-size: 1.1rem !important; }
+          .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
         }
       `}</style>
 
       <div className="editor-container">
         <div className="editor-content">
           <div className="editor-header">
-            <button onClick={() => navigate(-1)} className={btnGhost}>← Volver</button>
-            <h1 className="text-2xl font-bold text-center flex-1">🏷️ Editar Perfil de Marca</h1>
-            <div style={{ width: 100 }} />
+            <button onClick={() => navigate(-1)} className="editor-back-btn">← Volver</button>
+            <h1 className="editor-title">🏷️ Editar Perfil de Marca</h1>
+            <div style={{ width: '100px' }} />
           </div>
 
           {/* Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
-            <button onClick={() => setTab("info")} className={tab === "info" ? btnPrimary : btnGhost}>Información</button>
-            <button onClick={() => setTab("products")} className={tab === "products" ? btnPrimary : btnGhost}>Productos</button>
-            <button onClick={() => setTab("lookbook")} className={tab === "lookbook" ? btnPrimary : btnGhost}>Lookbook</button>
-            <button onClick={() => setTab("policies")} className={tab === "policies" ? btnPrimary : btnGhost}>Políticas</button>
+          <div style={{ display:'flex', gap:'.5rem', marginBottom:'1rem', flexWrap:'wrap', justifyContent:'center' }}>
+            <button onClick={()=>setTab('info')} className="editor-back-btn" style={{ background: tab==='info'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Información</button>
+            <button onClick={()=>setTab('products')} className="editor-back-btn" style={{ background: tab==='products'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Productos</button>
+            <button onClick={()=>setTab('lookbook')} className="editor-back-btn" style={{ background: tab==='lookbook'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Lookbook</button>
+            <button onClick={()=>setTab('policies')} className="editor-back-btn" style={{ background: tab==='policies'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Políticas</button>
           </div>
 
-          <div className="flex justify-center items-center mb-4">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
             <ProfileNavigationToggle currentView="edit" profileType="brand" onSave={handleSave} isSaving={upsert.isPending} />
           </div>
 
-          {/* === INFO TAB === */}
-          {tab === "info" && (
+          {/* === INFO === */}
+          {tab==='info' && (
             <>
-              <section className={card}>
-                <h2 className={h2}>🏷️ Información de la Marca</h2>
-                <div className="grid gap-4 md:grid-cols-2">
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">🏷️ Información de la Marca</h2>
+                <div className="editor-grid">
                   <div>
-                    <label className="block mb-1 font-semibold">Nombre Público</label>
-                    <input
-                      className={input}
-                      type="text"
-                      value={form.nombre_publico}
-                      onChange={(e) => dispatch({ type: "SET_FIELD", key: "nombre_publico", value: e.target.value })}
-                      placeholder="Nombre de la marca"
-                    />
+                    <label className="editor-field">Nombre Público</label>
+                    <input type="text" value={form.nombre_publico || ''} onChange={(e) => setField('nombre_publico', e.target.value)} placeholder="Nombre de la marca" className="editor-input" />
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold">Biografía / Descripción</label>
-                    <textarea
-                      className={`${input} resize-y min-h-[120px]`}
-                      value={form.bio}
-                      onChange={(e) => dispatch({ type: "SET_FIELD", key: "bio", value: e.target.value })}
-                      placeholder="Describe tu marca (materiales, enfoque, estilos)"
-                    />
+                    <label className="editor-field">Biografía / Descripción</label>
+                    <textarea value={form.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder="Describe tu marca (materiales, enfoque, estilos)" rows={4} className="editor-textarea" />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-3">
-                  <ImageWithFallback
-                    src={form.avatar_url || ""}
-                    alt="logo"
-                    style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(255,255,255,.2)" }}
-                  />
-                  <label className={btnGhost} style={{ cursor: "pointer" }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => e.target.files?.[0] && onUploadLogo(e.target.files[0])}
-                    />
+                {/* Logo uploader */}
+                <div style={{ marginTop: '1rem', display:'flex', gap:'1rem', alignItems:'center' }}>
+                  <ImageWithFallback src={form.avatar_url || ''} alt="logo" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'1px solid rgba(255,255,255,.2)' }} />
+                  <label className="editor-back-btn" style={{ cursor:'pointer' }}>
+                    <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
                     Subir logo
                   </label>
                 </div>
-              </section>
+              </div>
 
-              {/* Redes SOLO AQUÍ */}
-              <section className={`${card} mt-6`}>
-                <h2 className={h2}>📱 Redes Sociales</h2>
-                <div className="grid gap-4 md:grid-cols-3">
-                  {[
-                    { k: "instagram", label: "📸 Instagram", ph: "@tu_marca" },
-                    { k: "tiktok", label: "🎵 TikTok", ph: "@tu_marca" },
-                    { k: "youtube", label: "📺 YouTube", ph: "Canal o enlace" },
-                    { k: "facebook", label: "👥 Facebook", ph: "Página o perfil" },
-                    { k: "whatsapp", label: "💬 WhatsApp", ph: "Número de teléfono" },
-                    { k: "web", label: "🌐 Sitio Web", ph: "https://" },
-                  ].map((f) => (
-                    <div key={f.k}>
-                      <label className="block mb-1 font-semibold">{f.label}</label>
-                      <input
-                        className={input}
-                        type="text"
-                        value={form.redes_sociales?.[f.k] || ""}
-                        onChange={(e) => dispatch({ type: "SET_RS", key: f.k, value: e.target.value })}
-                        placeholder={f.ph}
-                      />
-                    </div>
-                  ))}
+              {/* Redes Sociales — SOLO aquí */}
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">📱 Redes Sociales</h2>
+                <div className="editor-grid-small">
+                  <div>
+                    <label className="editor-field">📸 Instagram</label>
+                    <input type="text" value={form.redes_sociales?.instagram || ''} onChange={(e)=>setRS('instagram', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">🎵 TikTok</label>
+                    <input type="text" value={form.redes_sociales?.tiktok || ''} onChange={(e)=>setRS('tiktok', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">📺 YouTube</label>
+                    <input type="text" value={form.redes_sociales?.youtube || ''} onChange={(e)=>setRS('youtube', e.target.value)} placeholder="Canal o enlace" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">👥 Facebook</label>
+                    <input type="text" value={form.redes_sociales?.facebook || ''} onChange={(e)=>setRS('facebook', e.target.value)} placeholder="Página o perfil" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">💬 WhatsApp</label>
+                    <input type="text" value={form.redes_sociales?.whatsapp || ''} onChange={(e)=>setRS('whatsapp', e.target.value)} placeholder="Número de teléfono" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">🌐 Sitio Web</label>
+                    <input type="text" value={form.redes_sociales?.web || ''} onChange={(e)=>setRS('web', e.target.value)} placeholder="https://" className="editor-input" />
+                  </div>
                 </div>
-                <div className="mt-5">
+                <div style={{ marginTop: '1.5rem' }}>
                   <SocialMediaSection
                     respuestas={{ redes: form.redes_sociales || {} }}
                     redes_sociales={form.redes_sociales || {}}
                     title="🔗 Vista previa de Redes"
-                    availablePlatforms={["instagram", "tiktok", "youtube", "facebook", "whatsapp", "web"]}
+                    availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp','web']}
                   />
                 </div>
-              </section>
+              </div>
 
-              {/* Guía de tallas + Tips */}
-              <section className={`${card} mt-6`}>
-                <h2 className={h2}>📏 Guía de tallas y ajuste</h2>
+              {/* Guía de tallas y ajuste */}
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">📏 Guía de tallas y ajuste</h2>
 
-                {/* Equivalencias */}
-                <h3 className="text-base font-semibold mb-2">Equivalencias (MX / US / EU)</h3>
-                <div className="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr auto", gap: ".5rem", alignItems: "center" }}>
-                  <b>MX</b>
-                  <b>US</b>
-                  <b>EU</b>
-                  <span />
-                  {form.size_guide.map((row, idx) => (
-                    <React.Fragment key={idx}>
-                      <input className={input} value={row.mx} onChange={(e) => dispatch({ type: "UPDATE_SIZE", index: idx, key: "mx", value: e.target.value })} />
-                      <input className={input} value={row.us} onChange={(e) => dispatch({ type: "UPDATE_SIZE", index: idx, key: "us", value: e.target.value })} />
-                      <input className={input} value={row.eu} onChange={(e) => dispatch({ type: "UPDATE_SIZE", index: idx, key: "eu", value: e.target.value })} />
-                      <button className={btnGhost} onClick={() => dispatch({ type: "REMOVE_SIZE", index: idx })}>Eliminar</button>
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <button className={btnGhost} onClick={() => dispatch({ type: "ADD_SIZE" })}>+ Agregar fila</button>
-                  <button
-                    className={btnGhost}
-                    onClick={async () => {
-                      if (!(brand as any)?.id) return;
-                      await supabase.from("profiles_brand").update({ size_guide: form.size_guide || [] }).eq("id", (brand as any).id);
-                    }}
-                  >
-                    Guardar guía
-                  </button>
-                </div>
-
-                {/* Fit tips */}
-                <h3 className="text-base font-semibold mt-6 mb-2">Consejos de ajuste por estilo</h3>
-                {form.fit_tips.map((it, idx) => (
-                  <div key={idx} className="grid mb-2" style={{ gridTemplateColumns: "1fr 3fr auto", gap: ".5rem", alignItems: "center" }}>
-                    <input className={input} placeholder="Estilo (p. ej. Bachata)" value={it.style} onChange={(e) => dispatch({ type: "UPDATE_FIT_TIP", index: idx, key: "style", value: e.target.value })} />
-                    <input className={input} placeholder="Tip (p. ej. tacón estable, suela flexible)" value={it.tip} onChange={(e) => dispatch({ type: "UPDATE_FIT_TIP", index: idx, key: "tip", value: e.target.value })} />
-                    <button className={btnGhost} onClick={() => dispatch({ type: "REMOVE_FIT_TIP", index: idx })}>Eliminar</button>
+                {/* Editor de Guía de tallas */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Equivalencias (MX / US / EU)</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '.5rem', alignItems: 'center' }}>
+                    <b>MX</b><b>US</b><b>EU</b><span />
+                    {(form.size_guide || []).map((row, idx) => (
+                      <React.Fragment key={idx}>
+                        <input className="editor-input" value={row.mx} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'mx', value:e.target.value })} />
+                        <input className="editor-input" value={row.us} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'us', value:e.target.value })} />
+                        <input className="editor-input" value={row.eu} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'eu', value:e.target.value })} />
+                        <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'REMOVE_SIZE', index: idx })}>Eliminar</button>
+                      </React.Fragment>
+                    ))}
                   </div>
-                ))}
-                <div className="mt-2 flex gap-2">
-                  <button className={btnGhost} onClick={() => dispatch({ type: "ADD_FIT_TIP" })}>+ Agregar tip</button>
-                  <button
-                    className={btnGhost}
-                    onClick={async () => {
+                  <div style={{ marginTop: '.6rem' }}>
+                    <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'ADD_SIZE' })}>+ Agregar fila</button>
+                    <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
                       if (!(brand as any)?.id) return;
-                      await supabase.from("profiles_brand").update({ fit_tips: form.fit_tips || [] }).eq("id", (brand as any).id);
-                    }}
-                  >
-                    Guardar tips
-                  </button>
+                      await supabase.from('profiles_brand').update({ size_guide: form.size_guide || [] }).eq('id', (brand as any).id);
+                    }}>Guardar guía</button>
+                  </div>
                 </div>
 
-                {/* Preview compacta */}
-                <div className="grid gap-4 md:grid-cols-2 mt-4">
-                  <SizeGuide rows={form.size_guide} />
-                  <FitTips tips={form.fit_tips} />
+                {/* Editor de Tips */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Consejos de ajuste por estilo</h3>
+                  {(form.fit_tips || []).map((it, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 3fr auto', gap: '.5rem', alignItems: 'center', marginBottom: '.5rem' }}>
+                      <input className="editor-input" placeholder="Estilo (p. ej. Bachata)" value={it.style} onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'style', value:e.target.value })} />
+                      <input className="editor-input" placeholder="Tip (p. ej. tacón estable, suela flexible)" value={it.tip} onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'tip', value:e.target.value })} />
+                      <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'REMOVE_FIT_TIP', index: idx })}>Eliminar</button>
+                    </div>
+                  ))}
+                  <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'ADD_FIT_TIP' })}>+ Agregar tip</button>
+                  <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
+                    if (!(brand as any)?.id) return;
+                    await supabase.from('profiles_brand').update({ fit_tips: form.fit_tips || [] }).eq('id', (brand as any).id);
+                  }}>Guardar tips</button>
                 </div>
-              </section>
+
+                {/* Vista previa */}
+                <div className="editor-grid-small">
+                  <SizeGuide rows={form.size_guide || []} />
+                  <FitTips tips={form.fit_tips || []} />
+                </div>
+              </div>
 
               {/* Conversión */}
-              <section className={`${card} mt-6`}>
-                <h2 className={h2}>🎁 Conversión</h2>
-                <div className="grid gap-4 md:grid-cols-2">
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">🎁 Conversión</h2>
+                <div className="editor-grid-small">
                   <div>
-                    <label className="block mb-1 font-semibold">Encabezado</label>
-                    <input
-                      className={input}
-                      value={form.conversion?.headline || ""}
-                      onChange={(e) => dispatch({ type: "SET_CONVERSION", value: { headline: e.target.value } })}
-                      placeholder="10% primera compra"
-                    />
+                    <label className="editor-field">Encabezado</label>
+                    <input className="editor-input" value={form.conversion?.headline || ''} onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ headline: e.target.value } })} placeholder="10% primera compra" />
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold">Subtítulo / Mensaje</label>
-                    <input
-                      className={input}
-                      value={form.conversion?.subtitle || ""}
-                      onChange={(e) => dispatch({ type: "SET_CONVERSION", value: { subtitle: e.target.value } })}
-                      placeholder="Usa el cupón BAILE10"
-                    />
+                    <label className="editor-field">Subtítulo / Mensaje</label>
+                    <input className="editor-input" value={form.conversion?.subtitle || ''} onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ subtitle: e.target.value } })} placeholder="Usa el cupón BAILE10" />
                   </div>
                 </div>
-
-                <div className="mt-3">
+                <div style={{ marginTop: '.6rem' }}>
                   <CouponEditor
                     coupons={(form.conversion?.coupons || []) as string[]}
-                    onChange={(arr) => dispatch({ type: "SET_CONVERSION", value: { coupons: arr } })}
-                    onSave={async (arr) => {
+                    onChange={(arr)=> dispatch({ type:'SET_CONVERSION', value:{ coupons: arr } })}
+                    onSave={async (arr)=>{
                       if (!(brand as any)?.id) return;
-                      const next = { ...(form.conversion || {}), coupons: arr };
-                      await supabase.from("profiles_brand").update({ conversion: next }).eq("id", (brand as any).id);
+                      const next = { ...(form.conversion||{}), coupons: arr };
+                      await supabase.from('profiles_brand').update({ conversion: next }).eq('id', (brand as any).id);
                     }}
                   />
                 </div>
-
-                <div className="mt-3 flex gap-2 flex-wrap items-center">
-                  <span className="font-extrabold">{form.conversion?.headline || "10% primera compra"}</span>
-                  <span className="opacity-85">{form.conversion?.subtitle || <>Usa uno de tus cupones</>}</span>
+                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '.75rem' }}>
+                  <span style={{ fontWeight: 900 }}>{form.conversion?.headline || '10% primera compra'}</span>
+                  <span style={{ opacity: .85 }}>{form.conversion?.subtitle || <>Usa uno de tus cupones</>}</span>
                 </div>
-              </section>
+              </div>
             </>
           )}
 
-          {/* === PRODUCTS TAB === */}
-          {tab === "products" && (
-            <section className={`${card}`}>
-              <h2 className={h2}>🛍️ Catálogo</h2>
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <div className="opacity-80">Sube fotos de tus productos. Se crearán entradas en el catálogo.</div>
+          {/* === PRODUCTS === */}
+          {tab==='products' && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">🛍️ Catálogo</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ opacity: .8 }}>Sube fotos de tus productos. Se crearán entradas en el catálogo.</div>
                 <MediaUploader onPick={onPickCatalog} />
               </div>
 
-              {/* Filtro */}
-              <div className="flex gap-2 mb-3 flex-wrap">
-                {(["all", "calzado", "ropa", "accesorios"] as const).map((c) => (
-                  <button key={c} className={catFilter === c ? btnPrimary : btnGhost} onClick={() => setCatFilter(c)}>
-                    {c === "all" ? "Todos" : c[0].toUpperCase() + c.slice(1)}
+              {/* Filtro por categoría (manteniendo look de botones) */}
+              <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', marginBottom:'.5rem' }}>
+                {(['all','calzado','ropa','accesorios'] as const).map(cat => (
+                  <button
+                    key={cat}
+                    onClick={()=>setCatFilter(cat)}
+                    className="editor-back-btn"
+                    style={{ background: catFilter===cat ? 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' : 'rgba(255,255,255,0.1)' }}
+                  >
+                    {cat==='all' ? 'Todos' : cat[0].toUpperCase()+cat.slice(1)}
                   </button>
                 ))}
               </div>
 
               {/* Grid editable */}
-              {form.productos.length > 0 ? (
-                <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+              {Array.isArray(form.productos) && form.productos.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', marginTop: '.75rem' }}>
                   {form.productos
-                    .filter((p) => (catFilter === "all" ? true : p.category === catFilter))
-                    .map((p) => (
-                      <article key={p.id} className={card}>
-                        <div className="flex justify-center">
-                          <ImageWithFallback
-                            src={p.imagen_url}
-                            alt={p.titulo || "Producto"}
-                            style={{ width: 350, maxWidth: "100%", height: "auto", borderRadius: 12, display: "block" }}
-                          />
-                        </div>
-                        <div className="grid items-center gap-2 mt-2" style={{ gridTemplateColumns: "1fr 1fr auto" }}>
-                          <input
-                            className={input}
-                            value={p.titulo || ""}
-                            onChange={(e) => dispatch({ type: "UPDATE_PRODUCT", id: p.id, value: { titulo: e.target.value } })}
-                            placeholder="Nombre del producto"
-                          />
-                          <select
-                            className={input}
-                            value={p.category || "ropa"}
-                            onChange={(e) => dispatch({ type: "UPDATE_PRODUCT", id: p.id, value: { category: e.target.value as Category } })}
-                          >
-                            <option value="calzado">Calzado</option>
-                            <option value="ropa">Ropa</option>
-                            <option value="accesorios">Accesorios</option>
-                          </select>
-                          <button className={btnGhost} onClick={() => removeCatalogItem(p.id)}>Eliminar</button>
-                        </div>
-                      </article>
-                    ))}
+                    .filter(p => catFilter==='all' ? true : p.category===catFilter)
+                    .map((p: any) => (
+                    <article key={p.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+                      <div style={{ display:'flex', justifyContent:'center' }}>
+                        <ImageWithFallback src={p.imagen_url} alt={p.titulo || 'Producto'} style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display:'block' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns:'1fr 1fr auto', alignItems: 'center', marginTop: '.5rem', gap: '.5rem' }}>
+                        <input
+                          value={p.titulo || ''}
+                          onChange={(e) => dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ titulo:e.target.value } })}
+                          placeholder="Nombre del producto (opcional)"
+                          className="editor-input"
+                          style={{ width: '100%' }}
+                        />
+                        <select
+                          className="editor-input"
+                          value={p.category || 'ropa'}
+                          onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ category: e.target.value as Category } })}
+                        >
+                          <option value="calzado">Calzado</option>
+                          <option value="ropa">Ropa</option>
+                          <option value="accesorios">Accesorios</option>
+                        </select>
+                        <button type="button" onClick={() => removeCatalogItem(p.id)} className="editor-back-btn" style={{ whiteSpace: 'nowrap' }}>Eliminar</button>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               ) : (
-                <p className="opacity-80 m-0">Aún no hay productos en el catálogo.</p>
+                <p style={{ color: 'rgba(255,255,255,.75)', margin: 0 }}>Aún no hay productos en el catálogo.</p>
               )}
 
-              {/* Vista previa por tabs */}
-              <div className="mt-6">
-                <h3 className="text-lg mb-2">👀 Vista previa</h3>
-                <CatalogTabs
-                  items={form.productos.map((p) => ({
-                    id: p.id,
-                    name: p.titulo || "Producto",
-                    price: "",
-                    image: p.imagen_url,
-                    category: (p.category || "ropa") as Category,
-                    sizes: p.sizes || [],
-                  }))}
-                />
+              {/* Vista previa con pestañas */}
+              <div style={{ marginTop: '1.5rem' }}>
+                <h3 className="editor-section-title" style={{ fontSize: '1.25rem' }}>👀 Vista previa</h3>
+                <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: (p.category || 'ropa') as any, sizes: p.sizes || [] }))} />
               </div>
-            </section>
+            </div>
           )}
 
-          {/* === LOOKBOOK TAB === */}
-          {tab === "lookbook" && (
-            <section className={card}>
-              <h2 className={h2}>🎥 Lookbook</h2>
-              <div className="flex justify-between items-center gap-3 mb-3 flex-wrap">
-                <div className="opacity-80">Sube fotos para tu lookbook.</div>
+          {/* === LOOKBOOK === */}
+          {tab==='lookbook' && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">🎥 Lookbook</h2>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1rem', marginBottom:'1rem', flexWrap:'wrap' }}>
+                <div style={{ opacity:.8 }}>Sube fotos para tu lookbook.</div>
                 <MediaUploader onPick={onPickLookbook} />
               </div>
-              <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
                 {lookbook.map((ph: any) => (
-                  <div key={ph.id} className={card}>
-                    <ImageWithFallback src={ph.image} alt={ph.caption || ""} style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12 }} />
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="font-bold">{ph.style || ""}</span>
+                  <div key={ph.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+                    <ImageWithFallback src={ph.image} alt={ph.caption || ''} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12 }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem' }}>
+                      <span style={{ fontWeight: 700 }}>{ph.style || ''}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* === POLICIES TAB === */}
-          {tab === "policies" && (
-            <section className={card}>
-              <h2 className={h2}>🔒 Políticas</h2>
-              <div className="grid gap-4 md:grid-cols-3">
+          {/* === POLICIES === */}
+          {tab==='policies' && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">🔒 Políticas</h2>
+              <div className="editor-grid">
                 <div>
-                  <label className="block mb-1 font-semibold">Envíos</label>
-                  <textarea
-                    className={`${input} min-h-[100px]`}
-                    value={form.policies?.shipping || ""}
-                    onChange={(e) => dispatch({ type: "SET_POLICIES", value: { shipping: e.target.value } })}
-                    placeholder="Tiempos y zonas de envío"
-                  />
+                  <label className="editor-field">Envíos</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.shipping || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ shipping: e.target.value } })} placeholder="Tiempos y zonas de envío" />
                 </div>
                 <div>
-                  <label className="block mb-1 font-semibold">Cambios / Devoluciones</label>
-                  <textarea
-                    className={`${input} min-h-[100px]`}
-                    value={form.policies?.returns || ""}
-                    onChange={(e) => dispatch({ type: "SET_POLICIES", value: { returns: e.target.value } })}
-                    placeholder="Condiciones para cambios y devoluciones"
-                  />
+                  <label className="editor-field">Cambios / Devoluciones</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.returns || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ returns: e.target.value } })} placeholder="Condiciones para cambios y devoluciones" />
                 </div>
                 <div>
-                  <label className="block mb-1 font-semibold">Garantía</label>
-                  <textarea
-                    className={`${input} min-h-[100px]`}
-                    value={form.policies?.warranty || ""}
-                    onChange={(e) => dispatch({ type: "SET_POLICIES", value: { warranty: e.target.value } })}
-                    placeholder="Cobertura de garantía"
-                  />
+                  <label className="editor-field">Garantía</label>
+                  <textarea className="editor-textarea" rows={3} value={form.policies?.warranty || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ warranty: e.target.value } })} placeholder="Cobertura de garantía" />
                 </div>
               </div>
-              <div className="mt-3">
-                <button
-                  className={btnGhost}
-                  onClick={async () => {
-                    if (!(brand as any)?.id) return;
-                    await supabase.from("profiles_brand").update({ policies: form.policies || {} }).eq("id", (brand as any).id);
-                  }}
-                >
-                  Guardar políticas
-                </button>
+              <div style={{ marginTop: '.6rem' }}>
+                <button type="button" className="editor-back-btn" onClick={async ()=>{
+                  if (!(brand as any)?.id) return;
+                  await supabase.from('profiles_brand').update({ policies: form.policies || {} }).eq('id', (brand as any).id);
+                }}>Guardar políticas</button>
               </div>
-              <div className="mt-3">
-                <ul className="m-0 pl-5 leading-6 list-disc">
-                  <li>
-                    <b>Envíos:</b> {form.policies?.shipping || "Nacionales 2–5 días hábiles."}
-                  </li>
-                  <li>
-                    <b>Cambios/Devoluciones:</b> {form.policies?.returns || "Dentro de 15 días (sin uso, en caja)."}
-                  </li>
-                  <li>
-                    <b>Garantía:</b> {form.policies?.warranty || "30 días por defectos de fabricación."}
-                  </li>
+              <div style={{ marginTop: '.75rem' }}>
+                <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
+                  <li><b>Envíos:</b> {form.policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
+                  <li><b>Cambios/Devoluciones:</b> {form.policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
+                  <li><b>Garantía:</b> {form.policies?.warranty || '30 días por defectos de fabricación.'}</li>
                 </ul>
               </div>
-            </section>
+            </div>
+          )}
+
+          {/* Galería (igual) */}
+          {media.length > 0 && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">📷 Galería</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {media.map((url, i) => (
+                  <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)' }}>
+                    <ImageWithFallback src={url} alt={`media-${i}`} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -661,46 +538,35 @@ export default function BrandProfileEditor() {
   );
 }
 
-/** Subcomponentes */
-
-function CatalogTabs({ items = [] as any[] }: { items?: any[] }) {
-  const [tab, setTab] = React.useState<Category>("calzado");
+// Subcomponentes (sin cambios visuales)
+function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
+  const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
   const filtered = items.filter((i: any) => i.category === tab);
-  const tabs: Category[] = ["calzado", "ropa", "accesorios"];
-  const btn = "px-3 py-2 rounded-full font-bold border border-white/20";
-  const btnPrimary = `${btn} bg-gradient-to-tr from-blue-600/90 to-cyan-600/90 text-white`;
-  const btnGhost = `${btn} bg-white/10 text-white`;
-  const card = "border border-white/15 rounded-2xl bg-white/5 p-3 flex flex-col items-center";
-
+  const tabs = ['calzado','ropa','accesorios'] as const;
+  const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
+  const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
+  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
+  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
   return (
     <div>
-      <div className="flex gap-2 mb-3 flex-wrap">
+      <div style={{ display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={t === tab ? btnPrimary : btnGhost}>
-            {t[0].toUpperCase() + t.slice(1)}
-          </button>
+          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>{t[0].toUpperCase()+t.slice(1)}</button>
         ))}
       </div>
-      {filtered.length === 0 ? (
-        <p className="opacity-80">Sin productos en esta categoría.</p>
-      ) : (
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))" }}>
+      {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
           {filtered.map((p: any) => (
-            <article key={p.id} className={card}>
-              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth: "100%", height: "auto", borderRadius: 12 }} />
-              <div className="mt-2 text-center">
-                <div className="font-extrabold">{p.name}</div>
-                {p.price && <div className="opacity-85 my-1">{p.price}</div>}
+            <article key={p.id} style={prodCard}>
+              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
+              <div style={{ marginTop: '.6rem' }}>
+                <div style={{ fontWeight: 800 }}>{p.name}</div>
+                <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
-                  <div className="flex gap-1 flex-wrap justify-center mt-1">
-                    {p.sizes.slice(0, 6).map((s: string) => (
-                      <span key={s} className="border border-white/20 rounded-full px-2 py-0.5 text-sm">
-                        {s}
-                      </span>
-                    ))}
-                    {p.sizes.length > 6 && (
-                      <span className="border border-white/20 rounded-full px-2 py-0.5 text-sm">+{p.sizes.length - 6}</span>
-                    )}
+                  <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap', margin: '.35rem 0' }}>
+                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
+                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
                   </div>
                 )}
               </div>
@@ -712,30 +578,22 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }) {
   );
 }
 
-function SizeGuide({ rows = [] as SizeRow[] }) {
-  const data: SizeRow[] =
-    rows.length > 0
-      ? rows
-      : [
-          { mx: "22", us: "5", eu: "35" },
-          { mx: "23", us: "6", eu: "36-37" },
-          { mx: "24", us: "7", eu: "38" },
-          { mx: "25", us: "8", eu: "39-40" },
-          { mx: "26", us: "9", eu: "41-42" },
-        ];
-
+function SizeGuide({ rows = [] as { mx:string; us:string; eu:string }[] }){
+  const data = rows.length > 0 ? rows : [
+    { mx:'22', us:'5', eu:'35' },
+    { mx:'23', us:'6', eu:'36-37' },
+    { mx:'24', us:'7', eu:'38' },
+    { mx:'25', us:'8', eu:'39-40' },
+    { mx:'26', us:'9', eu:'41-42' },
+  ];
   return (
-    <div className="border border-white/15 rounded-xl bg-white/5 p-3">
+    <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Equivalencias (Calzado)</b>
-      <div className="grid gap-1 mt-2" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
-        <div>MX</div>
-        <div>US</div>
-        <div>EU</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.35rem', marginTop: '.5rem', fontSize: '.92rem' }}>
+        <div>MX</div><div>US</div><div>EU</div>
         {data.map((r, i) => (
           <React.Fragment key={i}>
-            <div>{r.mx}</div>
-            <div>{r.us}</div>
-            <div>{r.eu}</div>
+            <div>{r.mx}</div><div>{r.us}</div><div>{r.eu}</div>
           </React.Fragment>
         ))}
       </div>
@@ -743,68 +601,46 @@ function SizeGuide({ rows = [] as SizeRow[] }) {
   );
 }
 
-function FitTips({ tips = [] as FitTip[] }) {
-  const data =
-    tips.length > 0
-      ? tips
-      : [
-          { style: "Bachata", tip: "Tacón estable, suela flexible, punta reforzada." },
-          { style: "Salsa", tip: "Mayor soporte lateral, giro suave (suela gamuza)." },
-          { style: "Kizomba", tip: "Confort prolongado, amortiguación talón." },
-        ];
+function FitTips({ tips = [] as { style:string; tip:string }[] }){
+  const data = tips.length > 0 ? tips : [
+    { style: 'Bachata', tip: 'Tacón estable, suela flexible, punta reforzada.' },
+    { style: 'Salsa', tip: 'Mayor soporte lateral, giro suave (suela gamuza).' },
+    { style: 'Kizomba', tip: 'Confort prolongado, amortiguación talón.' },
+  ];
   return (
-    <div className="border border-white/15 rounded-xl bg-white/5 p-3">
+    <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Fit recomendado por estilo</b>
-      <ul className="mt-2 pl-5 leading-6 list-disc">
+      <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
         {data.map((it, i) => (
-          <li key={i}>
-            <b>{it.style}:</b> {it.tip}
-          </li>
+          <li key={i}><b>{it.style}:</b> {it.tip}</li>
         ))}
       </ul>
     </div>
   );
 }
 
-function CouponEditor({
-  coupons = [],
-  onChange,
-  onSave,
-}: {
-  coupons?: string[];
-  onChange: (arr: string[]) => void;
-  onSave?: (arr: string[]) => Promise<void> | void;
-}) {
-  const [val, setVal] = React.useState("");
+function CouponEditor({ coupons = [] as string[], onChange, onSave }:{ coupons?: string[]; onChange:(arr:string[])=>void; onSave?:(arr:string[])=>Promise<void>|void }){
+  const [val, setVal] = React.useState('');
   const add = () => {
     const v = val.trim();
     if (!v) return;
     if (coupons.includes(v)) return;
-    onChange([...coupons, v]);
-    setVal("");
+    onChange([ ...coupons, v ]);
+    setVal('');
   };
-  const remove = (c: string) => onChange(coupons.filter((x) => x !== c));
-
+  const remove = (c:string) => onChange(coupons.filter(x=>x!==c));
   return (
     <div>
-      <div className="flex gap-2 items-center mb-2">
-        <input className="w-full px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white" placeholder="Código (p. ej. BAILE10)" value={val} onChange={(e) => setVal(e.target.value)} />
-        <button type="button" className="px-4 py-3 rounded-xl font-semibold border border-white/20 bg-white/10 text-white" onClick={add}>
-          Agregar
-        </button>
-        {onSave && (
-          <button type="button" className="px-4 py-3 rounded-xl font-semibold border border-white/20 bg-white/10 text-white" onClick={() => onSave(coupons)}>
-            Guardar cupones
-          </button>
-        )}
+      <div style={{ display:'flex', gap:'.5rem', alignItems:'center', marginBottom:'.5rem' }}>
+        <input className="editor-input" placeholder="Código (p. ej. BAILE10)" value={val} onChange={(e)=>setVal(e.target.value)} />
+        <button type="button" className="editor-back-btn" onClick={add}>Agregar</button>
+        {onSave && <button type="button" className="editor-back-btn" onClick={()=>onSave(coupons)}>Guardar cupones</button>}
       </div>
-      <div className="flex gap-2 flex-wrap">
-        {coupons.map((c) => (
-          <span key={c} className="border border-white/20 rounded-full px-3 py-1 inline-flex items-center gap-2">
+      <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
+        {coupons.map(c => (
+          <span key={c} style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.25rem .6rem', display:'inline-flex', alignItems:'center', gap:'.4rem' }}>
             <b>{c}</b>
-            <button type="button" className="px-2 py-1 rounded-md border border-white/20 bg-white/10 text-white" onClick={() => remove(c)}>
-              ✕
-            </button>
+            <button type="button" className="editor-back-btn" onClick={()=>remove(c)}>✕</button>
           </span>
         ))}
       </div>
