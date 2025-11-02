@@ -1027,8 +1027,8 @@ export default function OrganizerProfileEditor() {
         }
         
         .org-editor-card {
-          margin-bottom: 3rem;
-          padding: 2rem;
+          margin-bottom: 2rem;
+          padding: 1.2rem;
           background: rgba(255, 255, 255, 0.08);
           border-radius: 16px;
           border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1348,8 +1348,8 @@ export default function OrganizerProfileEditor() {
             id="organizer-basic-info"
             data-test-id="organizer-basic-info"
             className="org-editor-card"
-          >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+          > 
+            <h2 style={{ fontSize: '1rem', marginBottom: '1rem', color: colors.light }}>
               🏢 Información del Organizador
             </h2>
 
@@ -1392,7 +1392,7 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-rhythms-zones"
             className="org-editor-card"
           >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
               🎵 Ritmos y Zonas
             </h2>
 
@@ -1419,7 +1419,7 @@ export default function OrganizerProfileEditor() {
                   🎵 Ritmos de Baile
                 </h3> */}
                   {(
-                    <RitmosSelectorEditor 
+                    <RitmosSelectorEditor
                       selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
                       ritmoTags={ritmoTags as any}
                       setField={setField as any}
@@ -1453,7 +1453,7 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-social-networks"
             className="org-editor-card"
           >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
               📱 Redes Sociales
             </h2>
 
@@ -1512,6 +1512,29 @@ export default function OrganizerProfileEditor() {
               value={(form as any).ubicaciones || []}
               onChange={(ubicaciones) => setField('ubicaciones' as any, ubicaciones as any)}
             />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSave}
+                disabled={upsert.isPending}
+                style={{
+                  padding: '0.8rem 1.2rem',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: upsert.isPending
+                    ? 'rgba(255,255,255,0.12)'
+                    : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                  color: '#FFFFFF',
+                  fontSize: '0.9rem',
+                  fontWeight: 800,
+                  cursor: upsert.isPending ? 'not-allowed' : 'pointer',
+                  boxShadow: upsert.isPending ? 'none' : '0 8px 24px rgba(30,136,229,0.35)'
+                }}
+              >
+                {upsert.isPending ? '⏳ Guardando...' : '💾 Guardar ubicaciones'}
+              </motion.button>
+            </div>
           </div>
 
           {/* Maestros Invitados */}
@@ -1539,41 +1562,7 @@ export default function OrganizerProfileEditor() {
             }}
           /> */}
 
-          {/* Información para Asistentes */}
-          <div className="org-editor-card">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              💬 Información para Asistentes
-            </h2>
-
-            <div className="org-editor-grid">
-              <div>
-                <label className="org-editor-field">
-                  🎵 ¿Qué música tocarán?
-                </label>
-                <textarea
-                  value={form.respuestas.musica_tocaran}
-                  onChange={(e) => setNested('respuestas.musica_tocaran', e.target.value)}
-                  placeholder="Describe el tipo de música que tocarán..."
-                  rows={3}
-                  className="org-editor-textarea"
-                />
-              </div>
-
-              <div>
-                <label className="org-editor-field">
-                  🅿️ ¿Hay estacionamiento?
-                </label>
-                <textarea
-                  value={form.respuestas.hay_estacionamiento}
-                  onChange={(e) => setNested('respuestas.hay_estacionamiento', e.target.value)}
-                  placeholder="Información sobre estacionamiento..."
-                  rows={3}
-                  className="org-editor-textarea"
-                />
-              </div>
-            </div>
-          </div>
-
+         
           {/* Mis Eventos */}
           <div
             id="organizer-events-list"
@@ -2117,7 +2106,7 @@ export default function OrganizerProfileEditor() {
                     background: 'radial-gradient(circle, rgba(255, 61, 87, 0.1) 0%, transparent 70%)',
                     pointerEvents: 'none'
                   }} />
-                  
+
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -2190,6 +2179,40 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
           {/* Botón Crear Evento (movido a cabecera, se elimina el flotante) */}
+ {/* Información para Asistentes */}
+ <div className="org-editor-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              💬 Información para Asistentes
+            </h2>
+
+            <div className="org-editor-grid">
+              <div>
+                <label className="org-editor-field">
+                  🎵 ¿Qué música tocarán?
+                </label>
+                <textarea
+                  value={form.respuestas.musica_tocaran}
+                  onChange={(e) => setNested('respuestas.musica_tocaran', e.target.value)}
+                  placeholder="Describe el tipo de música que tocarán..."
+                  rows={3}
+                  className="org-editor-textarea"
+                />
+              </div>
+
+              <div>
+                <label className="org-editor-field">
+                  🅿️ ¿Hay estacionamiento?
+                </label>
+                <textarea
+                  value={form.respuestas.hay_estacionamiento}
+                  onChange={(e) => setNested('respuestas.hay_estacionamiento', e.target.value)}
+                  placeholder="Información sobre estacionamiento..."
+                  rows={3}
+                  className="org-editor-textarea"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Sección de Fotos */}
           <PhotoManagementSection

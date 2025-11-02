@@ -275,38 +275,76 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
           .dfs-controls { width: 100% !important; }
         }
       `}</style>
-      <motion.div
-        key={idx}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={() => onOpen(ev.href)}
-        style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
-        className="dfs-wrap"
-      >
-        <div style={{ width: 360, maxWidth: '85vw' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
-            {ev.flyer && (
-              <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            )}
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
-                {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
-                {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
-                {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
-                {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(280px, 360px) auto', alignItems: 'center', gap: '0.75rem' }}>
+        {items.length > 1 && (
+          <button
+            type="button"
+            aria-label="Anterior"
+            onClick={(e) => { e.stopPropagation(); setIdx((p) => (p - 1 + items.length) % items.length); }}
+            style={{
+              padding: '.9rem 1.1rem',
+              borderRadius: 14,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(30,136,229,.85), rgba(255,61,87,.85))',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '1.1rem',
+              boxShadow: '0 8px 22px rgba(0,0,0,.35)',
+              cursor: 'pointer'
+            }}
+          >
+            ‹
+          </button>
+        )}
+
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => onOpen(ev.href)}
+          style={{ position: 'relative', borderRadius: 16, cursor: 'pointer', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+          className="dfs-wrap"
+        >
+          <div style={{ width: 360, maxWidth: '85vw' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
+              {ev.flyer && (
+                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              )}
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.85rem' }}>
+                  {ev.date && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
+                  {ev.time && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
+                  {ev.place && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
+                  {ev.price && <span style={{ border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
-      {items.length > 1 && (
-        <div className="dfs-controls" style={{ width: 360, maxWidth: '85vw', display: 'flex', justifyContent: 'space-between' }}>
-          <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
-          <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
-        </div>
-      )}
+        </motion.div>
+
+        {items.length > 1 && (
+          <button
+            type="button"
+            aria-label="Siguiente"
+            onClick={(e) => { e.stopPropagation(); setIdx((p) => (p + 1) % items.length); }}
+            style={{
+              padding: '.9rem 1.1rem',
+              borderRadius: 14,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(255,61,87,.85), rgba(30,136,229,.85))',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '1.1rem',
+              boxShadow: '0 8px 22px rgba(0,0,0,.35)',
+              cursor: 'pointer'
+            }}
+          >
+            ›
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -8,6 +8,7 @@ export interface SocialMediaSectionProps {
       youtube?: string | null;
       facebook?: string | null;
       whatsapp?: string | null;
+      web?: string | null;
     };
   };
   redes_sociales?: {
@@ -16,11 +17,12 @@ export interface SocialMediaSectionProps {
     youtube?: string | null;
     facebook?: string | null;
     whatsapp?: string | null;
+    web?: string | null;
   };
   title?: string;
   showTitle?: boolean;
   style?: React.CSSProperties;
-  availablePlatforms?: ('instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp')[];
+  availablePlatforms?: ('instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp' | 'web')[];
 }
 
 function isNonEmpty(v?: string | null) {
@@ -243,6 +245,7 @@ export default function SocialMediaSection({
             youtube: '📺',
             facebook: '👥',
             whatsapp: '💬',
+        web: '🌐',
           }[k] || '🔗';
 
           return (
