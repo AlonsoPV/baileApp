@@ -364,7 +364,7 @@ function SizeGuide(){
         <div>22</div><div>5</div><div>35</div>
         <div>23</div><div>6</div><div>36-37</div>
         <div>24</div><div>7</div><div>38</div>
-        <div>25</div><div>8</div><div>39-40</div>
+        <div>25</div><div>8</div><div>39 -40</div>
         <div>26</div><div>9</div><div>41-42</div>
       </div>
     </div>
