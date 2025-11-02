@@ -51,6 +51,7 @@ import AcademyProfileLive from './screens/profile/AcademyProfileLive';
 import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
 import TeacherProfileLive from './screens/profile/TeacherProfileLive';
 import BrandProfileEditor from './screens/profile/BrandProfileEditor';
+import BrandProfileLive from './screens/profile/BrandProfileLive';
 
 // Brand Screens
 import BrandEditorScreen from './screens/brand/BrandEditorScreen';
@@ -124,7 +125,8 @@ export default function AppRouter() {
           <Route path="/profile/edit" element={<ProfileScreen />} />
           <Route path="/profile/settings" element={<ProfileScreen />} />
           <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
-          <Route path="/profile/brand" element={<BrandProfileEditor />} />
+          <Route path="/profile/brand" element={<BrandProfileLive />} />
+          <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
           <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
           <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
           <Route path="/events/parent/new" element={<OrganizerEventParentCreateScreen />} />

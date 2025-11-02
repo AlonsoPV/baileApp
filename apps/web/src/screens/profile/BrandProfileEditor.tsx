@@ -4,6 +4,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import { useAuth } from "@/contexts/AuthProvider";
 import { useMyBrand, useUpsertBrand } from "../../hooks/useBrand";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import ImageWithFallback from "../../components/ImageWithFallback";
 
 const colors = {
   dark: '#121212',
@@ -37,6 +38,23 @@ export default function BrandProfileEditor() {
   const handleSave = async () => {
     await upsert.mutateAsync({ id: (brand as any)?.id, nombre_publico: form.nombre_publico, bio: form.bio, redes_sociales: form.redes_sociales });
   };
+
+  // Datos para vistas previas (reutiliza lógica del Live)
+  const media: string[] = Array.isArray((brand as any)?.media)
+    ? ((brand as any).media as any[]).map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
+    : [];
+  const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];
+  const featured = productos.map((p: any) => ({
+    id: p.id || Math.random().toString(36).slice(2),
+    name: p.titulo || 'Producto',
+    price: typeof p.precio === 'number' ? `$${p.precio.toLocaleString()}` : (p.precio || ''),
+    image: p.imagen_url,
+    category: (p.categoria || p.category || 'ropa') as 'calzado'|'ropa'|'accesorios',
+    sizes: Array.isArray(p.sizes) ? p.sizes : [],
+  }));
+  const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
+  const policies = { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
+  const partners: any[] = [];
 
   return (
     <>
@@ -141,9 +159,143 @@ export default function BrandProfileEditor() {
               />
             </div>
           </div>
+
+          {/* Vista previa: Catálogo */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">🛍️ Catálogo (Vista previa)</h2>
+            <CatalogTabs items={featured} />
+          </div>
+
+          {/* Vista previa: Guía de tallas y ajuste */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">📏 Guía de tallas y ajuste</h2>
+            <div className="editor-grid-small">
+              <SizeGuide />
+              <FitTips />
+            </div>
+          </div>
+
+          {/* Vista previa: Lookbook */}
+          {lookbook.length > 0 && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">🎥 Lookbook</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+                {lookbook.map((ph: any) => (
+                  <div key={ph.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+                    <ImageWithFallback src={ph.image} alt={ph.caption || ''} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12 }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem' }}>
+                      <span style={{ fontWeight: 700 }}>{ph.style || ''}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Vista previa: Políticas */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">🔒 Políticas (Vista previa)</h2>
+            <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
+              <li><b>Envíos:</b> {policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
+              <li><b>Cambios/Devoluciones:</b> {policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
+              <li><b>Garantía:</b> {policies?.warranty || '30 días por defectos de fabricación.'}</li>
+            </ul>
+          </div>
+
+          {/* Vista previa: CTA */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">🎁 Conversión</h2>
+            <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontWeight: 900 }}>10% primera compra</span>
+              <span style={{ opacity: .85 }}>Usa el cupón <b>BAILE10</b></span>
+            </div>
+          </div>
+
+          {/* Vista previa: Galería */}
+          {media.length > 0 && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">📷 Galería</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {media.map((url, i) => (
+                  <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)' }}>
+                    <ImageWithFallback src={url} alt={`media-${i}`} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+// Subcomponentes (reutilizados del Live)
+function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
+  const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
+  const filtered = items.filter((i: any) => i.category === tab);
+  const tabs = ['calzado','ropa','accesorios'] as const;
+  const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
+  const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' };
+  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
+  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
+        {tabs.map((t) => (
+          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>{t[0].toUpperCase()+t.slice(1)}</button>
+        ))}
+      </div>
+      {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
+          {filtered.map((p: any) => (
+            <article key={p.id} style={prodCard}>
+              <ImageWithFallback src={p.image} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12 }} />
+              <div style={{ marginTop: '.6rem' }}>
+                <div style={{ fontWeight: 800 }}>{p.name}</div>
+                <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
+                {Array.isArray(p.sizes) && p.sizes.length > 0 && (
+                  <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap', margin: '.35rem 0' }}>
+                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
+                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SizeGuide(){
+  return (
+    <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+      <b>Equivalencias (Calzado)</b>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.35rem', marginTop: '.5rem', fontSize: '.92rem' }}>
+        <div>MX</div><div>US</div><div>EU</div>
+        <div>22</div><div>5</div><div>35</div>
+        <div>23</div><div>6</div><div>36-37</div>
+        <div>24</div><div>7</div><div>38</div>
+        <div>25</div><div>8</div><div>39-40</div>
+        <div>26</div><div>9</div><div>41-42</div>
+      </div>
+    </div>
+  );
+}
+
+function FitTips(){
+  return (
+    <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+      <b>Fit recomendado por estilo</b>
+      <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
+        <li><b>Bachata:</b> tacón estable, suela flexible, punta reforzada.</li>
+        <li><b>Salsa:</b> mayor soporte lateral, giro suave (suela gamuza).</li>
+        <li><b>Kizomba:</b> confort prolongado, amortiguación talón.</li>
+      </ul>
+    </div>
   );
 }
 
