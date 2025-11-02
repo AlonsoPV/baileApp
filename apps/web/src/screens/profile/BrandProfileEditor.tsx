@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useMyBrand, useUpsertBrand } from "../../hooks/useBrand";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { MediaUploader } from "../../components/MediaUploader";
+import { supabase } from "../../lib/supabase";
 
 const colors = {
   dark: '#121212',
@@ -16,14 +18,16 @@ export default function BrandProfileEditor() {
   const { user } = useAuth();
   const { data: brand } = useMyBrand();
   const upsert = useUpsertBrand();
-  const [form, setForm] = React.useState<{ nombre_publico?: string; bio?: string | null; redes_sociales: any }>({ nombre_publico: '', bio: '', redes_sociales: {} });
+  const [form, setForm] = React.useState<{ nombre_publico?: string; bio?: string | null; redes_sociales: any; productos?: any[] }>({ nombre_publico: '', bio: '', redes_sociales: {}, productos: [] });
+  const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
 
   React.useEffect(() => {
     if (brand) {
       setForm({
         nombre_publico: (brand as any).nombre_publico || '',
         bio: (brand as any).bio || '',
-        redes_sociales: (brand as any).redes_sociales || {}
+        redes_sociales: (brand as any).redes_sociales || {},
+        productos: Array.isArray((brand as any).productos) ? (brand as any).productos : []
       });
     }
   }, [brand]);
@@ -36,7 +40,99 @@ export default function BrandProfileEditor() {
   };
 
   const handleSave = async () => {
-    await upsert.mutateAsync({ id: (brand as any)?.id, nombre_publico: form.nombre_publico, bio: form.bio, redes_sociales: form.redes_sociales });
+    await upsert.mutateAsync({ id: (brand as any)?.id, nombre_publico: form.nombre_publico, bio: form.bio, redes_sociales: form.redes_sociales, productos: form.productos || [] });
+  };
+
+  // --- Catálogo (fotos) ---
+  const onPickCatalog = async (files: FileList) => {
+    if (!(brand as any)?.id) {
+      alert('Primero guarda la información básica para habilitar el catálogo.');
+      return;
+    }
+    const brandId = (brand as any).id as number;
+    const onlyImages = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (onlyImages.length === 0) return;
+
+    const uploaded: { imagen_url: string; id: string; titulo: string }[] = [];
+    for (const file of onlyImages) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('brand-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) {
+        console.error('[BrandCatalogUpload] Error:', error);
+        alert(`Error al subir una imagen: ${error.message}`);
+        continue;
+      }
+      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+      uploaded.push({ imagen_url: pub.publicUrl, id: path, titulo: '' });
+    }
+
+    if (uploaded.length > 0) {
+      setForm(s => ({
+        ...s,
+        productos: [
+          ...(Array.isArray(s.productos) ? s.productos : []),
+          ...uploaded.map(u => ({ id: u.id, titulo: u.titulo, imagen_url: u.imagen_url }))
+        ]
+      }));
+    }
+  };
+
+  const removeCatalogItem = async (prodIdOrPath: string) => {
+    // prodId is the storage path we used as id
+    try {
+      await supabase.storage.from('brand-media').remove([prodIdOrPath]);
+    } catch (e) {
+      console.warn('[BrandCatalogRemove] No se pudo eliminar del storage (continuando):', e);
+    }
+    setForm(s => ({ ...s, productos: (s.productos || []).filter((p: any) => p.id !== prodIdOrPath) }));
+  };
+
+  // --- Logo uploader ---
+  const onUploadLogo = async (file: File) => {
+    if (!(brand as any)?.id) {
+      alert('Primero guarda la información básica para habilitar el logo.');
+      return;
+    }
+    const brandId = (brand as any).id as number;
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    const path = `${brandId}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
+    if (error) { alert(error.message); return; }
+    const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+    setForm(s => ({ ...s, avatar_url: pub.publicUrl } as any));
+  };
+
+  // --- Lookbook manager (imágenes) ---
+  const onPickLookbook = async (files: FileList) => {
+    if (!(brand as any)?.id) {
+      alert('Primero guarda la información básica para habilitar el lookbook.');
+      return;
+    }
+    const brandId = (brand as any).id as number;
+    const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (imgs.length === 0) return;
+    const uploadedUrls: string[] = [];
+    for (const file of imgs) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${brandId}/lookbook/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
+      if (error) { console.error(error); continue; }
+      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+      uploadedUrls.push(pub.publicUrl);
+    }
+    if (uploadedUrls.length > 0) {
+      const prev = Array.isArray((brand as any)?.media) ? ((brand as any).media as any[]) : [];
+      const next = [
+        ...uploadedUrls.map(url => ({ type: 'image', url })),
+        ...prev,
+      ];
+      await supabase.from('profiles_brand').update({ media: next }).eq('id', (brand as any).id);
+    }
   };
 
   // Datos para vistas previas (reutiliza lógica del Live)
@@ -99,6 +195,14 @@ export default function BrandProfileEditor() {
             <div style={{ width: '100px' }} />
           </div>
 
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:'.5rem', marginBottom:'1rem', flexWrap:'wrap', justifyContent:'center' }}>
+            <button onClick={()=>setTab('info')} className="editor-back-btn" style={{ background: tab==='info'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Información</button>
+            <button onClick={()=>setTab('products')} className="editor-back-btn" style={{ background: tab==='products'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Productos</button>
+            <button onClick={()=>setTab('lookbook')} className="editor-back-btn" style={{ background: tab==='lookbook'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Lookbook</button>
+            <button onClick={()=>setTab('policies')} className="editor-back-btn" style={{ background: tab==='policies'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Políticas</button>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
             <ProfileNavigationToggle
               currentView="edit"
@@ -108,19 +212,69 @@ export default function BrandProfileEditor() {
             />
           </div>
 
-          <div className="editor-section glass-card-container">
-            <h2 className="editor-section-title">🏷️ Información de la Marca</h2>
-            <div className="editor-grid">
-              <div>
-                <label className="editor-field">Nombre Público</label>
-                <input type="text" value={form.nombre_publico || ''} onChange={(e) => setField('nombre_publico', e.target.value)} placeholder="Nombre de la marca" className="editor-input" />
+          {tab==='info' && (
+            <>
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">🏷️ Información de la Marca</h2>
+                <div className="editor-grid">
+                  <div>
+                    <label className="editor-field">Nombre Público</label>
+                    <input type="text" value={form.nombre_publico || ''} onChange={(e) => setField('nombre_publico', e.target.value)} placeholder="Nombre de la marca" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">Biografía / Descripción</label>
+                    <textarea value={form.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder="Describe tu marca (materiales, enfoque, estilos)" rows={4} className="editor-textarea" />
+                  </div>
+                </div>
+                {/* Logo uploader */}
+                <div style={{ marginTop: '1rem', display:'flex', gap:'1rem', alignItems:'center' }}>
+                  <ImageWithFallback src={(form as any).avatar_url} alt="logo" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'1px solid rgba(255,255,255,.2)' }} />
+                  <label className="editor-back-btn" style={{ cursor:'pointer' }}>
+                    <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
+                    Subir logo
+                  </label>
+                </div>
               </div>
-              <div>
-                <label className="editor-field">Biografía / Descripción</label>
-                <textarea value={form.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder="Describe tu marca (materiales, enfoque, estilos)" rows={4} className="editor-textarea" />
+
+              <div className="editor-section glass-card-container">
+                <h2 className="editor-section-title">📱 Redes Sociales</h2>
+                <div className="editor-grid-small">
+                  <div>
+                    <label className="editor-field">📸 Instagram</label>
+                    <input type="text" value={form.redes_sociales?.instagram || ''} onChange={(e)=>setRS('instagram', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">🎵 TikTok</label>
+                    <input type="text" value={form.redes_sociales?.tiktok || ''} onChange={(e)=>setRS('tiktok', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">📺 YouTube</label>
+                    <input type="text" value={form.redes_sociales?.youtube || ''} onChange={(e)=>setRS('youtube', e.target.value)} placeholder="Canal o enlace" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">👥 Facebook</label>
+                    <input type="text" value={form.redes_sociales?.facebook || ''} onChange={(e)=>setRS('facebook', e.target.value)} placeholder="Página o perfil" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">💬 WhatsApp</label>
+                    <input type="text" value={form.redes_sociales?.whatsapp || ''} onChange={(e)=>setRS('whatsapp', e.target.value)} placeholder="Número de teléfono" className="editor-input" />
+                  </div>
+                  <div>
+                    <label className="editor-field">🌐 Sitio Web</label>
+                    <input type="text" value={form.redes_sociales?.web || ''} onChange={(e)=>setRS('web', e.target.value)} placeholder="https://" className="editor-input" />
+                  </div>
+                </div>
+                <div style={{ marginTop: '1.5rem' }}>
+                  <SocialMediaSection
+                    respuestas={{ redes: form.redes_sociales || {} }}
+                    redes_sociales={form.redes_sociales || {}}
+                    title="🔗 Vista previa de Redes"
+                    availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp','web']}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">📱 Redes Sociales</h2>
@@ -161,10 +315,47 @@ export default function BrandProfileEditor() {
           </div>
 
           {/* Vista previa: Catálogo */}
+          {tab==='products' && (
           <div className="editor-section glass-card-container">
-            <h2 className="editor-section-title">🛍️ Catálogo (Vista previa)</h2>
-            <CatalogTabs items={featured} />
+            <h2 className="editor-section-title">🛍️ Catálogo</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ opacity: .8 }}>Sube fotos de tus productos. Se crearán entradas en el catálogo.</div>
+              <MediaUploader onPick={onPickCatalog} />
+            </div>
+
+            {/* Grid de catálogo editable */}
+            {Array.isArray(form.productos) && form.productos.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', marginTop: '.75rem' }}>
+                {form.productos.map((p: any) => (
+                  <article key={p.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
+                    <ImageWithFallback src={p.imagen_url} alt={p.titulo || 'Producto'} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12 }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem', gap: '.5rem' }}>
+                      <input
+                        value={p.titulo || ''}
+                        onChange={(e) => setForm(s => ({
+                          ...s,
+                          productos: (s.productos || []).map((it: any) => it.id === p.id ? { ...it, titulo: e.target.value } : it)
+                        }))}
+                        placeholder="Nombre del producto (opcional)"
+                        className="editor-input"
+                        style={{ flex: 1 }}
+                      />
+                      <button type="button" onClick={() => removeCatalogItem(p.id)} className="editor-back-btn" style={{ whiteSpace: 'nowrap' }}>Eliminar</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,.75)', margin: 0 }}>Aún no hay productos en el catálogo.</p>
+            )}
+
+            {/* Vista previa con pestañas (usa los datos del formulario) */}
+            <div style={{ marginTop: '1.5rem' }}>
+              <h3 className="editor-section-title" style={{ fontSize: '1.25rem' }}>👀 Vista previa</h3>
+              <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: 'ropa', sizes: [] }))} />
+            </div>
           </div>
+          )}
 
           {/* Vista previa: Guía de tallas y ajuste */}
           <div className="editor-section glass-card-container">
@@ -175,10 +366,13 @@ export default function BrandProfileEditor() {
             </div>
           </div>
 
-          {/* Vista previa: Lookbook */}
-          {lookbook.length > 0 && (
+          {tab==='lookbook' && (
             <div className="editor-section glass-card-container">
               <h2 className="editor-section-title">🎥 Lookbook</h2>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1rem', marginBottom:'1rem', flexWrap:'wrap' }}>
+                <div style={{ opacity:.8 }}>Sube fotos para tu lookbook.</div>
+                <MediaUploader onPick={onPickLookbook} />
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
                 {lookbook.map((ph: any) => (
                   <div key={ph.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
@@ -192,15 +386,16 @@ export default function BrandProfileEditor() {
             </div>
           )}
 
-          {/* Vista previa: Políticas */}
-          <div className="editor-section glass-card-container">
-            <h2 className="editor-section-title">🔒 Políticas (Vista previa)</h2>
-            <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
-              <li><b>Envíos:</b> {policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
-              <li><b>Cambios/Devoluciones:</b> {policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
-              <li><b>Garantía:</b> {policies?.warranty || '30 días por defectos de fabricación.'}</li>
-            </ul>
-          </div>
+          {tab==='policies' && (
+            <div className="editor-section glass-card-container">
+              <h2 className="editor-section-title">🔒 Políticas</h2>
+              <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
+                <li><b>Envíos:</b> {policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
+                <li><b>Cambios/Devoluciones:</b> {policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
+                <li><b>Garantía:</b> {policies?.warranty || '30 días por defectos de fabricación.'}</li>
+              </ul>
+            </div>
+          )}
 
           {/* Vista previa: CTA */}
           <div className="editor-section glass-card-container">
