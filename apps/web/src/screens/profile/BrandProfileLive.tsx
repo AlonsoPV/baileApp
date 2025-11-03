@@ -332,7 +332,6 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
   const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
   const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
-  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
   const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
   return (
     <div>
@@ -346,20 +345,7 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
           {filtered.map((p: any) => (
             <article key={p.id} style={prodCard}>
               <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
-              <div style={{ marginTop: '.6rem' }}>
-                <div style={{ fontWeight: 800 }}>{p.name}</div>
-                <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
-                {Array.isArray(p.sizes) && p.sizes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap', margin: '.35rem 0' }}>
-                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
-                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: '.5rem' }}>
-                  <button style={btnPrimary}>Ver detalles</button>
-                  <button style={btnGhost}>Guardar</button>
-                </div>
-              </div>
+              <div style={{ marginTop: '.6rem', fontWeight: 800 }}>{p.name}</div>
             </article>
           ))}
         </div>
