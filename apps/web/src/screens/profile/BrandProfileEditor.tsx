@@ -166,6 +166,27 @@ export default function BrandProfileEditor() {
     if (error) { alert(error.message); return; }
     const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
     dispatch({ type:'SET_AVATAR', url: pub.publicUrl });
+    // Persistir inmediatamente (fallback a user_id si fuera necesario)
+    try {
+      let { data, error: uerr } = await supabase
+        .from('profiles_brand')
+        .update({ avatar_url: pub.publicUrl })
+        .eq('id', (brand as any).id)
+        .select('id')
+        .maybeSingle();
+      if (uerr || !data) {
+        const { data: data2, error: uerr2 } = await supabase
+          .from('profiles_brand')
+          .update({ avatar_url: pub.publicUrl })
+          .eq('user_id', (user as any)?.id)
+          .select('id')
+          .maybeSingle();
+        if (uerr2 || !data2) throw uerr2 || new Error('No se pudo guardar el logo');
+      }
+    } catch (e:any) {
+      console.error('[BrandEditor] Error guardando logo:', e);
+      alert('No se pudo guardar el logo. Intenta nuevamente.');
+    }
   };
 
   const onPickLookbook = async (files: FileList) => {
@@ -465,8 +486,28 @@ export default function BrandProfileEditor() {
                {/* Guardar catálogo */}
                <div style={{ marginTop: '1rem', display:'flex', justifyContent:'flex-end' }}>
                  <button type="button" className="editor-back-btn" onClick={async ()=>{
-                   if (!(brand as any)?.id) return;
-                   await supabase.from('profiles_brand').update({ productos: form.productos }).eq('id', (brand as any).id);
+                   if (!(brand as any)?.id) { alert('Primero guarda la información básica.'); return; }
+                   try {
+                     let { data, error } = await supabase
+                       .from('profiles_brand')
+                       .update({ productos: form.productos })
+                       .eq('id', (brand as any).id)
+                       .select('id')
+                       .maybeSingle();
+                     if (error || !data) {
+                       const { data: d2, error: e2 } = await supabase
+                         .from('profiles_brand')
+                         .update({ productos: form.productos })
+                         .eq('user_id', (user as any)?.id)
+                         .select('id')
+                         .maybeSingle();
+                       if (e2 || !d2) throw e2 || new Error('No se pudo guardar catálogo');
+                     }
+                     alert('Catálogo guardado');
+                   } catch (e:any) {
+                     console.error('[BrandEditor] Error guardando catálogo:', e);
+                     alert('No se pudo guardar el catálogo. Revisa tu sesión/RLS.');
+                   }
                  }}>Guardar catálogo</button>
                </div>
             </div>
