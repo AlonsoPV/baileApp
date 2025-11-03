@@ -210,7 +210,7 @@ export default function BrandProfileEditor() {
     }
   };
 
-  // Datos para vistas previas (igual que tu Live)
+  // Datos para vistas previas
   const media: string[] = Array.isArray((brand as any)?.media)
     ? ((brand as any).media as any[]).map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
     : [];
