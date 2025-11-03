@@ -58,11 +58,12 @@ export default function BrandProfileLive() {
     );
   }
 
-  const avatarUrl = (brand as any).avatar_url || (Array.isArray((brand as any).media) && (brand as any).media[0]) || undefined;
-  const portadaUrl = (brand as any).portada_url as string | undefined;
+  // Prioriza el logo guardado; luego primer media normalizado
   const media: string[] = Array.isArray((brand as any).media)
     ? (brand as any).media.map((m: any) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
     : [];
+  const avatarUrl = (brand as any).avatar_url || media[0] || undefined;
+  const portadaUrl = (brand as any).portada_url as string | undefined;
 
   // Normalizaciones simples para catálogo / lookbook (opcional)
   const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];

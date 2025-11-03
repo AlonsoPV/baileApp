@@ -43,14 +43,34 @@ export function useUpsertBrand() {
     mutationFn: async (payload: Partial<BrandProfile>): Promise<BrandProfile> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No session');
-      const base = { user_id: user.id, ...payload };
-      const { data, error } = await supabase
+      const base = { user_id: user.id, ...payload } as any;
+      // Intento robusto sin depender de unique constraints
+      // 1) ¿Existe ya la marca del usuario?
+      const { data: existing, error: selErr } = await supabase
         .from(TABLE)
-        .upsert(base, { onConflict: 'id', ignoreDuplicates: false })
-        .select('*')
-        .single();
-      if (error) throw error;
-      return data as BrandProfile;
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (selErr) throw selErr;
+
+      if (existing?.id) {
+        const { data, error } = await supabase
+          .from(TABLE)
+          .update(base)
+          .eq('id', existing.id)
+          .select('*')
+          .single();
+        if (error) throw error;
+        return data as BrandProfile;
+      } else {
+        const { data, error } = await supabase
+          .from(TABLE)
+          .insert(base)
+          .select('*')
+          .single();
+        if (error) throw error;
+        return data as BrandProfile;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['brand','mine'] });
