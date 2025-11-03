@@ -81,6 +81,11 @@ import PinSetup from './screens/auth/PinSetup';
 import PinLogin from './screens/auth/PinLogin';
 import AuthCallback from './screens/auth/AuthCallback';
 
+// Challenges
+import ChallengesList from './screens/challenges/ChallengesList';
+import ChallengeNew from './screens/challenges/ChallengeNew';
+import ChallengeDetail from './screens/challenges/ChallengeDetail';
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -116,6 +121,9 @@ export default function AppRouter() {
         <Route path="/profile/teacher" element={<TeacherProfileLive />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
+        {/* Challenges (público: lista y detalle) */}
+        <Route path="/challenges" element={<ChallengesList />} />
+        <Route path="/challenges/:id" element={<ChallengeDetail />} />
         {/** Public user profile by id was removed along with UserPublicProfile.tsx */}
 
         {/* Protected */}
@@ -146,6 +154,8 @@ export default function AppRouter() {
           <Route path="/app/roles/request" element={<RequestRoleScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin" element={<AdminRoleRequestsScreen />} />
+          {/* Crear challenge (protegido por rol desde UI; backend con RLS) */}
+          <Route path="/challenges/new" element={<ChallengeNew />} />
           <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
         </Route>
 
