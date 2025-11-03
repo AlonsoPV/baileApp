@@ -461,6 +461,14 @@ export default function BrandProfileEditor() {
                 <h3 className="editor-section-title" style={{ fontSize: '1.25rem' }}>👀 Vista previa</h3>
                 <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: (p.category || 'ropa') as any, sizes: p.sizes || [] }))} />
               </div>
+
+               {/* Guardar catálogo */}
+               <div style={{ marginTop: '1rem', display:'flex', justifyContent:'flex-end' }}>
+                 <button type="button" className="editor-back-btn" onClick={async ()=>{
+                   if (!(brand as any)?.id) return;
+                   await supabase.from('profiles_brand').update({ productos: form.productos }).eq('id', (brand as any).id);
+                 }}>Guardar catálogo</button>
+               </div>
             </div>
           )}
 

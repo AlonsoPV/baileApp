@@ -75,7 +75,10 @@ export default function BrandProfileLive() {
     sizes: Array.isArray(p.sizes) ? p.sizes : [],
   }));
   const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
-  const policies = { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
+  const policies = (brand as any)?.policies || { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
+  const sizeGuideRows = Array.isArray((brand as any)?.size_guide) ? (brand as any).size_guide : [];
+  const fitTipsRows = Array.isArray((brand as any)?.fit_tips) ? (brand as any).fit_tips : [];
+  const conversion = (brand as any)?.conversion || {};
   const partners: any[] = [];
 
   return (
@@ -191,10 +194,10 @@ export default function BrandProfileLive() {
             transition={{ duration: 0.24, delay: 0.08 }}
           >
             <h3 className="section-title">📏 Guía de tallas y ajuste</h3>
-            <p style={{ color: 'rgba(255,255,255,.78)', margin: 0 }}>Consejos para bailar: suela partida (flex), talón firme, materiales transpirables.</p>
+            <p style={{ color: 'rgba(255,255,255,.78)', margin: 0 }}>Consulta tus medidas y recomendaciones por estilo.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '.9rem', marginTop: '.9rem' }}>
-              <SizeGuide />
-              <FitTips />
+              <SizeGuide rows={sizeGuideRows} />
+              <FitTips tips={fitTipsRows} />
             </div>
           </motion.section>
 
@@ -264,8 +267,17 @@ export default function BrandProfileLive() {
             transition={{ duration: 0.24, delay: 0.16 }}
           >
             <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontWeight: 900 }}>🎁 10% primera compra</span>
-              <span style={{ opacity: .85 }}>Usa el cupón <b>BAILE10</b></span>
+              <span style={{ fontWeight: 900 }}>🎁 {conversion?.headline || 'Promoción activa'}</span>
+              {conversion?.subtitle && <span style={{ opacity: .85 }}>{conversion.subtitle}</span>}
+              {Array.isArray(conversion?.coupons) && conversion.coupons.length > 0 && (
+                <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
+                  {conversion.coupons.map((c:string) => (
+                    <span key={c} style={{ border:'1px solid rgba(255,255,255,0.2)', borderRadius:999, padding:'.25rem .6rem' }}>
+                      <b>{c}</b>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                 {((brand as any)?.redes_sociales?.whatsapp) && (
                   <a href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} target="_blank" rel="noreferrer" style={{ padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900 }}>💬 WhatsApp</a>
@@ -318,7 +330,7 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   const tabs = ['calzado','ropa','accesorios'] as const;
   const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
   const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
   const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
   const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
   return (
@@ -332,7 +344,7 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
           {filtered.map((p: any) => (
             <article key={p.id} style={prodCard}>
-              <ImageWithFallback src={p.image} alt={p.name} style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 12 }} />
+              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
               <div style={{ marginTop: '.6rem' }}>
                 <div style={{ fontWeight: 800 }}>{p.name}</div>
                 <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
@@ -355,30 +367,42 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   );
 }
 
-function SizeGuide(){
+function SizeGuide({ rows = [] as { mx:string; us:string; eu:string }[] }){
+  const data = rows.length > 0 ? rows : [
+    { mx:'22', us:'5', eu:'35' },
+    { mx:'23', us:'6', eu:'36-37' },
+    { mx:'24', us:'7', eu:'38' },
+    { mx:'25', us:'8', eu:'39-40' },
+    { mx:'26', us:'9', eu:'41-42' },
+  ];
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Equivalencias (Calzado)</b>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.35rem', marginTop: '.5rem', fontSize: '.92rem' }}>
         <div>MX</div><div>US</div><div>EU</div>
-        <div>22</div><div>5</div><div>35</div>
-        <div>23</div><div>6</div><div>36-37</div>
-        <div>24</div><div>7</div><div>38</div>
-        <div>25</div><div>8</div><div>39 -40</div>
-        <div>26</div><div>9</div><div>41-42</div>
+        {data.map((r, i) => (
+          <React.Fragment key={i}>
+            <div>{r.mx}</div><div>{r.us}</div><div>{r.eu}</div>
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
 }
 
-function FitTips(){
+function FitTips({ tips = [] as { style:string; tip:string }[] }){
+  const data = tips.length > 0 ? tips : [
+    { style: 'Bachata', tip: 'Tacón estable, suela flexible, punta reforzada.' },
+    { style: 'Salsa', tip: 'Mayor soporte lateral, giro suave (suela gamuza).' },
+    { style: 'Kizomba', tip: 'Confort prolongado, amortiguación talón.' },
+  ];
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Fit recomendado por estilo</b>
       <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
-        <li><b>Bachata:</b> tacón estable, suela flexible, punta reforzada.</li>
-        <li><b>Salsa:</b> mayor soporte lateral, giro suave (suela gamuza).</li>
-        <li><b>Kizomba:</b> confort prolongado, amortiguación talón.</li>
+        {data.map((it, i) => (
+          <li key={i}><b>{it.style}:</b> {it.tip}</li>
+        ))}
       </ul>
     </div>
   );
