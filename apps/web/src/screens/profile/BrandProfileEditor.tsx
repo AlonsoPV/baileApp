@@ -8,6 +8,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { MediaUploader } from "../../components/MediaUploader";
 import { supabase } from "../../lib/supabase";
+import { useToast } from "../../components/Toast";
 
 /* Por qué: Tipos fuertes + reducer = menos bugs al mutar estructuras anidadas. */
 type Category = "calzado" | "ropa" | "accesorios";
@@ -87,6 +88,7 @@ export default function BrandProfileEditor() {
   const { user } = useAuth();
   const { data: brand } = useMyBrand();
   const upsert = useUpsertBrand();
+  const { showToast } = useToast();
 
   const [form, dispatch] = React.useReducer(formReducer, initialForm);
   const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
@@ -486,7 +488,7 @@ export default function BrandProfileEditor() {
                {/* Guardar catálogo */}
                <div style={{ marginTop: '1rem', display:'flex', justifyContent:'flex-end' }}>
                  <button type="button" className="editor-back-btn" onClick={async ()=>{
-                   if (!(brand as any)?.id) { alert('Primero guarda la información básica.'); return; }
+                   if (!(brand as any)?.id) { showToast('Primero guarda la información básica.', 'error'); return; }
                    try {
                      let { data, error } = await supabase
                        .from('profiles_brand')
@@ -503,10 +505,10 @@ export default function BrandProfileEditor() {
                          .maybeSingle();
                        if (e2 || !d2) throw e2 || new Error('No se pudo guardar catálogo');
                      }
-                     alert('Catálogo guardado');
+                     showToast('Catálogo guardado', 'success');
                    } catch (e:any) {
                      console.error('[BrandEditor] Error guardando catálogo:', e);
-                     alert('No se pudo guardar el catálogo. Revisa tu sesión/RLS.');
+                     showToast('No se pudo guardar el catálogo. Revisa tu sesión/RLS.', 'error');
                    }
                  }}>Guardar catálogo</button>
                </div>
