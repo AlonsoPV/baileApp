@@ -593,6 +593,20 @@ export default function ChallengeDetail() {
                         style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 8, display: 'block', margin: '0 auto' }}
                         src={s.video_url}
                       />
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:'.5rem', alignItems:'center', justifyContent:'space-between' }}>
+                        <a
+                          href={`/profile/user/${s.user_id}`}
+                          className="cc-soft-chip"
+                          title={userMeta[s.user_id]?.name || 'Usuario'}
+                        >
+                          <span className="cc-ellipsis">{userMeta[s.user_id]?.name || 'Usuario'}</span>
+                        </a>
+                        {s.created_at && (
+                          <span className="cc-soft-chip" title={String(s.created_at)}>
+                            {new Date(s.created_at).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </span>
+                        )}
+                      </div>
                       {s.caption && <div style={{ opacity: 0.9 }}>{s.caption}</div>}
                       <div style={{ display: 'flex', gap: '.5rem' }}>
                         <button
@@ -644,15 +658,15 @@ export default function ChallengeDetail() {
     .appr-media > video {
       width: 100%; height: 100%; display: block; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,.12);
     }
-    .appr-body { padding: .75rem; display: block; }
-    .appr-title { font-weight: 900; font-size: 1rem; }
-    .appr-desc { opacity: .9; font-size: .95rem; }
-    .appr-meta { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .appr-body { padding: 1.1rem; display: grid; gap: .9rem; }
+    .appr-title { font-weight: 900; font-size: 1.08rem; letter-spacing: -.01em; text-shadow: 0 1px 6px rgba(0,0,0,.25); }
+    .appr-desc { opacity: .95; font-size: .98rem; }
+    .appr-meta { display: flex; justify-content: space-between; align-items: center; gap: .9rem; }
     .appr-author { font-weight: 800; }
     .appr-actions {
-      display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: .25rem;
+      display: flex; justify-content: space-between; align-items: center; gap: .9rem; margin-top: .6rem;
     }
-    .appr-actions__left { display: flex; gap: .5rem; align-items: center; }
+    .appr-actions__left { display: flex; gap: .7rem; align-items: center; }
     /* Utilidades de truncado si aún no existen en tu CSS global */
     .cc-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cc-two-lines {
