@@ -42,6 +42,8 @@ export default function ChallengeDetail() {
   const [uploadingOwner, setUploadingOwner] = React.useState(false);
   const [uploadingCover, setUploadingCover] = React.useState(false);
   const [uploadingUser, setUploadingUser] = React.useState(false);
+  const [pendingCoverFile, setPendingCoverFile] = React.useState<File|null>(null);
+  const [pendingOwnerVideo, setPendingOwnerVideo] = React.useState<File|null>(null);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({
     title: '',
@@ -52,6 +54,10 @@ export default function ChallengeDetail() {
   });
   const [userMeta, setUserMeta] = React.useState<Record<string, { name: string; bio?: string }>>({});
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
+  const [saving, setSaving] = React.useState(false);
+  const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
+    { open: false, title: '', message: '', onConfirm: async () => {} }
+  );
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
     const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
@@ -117,6 +123,58 @@ export default function ChallengeDetail() {
   const pending = (subs || []).filter((s) => s.status === 'pending');
   const approved = (subs || []).filter((s) => s.status === 'approved');
 
+  const getStoragePathFromPublicUrl = (url?: string | null) => {
+    if (!url) return null;
+    try {
+      const idx = url.indexOf('/challenge-media/');
+      if (idx === -1) return null;
+      return url.substring(idx + '/challenge-media/'.length);
+    } catch { return null; }
+  };
+
+  const handleSave = async () => {
+    if (!id) return;
+    try {
+      setSaving(true);
+      let coverUrl = editForm.cover_image_url as string | null;
+      let heroUrl = (challenge as any)?.hero_video_url as string | null;
+
+      // Subidas pendientes
+      if (pendingCoverFile) {
+        const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        coverUrl = await uploadToChallengeBucket(pendingCoverFile, `challenges/${id}/cover-${Date.now()}.${ext}`);
+      }
+      if (pendingOwnerVideo) {
+        const ext = pendingOwnerVideo.name.split('.').pop()?.toLowerCase() || 'mp4';
+        heroUrl = await uploadToChallengeBucket(pendingOwnerVideo, `challenges/${id}/owner-${Date.now()}.${ext}`);
+      }
+
+      const { error } = await supabase
+        .from('challenges')
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          cover_image_url: coverUrl,
+          submission_deadline: editForm.submission_deadline || null,
+          voting_deadline: editForm.voting_deadline || null,
+          ritmo_slug: ritmosSelected[0] || null,
+          hero_video_url: heroUrl
+        })
+        .eq('id', id);
+      if (error) throw error;
+      showToast('Cambios guardados', 'success');
+      setEditOpen(false);
+      qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
+      qc.invalidateQueries({ queryKey: ['challenges','list'] });
+      setPendingCoverFile(null);
+      setPendingOwnerVideo(null);
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo guardar', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="cc-page">
       {/* Contenedor principal (layout simple) */}
@@ -151,6 +209,11 @@ export default function ChallengeDetail() {
                   {editOpen ? 'Cerrar edición' : 'Editar'}
                 </button>
               )}
+              {canModerate && editOpen && (
+                <button onClick={handleSave} className="cc-btn cc-btn--primary" disabled={saving}>
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -173,25 +236,37 @@ export default function ChallengeDetail() {
                     hidden
                     onChange={async (e) => {
                       const f = e.target.files?.[0];
-                      if (!f || !id) return;
-                      try {
-                        setUploadingCover(true);
-                        const ext = f.name.split('.').pop()?.toLowerCase() || 'jpg';
-                        const url = await uploadToChallengeBucket(f, `challenges/${id}/cover-${Date.now()}.${ext}`);
-                        const { error } = await supabase.from('challenges').update({ cover_image_url: url }).eq('id', id);
-                        if (error) throw error;
-                        showToast('Portada actualizada', 'success');
-                      } catch (e: any) {
-                        showToast(e?.message || 'No se pudo subir la portada', 'error');
-                      } finally {
-                        setUploadingCover(false);
-                        if (coverFileRef.current) coverFileRef.current.value = '';
-                      }
+                      if (!f) return;
+                      setPendingCoverFile(f);
+                      if (coverFileRef.current) coverFileRef.current.value = '';
                     }}
                   />
                   <button onClick={()=>coverFileRef.current?.click()} disabled={uploadingCover} className="cc-btn cc-btn--primary">
-                    {uploadingCover ? 'Subiendo…' : 'Subir/Actualizar portada'}
+                    Seleccionar portada
                   </button>
+                  {pendingCoverFile && (<span className="cc-chip">Archivo listo: {pendingCoverFile.name}</span>)}
+                  {(challenge as any).cover_image_url && (
+                    <button
+                      onClick={async()=>{
+                        setConfirmState({
+                          open: true,
+                          title: 'Eliminar portada',
+                          message: '¿Eliminar la portada actual? Esta acción no se puede deshacer.',
+                          onConfirm: async () => {
+                            try {
+                              const path = getStoragePathFromPublicUrl((challenge as any).cover_image_url);
+                              if (path) await supabase.storage.from('challenge-media').remove([path]);
+                              const { error } = await supabase.from('challenges').update({ cover_image_url: null }).eq('id', id as string);
+                              if (error) throw error;
+                              showToast('Portada eliminada','success');
+                              qc.invalidateQueries({ queryKey: ['challenges','detail', id] });
+                            } catch (e:any) { showToast(e?.message || 'No se pudo eliminar','error'); }
+                          }
+                        });
+                      }}
+                      className="cc-btn cc-btn--ghost"
+                    >Eliminar portada</button>
+                  )}
                 </div>
               )}
               <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
@@ -217,23 +292,35 @@ export default function ChallengeDetail() {
                     hidden
                     onChange={async (e) => {
                       const f = e.target.files?.[0];
-                      if (!f) return; if (!id) return;
-                      try {
-                        setUploadingOwner(true);
-                        const ext = f.name.split('.').pop()?.toLowerCase() || 'mp4';
-                        const url = await uploadToChallengeBucket(f, `challenges/${id}/owner-${Date.now()}.${ext}`);
-                        const { error } = await supabase.from('challenges').update({ hero_video_url: url }).eq('id', id);
-                        if (error) throw error;
-                        showToast('Video actualizado', 'success');
-                      } catch (e: any) {
-                        showToast(e?.message || 'No se pudo subir video', 'error');
-                      } finally {
-                        setUploadingOwner(false);
-                        if (ownerFileRef.current) ownerFileRef.current.value = '';
-                      }
+                      if (!f) return;
+                      setPendingOwnerVideo(f);
+                      if (ownerFileRef.current) ownerFileRef.current.value = '';
                     }}
                   />
-                  <button onClick={()=>ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">{uploadingOwner ? 'Subiendo…' : 'Subir/Actualizar video'}</button>
+                  <button onClick={()=>ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">Seleccionar video</button>
+                  {pendingOwnerVideo && (<span className="cc-chip">Archivo listo: {pendingOwnerVideo.name}</span>)}
+                  {(challenge as any).hero_video_url && (
+                    <button
+                      onClick={async()=>{
+                        setConfirmState({
+                          open: true,
+                          title: 'Eliminar video de referencia',
+                          message: '¿Eliminar el video? Esta acción no se puede deshacer.',
+                          onConfirm: async () => {
+                            try {
+                              const path = getStoragePathFromPublicUrl((challenge as any).hero_video_url);
+                              if (path) await supabase.storage.from('challenge-media').remove([path]);
+                              const { error } = await supabase.from('challenges').update({ hero_video_url: null }).eq('id', id as string);
+                              if (error) throw error;
+                              showToast('Video eliminado','success');
+                              qc.invalidateQueries({ queryKey: ['challenges','detail', id] });
+                            } catch (e:any) { showToast(e?.message || 'No se pudo eliminar','error'); }
+                          }
+                        });
+                      }}
+                      className="cc-btn cc-btn--ghost"
+                    >Eliminar video</button>
+                  )}
                 </div>
               )}
             </div>
@@ -297,32 +384,8 @@ export default function ChallengeDetail() {
               </div>
               <div style={{ display: 'flex', gap: '.5rem' }}>
                 <button className="cc-btn cc-btn--ghost" onClick={() => setEditOpen(false)}>Cancelar</button>
-                <button
-                  className="cc-btn cc-btn--primary"
-                  onClick={async () => {
-                    if (!id) return;
-                    try {
-                      const { error } = await supabase
-                        .from('challenges')
-                        .update({
-                          title: editForm.title,
-                          description: editForm.description,
-                          cover_image_url: editForm.cover_image_url,
-                          submission_deadline: editForm.submission_deadline || null,
-                          voting_deadline: editForm.voting_deadline || null,
-                          ritmo_slug: ritmosSelected[0] || null
-                        })
-                        .eq('id', id);
-                      if (error) throw error;
-                      showToast('Reto actualizado', 'success');
-                      setEditOpen(false);
-                      qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
-                    } catch (e: any) {
-                      showToast(e?.message || 'No se pudo actualizar', 'error');
-                    }
-                  }}
-                >
-                  Guardar
+                <button className="cc-btn cc-btn--primary" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Guardando…' : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -671,6 +734,19 @@ export default function ChallengeDetail() {
           )}
         </section>
       </div>
+      {/* Modal de confirmación */}
+      {confirmState.open && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'grid', placeItems:'center', zIndex:70 }}>
+          <div className="cc-glass" style={{ padding:'1rem', width:'min(520px, 92vw)' }}>
+            <h3 className="cc-section__title cc-mb-0" style={{ marginBottom: '.25rem' }}>{confirmState.title}</h3>
+            <p style={{ opacity:.9, margin:'0 0 .75rem 0' }}>{confirmState.message}</p>
+            <div style={{ display:'flex', justifyContent:'flex-end', gap:'.5rem' }}>
+              <button className="cc-btn cc-btn--ghost" onClick={()=>setConfirmState(s=>({ ...s, open:false }))}>Cancelar</button>
+              <button className="cc-btn cc-btn--primary" onClick={async()=>{ const fn=confirmState.onConfirm; setConfirmState(s=>({ ...s, open:false })); await fn(); }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

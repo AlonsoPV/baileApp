@@ -148,7 +148,7 @@ export default function ChallengeNew() {
                 Cancelar
               </button>
               <button type="submit" disabled={create.isPending} className="cc-btn cc-btn--primary">
-                {create.isPending ? 'Creando…' : 'Crear'}
+                {create.isPending ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
           </form>
