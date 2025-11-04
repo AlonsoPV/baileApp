@@ -10,7 +10,6 @@ import ProfileToolbar from "../../components/profile/ProfileToolbar";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
-import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
@@ -622,13 +621,7 @@ export const UserProfileLive: React.FC = () => {
         background: colors.darkBase,
         color: colors.light,
       }}>
-        {/* Profile Toolbar - Toggle y Edición (Fixed) */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <ProfileNavigationToggle
-            currentView="live"
-            profileType="user"
-          />
-        </div>
+        {/* Public view: toggle removed */}
 
         {/* Banner Principal */}
         <div

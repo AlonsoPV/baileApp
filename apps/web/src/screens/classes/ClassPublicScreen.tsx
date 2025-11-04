@@ -16,6 +16,8 @@ export default function ClassPublicScreen() {
   // Permitir /clase?type=teacher&id=123 o /clase/:type/:id
   const sourceType = (params as any)?.type || (sp.get('type') as SourceType) || 'teacher';
   const rawId = (params as any)?.id || sp.get('id') || '';
+  const classIdParam = sp.get('classId') || sp.get('claseId') || '';
+  const classIndexParam = sp.get('i') || sp.get('index') || '';
   const idNum = Number(rawId);
 
   const isTeacher = sourceType === 'teacher';
@@ -43,7 +45,7 @@ export default function ClassPublicScreen() {
 
   const cronograma = profile?.cronograma || [];
   const costos = profile?.costos || [];
-  const ubicacion = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
+  const ubicacionBase = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
     ? {
         nombre: profile.ubicaciones[0]?.nombre,
         direccion: profile.ubicaciones[0]?.direccion,
@@ -52,12 +54,31 @@ export default function ClassPublicScreen() {
       }
     : undefined;
 
-  // Intentar obtener un "nombre" de clase de la primera entrada del cronograma
-  const firstClass = Array.isArray(cronograma) && cronograma.length > 0 ? cronograma[0] as any : undefined;
-  const classTitle = (firstClass?.nombre)
-    || (firstClass?.titulo)
-    || (firstClass?.clase)
-    || (firstClass?.estilo)
+  // Seleccionar SOLO una clase del cronograma (por id o índice). Fallback: primera.
+  const classesArr = Array.isArray(cronograma) ? (cronograma as any[]) : [];
+  let selectedClass: any | undefined = undefined;
+  if (classIdParam) {
+    selectedClass = classesArr.find((c: any) => String(c?.id) === String(classIdParam));
+  }
+  if (!selectedClass && classIndexParam !== '') {
+    const idx = Number(classIndexParam);
+    if (!Number.isNaN(idx)) selectedClass = classesArr[idx];
+  }
+  if (!selectedClass) {
+    selectedClass = classesArr[0];
+  }
+  const cronogramaSelected = selectedClass ? [selectedClass] : [];
+
+  // Ubicación: priorizar la de la clase si existe, si no usar base
+  const ubicacion = selectedClass?.ubicacion
+    ? { nombre: selectedClass.ubicacion, direccion: undefined as any, ciudad: ubicacionBase?.ciudad, referencias: undefined as any }
+    : ubicacionBase;
+
+  // Título de la clase
+  const classTitle = (selectedClass?.nombre)
+    || (selectedClass?.titulo)
+    || (selectedClass?.clase)
+    || (selectedClass?.estilo)
     || 'Clase';
 
   return (
@@ -106,7 +127,7 @@ export default function ClassPublicScreen() {
                   <Link to={creatorLink} style={{ color: '#FFD166', fontWeight: 800, textDecoration: 'none', borderBottom: '1px dashed rgba(255,209,102,0.5)' }}>
                     Creada por {creatorTypeLabel} · {creatorName}
                   </Link>
-                  <span className="chip chip-date">📚 {cronograma?.length || 0} clase(s)</span>
+                  <span className="chip chip-date">📚 {cronogramaSelected.length} clase(s)</span>
                   {Array.isArray(costos) && costos.length > 0 && (
                     <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166' }}>💰 {costos.length} costo(s)</span>
                   )}
@@ -170,7 +191,7 @@ export default function ClassPublicScreen() {
 
         {/* Clases, horarios, costos y agregar a calendario */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)', backdropFilter: 'blur(12px)' }}>
-          <ClasesLive title="" cronograma={cronograma} costos={costos} ubicacion={ubicacion as any} showCalendarButton={true} />
+          <ClasesLive title="" cronograma={cronogramaSelected} costos={costos} ubicacion={ubicacion as any} showCalendarButton={true} />
         </motion.section>
       </div>
     </div>

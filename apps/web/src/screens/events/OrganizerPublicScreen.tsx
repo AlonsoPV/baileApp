@@ -84,20 +84,21 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 };
 
 export function OrganizerPublicScreen() {
-  const { id } = useParams<{ id: string }>();
+  const { id, organizerId } = useParams<{ id?: string; organizerId?: string }>();
+  const routeId = id || organizerId || '';
   const navigate = useNavigate();
   const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
 
   const { data: org, isLoading, isError } = useQuery({
-    queryKey: ['org-public', id],
-    enabled: !!id,
+    queryKey: ['org-public', routeId],
+    enabled: !!routeId,
     queryFn: async () => {
-      if (!id) return null;
-      if (isUUID(id)) {
-        const { data, error } = await supabase.from('organizers').select('*').eq('id', id).maybeSingle();
+      if (!routeId) return null;
+      if (isUUID(routeId)) {
+        const { data, error } = await supabase.from('organizers').select('*').eq('id', routeId).maybeSingle();
         if (error) throw error; if (data) return data;
       }
-      const { data, error } = await supabase.from('organizers').select('*').eq('slug', id).maybeSingle();
+      const { data, error } = await supabase.from('organizers').select('*').eq('slug', routeId).maybeSingle();
       if (error) throw error; return data ?? null;
     }
   });
