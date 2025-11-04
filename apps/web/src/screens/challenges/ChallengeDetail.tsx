@@ -43,8 +43,8 @@ export default function ChallengeDetail() {
   const [uploadingOwner, setUploadingOwner] = React.useState(false);
   const [uploadingCover, setUploadingCover] = React.useState(false);
   const [uploadingUser, setUploadingUser] = React.useState(false);
-  const [pendingCoverFile, setPendingCoverFile] = React.useState<File|null>(null);
-  const [pendingOwnerVideo, setPendingOwnerVideo] = React.useState<File|null>(null);
+  const [pendingCoverFile, setPendingCoverFile] = React.useState<File | null>(null);
+  const [pendingOwnerVideo, setPendingOwnerVideo] = React.useState<File | null>(null);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({
     title: '',
@@ -57,7 +57,7 @@ export default function ChallengeDetail() {
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
-    { open: false, title: '', message: '', onConfirm: async () => {} }
+    { open: false, title: '', message: '', onConfirm: async () => { } }
   );
   // Edición de submissions
   const [editingSubmissionId, setEditingSubmissionId] = React.useState<string | null>(null);
@@ -102,10 +102,10 @@ export default function ChallengeDetail() {
       setEditingSubmissionId(null);
       setEditCaption('');
       setPendingEditFile(null);
-      qc.invalidateQueries({ queryKey: ['challenges','submissions', id] });
-      qc.invalidateQueries({ queryKey: ['challenges','leaderboard', id] });
+      qc.invalidateQueries({ queryKey: ['challenges', 'submissions', id] });
+      qc.invalidateQueries({ queryKey: ['challenges', 'leaderboard', id] });
     } catch (e: any) {
-      showToast(e?.message || 'No se pudo actualizar el envío','error');
+      showToast(e?.message || 'No se pudo actualizar el envío', 'error');
     } finally {
       setSavingEdit(false);
     }
@@ -218,7 +218,7 @@ export default function ChallengeDetail() {
       showToast('Cambios guardados', 'success');
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
-      qc.invalidateQueries({ queryKey: ['challenges','list'] });
+      qc.invalidateQueries({ queryKey: ['challenges', 'list'] });
       setPendingCoverFile(null);
       setPendingOwnerVideo(null);
     } catch (e: any) {
@@ -239,14 +239,14 @@ export default function ChallengeDetail() {
               <button onClick={() => nav('/challenges')} className="cc-btn cc-btn--ghost">← Volver</button>
             </div>
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontWeight: 900, fontSize: '1.3rem', background: 'linear-gradient(135deg,#1E88E5,#00BCD4,#FF3D57)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1, letterSpacing: '-.015em', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden' }}>
+              <div style={{ fontWeight: 900, fontSize: '1.3rem', background: 'linear-gradient(135deg,#1E88E5,#00BCD4,#FF3D57)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1, letterSpacing: '-.015em', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 🏆 {challenge.title}
               </div>
               {(challenge as any)?.description && (
-                <div style={{ opacity:.85, fontSize: '.9rem', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden' }}>{(challenge as any).description}</div>
+                <div style={{ opacity: .85, fontSize: '.9rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{(challenge as any).description}</div>
               )}
             </div>
-            <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end', alignItems:'center' }}>
+            <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
               <span className={`cc-status-chip ${challenge.status ? ('is-' + String(challenge.status)) : ''}`}>{challenge.status}</span>
               {canModerate && challenge.status !== 'open' && (
                 <button
@@ -278,15 +278,15 @@ export default function ChallengeDetail() {
 
         {/* Encabezado combinado: Col 1 (portada + info + ritmos) | Col 2 (video) */}
         <section className="cc-glass" style={{ padding: '1rem' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1.1fr 1fr', gap:'1rem', alignItems:'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '1rem', alignItems: 'start' }}>
             <div>
               {(challenge as any).cover_image_url && (
-                <div style={{ display:'grid', placeItems:'center', marginBottom: '.75rem' }}>
-                  <img src={(challenge as any).cover_image_url} alt="cover" style={{ width: 350, maxWidth:'100%', height:'auto', borderRadius: 12, display:'block' }} />
+                <div style={{ display: 'grid', placeItems: 'center', marginBottom: '.75rem' }}>
+                  <img src={(challenge as any).cover_image_url} alt="cover" style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block' }} />
                 </div>
               )}
               {canModerate && (
-                <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', marginBottom: '.75rem' }}>
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '.75rem' }}>
                   <input
                     ref={coverFileRef}
                     type="file"
@@ -299,13 +299,13 @@ export default function ChallengeDetail() {
                       if (coverFileRef.current) coverFileRef.current.value = '';
                     }}
                   />
-                  <button onClick={()=>coverFileRef.current?.click()} disabled={uploadingCover} className="cc-btn cc-btn--primary">
+                  <button onClick={() => coverFileRef.current?.click()} disabled={uploadingCover} className="cc-btn cc-btn--primary">
                     Seleccionar portada
                   </button>
                   {pendingCoverFile && (<span className="cc-chip">Archivo listo: {pendingCoverFile.name}</span>)}
                   {(challenge as any).cover_image_url && (
                     <button
-                      onClick={async()=>{
+                      onClick={async () => {
                         setConfirmState({
                           open: true,
                           title: 'Eliminar portada',
@@ -316,9 +316,9 @@ export default function ChallengeDetail() {
                               if (path) await supabase.storage.from('challenge-media').remove([path]);
                               const { error } = await supabase.from('challenges').update({ cover_image_url: null }).eq('id', id as string);
                               if (error) throw error;
-                              showToast('Portada eliminada','success');
-                              qc.invalidateQueries({ queryKey: ['challenges','detail', id] });
-                            } catch (e:any) { showToast(e?.message || 'No se pudo eliminar','error'); }
+                              showToast('Portada eliminada', 'success');
+                              qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
+                            } catch (e: any) { showToast(e?.message || 'No se pudo eliminar', 'error'); }
                           }
                         });
                       }}
@@ -327,22 +327,22 @@ export default function ChallengeDetail() {
                   )}
                 </div>
               )}
-              <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
+             {/*  <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
               {(challenge as any).description && (
-                <div className="cc-two-lines" style={{ opacity:.92, marginBottom: 8 }}>{(challenge as any).description}</div>
-              )}
+                <div className="cc-two-lines" style={{ opacity: .92, marginBottom: 8 }}>{(challenge as any).description}</div>
+              )} */}
               {(challenge as any).ritmo_slug && (
-                <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={()=>{}} readOnly />
+                <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => { }} readOnly />
               )}
             </div>
             <div>
               {(challenge as any).hero_video_url ? (
-                <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:12, display:'block', margin:'0 auto' }} src={(challenge as any).hero_video_url} />
+                <video controls style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }} src={(challenge as any).hero_video_url} />
               ) : (
-                <div style={{ opacity:.85 }}>Aún no hay video de referencia.</div>
+                <div style={{ opacity: .85 }}>Aún no hay video de referencia.</div>
               )}
               {canModerate && (
-                <div style={{ marginTop: '.75rem', display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+                <div style={{ marginTop: '.75rem', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                   <input
                     ref={ownerFileRef}
                     type="file"
@@ -355,11 +355,11 @@ export default function ChallengeDetail() {
                       if (ownerFileRef.current) ownerFileRef.current.value = '';
                     }}
                   />
-                  <button onClick={()=>ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">Seleccionar video</button>
+                  <button onClick={() => ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">Seleccionar video</button>
                   {pendingOwnerVideo && (<span className="cc-chip">Archivo listo: {pendingOwnerVideo.name}</span>)}
                   {(challenge as any).hero_video_url && (
                     <button
-                      onClick={async()=>{
+                      onClick={async () => {
                         setConfirmState({
                           open: true,
                           title: 'Eliminar video de referencia',
@@ -370,9 +370,9 @@ export default function ChallengeDetail() {
                               if (path) await supabase.storage.from('challenge-media').remove([path]);
                               const { error } = await supabase.from('challenges').update({ hero_video_url: null }).eq('id', id as string);
                               if (error) throw error;
-                              showToast('Video eliminado','success');
-                              qc.invalidateQueries({ queryKey: ['challenges','detail', id] });
-                            } catch (e:any) { showToast(e?.message || 'No se pudo eliminar','error'); }
+                              showToast('Video eliminado', 'success');
+                              qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
+                            } catch (e: any) { showToast(e?.message || 'No se pudo eliminar', 'error'); }
                           }
                         });
                       }}
@@ -455,13 +455,13 @@ export default function ChallengeDetail() {
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Ritmo</h3>
             <div style={{ marginTop: 8 }}>
-              <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => {}} readOnly />
+              <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => { }} readOnly />
             </div>
           </section>
         )}
 
         {/* Owner video */}
-     {/*    {canModerate && (
+        {/*    {canModerate && (
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Video del Challenge (referencia)</h3>
             {(challenge as any).hero_video_url ? (
@@ -610,9 +610,9 @@ export default function ChallengeDetail() {
 
         {/* Approved */}
         {/* Sustituye tu sección por esta versión mejorada */}
-<section className="cc-glass" style={{ padding: '1rem' }}>
-  {/* CSS específico solo para esta sección */}
-  <style>{`
+        <section className="cc-glass" style={{ padding: '1rem' }}>
+          {/* CSS específico solo para esta sección */}
+          <style>{`
     .appr-slider { gap: 1rem; }
     .appr-card {
       width: 360px; min-width: 320px; max-width: 92vw; flex: 0 0 auto;
@@ -644,130 +644,130 @@ export default function ChallengeDetail() {
     }
   `}</style>
 
-  <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
+          <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
 
-  {approved.length === 0 ? (
-    <div>No hay envíos aprobados</div>
-  ) : (() => {
-    const vmap = new Map<string, number>((leaderboard || []).map((r) => [r.submission_id, r.votes]));
-    return (
-      <div className="appr-slider">
-      <HorizontalSlider
-        items={approved}
-        autoColumns={null}
-        renderItem={(s: any) => (
-          <div key={s.id} className="cc-glass appr-card" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
-            {/* Media */}
-            <div className="appr-media">
-              <video
-                controls
-                src={s.video_url}
-                title={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
-                aria-label={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
-              />
-            </div>
+          {approved.length === 0 ? (
+            <div>No hay envíos aprobados</div>
+          ) : (() => {
+            const vmap = new Map<string, number>((leaderboard || []).map((r) => [r.submission_id, r.votes]));
+            return (
+              <div className="appr-slider">
+                <HorizontalSlider
+                  items={approved}
+                  autoColumns={null}
+                  renderItem={(s: any) => (
+                    <div key={s.id} className="cc-glass appr-card" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
+                      {/* Media */}
+                      <div className="appr-media">
+                        <video
+                          controls
+                          src={s.video_url}
+                          title={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
+                          aria-label={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
+                        />
+                      </div>
 
-            {/* Body */}
-            <div className="appr-body">
-              {/* Título del challenge */}
-              <div className="appr-title cc-ellipsis" title={challenge.title}>
-                {challenge.title}
-              </div>
+                      {/* Body */}
+                      <div className="appr-body">
+                        {/* Título del challenge */}
+                        <div className="appr-title cc-ellipsis" title={challenge.title}>
+                          {challenge.title}
+                        </div>
 
-              {/* Descripción del challenge (2 líneas) */}
-              {(challenge as any)?.description && (
-                <div className="appr-desc">
-                  {(challenge as any).description}
-                </div>
-              )}
+                        {/* Descripción del challenge (2 líneas) */}
+                        {(challenge as any)?.description && (
+                          <div className="appr-desc">
+                            {(challenge as any).description}
+                          </div>
+                        )}
 
-              {/* Autor + votos */}
-              <div className="appr-meta">
-                <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || 'Usuario'}>
-                  {(userMeta[s.user_id]?.name && userMeta[s.user_id]?.name !== s.user_id) ? userMeta[s.user_id]?.name : 'Usuario'}
-                </div>
-                <button
-                  className="cc-btn cc-btn--primary"
-                  title={`${vmap.get(s.id) || 0} votos`}
-                  aria-label={`Votos: ${vmap.get(s.id) || 0}`}
-                  onClick={async () => { try { await vote.mutateAsync(s.id); } catch (e:any) { showToast(e?.message || 'Error','error'); } }}
-                >
-                  ❤️ {vmap.get(s.id) || 0}
-                </button>
-              </div>
+                        {/* Autor + votos */}
+                        <div className="appr-meta">
+                          <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || 'Usuario'}>
+                            {(userMeta[s.user_id]?.name && userMeta[s.user_id]?.name !== s.user_id) ? userMeta[s.user_id]?.name : 'Usuario'}
+                          </div>
+                          <button
+                            className="cc-btn cc-btn--primary"
+                            title={`${vmap.get(s.id) || 0} votos`}
+                            aria-label={`Votos: ${vmap.get(s.id) || 0}`}
+                            onClick={async () => { try { await vote.mutateAsync(s.id); } catch (e: any) { showToast(e?.message || 'Error', 'error'); } }}
+                          >
+                            ❤️ {vmap.get(s.id) || 0}
+                          </button>
+                        </div>
 
-              {/* Caption / edición */}
-              {editingSubmissionId === s.id ? (
-                <div style={{ display:'grid', gap:'.5rem' }}>
-                  <input
-                    value={editCaption}
-                    onChange={(e)=>setEditCaption(e.target.value)}
-                    placeholder="Título / caption"
-                    style={{ width:'100%', padding:'.5rem .75rem', borderRadius:12, border:'1px solid rgba(255,255,255,.18)', background:'rgba(255,255,255,.06)', color:'#fff' }}
-                  />
-                  <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', alignItems:'center' }}>
-                    <input ref={editFileRef} type="file" accept="video/*" hidden onChange={(e)=>{ const f=e.target.files?.[0]; if (!f) return; setPendingEditFile(f); if (editFileRef.current) editFileRef.current.value=''; }} />
-                    <button className="cc-btn cc-btn--ghost" onClick={()=>editFileRef.current?.click()}>Seleccionar nuevo video</button>
-                    {pendingEditFile && <span className="cc-chip">Archivo listo: {pendingEditFile.name}</span>}
-                  </div>
-                  <div style={{ display:'flex', gap:'.5rem', justifyContent:'flex-end' }}>
-                    <button className="cc-btn cc-btn--ghost" onClick={cancelEditSubmission}>Cancelar</button>
-                    <button className="cc-btn cc-btn--primary" onClick={()=>saveEditSubmission(s)} disabled={savingEdit}>{savingEdit ? 'Guardando…' : 'Guardar'}</button>
-                  </div>
-                </div>
-              ) : (
-                s.caption && (
-                  <div style={{ opacity: 0.85 }}>
-                    {s.caption}
-                  </div>
-                )
-              )}
+                        {/* Caption / edición */}
+                        {editingSubmissionId === s.id ? (
+                          <div style={{ display: 'grid', gap: '.5rem' }}>
+                            <input
+                              value={editCaption}
+                              onChange={(e) => setEditCaption(e.target.value)}
+                              placeholder="Título / caption"
+                              style={{ width: '100%', padding: '.5rem .75rem', borderRadius: 12, border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.06)', color: '#fff' }}
+                            />
+                            <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <input ref={editFileRef} type="file" accept="video/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; setPendingEditFile(f); if (editFileRef.current) editFileRef.current.value = ''; }} />
+                              <button className="cc-btn cc-btn--ghost" onClick={() => editFileRef.current?.click()}>Seleccionar nuevo video</button>
+                              {pendingEditFile && <span className="cc-chip">Archivo listo: {pendingEditFile.name}</span>}
+                            </div>
+                            <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end' }}>
+                              <button className="cc-btn cc-btn--ghost" onClick={cancelEditSubmission}>Cancelar</button>
+                              <button className="cc-btn cc-btn--primary" onClick={() => saveEditSubmission(s)} disabled={savingEdit}>{savingEdit ? 'Guardando…' : 'Guardar'}</button>
+                            </div>
+                          </div>
+                        ) : (
+                          s.caption && (
+                            <div style={{ opacity: 0.85 }}>
+                              {s.caption}
+                            </div>
+                          )
+                        )}
 
-              {/* Acciones */}
-              <div className="appr-actions">
-                <div className="appr-actions__left">
-                  {/* Botón de votar duplicado eliminado; usamos el chip de la barra superior */}
-                  {(canModerate || currentUserId === s.user_id) && (
-                    <button className="cc-btn cc-btn--ghost" onClick={()=>startEditSubmission(s)}>Editar</button>
+                        {/* Acciones */}
+                        <div className="appr-actions">
+                          <div className="appr-actions__left">
+                            {/* Botón de votar duplicado eliminado; usamos el chip de la barra superior */}
+                            {(canModerate || currentUserId === s.user_id) && (
+                              <button className="cc-btn cc-btn--ghost" onClick={() => startEditSubmission(s)}>Editar</button>
+                            )}
+                            <a
+                              href={s.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cc-btn cc-btn--ghost"
+                              aria-label="Abrir video en nueva pestaña"
+                              title="Ver video"
+                            >
+                              Ver video
+                            </a>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              // Navega al detalle del challenge (mantén tu routing si quieres ir a una página del submission)
+                              // nav(`/challenges/${challenge.id}`)  // <- si necesitas deep link, reemplázalo
+                              try {
+                                navigator.clipboard?.writeText(window.location.origin + `/challenges/${challenge.id}`);
+                                showToast('Enlace copiado', 'success');
+                              } catch {
+                                showToast('No se pudo copiar el enlace', 'error');
+                              }
+                            }}
+                            className="cc-btn cc-btn--ghost"
+                            aria-label="Copiar enlace del challenge"
+                            title="Copiar enlace"
+                          >
+                            Copiar enlace
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  <a
-                    href={s.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cc-btn cc-btn--ghost"
-                    aria-label="Abrir video en nueva pestaña"
-                    title="Ver video"
-                  >
-                    Ver video
-                  </a>
-                </div>
-
-                <button
-                  onClick={() => {
-                    // Navega al detalle del challenge (mantén tu routing si quieres ir a una página del submission)
-                    // nav(`/challenges/${challenge.id}`)  // <- si necesitas deep link, reemplázalo
-                    try {
-                      navigator.clipboard?.writeText(window.location.origin + `/challenges/${challenge.id}`);
-                      showToast('Enlace copiado', 'success');
-                    } catch {
-                      showToast('No se pudo copiar el enlace', 'error');
-                    }
-                  }}
-                  className="cc-btn cc-btn--ghost"
-                  aria-label="Copiar enlace del challenge"
-                  title="Copiar enlace"
-                >
-                  Copiar enlace
-                </button>
+                />
               </div>
-            </div>
-          </div>
-        )}
-      />
-      </div>
-    );
-  })()}
-</section>
+            );
+          })()}
+        </section>
 
 
         {/* Leaderboard */}
@@ -807,13 +807,13 @@ export default function ChallengeDetail() {
       </div>
       {/* Modal de confirmación */}
       {confirmState.open && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'grid', placeItems:'center', zIndex:70 }}>
-          <div className="cc-glass" style={{ padding:'1rem', width:'min(520px, 92vw)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'grid', placeItems: 'center', zIndex: 70 }}>
+          <div className="cc-glass" style={{ padding: '1rem', width: 'min(520px, 92vw)' }}>
             <h3 className="cc-section__title cc-mb-0" style={{ marginBottom: '.25rem' }}>{confirmState.title}</h3>
-            <p style={{ opacity:.9, margin:'0 0 .75rem 0' }}>{confirmState.message}</p>
-            <div style={{ display:'flex', justifyContent:'flex-end', gap:'.5rem' }}>
-              <button className="cc-btn cc-btn--ghost" onClick={()=>setConfirmState(s=>({ ...s, open:false }))}>Cancelar</button>
-              <button className="cc-btn cc-btn--primary" onClick={async()=>{ const fn=confirmState.onConfirm; setConfirmState(s=>({ ...s, open:false })); await fn(); }}>Eliminar</button>
+            <p style={{ opacity: .9, margin: '0 0 .75rem 0' }}>{confirmState.message}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '.5rem' }}>
+              <button className="cc-btn cc-btn--ghost" onClick={() => setConfirmState(s => ({ ...s, open: false }))}>Cancelar</button>
+              <button className="cc-btn cc-btn--primary" onClick={async () => { const fn = confirmState.onConfirm; setConfirmState(s => ({ ...s, open: false })); await fn(); }}>Eliminar</button>
             </div>
           </div>
         </div>
