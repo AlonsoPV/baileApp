@@ -131,7 +131,31 @@ export default function ClassCard({ item }: Props) {
           fontSize: '1.5rem', fontWeight: 700, color: '#fff',
           boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)'
         }}>📚</div> */}
-        <h3 style={{ margin: 0, fontSize: '1.375rem', fontWeight: 700, lineHeight: 1.2, background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{item.titulo || 'Clase'}</h3>
+        <h3 style={{
+          margin: 0,
+          fontSize: '1.375rem',
+          fontWeight: 700,
+          lineHeight: 1.2,
+          background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          <span style={{
+            display: 'inline-block',
+            maxWidth: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            background: 'rgba(0,0,0,0.45)',
+            padding: '4px 10px',
+            borderRadius: 10,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+            border: '1px solid rgba(255,255,255,0.12)'
+          }}>
+            {item.titulo || 'Clase'}
+          </span>
+        </h3>
       </div>
 
         {item.ownerName && (
