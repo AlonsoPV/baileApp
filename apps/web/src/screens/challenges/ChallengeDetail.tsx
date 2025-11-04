@@ -48,7 +48,7 @@ export default function ChallengeDetail() {
     submission_deadline: '',
     voting_deadline: ''
   });
-  const [userNames, setUserNames] = React.useState<Record<string, string>>({});
+  const [userMeta, setUserMeta] = React.useState<Record<string, { name: string; bio?: string }>>({});
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
@@ -87,7 +87,7 @@ export default function ChallengeDetail() {
     }
   }, [challenge]);
 
-  // Fetch uploader names for approved subs and leaderboard
+  // Fetch uploader display_name and bio for approved subs and leaderboard
   React.useEffect(() => {
     (async () => {
       const ids = new Set<string>();
@@ -97,14 +97,15 @@ export default function ChallengeDetail() {
       const arr = Array.from(ids);
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('user_id, nombre_publico, full_name, email')
+        .select('user_id, display_name, nombre_publico, full_name, email, bio')
         .in('user_id', arr);
       if (error) return;
-      const map: Record<string, string> = {};
+      const map: Record<string, { name: string; bio?: string }> = {};
       (data || []).forEach((p: any) => {
-        map[p.user_id] = p.nombre_publico || p.full_name || p.email || p.user_id;
+        const name = p.display_name || p.nombre_publico || p.full_name || p.email || p.user_id;
+        map[p.user_id] = { name, bio: p.bio };
       });
-      setUserNames(map);
+      setUserMeta(map);
     })();
   }, [subs, leaderboard]);
 
@@ -152,16 +153,60 @@ export default function ChallengeDetail() {
           </div>
         </header>
 
-        {/* Cover image */}
-        {(challenge as any).cover_image_url && (
-          <div className="cc-glass" style={{ padding: '1rem', display:'grid', placeItems:'center' }}>
-            <img
-              src={(challenge as any).cover_image_url}
-              alt="cover"
-              style={{ width: 350, maxWidth: '100%', height: 'auto', display: 'block', borderRadius: 12 }}
-            />
+        {/* Encabezado combinado: Col 1 (portada + info + ritmos) | Col 2 (video) */}
+        <section className="cc-glass" style={{ padding: '1rem' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1.1fr 1fr', gap:'1rem', alignItems:'start' }}>
+            <div>
+              {(challenge as any).cover_image_url && (
+                <div style={{ display:'grid', placeItems:'center', marginBottom: '.75rem' }}>
+                  <img src={(challenge as any).cover_image_url} alt="cover" style={{ width: 350, maxWidth:'100%', height:'auto', borderRadius: 12, display:'block' }} />
+                </div>
+              )}
+              <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
+              {(challenge as any).description && (
+                <div className="cc-two-lines" style={{ opacity:.92, marginBottom: 8 }}>{(challenge as any).description}</div>
+              )}
+              {(challenge as any).ritmo_slug && (
+                <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={()=>{}} readOnly />
+              )}
+            </div>
+            <div>
+              {(challenge as any).hero_video_url ? (
+                <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:12, display:'block', margin:'0 auto' }} src={(challenge as any).hero_video_url} />
+              ) : (
+                <div style={{ opacity:.85 }}>Aún no hay video de referencia.</div>
+              )}
+              {canModerate && (
+                <div style={{ marginTop: '.75rem', display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+                  <input
+                    ref={ownerFileRef}
+                    type="file"
+                    accept="video/*"
+                    hidden
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return; if (!id) return;
+                      try {
+                        setUploadingOwner(true);
+                        const ext = f.name.split('.').pop()?.toLowerCase() || 'mp4';
+                        const url = await uploadToChallengeBucket(f, `challenges/${id}/owner-${Date.now()}.${ext}`);
+                        const { error } = await supabase.from('challenges').update({ hero_video_url: url }).eq('id', id);
+                        if (error) throw error;
+                        showToast('Video actualizado', 'success');
+                      } catch (e: any) {
+                        showToast(e?.message || 'No se pudo subir video', 'error');
+                      } finally {
+                        setUploadingOwner(false);
+                        if (ownerFileRef.current) ownerFileRef.current.value = '';
+                      }
+                    }}
+                  />
+                  <button onClick={()=>ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">{uploadingOwner ? 'Subiendo…' : 'Subir/Actualizar video'}</button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </section>
 
         {/* Edit section */}
         {canModerate && editOpen && (
@@ -411,7 +456,7 @@ export default function ChallengeDetail() {
         )}
 
         {/* Approved */}
-         <section className="cc-glass" style={{ padding: '1rem' }}>
+        <section className="cc-glass" style={{ padding: '1rem' }}>
           <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
           {approved.length === 0 ? (
             <div>No hay envíos aprobados</div>
@@ -421,10 +466,10 @@ export default function ChallengeDetail() {
               <HorizontalSlider
                 items={approved}
                 renderItem={(s: any) => (
-                   <div
+                  <div
                     key={s.id}
                     className="cc-glass"
-                     style={{ padding: 0, width: 380, maxWidth:'92vw' }}
+                    style={{ padding: 0, width: 380, minWidth: 380, maxWidth:'92vw', boxSizing:'border-box', flex: '0 0 380px' }}
                   >
                      <div style={{ padding: '.6rem', display: 'grid', gap: '.5rem' }}>
                        <video
@@ -442,11 +487,18 @@ export default function ChallengeDetail() {
                        {/* Author + votes */}
                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
                          <div className="cc-ellipsis" style={{ fontWeight: 800 }}>
-                           {userNames[s.user_id] || s.user_id}
+                           {userMeta[s.user_id]?.name || s.user_id}
                          </div>
                          <span className="cc-chip">❤️ {vmap.get(s.id) || 0}</span>
                        </div>
-                       {s.caption && <div className="cc-two-lines" style={{ opacity: 0.9 }}>{s.caption}</div>}
+                       {userMeta[s.user_id]?.bio && (
+                         <div className="cc-two-lines" style={{ opacity: 0.9 }}>{userMeta[s.user_id]?.bio}</div>
+                       )}
+                       {s.caption && (
+                         <div className="cc-two-lines" style={{ opacity: 0.85 }}>
+                           {s.caption}
+                         </div>
+                       )}
                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                          <button
                            onClick={async () => {
@@ -491,9 +543,11 @@ export default function ChallengeDetail() {
                   <span className="cc-round-ico" style={{ width: 34, height: 34, fontSize: 16 }}>🏅</span>
                   <div style={{ overflow: 'hidden' }}>
                     <div style={{ fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {userNames[row.user_id] || row.user_id}
+                      {userMeta[row.user_id]?.name || row.user_id}
                     </div>
-                    <div style={{ fontSize: '.85rem', opacity: 0.8 }}>{row.submission_id}</div>
+                    {userMeta[row.user_id]?.bio && (
+                      <div style={{ fontSize: '.85rem', opacity: 0.85 }} className="cc-two-lines">{userMeta[row.user_id]?.bio}</div>
+                    )}
                   </div>
                   <span className="cc-chip">❤️ {row.votes}</span>
                 </div>
