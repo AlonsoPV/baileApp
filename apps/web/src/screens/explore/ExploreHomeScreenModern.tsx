@@ -12,6 +12,7 @@ import FilterBar from "../../components/FilterBar";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
+import DancerCard from "../../components/explore/cards/DancerCard";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -137,6 +138,15 @@ export default function ExploreHomeScreen() {
     ritmos: filters.ritmos,
     zonas: filters.zonas,
     pageSize: 4
+  });
+
+  // Usuarios (bailarines)
+  const { data: usuarios, isLoading: usuariosLoading } = useExploreQuery({
+    type: 'usuarios' as any,
+    q: filters.q,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 8
   });
 
   // Sociales (event parents)
@@ -448,6 +458,46 @@ export default function ExploreHomeScreen() {
               />
             ) : (
               <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+            )}
+          </Section>
+          )}
+
+          {(showAll || selectedType === 'usuarios') && (
+          <Section title="¿Con quién bailar?" toAll="/explore/list?type=usuarios">
+            {usuariosLoading ? (
+              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+            ) : usuarios && usuarios.pages?.[0]?.data?.length > 0 ? (
+              <HorizontalSlider
+                items={usuarios.pages[0].data}
+                renderItem={(u: any, idx: number) => (
+                  <motion.div 
+                    key={u.user_id ?? idx} 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05, duration: 0.3 }}
+                    whileHover={{ y: -4, scale: 1.02 }} 
+                    style={{ 
+                      background: 'rgba(255,255,255,0.04)', 
+                      border: '1px solid rgba(255,255,255,0.08)', 
+                      borderRadius: 16, 
+                      padding: 0,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <DancerCard item={{
+                      id: u.user_id,
+                      display_name: u.display_name,
+                      bio: u.bio,
+                      avatar_url: (u as any).avatar_url,
+                      ritmos: (u as any).ritmos,
+                      zonas: (u as any).zonas
+                    }} />
+                  </motion.div>
+                )}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles</div>
             )}
           </Section>
           )}
