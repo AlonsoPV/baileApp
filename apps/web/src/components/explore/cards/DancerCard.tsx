@@ -101,7 +101,7 @@ export default function DancerCard({ item, to }: Props) {
     return [] as string[];
   }, [item, allTags]);
 
-  const href = to || (item.id ? `/app/profile?userId=${encodeURIComponent(String(item.id))}` : '#');
+  const href = to || (item.id ? `/u/${encodeURIComponent(String(item.id))}` : '#');
 
   return (
     <LiveLink to={href} asCard={false}>

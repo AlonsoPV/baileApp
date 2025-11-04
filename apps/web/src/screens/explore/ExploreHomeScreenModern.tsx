@@ -504,7 +504,7 @@ export default function ExploreHomeScreen() {
                       media: (u as any).media,
                       ritmos: (u as any).ritmos,
                       zonas: (u as any).zonas
-                    }} to={`/app/profile?userId=${encodeURIComponent(u.user_id)}`} />
+                    }} to={`/u/${encodeURIComponent(u.user_id)}`} />
                   </motion.div>
                 )}
               />
