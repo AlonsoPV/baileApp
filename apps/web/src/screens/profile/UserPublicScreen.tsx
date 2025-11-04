@@ -3,7 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import RitmosChips from '@/components/RitmosChips';
-import SocialMediaSection from '@/components/SocialMediaSection';
+import SocialMediaSection from '@/components/profile/SocialMediaSection';
 
 export default function UserPublicScreen() {
   const { userId: userIdFromParams } = useParams();
