@@ -10,10 +10,10 @@ import { Chip } from '@/components/profile/Chip';
 export default function UserPublicScreen() {
   const { userId: userIdFromParams } = useParams();
   const { search } = useLocation();
-  const userId = React.useMemo(() => {
+  const userId = (() => {
     const q = new URLSearchParams(search);
     return (userIdFromParams as string) || q.get('userId') || '';
-  }, [userIdFromParams, search]);
+  })();
   const [profile, setProfile] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { data: allTags } = useTags();
@@ -67,7 +67,7 @@ export default function UserPublicScreen() {
     .filter((m: any) => m?.slot?.startsWith('p') && !['p1','p2','p3'].includes(m.slot))
     .map((m: any) => (m?.url ? toSupabasePublicUrl(m.url) : (m?.path ? toSupabasePublicUrl(m.path) : undefined)))
     .filter(Boolean) as string[];
-  const zonaNames: string[] = React.useMemo(() => {
+  const zonaNames: string[] = (() => {
     try {
       const ids: number[] = (profile?.zonas || []) as number[];
       if (!Array.isArray(allTags)) return [] as string[];
@@ -77,10 +77,37 @@ export default function UserPublicScreen() {
         .map((t: any) => t.nombre as string);
     } catch {}
     return [] as string[];
-  }, [profile?.zonas, allTags]);
+  })();
 
   return (
     <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#fff' }}>
+      {/* CSS idéntico al de UserProfileLive */}
+      <style>{`
+        .profile-container { width: 100%; max-width: 900px; margin: 0 auto; }
+        .profile-banner { width: 100%; max-width: 900px; margin: 0 auto; }
+        .banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
+        .question-section { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem; }
+        .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,.15); box-shadow: 0 8px 32px rgba(0,0,0,.3); backdrop-filter: blur(10px); transform: none; }
+        @media (max-width: 768px) {
+          .profile-container { max-width: 100% !important; padding: 1rem !important; }
+          .profile-banner { border-radius: 0 !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
+          .banner-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; justify-items: center !important; text-align: center !important; }
+          .banner-grid h1 { font-size: 2rem !important; line-height: 1.2 !important; }
+          .banner-avatar { width: 150px !important; height: 150px !important; }
+          .banner-avatar-fallback { font-size: 3.5rem !important; }
+          .question-section { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .events-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .banner-grid h1 { font-size: 1.75rem !important; }
+          .banner-avatar { width: 120px !important; height: 120px !important; }
+          .banner-avatar-fallback { font-size: 3rem !important; }
+          .glass-card-container { padding: .75rem !important; border-radius: 12px !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 980, margin: '0 auto', padding: '24px 16px 120px' }}>
         <section className="glass-card-container" style={{ position: 'relative' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '3rem', alignItems: 'center' }}>
@@ -120,37 +147,41 @@ export default function UserPublicScreen() {
           <SocialMediaSection respuestas={profile?.respuestas} availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']} />
         </div>
 
-        {(p2 || p3) && (
-          <section className="glass-card-container" style={{ marginTop: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
-              <div>
-                <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
-                <div style={{ padding: '1rem', background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)' }}>
-                  {profile?.respuestas?.dato_curioso || 'Aún no hay dato curioso.'}
-                </div>
-              </div>
-              <div>
-                {p2 ? <ImageWithFallback src={p2} alt="Foto personal" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} /> : null}
+        <section className="glass-card-container" style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            <div>
+              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
+              <div style={{ padding: '1rem', background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)' }}>
+                {profile?.respuestas?.dato_curioso || 'Aún no hay dato curioso.'}
               </div>
             </div>
-          </section>
-        )}
+            <div>
+              {p2 ? (
+                <ImageWithFallback src={p2} alt="Foto personal" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', minHeight: 220, background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.7)' }}>📷 Sin foto</div>
+              )}
+            </div>
+          </div>
+        </section>
 
-        {p3 && (
-          <section className="glass-card-container" style={{ marginTop: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
-              <div>
-                <h3 className="section-title">💃 ¿Qué es lo que más te gusta bailar?</h3>
-                <div style={{ padding: '1rem', background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)' }}>
-                  {profile?.respuestas?.gusta_bailar || 'Aún no has compartido qué te gusta bailar.'}
-                </div>
-              </div>
-              <div>
-                <ImageWithFallback src={p3} alt="Foto de baile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
+        <section className="glass-card-container" style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+            <div>
+              <h3 className="section-title">💃 ¿Qué es lo que más te gusta bailar?</h3>
+              <div style={{ padding: '1rem', background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.15)' }}>
+                {profile?.respuestas?.gusta_bailar || 'Aún no has compartido qué te gusta bailar.'}
               </div>
             </div>
-          </section>
-        )}
+            <div>
+              {p3 ? (
+                <ImageWithFallback src={p3} alt="Foto de baile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', minHeight: 220, background: 'rgba(255,255,255,.08)', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.7)' }}>📷 Sin foto</div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {v1 && (
           <section className="glass-card-container" style={{ marginTop: 16 }}>
