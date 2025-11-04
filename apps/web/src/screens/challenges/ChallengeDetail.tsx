@@ -95,7 +95,13 @@ export default function ChallengeDetail() {
   const approved = (subs || []).filter(s => s.status === 'approved');
 
   return (
-    <div style={{ padding:'1rem', color:'#fff', display:'grid', gap:'1rem' }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #12171d 0%, #0e141a 100%)', color:'#fff' }}>
+      <style>{`
+        .chd-wrap { max-width: 1200px; margin: 0 auto; padding: 1rem; display:grid; gap:1rem; }
+        .glass { border:1px solid rgba(255,255,255,.15); border-radius:16px; background:rgba(255,255,255,.06); box-shadow:0 8px 24px rgba(0,0,0,.24); }
+        @media (max-width: 768px) { .chd-wrap { padding: .75rem; } }
+      `}</style>
+      <div className="chd-wrap">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <button onClick={()=>nav('/challenges')} className="editor-back-btn">← Volver</button>
         <div style={{ fontWeight:900, fontSize:'1.15rem' }}>{challenge.title}</div>
@@ -127,7 +133,7 @@ export default function ChallengeDetail() {
       )}
 
       {canModerate && editOpen && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+        <section className="glass" style={{ padding:'1rem' }}>
           <h3 style={{ marginTop:0 }}>Editar reto</h3>
           <div style={{ display:'grid', gap:'.6rem', maxWidth:720 }}>
             <div>
@@ -176,7 +182,7 @@ export default function ChallengeDetail() {
       )}
 
       {canModerate && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'1rem', background:'rgba(255,255,255,.06)', boxShadow:'0 8px 24px rgba(0,0,0,.24)' }}>
+        <section className="glass" style={{ padding:'1rem' }}>
           <h3 style={{ marginTop:0 }}>Video del Challenge (referencia)</h3>
           {challenge.hero_video_url ? (
             <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:12, display:'block', margin:'0 auto' }} src={(challenge as any).hero_video_url} />
@@ -210,7 +216,7 @@ export default function ChallengeDetail() {
       )}
 
       {challenge.status === 'open' && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'1rem', background:'rgba(255,255,255,.06)', boxShadow:'0 8px 24px rgba(0,0,0,.24)' }}>
+        <section className="glass" style={{ padding:'1rem' }}>
           <h3 style={{ marginTop:0 }}>Subir mi video</h3>
           <div style={{ display:'grid', gap:'.5rem', maxWidth:600 }}>
             <input placeholder="Escribe un título o una breve descripción (opcional)" value={caption} onChange={e=>setCaption(e.target.value)} className="editor-input" />
@@ -240,7 +246,7 @@ export default function ChallengeDetail() {
       )}
 
       {canModerate && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+        <section className="glass" style={{ padding:'1rem' }}>
           <h3 style={{ marginTop:0 }}>Moderación (pendientes)</h3>
           {pending.length === 0 ? <div>Sin pendientes</div> : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'.75rem' }}>
@@ -261,7 +267,7 @@ export default function ChallengeDetail() {
         </section>
       )}
 
-      <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+      <section className="glass" style={{ padding:'1rem' }}>
         <h3 style={{ marginTop:0 }}>Aprobados</h3>
         {approved.length === 0 ? <div>No hay envíos aprobados</div> : (() => {
           const vmap = new Map<string, number>((leaderboard || []).map(r => [r.submission_id, r.votes]));
@@ -295,7 +301,7 @@ export default function ChallengeDetail() {
         })()}
       </section>
 
-      <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+      <section className="glass" style={{ padding:'1rem' }}>
         <h3 style={{ marginTop:0 }}>Leaderboard</h3>
         {!leaderboard || leaderboard.length === 0 ? <div>Sin votos</div> : (
           <div style={{ display:'grid', gap:'.5rem' }}>
@@ -315,6 +321,7 @@ export default function ChallengeDetail() {
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

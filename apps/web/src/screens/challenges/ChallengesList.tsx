@@ -27,7 +27,24 @@ export default function ChallengesList() {
   if (error) return <div style={{ color:'#fff', padding:'1rem' }}>Error: {(error as any)?.message}</div>;
 
   return (
-    <div style={{ padding: '1rem', color:'#fff' }}>
+    <div style={{ minHeight:'100vh', background: 'linear-gradient(135deg, #12171d 0%, #0e141a 100%)', color:'#fff' }}>
+      <style>{`
+        .ch-wrap { max-width: 1280px; margin: 0 auto; padding: 1rem; }
+        .ch-panel { 
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          border-radius: 20px;
+          padding: 1rem;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(10px);
+          margin: 1rem 0;
+        }
+        @media (max-width: 768px) {
+          .ch-wrap { padding: .75rem; }
+          .ch-panel { padding: .875rem; border-radius: 16px; }
+        }
+      `}</style>
+      <div className="ch-wrap">
       <div style={{
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
         border: '2px solid rgba(255, 255, 255, 0.15)',
@@ -85,6 +102,7 @@ export default function ChallengesList() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
