@@ -23,20 +23,29 @@ export default function SocialCard({ item }: { item: SocialItem }) {
   const desc = item?.descripcion || "";
   const { data: allTags } = useTags() as any;
 
+  const normalizeUrl = (u?: string) => {
+    if (!u) return u;
+    const v = String(u).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
+    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
+    return v;
+  };
+
   // Priorizar avatar del social como fondo. Si no hay, usar portada/media del social. Último recurso: portada/media del organizador
   const organizer = (item as any)?.profiles_organizer;
   const avatarFromMedia = Array.isArray(item?.media)
     ? (item!.media!.find((m: any) => typeof m === 'object' && (m as any).slot === 'avatar') as any)
     : undefined;
   const firstSocialMedia = Array.isArray(item?.media)
-    ? (((item!.media![0] as any)?.url) || (typeof item!.media![0] === 'string' ? (item!.media![0] as string) : undefined))
+    ? (((item!.media![0] as any)?.url) || ((item!.media![0] as any)?.path) || (typeof item!.media![0] === 'string' ? (item!.media![0] as string) : undefined))
     : undefined;
   const organizerCover = (
     organizer?.portada_url
       || (Array.isArray(organizer?.media) && ((organizer.media[0] as any)?.url || (typeof organizer.media[0] === 'string' ? organizer.media[0] : undefined)))
       || organizer?.avatar_url
   ) as string | undefined;
-  const cover = (
+  const cover = normalizeUrl(
     (avatarFromMedia?.url as string | undefined)
       || (item?.avatar_url as string | undefined)
       || (item?.portada_url as string | undefined)

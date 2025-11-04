@@ -63,6 +63,7 @@ import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 
 // User Screens
 import UserProfileEditor from './screens/profile/UserProfileEditor';
+import UserPublicScreen from './screens/profile/UserPublicScreen';
 
 // System Screens
 import NotFound from './screens/system/NotFound';
@@ -119,6 +120,7 @@ export default function AppRouter() {
         <Route path="/profile/academy/:academyId" element={<AcademyPublicScreen />} />
         <Route path="/profile/academy" element={<AcademyProfileLive />} />
         <Route path="/profile/teacher" element={<TeacherProfileLive />} />
+        <Route path="/u/:userId" element={<UserPublicScreen />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
         {/* Challenges (público: lista y detalle) */}

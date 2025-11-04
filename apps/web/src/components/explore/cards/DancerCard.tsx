@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
+import { supabase } from "../../../lib/supabase";
 
 type DancerItem = {
   id?: string;
@@ -33,17 +34,36 @@ export default function DancerCard({ item, to }: Props) {
     return v;
   };
 
+  // Convierte rutas tipo "bucket/path/to/file" a URL pública de Supabase
+  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
+    if (!maybePath) return undefined;
+    const v = String(maybePath).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+    const slash = v.indexOf('/');
+    if (slash > 0) {
+      const bucket = v.slice(0, slash);
+      const path = v.slice(slash + 1);
+      try {
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        return data.publicUrl || v;
+      } catch {
+        return v;
+      }
+    }
+    return v;
+  };
+
   // Resolver imagen de portada del usuario (prioriza banner/portada, luego avatar, luego media[0])
   const coverUrl: string | undefined = (() => {
     const direct = item.banner_url || item.portada_url || item.avatar_url;
-    if (direct) return normalizeUrl(direct as string) as string;
+    if (direct) return toSupabasePublicUrl(normalizeUrl(direct as string) as string);
     const media = Array.isArray(item.media) ? item.media : [];
     if (media.length) {
       const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
-      if (bySlot?.url) return normalizeUrl(bySlot.url as string) as string;
-      if (bySlot?.path) return normalizeUrl(bySlot.path as string) as string;
+      if (bySlot?.url) return toSupabasePublicUrl(normalizeUrl(bySlot.url as string) as string);
+      if (bySlot?.path) return toSupabasePublicUrl(normalizeUrl(bySlot.path as string) as string);
       const first = media[0] as any;
-      return normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
+      return toSupabasePublicUrl(normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined);
     }
     return undefined;
   })();

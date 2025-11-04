@@ -24,7 +24,7 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   // Priorizar el avatar usado en el banner (equivalente a academy-banner-avatar): avatar_url -> portada_url -> media[0]
   const avatar = normalizeUrl((item.avatar_url)
     || (item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined))
+    || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined))
     || null;
 
   // En editor a veces llega como 'estilos'; en live como 'ritmos'

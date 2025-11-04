@@ -13,6 +13,7 @@ import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
 import DancerCard from "../../components/explore/cards/DancerCard";
+import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -502,7 +503,7 @@ export default function ExploreHomeScreen() {
                       avatar_url: (u as any).avatar_url,
                       ritmos: (u as any).ritmos,
                       zonas: (u as any).zonas
-                    }} />
+                    }} to={urls.userLive(u.user_id)} />
                   </motion.div>
                 )}
               />

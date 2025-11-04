@@ -20,7 +20,7 @@ export default function BrandCard({ item }: Props) {
     return v;
   };
   const cover = normalizeUrl((item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
+    || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined)
     || item.avatar_url || undefined) as string | undefined;
   const ritmoNombres: string[] = (item.ritmos || [])
     .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
