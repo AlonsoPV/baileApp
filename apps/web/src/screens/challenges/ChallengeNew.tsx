@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChallengeCreate } from '../../hooks/useChallenges';
 import { useToast } from '../../components/Toast';
+import RitmosChips from '../../components/RitmosChips';
 
 // ⬇️ Estilos compartidos
 import '../../styles/event-public.css';
@@ -18,6 +19,7 @@ export default function ChallengeNew() {
     submission_deadline: '',
     voting_deadline: '',
   });
+  const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,7 @@ export default function ChallengeNew() {
         title: form.title,
         description: form.description || null,
         cover_image_url: form.cover_image_url || null,
+        ritmo_slug: ritmosSelected[0] || null,
         submission_deadline: form.submission_deadline || null,
         voting_deadline: form.voting_deadline || null,
       });
@@ -81,6 +84,12 @@ export default function ChallengeNew() {
                   color: '#fff',
                 }}
               />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>Ritmos</label>
+              <RitmosChips selected={ritmosSelected} onChange={setRitmosSelected} />
+              <div style={{ opacity: .7, fontSize: '.85rem', marginTop: 6 }}>Se guardará el primer ritmo como principal.</div>
             </div>
 
             <div>

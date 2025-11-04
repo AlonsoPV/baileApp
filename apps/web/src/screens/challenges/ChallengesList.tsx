@@ -7,6 +7,7 @@ import { useToast } from '../../components/Toast';
 
 // ⬇️ Estilos compartidos aplicados
 import '../../styles/event-public.css';
+import RitmosChips from '../../components/RitmosChips';
 
 export default function ChallengesList() {
   const nav = useNavigate();
@@ -57,34 +58,49 @@ export default function ChallengesList() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '0.9rem' }}>
               {data.map((c) => (
-                <article key={c.id} className="cc-glass" style={{ padding: 0, overflow: 'hidden' }}>
-                  {c.cover_image_url && (
-                    <img
-                      src={c.cover_image_url}
-                      alt="cover"
-                      style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
-                    />
-                  )}
-                  <div style={{ padding: '.75rem', display: 'grid', gap: '.45rem' }}>
-                    <div style={{ fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <article
+                  key={c.id}
+                  className="cc-glass"
+                  style={{
+                    padding: 0,
+                    position: 'relative',
+                    minHeight: 200,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    backgroundImage: c.cover_image_url
+                      ? `linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 50%, rgba(0,0,0,.25) 100%), url(${c.cover_image_url})`
+                      : 'linear-gradient(135deg, rgba(30,136,229,.25), rgba(255,61,87,.25))',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    color: '#fff',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{ padding: '.9rem', display: 'grid', gap: '.45rem' }}>
+                    {c.ritmo_slug && (
+                      <div style={{ marginBottom: 4 }}>
+                        <RitmosChips selected={[String(c.ritmo_slug)]} onChange={() => {}} readOnly />
+                      </div>
+                    )}
+                    <div className="cc-ellipsis" style={{ fontWeight: 900 }}>
                       {c.title}
                     </div>
                     {c.description && (
-                      <div style={{ opacity: .85, fontSize: '.9rem', height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div className="cc-two-lines" style={{ opacity: .95, fontSize: '.9rem' }}>
                         {c.description}
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                       <span
                         className="cc-chip"
-                        /* Por qué: color condicional de estado sin añadir variantes al CSS global */
                         style={{
                           background:
                             c.status === 'open'
-                              ? 'rgba(16,185,129,.16)'
+                              ? 'rgba(16,185,129,.22)'
                               : c.status === 'draft'
-                              ? 'rgba(255,255,255,.06)'
-                              : 'rgba(59,130,246,.12)'
+                              ? 'rgba(255,255,255,.14)'
+                              : 'rgba(59,130,246,.18)'
                         }}
                       >
                         {c.status}

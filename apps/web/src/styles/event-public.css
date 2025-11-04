@@ -12,6 +12,7 @@
   border-radius: 16px;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
 }
 
 .cc-chip {
@@ -67,6 +68,19 @@
 }
 
 .cc-mb-0 { margin-bottom: 0; }
+
+.cc-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-two-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 @media (max-width: 768px) {
   .cc-glass { border-radius: 14px; }

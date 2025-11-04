@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import HorizontalSlider from '../../components/explore/HorizontalSlider';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
+import RitmosChips from '../../components/RitmosChips';
 
 // ⬇️ Estilos compartidos aplicados
 import '../../styles/event-public.css';
@@ -48,6 +49,7 @@ export default function ChallengeDetail() {
     voting_deadline: ''
   });
   const [userNames, setUserNames] = React.useState<Record<string, string>>({});
+  const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
     const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
@@ -80,6 +82,8 @@ export default function ChallengeDetail() {
         submission_deadline: (challenge as any).submission_deadline || '',
         voting_deadline: (challenge as any).voting_deadline || ''
       });
+      const slug = (challenge as any).ritmo_slug as string | null;
+      if (slug) setRitmosSelected([slug]);
     }
   }, [challenge]);
 
@@ -150,11 +154,11 @@ export default function ChallengeDetail() {
 
         {/* Cover image */}
         {(challenge as any).cover_image_url && (
-          <div className="cc-glass" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="cc-glass" style={{ padding: '1rem', display:'grid', placeItems:'center' }}>
             <img
               src={(challenge as any).cover_image_url}
               alt="cover"
-              style={{ width: '100%', height: 'auto', display: 'block' }}
+              style={{ width: 350, maxWidth: '100%', height: 'auto', display: 'block', borderRadius: 12 }}
             />
           </div>
         )}
@@ -180,6 +184,11 @@ export default function ChallengeDetail() {
                   onChange={(e) => setEditForm((s) => ({ ...s, description: e.target.value }))}
                   style={{ width: '100%', padding: '.5rem .75rem', borderRadius: 12, border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.06)', color: '#fff' }}
                 />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Ritmos</label>
+                <RitmosChips selected={ritmosSelected} onChange={setRitmosSelected} />
+                <div style={{ opacity: .7, fontSize: '.85rem', marginTop: 6 }}>Se guardará el primer ritmo como principal.</div>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: 4 }}>Imagen de portada (URL)</label>
@@ -223,7 +232,8 @@ export default function ChallengeDetail() {
                           description: editForm.description,
                           cover_image_url: editForm.cover_image_url,
                           submission_deadline: editForm.submission_deadline || null,
-                          voting_deadline: editForm.voting_deadline || null
+                          voting_deadline: editForm.voting_deadline || null,
+                          ritmo_slug: ritmosSelected[0] || null
                         })
                         .eq('id', id);
                       if (error) throw error;
@@ -238,6 +248,16 @@ export default function ChallengeDetail() {
                   Guardar
                 </button>
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* Ritmos (live) */}
+        {(challenge as any).ritmo_slug && (
+          <section className="cc-glass" style={{ padding: '1rem' }}>
+            <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Ritmo</h3>
+            <div style={{ marginTop: 8 }}>
+              <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => {}} readOnly />
             </div>
           </section>
         )}
@@ -391,7 +411,7 @@ export default function ChallengeDetail() {
         )}
 
         {/* Approved */}
-        <section className="cc-glass" style={{ padding: '1rem' }}>
+         <section className="cc-glass" style={{ padding: '1rem' }}>
           <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
           {approved.length === 0 ? (
             <div>No hay envíos aprobados</div>
@@ -401,39 +421,47 @@ export default function ChallengeDetail() {
               <HorizontalSlider
                 items={approved}
                 renderItem={(s: any) => (
-                  <div
+                   <div
                     key={s.id}
                     className="cc-glass"
-                    style={{ padding: 0 }}
+                     style={{ padding: 0, width: 380, maxWidth:'92vw' }}
                   >
-                    <div style={{ padding: '.6rem', display: 'grid', gap: '.5rem' }}>
-                      <video
-                        controls
-                        style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 8, display: 'block', margin: '0 auto' }}
-                        src={s.video_url}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
-                        <div style={{ fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {userNames[s.user_id] || s.user_id}
-                        </div>
-                        <span className="cc-chip">❤️ {vmap.get(s.id) || 0}</span>
-                      </div>
-                      {s.caption && <div style={{ opacity: 0.9 }}>{s.caption}</div>}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await vote.mutateAsync(s.id);
-                            } catch (e: any) {
-                              showToast(e?.message || 'Error', 'error');
-                            }
-                          }}
-                          className="cc-btn cc-btn--ghost"
-                        >
-                          Votar
-                        </button>
-                      </div>
-                    </div>
+                     <div style={{ padding: '.6rem', display: 'grid', gap: '.5rem' }}>
+                       <video
+                         controls
+                         style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 8, display: 'block', margin: '0 auto' }}
+                         src={s.video_url}
+                       />
+                       {/* Challenge name + description */}
+                       <div className="cc-ellipsis" style={{ fontWeight: 900 }}>{challenge.title}</div>
+                       {(challenge as any).description && (
+                         <div className="cc-two-lines" style={{ opacity: .9, fontSize: '.95rem' }}>
+                           {(challenge as any).description}
+                         </div>
+                       )}
+                       {/* Author + votes */}
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
+                         <div className="cc-ellipsis" style={{ fontWeight: 800 }}>
+                           {userNames[s.user_id] || s.user_id}
+                         </div>
+                         <span className="cc-chip">❤️ {vmap.get(s.id) || 0}</span>
+                       </div>
+                       {s.caption && <div className="cc-two-lines" style={{ opacity: 0.9 }}>{s.caption}</div>}
+                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                         <button
+                           onClick={async () => {
+                             try {
+                               await vote.mutateAsync(s.id);
+                             } catch (e: any) {
+                               showToast(e?.message || 'Error', 'error');
+                             }
+                           }}
+                           className="cc-btn cc-btn--ghost"
+                         >
+                           Votar
+                         </button>
+                       </div>
+                     </div>
                   </div>
                 )}
               />
