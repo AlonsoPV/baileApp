@@ -35,6 +35,7 @@ export default function ChallengeDetail() {
   const vote = useToggleVote();
 
   const [canModerate, setCanModerate] = React.useState(false);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [caption, setCaption] = React.useState('');
   const ownerFileRef = React.useRef<HTMLInputElement | null>(null);
   const coverFileRef = React.useRef<HTMLInputElement | null>(null);
@@ -58,6 +59,57 @@ export default function ChallengeDetail() {
   const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
     { open: false, title: '', message: '', onConfirm: async () => {} }
   );
+  // Edición de submissions
+  const [editingSubmissionId, setEditingSubmissionId] = React.useState<string | null>(null);
+  const [editCaption, setEditCaption] = React.useState<string>('');
+  const [pendingEditFile, setPendingEditFile] = React.useState<File | null>(null);
+  const editFileRef = React.useRef<HTMLInputElement | null>(null);
+  const [savingEdit, setSavingEdit] = React.useState(false);
+
+  const startEditSubmission = (s: any) => {
+    setEditingSubmissionId(s.id);
+    setEditCaption(s.caption || '');
+    setPendingEditFile(null);
+  };
+  const cancelEditSubmission = () => {
+    setEditingSubmissionId(null);
+    setEditCaption('');
+    setPendingEditFile(null);
+  };
+  const saveEditSubmission = async (s: any) => {
+    if (!id) return;
+    try {
+      setSavingEdit(true);
+      let videoUrl = s.video_url as string;
+      if (pendingEditFile && currentUserId) {
+        const ext = pendingEditFile.name.split('.').pop()?.toLowerCase() || 'mp4';
+        const path = `challenges/${id}/submissions/${currentUserId}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('challenge-media').upload(path, pendingEditFile, {
+          upsert: true,
+          cacheControl: '3600',
+          contentType: pendingEditFile.type || undefined
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+        videoUrl = pub.publicUrl as string;
+      }
+      const { error } = await supabase
+        .from('challenge_submissions')
+        .update({ video_url: videoUrl, caption: editCaption })
+        .eq('id', s.id);
+      if (error) throw error;
+      showToast('Envío actualizado', 'success');
+      setEditingSubmissionId(null);
+      setEditCaption('');
+      setPendingEditFile(null);
+      qc.invalidateQueries({ queryKey: ['challenges','submissions', id] });
+      qc.invalidateQueries({ queryKey: ['challenges','leaderboard', id] });
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo actualizar el envío','error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
     const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
@@ -74,6 +126,7 @@ export default function ChallengeDetail() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setCurrentUserId(user.id);
       const { data: roles } = await supabase.from('user_roles').select('role_slug').eq('user_id', user.id);
       const isSA = (roles || []).some((r: any) => r.role_slug === 'superadmin');
       const amOwner = challenge?.owner_id === user.id;
@@ -638,11 +691,31 @@ export default function ChallengeDetail() {
                 </span>
               </div>
 
-              {/* Caption del envío (2 líneas) */}
-              {s.caption && (
-                <div className="cc-two-lines" style={{ opacity: 0.85 }}>
-                  {s.caption}
+              {/* Caption / edición */}
+              {editingSubmissionId === s.id ? (
+                <div style={{ display:'grid', gap:'.5rem' }}>
+                  <input
+                    value={editCaption}
+                    onChange={(e)=>setEditCaption(e.target.value)}
+                    placeholder="Título / caption"
+                    style={{ width:'100%', padding:'.5rem .75rem', borderRadius:12, border:'1px solid rgba(255,255,255,.18)', background:'rgba(255,255,255,.06)', color:'#fff' }}
+                  />
+                  <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', alignItems:'center' }}>
+                    <input ref={editFileRef} type="file" accept="video/*" hidden onChange={(e)=>{ const f=e.target.files?.[0]; if (!f) return; setPendingEditFile(f); if (editFileRef.current) editFileRef.current.value=''; }} />
+                    <button className="cc-btn cc-btn--ghost" onClick={()=>editFileRef.current?.click()}>Seleccionar nuevo video</button>
+                    {pendingEditFile && <span className="cc-chip">Archivo listo: {pendingEditFile.name}</span>}
+                  </div>
+                  <div style={{ display:'flex', gap:'.5rem', justifyContent:'flex-end' }}>
+                    <button className="cc-btn cc-btn--ghost" onClick={cancelEditSubmission}>Cancelar</button>
+                    <button className="cc-btn cc-btn--primary" onClick={()=>saveEditSubmission(s)} disabled={savingEdit}>{savingEdit ? 'Guardando…' : 'Guardar'}</button>
+                  </div>
                 </div>
+              ) : (
+                s.caption && (
+                  <div className="cc-two-lines" style={{ opacity: 0.85 }}>
+                    {s.caption}
+                  </div>
+                )
               )}
 
               {/* Acciones */}
@@ -659,6 +732,9 @@ export default function ChallengeDetail() {
                   >
                     Votar
                   </button>
+                  {(canModerate || currentUserId === s.user_id) && (
+                    <button className="cc-btn cc-btn--ghost" onClick={()=>startEditSubmission(s)}>Editar</button>
+                  )}
                   <a
                     href={s.video_url}
                     target="_blank"

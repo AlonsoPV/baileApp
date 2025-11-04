@@ -77,7 +77,7 @@ export default function HorizontalSlider<T>({
         style={{
           position: "relative",
           overflowX: "auto",
-          overflowY: "hidden",
+          overflowY: "visible",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           paddingBottom: 4
