@@ -66,7 +66,7 @@ import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 
 // User Screens
 import UserProfileEditor from './screens/profile/UserProfileEditor';
-import UserPublicScreen from './screens/profile/UserPublicScreen';
+import { UserProfileLive as UserPublicScreen } from './screens/profile/UserPublicScreen';
 
 // System Screens
 import NotFound from './screens/system/NotFound';
