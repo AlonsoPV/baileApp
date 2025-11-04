@@ -21,6 +21,21 @@ export default function ChallengeDetail() {
   const [canModerate, setCanModerate] = React.useState(false);
   const [videoUrl, setVideoUrl] = React.useState('');
   const [caption, setCaption] = React.useState('');
+  const ownerFileRef = React.useRef<HTMLInputElement|null>(null);
+  const userFileRef = React.useRef<HTMLInputElement|null>(null);
+  const [uploadingOwner, setUploadingOwner] = React.useState(false);
+  const [uploadingUser, setUploadingUser] = React.useState(false);
+
+  const uploadToChallengeBucket = async (file: File, path: string) => {
+    const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
+      upsert: true,
+      cacheControl: '3600',
+      contentType: file.type || undefined,
+    });
+    if (error) throw error;
+    const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+    return pub.publicUrl as string;
+  };
 
   React.useEffect(() => {
     (async () => {
@@ -61,21 +76,69 @@ export default function ChallengeDetail() {
         <img src={challenge.cover_image_url} alt="cover" style={{ width:'100%', maxWidth:960, height:'auto', borderRadius:12 }} />
       )}
 
-      <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
-        <h3 style={{ marginTop:0 }}>Subir mi video</h3>
-        <div style={{ display:'grid', gap:'.5rem', maxWidth:600 }}>
-          <input placeholder="https://..." value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} className="editor-input" />
-          <input placeholder="caption (opcional)" value={caption} onChange={e=>setCaption(e.target.value)} className="editor-input" />
-          <button onClick={async ()=>{
-            if (!videoUrl) { showToast('Ingresa un URL', 'error'); return; }
-            try {
-              await submit.mutateAsync({ challengeId: id, video_url: videoUrl, caption });
-              setVideoUrl(''); setCaption('');
-              showToast('Envío creado', 'success');
-            } catch(e:any){ showToast(e?.message || 'No se pudo enviar','error'); }
-          }} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>Enviar</button>
-        </div>
-      </section>
+      {canModerate && (
+        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+          <h3 style={{ marginTop:0 }}>Video del Challenge (referencia)</h3>
+          {challenge.hero_video_url ? (
+            <video controls style={{ width:'100%', maxWidth:960, borderRadius:12 }} src={(challenge as any).hero_video_url} />
+          ) : (
+            <div style={{ opacity:.85 }}>Aún no hay video de referencia.</div>
+          )}
+          <div style={{ marginTop:'.75rem', display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+            <input ref={ownerFileRef} type="file" accept="video/*" hidden onChange={async (e)=>{
+              const f = e.target.files?.[0];
+              if (!f) return;
+              if (!id) return;
+              try {
+                setUploadingOwner(true);
+                const ext = f.name.split('.').pop()?.toLowerCase() || 'mp4';
+                const url = await uploadToChallengeBucket(f, `challenges/${id}/owner-${Date.now()}.${ext}`);
+                const { error } = await supabase.from('challenges').update({ hero_video_url: url }).eq('id', id);
+                if (error) throw error;
+                showToast('Video actualizado', 'success');
+              } catch(e:any){
+                showToast(e?.message || 'No se pudo subir video', 'error');
+              } finally {
+                setUploadingOwner(false);
+                if (ownerFileRef.current) ownerFileRef.current.value='';
+              }
+            }} />
+            <button onClick={()=>ownerFileRef.current?.click()} disabled={uploadingOwner} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>
+              {uploadingOwner ? 'Subiendo…' : 'Subir/Actualizar video'}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {challenge.status === 'open' && (
+        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+          <h3 style={{ marginTop:0 }}>Subir mi video</h3>
+          <div style={{ display:'grid', gap:'.5rem', maxWidth:600 }}>
+            <input placeholder="caption (opcional)" value={caption} onChange={e=>setCaption(e.target.value)} className="editor-input" />
+            <input ref={userFileRef} type="file" accept="video/*" hidden onChange={async (e)=>{
+              const f = e.target.files?.[0];
+              if (!f || !id) return;
+              try {
+                setUploadingUser(true);
+                const ext = f.name.split('.').pop()?.toLowerCase() || 'mp4';
+                const { data: { user } } = await supabase.auth.getUser();
+                const uid = user?.id || 'anon';
+                const url = await uploadToChallengeBucket(f, `challenges/${id}/submissions/${uid}/${Date.now()}.${ext}`);
+                await submit.mutateAsync({ challengeId: id, video_url: url, caption });
+                setCaption('');
+                showToast('Envío creado', 'success');
+              } catch(e:any){ showToast(e?.message || 'No se pudo enviar','error'); }
+              finally {
+                setUploadingUser(false);
+                if (userFileRef.current) userFileRef.current.value='';
+              }
+            }} />
+            <button onClick={()=>userFileRef.current?.click()} disabled={uploadingUser} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>
+              {uploadingUser ? 'Subiendo…' : 'Seleccionar video y enviar'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {canModerate && (
         <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
