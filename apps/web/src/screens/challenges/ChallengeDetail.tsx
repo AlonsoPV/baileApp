@@ -158,29 +158,29 @@ export default function ChallengeDetail() {
       const arr = Array.from(ids);
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('user_id, display_name, nombre_publico, full_name, email, bio')
+        .select('user_id, display_name, email, bio')
         .in('user_id', arr);
       if (error) return;
       const map: Record<string, { name: string; bio?: string }> = {};
       (data || []).forEach((p: any) => {
-        const name = p.display_name || p.nombre_publico || p.full_name || p.email || p.user_id;
+        const name = p.display_name || p.email || p.user_id;
         map[p.user_id] = { name, bio: p.bio };
       });
       setUserMeta(map);
     })();
   }, [subs, leaderboard]);
 
-  if (!id) return <div className="cc-page" style={{ padding: '1rem' }}>Sin id</div>;
-  if (!challenge) return <div className="cc-page" style={{ padding: '1rem' }}>Cargando…</div>;
-
-  const pending = (subs || []).filter((s) => s.status === 'pending');
-  const approved = (subs || []).filter((s) => s.status === 'approved');
-
   const subById = React.useMemo(() => {
     const m = new Map<string, any>();
     (subs || []).forEach((s: any) => { if (s?.id) m.set(String(s.id), s); });
     return m;
   }, [subs]);
+
+  if (!id) return <div className="cc-page" style={{ padding: '1rem' }}>Sin id</div>;
+  if (!challenge) return <div className="cc-page" style={{ padding: '1rem' }}>Cargando…</div>;
+
+  const pending = (subs || []).filter((s) => s.status === 'pending');
+  const approved = (subs || []).filter((s) => s.status === 'approved');
 
   const getStoragePathFromPublicUrl = (url?: string | null) => {
     if (!url) return null;
