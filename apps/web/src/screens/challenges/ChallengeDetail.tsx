@@ -59,6 +59,9 @@ export default function ChallengeDetail() {
   const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
     { open: false, title: '', message: '', onConfirm: async () => { } }
   );
+  const [videoModal, setVideoModal] = React.useState<{ open: boolean; url: string | null; title?: string }>(
+    { open: false, url: null, title: undefined }
+  );
   // Edición de submissions
   const [editingSubmissionId, setEditingSubmissionId] = React.useState<string | null>(null);
   const [editCaption, setEditCaption] = React.useState<string>('');
@@ -175,6 +178,12 @@ export default function ChallengeDetail() {
 
   const pending = (subs || []).filter((s) => s.status === 'pending');
   const approved = (subs || []).filter((s) => s.status === 'approved');
+
+  const subById = React.useMemo(() => {
+    const m = new Map<string, any>();
+    (subs || []).forEach((s: any) => { if (s?.id) m.set(String(s.id), s); });
+    return m;
+  }, [subs]);
 
   const getStoragePathFromPublicUrl = (url?: string | null) => {
     if (!url) return null;
@@ -674,18 +683,18 @@ export default function ChallengeDetail() {
                           {challenge.title}
                         </div>
 
-                        {/* Descripción del challenge (2 líneas) */}
-                        {(challenge as any)?.description && (
-                          <div className="appr-desc">
-                            {(challenge as any).description}
-                          </div>
-                        )}
+              {/* Descripción del challenge (chip) */}
+              {(challenge as any)?.description && (
+                <div className="appr-desc">
+                  <span className="cc-soft-chip"><span className="cc-ellipsis">{(challenge as any).description}</span></span>
+                </div>
+              )}
 
                         {/* Autor + votos */}
-                        <div className="appr-meta">
-                          <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || 'Usuario'}>
-                            {(userMeta[s.user_id]?.name && userMeta[s.user_id]?.name !== s.user_id) ? userMeta[s.user_id]?.name : 'Usuario'}
-                          </div>
+                         <div className="appr-meta">
+                           <div className="appr-author" title={userMeta[s.user_id]?.name || 'Usuario'}>
+                             <span className="cc-soft-chip"><span className="cc-ellipsis">{(userMeta[s.user_id]?.name && userMeta[s.user_id]?.name !== s.user_id) ? userMeta[s.user_id]?.name : 'Usuario'}</span></span>
+                           </div>
                           <button
                             className="cc-btn cc-btn--primary"
                             title={`${vmap.get(s.id) || 0} votos`}
@@ -783,7 +792,7 @@ export default function ChallengeDetail() {
                   className="cc-glass"
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'auto 1fr auto',
+                    gridTemplateColumns: 'auto 1fr auto auto',
                     alignItems: 'center',
                     gap: '.6rem',
                     padding: '.6rem'
@@ -798,6 +807,9 @@ export default function ChallengeDetail() {
                       <div style={{ fontSize: '.85rem', opacity: 0.85 }} className="cc-two-lines">{userMeta[row.user_id]?.bio}</div>
                     )}
                   </div>
+                  {(() => { const url = subById.get(String(row.submission_id))?.video_url as string | undefined; return url ? (
+                    <button className="cc-btn cc-btn--ghost" title="Ver video" onClick={()=>setVideoModal({ open:true, url, title: userMeta[row.user_id]?.name || 'Video' })}>Ver video</button>
+                  ) : null; })()}
                   <span className="cc-chip">❤️ {row.votes}</span>
                 </div>
               ))}
@@ -815,6 +827,21 @@ export default function ChallengeDetail() {
               <button className="cc-btn cc-btn--ghost" onClick={() => setConfirmState(s => ({ ...s, open: false }))}>Cancelar</button>
               <button className="cc-btn cc-btn--primary" onClick={async () => { const fn = confirmState.onConfirm; setConfirmState(s => ({ ...s, open: false })); await fn(); }}>Eliminar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de video (leaderboard / submissions) */}
+      {videoModal.open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', display: 'grid', placeItems: 'center', zIndex: 75 }}>
+          <div className="cc-glass" style={{ padding: '1rem', width: 'min(900px, 95vw)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '.5rem' }}>
+              <h3 className="cc-section__title cc-mb-0">{videoModal.title || 'Video'}</h3>
+              <button className="cc-btn cc-btn--ghost" onClick={()=>setVideoModal({ open:false, url:null })}>Cerrar</button>
+            </div>
+            {videoModal.url && (
+              <video controls autoPlay style={{ width:'100%', height:'auto', borderRadius:12, display:'block' }} src={videoModal.url} />
+            )}
           </div>
         </div>
       )}

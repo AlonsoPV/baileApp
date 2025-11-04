@@ -144,3 +144,16 @@
 .cc-status-chip.is-draft  { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
 .cc-status-chip.is-submitted { background: rgba(59,130,246,.16); border-color: rgba(59,130,246,.35); }
 .cc-status-chip.is-rejected  { background: rgba(244,63,94,.16); border-color: rgba(244,63,94,.35); }
+
+/* Chips suaves para meta (nombre/descripcion) */
+.cc-soft-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .6rem;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07);
+  border-radius: 12px;
+  max-width: 100%;
+}
+.cc-soft-chip .cc-ellipsis { max-width: 100%; }
