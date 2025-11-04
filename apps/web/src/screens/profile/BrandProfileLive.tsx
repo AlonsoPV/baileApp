@@ -144,6 +144,9 @@ export default function BrandProfileLive() {
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
               </div>
+              <div>{(brand as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
+               </div>
+              
             </div>
 
             {/* Info */}
@@ -163,13 +166,13 @@ export default function BrandProfileLive() {
                   {((brand as any).redes_sociales.whatsapp) && <a href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} target="_blank" rel="noreferrer" style={{ color: '#fff' }}>💬 WhatsApp</a>}
                 </div>
               )}
-              {((brand as any)?.estado_aprobacion === 'aprobado') ? (
+             {/*  {((brand as any)?.estado_aprobacion === 'aprobado') ? (
                 <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12, alignSelf: 'center' }}>✅ Verificado</span>
               ) : (
                 (brand as any)?.estado_aprobacion && (
                   <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(255, 215, 0, 0.14)', border: '1px solid rgba(255,215,0,0.35)', color: '#ffd700', fontWeight: 800, fontSize: 12, alignSelf: 'center' }}>{`⏳ ${(brand as any).estado_aprobacion}`}</span>
                 )
-              )}
+              )} */}
             </div>
           </div>
         </motion.section>
