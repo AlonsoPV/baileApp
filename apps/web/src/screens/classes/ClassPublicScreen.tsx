@@ -39,6 +39,8 @@ export default function ClassPublicScreen() {
 
   const creatorName = profile?.nombre_publico || profile?.display_name || '—';
   const creatorLink = isTeacher ? urls.teacherLive(profile?.id) : urls.academyLive(profile?.id);
+  const creatorTypeLabel = isTeacher ? 'Maestro' : 'Academia';
+
   const cronograma = profile?.cronograma || [];
   const costos = profile?.costos || [];
   const ubicacion = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
@@ -49,6 +51,14 @@ export default function ClassPublicScreen() {
         referencias: profile.ubicaciones[0]?.referencias,
       }
     : undefined;
+
+  // Intentar obtener un "nombre" de clase de la primera entrada del cronograma
+  const firstClass = Array.isArray(cronograma) && cronograma.length > 0 ? cronograma[0] as any : undefined;
+  const classTitle = (firstClass?.nombre)
+    || (firstClass?.titulo)
+    || (firstClass?.clase)
+    || (firstClass?.estilo)
+    || 'Clase';
 
   return (
     <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
@@ -86,10 +96,16 @@ export default function ClassPublicScreen() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
                   <button onClick={() => navigate(creatorLink)} style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid rgba(240,147,251,0.28)', background: 'rgba(240,147,251,0.10)', color: '#f093fb', fontWeight: 700, cursor: 'pointer' }}>← Volver</button>
                 </div>
+                {/* Nombre de la clase */}
                 <h1 style={{ margin: 0, fontSize: '2rem', lineHeight: 1.2, fontWeight: 800, background: 'linear-gradient(135deg,#f093fb,#FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Clases de {creatorName}
+                  {classTitle}
                 </h1>
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
+                {/* Propiedad y tipo (Maestro/Academia) */}
+                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span className="chip chip-date">{isTeacher ? '👤 Maestro' : '🏫 Academia'}</span>
+                  <Link to={creatorLink} style={{ color: '#FFD166', fontWeight: 800, textDecoration: 'none', borderBottom: '1px dashed rgba(255,209,102,0.5)' }}>
+                    Creada por {creatorTypeLabel} · {creatorName}
+                  </Link>
                   <span className="chip chip-date">📚 {cronograma?.length || 0} clase(s)</span>
                   {Array.isArray(costos) && costos.length > 0 && (
                     <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166' }}>💰 {costos.length} costo(s)</span>
@@ -152,7 +168,7 @@ export default function ClassPublicScreen() {
           </div>
         </motion.section>
 
-        {/* Clases y costos */}
+        {/* Clases, horarios, costos y agregar a calendario */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)', backdropFilter: 'blur(12px)' }}>
           <ClasesLive title="" cronograma={cronograma} costos={costos} ubicacion={ubicacion as any} showCalendarButton={true} />
         </motion.section>

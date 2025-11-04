@@ -11,6 +11,9 @@ import OnboardingGate from './guards/OnboardingGate';
 // Auth Screens
 import { Login } from './screens/auth/Login';
 import { Signup } from './screens/auth/Signup';
+import AuthCallback from './screens/auth/AuthCallback';
+import PinSetup from './screens/auth/PinSetup';
+import PinLogin from './screens/auth/PinLogin';
 
 // Onboarding Screens
 import { ProfileBasics } from './screens/onboarding/ProfileBasics';
