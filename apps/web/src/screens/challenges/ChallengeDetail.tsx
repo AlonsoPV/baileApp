@@ -669,7 +669,7 @@ export default function ChallengeDetail() {
           <style>{`
     .appr-slider { gap: 1rem; }
     .appr-card {
-      width: 360px; min-width: 320px; max-width: 92vw; flex: 0 0 auto;
+      width: min-content; flex: 0 0 auto;
       border-radius: 18px; overflow: hidden; padding: 0; box-sizing: border-box;
       position: relative; display: block; transition: transform .18s ease, box-shadow .18s ease;
     }
