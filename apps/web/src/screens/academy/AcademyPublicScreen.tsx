@@ -1,22 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAcademyPublic } from '../../hooks/useAcademy';
 import { useTags } from '../../hooks/useTags';
 import SocialMediaSection from '../../components/profile/SocialMediaSection';
 import { Chip } from '../../components/profile/Chip';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { ProfileNavigationToggle } from '../../components/profile/ProfileNavigationToggle';
-import '@/styles/organizer.css';
-
-const DIAS_SEMANA = [
-  { value: 'Lun', label: 'Lunes' },
-  { value: 'Mar', label: 'Martes' },
-  { value: 'Mie', label: 'Miércoles' },
-  { value: 'Jue', label: 'Jueves' },
-  { value: 'Vie', label: 'Viernes' },
-  { value: 'Sab', label: 'Sábado' },
-  { value: 'Dom', label: 'Domingo' }
-];
+import ImageWithFallback from '../../components/ImageWithFallback';
+import ClasesLive from '../../components/events/ClasesLive';
+import UbicacionesLive from '../../components/locations/UbicacionesLive';
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
+import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 
 export default function AcademyPublicScreen() {
   const { academyId } = useParams();
@@ -24,38 +19,50 @@ export default function AcademyPublicScreen() {
   const { data: academy, isLoading } = useAcademyPublic(id);
   const { data: allTags } = useTags();
 
-  // Obtener nombres de tags
+  const media = (academy as any)?.media || [];
+  const carouselPhotos = PHOTO_SLOTS
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
+    .filter(Boolean) as string[];
+  const videos = VIDEO_SLOTS
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
+    .filter(Boolean) as string[];
+
   const getRitmoNombres = () => {
-    if (!allTags || !academy?.ritmos) return [];
-    return academy.ritmos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
+    const names: string[] = [];
+    if (allTags) {
+      const tagToName = (ids?: number[]) => (ids || [])
+        .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo')?.nombre)
+        .filter(Boolean) as string[];
+      if (Array.isArray((academy as any)?.ritmos) && (academy as any).ritmos.length) {
+        names.push(...tagToName((academy as any).ritmos));
+      } else if (Array.isArray((academy as any)?.estilos) && (academy as any).estilos.length) {
+        names.push(...tagToName((academy as any).estilos));
+      }
+    }
+    if (names.length === 0 && Array.isArray((academy as any)?.ritmos_seleccionados)) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      const extra = ((academy as any).ritmos_seleccionados as string[])
+        .map(id => labelById.get(id))
+        .filter(Boolean) as string[];
+      names.push(...extra);
+    }
+    return names;
   };
 
   const getZonaNombres = () => {
-    if (!allTags || !academy?.zonas) return [];
-    return academy.zonas
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
-  };
-
-  const getDiaLabel = (dia: string) => {
-    return DIAS_SEMANA.find(d => d.value === dia)?.label || dia;
+    if (!allTags || !(academy as any)?.zonas) return [];
+    return ((academy as any).zonas as number[])
+      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona')?.nombre)
+      .filter(Boolean) as string[];
   };
 
   if (isLoading) {
     return (
       <div style={{
-        padding: spacing[12],
-        textAlign: 'center',
-        color: colors.light,
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        padding: spacing[12], textAlign: 'center', color: colors.light,
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
         <p style={{ fontSize: typography.fontSize.lg }}>Cargando academia...</p>
@@ -66,19 +73,12 @@ export default function AcademyPublicScreen() {
   if (!academy) {
     return (
       <div style={{
-        padding: spacing[12],
-        textAlign: 'center',
-        color: colors.light,
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        padding: spacing[12], textAlign: 'center', color: colors.light,
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>❌</div>
-        <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-          Academia no disponible
-        </h2>
+        <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>Academia no disponible</h2>
         <p style={{ marginBottom: spacing[6], opacity: 0.7, fontSize: typography.fontSize.lg }}>
           Esta academia no existe o no está aprobada
         </p>
@@ -87,107 +87,169 @@ export default function AcademyPublicScreen() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', color: colors.light }}>
-      {/* Toggle */}
-      <div className="profile-toggle" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <ProfileNavigationToggle
-          currentView="live"
-          profileType="academy"
-          liveHref={id ? `/academia/${id}` : "/profile/academy/live"}
-          editHref="/profile/academy"
-        />
-      </div>
+    <>
+      <style>{`
+        .academy-container { width: 100%; max-width: 900px; margin: 0 auto; }
+        .academy-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }
+        .glass-card-container {
+          opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px; backdrop-filter: blur(10px);
+        }
+        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem;
+        }
+        .academy-banner-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center; }
+        .academy-banner-avatar { width: 200px; height: 200px; border-radius: 50%; overflow: hidden; border: 6px solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); background: linear-gradient(135deg, #1E88E5, #FF7043); display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 700; color: white; }
+        @media (max-width: 768px) {
+          .academy-container { max-width: 100% !important; padding: 1rem !important; }
+          .academy-banner { border-radius: 16px !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
+          .academy-banner-grid { grid-template-columns: 1fr !important; text-align: center; gap: 1.5rem !important; justify-items: center !important; }
+          .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .academy-banner h1 { font-size: 1.75rem !important; }
+          .academy-banner-avatar { width: 150px !important; height: 150px !important; }
+          .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
+        }
+      `}</style>
 
-      {/* Banner */}
-      <div className="org-banner" style={{ background: academy?.portada_url ? `url(${academy.portada_url}) center/cover` : undefined }}>
-        <div className="org-banner-grid">
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ width: '220px', height: '220px', borderRadius: '50%', overflow: 'hidden', border: '4px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg,#1E88E5,#00BCD4)' }}>
-              {academy?.avatar_url ? (
-                <img src={academy.avatar_url} alt={academy?.nombre_publico} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>🎓</div>
-              )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6], justifyContent: 'center' }}>
-            <h1 className="gradient-text" style={{ fontSize: typography.fontSize['5xl'], fontWeight: typography.fontWeight.black, margin: 0 }}>{academy?.nombre_publico}</h1>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] }}>
-              {getRitmoNombres().map((nombre) => (<Chip key={`r-${nombre}`} label={nombre} icon="🎵" variant="ritmo" />))}
-              {getZonaNombres().map((nombre) => (<Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />))}
-            </div>
-          </div>
+      <div className="academy-container">
+        {/* Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+          <ProfileNavigationToggle currentView="live" profileType="academy" />
         </div>
-      </div>
 
-      {/* Contenido */}
-      <div className="org-container" style={{ padding: spacing[8], maxWidth: '900px', margin: '0 auto' }}>
-        {academy?.bio && (
-          <section className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-            <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>💬 Sobre la academia</h3>
-            <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.lg }}>{academy.bio}</p>
-          </section>
-        )}
-
-        <section className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-          <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>🔗 Redes</h3>
-          <SocialMediaSection
-            availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp']}
-            respuestas={{ redes: academy?.redes_sociales || {} }}
-            redes_sociales={academy?.redes_sociales || {}}
-          />
-        </section>
-
-        {academy?.ubicaciones?.length > 0 && (
-          <section className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-            <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>📍 Ubicaciones</h3>
-            {academy.ubicaciones.map((u, i) => (
-              <div key={i} style={{ padding: spacing[3], borderBottom: i < academy.ubicaciones.length - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' }}>
-                <div style={{ fontWeight: typography.fontWeight.semibold }}>{u.sede || 'Sede'}</div>
-                {u.direccion && <div style={{ opacity: 0.9 }}>{u.direccion}</div>}
-                {u.ciudad && <div style={{ opacity: 0.7, fontSize: typography.fontSize.sm }}>{u.ciudad}</div>}
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="academy-banner glass-card-container"
+          style={{ position: 'relative', margin: '0 auto', overflow: 'hidden' }}
+        >
+          <div className="academy-banner-grid">
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div className="academy-banner-avatar">
+                {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
+                  <img
+                    src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''}
+                    alt="Logo de la academia"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', fontWeight: '700', color: 'white' }}>
+                    {(academy as any)?.nombre_publico?.[0]?.toUpperCase() || '🎓'}
+                  </div>
+                )}
               </div>
-            ))}
-          </section>
-        )}
-
-        {academy?.horarios?.length > 0 && (
-          <section className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-            <h3 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontWeight: typography.fontWeight.bold }}>🕒 Horarios</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: spacing[4] }}>
-              {academy.horarios.map((h, i) => (
-                <div key={i} style={{ padding: spacing[3], background: 'rgba(255,255,255,0.05)', borderRadius: borderRadius.lg, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ fontWeight: typography.fontWeight.semibold }}>{h.dia}</div>
-                  <div style={{ opacity: 0.8, fontSize: typography.fontSize.sm }}>{h.desde && h.hasta ? `${h.desde} - ${h.hasta}` : 'Horario por confirmar'}</div>
-                </div>
-              ))}
             </div>
-          </section>
+
+            <div>
+              <h1 style={{ fontSize: '3rem', display: 'inline', fontWeight: '800', color: 'white', margin: '0 0 0.5rem 0', textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+                {(academy as any)?.nombre_publico}
+              </h1>
+              <p style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.9)', margin: '0 0 1.5rem 0', lineHeight: 1.4 }}>
+                Academia de Baile
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {getRitmoNombres().map((nombre) => (
+                  <Chip key={`r-${nombre}`} label={nombre} icon="🎵" variant="ritmo" />
+                ))}
+                {getZonaNombres().map((nombre) => (
+                  <Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Bio */}
+        {(academy as any)?.bio && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="glass-card-container">
+            <h3 className="section-title">💬 Sobre Nosotros</h3>
+            <p style={{ fontSize: '1.1rem', lineHeight: 1.6, color: 'rgba(255,255,255,0.9)', margin: 0 }}>{(academy as any).bio}</p>
+          </motion.section>
         )}
 
-        {Array.isArray(academy?.media) && academy.media.length > 0 && (
-          <section id="user-profile-photo-gallery" className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+        {/* Clases & Tarifas */}
+        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="glass-card-container" style={{ position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #E53935, #FB8C00, #FFD166)', opacity: 0.9 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #E53935, #FB8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)' }}>🎓</div>
+            <div>
+              <h2 className="section-title" style={{ margin: 0 }}>Nuestras clases</h2>
+              <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)' }}>
+                Horarios, costos y ubicaciones
+              </p>
+            </div>
+          </div>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <ClasesLive
+              title=""
+              cronograma={(academy as any)?.cronograma || []}
+              costos={(academy as any)?.costos || []}
+              ubicacion={{
+                nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+              }}
+              showCalendarButton={true}
+            />
+          </div>
+        </motion.section>
+
+        {/* Ubicaciones */}
+        {Array.isArray((academy as any)?.ubicaciones) && (academy as any).ubicaciones.length > 0 && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }} className="glass-card-container">
+            <UbicacionesLive ubicaciones={(academy as any).ubicaciones} />
+          </motion.section>
+        )}
+
+        {/* Redes Sociales */}
+        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="glass-card-container">
+          <h3 className="section-title">🌐 Redes Sociales</h3>
+          <SocialMediaSection respuestas={{ redes: (academy as any)?.redes_sociales }} redes_sociales={(academy as any)?.redes_sociales} availablePlatforms={['instagram','facebook','whatsapp','tiktok','youtube']} />
+        </motion.section>
+
+        {/* Galería de Fotos */}
+        {carouselPhotos.length > 0 && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }} className="glass-card-container">
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'] }}>📷</div>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #E53935, #FB8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'], boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)' }}>📷</div>
               <div>
-                <h3 style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, margin: 0 }}>Galería</h3>
-                <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0 }}>{academy.media.length} elemento{academy.media.length !== 1 ? 's' : ''}</p>
+                <h3 className="section-title" style={{ margin: 0 }}>Galería de Fotos</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: spacing[4] }}>
-              {academy.media.map((item: any, index: number) => (
+              {carouselPhotos.map((src, index) => (
                 <div key={index} style={{ borderRadius: borderRadius.xl, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                  {item.type === 'image' ? (
-                    <img src={item.url} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
-                  ) : (
-                    <video src={item.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
-                  )}
+                  <ImageWithFallback src={src} alt={`Imagen ${index + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                 </div>
               ))}
             </div>
-          </section>
+          </motion.section>
+        )}
+
+        {/* Videos */}
+        {videos.length > 0 && (
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="glass-card-container">
+            <h3 className="section-title">🎥 Videos</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              {videos.map((video, index) => (
+                <div key={index} style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(255, 255, 255, 0.1)', background: 'rgba(0, 0, 0, 0.1)' }}>
+                  <video src={video} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          </motion.section>
         )}
       </div>
-    </div>
+    </>
   );
 }

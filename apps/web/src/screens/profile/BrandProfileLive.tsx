@@ -136,7 +136,7 @@ export default function BrandProfileLive() {
 
           <div className="banner-grid" style={{ position: 'relative' }}>
             {/* Avatar */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
               <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '50%', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary }}>
                 {avatarUrl ? (
                   <ImageWithFallback src={avatarUrl} alt="avatar marca" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -144,9 +144,33 @@ export default function BrandProfileLive() {
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
               </div>
-              <div>{(brand as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
-               </div>
-              
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    padding: `${spacing[2]} ${spacing[4]}`,
+                    borderRadius: borderRadius.full,
+                    background: (brand as any)?.estado_aprobacion === 'aprobado'
+                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)`
+                      : colors.gradients.secondary,
+                    border: `2px solid ${(brand as any)?.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
+                    color: colors.light,
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.bold,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: (brand as any)?.estado_aprobacion === 'aprobado'
+                      ? `0 4px 16px ${colors.success}66`
+                      : `0 4px 16px ${colors.secondary[500]}66`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: spacing[1],
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  {(brand as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
+                </motion.span>
+              </div>
             </div>
 
             {/* Info */}
