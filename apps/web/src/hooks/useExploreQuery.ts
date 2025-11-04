@@ -74,7 +74,8 @@ function baseSelect(type: ExploreType) {
       // Eventos padre (sociales) — simplificado para asegurar retorno de filas
       return { table: "events_parent", select: `*` };
     case "usuarios":       
-      return { table: "profiles_user", select: "user_id, display_name, avatar_url, ritmos, zonas, bio" };
+      // Incluir media para poder mostrar avatar/cover alternos en DancerCard
+      return { table: "profiles_user", select: "user_id, display_name, avatar_url, media, ritmos, zonas, bio" };
     default:               
       return { table: "events_date", select: "*" };
   }

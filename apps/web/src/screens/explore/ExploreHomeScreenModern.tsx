@@ -501,9 +501,10 @@ export default function ExploreHomeScreen() {
                       display_name: u.display_name,
                       bio: u.bio,
                       avatar_url: (u as any).avatar_url,
+                      media: (u as any).media,
                       ritmos: (u as any).ritmos,
                       zonas: (u as any).zonas
-                    }} to={urls.userLive(u.user_id)} />
+                    }} to={'/app/profile'} />
                   </motion.div>
                 )}
               />
