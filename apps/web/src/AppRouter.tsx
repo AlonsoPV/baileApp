@@ -87,6 +87,9 @@ import ChallengesList from './screens/challenges/ChallengesList';
 import ChallengeNew from './screens/challenges/ChallengeNew';
 import ChallengeDetail from './screens/challenges/ChallengeDetail';
 import ClassPublicScreen from './screens/classes/ClassPublicScreen';
+import OrganizerPublicLive from './screens/profile/OrganizerPublicLive';
+import AcademyPublicLive from './screens/profile/AcademyPublicLive';
+import TeacherPublicLive from './screens/profile/TeacherPublicLive';
 
 export default function AppRouter() {
   return (
@@ -111,19 +114,19 @@ export default function AppRouter() {
         <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
         <Route path="/about" element={<AboutScreen />} />
         <Route path="/legal" element={<LegalScreen />} />
-        <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
-        <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
+        <Route path="/organizer/:id" element={<OrganizerPublicLive />} />
+        <Route path="/organizador/:organizerId" element={<OrganizerPublicLive />} />
         <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
         <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
         <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
         <Route path="/profile/organizer/:id" element={<OrganizerPublicScreen />} />
-        <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
-        <Route path="/profile/academy/:academyId" element={<AcademyPublicScreen />} />
+        <Route path="/academia/:academyId" element={<AcademyPublicLive />} />
+        <Route path="/profile/academy/:academyId" element={<AcademyPublicLive />} />
         <Route path="/profile/academy" element={<AcademyProfileLive />} />
         <Route path="/profile/teacher" element={<TeacherProfileLive />} />
         <Route path="/u/:userId" element={<UserPublicScreen />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
-        <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
+        <Route path="/maestro/:teacherId" element={<TeacherPublicLive />} />
         {/* Clase pública (usa query o params) */}
         <Route path="/clase" element={<ClassPublicScreen />} />
         <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
