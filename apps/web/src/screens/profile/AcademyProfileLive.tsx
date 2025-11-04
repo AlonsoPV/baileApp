@@ -20,7 +20,7 @@ import { useUpsertAcademy } from "../../hooks/useAcademy";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 
-// Componente FAQ Accordion
+// Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
 

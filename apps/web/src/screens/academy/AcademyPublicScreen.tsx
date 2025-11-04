@@ -1,4 +1,4 @@
-// Public Academy Screen (replica visual de AcademyProfileLive)
+// Public Academy Screen (replica visual de AcademyProfileLi  ve)
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useParams } from "react-router-dom";
