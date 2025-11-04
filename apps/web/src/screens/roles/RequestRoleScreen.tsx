@@ -4,6 +4,8 @@ import { Button } from '@ui/index';
 import { useCreateRoleRequest, useRolesCatalog, useMyRoleRequests } from '@/hooks/useRoles';
 import type { RoleSlug } from '@/types/roles';
 import { useAuth } from '@/contexts/AuthProvider';
+// Estilos compartidos (botones/vidrio)
+import '@/styles/event-public.css';
 
 export default function RequestRoleScreen() {
   const [sp] = useSearchParams();
@@ -48,13 +50,8 @@ export default function RequestRoleScreen() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #111827 60%, #0b1020 100%)',
-      padding: '32px 16px',
-      color: '#e5e7eb'
-    }}>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div className="cc-page" style={{ padding: '24px 16px' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
         {okMsg && (
           <div style={{
             margin: '0 0 16px',
@@ -71,6 +68,7 @@ export default function RequestRoleScreen() {
         )}
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: 28, marginBottom: 6 }}>🎫</div>
           <h1 style={{
             margin: 0,
             fontSize: '1.875rem',
@@ -80,7 +78,12 @@ export default function RequestRoleScreen() {
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>Solicitar rol</h1>
-          <p style={{ opacity: 0.8, marginTop: 8 }}>Completa tus datos para que un admin revise tu solicitud.</p>
+          <p style={{ opacity: 0.85, marginTop: 8 }}>Completa tus datos para que un admin revise tu solicitud.</p>
+          <div style={{ display:'inline-flex', gap:8, marginTop:8, opacity:.9 }}>
+            <span className="cc-soft-chip">Paso 1: Datos</span>
+            <span className="cc-soft-chip">Paso 2: Revisión</span>
+            <span className="cc-soft-chip">Paso 3: Aprobación</span>
+          </div>
         </div>
 
         {/* Grid layout: form + aside */}
@@ -90,12 +93,13 @@ export default function RequestRoleScreen() {
               .rr-grid { grid-template-columns: 1.2fr 0.8fr !important; }
               .rr-actions { display: flex; justify-content: flex-end; }
             }
-            .rr-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
-            .rr-input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #e5e7eb; outline: none; }
+            .rr-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.35); backdrop-filter: blur(10px); }
+            .rr-input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: #e5e7eb; outline: none; }
             .rr-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.2); }
             .rr-label { display:block; font-size: 0.9rem; margin-bottom: 6px; opacity: .85 }
             .rr-legend { padding: 0 8px; opacity: .8 }
             .rr-chip { border:1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.25); border-radius: 999px; padding: 6px 10px; font-size: .8rem }
+            .rr-note { font-size:.9rem; opacity:.85; }
           `}</style>
 
           <div className="rr-grid" style={{ display: 'grid', gap: 16 }}>
@@ -151,10 +155,11 @@ export default function RequestRoleScreen() {
                 </fieldset>
 
                 <div className="rr-actions" style={{ marginTop: 8 }}>
-                  <Button onClick={submit} disabled={createReq.isPending} style={{ minWidth: 180 }}>
+                  <button onClick={submit} disabled={createReq.isPending} className="cc-btn cc-btn--primary" style={{ minWidth: 200, fontWeight: 800 }}>
                     {createReq.isPending ? 'Enviando…' : 'Enviar solicitud'}
-                  </Button>
+                  </button>
                 </div>
+                <div className="rr-note" style={{ marginTop: 6 }}>Tiempo estimado de revisión: 24–48h hábiles.</div>
               </div>
             </div>
 
@@ -179,6 +184,9 @@ export default function RequestRoleScreen() {
                   ))}
                 </div>
               )}
+              <div style={{ marginTop: 12, opacity: .85, fontSize: '.9rem' }}>
+                ¿Dudas? Escríbenos a <a href="mailto:soporte@baile.app" className="cc-soft-link">soporte@baile.app</a>
+              </div>
             </aside>
           </div>
         </div>

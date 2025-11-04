@@ -1,10 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
 import { routes } from '@/routes/registry';
 
 export default function Unauthorized() {
   const navigate = useNavigate();
+  const [sp] = useSearchParams();
+  const missingRole = sp.get('role');
 
   return (
     <div style={{
@@ -40,7 +42,7 @@ export default function Unauthorized() {
           marginBottom: spacing[4],
           color: colors.light
         }}>
-          Acceso no autorizado
+          {missingRole ? 'Rol requerido' : 'Acceso no autorizado'}
         </h1>
         
         <p style={{
@@ -49,8 +51,9 @@ export default function Unauthorized() {
           marginBottom: spacing[8],
           color: theme.text.secondary
         }}>
-          No tienes permisos para acceder a esta página. 
-          Inicia sesión o contacta al administrador.
+          {missingRole
+            ? <>No cuentas con el rol <b>{missingRole}</b> para acceder a esta sección.</>
+            : <>No tienes permisos para acceder a esta página. Inicia sesión o contacta al administrador.</>}
         </p>
         
         <div style={{ display: 'flex', gap: spacing[4], justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -78,6 +81,31 @@ export default function Unauthorized() {
           >
             Iniciar sesión
           </button>
+          
+          {missingRole && (
+            <button
+              onClick={() => navigate(`/profile/roles/request?role=${encodeURIComponent(missingRole)}`)}
+              style={{
+                padding: `${spacing[3]} ${spacing[6]}`,
+                borderRadius: borderRadius.lg,
+                background: colors.success[600] || '#10B981',
+                color: colors.light,
+                border: 'none',
+                fontSize: typography.fontSize.base,
+                fontWeight: typography.fontWeight.medium,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Solicitar rol
+            </button>
+          )}
           
           <button
             onClick={() => navigate(routes.app.home)}
