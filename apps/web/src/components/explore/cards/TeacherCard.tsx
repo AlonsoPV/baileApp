@@ -78,14 +78,14 @@ export default function TeacherCard({ item }: { item: any }) {
           WebkitTextFillColor: 'transparent',
           display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
         }}>
-          <span style={{
+         {/*  <span style={{
             flex: 1,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}>
             🎓 {item.nombre_publico || "Maestr@"}
-          </span>
+          </span> */}
         </div>
       </div>
       
