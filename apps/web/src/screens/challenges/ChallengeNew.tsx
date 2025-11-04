@@ -33,17 +33,14 @@ export default function ChallengeNew() {
   };
 
   return (
-    <div style={{ padding:'1rem', color:'#fff' }}>
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-        border: '2px solid rgba(255, 255, 255, 0.15)',
-        borderRadius: 20,
-        padding: '1rem',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(10px)',
-        margin: '1rem 0',
-        maxWidth: 720
-      }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #12171d 0%, #0e141a 100%)', color:'#fff' }}>
+      <style>{`
+        .chn-wrap { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .glass { border:1px solid rgba(255,255,255,.15); border-radius:20px; background:rgba(255,255,255,.06); box-shadow:0 8px 24px rgba(0,0,0,.24); }
+        @media (max-width: 768px) { .chn-wrap { padding: .75rem; } .glass { border-radius:16px; } }
+      `}</style>
+      <div className="chn-wrap">
+      <div className="glass" style={{ padding:'1rem', margin:'1rem 0', maxWidth: 720 }}>
       <h1 style={{ margin:'0 0 1rem 0', fontSize:'1.3rem', display:'flex', alignItems:'center', gap:'.6rem' }}>
         <span style={{ width:40, height:40, borderRadius:'50%', display:'grid', placeItems:'center', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.2)' }}>🏆</span>
         Nuevo Challenge
@@ -78,6 +75,7 @@ export default function ChallengeNew() {
           </button>
         </div>
       </form>
+      </div>
       </div>
     </div>
   );
