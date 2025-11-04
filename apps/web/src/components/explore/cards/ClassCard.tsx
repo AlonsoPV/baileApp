@@ -68,8 +68,8 @@ const fmtDate = (s?: string) => {
 export default function ClassCard({ item }: Props) {
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   const href = item.ownerType === 'academy'
-    ? `/profile/academy/live#clases`
-    : `${urls.teacherLive(item.ownerId || '')}#clases`;
+    ? (item.ownerId ? `/clase/academy/${item.ownerId}` : '/clase?type=academy')
+    : (item.ownerId ? `/clase/teacher/${item.ownerId}` : '/clase?type=teacher');
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();

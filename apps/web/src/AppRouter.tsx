@@ -86,6 +86,7 @@ import AuthCallback from './screens/auth/AuthCallback';
 import ChallengesList from './screens/challenges/ChallengesList';
 import ChallengeNew from './screens/challenges/ChallengeNew';
 import ChallengeDetail from './screens/challenges/ChallengeDetail';
+import ClassPublicScreen from './screens/classes/ClassPublicScreen';
 
 export default function AppRouter() {
   return (
@@ -123,6 +124,9 @@ export default function AppRouter() {
         <Route path="/u/:userId" element={<UserPublicScreen />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherProfileLive />} />
+        {/* Clase pública (usa query o params) */}
+        <Route path="/clase" element={<ClassPublicScreen />} />
+        <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
         {/* Challenges (público: lista y detalle) */}
         <Route path="/challenges" element={<ChallengesList />} />
         <Route path="/challenges/:id" element={<ChallengeDetail />} />
