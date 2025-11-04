@@ -26,9 +26,9 @@ export function ProfileScreen() {
   const { search } = useLocation();
   const viewUserId = new URLSearchParams(search).get('userId');
 
-  // Si viene userId por query, mostrar la vista pública de ese usuario
+  // Si viene userId por query, redirigir a la ruta pública /u/:userId
   if (viewUserId) {
-    return <UserPublicScreen />;
+    return <Navigate to={`/u/${encodeURIComponent(viewUserId)}`} replace />;
   }
 
   if (loading || isLoading) {
