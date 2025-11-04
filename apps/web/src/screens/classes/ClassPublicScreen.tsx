@@ -2,6 +2,8 @@ import React from 'react';
 import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ClasesLive from '@/components/events/ClasesLive';
+import TeacherCard from '@/components/explore/cards/TeacherCard';
+import AcademyCard from '@/components/explore/cards/AcademyCard';
 import { useTeacherPublic } from '@/hooks/useTeacher';
 import { useAcademyPublic } from '@/hooks/useAcademy';
 import { urls } from '@/lib/urls';
@@ -81,6 +83,40 @@ export default function ClassPublicScreen() {
     || (selectedClass?.estilo)
     || 'Clase';
 
+  // Horario, costo y ubicación (para chips del header)
+  const scheduleLabel = (() => {
+    const ini = (selectedClass as any)?.inicio || (selectedClass as any)?.hora_inicio;
+    const fin = (selectedClass as any)?.fin || (selectedClass as any)?.hora_fin;
+    if (ini && fin) return `${ini} - ${fin}`;
+    if (ini) return `${ini}`;
+    return undefined;
+  })();
+
+  const costLabel = (() => {
+    try {
+      if (Array.isArray(costos) && costos.length) {
+        if ((selectedClass as any)?.referenciaCosto) {
+          const ref = (selectedClass as any).referenciaCosto;
+          const match = (costos as any[]).find((c: any) => (c?.nombre || c?.titulo || c?.tipo) === ref);
+          const precio = match?.precio;
+          if (typeof precio === 'number') return `$${precio.toLocaleString()}`;
+        }
+        const nums = (costos as any[]).map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+        if (nums.length) {
+          const min = Math.min(...(nums as number[]));
+          return `$${min.toLocaleString()}`;
+        }
+      }
+      return undefined;
+    } catch { return undefined; }
+  })();
+
+  const locationLabel = (() => {
+    if (!ubicacion) return undefined;
+    const parts = [ubicacion.nombre, ubicacion.ciudad].filter(Boolean);
+    return parts.length ? parts.join(' · ') : undefined;
+  })();
+
   return (
     <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
       <style>{`
@@ -127,29 +163,28 @@ export default function ClassPublicScreen() {
                   <Link to={creatorLink} style={{ color: '#FFD166', fontWeight: 800, textDecoration: 'none', borderBottom: '1px dashed rgba(255,209,102,0.5)' }}>
                     Creada por {creatorTypeLabel} · {creatorName}
                   </Link>
-                  <span className="chip chip-date">📚 {cronogramaSelected.length} clase(s)</span>
-                  {Array.isArray(costos) && costos.length > 0 && (
-                    <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166' }}>💰 {costos.length} costo(s)</span>
+                </div>
+
+                {/* Chips de horario, costo y ubicación */}
+                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {scheduleLabel && (
+                    <span className="chip chip-date">🕒 {scheduleLabel}</span>
+                  )}
+                  {typeof costLabel === 'string' && costLabel && (
+                    <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166' }}>💰 {costLabel}</span>
+                  )}
+                  {locationLabel && (
+                    <span className="chip chip-date">📍 {locationLabel}</span>
                   )}
                 </div>
               </div>
-              {/* Columna derecha: datos rápidos de ubicación */}
+              {/* Columna derecha: card del creador */}
               <div style={{ display: 'grid', gap: '.85rem', alignContent: 'start' }}>
-                <div className="mini-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
-                    <strong>📍 Ubicación</strong>
-                    <span style={{ opacity: .7, fontSize: '.9rem' }}>{ubicacion?.ciudad || '—'}</span>
-                  </div>
-                  {ubicacion ? (
-                    <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {ubicacion?.nombre && <li><span style={{ opacity: .9 }}>Nombre</span><span style={{ opacity: .7 }}>{ubicacion.nombre}</span></li>}
-                      {ubicacion?.direccion && <li><span style={{ opacity: .9 }}>Dirección</span><span style={{ opacity: .7 }}>{ubicacion.direccion}</span></li>}
-                      {ubicacion?.referencias && <li><span style={{ opacity: .9 }}>Referencias</span><span style={{ opacity: .7 }}>{ubicacion.referencias}</span></li>}
-                    </ul>
-                  ) : (
-                    <div className="muted">Sin información</div>
-                  )}
-                </div>
+                {isTeacher ? (
+                  <TeacherCard item={profile} />
+                ) : (
+                  <AcademyCard item={profile} />
+                )}
               </div>
             </div>
           </div>
