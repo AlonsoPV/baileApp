@@ -83,6 +83,16 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           🔍
         </Link>
         <Link
+          to="/challenges"
+          aria-label="Challenges"
+          title="Challenges"
+          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          🏆
+        </Link>
+        <Link
           to={user ? '/app/profile' : '/auth/login'}
           aria-label="Perfil"
           title="Perfil"

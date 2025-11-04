@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChallenge, useChallengePublish, useChallengeSubmissions, useChallengeSubmit, useSubmissionApprove, useSubmissionReject, useToggleVote, useChallengeLeaderboard } from '../../hooks/useChallenges';
 import { useQueryClient } from '@tanstack/react-query';
+import HorizontalSlider from '../../components/explore/HorizontalSlider';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
 
@@ -29,6 +30,7 @@ export default function ChallengeDetail() {
   const [uploadingUser, setUploadingUser] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({ title:'', description:'', cover_image_url:'', submission_deadline:'', voting_deadline:'' });
+  const [userNames, setUserNames] = React.useState<Record<string,string>>({});
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
     const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
@@ -64,6 +66,27 @@ export default function ChallengeDetail() {
       });
     }
   }, [challenge]);
+
+  // Fetch uploader names for approved subs and leaderboard
+  React.useEffect(() => {
+    (async () => {
+      const ids = new Set<string>();
+      (subs || []).forEach(s => s?.user_id && ids.add(s.user_id));
+      (leaderboard || []).forEach(r => r?.user_id && ids.add(r.user_id));
+      if (ids.size === 0) return;
+      const arr = Array.from(ids);
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('user_id, nombre_publico, full_name, email')
+        .in('user_id', arr);
+      if (error) return;
+      const map: Record<string,string> = {};
+      (data || []).forEach((p: any) => {
+        map[p.user_id] = p.nombre_publico || p.full_name || p.email || p.user_id;
+      });
+      setUserNames(map);
+    })();
+  }, [subs, leaderboard]);
 
   if (!id) return <div style={{ color:'#fff', padding:'1rem' }}>Sin id</div>;
   if (!challenge) return <div style={{ color:'#fff', padding:'1rem' }}>Cargando…</div>;
@@ -148,7 +171,7 @@ export default function ChallengeDetail() {
         <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
           <h3 style={{ marginTop:0 }}>Video del Challenge (referencia)</h3>
           {challenge.hero_video_url ? (
-            <video controls style={{ width:'100%', maxWidth:960, borderRadius:12 }} src={(challenge as any).hero_video_url} />
+            <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:12, display:'block', margin:'0 auto' }} src={(challenge as any).hero_video_url} />
           ) : (
             <div style={{ opacity:.85 }}>Aún no hay video de referencia.</div>
           )}
@@ -216,7 +239,7 @@ export default function ChallengeDetail() {
               {pending.map(s => (
                 <article key={s.id} style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, overflow:'hidden' }}>
                   <div style={{ padding:'.6rem', display:'grid', gap:'.5rem' }}>
-                    <video controls style={{ width:'100%', borderRadius:8 }} src={s.video_url} />
+                    <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:8, display:'block', margin:'0 auto' }} src={s.video_url} />
                     {s.caption && <div style={{ opacity:.9 }}>{s.caption}</div>}
                     <div style={{ display:'flex', gap:'.5rem' }}>
                       <button onClick={async()=>{ try { await approve.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">Aprobar</button>
@@ -235,20 +258,31 @@ export default function ChallengeDetail() {
         {approved.length === 0 ? <div>No hay envíos aprobados</div> : (() => {
           const vmap = new Map<string, number>((leaderboard || []).map(r => [r.submission_id, r.votes]));
           return (
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'.75rem' }}>
-              {approved.map(s => (
-                <article key={s.id} style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, overflow:'hidden' }}>
+            <HorizontalSlider
+              items={approved}
+              renderItem={(s: any, idx: number) => (
+                <div key={s.id} style={{ 
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 16,
+                  padding: 0,
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+                }}>
                   <div style={{ padding:'.6rem', display:'grid', gap:'.5rem' }}>
-                    <video controls style={{ width:'100%', borderRadius:8 }} src={s.video_url} />
-                    {s.caption && <div style={{ opacity:.9 }}>{s.caption}</div>}
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:8, display:'block', margin:'0 auto' }} src={s.video_url} />
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.5rem' }}>
+                      <div style={{ fontWeight:800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{userNames[s.user_id] || s.user_id}</div>
                       <span style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.2rem .6rem' }}>❤️ {vmap.get(s.id) || 0}</span>
+                    </div>
+                    {s.caption && <div style={{ opacity:.9 }}>{s.caption}</div>}
+                    <div style={{ display:'flex', justifyContent:'flex-end' }}>
                       <button onClick={async()=>{ try { await vote.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">Votar</button>
                     </div>
                   </div>
-                </article>
-              ))}
-            </div>
+                </div>
+              )}
+            />
           );
         })()}
       </section>
@@ -256,13 +290,21 @@ export default function ChallengeDetail() {
       <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
         <h3 style={{ marginTop:0 }}>Leaderboard</h3>
         {!leaderboard || leaderboard.length === 0 ? <div>Sin votos</div> : (
-          <ul style={{ margin:0, paddingLeft:'1rem' }}>
+          <div style={{ display:'grid', gap:'.5rem' }}>
             {leaderboard.map(row => (
-              <li key={row.submission_id}>
-                {row.submission_id} · votos: {row.votes}
-              </li>
+              <div key={row.submission_id} style={{
+                display:'grid', gridTemplateColumns:'auto 1fr auto', alignItems:'center', gap:'.6rem',
+                border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'.6rem', background:'rgba(255,255,255,.04)'
+              }}>
+                <span style={{ width:34, height:34, borderRadius:'50%', display:'grid', placeItems:'center', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)' }}>🏅</span>
+                <div style={{ overflow:'hidden' }}>
+                  <div style={{ fontWeight:800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{userNames[row.user_id] || row.user_id}</div>
+                  <div style={{ fontSize:'.85rem', opacity:.8 }}>{row.submission_id}</div>
+                </div>
+                <span style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.2rem .6rem' }}>❤️ {row.votes}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
     </div>

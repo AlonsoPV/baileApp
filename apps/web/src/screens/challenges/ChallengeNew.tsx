@@ -34,8 +34,21 @@ export default function ChallengeNew() {
 
   return (
     <div style={{ padding:'1rem', color:'#fff' }}>
-      <h1 style={{ margin:'0 0 1rem 0' }}>Nuevo Challenge</h1>
-      <form onSubmit={onSubmit} style={{ display:'grid', gap:'.75rem', maxWidth:560 }}>
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+        border: '2px solid rgba(255, 255, 255, 0.15)',
+        borderRadius: 20,
+        padding: '1rem',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        backdropFilter: 'blur(10px)',
+        margin: '1rem 0',
+        maxWidth: 720
+      }}>
+      <h1 style={{ margin:'0 0 1rem 0', fontSize:'1.3rem', display:'flex', alignItems:'center', gap:'.6rem' }}>
+        <span style={{ width:40, height:40, borderRadius:'50%', display:'grid', placeItems:'center', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.2)' }}>🏆</span>
+        Nuevo Challenge
+      </h1>
+      <form onSubmit={onSubmit} style={{ display:'grid', gap:'.75rem' }}>
         <div>
           <label style={{ display:'block', marginBottom:4 }}>Título</label>
           <input value={form.title} onChange={e=>setForm(s=>({ ...s, title: e.target.value }))} required className="editor-input" style={{ width:'100%' }} />
@@ -65,6 +78,7 @@ export default function ChallengeNew() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }
