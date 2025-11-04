@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChallenge, useChallengePublish, useChallengeSubmissions, useChallengeSubmit, useSubmissionApprove, useSubmissionReject, useToggleVote, useChallengeLeaderboard } from '../../hooks/useChallenges';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
 
@@ -8,6 +9,7 @@ export default function ChallengeDetail() {
   const { id } = useParams();
   const nav = useNavigate();
   const { showToast } = useToast();
+  const qc = useQueryClient();
   const { data: challenge } = useChallenge(id);
   const { data: subs } = useChallengeSubmissions(id);
   const { data: leaderboard } = useChallengeLeaderboard(id);
@@ -25,6 +27,8 @@ export default function ChallengeDetail() {
   const userFileRef = React.useRef<HTMLInputElement|null>(null);
   const [uploadingOwner, setUploadingOwner] = React.useState(false);
   const [uploadingUser, setUploadingUser] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({ title:'', description:'', cover_image_url:'', submission_deadline:'', voting_deadline:'' });
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
     const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
@@ -49,6 +53,18 @@ export default function ChallengeDetail() {
     })();
   }, [challenge?.owner_id]);
 
+  React.useEffect(() => {
+    if (challenge) {
+      setEditForm({
+        title: challenge.title || '',
+        description: (challenge as any).description || '',
+        cover_image_url: (challenge as any).cover_image_url || '',
+        submission_deadline: (challenge as any).submission_deadline || '',
+        voting_deadline: (challenge as any).voting_deadline || '',
+      });
+    }
+  }, [challenge]);
+
   if (!id) return <div style={{ color:'#fff', padding:'1rem' }}>Sin id</div>;
   if (!challenge) return <div style={{ color:'#fff', padding:'1rem' }}>Cargando…</div>;
 
@@ -59,7 +75,7 @@ export default function ChallengeDetail() {
     <div style={{ padding:'1rem', color:'#fff', display:'grid', gap:'1rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <button onClick={()=>nav('/challenges')} className="editor-back-btn">← Volver</button>
-        <div style={{ fontWeight:900 }}>{challenge.title}</div>
+        <div style={{ fontWeight:900, fontSize:'1.15rem' }}>{challenge.title}</div>
         <div style={{ display:'flex', gap:'.5rem' }}>
           <span style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.25rem .6rem' }}>{challenge.status}</span>
           {canModerate && challenge.status !== 'open' && (
@@ -69,11 +85,63 @@ export default function ChallengeDetail() {
               Publicar
             </button>
           )}
+          {canModerate && (
+            <button onClick={()=>setEditOpen(v=>!v)} className="editor-back-btn">{editOpen ? 'Cerrar edición' : 'Editar'}</button>
+          )}
         </div>
       </div>
 
       {challenge.cover_image_url && (
         <img src={challenge.cover_image_url} alt="cover" style={{ width:'100%', maxWidth:960, height:'auto', borderRadius:12 }} />
+      )}
+
+      {canModerate && editOpen && (
+        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+          <h3 style={{ marginTop:0 }}>Editar reto</h3>
+          <div style={{ display:'grid', gap:'.6rem', maxWidth:720 }}>
+            <div>
+              <label style={{ display:'block', marginBottom:4 }}>Título</label>
+              <input className="editor-input" value={editForm.title} onChange={e=>setEditForm(s=>({ ...s, title: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ display:'block', marginBottom:4 }}>Descripción</label>
+              <textarea className="editor-textarea" rows={4} value={editForm.description} onChange={e=>setEditForm(s=>({ ...s, description: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ display:'block', marginBottom:4 }}>Imagen de portada (URL)</label>
+              <input className="editor-input" value={editForm.cover_image_url} onChange={e=>setEditForm(s=>({ ...s, cover_image_url: e.target.value }))} />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.6rem' }}>
+              <div>
+                <label style={{ display:'block', marginBottom:4 }}>Cierre envíos</label>
+                <input type="datetime-local" className="editor-input" value={editForm.submission_deadline as any} onChange={e=>setEditForm(s=>({ ...s, submission_deadline: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ display:'block', marginBottom:4 }}>Cierre votos</label>
+                <input type="datetime-local" className="editor-input" value={editForm.voting_deadline as any} onChange={e=>setEditForm(s=>({ ...s, voting_deadline: e.target.value }))} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:'.5rem' }}>
+              <button className="editor-back-btn" onClick={()=>setEditOpen(false)}>Cancelar</button>
+              <button className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }} onClick={async ()=>{
+                if (!id) return;
+                try {
+                  const { error } = await supabase.from('challenges').update({
+                    title: editForm.title,
+                    description: editForm.description,
+                    cover_image_url: editForm.cover_image_url,
+                    submission_deadline: editForm.submission_deadline || null,
+                    voting_deadline: editForm.voting_deadline || null,
+                  }).eq('id', id);
+                  if (error) throw error;
+                  showToast('Reto actualizado', 'success');
+                  setEditOpen(false);
+                  qc.invalidateQueries({ queryKey: ['challenges','detail', id] });
+                } catch(e:any) { showToast(e?.message || 'No se pudo actualizar','error'); }
+              }}>Guardar</button>
+            </div>
+          </div>
+        </section>
       )}
 
       {canModerate && (
@@ -147,8 +215,9 @@ export default function ChallengeDetail() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'.75rem' }}>
               {pending.map(s => (
                 <article key={s.id} style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, overflow:'hidden' }}>
-                  <div style={{ padding:'.6rem' }}>
-                    <div style={{ fontWeight:800, marginBottom:6 }}>{s.video_url}</div>
+                  <div style={{ padding:'.6rem', display:'grid', gap:'.5rem' }}>
+                    <video controls style={{ width:'100%', borderRadius:8 }} src={s.video_url} />
+                    {s.caption && <div style={{ opacity:.9 }}>{s.caption}</div>}
                     <div style={{ display:'flex', gap:'.5rem' }}>
                       <button onClick={async()=>{ try { await approve.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">Aprobar</button>
                       <button onClick={async()=>{ try { await reject.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">Rechazar</button>
@@ -163,18 +232,25 @@ export default function ChallengeDetail() {
 
       <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
         <h3 style={{ marginTop:0 }}>Aprobados</h3>
-        {approved.length === 0 ? <div>No hay envíos aprobados</div> : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'.75rem' }}>
-            {approved.map(s => (
-              <article key={s.id} style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, overflow:'hidden' }}>
-                <div style={{ padding:'.6rem' }}>
-                  <div style={{ fontWeight:800, marginBottom:6 }}>{s.video_url}</div>
-                  <button onClick={async()=>{ try { await vote.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">❤️ Votar</button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+        {approved.length === 0 ? <div>No hay envíos aprobados</div> : (() => {
+          const vmap = new Map<string, number>((leaderboard || []).map(r => [r.submission_id, r.votes]));
+          return (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'.75rem' }}>
+              {approved.map(s => (
+                <article key={s.id} style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, overflow:'hidden' }}>
+                  <div style={{ padding:'.6rem', display:'grid', gap:'.5rem' }}>
+                    <video controls style={{ width:'100%', borderRadius:8 }} src={s.video_url} />
+                    {s.caption && <div style={{ opacity:.9 }}>{s.caption}</div>}
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <span style={{ border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.2rem .6rem' }}>❤️ {vmap.get(s.id) || 0}</span>
+                      <button onClick={async()=>{ try { await vote.mutateAsync(s.id); } catch(e:any){ showToast(e?.message || 'Error','error'); } }} className="editor-back-btn">Votar</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          );
+        })()}
       </section>
 
       <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
