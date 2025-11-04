@@ -674,7 +674,7 @@ export default function ChallengeDetail() {
       display: block; transition: transform .18s ease, box-shadow .18s ease;
     }
     .appr-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.35); }
-    .appr-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+    .appr-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 18px 18px 0 0; }
     .appr-media > video {
       width: 100%; height: 100%; display: block; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,.12);
     }
@@ -713,11 +713,14 @@ export default function ChallengeDetail() {
   font-size: var(--appr-fz-desc);
   line-height: 1.5;
 }
-.appr-desc .cc-soft-chip {
+.appr-body :where(.cc-soft-chip) {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.12);
   padding: .35rem .6rem;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 /* Reglas compartidas para filas de meta y acciones */
@@ -773,7 +776,7 @@ export default function ChallengeDetail() {
                   items={approved}
                   autoColumns={null}
                   renderItem={(s: any) => (
-                    <div key={s.id} className="cc-glass appr-card" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
+                    <div key={s.id} className="cc-glass appr-card appr" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
                       {/* Media */}
                       <div className="appr-media">
                         <video
