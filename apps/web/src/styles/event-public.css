@@ -117,3 +117,30 @@
 @media (max-width: 768px) {
   .cc-glass { border-radius: 14px; }
 }
+
+/* Challenge header visual */
+.chd-header {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(18,22,27,.9), rgba(11,13,16,.9));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 14px 34px rgba(0,0,0,.35);
+}
+.chd-header::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 6px;
+  background: linear-gradient(90deg, #1E88E5, #00BCD4, #FF3D57);
+}
+
+.cc-status-chip {
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 999px;
+  padding: .35rem .7rem;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+.cc-status-chip.is-open   { background: rgba(16,185,129,.18); border-color: rgba(16,185,129,.35); }
+.cc-status-chip.is-draft  { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
+.cc-status-chip.is-submitted { background: rgba(59,130,246,.16); border-color: rgba(59,130,246,.35); }
+.cc-status-chip.is-rejected  { background: rgba(244,63,94,.16); border-color: rgba(244,63,94,.35); }

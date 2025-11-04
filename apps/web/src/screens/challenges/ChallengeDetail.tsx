@@ -233,16 +233,21 @@ export default function ChallengeDetail() {
       {/* Contenedor principal (layout simple) */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem', display: 'grid', gap: '1rem' }}>
         {/* Header / Toolbar */}
-        <header className="cc-glass" style={{ padding: '0.75rem 1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '0.75rem' }}>
+        <header className="cc-glass chd-header" style={{ padding: '0.9rem 1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '0.9rem' }}>
             <div>
               <button onClick={() => nav('/challenges')} className="cc-btn cc-btn--ghost">← Volver</button>
             </div>
-            <div style={{ fontWeight: 900, fontSize: '1.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {challenge.title}
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ fontWeight: 900, fontSize: '1.3rem', background: 'linear-gradient(135deg,#1E88E5,#00BCD4,#FF3D57)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1, letterSpacing: '-.015em', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden' }}>
+                🏆 {challenge.title}
+              </div>
+              {(challenge as any)?.description && (
+                <div style={{ opacity:.85, fontSize: '.9rem', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden' }}>{(challenge as any).description}</div>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end' }}>
-              <span className="cc-chip">{challenge.status}</span>
+            <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end', alignItems:'center' }}>
+              <span className={`cc-status-chip ${challenge.status ? ('is-' + String(challenge.status)) : ''}`}>{challenge.status}</span>
               {canModerate && challenge.status !== 'open' && (
                 <button
                   onClick={async () => {
@@ -678,17 +683,17 @@ export default function ChallengeDetail() {
 
               {/* Autor + votos */}
               <div className="appr-meta">
-                <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || s.user_id}>
-                  {userMeta[s.user_id]?.name || s.user_id}
+                <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || 'Usuario'}>
+                  {(userMeta[s.user_id]?.name && userMeta[s.user_id]?.name !== s.user_id) ? userMeta[s.user_id]?.name : 'Usuario'}
                 </div>
-                <span
-                  className="cc-chip"
-                  role="status"
-                  aria-live="polite"
+                <button
+                  className="cc-btn cc-btn--primary"
                   title={`${vmap.get(s.id) || 0} votos`}
+                  aria-label={`Votos: ${vmap.get(s.id) || 0}`}
+                  onClick={async () => { try { await vote.mutateAsync(s.id); } catch (e:any) { showToast(e?.message || 'Error','error'); } }}
                 >
                   ❤️ {vmap.get(s.id) || 0}
-                </span>
+                </button>
               </div>
 
               {/* Caption / edición */}
@@ -721,17 +726,7 @@ export default function ChallengeDetail() {
               {/* Acciones */}
               <div className="appr-actions">
                 <div className="appr-actions__left">
-                  <button
-                    onClick={async () => {
-                      try { await vote.mutateAsync(s.id); }
-                      catch (e: any) { showToast(e?.message || 'Error', 'error'); }
-                    }}
-                    className="cc-btn cc-btn--primary"
-                    aria-label={`Votar por envío de ${userMeta[s.user_id]?.name || s.user_id}`}
-                    title="Votar"
-                  >
-                    Votar
-                  </button>
+                  {/* Botón de votar duplicado eliminado; usamos el chip de la barra superior */}
                   {(canModerate || currentUserId === s.user_id) && (
                     <button className="cc-btn cc-btn--ghost" onClick={()=>startEditSubmission(s)}>Editar</button>
                   )}
