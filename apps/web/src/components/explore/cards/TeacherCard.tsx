@@ -64,66 +64,60 @@ export default function TeacherCard({ item }: { item: any }) {
           justifyContent: 'flex-end'
         }}
       >
-      {/* Top gradient bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-      {/* Overlay global solo si NO hay banner */}
-      {!bannerUrl && (
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-      )}
-      {/* Contenido */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{
-          fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-          display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
-        }}>
-          <span style={{
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            color: '#fff',
-            filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
+        {/* Top gradient bar */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
+        {/* Overlay global solo si NO hay banner */}
+        {!bannerUrl && (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        )}
+        {/* Contenido */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
+            display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
           }}>
-            🎓 {item.nombre_publico || "Maestr@"}
-          </span>
+            <span style={{
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: '#fff',
+              filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
+            }}>
+              {item.nombre_publico || "Maestr@"}
+            </span>
+          </div>
         </div>
-      </div>
-      
-      <div style={{
-        fontSize: '0.875rem',
-        opacity: 0.8,
-        marginBottom: '0.25rem'
-      }}>
-        {(item.ritmos || []).length} ritmos
-      </div>
-      
-      {item.bio && (
-        <div style={{
-          fontSize: '0.875rem',
-          marginTop: '0.5rem',
-          color: 'rgba(255, 255, 255, 0.7)',
-          display: '-webkit-box',
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          lineHeight: 1.6,
-          flex: 1
-        }}>
-          {item.bio}
-        </div>
-      )}
 
-      {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-          {ritmoNombres.slice(0,3).map((name: string, i: number) => (
-            <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
-          ))}
-          {zonaNombres.slice(0,2).map((name: string, i: number) => (
-            <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
-          ))}
-        </div>
-      )}
-      <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
+
+
+        {item.bio && (
+          <div style={{
+            fontSize: '0.875rem',
+            marginTop: '0.5rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            lineHeight: 1.6,
+            flex: 1
+          }}>
+            {item.bio}
+          </div>
+        )}
+
+        {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {ritmoNombres.slice(0, 3).map((name: string, i: number) => (
+              <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
+            ))}
+            {zonaNombres.slice(0, 2).map((name: string, i: number) => (
+              <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
+            ))}
+          </div>
+        )}
+        <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
     </LiveLink>
   );
