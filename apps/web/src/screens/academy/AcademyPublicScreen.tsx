@@ -1,15 +1,14 @@
-// src/pages/AcademyProfileLive.tsx
+// Public Academy Screen (replica visual de AcademyProfileLive)
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAcademyMy, useUpsertAcademy } from "../../hooks/useAcademy";
-import { useAcademyMedia } from "../../hooks/useAcademyMedia";
+import { useParams } from "react-router-dom";
+import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
-// ❌ Toggle removido: import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+// ❌ Toggle removido para vista pública
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -152,13 +151,13 @@ const colors = {
   orange: '#FF9800'
 };
 
-export default function AcademyProfileLive() {
-  const navigate = useNavigate();
-  const { data: academy, isLoading } = useAcademyMy();
-  const { media } = useAcademyMedia();
+export default function AcademyPublicScreen() {
+  const { academyId } = useParams();
+  const id = Number(academyId);
+  const { data: academy, isLoading } = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
   const { data: allTags } = useTags();
-  const upsert = useUpsertAcademy();
 
+  const media = (academy as any)?.media || [];
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
@@ -209,22 +208,8 @@ export default function AcademyProfileLive() {
   if (!academy) {
     return (
       <div style={{ padding: '48px 24px', textAlign: 'center', color: colors.light }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>No tienes perfil de academia</h2>
-        <p style={{ marginBottom: '24px', opacity: 0.7 }}>Crea uno para dar clases</p>
-        <p style={{ marginBottom: '16px', opacity: 0.8, fontSize: '0.95rem' }}>Para crear tu rol ve a edición y guarda tu nombre.</p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/profile/academy/edit')}
-          style={{
-            padding: '14px 28px', borderRadius: '50px', border: 'none',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light, fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(30,136,229,0.5)'
-          }}
-        >
-          🎓 Crear Academia
-        </motion.button>
+        <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Academia no disponible</h2>
+        <p style={{ marginBottom: '24px', opacity: 0.7 }}>Esta academia no existe o no está aprobada</p>
       </div>
     );
   }
@@ -311,7 +296,7 @@ export default function AcademyProfileLive() {
                     width: '100%', height: '100%', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontSize: '6rem', fontWeight: 700, color: 'white'
                   }}>
-                    {academy.nombre_publico?.[0]?.toUpperCase() || '🎓'}
+                    {(academy as any).nombre_publico?.[0]?.toUpperCase() || '🎓'}
                   </div>
                 )}
               </div>
