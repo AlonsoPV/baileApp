@@ -58,36 +58,29 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
     const baseItems = filteredCatalog.flatMap(g => g.items);
     const allSelectedItems = baseItems.filter(r => selected.includes(r.id));
     if (allSelectedItems.length === 0) return null;
-    
+
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {allSelectedItems.map(r => {
-          const group = filteredCatalog.find(g => g.items.some(i => i.id === r.id));
-          return (
-            <motion.div
-              key={r.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 20,
-                border: '1px solid rgba(240,147,251,0.4)',
-                background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))',
-                color: '#f093fb',
-                fontSize: 14,
-                fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
-                backdropFilter: 'blur(10px)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
-              }}
-            >
-              {group && <span style={{ fontSize: 12, opacity: 0.8 }}>{group.label}</span>}
-              <span>{r.label}</span>
-            </motion.div>
-          );
-        })}
+        {allSelectedItems.map(r => (
+          <motion.div
+            key={r.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 20,
+              border: '1px solid rgba(240,147,251,0.4)',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))',
+              color: '#f093fb',
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <span>{r.label}</span>
+          </motion.div>
+        ))}
       </div>
     );
   }

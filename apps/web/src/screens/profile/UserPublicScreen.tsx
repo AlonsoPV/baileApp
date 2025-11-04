@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import ImageWithFallback from '@/components/ImageWithFallback';
@@ -6,6 +7,64 @@ import RitmosChips from '@/components/RitmosChips';
 import SocialMediaSection from '@/components/profile/SocialMediaSection';
 import { useTags } from '@/hooks/useTags';
 import { Chip } from '@/components/profile/Chip';
+
+// Carrusel similar al de UserProfileLive
+const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  if (!photos || photos.length === 0) return null;
+
+  const nextPhoto = () => setCurrentIndex((prev) => (prev + 1) % photos.length);
+  const prevPhoto = () => setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  const goToPhoto = (idx: number) => setCurrentIndex(idx);
+
+  return (
+    <div className="carousel-container">
+      <div className="carousel-main">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ duration: 0.3 }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+        >
+          <ImageWithFallback
+            src={photos[currentIndex]}
+            alt={`Foto ${currentIndex + 1}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+            onClick={() => setIsFullscreen(true)}
+          />
+        </motion.div>
+        {photos.length > 1 && (
+          <>
+            <button className="carousel-nav-btn carousel-nav-prev" onClick={prevPhoto}>‹</button>
+            <button className="carousel-nav-btn carousel-nav-next" onClick={nextPhoto}>›</button>
+          </>
+        )}
+      </div>
+      {photos.length > 1 && (
+        <div className="carousel-thumbnails">
+          {photos.map((p, i) => (
+            <motion.button key={i} onClick={() => goToPhoto(i)} className={`carousel-thumbnail ${currentIndex === i ? 'active' : ''}`} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <ImageWithFallback src={p} alt={`Miniatura ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {isFullscreen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.95)', zIndex: 99, display: 'grid', placeItems: 'center', padding: '2rem' }} onClick={() => setIsFullscreen(false)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh', borderRadius: 12, overflow: 'hidden' }}>
+            <ImageWithFallback src={photos[currentIndex]} alt={`Foto ${currentIndex + 1} - Pantalla completa`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <button onClick={() => setIsFullscreen(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 48, height: 48, fontSize: '1.5rem', fontWeight: 700, cursor: 'pointer' }}>×</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function UserPublicScreen() {
   const { userId: userIdFromParams } = useParams();
@@ -90,6 +149,15 @@ export default function UserPublicScreen() {
         .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
         .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem; }
         .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,.15); box-shadow: 0 8px 32px rgba(0,0,0,.3); backdrop-filter: blur(10px); transform: none; }
+        .carousel-container { position: relative; max-width: 1000px; margin: 0 auto; }
+        .carousel-main { position: relative; aspect-ratio: 4 / 5; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.15); background: rgba(0,0,0,.2); max-height: 480px; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .carousel-thumbnails { display: flex; gap: .5rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
+        .carousel-thumbnail { width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,.3); cursor: pointer; background: transparent; padding: 0; transition: all .2s; }
+        .carousel-thumbnail.active { border: 3px solid #E53935; }
+        .carousel-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.7); color: #fff; border: none; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.25rem; transition: all .2s; }
+        .carousel-nav-prev { left: 1rem; }
+        .carousel-nav-next { right: 1rem; }
+        .carousel-nav-btn:hover { background: rgba(0,0,0,.9); transform: translateY(-50%) scale(1.1); }
         @media (max-width: 768px) {
           .profile-container { max-width: 100% !important; padding: 1rem !important; }
           .profile-banner { border-radius: 0 !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
@@ -192,16 +260,15 @@ export default function UserPublicScreen() {
           </section>
         )}
 
-        {galleryOthers.length > 0 && (
-          <section className="glass-card-container" style={{ marginTop: 16 }}>
-            <h3 className="section-title">📷 Galería de Fotos</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
-              {galleryOthers.map((src, i) => (
-                <ImageWithFallback key={`gal-${i}`} src={src} alt={`Foto ${i+1}`} style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)' }} />
-              ))}
-            </div>
-          </section>
-        )}
+        {(() => {
+          const photos = ([p2, p3].filter(Boolean) as string[]).concat(galleryOthers);
+          return photos.length > 0 ? (
+            <section className="glass-card-container" style={{ marginTop: 16 }}>
+              <h3 className="section-title">📷 Galería de Fotos</h3>
+              <CarouselComponent photos={photos} />
+            </section>
+          ) : null;
+        })()}
       </div>
     </div>
   );
