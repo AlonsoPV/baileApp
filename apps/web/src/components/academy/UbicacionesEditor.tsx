@@ -4,10 +4,12 @@ import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
 
 export default function UbicacionesEditor({
-  value, onChange
-}: { value: AcademyLocation[]; onChange:(v:AcademyLocation[])=>void }) {
+  value, onChange, onSaveItem
+}: { value: AcademyLocation[]; onChange:(v:AcademyLocation[])=>void; onSaveItem?:(index:number, item:AcademyLocation)=>void }) {
   const [items, setItems] = useState<AcademyLocation[]>(value || []);
   const { zonas } = useTags('zona');
+  const [saving, setSaving] = useState<Record<number, boolean>>({});
+  const [saved, setSaved] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     setItems(value || []);
@@ -33,6 +35,17 @@ export default function UbicacionesEditor({
   
   const patch = (index: number, p: Partial<AcademyLocation>) =>
     update((items||[]).map((item, i) => i === index ? { ...item, ...p } : item));
+
+  const saveOne = async (index: number) => {
+    try {
+      setSaving(s => ({ ...s, [index]: true }));
+      if (onSaveItem) await Promise.resolve(onSaveItem(index, (items||[])[index]));
+      setSaved(s => ({ ...s, [index]: true }));
+      setTimeout(() => setSaved(s => { const c = { ...s }; delete c[index]; return c; }), 1500);
+    } finally {
+      setSaving(s => ({ ...s, [index]: false }));
+    }
+  };
 
   return (
     <div style={{ marginTop: spacing[6] }}>
@@ -161,7 +174,26 @@ export default function UbicacionesEditor({
             onChange={e=>patch(index, { referencias: e.target.value })}
           />
           
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing[2] }}>
+            <button 
+              type="button"
+              onClick={() => saveOne(index)}
+              disabled={!!saving[index]}
+              style={{
+                padding: `${spacing[2]} ${spacing[3]}`,
+                borderRadius: borderRadius.lg,
+                background: saved[index] ? 'rgba(16, 185, 129, 0.9)' : 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: colors.light,
+                cursor: saving[index] ? 'not-allowed' : 'pointer',
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                transition: 'all 0.2s ease',
+                opacity: saving[index] ? 0.6 : 1
+              }}
+            >
+              {saving[index] ? 'Guardando…' : (saved[index] ? 'Guardado ✓' : 'Guardar')}
+            </button>
             <button 
               type="button" 
               onClick={()=>remove(index)}

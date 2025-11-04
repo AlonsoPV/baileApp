@@ -61,8 +61,8 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        padding: '2rem',
-        borderRadius: '24px',
+        padding: 'clamp(1rem, 2vw, 2rem)',
+        borderRadius: 'clamp(12px, 2vw, 24px)',
         border: '2px solid rgba(255, 255, 255, 0.15)',
         cursor: 'pointer',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -70,7 +70,8 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         overflow: 'hidden',
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
         backdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(255, 61, 87, 0.1)'
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(255, 61, 87, 0.1)',
+        width: '100%'
       }}
       onClick={handleSocialClick}
       whileHover={{
@@ -112,6 +113,8 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        gap: '1rem',
         marginBottom: '1.5rem',
         marginTop: '0.5rem',
         position: 'relative',
@@ -140,7 +143,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             </motion.div>
             <div style={{ flex: 1 }}>
               <h4 style={{
-                fontSize: '1.5rem',
+                fontSize: 'clamp(1.1rem, 1rem + 0.5vw, 1.5rem)',
                 fontWeight: '800',
                 margin: 0,
                 marginBottom: '0.25rem',
@@ -169,13 +172,13 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           <motion.div
             whileHover={{ scale: 1.05, x: 4 }}
             style={{
-              fontSize: '0.875rem',
+              fontSize: 'clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem)',
               color: colors.blue,
               fontWeight: '700',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '0.6rem 1rem',
+              padding: 'clamp(0.4rem, 0.5rem + 0.3vw, 0.75rem) clamp(0.75rem, 1rem, 1.25rem)',
               background: 'rgba(30, 136, 229, 0.15)',
               borderRadius: '12px',
               border: '2px solid rgba(30, 136, 229, 0.3)',
@@ -1120,8 +1123,8 @@ export default function OrganizerProfileEditor() {
         
         .org-events-section {
           margin-bottom: 3rem;
-          padding: 2.25rem;
-          border-radius: 28px;
+          padding: clamp(1rem, 3vw, 2.25rem);
+          border-radius: clamp(16px, 3vw, 28px);
           border: 1px solid rgba(255, 255, 255, 0.14);
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
           position: relative;
@@ -1155,8 +1158,15 @@ export default function OrganizerProfileEditor() {
 
         .org-events-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(min(100%, 450px), 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
           gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+          .org-events-grid { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+        }
+        @media (max-width: 992px) {
+          .org-events-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
         }
         
         .org-create-button {
@@ -1511,6 +1521,7 @@ export default function OrganizerProfileEditor() {
             <UbicacionesEditor
               value={(form as any).ubicaciones || []}
               onChange={(ubicaciones) => setField('ubicaciones' as any, ubicaciones as any)}
+              onSaveItem={() => handleSave()}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
               <motion.button
