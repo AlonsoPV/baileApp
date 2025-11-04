@@ -85,18 +85,14 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           <div style={{
             fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
             background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
           }}>
             <span style={{
               flex: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              textShadow: '0 2px 8px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.55)',
-              background: 'rgba(0,0,0,0.45)',
-              padding: '4px 10px',
-              borderRadius: 10,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.35)'
+              textOverflow: 'ellipsis'
             }}>
               {item.nombre_publico}
             </span>

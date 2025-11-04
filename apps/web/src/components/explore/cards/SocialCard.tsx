@@ -98,26 +98,24 @@ export default function SocialCard({ item }: { item: SocialItem }) {
         }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        {/* Overlay siempre presente para legibilidad (como solicitado) */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        {/* Overlay solo si NO hay imagen de portada (igual que EventCard) */}
+        {!cover && (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        )}
 
         {/* Contenido similar a OrganizerCard: título con pill oscuro y chips */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{
             fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
             background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
           }}>
             <span style={{
               flex: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              textShadow: '0 2px 8px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.55)',
-              background: 'rgba(0,0,0,0.45)',
-              padding: '4px 10px',
-              borderRadius: 10,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.35)'
+              textOverflow: 'ellipsis'
             }}>
               {title}
             </span>
