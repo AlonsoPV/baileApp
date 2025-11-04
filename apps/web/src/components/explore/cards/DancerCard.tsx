@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
+import { urls } from "../../../lib/urls";
 
 type DancerItem = {
   id?: string;
@@ -59,7 +60,7 @@ export default function DancerCard({ item, to }: Props) {
     if (direct) return toSupabasePublicUrl(normalizeUrl(direct as string) as string);
     const media = Array.isArray(item.media) ? item.media : [];
     if (media.length) {
-      const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
+      const bySlot: any = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
       if (bySlot?.url) return toSupabasePublicUrl(normalizeUrl(bySlot.url as string) as string);
       if (bySlot?.path) return toSupabasePublicUrl(normalizeUrl(bySlot.path as string) as string);
       const first = media[0] as any;
@@ -100,7 +101,7 @@ export default function DancerCard({ item, to }: Props) {
     return [] as string[];
   }, [item, allTags]);
 
-  const href = to || '#';
+  const href = to || (item.id ? urls.userLive(String(item.id)) : '#');
 
   return (
     <LiveLink to={href} asCard={false}>
