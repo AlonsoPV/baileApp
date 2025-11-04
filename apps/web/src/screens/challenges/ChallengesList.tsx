@@ -68,11 +68,17 @@ export default function ChallengesList() {
                 {c.cover_image_url && (
                   <img src={c.cover_image_url} alt="cover" style={{ width:'100%', height:140, objectFit:'cover', display:'block' }} />
                 )}
-                <div style={{ padding:'.75rem', display:'grid', gap:'.4rem' }}>
+                <div style={{ padding:'.75rem', display:'grid', gap:'.45rem' }}>
                   <div style={{ fontWeight:900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.title}</div>
-                  <div style={{ opacity:.85, fontSize:'.9rem' }}>{c.status}</div>
-                  <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                    <button onClick={()=>nav(`/challenges/${c.id}`)} className="editor-back-btn">Ver</button>
+                  {c.description && (
+                    <div style={{ opacity:.85, fontSize:'.9rem', height:36, overflow:'hidden', textOverflow:'ellipsis' }}>{c.description}</div>
+                  )}
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:4 }}>
+                    <span style={{
+                      border:'1px solid rgba(255,255,255,.2)', borderRadius:999, padding:'.2rem .6rem', fontSize:'.8rem',
+                      background: c.status==='open' ? 'rgba(16,185,129,.16)' : c.status==='draft' ? 'rgba(255,255,255,.06)' : 'rgba(59,130,246,.12)'
+                    }}>{c.status}</span>
+                    <button onClick={()=>nav(`/challenges/${c.id}`)} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>Ver</button>
                   </div>
                 </div>
               </article>

@@ -115,7 +115,15 @@ export default function ChallengeDetail() {
       </div>
 
       {challenge.cover_image_url && (
-        <img src={challenge.cover_image_url} alt="cover" style={{ width:'100%', maxWidth:960, height:'auto', borderRadius:12 }} />
+        <div style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+        }}>
+          <img src={challenge.cover_image_url} alt="cover" style={{ width:'100%', height:'auto', display:'block' }} />
+        </div>
       )}
 
       {canModerate && editOpen && (
@@ -168,7 +176,7 @@ export default function ChallengeDetail() {
       )}
 
       {canModerate && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'1rem', background:'rgba(255,255,255,.06)', boxShadow:'0 8px 24px rgba(0,0,0,.24)' }}>
           <h3 style={{ marginTop:0 }}>Video del Challenge (referencia)</h3>
           {challenge.hero_video_url ? (
             <video controls style={{ width:350, maxWidth:'100%', height:'auto', borderRadius:12, display:'block', margin:'0 auto' }} src={(challenge as any).hero_video_url} />
@@ -202,10 +210,10 @@ export default function ChallengeDetail() {
       )}
 
       {challenge.status === 'open' && (
-        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:12, padding:'1rem', background:'rgba(255,255,255,.06)' }}>
+        <section style={{ border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'1rem', background:'rgba(255,255,255,.06)', boxShadow:'0 8px 24px rgba(0,0,0,.24)' }}>
           <h3 style={{ marginTop:0 }}>Subir mi video</h3>
           <div style={{ display:'grid', gap:'.5rem', maxWidth:600 }}>
-            <input placeholder="caption (opcional)" value={caption} onChange={e=>setCaption(e.target.value)} className="editor-input" />
+            <input placeholder="Escribe un título o una breve descripción (opcional)" value={caption} onChange={e=>setCaption(e.target.value)} className="editor-input" />
             <input ref={userFileRef} type="file" accept="video/*" hidden onChange={async (e)=>{
               const f = e.target.files?.[0];
               if (!f || !id) return;
@@ -224,7 +232,7 @@ export default function ChallengeDetail() {
                 if (userFileRef.current) userFileRef.current.value='';
               }
             }} />
-            <button onClick={()=>userFileRef.current?.click()} disabled={uploadingUser} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>
+            <button onClick={()=>userFileRef.current?.click()} disabled={uploadingUser} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', fontWeight:900 }}>
               {uploadingUser ? 'Subiendo…' : 'Seleccionar video y enviar'}
             </button>
           </div>
