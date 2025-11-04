@@ -670,8 +670,8 @@ export default function ChallengeDetail() {
     .appr-slider { gap: 1rem; }
     .appr-card {
       width: 360px; min-width: 320px; max-width: 92vw; flex: 0 0 auto;
-      border-radius: 18px; overflow: visible; padding: 0; box-sizing: border-box;
-      display: block; transition: transform .18s ease, box-shadow .18s ease;
+      border-radius: 18px; overflow: hidden; padding: 0; box-sizing: border-box;
+      position: relative; display: block; transition: transform .18s ease, box-shadow .18s ease;
     }
     .appr-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.35); }
     .appr-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 18px 18px 0 0; }
@@ -697,6 +697,8 @@ export default function ChallengeDetail() {
   border-radius: 0 0 18px 18px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
   backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .appr-title {
@@ -706,12 +708,14 @@ export default function ChallengeDetail() {
   line-height: 1.25;
   margin: 0;
   text-shadow: 0 1px 6px rgba(0,0,0,.25);
+  word-break: break-word;
 }
 
 .appr-desc {
   opacity: .95;
   font-size: var(--appr-fz-desc);
   line-height: 1.5;
+  word-break: break-word;
 }
 .appr-body :where(.cc-soft-chip) {
   display: inline-flex;
@@ -744,6 +748,7 @@ export default function ChallengeDetail() {
   margin-top: .6rem;
   padding-top: .6rem;
   border-top: 1px dashed rgba(255,255,255,.12);
+  flex-wrap: wrap;
 }
 
 /* Responsive: compactar y evitar encimarse */
