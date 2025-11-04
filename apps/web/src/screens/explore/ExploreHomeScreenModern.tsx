@@ -97,6 +97,11 @@ export default function ExploreHomeScreen() {
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
 
+  const handlePreNavigate = React.useCallback(() => {
+    try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch {}
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch {}
+  }, []);
+
   const { data: fechas, isLoading: fechasLoading } = useExploreQuery({ 
     type: 'fechas', 
     q: filters.q, 
@@ -309,6 +314,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
@@ -344,6 +350,7 @@ export default function ExploreHomeScreen() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}
                       whileHover={{ y: -4, scale: 1.02 }} 
+                      onClickCapture={handlePreNavigate}
                       style={{ 
                         background: 'rgba(255,255,255,0.04)', 
                         border: '1px solid rgba(255,255,255,0.08)', 
@@ -378,6 +385,7 @@ export default function ExploreHomeScreen() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}
                       whileHover={{ y: -4, scale: 1.02 }} 
+                      onClickCapture={handlePreNavigate}
                       style={{ 
                         background: 'rgba(255,255,255,0.04)', 
                         border: '1px solid rgba(255,255,255,0.08)', 
@@ -410,6 +418,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
@@ -443,6 +452,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
@@ -516,6 +526,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
@@ -549,6 +560,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
