@@ -53,7 +53,7 @@ export default function ChallengeDetail() {
     submission_deadline: '',
     voting_deadline: ''
   });
-  const [userMeta, setUserMeta] = React.useState<Record<string, { name: string; bio?: string }>>({});
+  const [userMeta, setUserMeta] = React.useState<Record<string, { name: string; bio?: string; route?: string }>>({});
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
@@ -148,7 +148,7 @@ export default function ChallengeDetail() {
     }
   }, [challenge]);
 
-  // Fetch uploader display_name and bio for approved subs and leaderboard
+  // Fetch uploader display_name, bio and a safe public route (when available)
   React.useEffect(() => {
     (async () => {
       const ids = new Set<string>();
@@ -156,15 +156,29 @@ export default function ChallengeDetail() {
       (leaderboard || []).forEach((r) => r?.user_id && ids.add(r.user_id));
       if (ids.size === 0) return;
       const arr = Array.from(ids);
-      const { data, error } = await supabase
-        .from('profiles_user')
-        .select('user_id, display_name, email, bio')
-        .in('user_id', arr);
+      const [{ data, error }, { data: rolesData }] = await Promise.all([
+        supabase
+          .from('profiles_user')
+          .select('user_id, display_name, email, bio')
+          .in('user_id', arr),
+        supabase
+          .from('user_roles')
+          .select('user_id, role_slug')
+          .in('user_id', arr)
+      ]);
       if (error) return;
-      const map: Record<string, { name: string; bio?: string }> = {};
+      const roleByUser = new Map<string, string>();
+      (rolesData || []).forEach((r: any) => {
+        if (r?.user_id && r?.role_slug) roleByUser.set(r.user_id, r.role_slug);
+      });
+      const map: Record<string, { name: string; bio?: string; route?: string }> = {};
       (data || []).forEach((p: any) => {
         const name = p.display_name || p.email || p.user_id;
-        map[p.user_id] = { name, bio: p.bio };
+        const role = roleByUser.get(p.user_id);
+        let route: string | undefined = undefined;
+        if (role === 'organizador') route = `/organizer/${p.user_id}`;
+        if (role === 'maestro') route = `/maestro/${p.user_id}`;
+        map[p.user_id] = { name, bio: p.bio, route };
       });
       setUserMeta(map);
     })();
@@ -594,13 +608,19 @@ export default function ChallengeDetail() {
                         src={s.video_url}
                       />
                       <div style={{ display:'flex', flexWrap:'wrap', gap:'.5rem', alignItems:'center', justifyContent:'space-between' }}>
-                        <a
-                          href={`/profile/user/${s.user_id}`}
-                          className="cc-soft-chip"
-                          title={userMeta[s.user_id]?.name || 'Usuario'}
-                        >
-                          <span className="cc-ellipsis">{userMeta[s.user_id]?.name || 'Usuario'}</span>
-                        </a>
+                        {userMeta[s.user_id]?.route ? (
+                          <a
+                            href={userMeta[s.user_id]?.route}
+                            className="cc-soft-chip"
+                            title={userMeta[s.user_id]?.name || 'Usuario'}
+                          >
+                            <span className="cc-ellipsis">{userMeta[s.user_id]?.name || 'Usuario'}</span>
+                          </a>
+                        ) : (
+                          <span className="cc-soft-chip" title={userMeta[s.user_id]?.name || 'Usuario'}>
+                            <span className="cc-ellipsis">{userMeta[s.user_id]?.name || 'Usuario'}</span>
+                          </span>
+                        )}
                         {s.created_at && (
                           <span className="cc-soft-chip" title={String(s.created_at)}>
                             {new Date(s.created_at).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -658,14 +678,56 @@ export default function ChallengeDetail() {
     .appr-media > video {
       width: 100%; height: 100%; display: block; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,.12);
     }
-    .appr-body { padding: 1.1rem; display: grid; gap: .9rem; }
-    .appr-title { font-weight: 900; font-size: 1.08rem; letter-spacing: -.01em; text-shadow: 0 1px 6px rgba(0,0,0,.25); }
-    .appr-desc { opacity: .95; font-size: .98rem; }
-    .appr-meta { display: flex; justify-content: space-between; align-items: center; gap: .9rem; }
-    .appr-author { font-weight: 800; }
-    .appr-actions {
-      display: flex; justify-content: space-between; align-items: center; gap: .9rem; margin-top: .6rem;
-    }
+ /* Scope de la sección/cards aprobados */
+.appr {
+  /* Por qué: tuning rápido sin tocar CSS global */
+  --appr-gap: .9rem;
+  --appr-pad: 1.1rem;
+  --appr-fz-title: clamp(1.02rem, 1.2vw + .8rem, 1.12rem);
+  --appr-fz-desc: clamp(.95rem, .6vw + .84rem, 1rem);
+}
+
+.appr-body {
+  padding: var(--appr-pad);
+  display: grid;
+  gap: var(--appr-gap);
+}
+
+.appr-title {
+  font-weight: 900;
+  font-size: var(--appr-fz-title);
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  text-shadow: 0 1px 6px rgba(0,0,0,.25);
+}
+
+.appr-desc {
+  opacity: .95;
+  font-size: var(--appr-fz-desc);
+  line-height: 1.5;
+}
+
+/* Reglas compartidas para filas de meta y acciones */
+.appr :where(.appr-meta, .appr-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--appr-gap);
+}
+
+.appr-author {
+  font-weight: 800;
+  min-width: 0;            /* evita overflow con ellipsis */
+}
+
+.appr-actions { margin-top: .6rem; }
+
+/* Responsive: compactar y evitar encimarse */
+@media (max-width: 480px) {
+  .appr { --appr-gap: .7rem; --appr-pad: .9rem; }
+  .appr :where(.appr-meta, .appr-actions) { flex-wrap: wrap; }
+}
+
     .appr-actions__left { display: flex; gap: .7rem; align-items: center; }
     /* Utilidades de truncado si aún no existen en tu CSS global */
     .cc-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
