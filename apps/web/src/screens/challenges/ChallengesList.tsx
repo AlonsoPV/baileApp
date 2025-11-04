@@ -35,28 +35,37 @@ export default function ChallengesList() {
   return (
     <div className="cc-page">
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem' }}>
-        {/* Header / Panel principal */}
-        <section className="cc-glass" style={{ padding: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem', gap: '.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
-              <span className="cc-round-ico" style={{ width: 40, height: 40, fontSize: 18 }}>🏆</span>
-              <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Challenges</h1>
+        {/* Hero de bienvenida */}
+        <section className="cc-glass" style={{ padding: '1.25rem', marginBottom: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.9rem' }}>
+              <span className="cc-round-ico" style={{ width: 48, height: 48, fontSize: 22 }}>🏆</span>
+              <div>
+                <h1 style={{ margin: 0, fontSize: '1.45rem' }}>Bienvenido a Challenges</h1>
+                <p style={{ margin: 0, opacity: .85, fontSize: '.95rem' }}>Participa con tu video, compite y vota por tus favoritos.</p>
+              </div>
             </div>
             {canCreate && (
-              <button
-                onClick={() => nav('/challenges/new')}
-                className="cc-btn cc-btn--primary"
-              >
-                ➕ Nuevo Challenge
-              </button>
+              <button onClick={() => nav('/challenges/new')} className="cc-btn cc-btn--primary">➕ Crear Challenge</button>
             )}
           </div>
+        </section>
 
-          {/* Lista */}
+        {/* Lista */}
+        <section className="cc-glass" style={{ padding: '1rem' }}>
           {!data || data.length === 0 ? (
-            <div style={{ opacity: .85 }}>Aún no hay retos.</div>
+            <div style={{
+              display: 'grid', placeItems: 'center', padding: '1.25rem',
+              border: '1px dashed rgba(255,255,255,.18)', borderRadius: 12, opacity: .9
+            }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🚀</div>
+              <div style={{ marginBottom: 6 }}>Aún no hay retos publicados.</div>
+              {canCreate && (
+                <button onClick={() => nav('/challenges/new')} className="cc-btn cc-btn--primary">Crear el primero</button>
+              )}
+            </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '0.9rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
               {data.map((c) => (
                 <article
                   key={c.id}
@@ -64,7 +73,7 @@ export default function ChallengesList() {
                   style={{
                     padding: 0,
                     position: 'relative',
-                    minHeight: 200,
+                    minHeight: 220,
                     aspectRatio: '1 / 1',
                     maxWidth: 350,
                     width: '100%',
@@ -72,6 +81,10 @@ export default function ChallengesList() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-end',
+                    borderRadius: 16,
+                    border: '1px solid rgba(255,255,255,.12)',
+                    boxShadow: '0 10px 28px rgba(0,0,0,.35)',
+                    transition: 'transform .2s ease, box-shadow .2s ease',
                     backgroundImage: c.cover_image_url
                       ? `linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 50%, rgba(0,0,0,.25) 100%), url(${c.cover_image_url})`
                       : 'linear-gradient(135deg, rgba(30,136,229,.25), rgba(255,61,87,.25))',
@@ -80,6 +93,8 @@ export default function ChallengesList() {
                     color: '#fff',
                     overflow: 'hidden'
                   }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 14px 36px rgba(0,0,0,.45)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 10px 28px rgba(0,0,0,.35)'; }}
                 >
                   <div style={{ padding: '.9rem', display: 'grid', gap: '.45rem' }}>
                     {c.ritmo_slug && (
