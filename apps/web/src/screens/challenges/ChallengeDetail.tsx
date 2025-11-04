@@ -611,15 +611,15 @@ export default function ChallengeDetail() {
     .appr-slider { gap: 1rem; }
     .appr-card {
       width: 360px; min-width: 320px; max-width: 92vw; flex: 0 0 auto;
-      border-radius: 18px; overflow: hidden; padding: 0; box-sizing: border-box;
-      display: grid; grid-template-rows: auto 1fr; transition: transform .18s ease, box-shadow .18s ease;
+      border-radius: 18px; overflow: visible; padding: 0; box-sizing: border-box;
+      display: block; transition: transform .18s ease, box-shadow .18s ease;
     }
     .appr-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.35); }
     .appr-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; }
     .appr-media > video {
       width: 100%; height: 100%; display: block; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,.12);
     }
-    .appr-body { padding: .75rem; display: grid; gap: .5rem; }
+    .appr-body { padding: .75rem; display: block; }
     .appr-title { font-weight: 900; font-size: 1rem; }
     .appr-desc { opacity: .9; font-size: .95rem; }
     .appr-meta { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
@@ -671,7 +671,7 @@ export default function ChallengeDetail() {
 
               {/* Descripción del challenge (2 líneas) */}
               {(challenge as any)?.description && (
-                <div className="appr-desc cc-two-lines">
+                <div className="appr-desc">
                   {(challenge as any).description}
                 </div>
               )}
@@ -712,7 +712,7 @@ export default function ChallengeDetail() {
                 </div>
               ) : (
                 s.caption && (
-                  <div className="cc-two-lines" style={{ opacity: 0.85 }}>
+                  <div style={{ opacity: 0.85 }}>
                     {s.caption}
                   </div>
                 )
