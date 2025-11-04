@@ -59,9 +59,6 @@ export default function ChallengeDetail() {
   const [confirmState, setConfirmState] = React.useState<{ open: boolean; title: string; message: string; onConfirm: () => Promise<void> | void }>(
     { open: false, title: '', message: '', onConfirm: async () => { } }
   );
-  const [videoModal, setVideoModal] = React.useState<{ open: boolean; url: string | null; title?: string }>(
-    { open: false, url: null, title: undefined }
-  );
   // Edición de submissions
   const [editingSubmissionId, setEditingSubmissionId] = React.useState<string | null>(null);
   const [editCaption, setEditCaption] = React.useState<string>('');
@@ -161,7 +158,7 @@ export default function ChallengeDetail() {
       const arr = Array.from(ids);
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('user_id, display_name, email, bio')
+        .select('user_id, display_name, nombre_publico, full_name, email, bio')
         .in('user_id', arr);
       if (error) return;
       const map: Record<string, { name: string; bio?: string }> = {};
@@ -808,7 +805,7 @@ export default function ChallengeDetail() {
                     )}
                   </div>
                   {(() => { const url = subById.get(String(row.submission_id))?.video_url as string | undefined; return url ? (
-                    <button className="cc-btn cc-btn--ghost" title="Ver video" onClick={()=>setVideoModal({ open:true, url, title: userMeta[row.user_id]?.name || 'Video' })}>Ver video</button>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="cc-btn cc-btn--ghost" title="Ver video">Ver video</a>
                   ) : null; })()}
                   <span className="cc-chip">❤️ {row.votes}</span>
                 </div>
@@ -827,21 +824,6 @@ export default function ChallengeDetail() {
               <button className="cc-btn cc-btn--ghost" onClick={() => setConfirmState(s => ({ ...s, open: false }))}>Cancelar</button>
               <button className="cc-btn cc-btn--primary" onClick={async () => { const fn = confirmState.onConfirm; setConfirmState(s => ({ ...s, open: false })); await fn(); }}>Eliminar</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de video (leaderboard / submissions) */}
-      {videoModal.open && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', display: 'grid', placeItems: 'center', zIndex: 75 }}>
-          <div className="cc-glass" style={{ padding: '1rem', width: 'min(900px, 95vw)' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '.5rem' }}>
-              <h3 className="cc-section__title cc-mb-0">{videoModal.title || 'Video'}</h3>
-              <button className="cc-btn cc-btn--ghost" onClick={()=>setVideoModal({ open:false, url:null })}>Cerrar</button>
-            </div>
-            {videoModal.url && (
-              <video controls autoPlay style={{ width:'100%', height:'auto', borderRadius:12, display:'block' }} src={videoModal.url} />
-            )}
           </div>
         </div>
       )}
