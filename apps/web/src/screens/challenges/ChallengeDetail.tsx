@@ -37,8 +37,10 @@ export default function ChallengeDetail() {
   const [canModerate, setCanModerate] = React.useState(false);
   const [caption, setCaption] = React.useState('');
   const ownerFileRef = React.useRef<HTMLInputElement | null>(null);
+  const coverFileRef = React.useRef<HTMLInputElement | null>(null);
   const userFileRef = React.useRef<HTMLInputElement | null>(null);
   const [uploadingOwner, setUploadingOwner] = React.useState(false);
+  const [uploadingCover, setUploadingCover] = React.useState(false);
   const [uploadingUser, setUploadingUser] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({
@@ -160,6 +162,36 @@ export default function ChallengeDetail() {
               {(challenge as any).cover_image_url && (
                 <div style={{ display:'grid', placeItems:'center', marginBottom: '.75rem' }}>
                   <img src={(challenge as any).cover_image_url} alt="cover" style={{ width: 350, maxWidth:'100%', height:'auto', borderRadius: 12, display:'block' }} />
+                </div>
+              )}
+              {canModerate && (
+                <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', marginBottom: '.75rem' }}>
+                  <input
+                    ref={coverFileRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f || !id) return;
+                      try {
+                        setUploadingCover(true);
+                        const ext = f.name.split('.').pop()?.toLowerCase() || 'jpg';
+                        const url = await uploadToChallengeBucket(f, `challenges/${id}/cover-${Date.now()}.${ext}`);
+                        const { error } = await supabase.from('challenges').update({ cover_image_url: url }).eq('id', id);
+                        if (error) throw error;
+                        showToast('Portada actualizada', 'success');
+                      } catch (e: any) {
+                        showToast(e?.message || 'No se pudo subir la portada', 'error');
+                      } finally {
+                        setUploadingCover(false);
+                        if (coverFileRef.current) coverFileRef.current.value = '';
+                      }
+                    }}
+                  />
+                  <button onClick={()=>coverFileRef.current?.click()} disabled={uploadingCover} className="cc-btn cc-btn--primary">
+                    {uploadingCover ? 'Subiendo…' : 'Subir/Actualizar portada'}
+                  </button>
                 </div>
               )}
               <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
@@ -308,7 +340,7 @@ export default function ChallengeDetail() {
         )}
 
         {/* Owner video */}
-        {canModerate && (
+     {/*    {canModerate && (
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Video del Challenge (referencia)</h3>
             {(challenge as any).hero_video_url ? (
@@ -354,7 +386,7 @@ export default function ChallengeDetail() {
               </button>
             </div>
           </section>
-        )}
+        )} */}
 
         {/* User submission */}
         {challenge.status === 'open' && (
@@ -456,70 +488,152 @@ export default function ChallengeDetail() {
         )}
 
         {/* Approved */}
-        <section className="cc-glass" style={{ padding: '1rem' }}>
-          <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
-          {approved.length === 0 ? (
-            <div>No hay envíos aprobados</div>
-          ) : (() => {
-            const vmap = new Map<string, number>((leaderboard || []).map((r) => [r.submission_id, r.votes]));
-            return (
-              <HorizontalSlider
-                items={approved}
-                renderItem={(s: any) => (
-                  <div
-                    key={s.id}
-                    className="cc-glass"
-                    style={{ padding: 0, width: 380, minWidth: 380, maxWidth:'92vw', boxSizing:'border-box', flex: '0 0 380px' }}
-                  >
-                     <div style={{ padding: '.6rem', display: 'grid', gap: '.5rem' }}>
-                       <video
-                         controls
-                         style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 8, display: 'block', margin: '0 auto' }}
-                         src={s.video_url}
-                       />
-                       {/* Challenge name + description */}
-                       <div className="cc-ellipsis" style={{ fontWeight: 900 }}>{challenge.title}</div>
-                       {(challenge as any).description && (
-                         <div className="cc-two-lines" style={{ opacity: .9, fontSize: '.95rem' }}>
-                           {(challenge as any).description}
-                         </div>
-                       )}
-                       {/* Author + votes */}
-                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
-                         <div className="cc-ellipsis" style={{ fontWeight: 800 }}>
-                           {userMeta[s.user_id]?.name || s.user_id}
-                         </div>
-                         <span className="cc-chip">❤️ {vmap.get(s.id) || 0}</span>
-                       </div>
-                       {userMeta[s.user_id]?.bio && (
-                         <div className="cc-two-lines" style={{ opacity: 0.9 }}>{userMeta[s.user_id]?.bio}</div>
-                       )}
-                       {s.caption && (
-                         <div className="cc-two-lines" style={{ opacity: 0.85 }}>
-                           {s.caption}
-                         </div>
-                       )}
-                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                         <button
-                           onClick={async () => {
-                             try {
-                               await vote.mutateAsync(s.id);
-                             } catch (e: any) {
-                               showToast(e?.message || 'Error', 'error');
-                             }
-                           }}
-                           className="cc-btn cc-btn--ghost"
-                         >
-                           Votar
-                         </button>
-                       </div>
-                     </div>
-                  </div>
-                )}
+        {/* Sustituye tu sección por esta versión mejorada */}
+<section className="cc-glass" style={{ padding: '1rem' }}>
+  {/* CSS específico solo para esta sección */}
+  <style>{`
+    .appr-slider { gap: 1rem; }
+    .appr-card {
+      width: 360px; min-width: 320px; max-width: 92vw; flex: 0 0 auto;
+      border-radius: 18px; overflow: hidden; padding: 0; box-sizing: border-box;
+      display: grid; grid-template-rows: auto 1fr; transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .appr-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.35); }
+    .appr-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+    .appr-media > video {
+      width: 100%; height: 100%; display: block; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .appr-body { padding: .75rem; display: grid; gap: .5rem; }
+    .appr-title { font-weight: 900; font-size: 1rem; }
+    .appr-desc { opacity: .9; font-size: .95rem; }
+    .appr-meta { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .appr-author { font-weight: 800; }
+    .appr-actions {
+      display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: .25rem;
+    }
+    .appr-actions__left { display: flex; gap: .5rem; align-items: center; }
+    /* Utilidades de truncado si aún no existen en tu CSS global */
+    .cc-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cc-two-lines {
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    @media (max-width: 420px) {
+      .appr-card { width: 92vw; min-width: 92vw; }
+    }
+  `}</style>
+
+  <h3 className="cc-section__title cc-section__title--orange cc-mb-0">Aprobados</h3>
+
+  {approved.length === 0 ? (
+    <div>No hay envíos aprobados</div>
+  ) : (() => {
+    const vmap = new Map<string, number>((leaderboard || []).map((r) => [r.submission_id, r.votes]));
+    return (
+      <div className="appr-slider">
+      <HorizontalSlider
+        items={approved}
+        renderItem={(s: any) => (
+          <div key={s.id} className="cc-glass appr-card" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
+            {/* Media */}
+            <div className="appr-media">
+              <video
+                controls
+                src={s.video_url}
+                title={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
+                aria-label={`Video de ${userMeta[s.user_id]?.name || s.user_id}`}
               />
-            );
-          })()}
-        </section>
+            </div>
+
+            {/* Body */}
+            <div className="appr-body">
+              {/* Título del challenge */}
+              <div className="appr-title cc-ellipsis" title={challenge.title}>
+                {challenge.title}
+              </div>
+
+              {/* Descripción del challenge (2 líneas) */}
+              {(challenge as any)?.description && (
+                <div className="appr-desc cc-two-lines">
+                  {(challenge as any).description}
+                </div>
+              )}
+
+              {/* Autor + votos */}
+              <div className="appr-meta">
+                <div className="appr-author cc-ellipsis" title={userMeta[s.user_id]?.name || s.user_id}>
+                  {userMeta[s.user_id]?.name || s.user_id}
+                </div>
+                <span
+                  className="cc-chip"
+                  role="status"
+                  aria-live="polite"
+                  title={`${vmap.get(s.id) || 0} votos`}
+                >
+                  ❤️ {vmap.get(s.id) || 0}
+                </span>
+              </div>
+
+              {/* Caption del envío (2 líneas) */}
+              {s.caption && (
+                <div className="cc-two-lines" style={{ opacity: 0.85 }}>
+                  {s.caption}
+                </div>
+              )}
+
+              {/* Acciones */}
+              <div className="appr-actions">
+                <div className="appr-actions__left">
+                  <button
+                    onClick={async () => {
+                      try { await vote.mutateAsync(s.id); }
+                      catch (e: any) { showToast(e?.message || 'Error', 'error'); }
+                    }}
+                    className="cc-btn cc-btn--primary"
+                    aria-label={`Votar por envío de ${userMeta[s.user_id]?.name || s.user_id}`}
+                    title="Votar"
+                  >
+                    Votar
+                  </button>
+                  <a
+                    href={s.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cc-btn cc-btn--ghost"
+                    aria-label="Abrir video en nueva pestaña"
+                    title="Ver video"
+                  >
+                    Ver video
+                  </a>
+                </div>
+
+                <button
+                  onClick={() => {
+                    // Navega al detalle del challenge (mantén tu routing si quieres ir a una página del submission)
+                    // nav(`/challenges/${challenge.id}`)  // <- si necesitas deep link, reemplázalo
+                    try {
+                      navigator.clipboard?.writeText(window.location.origin + `/challenges/${challenge.id}`);
+                      showToast('Enlace copiado', 'success');
+                    } catch {
+                      showToast('No se pudo copiar el enlace', 'error');
+                    }
+                  }}
+                  className="cc-btn cc-btn--ghost"
+                  aria-label="Copiar enlace del challenge"
+                  title="Copiar enlace"
+                >
+                  Copiar enlace
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      />
+      </div>
+    );
+  })()}
+</section>
+
 
         {/* Leaderboard */}
         <section className="cc-glass" style={{ padding: '1rem' }}>
