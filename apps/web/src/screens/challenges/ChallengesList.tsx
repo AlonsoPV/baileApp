@@ -65,6 +65,7 @@ export default function ChallengesList() {
                     padding: 0,
                     position: 'relative',
                     minHeight: 200,
+                    aspectRatio: '1 / 1',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-end',

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useChallengeCreate } from '../../hooks/useChallenges';
 import { useToast } from '../../components/Toast';
 import RitmosChips from '../../components/RitmosChips';
+import { supabase } from '../../lib/supabase';
 
 // ⬇️ Estilos compartidos
 import '../../styles/event-public.css';
@@ -20,6 +21,8 @@ export default function ChallengeNew() {
     voting_deadline: '',
   });
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
+  const coverFileRef = React.useRef<HTMLInputElement|null>(null);
+  const [pendingCoverFile, setPendingCoverFile] = React.useState<File|null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +35,19 @@ export default function ChallengeNew() {
         submission_deadline: form.submission_deadline || null,
         voting_deadline: form.voting_deadline || null,
       });
+      // Si se seleccionó archivo de portada, súbelo y actualiza la fila
+      if (pendingCoverFile) {
+        const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('challenge-media').upload(path, pendingCoverFile, {
+          upsert: true,
+          cacheControl: '3600',
+          contentType: pendingCoverFile.type || undefined
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+        await supabase.from('challenges').update({ cover_image_url: pub.publicUrl }).eq('id', id);
+      }
       showToast('Challenge creado', 'success');
       nav(`/challenges/${id}`);
     } catch (err: any) {
@@ -106,6 +122,14 @@ export default function ChallengeNew() {
                   color: '#fff',
                 }}
               />
+          <div style={{ display:'flex', gap:'.5rem', marginTop:8, alignItems:'center', flexWrap:'wrap' }}>
+            <input ref={coverFileRef} type="file" accept="image/*" hidden onChange={(e)=>{
+              const f = e.target.files?.[0];
+              if (!f) return; setPendingCoverFile(f); if (coverFileRef.current) coverFileRef.current.value='';
+            }} />
+            <button type="button" className="cc-btn cc-btn--primary" onClick={()=>coverFileRef.current?.click()}>Seleccionar portada</button>
+            {pendingCoverFile && <span className="cc-chip">Archivo listo: {pendingCoverFile.name}</span>}
+          </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
