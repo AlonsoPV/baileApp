@@ -9,6 +9,7 @@ type Props<T = any> = {
   scrollStep?: number;     // 0..1 del ancho visible a desplazar por click
   className?: string;
   style?: React.CSSProperties;
+  autoColumns?: string | number | null; // permite sobreescribir grid-auto-columns
 };
 
 export default function HorizontalSlider<T>({
@@ -17,7 +18,8 @@ export default function HorizontalSlider<T>({
   gap = 16,
   scrollStep = 0.85,
   className,
-  style
+  style,
+  autoColumns
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -94,7 +96,11 @@ export default function HorizontalSlider<T>({
             display: "grid",
             gridAutoFlow: "column",
             // Fijar ancho de card para que no se estiren cuando hay <= 3
-            gridAutoColumns: "280px",
+            ...(autoColumns === undefined
+              ? { gridAutoColumns: "280px" }
+              : autoColumns === null
+              ? {}
+              : { gridAutoColumns: autoColumns as any }),
             gap
           }}
         >

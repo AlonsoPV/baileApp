@@ -518,8 +518,8 @@ export default function ChallengeDetail() {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    @media (max-width: 420px) {
-      .appr-card { width: 92vw; min-width: 92vw; }
+    @media (max-width: 768px) {
+      .appr-card { width: 100%; min-width: 100%; max-width: 100%; }
     }
   `}</style>
 
@@ -533,6 +533,7 @@ export default function ChallengeDetail() {
       <div className="appr-slider">
       <HorizontalSlider
         items={approved}
+        autoColumns={null}
         renderItem={(s: any) => (
           <div key={s.id} className="cc-glass appr-card" role="article" aria-label={`Envío aprobado por ${userMeta[s.user_id]?.name || s.user_id}`}>
             {/* Media */}
