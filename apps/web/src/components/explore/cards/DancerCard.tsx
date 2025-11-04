@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
-import { urls } from "../../../lib/urls";
+// no se usa urls.userLive, pedimos navegar a /app/profile con query
 
 type DancerItem = {
   id?: string;
@@ -101,7 +101,7 @@ export default function DancerCard({ item, to }: Props) {
     return [] as string[];
   }, [item, allTags]);
 
-  const href = to || (item.id ? urls.userLive(String(item.id)) : '#');
+  const href = to || (item.id ? `/app/profile?userId=${encodeURIComponent(String(item.id))}` : '#');
 
   return (
     <LiveLink to={href} asCard={false}>

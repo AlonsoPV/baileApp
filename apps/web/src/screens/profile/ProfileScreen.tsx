@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import UserProfileEditor from './UserProfileEditor';
 import { UserProfileLive } from './UserProfileLive';
 import OrganizerProfileEditor from './OrganizerProfileEditor';
 import { OrganizerProfileLive } from './OrganizerProfileLive';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import UserPublicScreen from './UserPublicScreen';
 import { useProfileMode } from '../../state/profileMode';
 import { useAuth } from '@/contexts/AuthProvider';
 
@@ -22,6 +23,13 @@ export function ProfileScreen() {
   const { profile, isLoading } = useUserProfile();
   const { mode } = useProfileMode(); // mode ahora es el rol actual
   const isEditRoute = window.location.pathname.includes('/edit');
+  const { search } = useLocation();
+  const viewUserId = new URLSearchParams(search).get('userId');
+
+  // Si viene userId por query, mostrar la vista pública de ese usuario
+  if (viewUserId) {
+    return <UserPublicScreen />;
+  }
 
   if (loading || isLoading) {
     return (

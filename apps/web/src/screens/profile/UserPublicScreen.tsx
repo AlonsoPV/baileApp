@@ -1,9 +1,14 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
 export default function UserPublicScreen() {
-  const { userId } = useParams();
+  const { userId: userIdFromParams } = useParams();
+  const { search } = useLocation();
+  const userId = React.useMemo(() => {
+    const q = new URLSearchParams(search);
+    return (userIdFromParams as string) || q.get('userId') || '';
+  }, [userIdFromParams, search]);
   const [profile, setProfile] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
 
