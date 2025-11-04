@@ -42,15 +42,15 @@ export default function SocialCard({ item }: { item: SocialItem }) {
     : undefined;
   const organizerCover = (
     organizer?.portada_url
-      || (Array.isArray(organizer?.media) && ((organizer.media[0] as any)?.url || (typeof organizer.media[0] === 'string' ? organizer.media[0] : undefined)))
-      || organizer?.avatar_url
+    || (Array.isArray(organizer?.media) && ((organizer.media[0] as any)?.url || (typeof organizer.media[0] === 'string' ? organizer.media[0] : undefined)))
+    || organizer?.avatar_url
   ) as string | undefined;
   const cover = normalizeUrl(
     (avatarFromMedia?.url as string | undefined)
-      || (item?.avatar_url as string | undefined)
-      || (item?.portada_url as string | undefined)
-      || (firstSocialMedia as string | undefined)
-      || organizerCover
+    || (item?.avatar_url as string | undefined)
+    || (item?.portada_url as string | undefined)
+    || (firstSocialMedia as string | undefined)
+    || organizerCover
   );
 
   const firstLocation = Array.isArray(item?.ubicaciones) && item!.ubicaciones!.length > 0
@@ -174,7 +174,7 @@ export default function SocialCard({ item }: { item: SocialItem }) {
             </div>
           )}
 
-       {/*    <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+          {/*    <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>Descubre más del social</div>
              *<div style={{
               padding: '8px 12px',

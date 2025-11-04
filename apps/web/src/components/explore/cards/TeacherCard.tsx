@@ -70,42 +70,8 @@ export default function TeacherCard({ item }: { item: any }) {
         {!bannerUrl && (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
         )}
-        {/* Contenido */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-            display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
-          }}>
-            <span style={{
-              flex: 1,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              color: '#fff',
-              filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
-            }}>
-              {item.nombre_publico || "Maestr@"}
-            </span>
-          </div>
-        </div>
-
-
-
-        {item.bio && (
-          <div style={{
-            fontSize: '0.875rem',
-            marginTop: '0.5rem',
-            color: 'rgba(255, 255, 255, 0.7)',
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            lineHeight: 1.6,
-            flex: 1
-          }}>
-            {item.bio}
-          </div>
-        )}
+        {/* Contenido principal de la tarjeta sin nombre/bio (se muestran debajo) */}
+        <div style={{ position: 'relative', zIndex: 1 }} />
 
         {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
@@ -120,6 +86,37 @@ export default function TeacherCard({ item }: { item: any }) {
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
     </LiveLink>
+    {/* Nombre y bio debajo de la tarjeta */}
+    <div style={{ marginTop: 8 }}>
+      <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
+        <div style={{
+          fontSize: '1.05rem',
+          fontWeight: 800,
+          lineHeight: 1.3,
+          color: '#fff',
+          filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))',
+          marginBottom: 4,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {item.nombre_publico || 'Maestr@'}
+        </div>
+      </LiveLink>
+      {item.bio && (
+        <div style={{
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.78)',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          lineHeight: 1.4
+        }}>
+          {item.bio}
+        </div>
+      )}
+    </div>
   );
 }
 
