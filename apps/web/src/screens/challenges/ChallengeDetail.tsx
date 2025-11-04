@@ -691,13 +691,20 @@ export default function ChallengeDetail() {
   padding: var(--appr-pad);
   display: grid;
   gap: var(--appr-gap);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+  border: 1px solid rgba(255,255,255,.12);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(8px);
 }
 
 .appr-title {
   font-weight: 900;
   font-size: var(--appr-fz-title);
   letter-spacing: -.01em;
-  line-height: 1.2;
+  line-height: 1.25;
+  margin: 0;
   text-shadow: 0 1px 6px rgba(0,0,0,.25);
 }
 
@@ -705,6 +712,12 @@ export default function ChallengeDetail() {
   opacity: .95;
   font-size: var(--appr-fz-desc);
   line-height: 1.5;
+}
+.appr-desc .cc-soft-chip {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  padding: .35rem .6rem;
+  border-radius: 12px;
 }
 
 /* Reglas compartidas para filas de meta y acciones */
@@ -719,8 +732,16 @@ export default function ChallengeDetail() {
   font-weight: 800;
   min-width: 0;            /* evita overflow con ellipsis */
 }
+.appr-author .cc-soft-chip {
+  background: rgba(30,136,229,.12);
+  border: 1px solid rgba(30,136,229,.25);
+}
 
-.appr-actions { margin-top: .6rem; }
+.appr-actions {
+  margin-top: .6rem;
+  padding-top: .6rem;
+  border-top: 1px dashed rgba(255,255,255,.12);
+}
 
 /* Responsive: compactar y evitar encimarse */
 @media (max-width: 480px) {
