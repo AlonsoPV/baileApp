@@ -161,7 +161,7 @@ export default function ChallengeDetail() {
       const arr = Array.from(ids);
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('user_id, display_name, nombre_publico, full_name, email, bio')
+        .select('user_id, display_name, email, bio')
         .in('user_id', arr);
       if (error) return;
       const map: Record<string, { name: string; bio?: string }> = {};
