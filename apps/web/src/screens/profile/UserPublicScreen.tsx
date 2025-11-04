@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import RitmosChips from '@/components/RitmosChips';
 import SocialMediaSection from '@/components/profile/SocialMediaSection';
+import { useTags } from '@/hooks/useTags';
+import { Chip } from '@/components/profile/Chip';
 
 export default function UserPublicScreen() {
   const { userId: userIdFromParams } = useParams();
@@ -14,6 +16,7 @@ export default function UserPublicScreen() {
   }, [userIdFromParams, search]);
   const [profile, setProfile] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const { data: allTags } = useTags();
 
   React.useEffect(() => {
     (async () => {
@@ -60,6 +63,21 @@ export default function UserPublicScreen() {
   const p2 = slot('p2');
   const p3 = slot('p3');
   const v1 = slot('v1');
+  const galleryOthers: string[] = (Array.isArray(profile.media) ? profile.media : [])
+    .filter((m: any) => m?.slot?.startsWith('p') && !['p1','p2','p3'].includes(m.slot))
+    .map((m: any) => (m?.url ? toSupabasePublicUrl(m.url) : (m?.path ? toSupabasePublicUrl(m.path) : undefined)))
+    .filter(Boolean) as string[];
+  const zonaNames: string[] = React.useMemo(() => {
+    try {
+      const ids: number[] = (profile?.zonas || []) as number[];
+      if (!Array.isArray(allTags)) return [] as string[];
+      return ids
+        .map((id: number) => allTags.find((t: any) => t.id === id && t.tipo === 'zona'))
+        .filter(Boolean)
+        .map((t: any) => t.nombre as string);
+    } catch {}
+    return [] as string[];
+  }, [profile?.zonas, allTags]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#fff' }}>
@@ -80,6 +98,13 @@ export default function UserPublicScreen() {
               {Array.isArray(profile.ritmos_seleccionados) && profile.ritmos_seleccionados.length > 0 ? (
                 <RitmosChips selected={profile.ritmos_seleccionados} onChange={() => {}} readOnly />
               ) : null}
+              {zonaNames.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {zonaNames.map((name) => (
+                    <Chip key={`z-${name}`} label={name} icon="📍" variant="zona" />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -132,6 +157,17 @@ export default function UserPublicScreen() {
             <h3 className="section-title">🎥 Video Principal</h3>
             <div style={{ width: '100%', maxWidth: 600, borderRadius: 12, overflow: 'hidden', border: '2px solid rgba(255,255,255,.1)', margin: '0 auto' }}>
               <video src={v1} controls style={{ width: '100%', height: 'auto', aspectRatio: '4 / 5', display: 'block', objectFit: 'contain', objectPosition: 'center' }} />
+            </div>
+          </section>
+        )}
+
+        {galleryOthers.length > 0 && (
+          <section className="glass-card-container" style={{ marginTop: 16 }}>
+            <h3 className="section-title">📷 Galería de Fotos</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
+              {galleryOthers.map((src, i) => (
+                <ImageWithFallback key={`gal-${i}`} src={src} alt={`Foto ${i+1}`} style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)' }} />
+              ))}
             </div>
           </section>
         )}
