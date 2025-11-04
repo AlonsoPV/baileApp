@@ -66,15 +66,15 @@ export default function BrandCard({ item }: Props) {
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{
             fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-            background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
             display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
           }}>
             <span style={{
               flex: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              color: '#fff',
+              filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
             }}>
               {nombre}
             </span>

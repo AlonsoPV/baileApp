@@ -135,11 +135,7 @@ export default function ClassCard({ item }: Props) {
           margin: 0,
           fontSize: '1.375rem',
           fontWeight: 700,
-          lineHeight: 1.2,
-          background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
+          lineHeight: 1.2
         }}>
           <span style={{
             display: 'inline-block',
@@ -147,11 +143,8 @@ export default function ClassCard({ item }: Props) {
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            background: 'rgba(0,0,0,0.45)',
-            padding: '4px 10px',
-            borderRadius: 10,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.12)'
+            color: '#fff',
+            filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
           }}>
             {item.titulo || 'Clase'}
           </span>
