@@ -12,7 +12,7 @@
  * @param id ID del organizador
  */
 export function organizerLive(id: number | string): string {
-  return `/profile/organizer/${id}`;
+  return `/organizer/${id}`;
 }
 
 /**
@@ -44,7 +44,7 @@ export function userLive(userId: string): string {
  * @param id ID de la academia
  */
 export function academyLive(id: number | string): string {
-  return `/academia/${id}`;
+  return `/academy/${id}`;
 }
 
 /**
