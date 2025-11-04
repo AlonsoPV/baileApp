@@ -157,17 +157,17 @@ export default function EventCard({ item }: EventCardProps) {
 
         <div style={{
           fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-          background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
           display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
         }}>
 
           <span style={{
             flex: 1,
+            maxWidth: '100%',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-           
-            padding: '4px 10px',
-            borderRadius: 10,
+            textOverflow: 'ellipsis',
+            color: '#fff',
+            filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
           }}>
             {nombre}
           </span>
