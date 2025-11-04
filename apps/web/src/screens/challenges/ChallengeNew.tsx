@@ -1,7 +1,11 @@
+// File: src/pages/challenges/ChallengeNew.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChallengeCreate } from '../../hooks/useChallenges';
 import { useToast } from '../../components/Toast';
+
+// ⬇️ Estilos compartidos
+import '../../styles/event-public.css';
 
 export default function ChallengeNew() {
   const nav = useNavigate();
@@ -33,52 +37,114 @@ export default function ChallengeNew() {
   };
 
   return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #12171d 0%, #0e141a 100%)', color:'#fff' }}>
-      <style>{`
-        .chn-wrap { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        .glass { border:1px solid rgba(255,255,255,.15); border-radius:20px; background:rgba(255,255,255,.06); box-shadow:0 8px 24px rgba(0,0,0,.24); }
-        @media (max-width: 768px) { .chn-wrap { padding: .75rem; } .glass { border-radius:16px; } }
-      `}</style>
-      <div className="chn-wrap">
-      <div className="glass" style={{ padding:'1rem', margin:'1rem 0', maxWidth: 720 }}>
-      <h1 style={{ margin:'0 0 1rem 0', fontSize:'1.3rem', display:'flex', alignItems:'center', gap:'.6rem' }}>
-        <span style={{ width:40, height:40, borderRadius:'50%', display:'grid', placeItems:'center', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.2)' }}>🏆</span>
-        Nuevo Challenge
-      </h1>
-      <form onSubmit={onSubmit} style={{ display:'grid', gap:'.75rem' }}>
-        <div>
-          <label style={{ display:'block', marginBottom:4 }}>Título</label>
-          <input value={form.title} onChange={e=>setForm(s=>({ ...s, title: e.target.value }))} required className="editor-input" style={{ width:'100%' }} />
+    <div className="cc-page">
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem' }}>
+        <div className="cc-glass" style={{ padding: '1rem', margin: '1rem 0', maxWidth: 720 }}>
+          <h1
+            className="cc-section__title cc-mb-0"
+            style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '.6rem' }}
+          >
+            <span className="cc-round-ico" style={{ width: 40, height: 40, fontSize: 18 }}>🏆</span>
+            Nuevo Challenge
+          </h1>
+
+          <form onSubmit={onSubmit} style={{ display: 'grid', gap: '.75rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>Título</label>
+              <input
+                required
+                value={form.title}
+                onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '.5rem .75rem',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,.18)',
+                  background: 'rgba(255,255,255,.06)',
+                  color: '#fff',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>Descripción</label>
+              <textarea
+                rows={4}
+                value={form.description}
+                onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '.5rem .75rem',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,.18)',
+                  background: 'rgba(255,255,255,.06)',
+                  color: '#fff',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>Imagen de portada (URL)</label>
+              <input
+                value={form.cover_image_url}
+                onChange={(e) => setForm((s) => ({ ...s, cover_image_url: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '.5rem .75rem',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,.18)',
+                  background: 'rgba(255,255,255,.06)',
+                  color: '#fff',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Cierre de envíos</label>
+                <input
+                  type="datetime-local"
+                  value={form.submission_deadline}
+                  onChange={(e) => setForm((s) => ({ ...s, submission_deadline: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '.5rem .75rem',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255,255,255,.18)',
+                    background: 'rgba(255,255,255,.06)',
+                    color: '#fff',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Cierre de votos</label>
+                <input
+                  type="datetime-local"
+                  value={form.voting_deadline}
+                  onChange={(e) => setForm((s) => ({ ...s, voting_deadline: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '.5rem .75rem',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255,255,255,.18)',
+                    background: 'rgba(255,255,255,.06)',
+                    color: '#fff',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '.5rem' }}>
+              <button type="button" onClick={() => nav('/challenges')} className="cc-btn cc-btn--ghost">
+                Cancelar
+              </button>
+              <button type="submit" disabled={create.isPending} className="cc-btn cc-btn--primary">
+                {create.isPending ? 'Creando…' : 'Crear'}
+              </button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label style={{ display:'block', marginBottom:4 }}>Descripción</label>
-          <textarea value={form.description} onChange={e=>setForm(s=>({ ...s, description: e.target.value }))} className="editor-textarea" rows={4} style={{ width:'100%' }} />
-        </div>
-        <div>
-          <label style={{ display:'block', marginBottom:4 }}>Imagen de portada (URL)</label>
-          <input value={form.cover_image_url} onChange={e=>setForm(s=>({ ...s, cover_image_url: e.target.value }))} className="editor-input" style={{ width:'100%' }} />
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.75rem' }}>
-          <div>
-            <label style={{ display:'block', marginBottom:4 }}>Cierre de envíos</label>
-            <input type="datetime-local" value={form.submission_deadline} onChange={e=>setForm(s=>({ ...s, submission_deadline: e.target.value }))} className="editor-input" style={{ width:'100%' }} />
-          </div>
-          <div>
-            <label style={{ display:'block', marginBottom:4 }}>Cierre de votos</label>
-            <input type="datetime-local" value={form.voting_deadline} onChange={e=>setForm(s=>({ ...s, voting_deadline: e.target.value }))} className="editor-input" style={{ width:'100%' }} />
-          </div>
-        </div>
-        <div style={{ display:'flex', gap:'.5rem' }}>
-          <button type="button" onClick={()=>nav('/challenges')} className="editor-back-btn">Cancelar</button>
-          <button type="submit" disabled={create.isPending} className="editor-back-btn" style={{ background:'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' }}>
-            {create.isPending ? 'Creando…' : 'Crear'}
-          </button>
-        </div>
-      </form>
-      </div>
       </div>
     </div>
   );
 }
-
-
