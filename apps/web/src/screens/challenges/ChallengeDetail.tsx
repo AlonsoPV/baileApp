@@ -181,6 +181,7 @@ export default function ChallengeDetail() {
 
   const pending = (subs || []).filter((s) => s.status === 'pending');
   const approved = (subs || []).filter((s) => s.status === 'approved');
+  const mySubmission = (subs || []).find((s:any) => s.user_id === currentUserId);
 
   const getStoragePathFromPublicUrl = (url?: string | null) => {
     if (!url) return null;
@@ -337,9 +338,9 @@ export default function ChallengeDetail() {
               {(challenge as any).description && (
                 <div className="cc-two-lines" style={{ opacity: .92, marginBottom: 8 }}>{(challenge as any).description}</div>
               )} */}
-              {(challenge as any).ritmo_slug && (
+             {/*  {(challenge as any).ritmo_slug && (
                 <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => { }} readOnly />
-              )}
+              )} */}
             </div>
             <div>
               {(challenge as any).hero_video_url ? (
@@ -516,7 +517,7 @@ export default function ChallengeDetail() {
         )} */}
 
         {/* User submission */}
-        {challenge.status === 'open' && (
+        {challenge.status === 'open' && !mySubmission && (
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Subir mi video</h3>
             <div style={{ display: 'grid', gap: '.5rem', maxWidth: 600 }}>
@@ -559,6 +560,19 @@ export default function ChallengeDetail() {
               >
                 {uploadingUser ? 'Subiendo…' : 'Seleccionar video y enviar'}
               </button>
+            </div>
+          </section>
+        )}
+
+        {challenge.status === 'open' && mySubmission && (
+          <section className="cc-glass" style={{ padding: '1rem' }}>
+            <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Mi envío</h3>
+            <div style={{ display:'grid', gap:'.5rem' }}>
+              <div className="cc-soft-chip"><span className="cc-ellipsis">Ya enviaste un video para este challenge.</span></div>
+              <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+                <a className="cc-btn cc-btn--ghost" href={mySubmission.video_url} target="_blank" rel="noopener noreferrer">Ver mi video</a>
+                <button className="cc-btn cc-btn--primary" onClick={()=>startEditSubmission(mySubmission)}>Editar mi envío</button>
+              </div>
             </div>
           </section>
         )}
