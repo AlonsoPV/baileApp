@@ -1,0 +1,73 @@
+/* Shared event/challenge public view helpers */
+
+.cc-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #12171d 0%, #0e141a 100%);
+  color: #fff;
+}
+
+.cc-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.cc-chip {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-weight: 800;
+}
+
+.cc-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.cc-btn--primary {
+  background: linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9));
+}
+
+.cc-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cc-section__title {
+  margin: 0 0 .5rem 0;
+  font-weight: 900;
+}
+
+.cc-section__title--blue {
+  background: linear-gradient(135deg, #1E88E5, #00BCD4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cc-section__title--orange {
+  background: linear-gradient(135deg, #E53935, #FB8C00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cc-round-ico {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+.cc-mb-0 { margin-bottom: 0; }
+
+@media (max-width: 768px) {
+  .cc-glass { border-radius: 14px; }
+}

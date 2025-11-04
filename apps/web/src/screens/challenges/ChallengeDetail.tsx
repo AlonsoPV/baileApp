@@ -17,7 +17,7 @@ import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
 
 // ⬇️ Estilos compartidos aplicados
-import '/src/styles/event-public.css';
+import '../../styles/event-public.css';
 
 export default function ChallengeDetail() {
   const { id } = useParams();
