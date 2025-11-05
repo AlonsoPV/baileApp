@@ -18,6 +18,7 @@ export default function TrendingAdmin() {
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<any[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("");
+  const [createOpen, setCreateOpen] = React.useState<boolean>(false);
 
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
@@ -28,14 +29,12 @@ export default function TrendingAdmin() {
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [ritmosSel, setRitmosSel] = React.useState<string[]>([]);
   // Listas de usuarios
-  const [list1Name, setList1Name] = React.useState<string>("");
-  const [list1Ritmo, setList1Ritmo] = React.useState<string>("");
-  const [list1Selected, setList1Selected] = React.useState<{id:string; name:string}[]>([]);
-  const [list1Search, setList1Search] = React.useState<string>("");
-  const [list2Name, setList2Name] = React.useState<string>("");
-  const [list2Ritmo, setList2Ritmo] = React.useState<string>("");
-  const [list2Selected, setList2Selected] = React.useState<{id:string; name:string}[]>([]);
-  const [list2Search, setList2Search] = React.useState<string>("");
+  type CandidateChip = { id: string; name: string; avatar?: string };
+  type UserList = { key: string; name: string; ritmo: string; selected: CandidateChip[]; search: string };
+  const [lists, setLists] = React.useState<UserList[]>([
+    { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+    { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+  ]);
 
   const [allUsers, setAllUsers] = React.useState<{id:string; name:string; avatar?:string}[]>([]);
   React.useEffect(() => {
@@ -103,21 +102,26 @@ export default function TrendingAdmin() {
       for (const slug of ritmosSel) {
         await adminAddRitmo(id, slug);
       }
-      // Crear candidatos desde listas seleccionadas por display_name
-      for (const u of list1Selected) {
-        if (list1Ritmo) {
-          await adminAddCandidate({ trendingId: id, ritmoSlug: list1Ritmo, userId: u.id, displayName: u.name, listName: list1Name || null as any });
-        }
-      }
-      for (const u of list2Selected) {
-        if (list2Ritmo) {
-          await adminAddCandidate({ trendingId: id, ritmoSlug: list2Ritmo, userId: u.id, displayName: u.name, listName: list2Name || null as any });
+      // Crear candidatos desde listas dinámicas
+      for (const L of lists) {
+        if (!L.ritmo) continue;
+        for (const u of L.selected) {
+          await adminAddCandidate({
+            trendingId: id,
+            ritmoSlug: L.ritmo,
+            userId: u.id,
+            displayName: u.name,
+            avatarUrl: u.avatar,
+            listName: L.name || null as any,
+          });
         }
       }
 
       setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
-      setList1Name(""); setList1Ritmo(""); setList1Selected([]); setList1Search("");
-      setList2Name(""); setList2Ritmo(""); setList2Selected([]); setList2Search("");
+      setLists([
+        { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+        { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+      ]);
       await reload(statusFilter || undefined);
       alert(`Trending creado: #${id}`);
     } catch (err: any) {
@@ -159,12 +163,17 @@ export default function TrendingAdmin() {
           </div>
         </section>
 
-        {/* Crear */}
+        {/* Crear (colapsable) */}
         <section className="cc-glass" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Crear trending</h2>
-          {!canAdmin && <div style={{ opacity: .85 }}>Necesitas permisos de superadmin.</div>}
-          {canAdmin && (
-            <form onSubmit={onCreate} style={{ display: 'grid', gap: '0.75rem', maxWidth: 700 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Crear trending</h2>
+            <button type="button" className="cc-btn" onClick={() => setCreateOpen(!createOpen)}>
+              {createOpen ? 'Cerrar' : 'Abrir'}
+            </button>
+          </div>
+          {!canAdmin && <div style={{ opacity: .85, marginTop: 8 }}>Necesitas permisos de superadmin.</div>}
+          {canAdmin && createOpen && (
+            <form onSubmit={onCreate} style={{ display: 'grid', gap: '0.75rem', maxWidth: 700, marginTop: 10 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Portada</label>
                 <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
@@ -198,80 +207,58 @@ export default function TrendingAdmin() {
                   <option value="per_ritmo">per_ritmo</option>
                 </select>
               </div>
-              {/* Lista #1 con selección por display_name */}
-              <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
-                <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #1</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
-                    <input placeholder="Ej. Bachata Team A" value={list1Name} onChange={(e) => setList1Name(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
-                    <RitmosChips selected={list1Ritmo ? [list1Ritmo] : []} onChange={(vals: string[]) => setList1Ritmo(vals?.[0] || '')} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
-                    <input placeholder="Escribe un nombre..." value={list1Search} onChange={(e) => setList1Search(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-                    {list1Search && (
-                      <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
-                        {allUsers.filter(u => u.name.toLowerCase().includes(list1Search.toLowerCase())).slice(0,50).map(u => (
-                          <button type="button" key={u.id} onClick={() => { if (!list1Selected.find(x=>x.id===u.id)) setList1Selected([...list1Selected, u]); }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
-                            <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
-                            <span>{u.name}</span>
-                          </button>
-                        ))}
+              {/* Listas dinámicas */}
+              <div style={{ display:'grid', gap: 10 }}>
+                {lists.map((L, idx) => (
+                  <div key={L.key} className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 8 }}>
+                      <h3 style={{ margin: 0, fontSize: '1rem' }}>Lista de usuarios #{idx+1}</h3>
+                      <button type="button" className="cc-btn" onClick={() => setLists(lists.filter(x => x.key !== L.key))}>
+                        Eliminar lista
+                      </button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
+                        <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                       </div>
-                    )}
-                    {list1Selected.length > 0 && (
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
-                        {list1Selected.map(u => (
-                          <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
-                            {u.name}
-                            <button type="button" onClick={() => setList1Selected(list1Selected.filter(x=>x.id!==u.id))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
-                          </span>
-                        ))}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
+                        <RitmosChips selected={L.ritmo ? [L.ritmo] : []} onChange={(vals: string[]) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmo: (vals?.[0] || '') } : x))} />
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Lista #2 con selección por display_name */}
-              <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
-                <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #2</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
-                    <input placeholder="Ej. Bachata Team B" value={list2Name} onChange={(e) => setList2Name(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
-                    <RitmosChips selected={list2Ritmo ? [list2Ritmo] : []} onChange={(vals: string[]) => setList2Ritmo(vals?.[0] || '')} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
-                    <input placeholder="Escribe un nombre..." value={list2Search} onChange={(e) => setList2Search(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-                    {list2Search && (
-                      <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
-                        {allUsers.filter(u => u.name.toLowerCase().includes(list2Search.toLowerCase())).slice(0,50).map(u => (
-                          <button type="button" key={u.id} onClick={() => { if (!list2Selected.find(x=>x.id===u.id)) setList2Selected([...list2Selected, u]); }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
-                            <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
-                            <span>{u.name}</span>
-                          </button>
-                        ))}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
+                        <input placeholder="Escribe un nombre..." value={L.search} onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, search: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                        {L.search && (
+                          <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
+                            {allUsers.filter(u => u.name.toLowerCase().includes(L.search.toLowerCase())).slice(0,50).map(u => (
+                              <button type="button" key={u.id} onClick={() => {
+                                if (!L.selected.find(x=>x.id===u.id)) {
+                                  setLists(lists.map(x => x.key===L.key ? { ...x, selected: [...x.selected, u] } : x));
+                                }
+                              }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
+                                <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
+                                <span>{u.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {L.selected.length > 0 && (
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
+                            {L.selected.map(u => (
+                              <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                                {u.name}
+                                <button type="button" onClick={() => setLists(lists.map(x => x.key===L.key ? { ...x, selected: x.selected.filter(y=>y.id!==u.id) } : x))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {list2Selected.length > 0 && (
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
-                        {list2Selected.map(u => (
-                          <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
-                            {u.name}
-                            <button type="button" onClick={() => setList2Selected(list2Selected.filter(x=>x.id!==u.id))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    </div>
                   </div>
+                ))}
+                <div>
+                  <button type="button" className="cc-btn" onClick={() => setLists([...lists, { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" }])}>Añadir lista</button>
                 </div>
               </div>
               <div>
@@ -290,21 +277,35 @@ export default function TrendingAdmin() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
               {rows.map((r) => (
-                <div key={r.id} className="cc-glass" style={{ padding: 12, borderRadius: 12, display: 'grid', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                    <div style={{ fontWeight: 900 }}>{r.title}</div>
-                    <span className="cc-chip" style={{ textTransform: 'uppercase' }}>{r.status}</span>
-                  </div>
-                  {r.description && <div className="cc-two-lines" style={{ opacity: .9 }}>{r.description}</div>}
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: .9 }}>
-                    {r.starts_at && <span>🟢 {new Date(r.starts_at).toLocaleString()}</span>}
-                    {r.ends_at && <span>🔴 {new Date(r.ends_at).toLocaleString()}</span>}
-                    <span>modo: <b>{r.allowed_vote_mode}</b></span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {r.status === 'draft' && <button className="cc-btn" onClick={() => doPublish(r.id)}>Publicar</button>}
-                    {r.status === 'open' && <button className="cc-btn" onClick={() => doClose(r.id)}>Cerrar</button>}
-                    <a href={`/trending/${r.id}`} className="cc-btn cc-btn--primary">Abrir</a>
+                <div key={r.id} style={{
+                  position: 'relative',
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.18)'
+                }}>
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    background: r.cover_url
+                      ? `url(${r.cover_url}) center/cover no-repeat`
+                      : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))'
+                  }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0.85) 100%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 12, gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontWeight: 900, color: '#fff', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.36))', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</div>
+                      <span className="cc-chip" style={{ textTransform: 'uppercase' }}>{r.status}</span>
+                    </div>
+                    {r.description && <div className="cc-two-lines" style={{ opacity: .92, color:'#fff' }}>{r.description}</div>}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: .92, color:'#fff' }}>
+                      {r.starts_at && <span>🟢 {new Date(r.starts_at).toLocaleString()}</span>}
+                      {r.ends_at && <span>🔴 {new Date(r.ends_at).toLocaleString()}</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {r.status === 'draft' && <button className="cc-btn" onClick={() => doPublish(r.id)}>Publicar</button>}
+                      {r.status === 'open' && <button className="cc-btn" onClick={() => doClose(r.id)}>Cerrar</button>}
+                      <a href={`/trending/${r.id}`} className="cc-btn cc-btn--primary">Abrir</a>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -29,6 +29,7 @@ export default function TrendingDetail() {
   const [activeRitmo, setActiveRitmo] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isSA, setIsSA] = React.useState(false);
+  const [myVotes, setMyVotes] = React.useState<Map<number, boolean>>(new Map());
 
   React.useEffect(() => {
     (async () => {
@@ -110,6 +111,11 @@ export default function TrendingDetail() {
       await voteTrending(trendingId, candidateId);
       const lb = await leaderboard(trendingId);
       setBoard(lb);
+      setMyVotes(prev => {
+        const next = new Map(prev);
+        next.set(candidateId, !prev.get(candidateId));
+        return next;
+      });
     } catch (e: any) {
       alert(e.message ?? "No se pudo votar");
     }
@@ -186,7 +192,9 @@ export default function TrendingDetail() {
                     background: "linear-gradient(135deg, rgba(0,188,212,.10), rgba(30,136,229,.06))",
                     boxShadow: '0 8px 24px rgba(0,0,0,0.25)'
                   }}>
-                    <div style={{ position:'absolute', top:8, right:8, padding:'6px 10px', borderRadius:999, background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.2)', fontWeight:900 }}>❤️ {votes}</div>
+                    <div style={{ position:'absolute', top:8, right:8, padding:'6px 10px', borderRadius:999, background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.2)', fontWeight:900 }}>
+                        {isSA ? <>❤️ {votes}</> : (myVotes.get(c.id) ? 'Mi voto' : '')}
+                    </div>
                     <div style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 10, alignItems: "center" }}>
                       <a href={userHref} title={c.display_name || 'Usuario'} style={{ display:'inline-block' }}>
                         <img
@@ -219,7 +227,7 @@ export default function TrendingDetail() {
                           boxShadow: canVote ? '0 6px 18px rgba(0,188,212,0.35)' : 'none'
                         }}
                       >
-                        {t.status !== "open" ? "Cerrado" : (canVoteByTime ? "❤️ Votar" : "Fuera de ventana")}
+                        {t.status !== "open" ? "Cerrado" : (canVoteByTime ? (myVotes.get(c.id) ? "Quitar voto" : "❤️ Votar") : "Fuera de ventana")}
                       </button>
                     </div>
                   </div>
