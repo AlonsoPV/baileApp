@@ -67,6 +67,17 @@ export default function TrendingDetail() {
     return map;
   }, [candidatos]);
 
+  const groupByList = React.useMemo(() => {
+    const current = (activeRitmo ? byRitmo.get(activeRitmo) ?? [] : candidatos);
+    const m = new Map<string, any[]>();
+    current.forEach((c:any) => {
+      const key = c.list_name || 'General';
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(c);
+    });
+    return Array.from(m.entries()); // [listName, candidates[]]
+  }, [activeRitmo, byRitmo, candidatos]);
+
   const votesByCandidate = React.useMemo(() => {
     const m = new Map<number, number>();
     board.forEach((b) => m.set(b.candidate_id, Number(b.votes)));
@@ -115,22 +126,24 @@ export default function TrendingDetail() {
           borderRadius: 16,
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.12)',
-          marginBottom: 16,
+          marginBottom: 12,
+          maxHeight: 220
         }}>
-          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }} />
+          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: '220px', display: 'block', objectFit: 'cover' }} />
         </div>
       )}
-      <header style={{ marginBottom: 16 }}>
-        <h1 style={{ fontWeight: 900, marginBottom: 8 }}>{t.title}</h1>
-        {t.description && <p style={{ opacity: 0.9 }}>{t.description}</p>}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <header style={{ marginBottom: 12 }}>
+        <h1 style={{ fontWeight: 900, marginBottom: 6 }}>{t.title}</h1>
+        {t.description && <p style={{ opacity: 0.9, margin: 0 }}>{t.description}</p>}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
           <span>Estado: <b>{t.status}</b></span>
           {t.starts_at && <span>Inicia: {new Date(t.starts_at).toLocaleString()}</span>}
           {t.ends_at && <span>Cierra: {new Date(t.ends_at).toLocaleString()}</span>}
         </div>
       </header>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+      {/* Tabs de ritmos */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
         {ritmos.map((r) => {
           const active = activeRitmo === r.ritmo_slug;
           return (
@@ -153,83 +166,124 @@ export default function TrendingDetail() {
         })}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 }}>
-        {(activeRitmo ? byRitmo.get(activeRitmo) ?? [] : candidatos).map((c) => {
-          const votes = votesByCandidate.get(c.id) ?? 0;
-          return (
-            <div key={c.id} style={{
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: 16,
-              padding: 16,
-              background: "linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03))"
-            }}>
-              <div style={{ display: "grid", gridTemplateColumns: "64px 1fr", gap: 12, alignItems: "center" }}>
-                <img
-                  src={c.avatar_url ?? "https://placehold.co/128x128?text=User"}
-                  alt={c.display_name ?? "Candidato"}
-                  style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover" }}
-                />
-                <div>
-                  <div style={{ fontWeight: 900 }}>{c.display_name ?? "Sin nombre"}</div>
-                  <div style={{ opacity: 0.8, fontSize: 12 }}>{c.ritmo_slug}</div>
-                </div>
-              </div>
-              {c.bio_short && <p style={{ opacity: 0.9, marginTop: 8 }}>{c.bio_short}</p>}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                <div style={{ fontWeight: 800 }}>🗳️ {votes} votos</div>
-                <button
-                  disabled={!canVote}
-                  onClick={() => doVote(c.id)}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    background: canVote ? "linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))" : "rgba(255,255,255,0.08)",
-                    color: "#fff",
-                    fontWeight: 900,
-                    cursor: canVote ? "pointer" : "not-allowed"
-                  }}
-                >
-                  {t.status !== "open" ? "Cerrado" : (canVoteByTime ? "Votar" : "Fuera de ventana")}
-                </button>
-              </div>
+      {/* Listas de candidatos (agrupadas por list_name) */}
+      <div style={{ display: 'grid', gap: 16 }}>
+        {groupByList.map(([listName, items]) => (
+          <section key={listName} style={{ display: 'grid', gap: 10 }}>
+            <h3 style={{ margin: 0, fontWeight: 900 }}>
+              {listName} <span style={{ opacity: .75, fontSize: 12 }}>({items.length})</span>
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 12 }}>
+              {items.map((c:any) => {
+                const votes = votesByCandidate.get(c.id) ?? 0;
+                const userHref = `/u/${c.user_id}`;
+                return (
+                  <div key={c.id} style={{
+                    position: 'relative',
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    borderRadius: 16,
+                    padding: 12,
+                    background: "linear-gradient(135deg, rgba(0,188,212,.10), rgba(30,136,229,.06))",
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.25)'
+                  }}>
+                    <div style={{ position:'absolute', top:8, right:8, padding:'6px 10px', borderRadius:999, background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.2)', fontWeight:900 }}>❤️ {votes}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 10, alignItems: "center" }}>
+                      <a href={userHref} title={c.display_name || 'Usuario'} style={{ display:'inline-block' }}>
+                        <img
+                          src={c.avatar_url ?? "https://placehold.co/96x96?text=User"}
+                          alt={c.display_name ?? "Candidato"}
+                          style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover", border:'1px solid rgba(255,255,255,0.2)' }}
+                        />
+                      </a>
+                      <div style={{ minWidth: 0 }}>
+                        <a href={userHref} title={c.display_name || 'Usuario'} style={{ color:'#fff', textDecoration:'none', fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {c.display_name ?? "Sin nombre"}
+                        </a>
+                        <div style={{ opacity: 0.85, fontSize: 12 }}>{c.ritmo_slug}{c.list_name ? ` • ${c.list_name}` : ''}</div>
+                      </div>
+                    </div>
+                    {c.bio_short && <p style={{ opacity: 0.92, marginTop: 10, lineHeight: 1.35 }}>{c.bio_short}</p>}
+                    <div style={{ marginTop: 10 }}>
+                      <button
+                        disabled={!canVote}
+                        onClick={() => doVote(c.id)}
+                        style={{
+                          width: '100%',
+                          padding: "10px 14px",
+                          borderRadius: 10,
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          background: canVote ? "linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))" : "rgba(255,255,255,0.08)",
+                          color: "#fff",
+                          fontWeight: 900,
+                          cursor: canVote ? "pointer" : "not-allowed",
+                          boxShadow: canVote ? '0 6px 18px rgba(0,188,212,0.35)' : 'none'
+                        }}
+                      >
+                        {t.status !== "open" ? "Cerrado" : (canVoteByTime ? "❤️ Votar" : "Fuera de ventana")}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </section>
+        ))}
       </div>
 
       {/* Leaderboard para superadmin; si está cerrado y no es SA, mostrar ganadores por lista */}
       {isSA ? (
-        <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontWeight: 900, marginBottom: 12 }}>🏆 Favoritos (Admin)</h2>
+        <section style={{ marginTop: 24 }}>
+          <h2 style={{ fontWeight: 900, marginBottom: 8 }}>🏆 Favoritos (Admin)</h2>
           {ritmos.map((r) => {
             const rows = board.filter((x) => x.ritmo_slug === r.ritmo_slug);
             if (!rows.length) return null;
+            // Agrupar por lista
+            const byList = rows.reduce((acc:any, it:any) => {
+              const k = it.list_name || 'General';
+              acc[k] = acc[k] || [];
+              acc[k].push(it);
+              return acc;
+            }, {} as Record<string, any[]>);
             return (
-              <div key={r.id} style={{ marginBottom: 16 }}>
-                <div style={{ fontWeight: 800, marginBottom: 8 }}>{r.ritmo_slug}</div>
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
-                  {rows.slice(0, 5).map((x: any, i: number) => (
-                    <li key={x.candidate_id} style={{ marginBottom: 4 }}>
-                      {i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : ""}{x.display_name} — {x.votes} {x.list_name ? `(${x.list_name})` : ''}
-                    </li>
+              <div key={r.id} style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>{r.ritmo_slug}</div>
+                <div style={{ display:'grid', gap: 8 }}>
+                  {Object.entries(byList).map(([lname, items]: any) => (
+                    <div key={lname} style={{ border:'1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 8 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 6, opacity: .9 }}>{lname}</div>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap: 8 }}>
+                        {items.slice(0,5).map((x:any, i:number) => (
+                          <div key={x.candidate_id} style={{ display:'flex', alignItems:'center', gap: 10, border:'1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 8, background:'rgba(255,255,255,0.04)' }}>
+                            <div style={{ width: 30, textAlign:'center' }}>{i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : i+1}</div>
+                            <a href={`/u/${x.user_id}`} title={x.display_name || 'Usuario'} style={{ display:'inline-block' }}>
+                              <img src={x.avatar_url || 'https://placehold.co/48x48'} alt={x.display_name || 'Usuario'} style={{ width: 40, height: 40, borderRadius: 8, objectFit:'cover' }} />
+                            </a>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <a href={`/u/${x.user_id}`} style={{ color:'#fff', textDecoration:'none', fontWeight: 800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>{x.display_name || 'Usuario'}</a>
+                              <div style={{ fontSize: 12, opacity: .8 }}>{x.ritmo_slug}{x.list_name ? ` • ${x.list_name}` : ''}</div>
+                            </div>
+                            <span style={{ fontWeight: 900 }}>❤️ {x.votes}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                </ol>
+                </div>
               </div>
             );
           })}
         </section>
       ) : (
         t.status === 'closed' && (
-          <section style={{ marginTop: 32 }}>
-            <h2 style={{ fontWeight: 900, marginBottom: 12 }}>🏆 Ganadores por lista</h2>
+          <section style={{ marginTop: 24 }}>
+            <h2 style={{ fontWeight: 900, marginBottom: 8 }}>🏆 Ganadores por lista</h2>
             {winnersByList.length === 0 ? (
               <div>Sin datos</div>
             ) : (
-              <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 10 }}>
                 {winnersByList.map((w: any) => (
-                  <div key={`${w.list_name || 'General'}-${w.ritmo_slug}-${w.candidate_id}`} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div key={`${w.list_name || 'General'}-${w.ritmo_slug}-${w.candidate_id}`} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 10, background: 'rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                         {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({w.ritmo_slug}{w.list_name ? ` • ${w.list_name}` : ''})</span>
                       </div>
