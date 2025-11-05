@@ -286,6 +286,7 @@ export default function TeacherProfileLive() {
   const { teacherId } = useParams<{ teacherId: string }>();
   const navigate = useNavigate();
   const { data: allTags } = useTags();
+  const [copied, setCopied] = React.useState(false);
 
   // Fetch public teacher profile
   const { data: teacher, isLoading } = useQuery({
@@ -568,6 +569,25 @@ export default function TeacherProfileLive() {
             overflow: 'hidden'
           }}
         >
+          <button
+            aria-label="Compartir perfil"
+            title="Compartir"
+            onClick={() => {
+              try {
+                const url = typeof window !== 'undefined' ? window.location.href : '';
+                const title = (teacher as any)?.nombre_publico || 'Maestro';
+                const text = `Mira el perfil de ${title}`;
+                const navAny = (navigator as any);
+                if (navAny && typeof navAny.share === 'function') {
+                  navAny.share({ title, text, url }).catch(() => {});
+                } else {
+                  navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                }
+              } catch {}
+            }}
+            style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', borderRadius: 999, backdropFilter: 'blur(8px)', cursor: 'pointer', zIndex: 10 }}
+          >📤</button>
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 56, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="teacher-banner-grid">
             <div style={{
               display: 'flex',

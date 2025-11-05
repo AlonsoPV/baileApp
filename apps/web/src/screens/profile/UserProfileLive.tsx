@@ -215,6 +215,7 @@ export const UserProfileLive: React.FC = () => {
   const { profile, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
   const { media, addMedia, removeMedia } = useUserMedia();
+  const [copied, setCopied] = useState(false);
 
   // Estados para carga de media
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -642,6 +643,57 @@ export const UserProfileLive: React.FC = () => {
             overflow: 'hidden'
           }}
         >
+          {/* Botón discreto para compartir */}
+          <button
+            aria-label="Compartir perfil"
+            title="Compartir"
+            onClick={() => {
+              try {
+                const url = typeof window !== 'undefined' ? window.location.href : '';
+                const title = profile?.display_name || 'Perfil';
+                const text = `Mira el perfil de ${profile?.display_name || 'usuario'}`;
+                const navAny = (navigator as any);
+                if (navAny && typeof navAny.share === 'function') {
+                  navAny.share({ title, text, url }).catch(() => {});
+                } else {
+                  navigator.clipboard?.writeText(url)
+                    .then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    })
+                    .catch(() => {});
+                }
+              } catch {}
+            }}
+            style={{
+              position: 'absolute', top: 12, right: 12,
+              width: 36, height: 36,
+              display: 'grid', placeItems: 'center',
+              background: 'rgba(255,255,255,0.10)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff', borderRadius: 999,
+              backdropFilter: 'blur(8px)', cursor: 'pointer',
+              zIndex: 10
+            }}
+          >
+            📤
+          </button>
+          {copied && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                position: 'absolute', top: 14, right: 56,
+                padding: '4px 8px', borderRadius: 8,
+                background: 'rgba(0,0,0,0.6)', color: '#fff',
+                border: '1px solid rgba(255,255,255,0.25)',
+                fontSize: 12, fontWeight: 700,
+                zIndex: 10
+              }}
+            >
+              Copiado
+            </div>
+          )}
           <div
             id="user-profile-banner-grid"
             data-baile-id="user-profile-banner-grid"

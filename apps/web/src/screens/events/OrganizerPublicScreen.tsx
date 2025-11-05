@@ -88,6 +88,7 @@ export function OrganizerPublicScreen() {
   const routeId = id || organizerId || '';
   const navigate = useNavigate();
   const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
+  const [copied, setCopied] = React.useState(false);
 
   const { data: org, isLoading, isError } = useQuery({
     queryKey: ['org-public', routeId],
@@ -306,6 +307,25 @@ export function OrganizerPublicScreen() {
 
         {/* Banner */}
         <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'hidden', margin: `0 auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
+          <button
+            aria-label="Compartir perfil"
+            title="Compartir"
+            onClick={() => {
+              try {
+                const url = typeof window !== 'undefined' ? window.location.href : '';
+                const title = (org as any)?.nombre_publico || 'Organizador';
+                const text = `Mira el perfil de ${title}`;
+                const navAny = (navigator as any);
+                if (navAny && typeof navAny.share === 'function') {
+                  navAny.share({ title, text, url }).catch(() => {});
+                } else {
+                  navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                }
+              } catch {}
+            }}
+            style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', borderRadius: 999, backdropFilter: 'blur(8px)', cursor: 'pointer', zIndex: 10 }}
+          >📤</button>
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 56, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="org-banner-grid">
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10 }}>
