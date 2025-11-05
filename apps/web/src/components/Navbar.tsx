@@ -36,16 +36,15 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       <style>{`
         @media (max-width: 768px) {
           .nav-root {
-            position: fixed !important;
-            top: auto !important; bottom: 0; left: 0; right: 0;
-            padding: .5rem .75rem !important;
-            border-top-left-radius: 12px; border-top-right-radius: 12px;
-            box-shadow: 0 -6px 24px rgba(0,0,0,0.28) !important;
+            position: sticky !important;
+            top: 0 !important; bottom: auto; left: 0; right: 0;
+            padding: .6rem .9rem !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
             min-height: 56px;
           }
-          .nav-left { display: none !important; }
-          .nav-icons { width: 100%; justify-content: space-around !important; gap: .25rem !important; }
-          .nav-icon { font-size: 1.25rem !important; padding: .6rem !important; }
+          .nav-left { display: flex !important; }
+          .nav-icons { gap: .35rem !important; }
+          .nav-icon { font-size: 1.25rem !important; padding: .55rem !important; }
         }
       `}</style>
       <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
