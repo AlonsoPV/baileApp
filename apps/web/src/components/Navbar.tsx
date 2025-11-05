@@ -37,10 +37,11 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         @media (max-width: 768px) {
           .nav-root {
             position: fixed !important;
-            bottom: 0; top: auto; left: 0; right: 0;
+            top: auto !important; bottom: 0; left: 0; right: 0;
             padding: .5rem .75rem !important;
             border-top-left-radius: 12px; border-top-right-radius: 12px;
             box-shadow: 0 -6px 24px rgba(0,0,0,0.28) !important;
+            min-height: 56px;
           }
           .nav-left { display: none !important; }
           .nav-icons { width: 100%; justify-content: space-around !important; gap: .25rem !important; }
