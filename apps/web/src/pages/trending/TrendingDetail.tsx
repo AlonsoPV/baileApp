@@ -9,12 +9,18 @@ import {
 } from "@/lib/trending";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/lib/supabase";
+import { urls } from "@/lib/urls";
 
 function isWithinWindow(starts_at?: string | null, ends_at?: string | null) {
   const now = Date.now();
   const startOk = !starts_at || now >= new Date(starts_at).getTime();
   const endOk = !ends_at || now <= new Date(ends_at).getTime();
   return startOk && endOk;
+}
+
+function labelFromSlug(slug?: string | null) {
+  if (!slug) return '';
+  return slug.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 export default function TrendingDetail() {
@@ -30,6 +36,7 @@ export default function TrendingDetail() {
   const [loading, setLoading] = React.useState(true);
   const [isSA, setIsSA] = React.useState(false);
   const [myVotes, setMyVotes] = React.useState<Map<number, boolean>>(new Map());
+  const [userMeta, setUserMeta] = React.useState<Record<string, { name?: string; avatar?: string }>>({});
 
   React.useEffect(() => {
     (async () => {
@@ -45,6 +52,7 @@ export default function TrendingDetail() {
         setCandidatos(cs);
         setBoard(lb);
         setActiveRitmo(rs?.[0]?.ritmo_slug ?? null);
+        // precompute myVotes map from current leaderboard if needed (not exact, but UI toggle will update)
       } finally {
         setLoading(false);
       }
@@ -58,6 +66,23 @@ export default function TrendingDetail() {
       setIsSA(Boolean((data || []).some((r:any)=> r.role_slug === 'superadmin')));
     })();
   }, [user?.id]);
+
+  // Load avatar/name fallback for candidates
+  React.useEffect(() => {
+    (async () => {
+      const ids = Array.from(new Set((candidatos || []).map((c:any) => c.user_id).filter(Boolean)));
+      if (!ids.length) return;
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', ids);
+      if (!error && Array.isArray(data)) {
+        const map: Record<string, { name?: string; avatar?: string }> = {};
+        data.forEach((u:any) => { map[u.user_id] = { name: u.display_name || undefined, avatar: u.avatar_url || undefined }; });
+        setUserMeta(map);
+      }
+    })();
+  }, [candidatos]);
 
   const byRitmo = React.useMemo(() => {
     const map = new Map<string, any[]>();
@@ -76,7 +101,7 @@ export default function TrendingDetail() {
       if (!m.has(key)) m.set(key, []);
       m.get(key)!.push(c);
     });
-    return Array.from(m.entries()); // [listName, candidates[]]
+    return Array.from(m.entries());
   }, [activeRitmo, byRitmo, candidatos]);
 
   const votesByCandidate = React.useMemo(() => {
@@ -85,7 +110,6 @@ export default function TrendingDetail() {
     return m;
   }, [board]);
 
-  // Ganadores por lista (por list_name); si list_name es null, agrupar como "General".
   const winnersByList = React.useMemo(() => {
     const best = new Map<string, any>();
     board.forEach(row => {
@@ -142,9 +166,9 @@ export default function TrendingDetail() {
         <h1 style={{ fontWeight: 900, marginBottom: 6 }}>{t.title}</h1>
         {t.description && <p style={{ opacity: 0.9, margin: 0 }}>{t.description}</p>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-          <span>Estado: <b>{t.status}</b></span>
-          {t.starts_at && <span>Inicia: {new Date(t.starts_at).toLocaleString()}</span>}
-          {t.ends_at && <span>Cierra: {new Date(t.ends_at).toLocaleString()}</span>}
+          <span className="cc-chip">Estado: <b style={{ textTransform:'uppercase' }}>{t.status}</b></span>
+          {t.starts_at && <span className="cc-soft-chip">🟢 {new Date(t.starts_at).toLocaleString()}</span>}
+          {t.ends_at && <span className="cc-soft-chip">🔴 {new Date(t.ends_at).toLocaleString()}</span>}
         </div>
       </header>
 
@@ -166,7 +190,7 @@ export default function TrendingDetail() {
                 fontWeight: 800,
               }}
             >
-              {r.ritmo_slug}
+              {labelFromSlug(r.ritmo_slug)}
             </button>
           );
         })}
@@ -179,10 +203,13 @@ export default function TrendingDetail() {
             <h3 style={{ margin: 0, fontWeight: 900 }}>
               {listName} <span style={{ opacity: .75, fontSize: 12 }}>({items.length})</span>
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,450px))", gap: 12, justifyContent:'center' }}>
               {items.map((c:any) => {
                 const votes = votesByCandidate.get(c.id) ?? 0;
-                const userHref = `/u/${c.user_id}`;
+                const m = userMeta[c.user_id] || {};
+                const avatarSrc = c.avatar_url || m.avatar || "https://placehold.co/96x96?text=User";
+                const displayName = c.display_name || m.name || "Sin nombre";
+                const userHref = urls.userLive(c.user_id);
                 return (
                   <div key={c.id} style={{
                     position: 'relative',
@@ -190,24 +217,25 @@ export default function TrendingDetail() {
                     borderRadius: 16,
                     padding: 12,
                     background: "linear-gradient(135deg, rgba(0,188,212,.10), rgba(30,136,229,.06))",
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.25)'
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                    maxWidth: 450
                   }}>
                     <div style={{ position:'absolute', top:8, right:8, padding:'6px 10px', borderRadius:999, background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.2)', fontWeight:900 }}>
-                        {isSA ? <>❤️ {votes}</> : (myVotes.get(c.id) ? 'Mi voto' : '')}
+                      {isSA ? <>❤️ {votes}</> : (myVotes.get(c.id) ? 'Mi voto' : '')}
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 10, alignItems: "center" }}>
-                      <a href={userHref} title={c.display_name || 'Usuario'} style={{ display:'inline-block' }}>
+                      <a href={userHref} title={displayName} style={{ display:'inline-block' }}>
                         <img
-                          src={c.avatar_url ?? "https://placehold.co/96x96?text=User"}
-                          alt={c.display_name ?? "Candidato"}
+                          src={avatarSrc}
+                          alt={displayName}
                           style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover", border:'1px solid rgba(255,255,255,0.2)' }}
                         />
                       </a>
                       <div style={{ minWidth: 0 }}>
-                        <a href={userHref} title={c.display_name || 'Usuario'} style={{ color:'#fff', textDecoration:'none', fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {c.display_name ?? "Sin nombre"}
+                        <a href={userHref} title={displayName} style={{ color:'#fff', textDecoration:'none', fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {displayName}
                         </a>
-                        <div style={{ opacity: 0.85, fontSize: 12 }}>{c.ritmo_slug}{c.list_name ? ` • ${c.list_name}` : ''}</div>
+                        <div style={{ opacity: 0.85, fontSize: 12 }}>{labelFromSlug(c.ritmo_slug)}{c.list_name ? ` • ${c.list_name}` : ''}</div>
                       </div>
                     </div>
                     {c.bio_short && <p style={{ opacity: 0.92, marginTop: 10, lineHeight: 1.35 }}>{c.bio_short}</p>}
@@ -238,14 +266,12 @@ export default function TrendingDetail() {
         ))}
       </div>
 
-      {/* Leaderboard para superadmin; si está cerrado y no es SA, mostrar ganadores por lista */}
       {isSA ? (
         <section style={{ marginTop: 24 }}>
           <h2 style={{ fontWeight: 900, marginBottom: 8 }}>🏆 Favoritos (Admin)</h2>
           {ritmos.map((r) => {
             const rows = board.filter((x) => x.ritmo_slug === r.ritmo_slug);
             if (!rows.length) return null;
-            // Agrupar por lista
             const byList = rows.reduce((acc:any, it:any) => {
               const k = it.list_name || 'General';
               acc[k] = acc[k] || [];
@@ -254,7 +280,7 @@ export default function TrendingDetail() {
             }, {} as Record<string, any[]>);
             return (
               <div key={r.id} style={{ marginBottom: 12 }}>
-                <div style={{ fontWeight: 800, marginBottom: 6 }}>{r.ritmo_slug}</div>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>{labelFromSlug(r.ritmo_slug)}</div>
                 <div style={{ display:'grid', gap: 8 }}>
                   {Object.entries(byList).map(([lname, items]: any) => (
                     <div key={lname} style={{ border:'1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 8 }}>
@@ -263,12 +289,12 @@ export default function TrendingDetail() {
                         {items.slice(0,5).map((x:any, i:number) => (
                           <div key={x.candidate_id} style={{ display:'flex', alignItems:'center', gap: 10, border:'1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 8, background:'rgba(255,255,255,0.04)' }}>
                             <div style={{ width: 30, textAlign:'center' }}>{i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : i+1}</div>
-                            <a href={`/u/${x.user_id}`} title={x.display_name || 'Usuario'} style={{ display:'inline-block' }}>
+                            <a href={urls.userLive(x.user_id)} title={x.display_name || 'Usuario'} style={{ display:'inline-block' }}>
                               <img src={x.avatar_url || 'https://placehold.co/48x48'} alt={x.display_name || 'Usuario'} style={{ width: 40, height: 40, borderRadius: 8, objectFit:'cover' }} />
                             </a>
                             <div style={{ minWidth: 0, flex: 1 }}>
-                              <a href={`/u/${x.user_id}`} style={{ color:'#fff', textDecoration:'none', fontWeight: 800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>{x.display_name || 'Usuario'}</a>
-                              <div style={{ fontSize: 12, opacity: .8 }}>{x.ritmo_slug}{x.list_name ? ` • ${x.list_name}` : ''}</div>
+                              <a href={urls.userLive(x.user_id)} style={{ color:'#fff', textDecoration:'none', fontWeight: 800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>{x.display_name || 'Usuario'}</a>
+                              <div style={{ fontSize: 12, opacity: .8 }}>{labelFromSlug(x.ritmo_slug)}{x.list_name ? ` • ${x.list_name}` : ''}</div>
                             </div>
                             <span style={{ fontWeight: 900 }}>❤️ {x.votes}</span>
                           </div>
@@ -293,7 +319,7 @@ export default function TrendingDetail() {
                   <div key={`${w.list_name || 'General'}-${w.ritmo_slug}-${w.candidate_id}`} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 10, background: 'rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                        {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({w.ritmo_slug}{w.list_name ? ` • ${w.list_name}` : ''})</span>
+                        {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({labelFromSlug(w.ritmo_slug)}{w.list_name ? ` • ${w.list_name}` : ''})</span>
                       </div>
                       <span style={{ fontWeight: 900 }}>❤️ {w.votes}</span>
                     </div>
