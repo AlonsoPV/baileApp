@@ -1,24 +1,19 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useTeacherMy } from "../../hooks/useTeacher";
-import { useTeacherMedia } from "../../hooks/useTeacherMedia";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
-import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
-import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
-import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
-import CrearClase from "../../components/events/CrearClase";
-// import { useUpsertTeacher } from "../../hooks/useTeacher";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
+import { supabase } from "../../lib/supabase";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -288,11 +283,26 @@ const colors = {
 };
 
 export default function TeacherProfileLive() {
+  const { teacherId } = useParams<{ teacherId: string }>();
   const navigate = useNavigate();
-  const { data: teacher, isLoading } = useTeacherMy();
-  const { media } = useTeacherMedia();
   const { data: allTags } = useTags();
-  // const upsert = useUpsertTeacher();
+
+  // Fetch public teacher profile
+  const { data: teacher, isLoading } = useQuery({
+    queryKey: ['teacher-public', teacherId],
+    enabled: !!teacherId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles_teacher')
+        .select('*')
+        .eq('id', teacherId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const media = teacher?.media || [];
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
@@ -336,9 +346,6 @@ export default function TeacherProfileLive() {
     if (!allTags || !zonas) return [];
     return zonas.map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'zona')?.nombre).filter(Boolean);
   };
-
-  console.log('[TeacherProfileLive] Teacher data:', teacher);
-  console.log('[TeacherProfileLive] Teacher redes_sociales:', (teacher as any)?.redes_sociales);
 
   if (isLoading) {
     return (
@@ -401,6 +408,7 @@ export default function TeacherProfileLive() {
           max-width: 900px;
           margin: 0 auto;
         }
+        @media (max-width: 768px) { .teacher-container { padding-top: 64px !important; } }
         .teacher-banner {
           width: 100%;
           max-width: 900px;
@@ -548,16 +556,6 @@ export default function TeacherProfileLive() {
       `}</style>
 
       <div className="teacher-container">
-        {/* Navigation Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle
-            currentView="live"
-            profileType="teacher"
-            liveHref="/profile/teacher"
-            editHref="/profile/teacher/edit"
-          />
-        </div>
-
         {/* Banner Principal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

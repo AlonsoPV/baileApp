@@ -98,11 +98,11 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         >
           🔍
         </Link>
-        {/* Trending icon: admin va al panel; usuarios verán este icono también en mobile si decidimos habilitar una vista pública */}
+        {/* Trending: todos pueden ver y votar */}
         <Link
-          to={isAdmin ? "/admin/trending" : "/admin/trending"}
-          aria-label={isAdmin ? "Trending Admin" : "Trending"}
-          title={isAdmin ? "Trending Admin" : "Trending"}
+          to="/trending"
+          aria-label="Trending"
+          title="Trending"
           className="nav-icon"
           style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
@@ -110,6 +110,20 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         >
           📈
         </Link>
+        {/* Admin trending: solo superadmin */}
+        {isAdmin && (
+          <Link
+            to="/admin/trending"
+            aria-label="Trending Admin"
+            title="Trending Admin"
+            className="nav-icon"
+            style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            ⚙️
+          </Link>
+        )}
         <Link
           to="/challenges"
           aria-label="Challenges"

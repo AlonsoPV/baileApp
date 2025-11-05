@@ -257,6 +257,7 @@ export function OrganizerPublicScreen() {
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
         .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem; }
+        @media (max-width: 768px) { .org-root { padding-top: 64px; } }
         @media (max-width: 768px) {
           .org-container { max-width: 100% !important; padding: 1rem !important; }
           .org-banner { border-radius: 0 !important; padding: 2rem 1rem !important; margin: 1rem auto 0 auto !important; }
@@ -281,7 +282,7 @@ export function OrganizerPublicScreen() {
         }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], width: '100%', position: 'relative' }}>
+      <div className="org-root" style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], width: '100%', position: 'relative' }}>
         {/* Elementos flotantes */}
         <div style={{ position: 'absolute', top: '10%', left: '5%', width: 100, height: 100, background: colors.gradients.primary, borderRadius: '50%', opacity: 0.1, animation: 'float 8s ease-in-out infinite', zIndex: 0 }} />
         <div style={{ position: 'absolute', top: '20%', right: '10%', width: 60, height: 60, background: colors.gradients.secondary, borderRadius: '50%', opacity: 0.15, animation: 'float 6s ease-in-out infinite reverse', zIndex: 0 }} />

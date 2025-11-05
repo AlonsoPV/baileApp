@@ -87,6 +87,7 @@ import ClassPublicScreen from './screens/classes/ClassPublicScreen';
 import TeacherPublicLive from './screens/profile/TeacherPublicLive';
 import TrendingDetail from './pages/trending/TrendingDetail';
 import TrendingAdmin from './pages/trending/TrendingAdmin';
+import TrendingList from './pages/trending/TrendingList';
 
 export default function AppRouter() {
   return (
@@ -125,6 +126,7 @@ export default function AppRouter() {
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherPublicLive />} />
         {/* Trending público */}
+        <Route path="/trending" element={<TrendingList />} />
         <Route path="/trending/:id" element={<TrendingDetail />} />
         {/* Clase pública (usa query o params) */}
         <Route path="/clase" element={<ClassPublicScreen />} />

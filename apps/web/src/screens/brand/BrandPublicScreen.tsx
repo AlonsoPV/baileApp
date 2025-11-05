@@ -1,15 +1,29 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { colors, typography, spacing, borderRadius } from "../../theme/colors";
-import { useMyBrand } from "../../hooks/useBrand";
+import { supabase } from "../../lib/supabase";
 
 export default function BrandProfileLive() {
+  const { brandId } = useParams<{ brandId: string }>();
   const navigate = useNavigate();
-  const { data: brand, isLoading } = useMyBrand();
+
+  const { data: brand, isLoading } = useQuery({
+    queryKey: ['brand-public', brandId],
+    enabled: !!brandId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles_brand')
+        .select('*')
+        .eq('id', brandId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+  });
 
   if (isLoading) {
     return (
@@ -91,6 +105,7 @@ export default function BrandProfileLive() {
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           display: flex; align-items: center; gap: .5rem;
         }
+        @media (max-width: 768px) { .brand-root { padding-top: 64px; } }
         .profile-container { width: 100%; max-width: 900px; margin: 0 auto; }
         .profile-banner { width: 100%; max-width: 900px; margin: 0 auto; }
         .banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
@@ -115,11 +130,7 @@ export default function BrandProfileLive() {
         }
       `}</style>
 
-      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <ProfileNavigationToggle currentView="live" profileType="brand" />
-        </div>
-
+      <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
         {/* Banner */}
         <motion.section
           className="profile-banner glass-card-container"

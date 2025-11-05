@@ -1,20 +1,15 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useUserProfile } from "../../hooks/useUserProfile";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
-import { useUserMedia } from "../../hooks/useUserMedia";
-import { useUserRSVPEvents } from "../../hooks/useRSVP";
 import { useAuth } from '@/contexts/AuthProvider';
-import ProfileToolbar from "../../components/profile/ProfileToolbar";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
 
@@ -209,142 +204,60 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 // Usar el nuevo sistema de colores importado
 
 export const UserProfileLive: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { profile, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
-  const { media, addMedia, removeMedia } = useUserMedia();
   const [copied, setCopied] = useState(false);
 
-  // Estados para carga de media
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-
-  // Fallback para cuando no hay perfil
-  const safeMedia = media || [];
-  const { data: rsvpEvents } = useUserRSVPEvents('interesado');
-
-  // Debug logs
-  React.useEffect(() => {
-    console.log('[UserProfileLive] Profile data:', profile);
-    console.log('[UserProfileLive] Redes Sociales:', profile?.redes_sociales);
-    console.log('[UserProfileLive] Respuestas.redes:', profile?.respuestas?.redes);
-    console.log('[UserProfileLive] RSVP Events:', rsvpEvents);
-    console.log('[UserProfileLive] Media:', media);
-
-    // Log específico para redes sociales
-    if (profile?.redes_sociales) {
-      console.log('[UserProfileLive] Instagram:', profile.redes_sociales.instagram);
-      console.log('[UserProfileLive] TikTok:', profile.redes_sociales.tiktok);
-      console.log('[UserProfileLive] YouTube:', profile.redes_sociales.youtube);
-      console.log('[UserProfileLive] Facebook:', profile.redes_sociales.facebook);
-      console.log('[UserProfileLive] WhatsApp:', profile.redes_sociales.whatsapp);
+  // Fetch public user profile
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['user-public', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('user_id, display_name, bio, avatar_url, ritmos, ritmos_seleccionados, zonas, respuestas, media, redes_sociales')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     }
-  }, [profile, rsvpEvents, media]);
+  });
+
+  // Fetch RSVPs for this user
+  const { data: rsvpEvents } = useQuery({
+    queryKey: ['user-rsvps', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('event_rsvp')
+        .select(`*, events_date!inner(*, events_parent!inner(*, profiles_organizer!inner(*)))`)
+        .eq('user_id', userId)
+        .eq('status', 'interesado');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const safeMedia = profile?.media || [];
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    console.log('[UserProfileLive] getRitmoNombres - allTags:', allTags);
-    console.log('[UserProfileLive] getRitmoNombres - profile.ritmos:', profile?.ritmos);
     if (!allTags || !profile?.ritmos) return [];
     const ritmos = profile.ritmos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
-    console.log('[UserProfileLive] getRitmoNombres - resultado:', ritmos);
     return ritmos;
   };
 
   const getZonaNombres = () => {
-    console.log('[UserProfileLive] getZonaNombres - allTags:', allTags);
-    console.log('[UserProfileLive] getZonaNombres - profile.zonas:', profile?.zonas);
     if (!allTags || !profile?.zonas) return [];
     const zonas = profile.zonas
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
-    console.log('[UserProfileLive] getZonaNombres - resultado:', zonas);
     return zonas;
-  };
-
-  // Upload cover photo
-  const handleCoverUpload = async (file: File) => {
-    if (!user) return;
-    setUploadingCover(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `user-covers/${user.id}/cover.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
-
-      await updateProfileFields({
-        respuestas: {
-          ...profile?.respuestas,
-          cover_url: publicUrl.publicUrl
-        }
-      });
-    } catch (error) {
-      console.error('Error uploading cover:', error);
-    } finally {
-      setUploadingCover(false);
-    }
-  };
-
-  // Upload photo to slot
-  const handlePhotoUpload = async (file: File, slot: string) => {
-    if (!user) return;
-    setUploadingPhoto(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `user-media/${user.id}/${slot}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
-
-      // Usar addMedia para agregar nuevo media
-      await addMedia.mutateAsync(file);
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  // Upload video to slot
-  const handleVideoUpload = async (file: File, slot: string) => {
-    if (!user) return;
-    setUploadingVideo(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `user-media/${user.id}/${slot}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
-
-      // Usar addMedia para agregar nuevo media
-      await addMedia.mutateAsync(file);
-    } catch (error) {
-      console.error('Error uploading video:', error);
-    } finally {
-      setUploadingVideo(false);
-    }
   };
 
   // Get photos for carousel
@@ -352,6 +265,28 @@ export const UserProfileLive: React.FC = () => {
     .map(slot => getMediaBySlot(safeMedia as any, slot))
     .filter(item => item && item.kind === 'photo')
     .map(item => item!.url);
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⏳</div>
+          <p>Cargando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: 16 }}>❌</div>
+          <p>Perfil no encontrado</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleShareProfile = () => {
     try {
@@ -379,6 +314,9 @@ export const UserProfileLive: React.FC = () => {
           width: 100%;
           max-width: 900px;
           margin: 0 auto;
+        }
+        @media (max-width: 768px) {
+          .page-shell { padding-top: 64px; }
         }
         .profile-banner {
           width: 100%;
@@ -634,7 +572,7 @@ export const UserProfileLive: React.FC = () => {
           }
         }
       `}</style>
-      <div style={{
+      <div className="page-shell" style={{
         position: 'relative',
         width: '100%',
         minHeight: '100vh',

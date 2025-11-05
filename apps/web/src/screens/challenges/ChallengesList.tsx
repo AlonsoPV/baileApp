@@ -34,6 +34,13 @@ export default function ChallengesList() {
 
   return (
     <div className="cc-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .cc-page { padding-top: 64px; }
+          .cc-glass { padding: .75rem !important; }
+          .cc-round-ico { width: 36px !important; height: 36px !important; font-size: 18px !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem' }}>
         {/* Hero de bienvenida */}
         <section className="cc-glass" style={{ padding: '1.25rem', marginBottom: '0.9rem' }}>

@@ -251,6 +251,17 @@ export default function ChallengeDetail() {
 
   return (
     <div className="cc-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .cc-page { padding-top: 64px; }
+          .chd-header > div { grid-template-columns: 1fr !important; gap: .5rem !important; text-align: center; }
+          .chd-combined { grid-template-columns: 1fr !important; }
+          .chd-video-box, .chd-cover-box { max-width: 100% !important; }
+          .appr-slider { padding: .75rem !important; }
+          .appr-card { max-width: 100% !important; width: 100% !important; }
+          .appr-media video { width: 100% !important; }
+        }
+      `}</style>
       {/* Contenedor principal (layout simple) */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem', display: 'grid', gap: '1rem' }}>
         {/* Header / Toolbar */}
@@ -530,8 +541,8 @@ export default function ChallengeDetail() {
           </section>
         )} */}
 
-        {/* User submission */}
-        {challenge.status === 'open' && !mySubmission && (
+        {/* User submission: solo si está loggeado */}
+        {currentUserId && challenge.status === 'open' && !mySubmission && (
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Subir mi video</h3>
             <div style={{ display: 'grid', gap: '.5rem', maxWidth: 600 }}>
@@ -578,7 +589,7 @@ export default function ChallengeDetail() {
           </section>
         )}
 
-        {challenge.status === 'open' && mySubmission && (
+        {currentUserId && challenge.status === 'open' && mySubmission && (
           <section className="cc-glass" style={{ padding: '1rem' }}>
             <h3 className="cc-section__title cc-section__title--blue cc-mb-0">Mi envío</h3>
             <div style={{ display:'grid', gap:'.5rem' }}>
