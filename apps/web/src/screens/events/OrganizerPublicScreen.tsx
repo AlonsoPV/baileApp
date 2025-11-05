@@ -9,6 +9,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import RitmosChips from "../../components/RitmosChips";
 import { Chip } from '../../components/profile/Chip';
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -353,9 +354,12 @@ export function OrganizerPublicScreen() {
                 {(org as any)?.nombre_publico}
               </h1>
               <div id="organizer-chips" data-test-id="organizer-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] }}>
-                {Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0 && (
-                  <RitmosChips selected={((org as any).ritmos_seleccionados || []) as string[]} onChange={() => {}} readOnly />
-                )}
+                {(() => {
+                  const slugs = normalizeRitmosToSlugs(org, allRitmos);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                  ) : null;
+                })()}
                 {getZonaNombres().map((nombre) => (
                   <Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />
                 ))}

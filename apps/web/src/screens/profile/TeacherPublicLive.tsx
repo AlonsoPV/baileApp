@@ -14,6 +14,7 @@ import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { supabase } from "../../lib/supabase";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -692,21 +693,9 @@ export default function TeacherProfileLive() {
               {/* Chips de Ritmos y Zonas dentro del banner */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {(() => {
-                  const selectedFromDb = Array.isArray((teacher as any)?.ritmos_seleccionados)
-                    ? ((teacher as any).ritmos_seleccionados as string[])
-                    : [] as string[];
-                  let selectedCatalogIds = selectedFromDb;
-                  if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((teacher as any)?.ritmos)) {
-                    const labelToId = new Map<string, string>();
-                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
-                    const names = ((teacher as any).ritmos as number[])
-                      .map(id => (allTags || []).find((t: any) => t.id === id && t.tipo === 'ritmo')?.nombre)
-                      .filter(Boolean) as string[];
-                    const mapped = names.map(n => labelToId.get(n!)).filter(Boolean) as string[];
-                    if (mapped.length > 0) selectedCatalogIds = mapped;
-                  }
-                  return selectedCatalogIds && selectedCatalogIds.length > 0 ? (
-                    <RitmosChips selected={selectedCatalogIds} onChange={() => {}} readOnly />
+                  const slugs = normalizeRitmosToSlugs(teacher, allTags);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
                 {getZonaNombres().map((zona, index) => (

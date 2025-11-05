@@ -12,6 +12,7 @@ import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -240,6 +241,34 @@ export const UserProfileLive: React.FC = () => {
   });
 
   const safeMedia = profile?.media || [];
+
+  // Helper to convert Supabase storage paths to public URLs
+  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
+    if (!maybePath) return undefined;
+    const v = String(maybePath).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+    const slash = v.indexOf('/');
+    if (slash > 0) {
+      const bucket = v.slice(0, slash);
+      const path = v.slice(slash + 1);
+      try {
+        return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      } catch {
+        return v;
+      }
+    }
+    return v;
+  };
+
+  // Get avatar URL (prioritize avatar_url, then media slots)
+  const avatarUrl = (() => {
+    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
+    const p1 = getMediaBySlot(safeMedia as any, 'p1');
+    if (p1?.url) return toSupabasePublicUrl(p1.url);
+    const avatar = getMediaBySlot(safeMedia as any, 'avatar');
+    if (avatar?.url) return toSupabasePublicUrl(avatar.url);
+    return undefined;
+  })();
 
   // Get tag names from IDs
   const getRitmoNombres = () => {
@@ -657,9 +686,9 @@ export const UserProfileLive: React.FC = () => {
                   background: colors.gradients.primary
                 }}
               >
-                {getMediaBySlot(safeMedia as any, 'p1')?.url ? (
+                {avatarUrl ? (
                   <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p1')!.url}
+                    src={avatarUrl}
                     alt="Avatar"
                     style={{
                       width: '100%',
@@ -718,22 +747,12 @@ export const UserProfileLive: React.FC = () => {
                 data-test-id="user-profile-tags"
                 style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
               >
-                {Array.isArray((profile as any)?.ritmos_seleccionados) && (profile as any).ritmos_seleccionados.length > 0 ? (
-                  <RitmosChips
-                    selected={((profile as any).ritmos_seleccionados || []) as string[]}
-                    onChange={() => {}}
-                    readOnly
-                  />
-                ) : (
-                  getRitmoNombres().map((nombre) => (
-                    <Chip
-                      key={`r-${nombre}`}
-                      label={nombre}
-                      icon="🎵"
-                      variant="ritmo"
-                    />
-                  ))
-                )}
+                {(() => {
+                  const slugs = normalizeRitmosToSlugs(profile, allTags);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                  ) : null;
+                })()}
                 {getZonaNombres().map((nombre) => (
                   <Chip
                     key={`z-${nombre}`}

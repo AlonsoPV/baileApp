@@ -19,6 +19,7 @@ import CrearClase from "../../components/events/CrearClase";
 import { useUpsertAcademy } from "../../hooks/useAcademy";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -671,13 +672,12 @@ export default function AcademyProfileLive() {
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {Array.isArray((academy as any)?.ritmos_seleccionados) && (academy as any).ritmos_seleccionados.length > 0 && (
-                  <RitmosChips
-                    selected={((academy as any).ritmos_seleccionados || []) as string[]}
-                    onChange={() => {}}
-                    readOnly
-                  />
-                )}
+                {(() => {
+                  const slugs = normalizeRitmosToSlugs(academy, allTags);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                  ) : null;
+                })()}
                 {getZonaNombres().map((zona, index) => (
                   <Chip
                     key={`zona-${index}`}

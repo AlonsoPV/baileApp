@@ -9,6 +9,7 @@ import { fmtDate, fmtTime } from "../../utils/format";
 import { Chip } from "../../components/profile/Chip";
 import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import EventInfoGrid from "../../components/events/EventInfoGrid";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
@@ -1013,13 +1014,12 @@ export function OrganizerProfileLive() {
                   marginBottom: spacing[2]
                 }}
               >
-                {Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0 && (
-                  <RitmosChips
-                    selected={((org as any).ritmos_seleccionados || []) as string[]}
-                    onChange={() => {}}
-                    readOnly
-                  />
-                )}
+                {(() => {
+                  const slugs = normalizeRitmosToSlugs(org, allTags);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                  ) : null;
+                })()}
                 {getZonaNombres().map((nombre) => (
                   <Chip
                     key={`z-${nombre}`}

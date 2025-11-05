@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
+import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -787,22 +788,12 @@ export const UserProfileLive: React.FC = () => {
                 data-test-id="user-profile-tags"
                 style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
               >
-                {Array.isArray((profile as any)?.ritmos_seleccionados) && (profile as any).ritmos_seleccionados.length > 0 ? (
-                  <RitmosChips
-                    selected={((profile as any).ritmos_seleccionados || []) as string[]}
-                    onChange={() => {}}
-                    readOnly
-                  />
-                ) : (
-                  getRitmoNombres().map((nombre) => (
-                    <Chip
-                      key={`r-${nombre}`}
-                      label={nombre}
-                      icon="🎵"
-                      variant="ritmo"
-                    />
-                  ))
-                )}
+                {(() => {
+                  const slugs = normalizeRitmosToSlugs(profile, allTags);
+                  return slugs.length > 0 ? (
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                  ) : null;
+                })()}
                 {getZonaNombres().map((nombre) => (
                   <Chip
                     key={`z-${nombre}`}
