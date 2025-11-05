@@ -113,6 +113,7 @@ export async function adminAddCandidate(args: {
   displayName?: string;
   avatarUrl?: string;
   bioShort?: string;
+  listName?: string;
 }) {
   const { error } = await supabase.rpc("rpc_trending_add_candidate", {
     p_trending_id: args.trendingId,
@@ -121,6 +122,7 @@ export async function adminAddCandidate(args: {
     p_display_name: args.displayName ?? null,
     p_avatar_url: args.avatarUrl ?? null,
     p_bio_short: args.bioShort ?? null,
+    p_list_name: args.listName ?? null,
   });
   if (error) throw error;
 }

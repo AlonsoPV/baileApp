@@ -28,10 +28,27 @@ export default function TrendingAdmin() {
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [ritmosSel, setRitmosSel] = React.useState<string[]>([]);
   // Listas de usuarios
+  const [list1Name, setList1Name] = React.useState<string>("");
   const [list1Ritmo, setList1Ritmo] = React.useState<string>("");
-  const [list1UserIds, setList1UserIds] = React.useState<string>("");
+  const [list1Selected, setList1Selected] = React.useState<{id:string; name:string}[]>([]);
+  const [list1Search, setList1Search] = React.useState<string>("");
+  const [list2Name, setList2Name] = React.useState<string>("");
   const [list2Ritmo, setList2Ritmo] = React.useState<string>("");
-  const [list2UserIds, setList2UserIds] = React.useState<string>("");
+  const [list2Selected, setList2Selected] = React.useState<{id:string; name:string}[]>([]);
+  const [list2Search, setList2Search] = React.useState<string>("");
+
+  const [allUsers, setAllUsers] = React.useState<{id:string; name:string; avatar?:string}[]>([]);
+  React.useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('user_id, display_name, avatar_url')
+        .limit(2000);
+      if (!error && Array.isArray(data)) {
+        setAllUsers(data.map((u:any) => ({ id: u.user_id, name: u.display_name || u.user_id, avatar: u.avatar_url })));
+      }
+    })();
+  }, []);
 
   React.useEffect(() => {
     (async () => {
@@ -67,7 +84,7 @@ export default function TrendingAdmin() {
       // Subir portada si aplica
       let coverUrl: string | null = null;
       if (coverFile) {
-        const ext = coverFile.name.split('.').pop();
+        const ext = coverFile.name.split('.')?.pop();
         const key = `trending-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(key, coverFile, { upsert: true });
         if (upErr) throw upErr;
@@ -86,18 +103,21 @@ export default function TrendingAdmin() {
       for (const slug of ritmosSel) {
         await adminAddRitmo(id, slug);
       }
-      // Procesar listas de usuarios pegadas
-      const parseIds = (txt: string) => Array.from(new Set(txt.split(/[,\n\s]+/).map(s => s.trim()).filter(Boolean)));
-      const l1 = parseIds(list1UserIds);
-      const l2 = parseIds(list2UserIds);
-      for (const uid of l1) {
-        if (list1Ritmo) await adminAddCandidate({ trendingId: id, ritmoSlug: list1Ritmo, userId: uid });
+      // Crear candidatos desde listas seleccionadas por display_name
+      for (const u of list1Selected) {
+        if (list1Ritmo) {
+          await adminAddCandidate({ trendingId: id, ritmoSlug: list1Ritmo, userId: u.id, displayName: u.name, listName: list1Name || null as any });
+        }
       }
-      for (const uid of l2) {
-        if (list2Ritmo) await adminAddCandidate({ trendingId: id, ritmoSlug: list2Ritmo, userId: uid });
+      for (const u of list2Selected) {
+        if (list2Ritmo) {
+          await adminAddCandidate({ trendingId: id, ritmoSlug: list2Ritmo, userId: u.id, displayName: u.name, listName: list2Name || null as any });
+        }
       }
 
-      setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]); setList1Ritmo(""); setList1UserIds(""); setList2Ritmo(""); setList2UserIds("");
+      setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
+      setList1Name(""); setList1Ritmo(""); setList1Selected([]); setList1Search("");
+      setList2Name(""); setList2Ritmo(""); setList2Selected([]); setList2Search("");
       await reload(statusFilter || undefined);
       alert(`Trending creado: #${id}`);
     } catch (err: any) {
@@ -178,30 +198,79 @@ export default function TrendingAdmin() {
                   <option value="per_ritmo">per_ritmo</option>
                 </select>
               </div>
-              {/* Listas de usuarios pegados */}
+              {/* Lista #1 con selección por display_name */}
               <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
                 <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #1</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
+                    <input placeholder="Ej. Bachata Team A" value={list1Name} onChange={(e) => setList1Name(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
                     <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list1Ritmo} onChange={(e) => setList1Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>User IDs (separados por coma o renglón)</label>
-                    <textarea rows={3} value={list1UserIds} onChange={(e) => setList1UserIds(e.target.value)} placeholder="uuid1, uuid2, uuid3" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
+                    <input placeholder="Escribe un nombre..." value={list1Search} onChange={(e) => setList1Search(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    {list1Search && (
+                      <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
+                        {allUsers.filter(u => u.name.toLowerCase().includes(list1Search.toLowerCase())).slice(0,50).map(u => (
+                          <button type="button" key={u.id} onClick={() => { if (!list1Selected.find(x=>x.id===u.id)) setList1Selected([...list1Selected, u]); }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
+                            <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
+                            <span>{u.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {list1Selected.length > 0 && (
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
+                        {list1Selected.map(u => (
+                          <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                            {u.name}
+                            <button type="button" onClick={() => setList1Selected(list1Selected.filter(x=>x.id!==u.id))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+              {/* Lista #2 con selección por display_name */}
               <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
                 <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #2</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
+                    <input placeholder="Ej. Bachata Team B" value={list2Name} onChange={(e) => setList2Name(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
                     <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list2Ritmo} onChange={(e) => setList2Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>User IDs (separados por coma o renglón)</label>
-                    <textarea rows={3} value={list2UserIds} onChange={(e) => setList2UserIds(e.target.value)} placeholder="uuid1, uuid2, uuid3" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
+                    <input placeholder="Escribe un nombre..." value={list2Search} onChange={(e) => setList2Search(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    {list2Search && (
+                      <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
+                        {allUsers.filter(u => u.name.toLowerCase().includes(list2Search.toLowerCase())).slice(0,50).map(u => (
+                          <button type="button" key={u.id} onClick={() => { if (!list2Selected.find(x=>x.id===u.id)) setList2Selected([...list2Selected, u]); }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
+                            <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
+                            <span>{u.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {list2Selected.length > 0 && (
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
+                        {list2Selected.map(u => (
+                          <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                            {u.name}
+                            <button type="button" onClick={() => setList2Selected(list2Selected.filter(x=>x.id!==u.id))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
