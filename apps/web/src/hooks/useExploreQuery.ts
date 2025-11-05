@@ -74,8 +74,8 @@ function baseSelect(type: ExploreType) {
       // Eventos padre (sociales) — simplificado para asegurar retorno de filas
       return { table: "events_parent", select: `*` };
     case "usuarios":       
-      // Incluir media para poder mostrar avatar/cover alternos en DancerCard
-      return { table: "profiles_user", select: "user_id, display_name, avatar_url, media, ritmos, zonas, bio" };
+      // Incluir media y estado de onboarding para filtrar solo perfiles completos
+      return { table: "profiles_user", select: "user_id, display_name, avatar_url, media, ritmos, zonas, bio, onboarding_complete" };
     default:               
       return { table: "events_date", select: "*" };
   }
@@ -215,6 +215,8 @@ async function fetchPage(params: QueryParams, page: number) {
       if (parts.length > 0) query = query.or(parts.join(','));
     }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
+    // Solo mostrar usuarios con onboarding completo
+    query = query.eq("onboarding_complete", true);
     
     query = query.order("created_at", { ascending: false });
   } 
