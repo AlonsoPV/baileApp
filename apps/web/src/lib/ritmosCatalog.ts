@@ -16,6 +16,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
     label: 'Latinos',
     items: [
       { id: 'salsa_on1', label: 'Salsa On 1', parent: 'latinos' },
+      { id: 'moderna', label: 'Moderna', parent: 'latinos' },
       { id: 'salsa_on2', label: 'Salsa On 2', parent: 'latinos' },
       { id: 'salsa_casino', label: 'Salsa Casino', parent: 'latinos' },
       { id: 'bachata_tradicional', label: 'Bachata tradicional', parent: 'latinos' },
@@ -38,6 +39,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
     id: 'urbanos',
     label: 'Urbanos y Contemporáneos',
     items: [
+      
       { id: 'hiphop', label: 'Hip hop', parent: 'urbanos' },
       { id: 'breakdance', label: 'Break dance', parent: 'urbanos' },
       { id: 'reggaeton', label: 'Reggaetón', parent: 'urbanos' },
