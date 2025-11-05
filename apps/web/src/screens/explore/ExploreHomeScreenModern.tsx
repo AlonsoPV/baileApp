@@ -477,9 +477,13 @@ export default function ExploreHomeScreen() {
           <Section title="¿Con quién bailar?" toAll="/explore/list?type=usuarios">
             {usuariosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : usuarios && usuarios.pages?.[0]?.data?.length > 0 ? (
+            ) : (() => {
+              const raw = usuarios?.pages?.[0]?.data || [];
+              // Filtro defensivo: solo mostrar usuarios con onboarding completo
+              const list = raw.filter((u: any) => u?.onboarding_complete === true);
+              return list.length > 0 ? (
               <HorizontalSlider
-                items={usuarios.pages[0].data}
+                items={list}
                 renderItem={(u: any, idx: number) => (
                   <motion.div 
                     key={u.user_id ?? idx} 
@@ -508,9 +512,10 @@ export default function ExploreHomeScreen() {
                   </motion.div>
                 )}
               />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles</div>
-            )}
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles</div>
+              );
+            })()}
           </Section>
           )}
 
