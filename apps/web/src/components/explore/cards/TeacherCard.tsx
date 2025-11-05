@@ -37,6 +37,7 @@ export default function TeacherCard({ item }: { item: any }) {
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
     .filter(Boolean);
   return (
+    <>
     <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -117,6 +118,7 @@ export default function TeacherCard({ item }: { item: any }) {
         </div>
       )}
     </div>
+    </>
   );
 }
 
