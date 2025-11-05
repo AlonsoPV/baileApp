@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getTrending,
   getTrendingRitmos,
@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { urls } from "@/lib/urls";
+import "@/styles/event-public.css";
 
 function isWithinWindow(starts_at?: string | null, ends_at?: string | null) {
   const now = Date.now();
@@ -27,6 +28,7 @@ export default function TrendingDetail() {
   const { id } = useParams<{ id: string }>();
   const trendingId = Number(id);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [t, setT] = React.useState<any>(null);
   const [ritmos, setRitmos] = React.useState<any[]>([]);
@@ -132,12 +134,16 @@ export default function TrendingDetail() {
     }
     if (!canVote) return;
     try {
+      // Toggle vote
       await voteTrending(trendingId, candidateId);
+      // Refetch leaderboard to get updated counts
       const lb = await leaderboard(trendingId);
       setBoard(lb);
+      // Update local myVotes state for UI toggle
       setMyVotes(prev => {
         const next = new Map(prev);
-        next.set(candidateId, !prev.get(candidateId));
+        const wasVoted = prev.get(candidateId);
+        next.set(candidateId, !wasVoted);
         return next;
       });
     } catch (e: any) {
@@ -150,6 +156,12 @@ export default function TrendingDetail() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+      {/* Botón Volver */}
+      <div style={{ marginBottom: 12 }}>
+        <button onClick={() => navigate('/trending')} className="cc-btn cc-btn--ghost">
+          ← Volver a Trending
+        </button>
+      </div>
       {t.cover_url && (
         <div style={{
           width: '100%',
