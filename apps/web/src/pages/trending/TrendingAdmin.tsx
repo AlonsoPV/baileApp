@@ -208,7 +208,7 @@ export default function TrendingAdmin() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
-                    <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list1Ritmo} onChange={(e) => setList1Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    <RitmosChips selected={list1Ritmo ? [list1Ritmo] : []} onChange={(vals: string[]) => setList1Ritmo(vals?.[0] || '')} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
@@ -246,7 +246,7 @@ export default function TrendingAdmin() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
-                    <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list2Ritmo} onChange={(e) => setList2Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                    <RitmosChips selected={list2Ritmo ? [list2Ritmo] : []} onChange={(vals: string[]) => setList2Ritmo(vals?.[0] || '')} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
