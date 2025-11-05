@@ -4,9 +4,12 @@ import {
   adminCreateTrending,
   adminPublishTrending,
   adminCloseTrending,
+  adminAddRitmo,
+  adminAddCandidate,
 } from "@/lib/trending";
 import { supabase } from "@/lib/supabase";
 import "@/styles/event-public.css";
+import RitmosChips from "@/components/RitmosChips";
 
 type Mode = "per_candidate" | "per_ritmo";
 
@@ -22,6 +25,13 @@ export default function TrendingAdmin() {
   const [endsAt, setEndsAt] = React.useState<string>("");
   const [mode, setMode] = React.useState<Mode>("per_candidate");
   const [creating, setCreating] = React.useState(false);
+  const [coverFile, setCoverFile] = React.useState<File | null>(null);
+  const [ritmosSel, setRitmosSel] = React.useState<string[]>([]);
+  // Listas de usuarios
+  const [list1Ritmo, setList1Ritmo] = React.useState<string>("");
+  const [list1UserIds, setList1UserIds] = React.useState<string>("");
+  const [list2Ritmo, setList2Ritmo] = React.useState<string>("");
+  const [list2UserIds, setList2UserIds] = React.useState<string>("");
 
   React.useEffect(() => {
     (async () => {
@@ -54,14 +64,40 @@ export default function TrendingAdmin() {
     if (!canAdmin) return;
     setCreating(true);
     try {
+      // Subir portada si aplica
+      let coverUrl: string | null = null;
+      if (coverFile) {
+        const ext = coverFile.name.split('.').pop();
+        const key = `trending-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('media').upload(key, coverFile, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
+        coverUrl = pub.publicUrl;
+      }
       const id = await adminCreateTrending({
         title: title.trim(),
         description: description.trim() || undefined,
         starts_at: startsAt ? new Date(startsAt).toISOString() : null,
         ends_at: endsAt ? new Date(endsAt).toISOString() : null,
         allowed_vote_mode: mode,
+        cover_url: coverUrl,
       });
-      setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate");
+      // Guardar ritmos seleccionados
+      for (const slug of ritmosSel) {
+        await adminAddRitmo(id, slug);
+      }
+      // Procesar listas de usuarios pegadas
+      const parseIds = (txt: string) => Array.from(new Set(txt.split(/[,\n\s]+/).map(s => s.trim()).filter(Boolean)));
+      const l1 = parseIds(list1UserIds);
+      const l2 = parseIds(list2UserIds);
+      for (const uid of l1) {
+        if (list1Ritmo) await adminAddCandidate({ trendingId: id, ritmoSlug: list1Ritmo, userId: uid });
+      }
+      for (const uid of l2) {
+        if (list2Ritmo) await adminAddCandidate({ trendingId: id, ritmoSlug: list2Ritmo, userId: uid });
+      }
+
+      setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]); setList1Ritmo(""); setList1UserIds(""); setList2Ritmo(""); setList2UserIds("");
       await reload(statusFilter || undefined);
       alert(`Trending creado: #${id}`);
     } catch (err: any) {
@@ -110,12 +146,20 @@ export default function TrendingAdmin() {
           {canAdmin && (
             <form onSubmit={onCreate} style={{ display: 'grid', gap: '0.75rem', maxWidth: 700 }}>
               <div>
+                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Portada</label>
+                <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
+              </div>
+              <div>
                 <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Título</label>
                 <input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Título" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Descripción</label>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Descripción" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos</label>
+                <RitmosChips selected={ritmosSel} onChange={(val: string[]) => setRitmosSel(val)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
@@ -133,6 +177,33 @@ export default function TrendingAdmin() {
                   <option value="per_candidate">per_candidate</option>
                   <option value="per_ritmo">per_ritmo</option>
                 </select>
+              </div>
+              {/* Listas de usuarios pegados */}
+              <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
+                <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #1</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
+                    <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list1Ritmo} onChange={(e) => setList1Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>User IDs (separados por coma o renglón)</label>
+                    <textarea rows={3} value={list1UserIds} onChange={(e) => setList1UserIds(e.target.value)} placeholder="uuid1, uuid2, uuid3" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
+                <h3 style={{ margin: 0, marginBottom: 8, fontSize: '1rem' }}>Lista de usuarios #2</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
+                    <input placeholder="slug de ritmo (ej. bachata_tradicional)" value={list2Ritmo} onChange={(e) => setList2Ritmo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>User IDs (separados por coma o renglón)</label>
+                    <textarea rows={3} value={list2UserIds} onChange={(e) => setList2UserIds(e.target.value)} placeholder="uuid1, uuid2, uuid3" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                  </div>
+                </div>
               </div>
               <div>
                 <button type="submit" disabled={creating} className="cc-btn cc-btn--primary">{creating ? 'Creando…' : 'Crear'}</button>

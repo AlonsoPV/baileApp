@@ -86,6 +86,17 @@ export default function TrendingDetail() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+      {t.cover_url && (
+        <div style={{
+          width: '100%',
+          borderRadius: 16,
+          overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.12)',
+          marginBottom: 16,
+        }}>
+          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }} />
+        </div>
+      )}
       <header style={{ marginBottom: 16 }}>
         <h1 style={{ fontWeight: 900, marginBottom: 8 }}>{t.title}</h1>
         {t.description && <p style={{ opacity: 0.9 }}>{t.description}</p>}

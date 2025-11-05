@@ -8,6 +8,7 @@ export type Trending = {
   starts_at: string | null;
   ends_at: string | null;
   allowed_vote_mode: "per_candidate" | "per_ritmo";
+  cover_url?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -73,6 +74,7 @@ export async function adminCreateTrending(payload: {
   starts_at?: string | null;
   ends_at?: string | null;
   allowed_vote_mode?: "per_candidate" | "per_ritmo";
+  cover_url?: string | null;
 }) {
   const { data, error } = await supabase.rpc("rpc_trending_create", {
     p_title: payload.title,
@@ -80,6 +82,7 @@ export async function adminCreateTrending(payload: {
     p_starts_at: payload.starts_at ?? null,
     p_ends_at: payload.ends_at ?? null,
     p_allowed_vote_mode: payload.allowed_vote_mode ?? "per_candidate",
+    p_cover_url: payload.cover_url ?? null,
   });
   if (error) throw error;
   return data as number;
