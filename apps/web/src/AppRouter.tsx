@@ -85,6 +85,8 @@ import ChallengeNew from './screens/challenges/ChallengeNew';
 import ChallengeDetail from './screens/challenges/ChallengeDetail';
 import ClassPublicScreen from './screens/classes/ClassPublicScreen';
 import TeacherPublicLive from './screens/profile/TeacherPublicLive';
+import TrendingDetail from './pages/trending/TrendingDetail';
+import TrendingAdmin from './pages/trending/TrendingAdmin';
 
 export default function AppRouter() {
   return (
@@ -122,6 +124,8 @@ export default function AppRouter() {
         <Route path="/u/:userId" element={<UserPublicScreen />} />
         <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
         <Route path="/maestro/:teacherId" element={<TeacherPublicLive />} />
+        {/* Trending público */}
+        <Route path="/trending/:id" element={<TrendingDetail />} />
         {/* Clase pública (usa query o params) */}
         <Route path="/clase" element={<ClassPublicScreen />} />
         <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
@@ -158,6 +162,7 @@ export default function AppRouter() {
           <Route path="/app/roles/request" element={<RequestRoleScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin" element={<AdminRoleRequestsScreen />} />
+          <Route path="/admin/trending" element={<TrendingAdmin />} />
           {/* Crear challenge (protegido por rol desde UI; backend con RLS) */}
           <Route path="/challenges/new" element={<ChallengeNew />} />
           <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
