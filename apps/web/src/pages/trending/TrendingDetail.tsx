@@ -8,6 +8,7 @@ import {
   voteTrending,
 } from "@/lib/trending";
 import { useAuth } from "@/contexts/AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 function isWithinWindow(starts_at?: string | null, ends_at?: string | null) {
   const now = Date.now();
@@ -27,6 +28,7 @@ export default function TrendingDetail() {
   const [board, setBoard] = React.useState<any[]>([]);
   const [activeRitmo, setActiveRitmo] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isSA, setIsSA] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -48,6 +50,14 @@ export default function TrendingDetail() {
     })();
   }, [trendingId]);
 
+  React.useEffect(() => {
+    (async () => {
+      if (!user) { setIsSA(false); return; }
+      const { data } = await supabase.from('user_roles').select('role_slug').eq('user_id', user.id);
+      setIsSA(Boolean((data || []).some((r:any)=> r.role_slug === 'superadmin')));
+    })();
+  }, [user?.id]);
+
   const byRitmo = React.useMemo(() => {
     const map = new Map<string, any[]>();
     candidatos.forEach((c) => {
@@ -61,6 +71,19 @@ export default function TrendingDetail() {
     const m = new Map<number, number>();
     board.forEach((b) => m.set(b.candidate_id, Number(b.votes)));
     return m;
+  }, [board]);
+
+  // Ganadores por lista (por list_name); si list_name es null, agrupar como "General".
+  const winnersByList = React.useMemo(() => {
+    const best = new Map<string, any>();
+    board.forEach(row => {
+      const key = (row.list_name || 'General') + '::' + (row.ritmo_slug || '');
+      const prev = best.get(key);
+      if (!prev || Number(row.votes) > Number(prev.votes)) {
+        best.set(key, row);
+      }
+    });
+    return Array.from(best.values());
   }, [board]);
 
   const canVoteByTime = isWithinWindow(t?.starts_at, t?.ends_at);
@@ -175,25 +198,50 @@ export default function TrendingDetail() {
         })}
       </div>
 
-      <section style={{ marginTop: 32 }}>
-        <h2 style={{ fontWeight: 900, marginBottom: 12 }}>🏆 Favoritos</h2>
-        {ritmos.map((r) => {
-          const rows = board.filter((x) => x.ritmo_slug === r.ritmo_slug);
-          if (!rows.length) return null;
-          return (
-            <div key={r.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 800, marginBottom: 8 }}>{r.ritmo_slug}</div>
-              <ol style={{ margin: 0, paddingLeft: 18 }}>
-                {rows.slice(0, 5).map((x: any, i: number) => (
-                  <li key={x.candidate_id} style={{ marginBottom: 4 }}>
-                    {i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : ""}{x.display_name} — {x.votes}
-                  </li>
+      {/* Leaderboard para superadmin; si está cerrado y no es SA, mostrar ganadores por lista */}
+      {isSA ? (
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontWeight: 900, marginBottom: 12 }}>🏆 Favoritos (Admin)</h2>
+          {ritmos.map((r) => {
+            const rows = board.filter((x) => x.ritmo_slug === r.ritmo_slug);
+            if (!rows.length) return null;
+            return (
+              <div key={r.id} style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 800, marginBottom: 8 }}>{r.ritmo_slug}</div>
+                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                  {rows.slice(0, 5).map((x: any, i: number) => (
+                    <li key={x.candidate_id} style={{ marginBottom: 4 }}>
+                      {i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : ""}{x.display_name} — {x.votes} {x.list_name ? `(${x.list_name})` : ''}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })}
+        </section>
+      ) : (
+        t.status === 'closed' && (
+          <section style={{ marginTop: 32 }}>
+            <h2 style={{ fontWeight: 900, marginBottom: 12 }}>🏆 Ganadores por lista</h2>
+            {winnersByList.length === 0 ? (
+              <div>Sin datos</div>
+            ) : (
+              <div style={{ display: 'grid', gap: 12 }}>
+                {winnersByList.map((w: any) => (
+                  <div key={`${w.list_name || 'General'}-${w.ritmo_slug}-${w.candidate_id}`} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                        {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({w.ritmo_slug}{w.list_name ? ` • ${w.list_name}` : ''})</span>
+                      </div>
+                      <span style={{ fontWeight: 900 }}>❤️ {w.votes}</span>
+                    </div>
+                  </div>
                 ))}
-              </ol>
-            </div>
-          );
-        })}
-      </section>
+              </div>
+            )}
+          </section>
+        )
+      )}
     </div>
   );
 }

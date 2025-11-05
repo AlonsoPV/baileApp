@@ -53,6 +53,7 @@ export async function leaderboard(trendingId: number) {
   return (data ?? []) as {
     candidate_id: number;
     ritmo_slug: string;
+    list_name: string | null;
     user_id: string;
     display_name: string;
     avatar_url: string | null;

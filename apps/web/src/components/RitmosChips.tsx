@@ -95,6 +95,7 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
           return (
             <button
               key={group.id}
+              type="button"
               onClick={() => setExpanded(prev => prev === group.id ? null : group.id)}
               style={{
                 padding: '10px 14px',
@@ -123,6 +124,7 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
             return (
               <motion.button
                 key={r.id}
+                type="button"
                 onClick={() => toggleChild(r.id)}
                 whileTap={{ scale: 0.95 }}
                 style={{
