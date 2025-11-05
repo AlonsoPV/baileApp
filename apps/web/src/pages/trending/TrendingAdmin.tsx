@@ -6,6 +6,7 @@ import {
   adminCloseTrending,
   adminAddRitmo,
   adminAddCandidate,
+  adminUpdateTrending,
 } from "@/lib/trending";
 import { supabase } from "@/lib/supabase";
 import "@/styles/event-public.css";
@@ -30,10 +31,10 @@ export default function TrendingAdmin() {
   const [ritmosSel, setRitmosSel] = React.useState<string[]>([]);
   // Listas de usuarios
   type CandidateChip = { id: string; name: string; avatar?: string };
-  type UserList = { key: string; name: string; ritmo: string; selected: CandidateChip[]; search: string };
+  type UserList = { key: string; name: string; ritmos: string[]; selected: CandidateChip[]; search: string };
   const [lists, setLists] = React.useState<UserList[]>([
-    { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
-    { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+    { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
+    { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
   ]);
 
   const [allUsers, setAllUsers] = React.useState<{id:string; name:string; avatar?:string}[]>([]);
@@ -104,23 +105,25 @@ export default function TrendingAdmin() {
       }
       // Crear candidatos desde listas dinámicas
       for (const L of lists) {
-        if (!L.ritmo) continue;
-        for (const u of L.selected) {
-          await adminAddCandidate({
-            trendingId: id,
-            ritmoSlug: L.ritmo,
-            userId: u.id,
-            displayName: u.name,
-            avatarUrl: u.avatar,
-            listName: L.name || null as any,
-          });
+        if (!L.ritmos || L.ritmos.length === 0) continue; // opcional
+        for (const rs of L.ritmos) {
+          for (const u of L.selected) {
+            await adminAddCandidate({
+              trendingId: id,
+              ritmoSlug: rs,
+              userId: u.id,
+              displayName: u.name,
+              avatarUrl: u.avatar,
+              listName: L.name || null as any,
+            });
+          }
         }
       }
 
       setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
       setLists([
-        { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
-        { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" },
+        { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
+        { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
       ]);
       await reload(statusFilter || undefined);
       alert(`Trending creado: #${id}`);
@@ -138,6 +141,41 @@ export default function TrendingAdmin() {
   const doClose = async (id: number) => {
     if (!canAdmin) return;
     try { await adminCloseTrending(id); await reload(statusFilter || undefined); } catch (e: any) { alert(e.message || 'Error'); }
+  };
+
+  // Inline editing state
+  const [editId, setEditId] = React.useState<number | null>(null);
+  const [editTitle, setEditTitle] = React.useState<string>("");
+  const [editDescription, setEditDescription] = React.useState<string>("");
+  const [editStartsAt, setEditStartsAt] = React.useState<string>("");
+  const [editEndsAt, setEditEndsAt] = React.useState<string>("");
+  const [editMode, setEditMode] = React.useState<Mode>("per_candidate");
+
+  const beginEdit = (r: any) => {
+    setEditId(r.id);
+    setEditTitle(r.title || "");
+    setEditDescription(r.description || "");
+    setEditStartsAt(r.starts_at ? new Date(r.starts_at).toISOString().slice(0,16) : "");
+    setEditEndsAt(r.ends_at ? new Date(r.ends_at).toISOString().slice(0,16) : "");
+    setEditMode(r.allowed_vote_mode || "per_candidate");
+  };
+
+  const saveEdit = async () => {
+    if (!canAdmin || editId == null) return;
+    try {
+      await adminUpdateTrending({
+        id: editId,
+        title: editTitle,
+        description: editDescription,
+        starts_at: editStartsAt ? new Date(editStartsAt).toISOString() : null,
+        ends_at: editEndsAt ? new Date(editEndsAt).toISOString() : null,
+        allowed_vote_mode: editMode,
+      });
+      setEditId(null);
+      await reload(statusFilter || undefined);
+    } catch (e:any) {
+      alert(e.message || 'Error al guardar');
+    }
   };
 
   return (
@@ -223,8 +261,8 @@ export default function TrendingAdmin() {
                         <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmo</label>
-                        <RitmosChips selected={L.ritmo ? [L.ritmo] : []} onChange={(vals: string[]) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmo: (vals?.[0] || '') } : x))} />
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, multi)</label>
+                        <RitmosChips selected={L.ritmos} onChange={(vals: string[]) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmos: vals } : x))} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
@@ -258,7 +296,7 @@ export default function TrendingAdmin() {
                   </div>
                 ))}
                 <div>
-                  <button type="button" className="cc-btn" onClick={() => setLists([...lists, { key: Math.random().toString(36).slice(2), name: "", ritmo: "", selected: [], search: "" }])}>Añadir lista</button>
+                  <button type="button" className="cc-btn" onClick={() => setLists([...lists, { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" }])}>Añadir lista</button>
                 </div>
               </div>
               <div>
@@ -305,6 +343,7 @@ export default function TrendingAdmin() {
                       {r.status === 'draft' && <button className="cc-btn" onClick={() => doPublish(r.id)}>Publicar</button>}
                       {r.status === 'open' && <button className="cc-btn" onClick={() => doClose(r.id)}>Cerrar</button>}
                       <a href={`/trending/${r.id}`} className="cc-btn cc-btn--primary">Abrir</a>
+                      <button className="cc-btn" onClick={() => beginEdit(r)}>{editId === r.id ? 'Editando…' : 'Editar'}</button>
                     </div>
                   </div>
                 </div>
@@ -312,6 +351,42 @@ export default function TrendingAdmin() {
             </div>
           )}
         </section>
+        {editId !== null && (
+          <section className="cc-glass" style={{ padding: '1rem', marginTop: '1rem' }}>
+            <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Editar trending #{editId}</h2>
+            <div style={{ display:'grid', gap: 10, maxWidth: 700 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Título</label>
+                <input value={editTitle} onChange={(e)=>setEditTitle(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Descripción</label>
+                <textarea value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} rows={3} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Inicia</label>
+                  <input type="datetime-local" value={editStartsAt} onChange={(e)=>setEditStartsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                </div>
+                <div>
+                  <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Termina</label>
+                  <input type="datetime-local" value={editEndsAt} onChange={(e)=>setEditEndsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Modo de voto</label>
+                <select value={editMode} onChange={(e)=>setEditMode(e.target.value as any)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }}>
+                  <option value="per_candidate">per_candidate</option>
+                  <option value="per_ritmo">per_ritmo</option>
+                </select>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button className="cc-btn cc-btn--primary" onClick={saveEdit}>Guardar</button>
+                <button className="cc-btn" onClick={()=>setEditId(null)}>Cancelar</button>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

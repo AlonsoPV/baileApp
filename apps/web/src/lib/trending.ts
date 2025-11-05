@@ -128,4 +128,25 @@ export async function adminAddCandidate(args: {
   if (error) throw error;
 }
 
+export async function adminUpdateTrending(args: {
+  id: number;
+  title?: string;
+  description?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  allowed_vote_mode?: "per_candidate" | "per_ritmo";
+  cover_url?: string | null;
+}) {
+  const { error } = await supabase.rpc("rpc_trending_update", {
+    p_trending_id: args.id,
+    p_title: args.title ?? null,
+    p_description: args.description ?? null,
+    p_starts_at: args.starts_at ?? null,
+    p_ends_at: args.ends_at ?? null,
+    p_allowed_vote_mode: args.allowed_vote_mode ?? null,
+    p_cover_url: args.cover_url ?? null,
+  });
+  if (error) throw error;
+}
+
 

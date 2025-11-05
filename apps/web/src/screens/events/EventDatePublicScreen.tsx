@@ -291,7 +291,8 @@ export default function EventDatePublicScreen() {
   const interestedCount = (() => {
     try {
       const anyStats: any = stats as any;
-      const val = anyStats?.interesados ?? anyStats?.count ?? anyStats?.interested ?? 0;
+      // our RPC returns { interesado, total }
+      const val = anyStats?.interesado ?? anyStats?.interested ?? anyStats?.count ?? anyStats?.total ?? 0;
       return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
     } catch {
       return 0;
