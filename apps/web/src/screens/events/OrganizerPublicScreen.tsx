@@ -94,12 +94,23 @@ export function OrganizerPublicScreen() {
     enabled: !!routeId,
     queryFn: async () => {
       if (!routeId) return null;
-      if (isUUID(routeId)) {
-        const { data, error } = await supabase.from('organizers').select('*').eq('id', routeId).maybeSingle();
-        if (error) throw error; if (data) return data;
+      // Intentar como ID numérico primero
+      const numId = parseInt(routeId, 10);
+      if (!isNaN(numId)) {
+        const { data, error } = await supabase.from('profiles_organizer').select('*').eq('id', numId).maybeSingle();
+        if (error) throw error;
+        if (data) return data;
       }
-      const { data, error } = await supabase.from('organizers').select('*').eq('slug', routeId).maybeSingle();
-      if (error) throw error; return data ?? null;
+      // Intentar como UUID
+      if (isUUID(routeId)) {
+        const { data, error } = await supabase.from('profiles_organizer').select('*').eq('user_id', routeId).maybeSingle();
+        if (error) throw error;
+        if (data) return data;
+      }
+      // Intentar como slug
+      const { data, error } = await supabase.from('profiles_organizer').select('*').eq('slug', routeId).maybeSingle();
+      if (error) throw error;
+      return data ?? null;
     }
   });
 
