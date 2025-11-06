@@ -415,6 +415,14 @@ export function OrganizerProfileLive() {
     );
   }
 
+  // Auto-redirigir a Edit si no tiene perfil de organizador
+  React.useEffect(() => {
+    if (!isLoading && !org) {
+      console.log('[OrganizerProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/organizer/edit', { replace: true });
+    }
+  }, [isLoading, org, navigate]);
+
   if (!org) {
     return (
       <div style={{
@@ -427,35 +435,13 @@ export function OrganizerProfileLive() {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>❌</div>
+        <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
         <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-          No tienes perfil de organizador
+          Cargando perfil...
         </h2>
-        <p style={{ marginBottom: spacing[6], opacity: 0.7, fontSize: typography.fontSize.lg }}>
-          Crea uno para organizar eventos
+        <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg }}>
+          Redirigiendo a edición para crear tu perfil
         </p>
-        <p style={{ marginBottom: spacing[4], opacity: 0.85 }}>
-          Para crear tu rol ve a edición y guarda tu nombre.
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/app/roles/request?role=organizador')}
-          style={{
-            padding: `${spacing[4]} ${spacing[7]}`,
-            borderRadius: borderRadius.full,
-            border: 'none',
-            background: colors.gradients.primary,
-            color: colors.gray[50],
-            fontSize: typography.fontSize.base,
-            fontWeight: typography.fontWeight.bold,
-            cursor: 'pointer',
-            boxShadow: colors.shadows.glow,
-            transition: transitions.normal
-          }}
-        >
-          🎤 Crear Organizador
-        </motion.button>
       </div>
     );
   }

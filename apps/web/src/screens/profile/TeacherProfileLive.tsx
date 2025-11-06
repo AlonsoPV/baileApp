@@ -354,40 +354,34 @@ export default function TeacherProfileLive() {
     );
   }
 
+  // Auto-redirigir a Edit si no tiene perfil de maestro
+  React.useEffect(() => {
+    if (!isLoading && !teacher) {
+      console.log('[TeacherProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/teacher/edit', { replace: true });
+    }
+  }, [isLoading, teacher, navigate]);
+
   if (!teacher) {
     return (
       <div style={{
         padding: '48px 24px',
         textAlign: 'center',
         color: colors.light,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-          No tienes perfil de maestro
-        </h2>
-        <p style={{ marginBottom: '24px', opacity: 0.7 }}>
-          Crea uno para dar clases
-        </p>
-        <p style={{ marginBottom: '16px', opacity: 0.8, fontSize: '0.95rem' }}>
-          Para crear tu rol ve a edición y guarda tu nombre.
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/profile/teacher')}
-          style={{
-            padding: '14px 28px',
-            borderRadius: '50px',
-            border: 'none',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            color: colors.light,
-            fontSize: '1rem',
-            fontWeight: '700',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(30,136,229,0.5)',
-          }}
-        >
-          🎓 Crear Perfil Maestro
-        </motion.button>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+            Cargando perfil...
+          </h2>
+          <p style={{ opacity: 0.7 }}>
+            Redirigiendo a edición para crear tu perfil de maestro
+          </p>
+        </div>
       </div>
     );
   }

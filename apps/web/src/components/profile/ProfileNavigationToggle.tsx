@@ -68,7 +68,6 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'academy': return '/profile/academy';
       case 'brand': return '/profile/brand';
       case 'teacher': return '/profile/teacher';
-      // teacher live route
       default: return '/profile';
     }
   };
@@ -83,6 +82,15 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       case 'teacher': return '/profile/teacher/edit';
       default: return '/profile';
     }
+  };
+
+  // Determinar si el usuario tiene el perfil creado para este rol
+  const hasProfileCreated = (roleId: string) => {
+    // Usuario siempre tiene perfil
+    if (roleId === 'user') return true;
+    // TODO: Aquí podríamos verificar si existe el perfil en la BD
+    // Por ahora asumimos que si está en live view, ya tiene perfil
+    return currentView === 'live';
   };
 
   const getProfileName = () => {
@@ -392,10 +400,12 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                       </div>
 
                       {isAvailable ? (
-                        // Botón para ir al perfil
+                        // Botón para ir al perfil (Live si existe, Edit si no)
                         <button
                           onClick={() => {
                             console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
+                            // Si el usuario tiene el rol aprobado, ir a la ruta del rol
+                            // La pantalla Live del rol se encargará de redirigir a Edit si no tiene perfil
                             navigate(role.route);
                             setIsRoleDropdownOpen(false);
                           }}

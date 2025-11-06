@@ -26,6 +26,14 @@ export default function BrandProfileLive() {
     );
   }
 
+  // Auto-redirigir a Edit si no tiene perfil de marca
+  React.useEffect(() => {
+    if (!isLoading && !brand) {
+      console.log('[BrandProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/brand/edit', { replace: true });
+    }
+  }, [isLoading, brand, navigate]);
+
   if (!brand) {
     return (
       <div style={{
@@ -34,25 +42,13 @@ export default function BrandProfileLive() {
         color: colors.gray[50], padding: spacing[8]
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>❌</div>
-          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>Marca no encontrada</h2>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/explore')}
-            style={{
-              padding: `${spacing[4]} ${spacing[7]}`,
-              borderRadius: borderRadius.full,
-              border: 'none',
-              background: colors.gradients.primary,
-              color: colors.gray[50],
-              fontSize: typography.fontSize.base,
-              fontWeight: typography.fontWeight.bold,
-              cursor: 'pointer'
-            }}
-          >
-            🔍 Explorar
-          </motion.button>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
+            Cargando perfil...
+          </h2>
+          <p style={{ opacity: 0.7 }}>
+            Redirigiendo a edición para crear tu perfil de marca
+          </p>
         </div>
       </div>
     );
