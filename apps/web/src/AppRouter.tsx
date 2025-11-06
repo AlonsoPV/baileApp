@@ -109,7 +109,6 @@ export default function AppRouter() {
       <Route element={<AppShell />}>
         {/* Public */}
         <Route path="/explore" element={<ExploreHomeScreen />} />
-        <Route path="/app/explore" element={<ExploreHomeScreen />} />
         <Route path="/explore/list" element={<ExploreListScreen />} />
         <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
         <Route path="/about" element={<AboutScreen />} />

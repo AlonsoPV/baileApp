@@ -43,7 +43,7 @@ export default function PinSetup() {
       setPinVerified(user.id);
       
       // Redirigir directo a explore (onboarding completo)
-      navigate('/app/explore', { replace: true });
+      navigate('/explore', { replace: true });
     } catch (e: any) {
       setError(e?.message || 'Error al guardar PIN');
     } finally {

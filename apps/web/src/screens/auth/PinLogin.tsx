@@ -68,7 +68,7 @@ export default function PinLogin() {
       setPinVerified(user.id);
       
       // Redirigir a explore después de verificar PIN
-      navigate('/app/explore', { replace: true });
+      navigate('/explore', { replace: true });
     } catch (e: any) {
       setPinError(e?.message || 'Error verificando PIN');
     } finally {

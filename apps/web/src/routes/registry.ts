@@ -24,7 +24,7 @@ export const routes = {
   app: {
     home: '/app',
     profile: '/app/profile', // perfil propio
-    explore: '/app/explore',
+    explore: '/explore',
   },
   
   user: {

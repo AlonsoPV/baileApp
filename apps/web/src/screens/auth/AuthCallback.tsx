@@ -70,7 +70,7 @@ export default function AuthCallback() {
           }
           
           // Si todo está OK, ir a explore
-          navigate('/app/explore', { replace: true });
+          navigate('/explore', { replace: true });
           return;
         }
         
