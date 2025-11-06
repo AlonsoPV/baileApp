@@ -114,17 +114,69 @@ export default function RequestRoleScreen() {
 
               <div style={{ display: 'grid', gap: 12 }}>
                 <div>
-                  <label className="rr-label">Rol</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as RoleSlug)}
-                    className="rr-input"
-                    disabled={enforceSingleRole}
-                  >
-                    {rolesToShow.map(r => (
-                      <option key={r.slug} value={r.slug}>{r.name}</option>
-                    ))}
-                  </select>
+                  <label className="rr-label">Rol al que aplicas</label>
+                  {enforceSingleRole ? (
+                    // Mostrar rol de manera visual y no editable
+                    <div style={{
+                      padding: '16px 20px',
+                      background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.15) 0%, rgba(251, 140, 0, 0.15) 100%)',
+                      border: '2px solid rgba(229, 57, 53, 0.3)',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Icono según el rol */}
+                      <span style={{ fontSize: '2rem' }}>
+                        {role === 'organizador' && '🎤'}
+                        {role === 'academia' && '🎓'}
+                        {role === 'maestro' && '👨‍🏫'}
+                        {role === 'marca' && '🏷️'}
+                      </span>
+                      
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          fontSize: '1.25rem', 
+                          fontWeight: '700',
+                          color: '#fff',
+                          marginBottom: '4px'
+                        }}>
+                          {rolesToShow[0]?.name || role}
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.85rem', 
+                          opacity: 0.8,
+                          color: 'rgba(255, 255, 255, 0.9)'
+                        }}>
+                          Este es el rol que estás solicitando
+                        </div>
+                      </div>
+
+                      {/* Badge decorativo */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '-20px',
+                        right: '-20px',
+                        width: '80px',
+                        height: '80px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '50%'
+                      }} />
+                    </div>
+                  ) : (
+                    // Select normal si no viene de query
+                    <select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value as RoleSlug)}
+                      className="rr-input"
+                    >
+                      {rolesToShow.map(r => (
+                        <option key={r.slug} value={r.slug}>{r.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr', }}>
