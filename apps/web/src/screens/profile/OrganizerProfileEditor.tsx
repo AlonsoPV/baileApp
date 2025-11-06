@@ -60,8 +60,8 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        padding: 'clamp(1rem, 2vw, 2rem)',
-        borderRadius: 'clamp(12px, 2vw, 24px)',
+        padding: 'clamp(1.5rem, 2.5vw, 2.5rem)',
+        borderRadius: 'clamp(16px, 2.5vw, 28px)',
         border: '2px solid rgba(255, 255, 255, 0.15)',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
@@ -70,9 +70,9 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         backdropFilter: 'blur(20px)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(255, 61, 87, 0.1)',
         width: '100%',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2rem'
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem'
       }}
     >
       {/* Barra decorativa superior */}
@@ -86,101 +86,103 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         borderRadius: '24px 24px 0 0',
       }} />
 
-      {/* Efecto de brillo en hover */}
-      <motion.div
-        initial={{ x: '-100%' }}
-        whileHover={{ x: '100%' }}
-        transition={{ duration: 0.6, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-          zIndex: 1,
-          pointerEvents: 'none'
-        }}
-      />
-      
-      {/* COLUMNA 1: Información del Social */}
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <motion.div
-            whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
-            transition={{ duration: 0.5 }}
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.8rem',
-              background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
-              border: '2px solid rgba(255, 61, 87, 0.3)',
-              boxShadow: '0 4px 16px rgba(255, 61, 87, 0.3)',
-              filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))'
-            }}
-          >
-            🎭
-          </motion.div>
-          <div style={{ flex: 1 }}>
-            <h4 style={{
-              fontSize: 'clamp(1.1rem, 1rem + 0.5vw, 1.5rem)',
-              fontWeight: '800',
-              margin: 0,
-              marginBottom: '0.25rem',
-              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.02em'
-            }}>
-              {parent.nombre}
-            </h4>
-          </div>
-        </div>
-        
-        {parent.descripcion && (
-          <p style={{
-            fontSize: '0.95rem',
-            opacity: 0.85,
-            marginBottom: '1rem',
-            fontWeight: '400',
-            lineHeight: 1.5,
-            color: "rgba(255, 255, 255, 0.9)"
-          }}>
-            {parent.descripcion.length > 150 ? `${parent.descripcion.substring(0, 150)}...` : parent.descripcion}
-          </p>
-        )}
-        
+      {/* FILA 1: Información del Social */}
+      <div style={{ 
+        position: 'relative', 
+        zIndex: 2,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '1.5rem',
+        paddingBottom: '1.5rem',
+        borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        {/* Icono */}
         <motion.div
-          whileHover={{ scale: 1.05, x: 4 }}
-          onClick={handleSocialClick}
+          whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+          transition={{ duration: 0.5 }}
           style={{
-            fontSize: 'clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem)',
-            color: colors.blue,
-            fontWeight: '700',
-            display: 'inline-flex',
+            width: '72px',
+            height: '72px',
+            borderRadius: '50%',
+            display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: 'clamp(0.4rem, 0.5rem + 0.3vw, 0.75rem) clamp(0.75rem, 1rem, 1.25rem)',
-            background: 'rgba(30, 136, 229, 0.15)',
-            borderRadius: '12px',
-            border: '2px solid rgba(30, 136, 229, 0.3)',
-            width: 'fit-content',
-            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-            cursor: 'pointer',
-            marginBottom: '1rem'
+            justifyContent: 'center',
+            fontSize: '2.5rem',
+            background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
+            border: '3px solid rgba(255, 61, 87, 0.4)',
+            boxShadow: '0 6px 20px rgba(255, 61, 87, 0.4)',
+            filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))',
+            flexShrink: 0
           }}
         >
-          <span style={{ fontSize: '1rem' }}>👁️</span>
-          <span>Ver detalles del social</span>
-          <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>→</span>
+          🎭
         </motion.div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Contenido principal */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Nombre del social */}
+          <h3 style={{
+            fontSize: 'clamp(1.5rem, 2vw, 2rem)',
+            fontWeight: '800',
+            margin: 0,
+            marginBottom: '0.75rem',
+            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2
+          }}>
+            {parent.nombre}
+          </h3>
+          
+          {/* Descripción */}
+          {parent.descripcion && (
+            <p style={{
+              fontSize: '1rem',
+              opacity: 0.9,
+              margin: 0,
+              fontWeight: '400',
+              lineHeight: 1.6,
+              color: "rgba(255, 255, 255, 0.9)"
+            }}>
+              {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
+            </p>
+          )}
+        </div>
+        
+        {/* Botones de acción */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.75rem',
+          flexShrink: 0,
+          alignItems: 'flex-start'
+        }}>
+          <motion.button
+            whileHover={{ scale: 1.08, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSocialClick}
+            style={{
+              padding: '0.75rem 1.25rem',
+              background: 'rgba(30, 136, 229, 0.15)',
+              color: colors.blue,
+              border: '2px solid rgba(30, 136, 229, 0.3)',
+              borderRadius: '12px',
+              fontSize: '0.875rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>👁️</span>
+            <span>Ver</span>
+          </motion.button>
+          
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -189,7 +191,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               navigate(`/social/${parent.id}/edit`);
             }}
             style={{
-              padding: '0.7rem 1.2rem',
+              padding: '0.75rem 1.25rem',
               background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
               color: '#FFFFFF',
               border: 'none',
@@ -202,12 +204,13 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              justifyContent: 'center'
+              whiteSpace: 'nowrap'
             }}
           >
             <span>✏️</span>
             <span>Editar</span>
           </motion.button>
+          
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -217,7 +220,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             }}
             disabled={isDeleting}
             style={{
-              padding: '0.7rem 1.2rem',
+              padding: '0.75rem 1.25rem',
               background: isDeleting
                 ? 'rgba(255, 255, 255, 0.1)'
                 : `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
@@ -233,7 +236,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              justifyContent: 'center'
+              whiteSpace: 'nowrap'
             }}
           >
             <span>{isDeleting ? '⏳' : '🗑️'}</span>
@@ -242,7 +245,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         </div>
       </div>
 
-      {/* COLUMNA 2: Fechas del social */}
+      {/* FILA 2: Fechas del social */}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {dates && dates.length > 0 ? (
           <>
@@ -335,25 +338,23 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                     }}
                     style={{
                       padding: '1.5rem',
-                      borderRadius: '18px',
-                      border: '2px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '16px',
+                      border: '2px solid rgba(255, 255, 255, 0.12)',
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      gap: '1.25rem',
+                      flexDirection: 'column',
+                      gap: '1rem',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       overflow: 'hidden',
-                      background: 'rgba(255, 255, 255, 0.06)',
+                      background: 'rgba(255, 255, 255, 0.05)',
                       backdropFilter: 'blur(10px)',
-                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.08), 0 2px 8px rgba(0, 0, 0, 0.1)'
                     }}
                     whileHover={{
-                      y: -6,
-                      scale: 1.03,
+                      y: -4,
                       borderColor: 'rgba(30, 136, 229, 0.4)',
-                      boxShadow: '0 8px 24px rgba(30, 136, 229, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)'
+                      boxShadow: '0 8px 24px rgba(30, 136, 229, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15)'
                     }}
                   >
                     {/* Efecto de brillo en hover */}
@@ -373,76 +374,146 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                       }}
                     />
 
-                    <div style={{ flex: 1, position: 'relative', zIndex: 2 }}>
-                      {/* Header con icono y nombre */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
+                    {/* FILA 1: Nombre y fecha principal */}
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      gap: '1rem',
+                      position: 'relative',
+                      zIndex: 2,
+                      paddingBottom: '1rem',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                         <motion.div
                           whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
                           transition={{ duration: 0.4 }}
                           style={{
-                            width: '44px',
-                            height: '44px',
+                            width: '48px',
+                            height: '48px',
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '1.2rem',
+                            fontSize: '1.4rem',
                             background: 'rgba(30, 136, 229, 0.15)',
                             border: '2px solid rgba(30, 136, 229, 0.3)',
-                            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)'
+                            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
+                            flexShrink: 0
                           }}
                         >
                           📅
                         </motion.div>
-                        <div style={{
-                          fontSize: '1.1rem',
-                          fontWeight: '800',
-                          color: colors.light,
-                          lineHeight: 1.3,
-                          letterSpacing: '-0.01em'
-                        }}>
-                          {date.nombre || 'Fecha sin nombre'}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: '1.2rem',
+                            fontWeight: '800',
+                            color: colors.light,
+                            lineHeight: 1.3,
+                            letterSpacing: '-0.01em',
+                            marginBottom: '0.25rem'
+                          }}>
+                            {date.nombre || 'Fecha sin nombre'}
+                          </div>
+                          {/* Fecha en chip compacto */}
+                          <div style={{
+                            fontSize: '0.875rem',
+                            color: colors.blue,
+                            fontWeight: '700',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '0.4rem 0.75rem',
+                            background: 'rgba(30, 136, 229, 0.15)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(30, 136, 229, 0.25)',
+                            width: 'fit-content'
+                          }}>
+                            <span>📅</span>
+                            <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}</span>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Información agrupada de la fecha */}
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem',
-                        marginBottom: '1rem'
+                      
+                      {/* Botones de acción en la primera fila */}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '0.5rem',
+                        flexShrink: 0
                       }}>
-                        {/* Fecha */}
-                        <div style={{
-                          fontSize: '0.95rem',
-                          color: colors.blue,
-                          fontWeight: '700',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '0.65rem 1rem',
-                          background: 'rgba(30, 136, 229, 0.15)',
-                          borderRadius: '12px',
-                          border: '2px solid rgba(30, 136, 229, 0.25)',
-                          width: 'fit-content',
-                          boxShadow: '0 2px 8px rgba(30, 136, 229, 0.2)'
-                        }}>
-                          <span style={{ fontSize: '1.1rem' }}>📅</span>
-                          <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}</span>
-                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.08, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/social/fecha/${date.id}/edit`);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          <span>✏️</span>
+                          <span>Editar</span>
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.08, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // TODO: Implementar eliminación de fecha
+                            console.log('Eliminar fecha:', date.id);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          <span>🗑️</span>
+                          <span>Eliminar</span>
+                        </motion.button>
+                      </div>
+                    </div>
 
-                        {/* Hora y lugar en fila */}
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.75rem',
-                          alignItems: 'center'
-                        }}>
+                    {/* FILA 2: Detalles de la fecha */}
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      alignItems: 'center',
+                      position: 'relative',
+                      zIndex: 2
+                    }}>
                           {date.hora_inicio && date.hora_fin && (
                             <div style={{
                               fontSize: '0.875rem',
@@ -495,92 +566,6 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                               <span>{date.ciudad}</span>
                             </div>
                           )}
-                        </div>
-                      </div>
-
-                      {/* CTA mejorado */}
-                      <motion.div
-                        whileHover={{ scale: 1.05, x: 4 }}
-                        style={{
-                          fontSize: '0.875rem',
-                          color: colors.blue,
-                          fontWeight: '700',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '0.6rem 1rem',
-                          background: 'rgba(30, 136, 229, 0.15)',
-                          borderRadius: '10px',
-                          border: '2px solid rgba(30, 136, 229, 0.25)',
-                          width: 'fit-content',
-                          transition: 'all 0.2s ease',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(30, 136, 229, 0.2)'
-                        }}
-                      >
-                        <span>👁️</span>
-                        <span>Ver detalles</span>
-                        <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>→</span>
-                      </motion.div>
-                    </div>
-
-                    {/* Botones de acción */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 2 }}>
-                      <motion.button
-                        whileHover={{ scale: 1.08, y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/social/fecha/${date.id}/edit`);
-                        }}
-                        style={{
-                          padding: '0.65rem 1rem',
-                          background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '12px',
-                          fontSize: '0.8rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <span>✏️</span>
-                        <span>Editar</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.08, y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: Implementar eliminación de fecha
-                          console.log('Eliminar fecha:', date.id);
-                        }}
-                        style={{
-                          padding: '0.65rem 1rem',
-                          background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '12px',
-                          fontSize: '0.8rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <span>🗑️</span>
-                        <span>Eliminar</span>
-                      </motion.button>
                     </div>
                   </motion.div>
                 );
@@ -1237,12 +1222,6 @@ export default function OrganizerProfileEditor() {
             gap: 1.25rem !important;
           }
           
-          /* En mobile, las cards de social deben ser de una sola columna */
-          .org-events-grid > div > div {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          
           .org-create-button {
             bottom: 20px !important;
             left: 50% !important;
@@ -1308,12 +1287,6 @@ export default function OrganizerProfileEditor() {
           
           .org-events-grid {
             gap: 1rem !important;
-          }
-          
-          /* En mobile pequeño, las cards de social deben ser de una sola columna */
-          .org-events-grid > div > div {
-            grid-template-columns: 1fr !important;
-            gap: 0.75rem !important;
           }
           
           .org-create-button {
