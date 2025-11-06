@@ -63,11 +63,8 @@ export function useCreateRoleRequest() {
       const { error } = await supabase.from('role_requests').insert({
         user_id: user!.id,
         ...payload,
-        // Compat: algunos esquemas usan columna "role" en vez de "role_slug"
-        role: (payload as any).role_slug,
-        // Esquema actual usa estados en español
-        status: 'pendiente',
-      } as any);
+        status: 'pending',
+      });
       if (error) throw error;
     },
     onSuccess: () => {
