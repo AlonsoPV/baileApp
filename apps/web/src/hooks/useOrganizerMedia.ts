@@ -3,13 +3,13 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useMyOrganizer } from "./useOrganizer";
 
-const BUCKET = "org-media";
+const BUCKET = "media"; // ✅ Bucket unificado
 
-// Helper to upload to org-media bucket
+// Helper to upload to media bucket (organizer media)
 async function uploadOrgFile(orgId: number, file: File): Promise<MediaItem> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = file.type.startsWith("image/") ? "image" : "video";
-  const path = `${orgId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const path = `media/organizer-media/${orgId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   console.log('[OrgStorage] Uploading file:', { orgId, fileName: file.name, type, path });
 
