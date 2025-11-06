@@ -1925,6 +1925,11 @@ export default function OrganizerProfileEditor() {
                       onChangeCostos={(costos) => setDateForm({ ...dateForm, costos })}
                       ritmos={ritmoTags}
                       zonas={zonaTags}
+                      eventFecha={dateForm.fecha}
+                      onSaveCosto={(index) => {
+                        console.log('💾 Guardando costo individual:', dateForm.costos[index]);
+                        showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
+                      }}
                     />
                   </div>
 

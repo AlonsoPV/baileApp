@@ -59,8 +59,10 @@ type Props = {
   selectedRitmoId?: number | null;
   selectedZonaId?: number | null;
   ubicacion?: string;
+  eventFecha?: string; // ✅ Fecha del evento para heredar
 
   onMetaChange?: (meta: MetaState) => void;
+  onSaveCosto?: (index: number) => void; // ✅ Callback para guardar costo individual
 
   labelSchedule?: string;
   labelCostos?: string;
@@ -120,7 +122,9 @@ export default function ScheduleEditorPlus({
   selectedRitmoId = null,
   selectedZonaId = null,
   ubicacion = '',
+  eventFecha = '',
   onMetaChange,
+  onSaveCosto,
   labelSchedule = "Cronograma",
   labelCostos = "Costos y Promociones",
   style,
@@ -147,11 +151,18 @@ export default function ScheduleEditorPlus({
     zonaId: selectedZonaId ?? null,
     inicio: '',
     fin: '',
-    fecha: '',
+    fecha: eventFecha || '', // ✅ Usar fecha del evento
     ubicacion: ubicacion ?? '',
     nivel: '',
     referenciaCosto: ''
   });
+  
+  // Actualizar fecha cuando cambie eventFecha
+  React.useEffect(() => {
+    if (eventFecha) {
+      setNewItem(prev => ({ ...prev, fecha: eventFecha }));
+    }
+  }, [eventFecha]);
 
   const addItem = () => {
     const hasTitulo = (newItem.titulo && newItem.titulo.trim()) || newItem.ritmoId;
@@ -644,10 +655,16 @@ export default function ScheduleEditorPlus({
               </div>
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
+                {onSaveCosto && (
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={()=> onSaveCosto(idx)}
+                    style={{ ...input, width: 'auto', background: colors.blue, border: 'none', cursor: 'pointer', padding: '8px 16px' }}
+                  >💾 Guardar</motion.button>
+                )}
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={()=> removeCosto(idx)}
                   style={{ ...input, width: 'auto', background: colors.coral, border: 'none', cursor: 'pointer' }}
-                >Eliminar</motion.button>
+                >🗑️ Eliminar</motion.button>
               </div>
             </div>
           ))}
