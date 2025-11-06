@@ -132,6 +132,7 @@ export default function ScheduleEditorPlus({
 }: Props) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isAddingCosto, setIsAddingCosto] = useState(false); // ✅ Estado para colapsar costos
   const [meta, setMeta] = useState<MetaState>({
     ritmoId: selectedRitmoId ?? null,
     zonaId: selectedZonaId ?? null,
@@ -209,17 +210,24 @@ export default function ScheduleEditorPlus({
   const finishEdit = () => setEditingIndex(null);
 
   // ====== Costos ======
+  const [newCosto, setNewCosto] = useState<CostoItem>({
+    nombre: '',
+    tipo: 'Otro',
+    precio: null,
+    regla: ''
+  });
+
   const setCosto = (idx: number, patch: Partial<CostoItem>) => {
     const next = [...costos];
     next[idx] = { ...next[idx], ...patch };
     onChangeCostos(next);
   };
 
-  const addCosto = () => {
-    onChangeCostos([
-      ...costos,
-      { nombre: '', tipo: 'Otro', precio: null, regla: '' }
-    ]);
+  const addCostoToList = () => {
+    if (!newCosto.nombre?.trim()) return;
+    onChangeCostos([...costos, newCosto]);
+    setNewCosto({ nombre: '', tipo: 'Otro', precio: null, regla: '' });
+    setIsAddingCosto(false);
   };
 
   const removeCosto = (idx: number) => {
@@ -629,7 +637,7 @@ export default function ScheduleEditorPlus({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <label style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.light }}>{labelCostos}</label>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            onClick={addCosto}
+            onClick={() => setIsAddingCosto(true)}
             style={{
               padding: '8px 16px', borderRadius: 20, border: 'none',
               background: `linear-gradient(135deg, ${colors.yellow}, ${colors.orange})`,
@@ -637,6 +645,98 @@ export default function ScheduleEditorPlus({
             }}
           >+ Añadir costo</motion.button>
         </div>
+
+        {/* Formulario colapsable para agregar nuevo costo */}
+        {isAddingCosto && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ ...card, marginBottom: 12 }}
+          >
+            <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
+                  <input
+                    style={input}
+                    placeholder="Ej. Clase suelta / Paquete 4 clases"
+                    value={newCosto.nombre || ''}
+                    onChange={(e)=> setNewCosto({ ...newCosto, nombre: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
+                  <div style={pillWrap}>
+                    {tiposCosto.map(t => (
+                      <div
+                        key={t}
+                        style={pill(newCosto.tipo === t)}
+                        onClick={()=> setNewCosto({ ...newCosto, tipo: t })}
+                      >{t}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
+                  <input
+                    type="number" min={0} step="1" placeholder="Ej. 200"
+                    value={newCosto.precio ?? ''}
+                    onChange={(e)=> setNewCosto({ ...newCosto, precio: e.target.value === '' ? null : Number(e.target.value) })}
+                    style={input}
+                  />
+                </div>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
+                  <input
+                    style={input}
+                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                    value={newCosto.regla || ''}
+                    onChange={(e)=> setNewCosto({ ...newCosto, regla: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={addCostoToList}
+                  disabled={!newCosto.nombre?.trim()}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: newCosto.nombre?.trim()
+                      ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
+                      : `${colors.light}33`,
+                    color: colors.light,
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: newCosto.nombre?.trim() ? 'pointer' : 'not-allowed'
+                  }}
+                >✅ Agregar Costo</motion.button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setIsAddingCosto(false);
+                    setNewCosto({ nombre: '', tipo: 'Otro', precio: null, regla: '' });
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.light}33`,
+                    background: 'transparent',
+                    color: colors.light,
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >❌ Cancelar</motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <div style={{ display: 'grid', gap: 12 }}>
           {costos.map((c, idx)=> (
