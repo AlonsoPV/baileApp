@@ -11,7 +11,7 @@ export function useMyRoles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('id,user_id,role_slug,granted_at')
+        .select('id,user_id,role_slug,created_at')
         .eq('user_id', user!.id);
       if (error) throw error;
       return data || [];

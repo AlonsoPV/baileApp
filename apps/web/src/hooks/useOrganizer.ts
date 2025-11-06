@@ -94,12 +94,6 @@ export function useUpsertMyOrganizer() {
           next: next.media,
           changed: JSON.stringify(prev.media) !== JSON.stringify(next.media)
         });
-        console.log("  📍 ubicaciones:", {
-          prev: (prev as any).ubicaciones,
-          next: (next as any).ubicaciones,
-          changed: JSON.stringify((prev as any).ubicaciones) !== JSON.stringify((next as any).ubicaciones)
-        });
-        
         console.log("🔧 [useOrganizer] Creando patch...");
         console.log("  🎵 ritmos_seleccionados:", {
           prev: (prev as any).ritmos_seleccionados,
@@ -107,7 +101,7 @@ export function useUpsertMyOrganizer() {
           changed: JSON.stringify((prev as any).ritmos_seleccionados) !== JSON.stringify((next as any).ritmos_seleccionados)
         });
         const patch = buildSafePatch(prev, candidate, { 
-          allowEmptyArrays: ["ritmos", "zonas", "estilos", "ritmos_seleccionados", "ubicaciones"] as any 
+          allowEmptyArrays: ["ritmos", "zonas", "estilos", "ritmos_seleccionados"] as any 
         });
         
         console.log("📦 [useOrganizer] Patch creado:", patch);

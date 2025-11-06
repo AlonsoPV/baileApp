@@ -2,7 +2,7 @@ export type RoleSlug = 'usuario' | 'organizador' | 'academia' | 'maestro' | 'mar
 export type RoleRequestStatus = 'pending' | 'approved' | 'rejected' | 'needs_review';
 
 export type Role = { id: string; slug: RoleSlug; name: string };
-export type UserRole = { id: string; user_id: string; role_slug: RoleSlug; granted_at: string };
+export type UserRole = { id: string; user_id: string; role_slug: RoleSlug; created_at: string };
 
 export type RoleRequest = {
   id: string;
