@@ -12,7 +12,7 @@ export const FooterNav: React.FC = () => {
       id: 'explore',
       icon: '🔍',
       label: 'Explorar',
-      path: '/app/explore',
+      path: '/explore',
       requiresAuth: false
     },
     {
@@ -33,7 +33,7 @@ export const FooterNav: React.FC = () => {
       id: 'profile',
       icon: '👤',
       label: 'Perfil',
-      path: '/profile',
+      path: '/app/profile',
       requiresAuth: true
     }
   ];
