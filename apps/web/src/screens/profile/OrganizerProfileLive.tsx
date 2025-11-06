@@ -19,6 +19,7 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { BioSection } from "../../components/profile/BioSection";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1029,53 +1030,17 @@ export function OrganizerProfileLive() {
           margin: '0 auto',
           width: '100%'
         }}>
-          {/* Biografía */}
-          {org.bio && (
-            <motion.section
-              id="organizer-bio"
-              data-test-id="organizer-bio"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[6],
-                borderRadius: borderRadius['2xl']
-              }}
-            >
-              <h3 className="section-title">💬 Sobre nosotros</h3>
-              <p style={{
-                lineHeight: typography.lineHeight.relaxed,
-                opacity: 0.9,
-                fontSize: typography.fontSize.lg,
-                color: colors.light
-              }}>
-                {org.bio}
-              </p>
-            </motion.section>
-          )}
-
-          {/* Redes Sociales */}
-          <div
-            id="organizer-social-media"
-            data-test-id="organizer-social-media"
+          {/* Biografía y Redes Sociales */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <SocialMediaSection
-              respuestas={(org as any)?.respuestas}
-              redes_sociales={(org as any)?.redes_sociales}
-              title="Redes Sociales"
-              availablePlatforms={['instagram', 'facebook', 'whatsapp']}
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                textAlign: 'center',
-                background: colors.gradients.glass,
-                borderRadius: borderRadius['2xl'],
-                border: `1px solid ${colors.glass.medium}`,
-                boxShadow: colors.shadows.glass
-              }}
+            <BioSection 
+              bio={org.bio}
+              redes={(org as any)?.redes_sociales || (org as any)?.respuestas?.redes}
             />
-          </div>
+          </motion.div>
 
           {/* Maestros Invitados */}
           <div

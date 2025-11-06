@@ -19,6 +19,7 @@ import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hook
 import { fmtDate, fmtTime } from "../../utils/format";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { BioSection } from "../../components/profile/BioSection";
 
 const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
@@ -370,24 +371,17 @@ export function OrganizerPublicScreen() {
 
         {/* Contenido Principal */}
         <div className="org-container" style={{ padding: spacing[8], position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-          {/* Bio */}
-          {(org as any)?.bio && (
-            <motion.section id="organizer-bio" data-test-id="organizer-bio" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-              <h3 className="section-title">💬 Sobre nosotros</h3>
-              <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.lg, color: colors.light }}>{(org as any).bio}</p>
-            </motion.section>
-          )}
-
-          {/* Redes Sociales */}
-          <div id="organizer-social-media" data-test-id="organizer-social-media">
-            <SocialMediaSection
-              respuestas={(org as any)?.respuestas}
-              redes_sociales={(org as any)?.redes_sociales}
-              title="Redes Sociales"
-              availablePlatforms={['instagram', 'facebook', 'whatsapp']}
-              style={{ marginBottom: spacing[8], padding: spacing[8], textAlign: 'center', background: colors.gradients.glass, borderRadius: borderRadius['2xl'], border: `1px solid ${colors.glass.medium}`, boxShadow: colors.shadows.glass }}
+          {/* Biografía y Redes Sociales */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <BioSection 
+              bio={(org as any)?.bio}
+              redes={(org as any)?.redes_sociales || (org as any)?.respuestas?.redes}
             />
-          </div>
+          </motion.div>
 
           {/* Maestros Invitados */}
           <div id="organizer-invited-masters" data-test-id="organizer-invited-masters">
