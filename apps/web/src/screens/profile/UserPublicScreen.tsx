@@ -847,13 +847,14 @@ export const UserProfileLive: React.FC = () => {
               <div>
               <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
                 <div style={{
-                  padding: '1rem',
+                  padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
                   borderRadius: '12px',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1rem',
-                  lineHeight: '1.6',
-                  color: colors.light
+                  fontSize: '1.05rem',
+                  lineHeight: '1.7',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontWeight: '400'
                 }}>
                   {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
                 </div>
@@ -873,13 +874,14 @@ export const UserProfileLive: React.FC = () => {
               <div>
               <h3 className="section-title">💃 ¿Qué es lo que más te gusta bailar?</h3>
                 <div style={{
-                  padding: '1rem',
+                  padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
                   borderRadius: '12px',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1rem',
-                  lineHeight: '1.6',
-                  color: colors.light
+                  fontSize: '1.05rem',
+                  lineHeight: '1.7',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontWeight: '400'
                 }}>
                   {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
                 </div>

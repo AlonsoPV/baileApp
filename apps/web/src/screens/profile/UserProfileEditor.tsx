@@ -381,13 +381,14 @@ export default function UserProfileEditor() {
           />
         </div>
 
-        {/* Información Personal */}
+        {/* Información Personal y Redes Sociales */}
         <div className="editor-section glass-card-container">
           <h2 className="editor-section-title">
-            👤 Información Personal
+            👤 Información Personal y Redes Sociales
           </h2>
           
-          <div className="editor-grid">
+          {/* Información Básica */}
+          <div className="editor-grid" style={{ marginBottom: '2rem' }}>
             <div>
               <label className="editor-field">
                 Nombre de Usuario
@@ -414,53 +415,19 @@ export default function UserProfileEditor() {
               />
             </div>
           </div>
-        </div>
 
-        {/* Ritmos y Zonas */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
-            🎵 Ritmos y Zonas
-          </h2>
-          
-          <div className="editor-grid">
-            <div>
-              <h3 className="editor-subsection-title">
-                🎶 Ritmos que Bailas
-              </h3>
-              <div style={{ textAlign: 'left' }}>
-                <RitmosSelectorEditor
-                  selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
-                  ritmoTags={ritmoTags}
-                  setField={setField as any}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="editor-subsection-title">
-                📍 Zonas donde Bailas
-              </h3>
-              <div className="editor-chips">
-                {zonaTags.map((tag) => (
-                  <Chip
-                    key={tag.id}
-                    label={tag.nombre}
-                    active={form.zonas.includes(tag.id)}
-                    onClick={() => toggleZona(tag.id)}
-                    variant="zona"
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+          {/* Divisor */}
+          <div style={{
+            width: '100%',
+            height: '1px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            margin: '2rem 0'
+          }} />
 
-        {/* Redes Sociales */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
+          {/* Redes Sociales */}
+          <h3 className="editor-subsection-title" style={{ marginBottom: '1rem' }}>
             📱 Redes Sociales
-          </h2>
-          
+          </h3>
           <div className="editor-grid-small">
             <div>
               <label className="editor-field">
@@ -525,6 +492,45 @@ export default function UserProfileEditor() {
                 placeholder="Número de teléfono"
                 className="editor-input"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Ritmos y Zonas */}
+        <div className="editor-section glass-card-container">
+          <h2 className="editor-section-title">
+            🎵 Ritmos y Zonas
+          </h2>
+          
+          <div className="editor-grid">
+            <div>
+              <h3 className="editor-subsection-title">
+                🎶 Ritmos que Bailas
+              </h3>
+              <div style={{ textAlign: 'left' }}>
+                <RitmosSelectorEditor
+                  selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
+                  ritmoTags={ritmoTags}
+                  setField={setField as any}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="editor-subsection-title">
+                📍 Zonas donde Bailas
+              </h3>
+              <div className="editor-chips">
+                {zonaTags.map((tag) => (
+                  <Chip
+                    key={tag.id}
+                    label={tag.nombre}
+                    active={form.zonas.includes(tag.id)}
+                    onClick={() => toggleZona(tag.id)}
+                    variant="zona"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

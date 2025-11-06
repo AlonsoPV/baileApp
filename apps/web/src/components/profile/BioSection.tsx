@@ -201,19 +201,20 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
       {bio ? (
         <p style={{
           margin: 0,
-          fontSize: '0.95rem',
-          lineHeight: '1.6',
-          color: 'rgba(255, 255, 255, 0.9)',
+          fontSize: '1.05rem',
+          lineHeight: '1.7',
+          color: 'rgba(255, 255, 255, 0.95)',
           whiteSpace: 'pre-wrap',
-          wordWrap: 'break-word'
+          wordWrap: 'break-word',
+          fontWeight: '400'
         }}>
           {bio}
         </p>
       ) : (
         <p style={{
           margin: 0,
-          fontSize: '0.9rem',
-          color: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '0.95rem',
+          color: 'rgba(255, 255, 255, 0.6)',
           fontStyle: 'italic',
           textAlign: 'center',
           padding: '1rem'
