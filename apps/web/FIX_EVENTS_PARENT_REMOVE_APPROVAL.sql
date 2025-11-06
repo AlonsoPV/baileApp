@@ -139,10 +139,7 @@ BEGIN
     ) THEN
         CREATE POLICY events_parent_update_policy ON public.events_parent
             FOR UPDATE USING (
-                organizer_id IN (
-                    SELECT id FROM public.profiles_organizer 
-                    WHERE user_id = auth.uid()
-                )
+                organizer_id = auth.uid()
             );
         RAISE NOTICE 'Política de UPDATE creada para events_parent.';
     END IF;
@@ -155,10 +152,7 @@ BEGIN
     ) THEN
         CREATE POLICY events_parent_delete_policy ON public.events_parent
             FOR DELETE USING (
-                organizer_id IN (
-                    SELECT id FROM public.profiles_organizer 
-                    WHERE user_id = auth.uid()
-                )
+                organizer_id = auth.uid()
             );
         RAISE NOTICE 'Política de DELETE creada para events_parent.';
     END IF;
@@ -183,7 +177,7 @@ SELECT
     po.bio as organizer_bio,
     po.media as organizer_media
 FROM public.events_parent ep
-JOIN public.profiles_organizer po ON ep.organizer_id = po.id;
+JOIN public.profiles_organizer po ON ep.organizer_id = po.user_id;
 
 CREATE OR REPLACE VIEW public.v_events_dates_public AS
 SELECT 
@@ -198,23 +192,26 @@ SELECT
     ed.direccion,
     ed.ciudad,
     ed.zona,
-    ed.zonas,
     ed.referencias,
     ed.requisitos,
     ed.cronograma,
     ed.costos,
     ed.estilos,
+    ed.ritmos_seleccionados,
     ed.media,
-    ed.estado_publicacion,
+    ed.flyer_url,
+    ed.rsvp_interesado_count,
     ed.created_at,
     ed.updated_at,
     ep.nombre as parent_nombre,
     ep.descripcion as parent_descripcion,
     ep.organizer_id,
-    po.nombre_publico as organizer_name
+    ep.zonas as parent_zonas,
+    po.nombre_publico as organizer_name,
+    po.bio as organizer_bio
 FROM public.events_date ed
 JOIN public.events_parent ep ON ed.parent_id = ep.id
-JOIN public.profiles_organizer po ON ep.organizer_id = po.id;
+JOIN public.profiles_organizer po ON ep.organizer_id = po.user_id;
 
 -- 9. Verificar la estructura final
 SELECT 

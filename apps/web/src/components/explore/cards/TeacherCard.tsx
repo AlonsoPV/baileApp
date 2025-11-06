@@ -72,26 +72,24 @@ export default function TeacherCard({ item }: { item: any }) {
         )}
         {/* Contenido principal: nombre/bio arriba de las chips */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
-            <div style={{
-              fontSize: '1.05rem',
-              fontWeight: 800,
-              lineHeight: 1.3,
-              color: '#fff',
-              filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))',
-              marginBottom: 2,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: 'inline-block',
-              background: 'rgba(0,0,0,0.45)',
-              border: '1px solid rgba(255,255,255,0.32)',
-              padding: '6px 10px',
-              borderRadius: 10
-            }}>
-              {item.nombre_publico || 'Maestr@'}
-            </div>
-          </LiveLink>
+          <div style={{
+            fontSize: '1.05rem',
+            fontWeight: 800,
+            lineHeight: 1.3,
+            color: '#fff',
+            filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))',
+            marginBottom: 2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'inline-block',
+            background: 'rgba(0,0,0,0.45)',
+            border: '1px solid rgba(255,255,255,0.32)',
+            padding: '6px 10px',
+            borderRadius: 10
+          }}>
+            {item.nombre_publico || 'Maestr@'}
+          </div>
           {item.bio && (
             <div style={{
               fontSize: 12,

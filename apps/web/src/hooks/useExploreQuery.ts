@@ -15,13 +15,14 @@ function baseSelect(type: ExploreType) {
   switch (type) {
     case "fechas":
       // Mismo que eventos pero específicamente para fechas
+      // NOTA: No podemos hacer join directo events_parent->profiles_organizer
+      // porque la FK es events_parent.organizer_id -> auth.users.id, no -> profiles_organizer
       return { 
         table: "events_date", 
         select: `
           id,
           parent_id,
           nombre,
-          biografia,
           fecha,
           hora_inicio,
           hora_fin,
@@ -29,35 +30,21 @@ function baseSelect(type: ExploreType) {
           direccion,
           ciudad,
           zona,
-          referencias,
-          requisitos,
           estilos,
           ritmos_seleccionados,
-          cronograma,
-          costos,
           media,
           flyer_url,
           created_at,
           updated_at,
-          events_parent!inner(
+          events_parent(
             id,
             nombre,
             descripcion,
-            biografia,
             estilos,
             ritmos_seleccionados,
             zonas,
-            sede_general,
-            faq,
             media,
-            organizer_id,
-            profiles_organizer!inner(
-              id,
-              nombre_publico,
-              bio,
-              media,
-              estado_aprobacion
-            )
+            organizer_id
           )
         `
       };
@@ -121,8 +108,8 @@ async function fetchPage(params: QueryParams, page: number) {
     // TEMPORARY: Comment out future events filter to debug
     // query = query.gte("fecha", today);
     
-    // Filtrar por organizadores aprobados
-    query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
+    // Filtrar por organizadores aprobados (removido por ahora - el !inner falla si no hay relación)
+    // query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
     
     if (dateFrom) query = query.gte("fecha", dateFrom);
     if (dateTo)   query = query.lte("fecha", dateTo);

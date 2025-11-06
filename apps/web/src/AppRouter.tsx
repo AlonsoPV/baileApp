@@ -171,7 +171,7 @@ export default function AppRouter() {
         </Route>
 
         {/* Default and 404 */}
-        <Route path="/" element={<Navigate to="/explore" replace />} />
+        <Route path="/" element={<AuthCallback />} /> {/* Cambio temporal: manejar callback en raíz también */}
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

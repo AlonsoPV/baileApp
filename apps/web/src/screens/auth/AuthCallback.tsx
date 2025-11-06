@@ -13,30 +13,65 @@ export default function AuthCallback() {
       try {
         // Forzar lectura/establecimiento de sesión desde la URL (hash/callback)
         const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        if (error) {
+          console.error('[AuthCallback] Error getting session:', error);
+          throw error;
+        }
+        
         const user = data.session?.user;
+        console.log('[AuthCallback] Session user:', user?.email);
+        
         if (user) {
-          // Consultar vista ligera para saber si tiene PIN
-          const { data: light, error: e2 } = await supabase
-            .from('profiles_user_light')
-            .select('has_pin')
+          // Verificar si el usuario tiene perfil y onboarding completo
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles_user')
+            .select('user_id, onboarding_complete, pin_hash')
             .eq('user_id', user.id)
             .maybeSingle();
-          if (e2) throw e2;
-          // Marcar que esta sesión requiere verificación de PIN
-          setNeedsPinVerify(user.id);
-          // Redirigir según tenga/nó PIN configurado
-          if (!light?.has_pin) {
-            navigate('/auth/pin/setup', { replace: true });
-          } else {
-            // Ir directo a la pantalla de PIN (no protegida) para evitar rebote si aún no hidrata el user
-            navigate('/auth/pin', { replace: true });
+          
+          if (profileError) {
+            console.error('[AuthCallback] Error fetching profile:', profileError);
+            // Si el perfil no existe, crear uno básico
+            const { error: insertError } = await supabase
+              .from('profiles_user')
+              .insert({
+                user_id: user.id,
+                email: user.email,
+                display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+                onboarding_complete: false
+              });
+            
+            if (insertError) {
+              console.error('[AuthCallback] Error creating profile:', insertError);
+            }
+            
+            // Redirigir a onboarding
+            navigate('/onboarding/basics', { replace: true });
+            return;
           }
+          
+          // Marcar que esta sesión requiere verificación de PIN (si tiene PIN configurado)
+          if (profile?.pin_hash) {
+            setNeedsPinVerify(user.id);
+            navigate('/auth/pin', { replace: true });
+            return;
+          }
+          
+          // Si no tiene onboarding completo, ir a onboarding
+          if (!profile?.onboarding_complete) {
+            navigate('/onboarding/basics', { replace: true });
+            return;
+          }
+          
+          // Si todo está OK, ir a explore
+          navigate('/app/explore', { replace: true });
           return;
         }
+        
         setMessage('No se pudo recuperar la sesión. Redirigiendo a login…');
         setTimeout(() => navigate('/auth/login', { replace: true }), 800);
       } catch (e: any) {
+        console.error('[AuthCallback] Error:', e);
         if (!cancelled) {
           setMessage('Error procesando el acceso. Redirigiendo a login…');
           setTimeout(() => navigate('/auth/login', { replace: true }), 800);

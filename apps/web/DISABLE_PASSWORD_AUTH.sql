@@ -1,41 +1,49 @@
--- Script para deshabilitar autenticación por contraseña
--- y habilitar solo Magic Link (email sin contraseña)
+-- ========================================
+-- CONFIGURACIÓN DE MAGIC LINK
+-- ========================================
+-- 
+-- ⚠️ IMPORTANTE: La configuración de autenticación ya NO se hace por SQL.
+-- auth.config ya no existe en versiones recientes de Supabase.
+--
+-- 📋 INSTRUCCIONES PARA HABILITAR MAGIC LINK:
+--
+-- 1. Ve a Supabase Dashboard
+-- 2. Authentication > Providers > Email
+-- 3. Configurar:
+--    ✅ Enable Email provider
+--    ✅ Confirm email
+--    ✅ Enable Magic Link (también llamado "Email OTP")
+--    
+-- 4. Opcional - Si solo quieres Magic Link (sin contraseñas):
+--    Authentication > Providers > Email
+--    ❌ Disable "Enable Email & Password"
+--    ✅ Solo dejar habilitado "Enable Magic Link"
+--
+-- 5. Configurar Email Templates (opcional):
+--    Authentication > Email Templates
+--    - Personalizar plantilla de "Magic Link"
+--
+-- ========================================
 
--- 1. Verificar configuración actual de autenticación
+-- Verificar usuarios que pueden usar Magic Link
 SELECT 
-  'Configuración actual' as info,
-  key,
-  value
-FROM auth.config 
-WHERE key IN ('DISABLE_SIGNUP', 'ENABLE_SIGNUP', 'ENABLE_EMAIL_CONFIRMATIONS', 'ENABLE_EMAIL_AUTOCONFIRM');
+  'Usuarios con email (listos para Magic Link)' as info,
+  COUNT(*) as total_usuarios_con_email,
+  COUNT(CASE WHEN email_confirmed_at IS NOT NULL THEN 1 END) as emails_confirmados,
+  COUNT(CASE WHEN encrypted_password IS NULL THEN 1 END) as usuarios_solo_magic_link
+FROM auth.users
+WHERE email IS NOT NULL;
 
--- 2. Habilitar Magic Link (email sin contraseña)
--- Esto permite que los usuarios se registren e inicien sesión solo con email
-UPDATE auth.config 
-SET value = 'false'
-WHERE key = 'DISABLE_SIGNUP';
-
-UPDATE auth.config 
-SET value = 'true'
-WHERE key = 'ENABLE_SIGNUP';
-
-UPDATE auth.config 
-SET value = 'true'
-WHERE key = 'ENABLE_EMAIL_CONFIRMATIONS';
-
-UPDATE auth.config 
-SET value = 'true'
-WHERE key = 'ENABLE_EMAIL_AUTOCONFIRM';
-
--- 3. Verificar la nueva configuración
+-- Mostrar últimos usuarios
 SELECT 
-  'Nueva configuración' as info,
-  key,
-  value
-FROM auth.config 
-WHERE key IN ('DISABLE_SIGNUP', 'ENABLE_SIGNUP', 'ENABLE_EMAIL_CONFIRMATIONS', 'ENABLE_EMAIL_AUTOCONFIRM');
-
--- 4. Opcional: Limpiar contraseñas existentes (solo si quieres forzar magic link)
--- UPDATE auth.users 
--- SET encrypted_password = NULL
--- WHERE email IS NOT NULL;
+  'Últimos 10 usuarios' as info,
+  id,
+  email,
+  email_confirmed_at,
+  CASE WHEN encrypted_password IS NULL THEN 'Solo Magic Link' ELSE 'Con contraseña' END as tipo_auth,
+  created_at,
+  last_sign_in_at
+FROM auth.users 
+WHERE email IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 10;

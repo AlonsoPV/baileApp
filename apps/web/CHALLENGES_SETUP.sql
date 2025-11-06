@@ -77,12 +77,19 @@ ALTER TABLE public.challenges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.challenge_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.challenge_votes ENABLE ROW LEVEL SECURITY;
 
--- Helpers (ajusta v_user_roles según tu esquema real)
--- CREATE OR REPLACE VIEW public.v_user_roles AS
--- SELECT u.id AS user_id, p.role_slug
--- FROM auth.users u
--- JOIN public.user_profiles p ON p.user_id = u.id;
+-- ========================================
+-- Helper: Vista para mapear user_id a role_slug
+-- ========================================
+DROP VIEW IF EXISTS public.v_user_roles CASCADE;
+CREATE OR REPLACE VIEW public.v_user_roles AS
+SELECT 
+  ur.user_id,
+  ur.role_slug
+FROM public.user_roles ur;
 
+-- ========================================
+-- Helper Functions
+-- ========================================
 CREATE OR REPLACE FUNCTION public.is_superadmin(uid uuid) RETURNS boolean AS $$
   SELECT EXISTS(
     SELECT 1 FROM public.v_user_roles r

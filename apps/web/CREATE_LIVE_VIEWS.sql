@@ -1,6 +1,11 @@
 -- Script para crear las vistas LIVE necesarias para la exploración
 -- Estas vistas muestran solo contenido público/aprobado
 
+-- Eliminar vistas existentes primero para evitar conflictos de columnas
+DROP VIEW IF EXISTS public.organizers_live CASCADE;
+DROP VIEW IF EXISTS public.events_live CASCADE;
+DROP VIEW IF EXISTS public.users_live CASCADE;
+
 -- 1. Vista para organizadores aprobados
 CREATE OR REPLACE VIEW public.organizers_live AS
 SELECT 
@@ -9,10 +14,12 @@ SELECT
     po.nombre_publico,
     po.bio,
     po.media,
-    po.estilos,
+    po.ritmos,
+    po.ritmos_seleccionados,
     po.zonas,
     po.redes_sociales,
     po.respuestas,
+    po.faq,
     po.created_at,
     po.updated_at,
     po.estado_aprobacion
@@ -56,11 +63,12 @@ SELECT
     po.nombre_publico as organizador_nombre,
     po.bio as organizador_bio,
     po.media as organizador_media,
-    po.estilos as organizador_estilos,
+    po.ritmos as organizador_ritmos,
+    po.ritmos_seleccionados as organizador_ritmos_seleccionados,
     po.zonas as organizador_zonas
 FROM public.events_date ed
 JOIN public.events_parent ep ON ed.parent_id = ep.id
-JOIN public.profiles_organizer po ON ep.organizer_id = po.id
+JOIN public.profiles_organizer po ON ep.organizer_id = po.user_id
 WHERE po.estado_aprobacion = 'aprobado'
   AND ed.fecha >= CURRENT_DATE; -- Solo eventos futuros
 

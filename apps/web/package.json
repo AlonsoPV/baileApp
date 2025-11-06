@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
     "build": "vite build",
+    "build:staging": "vite build --mode staging",
     "preview": "vite preview --port 4173",
+    "preview:staging": "vite preview --mode staging --port 4173",
     "lint": "eslint --ext .ts,.tsx src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:auth": "powershell -Command \"if (Select-String -Path 'src\\**\\*.ts','src\\**\\*.tsx' -Pattern 'useAuth\\(\\)' | Select-String -Pattern '(utils|stores|services)') { Write-Host '❌ useAuth usado fuera de componentes'; exit 1 } else { Write-Host '✅ useAuth sólo en componentes' }\""
