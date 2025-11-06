@@ -62,13 +62,11 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       style={{
         padding: 'clamp(1.5rem, 2.5vw, 2.5rem)',
         borderRadius: 'clamp(16px, 2.5vw, 28px)',
-        border: '2px solid rgba(255, 255, 255, 0.15)',
+        border: '2px solid rgba(255, 255, 255, 0.2)',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(255, 61, 87, 0.1)',
+        background: 'rgba(30, 30, 30, 0.6)',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -302,12 +300,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                 marginTop: '1rem',
                 padding: '1.5rem',
                 borderRadius: '20px',
-                border: '2px solid rgba(30, 136, 229, 0.25)',
-                background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.08) 0%, rgba(255, 61, 87, 0.05) 100%)',
+                border: '2px solid rgba(30, 136, 229, 0.3)',
+                background: 'rgba(15, 15, 15, 0.4)',
                 position: 'relative',
-                overflow: 'hidden',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 24px rgba(30, 136, 229, 0.15)'
+                overflow: 'hidden'
               }}
             >
               {/* Barra decorativa superior para fechas */}
@@ -339,7 +335,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                     style={{
                       padding: '1.5rem',
                       borderRadius: '16px',
-                      border: '2px solid rgba(255, 255, 255, 0.12)',
+                      border: '2px solid rgba(255, 255, 255, 0.15)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '1rem',
@@ -347,14 +343,12 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       overflow: 'hidden',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      backdropFilter: 'blur(10px)',
-                      boxShadow: '0 4px 16px rgba(30, 136, 229, 0.08), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                      background: 'rgba(20, 20, 20, 0.5)'
                     }}
                     whileHover={{
                       y: -4,
-                      borderColor: 'rgba(30, 136, 229, 0.4)',
-                      boxShadow: '0 8px 24px rgba(30, 136, 229, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15)'
+                      borderColor: 'rgba(30, 136, 229, 0.5)',
+                      background: 'rgba(30, 30, 30, 0.6)'
                     }}
                   >
                     {/* Efecto de brillo en hover */}
