@@ -5,19 +5,31 @@ import { FooterNav } from '../FooterNav';
 import AppBootstrap from '@/providers/AppBootstrap';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserMedia } from '@/hooks/useUserMedia';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 import { OffCanvasMenu } from '@ui/index';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
+import { getMediaBySlot } from '@/utils/mediaSlots';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
+  const { media } = useUserMedia();
   const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const { data: isSuperAdmin } = useIsAdmin();
 
   const defaultProfileInfo = getDefaultProfileInfo();
+
+  // Obtener avatar con la misma lógica que UserProfileLive (priorizar p1)
+  const avatarUrl = (() => {
+    const safeMedia = media || [];
+    const p1 = getMediaBySlot(safeMedia as any, 'p1');
+    if (p1?.url) return p1.url;
+    if (profile?.avatar_url) return profile.avatar_url;
+    return undefined;
+  })();
 
   const menuItems = [
     { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
@@ -67,7 +79,7 @@ export default function AppShell() {
             menuItems={menuItems}
             userName={user.email?.split('@')[0] || 'Usuario'}
             userEmail={user.email || ''}
-            userAvatar={profile?.avatar_url || undefined}
+            userAvatar={avatarUrl}
             displayName={profile?.display_name || undefined}
           />
         )}

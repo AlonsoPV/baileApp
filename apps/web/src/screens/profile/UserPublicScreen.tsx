@@ -271,13 +271,13 @@ export const UserProfileLive: React.FC = () => {
     return v;
   };
 
-  // Get avatar URL (prioritize avatar_url, then media slots)
+  // Get avatar URL (prioritize p1 media slot for consistency)
   const avatarUrl = (() => {
-    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) return toSupabasePublicUrl(p1.url);
+    if (p1?.url) return p1.url; // Ya viene como URL pública
+    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
     const avatar = getMediaBySlot(safeMedia as any, 'avatar');
-    if (avatar?.url) return toSupabasePublicUrl(avatar.url);
+    if (avatar?.url) return avatar.url;
     return undefined;
   })();
 
