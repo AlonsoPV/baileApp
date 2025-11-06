@@ -50,11 +50,17 @@ export default function AuthCallback() {
             return;
           }
           
-          // Marcar que esta sesión requiere verificación de PIN (si tiene PIN configurado)
+          // Verificar PIN solo si tiene PIN configurado Y no está verificado en esta sesión
           if (profile?.pin_hash) {
-            setNeedsPinVerify(user.id);
-            navigate('/auth/pin', { replace: true });
-            return;
+            const { isPinVerified } = await import('@/lib/pin');
+            const alreadyVerified = isPinVerified(user.id);
+            
+            if (!alreadyVerified) {
+              setNeedsPinVerify(user.id);
+              navigate('/auth/pin', { replace: true });
+              return;
+            }
+            // Si ya está verificado, continuar normalmente
           }
           
           // Si no tiene onboarding completo, ir a onboarding
