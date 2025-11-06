@@ -1,0 +1,12 @@
+# Agregar estas líneas a tu .gitignore para ambientes staging
+
+# Environment files (local overrides)
+.env.local
+.env.staging.local
+.env.production.local
+.env.*.local
+
+# Keep example files
+!.env.example
+!.env.staging.example
+
