@@ -16,7 +16,7 @@ export function useMyApprovedRoles() {
       // 1) role_requests aprobadas
       const { data: reqs, error: e1 } = await supabase
         .from("role_requests")
-        .select("role,status")
+        .select("role_slug,status")
         .eq("user_id", user!.id)
         .eq("status", "aprobado");
       
@@ -27,7 +27,7 @@ export function useMyApprovedRoles() {
 
       // 🔥 IMPORTANTE: "usuario" es un rol base que TODOS tienen
       const approved = new Set<RoleKey>(["usuario"]);
-      (reqs || []).forEach((r) => approved.add(r.role as RoleKey));
+      (reqs || []).forEach((r) => approved.add(r.role_slug as RoleKey));
       console.log('[useMyApprovedRoles] Approved roles (including usuario):', Array.from(approved));
 
       // 2) existencia de perfiles (para rutas/edición)

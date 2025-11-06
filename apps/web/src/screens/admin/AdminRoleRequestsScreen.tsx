@@ -179,7 +179,7 @@ export default function AdminRoleRequestsScreen() {
                   {filter === 'pendiente' && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
-                        onClick={() => handleApprove(r.id, true, r.role)}
+                        onClick={() => handleApprove(r.id, true, (r as any).role_slug || (r as any).role)}
                         disabled={approve.isPending}
                         style={{
                           padding: '0.5rem 1rem',
@@ -195,7 +195,7 @@ export default function AdminRoleRequestsScreen() {
                         ✅ Aprobar
                       </button>
                       <button
-                        onClick={() => handleApprove(r.id, false, r.role)}
+                        onClick={() => handleApprove(r.id, false, (r as any).role_slug || (r as any).role)}
                         disabled={approve.isPending}
                         style={{
                           padding: '0.5rem 1rem',
