@@ -114,18 +114,16 @@ ORDER BY table_name;
 -- 6️⃣ VERIFICAR políticas RLS
 -- ========================================
 
--- Ver todas las políticas relacionadas con roles
+-- Ver todas las políticas relacionadas con roles (simplificado)
 SELECT 
   tablename,
   policyname,
   cmd,
-  CASE 
-    WHEN qual IS NOT NULL THEN 'USING: ' || pg_get_expr(qual, (SELECT oid FROM pg_class WHERE relname = tablename AND relnamespace = 'public'::regnamespace))
-    ELSE 'Sin restricción'
-  END as using_clause
+  permissive,
+  roles
 FROM pg_policies
 WHERE schemaname = 'public'
-AND tablename IN ('user_roles', 'role_requests', 'admins')
+AND tablename IN ('user_roles', 'role_requests')
 ORDER BY tablename, policyname;
 
 -- ========================================
