@@ -40,13 +40,42 @@ export default function RequestRoleScreen() {
       const payload = { role_slug: role, full_name: fullName, email, phone, socials };
       console.log('[RequestRoleScreen] payload', { ...payload, status: 'pending' });
       await createReq.mutateAsync(payload);
-      setOkMsg('Solicitud enviada. Te avisaremos al ser revisada.');
+      setOkMsg('Solicitud enviada exitosamente. Te notificaremos cuando sea revisada.');
       setFullName(''); setEmail(user?.email ?? ''); setPhone('');
-      setTimeout(() => navigate('/app/profile'), 1000);
+      setSocials({ instagram: '', tiktok: '', youtube: '', facebook: '', whatsapp: '' });
+      // NO redirigir, quedarse en la pantalla para ver el estado
     } catch (e: any) {
       console.error('[RequestRoleScreen] Insert error:', e);
       setErrorMsg(e?.message || 'No se pudo enviar la solicitud');
     }
+  };
+
+  // Obtener la solicitud actual para este rol (si existe)
+  const currentRequest = myReqs.find((r: any) => 
+    (r.role_slug === role || r.role === role)
+  );
+
+  // Determinar el paso actual según el estado de la solicitud
+  const getCurrentStep = () => {
+    if (!currentRequest) return 1; // Sin solicitud = Paso 1 (Datos)
+    if (currentRequest.status === 'pending' || currentRequest.status === 'pendiente') return 2; // En revisión
+    if (currentRequest.status === 'aprobado' || currentRequest.status === 'approved') return 3; // Aprobado
+    if (currentRequest.status === 'rechazado' || currentRequest.status === 'rejected') return 1; // Rechazado, puede volver a aplicar
+    return 1;
+  };
+
+  const currentStep = getCurrentStep();
+
+  const getStepColor = (step: number) => {
+    if (step < currentStep) return 'rgba(76, 175, 80, 0.3)'; // Completado (verde)
+    if (step === currentStep) return 'rgba(229, 57, 53, 0.3)'; // Actual (naranja-rojo)
+    return 'rgba(255, 255, 255, 0.1)'; // Pendiente (gris)
+  };
+
+  const getStepBorderColor = (step: number) => {
+    if (step < currentStep) return 'rgba(76, 175, 80, 0.6)';
+    if (step === currentStep) return 'rgba(229, 57, 53, 0.6)';
+    return 'rgba(255, 255, 255, 0.2)';
   };
 
   return (
@@ -78,11 +107,59 @@ export default function RequestRoleScreen() {
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>Solicitar rol</h1>
-          <p style={{ opacity: 0.85, marginTop: 8 }}>Completa tus datos para que un admin revise tu solicitud.</p>
-          <div style={{ display:'inline-flex', gap:8, marginTop:8, opacity:.9 }}>
-            <span className="cc-soft-chip">Paso 1: Datos</span>
-            <span className="cc-soft-chip">Paso 2: Revisión</span>
-            <span className="cc-soft-chip">Paso 3: Aprobación</span>
+          <p style={{ opacity: 0.85, marginTop: 8 }}>
+            {currentStep === 1 && 'Completa tus datos para que un admin revise tu solicitud.'}
+            {currentStep === 2 && 'Tu solicitud está en revisión. Te notificaremos pronto.'}
+            {currentStep === 3 && '¡Felicidades! Tu solicitud ha sido aprobada.'}
+          </p>
+          <div style={{ display:'flex', gap: 12, marginTop: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {/* Paso 1: Datos */}
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              background: getStepColor(1),
+              border: `2px solid ${getStepBorderColor(1)}`,
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.3s'
+            }}>
+              {currentStep > 1 ? '✅' : '1️⃣'} Datos
+            </div>
+
+            {/* Paso 2: Revisión */}
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              background: getStepColor(2),
+              border: `2px solid ${getStepBorderColor(2)}`,
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.3s'
+            }}>
+              {currentStep > 2 ? '✅' : currentStep === 2 ? '⏳' : '2️⃣'} Revisión
+            </div>
+
+            {/* Paso 3: Aprobación */}
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              background: getStepColor(3),
+              border: `2px solid ${getStepBorderColor(3)}`,
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.3s'
+            }}>
+              {currentStep === 3 ? '🎉' : '3️⃣'} Aprobación
+            </div>
           </div>
         </div>
 
@@ -207,11 +284,47 @@ export default function RequestRoleScreen() {
                 </fieldset>
 
                 <div className="rr-actions" style={{ marginTop: 8 }}>
-                  <button onClick={submit} disabled={createReq.isPending} className="cc-btn cc-btn--primary" style={{ minWidth: 200, fontWeight: 800 }}>
-                    {createReq.isPending ? 'Enviando…' : 'Enviar solicitud'}
+                  <button 
+                    onClick={submit} 
+                    disabled={
+                      createReq.isPending || 
+                      (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
+                      (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                    }
+                    className="cc-btn cc-btn--primary" 
+                    style={{ 
+                      minWidth: 200, 
+                      fontWeight: 800,
+                      background: currentStep === 3 
+                        ? 'linear-gradient(135deg, #4CAF50, #45a049)' 
+                        : currentStep === 2 
+                        ? 'linear-gradient(135deg, #FFA726, #FB8C00)' 
+                        : 'linear-gradient(135deg, #E53935, #FB8C00)',
+                      opacity: (
+                        createReq.isPending || 
+                        (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
+                        (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                      ) ? 0.6 : 1,
+                      cursor: (
+                        createReq.isPending || 
+                        (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
+                        (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                      ) ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {createReq.isPending ? '⏳ Enviando…' : 
+                     currentStep === 3 ? '✅ Solicitud Aprobada' :
+                     currentStep === 2 ? '⏳ En Revisión' :
+                     currentRequest?.status === 'rechazado' || currentRequest?.status === 'rejected' ? '🔄 Volver a Solicitar' :
+                     '📤 Enviar Solicitud'}
                   </button>
                 </div>
-                <div className="rr-note" style={{ marginTop: 6 }}>Tiempo estimado de revisión: 24–48h hábiles.</div>
+                <div className="rr-note" style={{ marginTop: 6 }}>
+                  {currentStep === 1 && 'Tiempo estimado de revisión: 24–48h hábiles.'}
+                  {currentStep === 2 && 'Tu solicitud está siendo revisada por nuestro equipo.'}
+                  {currentStep === 3 && 'Ya puedes acceder a las funcionalidades de este rol.'}
+                  {currentRequest?.status === 'rechazado' && '❌ Tu solicitud fue rechazada. Puedes volver a intentarlo.'}
+                </div>
               </div>
             </div>
 
