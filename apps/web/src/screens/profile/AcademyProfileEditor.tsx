@@ -545,38 +545,46 @@ export default function AcademyProfileEditor() {
                 <CrearClase
                   ritmos={(() => {
                     const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+                    
+                    // Crear mapeo de slug → label del catálogo
                     const labelByCatalogId = new Map<string, string>();
                     RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
                     
-                    // 1) Priorizar selección local del formulario (sin guardar)
+                    // Obtener ritmos seleccionados (slugs)
                     const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-                    
-                    // 2) Si no hay selección local, usar datos guardados en academy
                     const savedSelected: string[] = ((academy as any)?.ritmos_seleccionados || []) as string[];
-                    
-                    // Combinar ambas fuentes
                     const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
                     
+                    console.log('[AcademyProfileEditor] 🎵 Ritmos seleccionados (slugs):', combinedSelected);
+                    console.log('[AcademyProfileEditor] 🏷️  Tags disponibles:', ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre })));
+                    
                     if (combinedSelected.length > 0) {
-                      const selectedLabels = new Set(
-                        combinedSelected.map(id => labelByCatalogId.get(id)).filter(Boolean)
+                      // Mapear slugs → labels del catálogo
+                      const selectedLabels = combinedSelected
+                        .map(slug => labelByCatalogId.get(slug))
+                        .filter(Boolean);
+                      
+                      console.log('[AcademyProfileEditor] 📋 Labels del catálogo:', selectedLabels);
+                      
+                      // Filtrar tags que coincidan con los labels (case-insensitive)
+                      const filtered = ritmoTags.filter((t: any) => 
+                        selectedLabels.some(label => 
+                          label && t.nombre && 
+                          label.toLowerCase().trim() === t.nombre.toLowerCase().trim()
+                        )
                       );
-                      const filtered = ritmoTags.filter((t: any) => selectedLabels.has(t.nombre));
+                      
+                      console.log('[AcademyProfileEditor] ✅ Ritmos filtrados:', filtered.map((t: any) => ({ id: t.id, nombre: t.nombre })));
+                      
                       if (filtered.length > 0) {
-                        console.log('[AcademyProfileEditor] Ritmos filtrados para CrearClase:', filtered);
                         return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                       }
+                      
+                      console.warn('[AcademyProfileEditor] ⚠️  No se encontraron coincidencias, usando todos los ritmos');
                     }
                     
-                    // 3) Fallback: usar allowedIds si existe
-                    if (Array.isArray(allowedIds) && allowedIds.length > 0) {
-                      const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                      const filtered = ritmoTags.filter((t: any) => allowedLabels.has(t.nombre));
-                      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                    }
-                    
-                    // 4) Último fallback: todos los ritmos
-                    console.log('[AcademyProfileEditor] Usando todos los ritmos como fallback');
+                    // Fallback: todos los ritmos
+                    console.log('[AcademyProfileEditor] 🔄 Usando todos los ritmos como fallback');
                     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                   })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
