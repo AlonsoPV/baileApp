@@ -512,28 +512,49 @@ export default function AcademyProfileEditor() {
                 </div>
               )}
 
-              <CrearClase
-                ritmos={(() => {
-                  const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
-                  const labelByCatalogId = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                  // 1) Priorizar selección local del formulario (sin guardar)
-                  const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-                  if (Array.isArray(localSelected) && localSelected.length > 0) {
-                    const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                    const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
-                    // Si por alguna razón no mapea nada, caemos a allowedIds o todos
-                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                  }
-                  // 2) Si no hay selección local, usar restricción desde DB (allowedIds)
-                  if (Array.isArray(allowedIds) && allowedIds.length > 0) {
-                    const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                    const filtered = ritmoTags.filter((t: any) => allowedLabels.has(t.nombre));
-                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                  }
-                  // 3) Fallback: todos
-                  return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                })()}
+              {/* Mensaje si no tiene perfil guardado */}
+              {!academy && (
+                <div style={{
+                  padding: '1.5rem',
+                  marginBottom: '1rem',
+                  background: 'rgba(255, 140, 66, 0.15)',
+                  border: '2px solid rgba(255, 140, 66, 0.3)',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
+                  <p style={{ fontSize: '1rem', fontWeight: '600', margin: 0 }}>
+                    Debes guardar el perfil de la academia primero antes de crear clases
+                  </p>
+                  <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0.5rem 0 0 0' }}>
+                    Completa el nombre de la academia y haz clic en 💾 Guardar arriba
+                  </p>
+                </div>
+              )}
+
+              {academy && (
+                <CrearClase
+                  ritmos={(() => {
+                    const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    // 1) Priorizar selección local del formulario (sin guardar)
+                    const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
+                    if (Array.isArray(localSelected) && localSelected.length > 0) {
+                      const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                      const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
+                      // Si por alguna razón no mapea nada, caemos a allowedIds o todos
+                      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                    }
+                    // 2) Si no hay selección local, usar restricción desde DB (allowedIds)
+                    if (Array.isArray(allowedIds) && allowedIds.length > 0) {
+                      const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
+                      const filtered = ritmoTags.filter((t: any) => allowedLabels.has(t.nombre));
+                      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                    }
+                    // 3) Fallback: todos
+                    return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                  })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
                 locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({ id: u?.id || String(i), nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
                 editIndex={editingIndex}
@@ -657,8 +678,9 @@ export default function AcademyProfileEditor() {
                   }
                 }}
               />
+              )}
 
-              {Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
+              {academy && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
                 <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
                   {(form as any).cronograma.map((it: any, idx: number) => (
                     <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
