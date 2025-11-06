@@ -72,10 +72,14 @@ export function useCreateEventDate() {
       return data;
     },
     onSuccess: (row) => {
+      // Invalidar con las keys correctas que usa useDatesByParent
+      qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
+      qc.invalidateQueries({ queryKey: ["dates"] }); // Invalidar todas las fechas
       qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
       qc.invalidateQueries({ queryKey: ["event", "date", row.id] });
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["parents"] }); // Refrescar lista de parents
     }
   });
 }
@@ -90,10 +94,14 @@ export function useUpdateEventDate() {
       return data;
     },
     onSuccess: (row) => {
+      // Invalidar con las keys correctas que usa useDatesByParent
+      qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
+      qc.invalidateQueries({ queryKey: ["dates"] }); // Invalidar todas las fechas
       qc.invalidateQueries({ queryKey: ["event", "date", row.id] });
       qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["parents"] }); // Refrescar lista de parents
     }
   });
 }
