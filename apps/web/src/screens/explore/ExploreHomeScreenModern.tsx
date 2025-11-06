@@ -478,9 +478,8 @@ export default function ExploreHomeScreen() {
             {usuariosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : (() => {
-              const raw = usuarios?.pages?.[0]?.data || [];
-              // Filtro defensivo: solo mostrar usuarios con onboarding completo
-              const list = raw.filter((u: any) => u?.onboarding_complete === true);
+              const list = usuarios?.pages?.[0]?.data || [];
+              // La vista v_user_public ya filtra por onboarding_complete = true
               return list.length > 0 ? (
               <HorizontalSlider
                 items={list}

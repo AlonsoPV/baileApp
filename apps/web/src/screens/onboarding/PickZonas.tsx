@@ -60,8 +60,8 @@ export function PickZonas() {
       await updateProfileFields(updates);
       showToast('Zonas guardadas exitosamente 📍', 'success');
       
-      // Marcar onboarding como completo
-      await finishOnboarding.mutateAsync();
+      // Redirigir a configurar PIN (paso 4)
+      navigate('/auth/pin/setup', { replace: true });
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');

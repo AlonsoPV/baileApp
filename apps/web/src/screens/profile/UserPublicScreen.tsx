@@ -215,9 +215,10 @@ export const UserProfileLive: React.FC = () => {
     queryKey: ['user-public', userId],
     enabled: !!userId,
     queryFn: async () => {
+      // Usar vista pública para mejor seguridad (solo perfiles completos)
       const { data, error } = await supabase
-        .from('profiles_user')
-        .select('user_id, display_name, bio, avatar_url, ritmos, ritmos_seleccionados, zonas, respuestas, media, redes_sociales')
+        .from('v_user_public')
+        .select('*')
         .eq('user_id', userId)
         .maybeSingle();
       if (error) throw error;

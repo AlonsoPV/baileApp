@@ -183,8 +183,15 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
       <button
         onClick={() => {
           if (user?.id) {
+            // Invalidar todas las queries del perfil para forzar refetch
             qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
             qc.invalidateQueries({ queryKey: ['role_requests_me', user.id] });
+            qc.invalidateQueries({ queryKey: ['user', 'profile', user.id] });
+            qc.invalidateQueries({ queryKey: ['user-media', user.id] });
+            qc.invalidateQueries({ queryKey: ['organizer', 'mine'] });
+            qc.invalidateQueries({ queryKey: ['academy', 'mine'] });
+            qc.invalidateQueries({ queryKey: ['teacher', 'mine'] });
+            qc.invalidateQueries({ queryKey: ['brand', 'mine'] });
           }
           const target = getLiveRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);

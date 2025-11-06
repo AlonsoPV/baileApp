@@ -66,7 +66,9 @@ export default function PinLogin() {
       const ok = await verifyPin(pin, hash);
       if (!ok) { setPinError('PIN incorrecto'); return; }
       setPinVerified(user.id);
-      navigate('/app/profile', { replace: true });
+      
+      // Redirigir a explore después de verificar PIN
+      navigate('/app/explore', { replace: true });
     } catch (e: any) {
       setPinError(e?.message || 'Error verificando PIN');
     } finally {
