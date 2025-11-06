@@ -750,32 +750,41 @@ export default function OrganizerProfileEditor() {
       }
 
       const wasNewProfile = !org; // Detectar si es un perfil nuevo
-      const profileId = await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
+      console.log("📊 [OrganizerProfileEditor] wasNewProfile:", wasNewProfile);
       
+      const profileId = await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
+      console.log("📊 [OrganizerProfileEditor] profileId retornado:", profileId);
       console.log("✅ [OrganizerProfileEditor] Guardado exitoso");
       
       // Si es un perfil nuevo, crear evento y fecha por defecto
       if (wasNewProfile && profileId) {
-        console.log("🌱 [OrganizerProfileEditor] Creando evento y fecha por defecto...");
+        console.log("🌱 [OrganizerProfileEditor] Creando evento y fecha por defecto para organizador ID:", profileId);
+        console.log("🌱 [OrganizerProfileEditor] Ritmos a usar:", outSelected);
+        console.log("🌱 [OrganizerProfileEditor] Zonas a usar:", form.zonas);
         
         try {
           // Crear evento padre por defecto
+          const parentPayload = {
+            organizer_id: profileId,
+            nombre: '🎉 Mi Primer Social',
+            descripcion: 'Este es tu primer evento social. Edita el nombre, descripción y agrega fechas desde el editor.',
+            estado_aprobacion: 'borrador',
+            estado_publicacion: 'borrador',
+            ritmos_seleccionados: outSelected || [],
+            zonas: form.zonas || []
+          };
+          
+          console.log("📦 [OrganizerProfileEditor] Payload para evento padre:", parentPayload);
+          
           const { data: newParent, error: parentErr } = await supabase
             .from('events_parent')
-            .insert({
-              organizer_id: profileId,
-              nombre: '🎉 Mi Primer Social',
-              descripcion: 'Este es tu primer evento social. Edita el nombre, descripción y agrega fechas desde el editor.',
-              estado_aprobacion: 'borrador',
-              estado_publicacion: 'borrador',
-              ritmos_seleccionados: outSelected || [],
-              zonas: form.zonas || []
-            })
+            .insert(parentPayload)
             .select('*')
             .single();
 
           if (parentErr) {
-            console.error('[OrganizerProfileEditor] Error creando social por defecto:', parentErr);
+            console.error('❌ [OrganizerProfileEditor] Error creando social por defecto:', parentErr);
+            showToast('⚠️ Perfil creado, pero no se pudo crear el evento por defecto', 'info');
           } else if (newParent) {
             console.log("✅ [OrganizerProfileEditor] Social por defecto creado:", newParent.id);
             
@@ -784,37 +793,49 @@ export default function OrganizerProfileEditor() {
             fechaBase.setDate(fechaBase.getDate() + 7);
             const fechaStr = fechaBase.toISOString().slice(0, 10);
 
+            const datePayload = {
+              parent_id: newParent.id,
+              nombre: '📅 Primera Fecha',
+              biografia: 'Configura la información de tu primera fecha: hora, lugar, precios y más.',
+              fecha: fechaStr,
+              hora_inicio: '20:00',
+              hora_fin: '02:00',
+              lugar: 'Por definir',
+              ciudad: 'Tu ciudad',
+              estado_publicacion: 'borrador',
+              ritmos_seleccionados: outSelected || [],
+              zonas: form.zonas || [],
+              cronograma: [],
+              costos: []
+            };
+            
+            console.log("📦 [OrganizerProfileEditor] Payload para fecha:", datePayload);
+
             const { error: dateErr } = await supabase
               .from('events_date')
-              .insert({
-                parent_id: newParent.id,
-                nombre: '📅 Primera Fecha',
-                biografia: 'Configura la información de tu primera fecha: hora, lugar, precios y más.',
-                fecha: fechaStr,
-                hora_inicio: '20:00',
-                hora_fin: '02:00',
-                lugar: 'Por definir',
-                ciudad: 'Tu ciudad',
-                estado_publicacion: 'borrador',
-                ritmos_seleccionados: outSelected || [],
-                zonas: form.zonas || [],
-                cronograma: [],
-                costos: []
-              });
+              .insert(datePayload);
 
             if (dateErr) {
-              console.error('[OrganizerProfileEditor] Error creando fecha por defecto:', dateErr);
+              console.error('❌ [OrganizerProfileEditor] Error creando fecha por defecto:', dateErr);
             } else {
               console.log("✅ [OrganizerProfileEditor] Fecha por defecto creada");
             }
           }
         } catch (seedErr) {
-          console.error('[OrganizerProfileEditor] Error en semilla automática:', seedErr);
-          // No mostrar error al usuario, es solo un helper
+          console.error('❌ [OrganizerProfileEditor] Error en semilla automática:', seedErr);
         }
+      } else {
+        console.log("ℹ️ [OrganizerProfileEditor] No es perfil nuevo o no hay profileId, saltando auto-seed");
+        console.log("   - wasNewProfile:", wasNewProfile);
+        console.log("   - profileId:", profileId);
       }
       
-      showToast('Organizador actualizado ✅', 'success');
+      // Toast final basado en si es nuevo o actualización
+      if (wasNewProfile) {
+        showToast('✅ Perfil de organizador creado con evento de ejemplo', 'success');
+      } else {
+        showToast('✅ Organizador actualizado', 'success');
+      }
     } catch (err: any) {
       console.error("❌ [OrganizerProfileEditor] Error al guardar:", err);
       showToast('Error al guardar', 'error');
