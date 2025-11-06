@@ -352,6 +352,14 @@ export function OrganizerProfileLive() {
   const { media } = useOrganizerMedia();
   const { data: allTags } = useTags();
 
+  // Auto-redirigir a Edit si no tiene perfil de organizador
+  React.useEffect(() => {
+    if (!isLoading && !org) {
+      console.log('[OrganizerProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/organizer/edit', { replace: true });
+    }
+  }, [isLoading, org, navigate]);
+
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as any, slot)?.url)
@@ -414,14 +422,6 @@ export function OrganizerProfileLive() {
       </div>
     );
   }
-
-  // Auto-redirigir a Edit si no tiene perfil de organizador
-  React.useEffect(() => {
-    if (!isLoading && !org) {
-      console.log('[OrganizerProfileLive] No profile found, redirecting to edit...');
-      navigate('/profile/organizer/edit', { replace: true });
-    }
-  }, [isLoading, org, navigate]);
 
   if (!org) {
     return (
