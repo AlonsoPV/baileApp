@@ -60,7 +60,6 @@ export default function AcademyProfileEditor() {
     defaults: {
       nombre_publico: "",
       bio: "",
-      estilos: [] as number[],
       ritmos_seleccionados: [] as string[],
       zonas: [] as number[],
       cronograma: [] as any[],
@@ -91,23 +90,44 @@ export default function AcademyProfileEditor() {
       console.log("📱 [AcademyProfileEditor] Redes sociales:", form.redes_sociales);
       console.log("📝 [AcademyProfileEditor] Nombre público:", form.nombre_publico);
       console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
-      console.log("🎵 [AcademyProfileEditor] Estilos:", form.estilos);
 
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
-      await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: selectedCatalogIds } as any);
+      
+      // Crear payload limpio sin campos que no existen en la tabla
+      const payload: any = {
+        nombre_publico: form.nombre_publico,
+        bio: form.bio,
+        ritmos_seleccionados: selectedCatalogIds,
+        zonas: (form as any).zonas || [],
+        cronograma: (form as any).cronograma || [],
+        costos: (form as any).costos || [],
+        ubicaciones: (form as any).ubicaciones || [],
+        redes_sociales: form.redes_sociales,
+        respuestas: (form as any).respuestas || {},
+        faq: (form as any).faq || []
+      };
+
+      // Solo incluir id si existe (para updates)
+      if ((form as any)?.id) {
+        payload.id = (form as any).id;
+      }
+
+      console.log("📦 [AcademyProfileEditor] Payload limpio:", payload);
+      await upsert.mutateAsync(payload);
       console.log("✅ [AcademyProfileEditor] Guardado exitoso");
     } catch (error) {
       console.error("❌ [AcademyProfileEditor] Error guardando:", error);
     }
   };
 
-  const toggleEstilo = (estiloId: number) => {
-    const currentEstilos = form.estilos || [];
-    const newEstilos = currentEstilos.includes(estiloId)
-      ? currentEstilos.filter(id => id !== estiloId)
-      : [...currentEstilos, estiloId];
-    setField('estilos', newEstilos);
-  };
+  // Ya no se usa toggleEstilo, ahora se maneja directamente en RitmosChips
+  // const toggleEstilo = (estiloId: number) => {
+  //   const currentEstilos = form.estilos || [];
+  //   const newEstilos = currentEstilos.includes(estiloId)
+  //     ? currentEstilos.filter(id => id !== estiloId)
+  //     : [...currentEstilos, estiloId];
+  //   setField('estilos', newEstilos);
+  // };
 
   const toggleZona = (zonaId: number) => {
     const currentZonas = (form as any).zonas || [];
@@ -430,20 +450,7 @@ export default function AcademyProfileEditor() {
               const onChangeCatalog = (ids: string[]) => {
                 // Guardar selección de catálogo directamente
                 setField('ritmos_seleccionados' as any, ids as any);
-                // Intentar mapear también a ids de tags si existen (no bloqueante)
-                try {
-                  const labelByCatalogId = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                  const nameToTagId = new Map<string, number>(
-                    (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
-                  );
-                  const mappedTagIds = ids
-                    .map(cid => labelByCatalogId.get(cid))
-                    .filter(Boolean)
-                    .map((label: any) => nameToTagId.get(label as string))
-                    .filter((n): n is number => typeof n === 'number');
-                  setField('estilos', mappedTagIds);
-                } catch {}
+                // Ya no necesitamos mapear a 'estilos' porque ese campo no existe en la tabla
               };
 
               return (
