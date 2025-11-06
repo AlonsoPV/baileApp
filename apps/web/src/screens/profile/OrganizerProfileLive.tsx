@@ -660,7 +660,7 @@ export function OrganizerProfileLive() {
         
         .glass-card-container {
           opacity: 1;
-          margin-bottom: 2rem;
+          margin: 0 auto 2rem auto;
           padding: 2rem;
           text-align: center;
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
