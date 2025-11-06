@@ -658,12 +658,30 @@ export default function ScheduleEditorPlus({
                 {onSaveCosto && (
                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={()=> onSaveCosto(idx)}
-                    style={{ ...input, width: 'auto', background: colors.blue, border: 'none', cursor: 'pointer', padding: '8px 16px' }}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                      color: colors.light,
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
                   >💾 Guardar</motion.button>
                 )}
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={()=> removeCosto(idx)}
-                  style={{ ...input, width: 'auto', background: colors.coral, border: 'none', cursor: 'pointer' }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 8,
+                    border: `1px solid ${colors.light}33`,
+                    background: 'transparent',
+                    color: colors.light,
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
                 >🗑️ Eliminar</motion.button>
               </div>
             </div>
