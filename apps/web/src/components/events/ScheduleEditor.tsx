@@ -399,14 +399,32 @@ export default function ScheduleEditorPlus({
                     </select>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                       onClick={finishEdit}
-                      style={{ ...input, width: 'auto', background: colors.blue, border: 'none', cursor: 'pointer' }}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
                     >✅ Guardar</motion.button>
                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                       onClick={() => setEditingIndex(null)}
-                      style={{ ...input, width: 'auto', background: colors.coral, border: 'none', cursor: 'pointer' }}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        border: `1px solid ${colors.light}33`,
+                        background: 'transparent',
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
                     >❌ Cancelar</motion.button>
                   </div>
                 </div>
@@ -571,21 +589,35 @@ export default function ScheduleEditorPlus({
               </select>
             </div>
  */}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={addItem}
                 disabled={!((newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin)}
                 style={{
-                  padding: '10px 20px', borderRadius: 8, border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: 8,
+                  border: 'none',
                   background: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin
-                    ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : `${colors.light}33`,
-                  color: colors.light, fontSize: '0.9rem', fontWeight: 600,
+                    ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` 
+                    : `${colors.light}33`,
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
                   cursor: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin ? 'pointer' : 'not-allowed',
                 }}
               >✅ Agregar Actividad</motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => { setIsAdding(false); }}
-                style={{ padding: '10px 20px', borderRadius: 8, border: `1px solid ${colors.light}33`, background: 'transparent', color: colors.light, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: 8,
+                  border: `1px solid ${colors.light}33`,
+                  background: 'transparent',
+                  color: colors.light,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
               >❌ Cancelar</motion.button>
             </div>
           </div>
@@ -654,7 +686,7 @@ export default function ScheduleEditorPlus({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start', marginTop: 10 }}>
                 {onSaveCosto && (
                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={()=> onSaveCosto(idx)}
