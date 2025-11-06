@@ -35,34 +35,28 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("No hay sesión.");
 
-      // Ruta: event-flyers/USERID/{parentId}/{dateId}_flyer.ext
+      // Ruta: media/event-flyers/USERID/{parentId}/{dateId}_flyer.ext
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const safeParent = parentId ? String(parentId) : "no-parent";
       const safeDate = dateId ? String(dateId) : String(Date.now());
-      const path = `${user.id}/${safeParent}/${safeDate}_flyer.${ext}`;
+      const path = `media/event-flyers/${user.id}/${safeParent}/${safeDate}_flyer.${ext}`;
 
       console.log('[DateFlyerUploader] Uploading to path:', path);
       console.log('[DateFlyerUploader] File type:', file.type);
       console.log('[DateFlyerUploader] File size:', file.size);
 
       const { data: up, error: upErr } = await supabase.storage
-        .from("event-flyers")
+        .from("media")
         .upload(path, file, { upsert: true, contentType: file.type });
 
       if (upErr) {
         console.error('[DateFlyerUploader] Upload error:', upErr);
-        
-        // Manejar error específico del bucket
-        if (upErr.message.includes('Bucket not found') || upErr.message.includes('bucket not found')) {
-          throw new Error("El bucket 'event-flyers' no existe. Contacta al administrador para crear el bucket.");
-        }
-        
         throw upErr;
       }
 
       console.log('[DateFlyerUploader] Upload successful:', up);
 
-      const { data: pub } = supabase.storage.from("event-flyers").getPublicUrl(up.path);
+      const { data: pub } = supabase.storage.from("media").getPublicUrl(up.path);
       console.log('[DateFlyerUploader] Public URL:', pub.publicUrl);
       
       onChange(pub.publicUrl || null);
