@@ -412,16 +412,133 @@ export function OrganizerPublicScreen() {
                   <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>
-              <div style={{ display: 'grid', gap: spacing[4] }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
                 {parents.map((parent: any) => (
-                  <motion.div key={parent.id} whileHover={{ scale: 1.02, y: -4, boxShadow: colors.shadows.lg }} onClick={() => navigate(`/social/${parent.id}`)} className="glass-card" style={{ padding: spacing[6], borderRadius: borderRadius.xl, cursor: 'pointer', transition: transitions.normal }}>
-                    <h4 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[2], color: colors.light }}>{parent.nombre}</h4>
-                    {parent.descripcion && (
-                      <p style={{ fontSize: typography.fontSize.sm, color: colors.light, marginBottom: spacing[3] }}>{parent.descripcion}</p>
-                    )}
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={(e) => { e.stopPropagation(); navigate(`/social/${parent.id}`); }} style={{ padding: `${spacing[3]} ${spacing[6]}`, background: colors.gradients.secondary, border: 'none', borderRadius: borderRadius.lg, color: colors.light, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.semibold, cursor: 'pointer', transition: transitions.normal, boxShadow: `0 4px 16px ${colors.secondary[500]}40` }}>
-                      📅 Ver próximas fechas
-                    </motion.button>
+                  <motion.div
+                    key={parent.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{
+                      y: -4,
+                      borderColor: 'rgba(255, 61, 87, 0.4)'
+                    }}
+                    style={{
+                      padding: 'clamp(1.5rem, 2.5vw, 2.5rem)',
+                      borderRadius: 'clamp(16px, 2.5vw, 28px)',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      background: 'rgba(30, 30, 30, 0.6)',
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1.5rem'
+                    }}
+                  >
+                    {/* Barra decorativa superior */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '6px',
+                      background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
+                      borderRadius: '24px 24px 0 0',
+                    }} />
+
+                    {/* FILA 1: Información del Social */}
+                    <div style={{ 
+                      position: 'relative', 
+                      zIndex: 2,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '1.5rem',
+                      paddingTop: '0.5rem'
+                    }}>
+                      {/* Icono */}
+                      <motion.div
+                        whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                        transition={{ duration: 0.5 }}
+                        style={{
+                          width: '72px',
+                          height: '72px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '2.5rem',
+                          background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
+                          border: '3px solid rgba(255, 61, 87, 0.4)',
+                          boxShadow: '0 6px 20px rgba(255, 61, 87, 0.4)',
+                          filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))',
+                          flexShrink: 0
+                        }}
+                      >
+                        🎭
+                      </motion.div>
+                      
+                      {/* Contenido principal */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Nombre del social */}
+                        <h4 style={{
+                          fontSize: 'clamp(1.5rem, 2vw, 2rem)',
+                          fontWeight: '800',
+                          margin: 0,
+                          marginBottom: '0.75rem',
+                          background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.2
+                        }}>
+                          {parent.nombre}
+                        </h4>
+                        
+                        {/* Descripción */}
+                        {parent.descripcion && (
+                          <p style={{
+                            fontSize: '1rem',
+                            opacity: 0.9,
+                            margin: 0,
+                            fontWeight: '400',
+                            lineHeight: 1.6,
+                            color: "rgba(255, 255, 255, 0.9)"
+                          }}>
+                            {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Botón de ver detalles */}
+                      <div style={{ flexShrink: 0 }}>
+                        <motion.button
+                          whileHover={{ scale: 1.08, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => navigate(`/social/${parent.id}`)}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '0.875rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 4px 16px rgba(30, 136, 229, 0.4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          <span>📅</span>
+                          <span>Ver Fechas</span>
+                        </motion.button>
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
