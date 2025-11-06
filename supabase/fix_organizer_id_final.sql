@@ -179,106 +179,115 @@ END $$;
 -- 8️⃣ RECREAR foreign keys
 -- ========================================
 
-ALTER TABLE public.events_parent
-ADD CONSTRAINT events_parent_organizer_id_fkey
-FOREIGN KEY (organizer_id)
-REFERENCES public.profiles_organizer(id)
-ON DELETE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE public.events_parent
+  ADD CONSTRAINT events_parent_organizer_id_fkey
+  FOREIGN KEY (organizer_id)
+  REFERENCES public.profiles_organizer(id)
+  ON DELETE CASCADE;
 
-RAISE NOTICE '✅ Foreign key events_parent → profiles_organizer recreada';
+  RAISE NOTICE '✅ Foreign key events_parent → profiles_organizer recreada';
 
-ALTER TABLE public.events_date
-ADD CONSTRAINT events_date_parent_id_fkey
-FOREIGN KEY (parent_id)
-REFERENCES public.events_parent(id)
-ON DELETE CASCADE;
+  ALTER TABLE public.events_date
+  ADD CONSTRAINT events_date_parent_id_fkey
+  FOREIGN KEY (parent_id)
+  REFERENCES public.events_parent(id)
+  ON DELETE CASCADE;
 
-RAISE NOTICE '✅ Foreign key events_date → events_parent recreada';
+  RAISE NOTICE '✅ Foreign key events_date → events_parent recreada';
+END $$;
 
 -- ========================================
 -- 9️⃣ RECREAR políticas RLS para events_parent
 -- ========================================
 
-CREATE POLICY "events_parent_select_all"
-ON public.events_parent
-FOR SELECT
-USING (true);
+DO $$
+BEGIN
+  CREATE POLICY "events_parent_select_all"
+  ON public.events_parent
+  FOR SELECT
+  USING (true);
 
-CREATE POLICY "events_parent_insert_organizer"
-ON public.events_parent
-FOR INSERT
-WITH CHECK (
-  organizer_id IN (
-    SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_parent_insert_organizer"
+  ON public.events_parent
+  FOR INSERT
+  WITH CHECK (
+    organizer_id IN (
+      SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
+    )
+  );
 
-CREATE POLICY "events_parent_update_own"
-ON public.events_parent
-FOR UPDATE
-USING (
-  organizer_id IN (
-    SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_parent_update_own"
+  ON public.events_parent
+  FOR UPDATE
+  USING (
+    organizer_id IN (
+      SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
+    )
+  );
 
-CREATE POLICY "events_parent_delete_own"
-ON public.events_parent
-FOR DELETE
-USING (
-  organizer_id IN (
-    SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_parent_delete_own"
+  ON public.events_parent
+  FOR DELETE
+  USING (
+    organizer_id IN (
+      SELECT id FROM public.profiles_organizer WHERE user_id = auth.uid()
+    )
+  );
 
-RAISE NOTICE '✅ Políticas RLS de events_parent recreadas';
+  RAISE NOTICE '✅ Políticas RLS de events_parent recreadas';
+END $$;
 
 -- ========================================
 -- 🔟 RECREAR políticas RLS para events_date
 -- ========================================
 
-CREATE POLICY "events_date_select_all"
-ON public.events_date
-FOR SELECT
-USING (true);
+DO $$
+BEGIN
+  CREATE POLICY "events_date_select_all"
+  ON public.events_date
+  FOR SELECT
+  USING (true);
 
-CREATE POLICY "events_date_insert_organizer"
-ON public.events_date
-FOR INSERT
-WITH CHECK (
-  parent_id IN (
-    SELECT ep.id 
-    FROM public.events_parent ep
-    INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
-    WHERE po.user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_date_insert_organizer"
+  ON public.events_date
+  FOR INSERT
+  WITH CHECK (
+    parent_id IN (
+      SELECT ep.id 
+      FROM public.events_parent ep
+      INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
+      WHERE po.user_id = auth.uid()
+    )
+  );
 
-CREATE POLICY "events_date_update_organizer"
-ON public.events_date
-FOR UPDATE
-USING (
-  parent_id IN (
-    SELECT ep.id 
-    FROM public.events_parent ep
-    INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
-    WHERE po.user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_date_update_organizer"
+  ON public.events_date
+  FOR UPDATE
+  USING (
+    parent_id IN (
+      SELECT ep.id 
+      FROM public.events_parent ep
+      INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
+      WHERE po.user_id = auth.uid()
+    )
+  );
 
-CREATE POLICY "events_date_delete_organizer"
-ON public.events_date
-FOR DELETE
-USING (
-  parent_id IN (
-    SELECT ep.id 
-    FROM public.events_parent ep
-    INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
-    WHERE po.user_id = auth.uid()
-  )
-);
+  CREATE POLICY "events_date_delete_organizer"
+  ON public.events_date
+  FOR DELETE
+  USING (
+    parent_id IN (
+      SELECT ep.id 
+      FROM public.events_parent ep
+      INNER JOIN public.profiles_organizer po ON ep.organizer_id = po.id
+      WHERE po.user_id = auth.uid()
+    )
+  );
 
-RAISE NOTICE '✅ Políticas RLS de events_date recreadas';
+  RAISE NOTICE '✅ Políticas RLS de events_date recreadas';
+END $$;
 
 -- ========================================
 -- 1️⃣1️⃣ VERIFICACIÓN FINAL
