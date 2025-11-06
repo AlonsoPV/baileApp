@@ -2,13 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 
-const BUCKET = "org-media";
+const BUCKET = "media"; // ✅ Bucket unificado
 
-// Helper to upload to org-media bucket
+// Helper to upload to media bucket (event media)
 async function uploadEventFile(eventId: number, file: File): Promise<MediaItem> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = file.type.startsWith("image/") ? "image" : "video";
-  const path = `events/${eventId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const path = `media/event-media/${eventId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   console.log('[EventMedia] Uploading file:', { eventId, fileName: file.name, type, path });
 
