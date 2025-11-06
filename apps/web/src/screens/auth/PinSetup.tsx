@@ -37,12 +37,13 @@ export default function PinSetup() {
         .eq('user_id', user.id);
       if (error) throw error;
       
-      // Obligar verificación inmediata del nuevo PIN
-      setNeedsPinVerify(user.id);
-      clearPinVerified(user.id);
+      // Marcar PIN como verificado (recién creado, no necesita verificación inmediata)
+      // En lugar de setNeedsPinVerify, marcamos como ya verificado
+      const { setPinVerified } = await import('@/lib/pin');
+      setPinVerified(user.id);
       
-      // Redirigir a verificar PIN y luego a explore
-      navigate('/auth/pin', { replace: true });
+      // Redirigir directo a explore (onboarding completo)
+      navigate('/app/explore', { replace: true });
     } catch (e: any) {
       setError(e?.message || 'Error al guardar PIN');
     } finally {

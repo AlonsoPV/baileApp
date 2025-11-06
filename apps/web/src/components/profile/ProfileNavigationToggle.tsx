@@ -179,7 +179,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           .pnt-role-name { width: 100%; justify-content: center; margin-top: 4px; }
         }
       `}</style>
-      {/* Botón Ver Live */}
+      
+      {/* Botón Toggle Edit/Live (unificado) */}
       <button
         onClick={() => {
           if (user?.id) {
@@ -193,56 +194,9 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
             qc.invalidateQueries({ queryKey: ['teacher', 'mine'] });
             qc.invalidateQueries({ queryKey: ['brand', 'mine'] });
           }
-          const target = getLiveRoute();
-          const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
-          if (!isSuperAdmin && needsRole && !(hasRole(profileType) || hasApprovedRequest(profileType))) {
-            navigate(getRequestRoute(profileType));
-          } else {
-            navigate(target);
-          }
-        }}
-        style={{
-          padding: '0.5rem 1rem',
-          borderRadius: '20px',
-          background: currentView === 'live' 
-            ? 'linear-gradient(135deg, #4CAF50, #45a049)' 
-            : 'rgba(255, 255, 255, 0.1)',
-          color: currentView === 'live' ? 'white' : colors.light,
-          border: currentView === 'live' 
-            ? 'none' 
-            : '1px solid rgba(255, 255, 255, 0.2)',
-          fontSize: '0.9rem',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-        }}
-        onMouseEnter={(e) => {
-          if (currentView !== 'live') {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (currentView !== 'live') {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-          }
-        }}
-        className="pnt-btn"
-      >
-        <span>👁️</span>
-        <span className="pnt-text"> Live</span>
-      </button>
-
-      {/* Botón Editar */}
-      <button
-        onClick={() => {
-          if (user?.id) {
-            qc.invalidateQueries({ queryKey: ['user_roles', user.id] });
-            qc.invalidateQueries({ queryKey: ['role_requests_me', user.id] });
-          }
-          const target = getEditRoute();
+          
+          // Si estoy en edit, ir a live. Si estoy en live, ir a edit.
+          const target = currentView === 'edit' ? getLiveRoute() : getEditRoute();
           const needsRole = ['organizer','academy','brand','teacher'].includes(profileType);
           if (!isSuperAdmin && needsRole && !(hasRole(profileType) || hasApprovedRequest(profileType))) {
             navigate(getRequestRoute(profileType));
@@ -254,12 +208,10 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           padding: '0.5rem 1rem',
           borderRadius: '20px',
           background: currentView === 'edit' 
-            ? 'linear-gradient(135deg, #1E88E5, #1976D2)' 
-            : 'rgba(255, 255, 255, 0.1)',
-          color: currentView === 'edit' ? 'white' : colors.light,
-          border: currentView === 'edit' 
-            ? 'none' 
-            : '1px solid rgba(255, 255, 255, 0.2)',
+            ? 'linear-gradient(135deg, #4CAF50, #45a049)' 
+            : 'linear-gradient(135deg, #1E88E5, #1976D2)',
+          color: 'white',
+          border: 'none',
           fontSize: '0.9rem',
           fontWeight: '600',
           cursor: 'pointer',
@@ -269,19 +221,15 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           gap: '0.5rem',
         }}
         onMouseEnter={(e) => {
-          if (currentView !== 'edit') {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-          }
+          e.currentTarget.style.opacity = '0.9';
         }}
         onMouseLeave={(e) => {
-          if (currentView !== 'edit') {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-          }
+          e.currentTarget.style.opacity = '1';
         }}
         className="pnt-btn"
       >
-        <span>✏️</span>
-        <span className="pnt-text">Editar</span>
+        <span>{currentView === 'edit' ? '👁️' : '✏️'}</span>
+        <span className="pnt-text">{currentView === 'edit' ? 'Live' : 'Editar'}</span>
       </button>
 
       {/* Botón Guardar (solo en modo edición) */}
@@ -375,8 +323,9 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
               }}
               className="pnt-btn"
             >
-              <span>🔄</span>
-              <span className="pnt-text">Rol</span>
+              <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Vista:</span>
+              <span>{getProfileIcon()}</span>
+              <span className="pnt-text">{getProfileName()}</span>
               <span style={{ 
                 fontSize: '0.7rem',
                 transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -391,7 +340,6 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
               <div style={{
                 position: 'absolute',
                 top: '100%',
-                left: '0',
                 right: '0',
                 marginTop: '0.5rem',
                 background: 'rgba(18, 18, 18, 0.95)',
@@ -460,16 +408,6 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
           </div>
         </>
       )}
-
-      {/* Indicador de perfil (segunda fila en mobile) */}
-      <div style={{ width: '100%' }} />
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem',
-        color: 'rgba(255, 255, 255, 0.7)', fontWeight: '500'
-      }} className="pnt-role-name">
-        <span>{getProfileIcon()}</span>
-        <span>{getProfileName()}</span>
-      </div>
     </div>
   );
 };
