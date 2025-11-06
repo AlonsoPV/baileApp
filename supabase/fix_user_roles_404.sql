@@ -2,6 +2,17 @@
 -- 🔧 FIX: Error 400 en user_roles
 -- ========================================
 -- Diagnóstico y corrección de la tabla user_roles
+--
+-- Si la tabla NO EXISTE, créala primero con:
+--
+-- CREATE TABLE IF NOT EXISTS public.user_roles (
+--   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+--   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+--   role_slug text NOT NULL,
+--   created_at timestamptz DEFAULT now(),
+--   UNIQUE(user_id, role_slug)
+-- );
+--
 
 -- ========================================
 -- 1️⃣ VERIFICAR tabla user_roles
@@ -23,6 +34,7 @@ END $$;
 -- ========================================
 -- 2️⃣ VERIFICAR columnas de user_roles
 -- ========================================
+-- Columnas esperadas: id, user_id, role_slug, created_at
 
 SELECT 
   'Columnas de user_roles:' as info,
@@ -142,11 +154,21 @@ FROM public.user_roles;
 SELECT 
   user_id,
   role_slug,
-  created_at,
-  granted_at
+  created_at
 FROM public.user_roles
 ORDER BY created_at DESC
 LIMIT 10;
 
-RAISE NOTICE '✅ Script completado. Tabla user_roles configurada correctamente.';
+-- ========================================
+-- 8️⃣ MENSAJE FINAL
+-- ========================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Script completado. Tabla user_roles configurada correctamente.';
+  RAISE NOTICE '📊 Políticas RLS creadas:';
+  RAISE NOTICE '   - sel_user_roles_all: SELECT para todos';
+  RAISE NOTICE '   - ins_user_roles_sa: INSERT solo superadmins';
+  RAISE NOTICE '   - del_user_roles_sa: DELETE solo superadmins';
+END $$;
 
