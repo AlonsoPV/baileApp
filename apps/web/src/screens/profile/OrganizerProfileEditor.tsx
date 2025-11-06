@@ -914,6 +914,8 @@ export default function OrganizerProfileEditor() {
 
   // Función para obtener badge de estado
   const getEstadoBadge = () => {
+    if (!org) return null; // Si no hay perfil, no mostrar badge
+
     const badges: Record<string, { bg: string; text: string; icon: string }> = {
       borrador: { bg: '#94A3B8', text: 'Borrador', icon: '📝' },
       en_revision: { bg: colors.orange, text: 'En Revisión', icon: '⏳' },
@@ -2276,40 +2278,42 @@ export default function OrganizerProfileEditor() {
             slots={['v1', 'v2', 'v3']}
           />
 
-          {/* Estado y Acciones */}
-          <div className="org-editor-card">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              ⚙️ Estado y Acciones
-            </h2>
+          {/* Estado y Acciones - Solo mostrar si el perfil ya existe */}
+          {!isNewProfile && (
+            <div className="org-editor-card">
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+                ⚙️ Estado y Acciones
+              </h2>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                Estado: {getEstadoBadge()}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                  Estado: {getEstadoBadge()}
+                </span>
+              </div>
+
+              {org.estado_aprobacion === "borrador" && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSubmitForReview}
+                  disabled={submit.isPending}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: submit.isPending ? `${colors.light}33` : colors.blue,
+                    color: colors.light,
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: submit.isPending ? 'not-allowed' : 'pointer',
+                    boxShadow: `0 4px 16px ${colors.blue}66`,
+                  }}
+                >
+                  {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
+                </motion.button>
+              )}
             </div>
-
-            {org.estado_aprobacion === "borrador" && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSubmitForReview}
-                disabled={submit.isPending}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: submit.isPending ? `${colors.light}33` : colors.blue,
-                  color: colors.light,
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: submit.isPending ? 'not-allowed' : 'pointer',
-                  boxShadow: `0 4px 16px ${colors.blue}66`,
-                }}
-              >
-                {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
-              </motion.button>
-            )}
-          </div>
+          )}
 
         </div>
       </div>
