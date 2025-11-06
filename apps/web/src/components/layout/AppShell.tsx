@@ -61,18 +61,19 @@ export default function AppShell() {
         {/* Footer Navigation (always visible) */}
         <FooterNav />
 
-      {user && (
-        <OffCanvasMenu
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          menuItems={menuItems}
-          userName={user.email?.split('@')[0] || 'Usuario'}
-          userEmail={user.email || ''}
-          userAvatar={profile?.avatar_url || undefined}
-          displayName={profile?.display_name || undefined}
-        />
-      )}
-    </div>
+        {user && (
+          <OffCanvasMenu
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            menuItems={menuItems}
+            userName={user.email?.split('@')[0] || 'Usuario'}
+            userEmail={user.email || ''}
+            userAvatar={profile?.avatar_url || undefined}
+            displayName={profile?.display_name || undefined}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
