@@ -960,29 +960,79 @@ export default function OrganizerProfileEditor() {
   }
 
   if (!org) {
-    // Auto-creación de perfil si no existe
-    const [creating, setCreating] = React.useState(false);
-    React.useEffect(() => {
-      if (!creating) {
-        setCreating(true);
-        upsert.mutateAsync({ nombre_publico: 'Mi Organizador' }).catch(() => {
-          setCreating(false);
-        });
-      }
-    }, [creating, upsert]);
+    // Mensaje inicial para crear perfil (sin auto-creación)
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#000000',
+        background: 'linear-gradient(135deg, #0b0d10 0%, #1a1d24 100%)',
         color: colors.light,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        padding: '2rem'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <div>Creando tu perfil de organizador…</div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            textAlign: 'center',
+            maxWidth: '600px',
+            padding: '3rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}
+        >
+          <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🎤</div>
+          <h2 style={{ 
+            fontSize: '2rem', 
+            marginBottom: '1rem',
+            background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: '800'
+          }}>
+            Bienvenido, Organizador
+          </h2>
+          <p style={{ 
+            fontSize: '1.1rem',
+            marginBottom: '2rem',
+            opacity: 0.8,
+            lineHeight: '1.6'
+          }}>
+            Completa tu información básica para crear tu perfil de organizador.
+            Podrás añadir más detalles después.
+          </p>
+          <div style={{
+            padding: '1.5rem',
+            background: 'rgba(229, 57, 53, 0.1)',
+            borderRadius: '12px',
+            border: '1px solid rgba(229, 57, 53, 0.3)',
+            marginBottom: '2rem'
+          }}>
+            <p style={{ margin: 0, fontSize: '0.95rem', opacity: 0.9 }}>
+              💡 <strong>Tip:</strong> Usa el botón "💾 Guardar" arriba para crear tu perfil
+            </p>
+          </div>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{
+              padding: '0.75rem 2rem',
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+              border: 'none',
+              borderRadius: '12px',
+              color: '#fff',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            ⬆️ Ir arriba para guardar
+          </button>
+        </motion.div>
       </div>
     );
   }
