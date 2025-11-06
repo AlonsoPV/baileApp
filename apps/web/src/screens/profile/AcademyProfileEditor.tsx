@@ -93,19 +93,20 @@ export default function AcademyProfileEditor() {
 
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
-      // Crear payload limpio sin campos que no existen en la tabla
+      // Crear payload limpio con SOLO los campos que existen en profiles_academy
       const payload: any = {
         nombre_publico: form.nombre_publico,
         bio: form.bio,
-        ritmos_seleccionados: selectedCatalogIds,
         zonas: (form as any).zonas || [],
-        cronograma: (form as any).cronograma || [],
-        costos: (form as any).costos || [],
         ubicaciones: (form as any).ubicaciones || [],
-        redes_sociales: form.redes_sociales,
-        respuestas: (form as any).respuestas || {},
-        faq: (form as any).faq || []
+        horarios: (form as any).cronograma || [],  // cronograma se guarda como horarios
+        redes_sociales: form.redes_sociales
       };
+
+      // Agregar ritmos_seleccionados solo si hay selección (requiere ejecutar SCRIPT_ADD_RITMOS_SELECCIONADOS_TO_ACADEMY.sql)
+      if (selectedCatalogIds && selectedCatalogIds.length > 0) {
+        payload.ritmos_seleccionados = selectedCatalogIds;
+      }
 
       // Solo incluir id si existe (para updates)
       if ((form as any)?.id) {
