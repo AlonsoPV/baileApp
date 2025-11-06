@@ -30,6 +30,7 @@ import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
+import RSVPCounter from "../../components/RSVPCounter";
 
 const colors = {
   coral: '#FF3D57',
@@ -560,6 +561,24 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                               <span>{date.ciudad}</span>
                             </div>
                           )}
+                          
+                          {/* Contador de RSVP */}
+                          <div style={{
+                            marginLeft: 'auto',
+                            padding: '0.5rem 0.875rem',
+                            background: 'rgba(255, 140, 66, 0.15)',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255, 140, 66, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <RSVPCounter 
+                              eventDateId={date.id} 
+                              variant="minimal"
+                              showIcons={true}
+                            />
+                          </div>
                     </div>
                   </motion.div>
                 );
