@@ -39,13 +39,13 @@ export default function ChallengeNew() {
       if (pendingCoverFile) {
         const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
         const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('challenge-media').upload(path, pendingCoverFile, {
+        const { error: upErr } = await supabase.storage.from('media').upload(path, pendingCoverFile, {
           upsert: true,
           cacheControl: '3600',
           contentType: pendingCoverFile.type || undefined
         });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
         await supabase.from('challenges').update({ cover_image_url: pub.publicUrl }).eq('id', id);
       }
       showToast('Challenge creado', 'success');

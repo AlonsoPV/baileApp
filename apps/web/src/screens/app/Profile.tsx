@@ -97,16 +97,16 @@ export function Profile() {
 
       // Upload avatar if selected
       if (avatarFile) {
-        const fileName = `${profile.user_id}.png`;
+        const fileName = `avatars/${profile.user_id}.png`;
         const { error: uploadError } = await supabase.storage
-          .from('AVATARS')
+          .from('media')
           .upload(fileName, avatarFile, { upsert: true });
 
         if (uploadError) {
           throw new Error(`Error uploading avatar: ${uploadError.message}`);
         }
 
-        avatarUrl = getBucketPublicUrl('AVATARS', fileName);
+        avatarUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
         // Add timestamp to force cache refresh
         avatarUrl += `?t=${Date.now()}`;
         console.log('Avatar uploaded, new URL:', avatarUrl); // Debug log

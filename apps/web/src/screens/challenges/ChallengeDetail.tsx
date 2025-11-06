@@ -84,13 +84,13 @@ export default function ChallengeDetail() {
       if (pendingEditFile && currentUserId) {
         const ext = pendingEditFile.name.split('.').pop()?.toLowerCase() || 'mp4';
         const path = `challenges/${id}/submissions/${currentUserId}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('challenge-media').upload(path, pendingEditFile, {
+        const { error: upErr } = await supabase.storage.from('media').upload(path, pendingEditFile, {
           upsert: true,
           cacheControl: '3600',
           contentType: pendingEditFile.type || undefined
         });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
         videoUrl = pub.publicUrl as string;
       }
       const { error } = await supabase
@@ -112,13 +112,13 @@ export default function ChallengeDetail() {
   };
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
-    const { error } = await supabase.storage.from('challenge-media').upload(path, file, {
+    const { error } = await supabase.storage.from('media').upload(path, file, {
       upsert: true,
       cacheControl: '3600',
       contentType: file.type || undefined
     });
     if (error) throw error;
-    const { data: pub } = supabase.storage.from('challenge-media').getPublicUrl(path);
+    const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
     return pub.publicUrl as string;
   };
 
@@ -345,7 +345,7 @@ export default function ChallengeDetail() {
                           onConfirm: async () => {
                             try {
                               const path = getStoragePathFromPublicUrl((challenge as any).cover_image_url);
-                              if (path) await supabase.storage.from('challenge-media').remove([path]);
+                              if (path) await supabase.storage.from('media').remove([path]);
                               const { error } = await supabase.from('challenges').update({ cover_image_url: null }).eq('id', id as string);
                               if (error) throw error;
                               showToast('Portada eliminada', 'success');
@@ -399,7 +399,7 @@ export default function ChallengeDetail() {
                           onConfirm: async () => {
                             try {
                               const path = getStoragePathFromPublicUrl((challenge as any).hero_video_url);
-                              if (path) await supabase.storage.from('challenge-media').remove([path]);
+                              if (path) await supabase.storage.from('media').remove([path]);
                               const { error } = await supabase.from('challenges').update({ hero_video_url: null }).eq('id', id as string);
                               if (error) throw error;
                               showToast('Video eliminado', 'success');

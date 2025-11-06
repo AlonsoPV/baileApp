@@ -51,16 +51,16 @@ export function ProfileBasics() {
 
       // Upload avatar if selected
       if (avatarFile) {
-        const fileName = `${user.id}.png`;
+        const fileName = `avatars/${user.id}.png`;
         const { error: uploadError } = await supabase.storage
-          .from('AVATARS')
+          .from('media')
           .upload(fileName, avatarFile, { upsert: true });
 
         if (uploadError) {
           throw new Error(`Error uploading avatar: ${uploadError.message}`);
         }
 
-        avatarUrl = getBucketPublicUrl('AVATARS', fileName);
+        avatarUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
       }
 
       // Merge with existing profile

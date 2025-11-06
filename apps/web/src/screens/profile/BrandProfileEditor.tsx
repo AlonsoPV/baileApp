@@ -143,18 +143,18 @@ export default function BrandProfileEditor() {
     for (const file of onlyImages) {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from('brand-media').upload(path, file, {
+      const { error } = await supabase.storage.from('media').upload(path, file, {
         cacheControl: '3600', upsert: false, contentType: file.type || undefined,
       });
       if (error) { console.error('[BrandCatalogUpload] Error:', error); alert(`Error al subir una imagen: ${error.message}`); continue; }
-      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+      const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
       uploaded.push({ id: path, titulo: '', imagen_url: pub.publicUrl, category: 'ropa' });
     }
     if (uploaded.length > 0) dispatch({ type:'SET_PRODUCTS', value: [...form.productos, ...uploaded] });
   };
 
   const removeCatalogItem = async (prodIdOrPath: string) => {
-    try { await supabase.storage.from('brand-media').remove([prodIdOrPath]); }
+    try { await supabase.storage.from('media').remove([prodIdOrPath]); }
     catch (e) { console.warn('[BrandCatalogRemove] No se pudo eliminar del storage (continuando):', e); }
     dispatch({ type:'REMOVE_PRODUCT', id: prodIdOrPath });
   };
@@ -164,9 +164,9 @@ export default function BrandProfileEditor() {
     const brandId = (brand as any).id as number;
     const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
     const path = `${brandId}/logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
+    const { error } = await supabase.storage.from('media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
     if (error) { alert(error.message); return; }
-    const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+    const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
     dispatch({ type:'SET_AVATAR', url: pub.publicUrl });
     // Persistir inmediatamente (fallback a user_id si fuera necesario)
     try {
@@ -200,9 +200,9 @@ export default function BrandProfileEditor() {
     for (const file of imgs) {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${brandId}/lookbook/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from('brand-media').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
+      const { error } = await supabase.storage.from('media').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
       if (error) { console.error(error); continue; }
-      const { data: pub } = supabase.storage.from('brand-media').getPublicUrl(path);
+      const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
       uploadedUrls.push(pub.publicUrl);
     }
     if (uploadedUrls.length > 0) {
