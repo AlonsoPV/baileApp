@@ -31,14 +31,35 @@ export default function AppShell() {
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#e5e7eb', paddingBottom: '80px' }}>
-      <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
-      <AppBootstrap>
-        <Outlet />
-      </AppBootstrap>
+    <>
+      <style>{`
+        .app-shell-root {
+          min-height: 100vh;
+          background: #0b0d10;
+          color: #e5e7eb;
+          padding-bottom: 100px;
+        }
+        
+        @media (max-width: 768px) {
+          .app-shell-root {
+            padding-bottom: 90px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .app-shell-root {
+            padding-bottom: 80px;
+          }
+        }
+      `}</style>
+      <div className="app-shell-root">
+        <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
+        <AppBootstrap>
+          <Outlet />
+        </AppBootstrap>
 
-      {/* Footer Navigation (mobile only) */}
-      <FooterNav />
+        {/* Footer Navigation (always visible) */}
+        <FooterNav />
 
       {user && (
         <OffCanvasMenu

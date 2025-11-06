@@ -128,15 +128,28 @@ export const FooterNav: React.FC = () => {
           height: 80px;
         }
 
+        /* Desktop y Laptop */
         @media (min-width: 769px) {
-          .footer-nav {
-            display: none;
+          .footer-nav-content {
+            max-width: 800px;
+            padding: 0.75rem 0;
           }
-          .footer-spacer {
-            display: none;
+          
+          .footer-nav-item {
+            padding: 0.75rem 1.5rem;
+            min-width: 90px;
+          }
+
+          .footer-nav-icon {
+            font-size: 1.6rem;
+          }
+
+          .footer-nav-label {
+            font-size: 0.75rem;
           }
         }
 
+        /* Tablet */
         @media (max-width: 768px) {
           .footer-nav-content {
             padding: 0.75rem 0;
@@ -156,6 +169,7 @@ export const FooterNav: React.FC = () => {
           }
         }
 
+        /* Mobile */
         @media (max-width: 480px) {
           .footer-nav-item {
             padding: 0.5rem 0.5rem;
