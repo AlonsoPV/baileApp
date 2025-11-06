@@ -3,17 +3,14 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useAcademyMy } from "./useAcademy";
 
-// Buckets esperados (crear en Supabase si no existen):
-// - academy-avatars (público)
-// - academy-covers (público)
-// - academy-media (público)
-const BUCKET = "academy-media";
+// Usar el bucket 'media' existente con prefijo 'academy/'
+const BUCKET = "media";
 
-// Helper to upload to academy-media bucket
+// Helper to upload to media bucket with academy prefix
 async function uploadAcademyFile(academyId: number, file: File): Promise<MediaItem> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = file.type.startsWith("image/") ? "image" : "video";
-  const path = `${academyId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const path = `academy/${academyId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   console.log('[AcademyMediaStorage] Uploading file:', { academyId, fileName: file.name, type, path });
 

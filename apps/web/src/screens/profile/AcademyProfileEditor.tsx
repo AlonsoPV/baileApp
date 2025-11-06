@@ -100,7 +100,8 @@ export default function AcademyProfileEditor() {
         zonas: (form as any).zonas || [],
         ubicaciones: (form as any).ubicaciones || [],
         horarios: (form as any).cronograma || [],  // cronograma se guarda como horarios
-        redes_sociales: form.redes_sociales
+        redes_sociales: form.redes_sociales,
+        estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
 
       // Agregar ritmos_seleccionados solo si hay selección (requiere ejecutar SCRIPT_ADD_RITMOS_SELECCIONADOS_TO_ACADEMY.sql)
@@ -546,21 +547,36 @@ export default function AcademyProfileEditor() {
                     const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
                     const labelByCatalogId = new Map<string, string>();
                     RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                    
                     // 1) Priorizar selección local del formulario (sin guardar)
                     const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-                    if (Array.isArray(localSelected) && localSelected.length > 0) {
-                      const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                      const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
-                      // Si por alguna razón no mapea nada, caemos a allowedIds o todos
-                      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                    
+                    // 2) Si no hay selección local, usar datos guardados en academy
+                    const savedSelected: string[] = ((academy as any)?.ritmos_seleccionados || []) as string[];
+                    
+                    // Combinar ambas fuentes
+                    const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
+                    
+                    if (combinedSelected.length > 0) {
+                      const selectedLabels = new Set(
+                        combinedSelected.map(id => labelByCatalogId.get(id)).filter(Boolean)
+                      );
+                      const filtered = ritmoTags.filter((t: any) => selectedLabels.has(t.nombre));
+                      if (filtered.length > 0) {
+                        console.log('[AcademyProfileEditor] Ritmos filtrados para CrearClase:', filtered);
+                        return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+                      }
                     }
-                    // 2) Si no hay selección local, usar restricción desde DB (allowedIds)
+                    
+                    // 3) Fallback: usar allowedIds si existe
                     if (Array.isArray(allowedIds) && allowedIds.length > 0) {
                       const allowedLabels = new Set(allowedIds.map(id => labelByCatalogId.get(id)).filter(Boolean));
                       const filtered = ritmoTags.filter((t: any) => allowedLabels.has(t.nombre));
                       if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                     }
-                    // 3) Fallback: todos
+                    
+                    // 4) Último fallback: todos los ritmos
+                    console.log('[AcademyProfileEditor] Usando todos los ritmos como fallback');
                     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                   })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
