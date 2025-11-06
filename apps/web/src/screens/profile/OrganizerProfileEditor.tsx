@@ -29,7 +29,6 @@ import ChipPicker from "../../components/common/ChipPicker";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
-import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 
 const colors = {
@@ -639,8 +638,7 @@ export default function OrganizerProfileEditor() {
     cronograma: [] as any[],
     costos: [] as any[],
     flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
-    ubicaciones: [] as any[]
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
   });
 
   // Función para subir archivo
@@ -676,8 +674,7 @@ export default function OrganizerProfileEditor() {
             estado_aprobacion: 'borrador',
             estado_publicacion: 'borrador',
             ritmos_seleccionados: [],
-            zonas: [],
-            ubicaciones: []
+            zonas: []
           })
           .select('*')
           .single();
@@ -703,8 +700,7 @@ export default function OrganizerProfileEditor() {
             ritmos_seleccionados: [],
             zonas: [],
             cronograma: [],
-            costos: [],
-            ubicaciones: []
+            costos: []
           });
 
         if (dateErr) {
@@ -758,7 +754,6 @@ export default function OrganizerProfileEditor() {
       ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
-      ubicaciones: [] as any[],
       redes_sociales: {
         instagram: "",
         facebook: "",
@@ -798,7 +793,6 @@ export default function OrganizerProfileEditor() {
       console.log("🎵 [OrganizerProfileEditor] Ritmos:", form.ritmos);
       console.log("🎵 [OrganizerProfileEditor] Ritmos Seleccionados:", (form as any).ritmos_seleccionados);
       console.log("📍 [OrganizerProfileEditor] Zonas:", form.zonas);
-      console.log("📍 [OrganizerProfileEditor] Ubicaciones:", (form as any).ubicaciones);
       console.log("💬 [OrganizerProfileEditor] Respuestas:", form.respuestas);
 
       // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
@@ -879,8 +873,7 @@ export default function OrganizerProfileEditor() {
         cronograma: dateForm.cronograma || [],
         costos: dateForm.costos || [],
         flyer_url: dateForm.flyer_url || null,
-        estado_publicacion: dateForm.estado_publicacion || 'borrador',
-        ubicaciones: dateForm.ubicaciones || []
+        estado_publicacion: dateForm.estado_publicacion || 'borrador'
       });
       showToast('Fecha creada ✅', 'success');
       setShowDateForm(false);
@@ -902,8 +895,7 @@ export default function OrganizerProfileEditor() {
         cronograma: [],
         costos: [],
         flyer_url: null,
-        estado_publicacion: 'borrador',
-        ubicaciones: []
+        estado_publicacion: 'borrador'
       });
       setSelectedParentId(null);
     } catch (err: any) {
@@ -1527,45 +1519,6 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
-          {/* Ubicaciones del Organizador */}
-          <div
-            id="organizer-ubicaciones"
-            data-test-id="organizer-ubicaciones"
-            className="org-editor-card"
-          >
-            {/* <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              📍 Ubicaciones
-            </h2> */}
-            <UbicacionesEditor
-              value={(form as any).ubicaciones || []}
-              onChange={(ubicaciones) => setField('ubicaciones' as any, ubicaciones as any)}
-              onSaveItem={() => handleSave()}
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleSave}
-                disabled={upsert.isPending}
-                style={{
-                  padding: '0.8rem 1.2rem',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: upsert.isPending
-                    ? 'rgba(255,255,255,0.12)'
-                    : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                  color: '#FFFFFF',
-                  fontSize: '0.9rem',
-                  fontWeight: 800,
-                  cursor: upsert.isPending ? 'not-allowed' : 'pointer',
-                  boxShadow: upsert.isPending ? 'none' : '0 8px 24px rgba(30,136,229,0.35)'
-                }}
-              >
-                {upsert.isPending ? '⏳ Guardando...' : '💾 Guardar ubicaciones'}
-              </motion.button>
-            </div>
-          </div>
-
           {/* Maestros Invitados */}
           {/* <InvitedMastersSection
             masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
@@ -2042,8 +1995,7 @@ export default function OrganizerProfileEditor() {
                           cronograma: [],
                           costos: [],
                           flyer_url: null,
-                          estado_publicacion: 'borrador',
-                          ubicaciones: []
+                          estado_publicacion: 'borrador'
                         });
                         setSelectedParentId(null);
                       }}
