@@ -119,112 +119,195 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
 
   // Siempre mostrar la sección, incluso sin datos
   return (
-    <div style={{
-      width: '100%',
-      padding: '1.5rem',
-      background: 'rgba(255, 255, 255, 0.05)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      marginBottom: '1.5rem'
-    }}>
-      {/* Header: Sobre mi + Redes Sociales */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: bio ? '1rem' : '0',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
-        <h3 style={{
-          margin: '0 0 1rem 0',
-          fontSize: '1.5rem',
-          fontWeight: '800',
-          background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          <span>📝</span>
-          <span>Sobre mí</span>
-        </h3>
+    <>
+      <style>{`
+        .bio-section-root {
+          width: 100%;
+          padding: 1.5rem;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 1.5rem;
+        }
 
-        {/* Iconos de Redes Sociales */}
-        {availableSocials.length > 0 && (
-          <div style={{
-            display: 'flex',
-            gap: '0.75rem',
-            alignItems: 'center',
-            flexWrap: 'wrap'
+        .bio-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        .bio-title {
+          margin: 0;
+          fontSize: 1.5rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .bio-socials {
+          display: flex;
+          gap: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .bio-social-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .bio-social-icon:hover {
+          transform: translateY(-3px) scale(1.15);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .bio-text {
+          margin: 0;
+          font-size: 1.05rem;
+          line-height: 1.7;
+          color: rgba(255, 255, 255, 0.95);
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          font-weight: 400;
+        }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+          .bio-section-root {
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+          }
+
+          .bio-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+
+          .bio-title {
+            font-size: 1.35rem;
+            width: 100%;
+          }
+
+          .bio-socials {
+            width: 100%;
+            justify-content: center;
+            gap: 0.6rem;
+          }
+
+          .bio-social-icon {
+            width: 42px;
+            height: 42px;
+          }
+
+          .bio-text {
+            font-size: 1rem;
+            line-height: 1.65;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+          .bio-section-root {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+          }
+
+          .bio-header {
+            gap: 0.75rem;
+          }
+
+          .bio-title {
+            font-size: 1.2rem;
+            gap: 0.35rem;
+          }
+
+          .bio-socials {
+            gap: 0.5rem;
+          }
+
+          .bio-social-icon {
+            width: 38px;
+            height: 38px;
+          }
+
+          .bio-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+          }
+        }
+      `}</style>
+      
+      <div className="bio-section-root">
+        {/* Header: Sobre mi + Redes Sociales */}
+        <div className="bio-header">
+          <h3 className="bio-title">
+            <span>📝</span>
+            <span>Sobre mí</span>
+          </h3>
+
+          {/* Iconos de Redes Sociales */}
+          {availableSocials.length > 0 && (
+            <div className="bio-socials">
+              {availableSocials.map(([platform, username]) => (
+                <a
+                  key={platform}
+                  href={getSocialUrl(platform, username as string)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bio-social-icon"
+                  style={{
+                    background: getSocialColor(platform),
+                    color: '#fff',
+                    border: platform === 'tiktok' ? '2px solid #fff' : 'none'
+                  }}
+                  title={`${platform}: ${username}`}
+                >
+                  {getSocialIcon(platform)}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Biografía */}
+        {bio ? (
+          <p className="bio-text">
+            {bio}
+          </p>
+        ) : (
+          <p style={{
+            margin: 0,
+            fontSize: '0.95rem',
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontStyle: 'italic',
+            textAlign: 'center',
+            padding: '1rem'
           }}>
-            {availableSocials.map(([platform, username]) => (
-              <a
-                key={platform}
-                href={getSocialUrl(platform, username as string)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: getSocialColor(platform),
-                  color: platform === 'tiktok' ? '#fff' : '#fff',
-                  transition: 'all 0.3s ease',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  border: platform === 'tiktok' ? '2px solid #fff' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.1)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                }}
-                title={`${platform}: ${username}`}
-              >
-                {getSocialIcon(platform)}
-              </a>
-            ))}
-          </div>
+            {availableSocials.length > 0 
+              ? '¡Sígueme en mis redes sociales!' 
+              : 'Aún no hay biografía disponible'}
+          </p>
         )}
       </div>
-
-      {/* Biografía */}
-      {bio ? (
-        <p style={{
-          margin: 0,
-          fontSize: '1.05rem',
-          lineHeight: '1.7',
-          color: 'rgba(255, 255, 255, 0.95)',
-          whiteSpace: 'pre-wrap',
-          wordWrap: 'break-word',
-          fontWeight: '400'
-        }}>
-          {bio}
-        </p>
-      ) : (
-        <p style={{
-          margin: 0,
-          fontSize: '0.95rem',
-          color: 'rgba(255, 255, 255, 0.6)',
-          fontStyle: 'italic',
-          textAlign: 'center',
-          padding: '1rem'
-        }}>
-          {availableSocials.length > 0 
-            ? '¡Sígueme en mis redes sociales!' 
-            : 'Aún no hay biografía disponible'}
-        </p>
-      )}
-    </div>
+    </>
   );
 };
 
