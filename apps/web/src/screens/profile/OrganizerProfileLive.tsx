@@ -690,7 +690,7 @@ export function OrganizerProfileLive() {
           .org-banner {
             border-radius: 0 !important;
             padding: 2rem 1rem !important;
-            margin: 1rem auto 0 auto !important;
+            margin: 0 auto !important;
           }
           .org-banner-grid {
             grid-template-columns: 1fr !important;
@@ -863,7 +863,7 @@ export function OrganizerProfileLive() {
           style={{
             position: 'relative',
             overflow: 'hidden',
-            margin: `0 auto 0 auto`,
+            margin: `0 auto`,
             maxWidth: '900px',
             width: '100%',
             zIndex: 1

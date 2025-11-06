@@ -274,7 +274,7 @@ export function OrganizerPublicScreen() {
         @media (max-width: 768px) { .org-root { padding-top: 64px; } }
         @media (max-width: 768px) {
           .org-container { max-width: 100% !important; padding: 1rem !important; }
-          .org-banner { border-radius: 0 !important; padding: 2rem 1rem !important; margin: 1rem auto 0 auto !important; }
+          .org-banner { border-radius: 0 !important; padding: 2rem 1rem !important; margin: 0 auto !important; }
           .org-banner-grid { grid-template-columns: 1fr !important; gap: 2rem !important; justify-items: center !important; text-align: center !important; }
           .org-banner-avatar { width: 180px !important; height: 180px !important; }
           .org-banner-avatar-fallback { font-size: 4rem !important; }
@@ -308,7 +308,7 @@ export function OrganizerPublicScreen() {
         </div>
 
         {/* Banner */}
-        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'hidden', margin: `0 auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
+        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'hidden', margin: `0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
           <button
             aria-label="Compartir perfil"
             title="Compartir"
