@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
+import { BioSection } from "../../components/profile/BioSection";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -819,32 +820,17 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
 
-          {/* Biografía */}
-          {profile?.bio && (
-          <motion.section
-            id="user-profile-bio"
-            data-baile-id="user-profile-bio"
-            data-test-id="user-profile-bio"
+          {/* Biografía y Redes Sociales */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bio-section glass-card-container"
+            transition={{ duration: 0.6 }}
           >
-              <h3 className="section-title">
-                💬 Sobre mí
-              </h3>
-              <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1rem' }}>
-                {profile.bio}
-              </p>
-            </motion.section>
-          )}
-
-          {/* Redes Sociales */}
-          <div >
-            <SocialMediaSection
-              respuestas={profile?.respuestas}
-              availablePlatforms={['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp']}
+            <BioSection 
+              bio={profile?.bio}
+              redes={profile?.redes_sociales || (profile?.respuestas as any)?.redes}
             />
-          </div>
+          </motion.div>
 
           {/* Sección 1: Foto - Pregunta */}
           <motion.section
