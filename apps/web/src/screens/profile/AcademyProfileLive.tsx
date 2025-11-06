@@ -295,6 +295,14 @@ export default function AcademyProfileLive() {
   const { data: allTags } = useTags();
   const upsert = useUpsertAcademy();
 
+  // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
+  React.useEffect(() => {
+    if (!isLoading && !academy) {
+      console.log('[AcademyProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/academy/edit', { replace: true });
+    }
+  }, [isLoading, academy, navigate]);
+
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
@@ -353,14 +361,6 @@ export default function AcademyProfileLive() {
       </div>
     );
   }
-
-  // Auto-redirigir a Edit si no tiene perfil de academia
-  React.useEffect(() => {
-    if (!isLoading && !academy) {
-      console.log('[AcademyProfileLive] No profile found, redirecting to edit...');
-      navigate('/profile/academy/edit', { replace: true });
-    }
-  }, [isLoading, academy, navigate]);
 
   if (!academy) {
     return (
