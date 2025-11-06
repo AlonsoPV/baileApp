@@ -156,7 +156,8 @@ export function useUpsertMyOrganizer() {
         
         const payload = { 
           user_id: user.id, 
-          nombre_publico: next.nombre_publico || "Mi Organizador", 
+          nombre_publico: next.nombre_publico || "Mi Organizador",
+          estado_aprobacion: 'borrador', // Estado inicial por defecto
           ...cleanNext 
         };
         
@@ -178,8 +179,8 @@ export function useUpsertMyOrganizer() {
       }
     },
     onSuccess: () => {
+      // Invalidar todas las queries de organizer (usa prefijo para capturar todos los user_id)
       qc.invalidateQueries({ queryKey: ["organizer"] });
-      qc.invalidateQueries({ queryKey: ["organizer", "me"] });
     },
   });
 }
