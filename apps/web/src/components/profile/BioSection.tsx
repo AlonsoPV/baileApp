@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   FaInstagram, 
   FaFacebookF, 
@@ -25,6 +25,14 @@ interface BioSectionProps {
 }
 
 export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
+  // Debug logs
+  useEffect(() => {
+    console.log('[BioSection] Bio:', bio);
+    console.log('[BioSection] Redes raw:', redes);
+    console.log('[BioSection] Redes type:', typeof redes);
+    console.log('[BioSection] Redes keys:', redes ? Object.keys(redes) : 'null');
+  }, [bio, redes]);
+
   // Normalizar redes sociales (pueden venir en diferentes formatos)
   const socialLinks = redes || {};
 
