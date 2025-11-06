@@ -51,9 +51,10 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMainPhoto 
-          ? 'repeat(auto-fit, minmax(300px, 1fr))' 
+          ? 'repeat(auto-fit, minmax(300px, 450px))' 
           : 'repeat(auto-fit, minmax(250px, 1fr))', 
-        gap: isMainPhoto ? '2rem' : '1.5rem' 
+        gap: isMainPhoto ? '2rem' : '1.5rem',
+        justifyContent: isMainPhoto ? 'center' : 'start'
       }}>
         {slots.map((slot) => (
           <div key={slot} style={{
@@ -81,7 +82,10 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             )}
             
             <div style={{
-              aspectRatio: isMainPhoto ? '4/3' : '4/3',
+              aspectRatio: isMainPhoto ? 'auto' : '4/3',
+              width: isMainPhoto ? '450px' : '100%',
+              maxWidth: '100%',
+              height: isMainPhoto ? 'auto' : undefined,
               borderRadius: '8px',
               overflow: 'hidden',
               marginBottom: '1rem',
