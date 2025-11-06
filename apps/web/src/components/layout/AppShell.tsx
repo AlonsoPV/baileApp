@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Navbar } from '../Navbar';
+import { FooterNav } from '../FooterNav';
 import AppBootstrap from '@/providers/AppBootstrap';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -30,11 +31,14 @@ export default function AppShell() {
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#e5e7eb' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d10', color: '#e5e7eb', paddingBottom: '80px' }}>
       <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
       <AppBootstrap>
         <Outlet />
       </AppBootstrap>
+
+      {/* Footer Navigation (mobile only) */}
+      <FooterNav />
 
       {user && (
         <OffCanvasMenu

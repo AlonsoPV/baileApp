@@ -85,31 +85,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         </Link>
       </div>
 
-      {/* Nav Icons Only */}
+      {/* Nav Icons - Solo Admin Trending para Superadmins */}
       <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <Link
-          to="/explore"
-          aria-label="Explorar"
-          title="Explorar"
-          className="nav-icon"
-          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          🔍
-        </Link>
-        {/* Trending: todos pueden ver y votar */}
-        <Link
-          to="/trending"
-          aria-label="Trending"
-          title="Trending"
-          className="nav-icon"
-          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          📈
-        </Link>
         {/* Admin trending: solo superadmin */}
         {isAdmin && (
           <Link
@@ -124,28 +101,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             ⚙️
           </Link>
         )}
-        <Link
-          to="/challenges"
-          aria-label="Challenges"
-          title="Challenges"
-          className="nav-icon"
-          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          🏆
-        </Link>
-        <Link
-          to={user ? '/app/profile' : '/auth/login'}
-          aria-label="Perfil"
-          title="Perfil"
-          className="nav-icon"
-          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          👤
-        </Link>
       </div>
     </nav>
   );
