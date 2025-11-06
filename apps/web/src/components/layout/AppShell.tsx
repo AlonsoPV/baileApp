@@ -20,9 +20,9 @@ export default function AppShell() {
   const defaultProfileInfo = getDefaultProfileInfo();
 
   const menuItems = [
-    { id: 'explore', label: 'Explorar', icon: '🔍', onClick: () => navigate('/explore') },
-    { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
     { id: 'me', label: 'Mi perfil', icon: '👤', onClick: () => navigate('/app/profile') },
+    { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
+    { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
     { id: 'default-profile', label: 'Configurar perfil por defecto', icon: '⚙️', onClick: () => navigate('/app/profile/settings') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
     { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') },

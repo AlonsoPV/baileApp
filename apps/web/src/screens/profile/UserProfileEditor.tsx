@@ -324,6 +324,10 @@ export default function UserProfileEditor() {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
           }
+          .info-redes-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
           .editor-subsection-title {
             font-size: 1.1rem !important;
             margin-bottom: 0.75rem !important;
@@ -387,111 +391,120 @@ export default function UserProfileEditor() {
             👤 Información Personal y Redes Sociales
           </h2>
           
-          {/* Información Básica */}
-          <div className="editor-grid" style={{ marginBottom: '2rem' }}>
+          {/* Layout de 2 columnas: Info Personal | Redes Sociales */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '2rem',
+            alignItems: 'start'
+          }}
+          className="info-redes-grid">
+            {/* Columna 1: Información Básica */}
             <div>
-              <label className="editor-field">
-                Nombre de Usuario
-              </label>
-              <input
-                type="text"
-                value={form.display_name}
-                onChange={(e) => setField('display_name', e.target.value)}
-                placeholder="Tu nombre de usuario"
-                className="editor-input"
-              />
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="editor-field">
+                  Nombre de Usuario
+                </label>
+                <input
+                  type="text"
+                  value={form.display_name}
+                  onChange={(e) => setField('display_name', e.target.value)}
+                  placeholder="Tu nombre de usuario"
+                  className="editor-input"
+                />
+              </div>
+              
+              <div>
+                <label className="editor-field">
+                  Biografía
+                </label>
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setField('bio', e.target.value)}
+                  placeholder="Cuéntanos sobre ti..."
+                  rows={6}
+                  className="editor-textarea"
+                />
+              </div>
             </div>
-            
-            <div>
-              <label className="editor-field">
-                Biografía
-              </label>
-              <textarea
-                value={form.bio}
-                onChange={(e) => setField('bio', e.target.value)}
-                placeholder="Cuéntanos sobre ti..."
-                rows={4}
-                className="editor-textarea"
-              />
-            </div>
-          </div>
 
-          {/* Divisor */}
-          <div style={{
-            width: '100%',
-            height: '1px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            margin: '2rem 0'
-          }} />
-
-          {/* Redes Sociales */}
-          <h3 className="editor-subsection-title" style={{ marginBottom: '1rem' }}>
-            📱 Redes Sociales
-          </h3>
-          <div className="editor-grid-small">
+            {/* Columna 2: Redes Sociales */}
             <div>
-              <label className="editor-field">
-                📸 Instagram
-              </label>
-              <input
-                type="text"
-                value={form.respuestas?.redes?.instagram || ''}
-                onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
-                placeholder="@tu_usuario"
-                className="editor-input"
-              />
-            </div>
-            
-            <div>
-              <label className="editor-field">
-                🎵 TikTok
-              </label>
-              <input
-                type="text"
-                value={form.respuestas?.redes?.tiktok || ''}
-                onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
-                placeholder="@tu_usuario"
-                className="editor-input"
-              />
-            </div>
-            
-            <div>
-              <label className="editor-field">
-                📺 YouTube
-              </label>
-              <input
-                type="text"
-                value={form.respuestas?.redes?.youtube || ''}
-                onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
-                placeholder="Canal o enlace"
-                className="editor-input"
-              />
-            </div>
-            
-            <div>
-              <label className="editor-field">
-                👥 Facebook
-              </label>
-              <input
-                type="text"
-                value={form.respuestas?.redes?.facebook || ''}
-                onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
-                placeholder="Perfil o página"
-                className="editor-input"
-              />
-            </div>
-            
-            <div>
-              <label className="editor-field">
-                💬 WhatsApp
-              </label>
-              <input
-                type="text"
-                value={form.respuestas?.redes?.whatsapp || ''}
-                onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
-                placeholder="Número de teléfono"
-                className="editor-input"
-              />
+              <h3 className="editor-subsection-title" style={{ marginBottom: '1rem', marginTop: 0 }}>
+                📱 Redes Sociales
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                    📸 Instagram
+                  </label>
+                  <input
+                    type="text"
+                    value={form.respuestas?.redes?.instagram || ''}
+                    onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
+                    placeholder="@usuario"
+                    className="editor-input"
+                    style={{ padding: '0.6rem' }}
+                  />
+                </div>
+                
+                <div>
+                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                    🎵 TikTok
+                  </label>
+                  <input
+                    type="text"
+                    value={form.respuestas?.redes?.tiktok || ''}
+                    onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
+                    placeholder="@usuario"
+                    className="editor-input"
+                    style={{ padding: '0.6rem' }}
+                  />
+                </div>
+                
+                <div>
+                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                    📺 YouTube
+                  </label>
+                  <input
+                    type="text"
+                    value={form.respuestas?.redes?.youtube || ''}
+                    onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
+                    placeholder="@canal"
+                    className="editor-input"
+                    style={{ padding: '0.6rem' }}
+                  />
+                </div>
+                
+                <div>
+                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                    👥 Facebook
+                  </label>
+                  <input
+                    type="text"
+                    value={form.respuestas?.redes?.facebook || ''}
+                    onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
+                    placeholder="perfil"
+                    className="editor-input"
+                    style={{ padding: '0.6rem' }}
+                  />
+                </div>
+                
+                <div>
+                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                    💬 WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={form.respuestas?.redes?.whatsapp || ''}
+                    onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
+                    placeholder="+52..."
+                    className="editor-input"
+                    style={{ padding: '0.6rem' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
