@@ -106,14 +106,6 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     }
   };
 
-  // Definir roles disponibles
-  const availableRoles = [
-    { id: 'user', name: 'Usuario', icon: '👤', route: '/profile', available: true },
-    { id: 'organizer', name: 'Organizador', icon: '🎤', route: '/profile/organizer', available: true },
-    { id: 'academy', name: 'Academia', icon: '🎓', route: '/profile/academy', available: true },
-    { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher', available: true },
-    { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand', available: true },
-  ];
   const slugForRoleId = (roleId: string) => {
     const map: Record<string, 'usuario'|'organizador'|'academia'|'maestro'|'marca'> = {
       user: 'usuario',
@@ -139,6 +131,28 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     ));
   };
 
+  // Verificar si un rol está realmente disponible (aprobado o es superadmin)
+  const isRoleAvailable = (roleId: string) => {
+    // Usuario siempre está disponible
+    if (roleId === 'user') return true;
+    // Superadmin puede acceder a todos los roles
+    if (isSuperAdmin) return true;
+    // Verificar si tiene el rol aprobado
+    return hasRole(roleId) || hasApprovedRequest(roleId);
+  };
+
+  // Definir todos los roles posibles
+  const allRoles = [
+    { id: 'user', name: 'Usuario', icon: '👤', route: '/profile' },
+    { id: 'organizer', name: 'Organizador', icon: '🎤', route: '/profile/organizer' },
+    { id: 'academy', name: 'Academia', icon: '🎓', route: '/profile/academy' },
+    { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher' },
+    { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand' },
+  ];
+
+  // Filtrar solo roles disponibles para el usuario
+  const availableRoles = allRoles.filter(role => isRoleAvailable(role.id));
+
   const getRequestRoute = (roleId: string) => {
     const map: Record<string, string> = {
       organizer: 'organizador',
@@ -153,7 +167,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
 
 
   const currentRole = availableRoles.find(role => role.id === profileType);
-  const otherRoles = availableRoles.filter(role => role.id !== profileType);
+  // Mostrar TODOS los roles en el dropdown (disponibles y no disponibles)
+  const otherRoles = allRoles.filter(role => role.id !== profileType);
 
   return (
     <div className="pnt-wrap" style={{
@@ -349,60 +364,92 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                 zIndex: 1000,
                 overflow: 'hidden',
-                minWidth: '200px'
+                minWidth: '220px'
               }}>
-                {otherRoles.map((role) => (
-                  <button
-                    key={role.id}
-                    onClick={() => {
-                      console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
-                      if (!role.available) return;
-                      if (role.id === 'user') {
-                        navigate(role.route);
-                      } else if (isSuperAdmin || hasRole(role.id) || hasApprovedRequest(role.id)) {
-                        navigate(role.route);
-                      } else {
-                        navigate(getRequestRoute(role.id));
-                      }
-                      setIsRoleDropdownOpen(false);
-                    }}
-                    disabled={!role.available}
-                    style={{
+                {otherRoles.map((role) => {
+                  const isAvailable = isRoleAvailable(role.id);
+                  
+                  return (
+                    <div key={role.id} style={{
                       width: '100%',
                       padding: '0.75rem 1rem',
-                      background: role.available ? 'transparent' : 'rgba(255, 255, 255, 0.05)',
-                      color: role.available ? colors.light : 'rgba(255, 255, 255, 0.3)',
-                      border: 'none',
-                      fontSize: '0.9rem',
-                      fontWeight: '500',
-                      cursor: role.available ? 'pointer' : 'not-allowed',
+                      background: 'transparent',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
-                      transition: 'background 0.2s',
-                      textAlign: 'left',
-                      opacity: role.available ? 1 : 0.5
-                    }}
-                    onMouseEnter={(e) => {
-                      if (role.available) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (role.available) {
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem' }}>{role.icon}</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span>{role.name}</span>
-                      {!role.available && (
-                        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>Próximamente</span>
+                      justifyContent: 'space-between',
+                      gap: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                        <span style={{ fontSize: '1.1rem' }}>{role.icon}</span>
+                        <span style={{ 
+                          fontSize: '0.9rem', 
+                          fontWeight: '500',
+                          color: isAvailable ? colors.light : 'rgba(255, 255, 255, 0.5)'
+                        }}>
+                          {role.name}
+                        </span>
+                      </div>
+
+                      {isAvailable ? (
+                        // Botón para ir al perfil
+                        <button
+                          onClick={() => {
+                            console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
+                            navigate(role.route);
+                            setIsRoleDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '12px',
+                            background: 'rgba(76, 175, 80, 0.2)',
+                            border: '1px solid rgba(76, 175, 80, 0.4)',
+                            color: '#4CAF50',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(76, 175, 80, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(76, 175, 80, 0.2)';
+                          }}
+                        >
+                          Ver
+                        </button>
+                      ) : (
+                        // Botón para solicitar rol
+                        <button
+                          onClick={() => {
+                            navigate(getRequestRoute(role.id));
+                            setIsRoleDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '12px',
+                            background: 'rgba(229, 57, 53, 0.2)',
+                            border: '1px solid rgba(229, 57, 53, 0.4)',
+                            color: '#E53935',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(229, 57, 53, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(229, 57, 53, 0.2)';
+                          }}
+                        >
+                          Solicitar
+                        </button>
                       )}
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
