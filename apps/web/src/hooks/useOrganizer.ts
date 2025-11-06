@@ -151,10 +151,13 @@ export function useUpsertMyOrganizer() {
         console.log("🆕 [useOrganizer] Creando nuevo organizador...");
         
         // Primera vez: crear directamente
+        // Filtrar campos que no existen en profiles_organizer (como ubicaciones, que es solo para academias)
+        const { media, ubicaciones, ...cleanNext } = next as any;
+        
         const payload = { 
           user_id: user.id, 
           nombre_publico: next.nombre_publico || "Mi Organizador", 
-          ...next 
+          ...cleanNext 
         };
         
         console.log("📦 [useOrganizer] Payload para insertar:", payload);
