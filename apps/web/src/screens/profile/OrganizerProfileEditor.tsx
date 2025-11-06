@@ -63,21 +63,16 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         padding: 'clamp(1rem, 2vw, 2rem)',
         borderRadius: 'clamp(12px, 2vw, 24px)',
         border: '2px solid rgba(255, 255, 255, 0.15)',
-        cursor: 'pointer',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
         backdropFilter: 'blur(20px)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(255, 61, 87, 0.1)',
-        width: '100%'
-      }}
-      onClick={handleSocialClick}
-      whileHover={{
-        y: -8,
-        scale: 1.03,
-        boxShadow: '0 16px 48px rgba(255, 61, 87, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2)',
-        borderColor: 'rgba(255, 61, 87, 0.4)'
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem'
       }}
     >
       {/* Barra decorativa superior */}
@@ -107,91 +102,85 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           pointerEvents: 'none'
         }}
       />
-      {/* Header del social */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        marginBottom: '1.5rem',
-        marginTop: '0.5rem',
-        position: 'relative',
-        zIndex: 2
-      }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <motion.div
-              whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
-              transition={{ duration: 0.5 }}
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.8rem',
-                background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
-                border: '2px solid rgba(255, 61, 87, 0.3)',
-                boxShadow: '0 4px 16px rgba(255, 61, 87, 0.3)',
-                filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))'
-              }}
-            >
-              🎭
-            </motion.div>
-            <div style={{ flex: 1 }}>
-              <h4 style={{
-                fontSize: 'clamp(1.1rem, 1rem + 0.5vw, 1.5rem)',
-                fontWeight: '800',
-                margin: 0,
-                marginBottom: '0.25rem',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                letterSpacing: '-0.02em'
-              }}>
-                {parent.nombre}
-              </h4>
-              {parent.descripcion && (
-                <p style={{
-                  fontSize: '0.95rem',
-                  opacity: 0.85,
-                  marginTop: '0.25rem',
-                  fontWeight: '400',
-                  lineHeight: 1.5,
-                  color: "rgba(255, 255, 255, 0.9)"
-                }}>
-                  {parent.descripcion.length > 100 ? `${parent.descripcion.substring(0, 100)}...` : parent.descripcion}
-                </p>
-              )}
-            </div>
-          </div>
+      
+      {/* COLUMNA 1: Información del Social */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <motion.div
-            whileHover={{ scale: 1.05, x: 4 }}
+            whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+            transition={{ duration: 0.5 }}
             style={{
-              fontSize: 'clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem)',
-              color: colors.blue,
-              fontWeight: '700',
-              display: 'inline-flex',
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: 'clamp(0.4rem, 0.5rem + 0.3vw, 0.75rem) clamp(0.75rem, 1rem, 1.25rem)',
-              background: 'rgba(30, 136, 229, 0.15)',
-              borderRadius: '12px',
-              border: '2px solid rgba(30, 136, 229, 0.3)',
-              width: 'fit-content',
-              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-              cursor: 'pointer'
+              justifyContent: 'center',
+              fontSize: '1.8rem',
+              background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
+              border: '2px solid rgba(255, 61, 87, 0.3)',
+              boxShadow: '0 4px 16px rgba(255, 61, 87, 0.3)',
+              filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))'
             }}
           >
-            <span style={{ fontSize: '1rem' }}>👁️</span>
-            <span>Ver detalles del social</span>
-            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>→</span>
+            🎭
           </motion.div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{
+              fontSize: 'clamp(1.1rem, 1rem + 0.5vw, 1.5rem)',
+              fontWeight: '800',
+              margin: 0,
+              marginBottom: '0.25rem',
+              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.02em'
+            }}>
+              {parent.nombre}
+            </h4>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative', zIndex: 2, alignItems: 'flex-end' }}>
+        
+        {parent.descripcion && (
+          <p style={{
+            fontSize: '0.95rem',
+            opacity: 0.85,
+            marginBottom: '1rem',
+            fontWeight: '400',
+            lineHeight: 1.5,
+            color: "rgba(255, 255, 255, 0.9)"
+          }}>
+            {parent.descripcion.length > 150 ? `${parent.descripcion.substring(0, 150)}...` : parent.descripcion}
+          </p>
+        )}
+        
+        <motion.div
+          whileHover={{ scale: 1.05, x: 4 }}
+          onClick={handleSocialClick}
+          style={{
+            fontSize: 'clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem)',
+            color: colors.blue,
+            fontWeight: '700',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: 'clamp(0.4rem, 0.5rem + 0.3vw, 0.75rem) clamp(0.75rem, 1rem, 1.25rem)',
+            background: 'rgba(30, 136, 229, 0.15)',
+            borderRadius: '12px',
+            border: '2px solid rgba(30, 136, 229, 0.3)',
+            width: 'fit-content',
+            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
+            cursor: 'pointer',
+            marginBottom: '1rem'
+          }}
+        >
+          <span style={{ fontSize: '1rem' }}>👁️</span>
+          <span>Ver detalles del social</span>
+          <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>→</span>
+        </motion.div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -213,7 +202,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              whiteSpace: 'nowrap'
+              justifyContent: 'center'
             }}
           >
             <span>✏️</span>
@@ -244,7 +233,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              whiteSpace: 'nowrap'
+              justifyContent: 'center'
             }}
           >
             <span>{isDeleting ? '⏳' : '🗑️'}</span>
@@ -253,16 +242,17 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         </div>
       </div>
 
-      {/* Fechas del social */}
-      {dates && dates.length > 0 && (
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
+      {/* COLUMNA 2: Fechas del social */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        {dates && dates.length > 0 ? (
+          <>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -597,8 +587,22 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
               })}
             </motion.div>
           )}
-        </div>
-      )}
+          </>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '2rem',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📅</div>
+            <p style={{ fontSize: '0.9rem', opacity: 0.7, margin: 0 }}>
+              No hay fechas para este social
+            </p>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -1150,16 +1154,9 @@ export default function OrganizerProfileEditor() {
         }
 
         .org-events-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+          display: flex;
+          flex-direction: column;
           gap: 1.5rem;
-        }
-
-        @media (max-width: 1200px) {
-          .org-events-grid { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
-        }
-        @media (max-width: 992px) {
-          .org-events-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
         }
         
         .org-create-button {
@@ -1237,8 +1234,13 @@ export default function OrganizerProfileEditor() {
           }
           
           .org-events-grid {
-            grid-template-columns: 1fr !important;
             gap: 1.25rem !important;
+          }
+          
+          /* En mobile, las cards de social deben ser de una sola columna */
+          .org-events-grid > div > div {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
           }
           
           .org-create-button {
@@ -1305,8 +1307,13 @@ export default function OrganizerProfileEditor() {
           }
           
           .org-events-grid {
-            grid-template-columns: 1fr !important;
             gap: 1rem !important;
+          }
+          
+          /* En mobile pequeño, las cards de social deben ser de una sola columna */
+          .org-events-grid > div > div {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
           }
           
           .org-create-button {
