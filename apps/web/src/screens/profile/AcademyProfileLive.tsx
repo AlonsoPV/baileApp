@@ -11,7 +11,6 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
@@ -20,6 +19,7 @@ import { useUpsertAcademy } from "../../hooks/useAcademy";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
+import { BioSection } from "../../components/profile/BioSection";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -693,33 +693,17 @@ export default function AcademyProfileLive() {
 
         {/* Contenido Principal */}
         <div style={{ padding: '2rem 0' }}>
-          {/* Bio */}
-          {academy.bio && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <h3 className="section-title">📚 Sobre Nosotros</h3>
-              <p style={{
-                fontSize: '1.1rem',
-                lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.9)',
-                margin: 0
-              }}>
-                {academy.bio}
-              </p>
-            </motion.section>
-          )}
+          {/* Biografía y Redes Sociales */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <BioSection 
+              bio={academy.bio}
+              redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+            />
+          </motion.div>
 
           {/* Ritmos de Baile */}
           {/*   {academy.ritmos && academy.ritmos.length > 0 && (
@@ -918,22 +902,6 @@ export default function AcademyProfileLive() {
               </div>
             </motion.section>
           )}
-          {/* Redes Sociales */}
-          <SocialMediaSection
-            respuestas={{ redes: academy.redes_sociales }}
-            redes_sociales={academy.redes_sociales}
-            title="Redes Sociales"
-            availablePlatforms={['instagram', 'facebook', 'whatsapp']}
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            }}
-          />
 
           {/* Maestros Invitados */}
           <InvitedMastersSection

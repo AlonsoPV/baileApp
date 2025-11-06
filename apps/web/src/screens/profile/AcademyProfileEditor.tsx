@@ -297,6 +297,47 @@ export default function AcademyProfileEditor() {
           />
         </div>
 
+        {/* Banner de Bienvenida (solo para perfiles nuevos) */}
+        {!academy && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              padding: '1.5rem',
+              marginBottom: '2rem',
+              background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)',
+              border: '2px solid rgba(229, 57, 53, 0.4)',
+              borderRadius: '16px',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎓</div>
+            <h3 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '700',
+              marginBottom: '0.5rem',
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              ¡Bienvenido, Academia!
+            </h3>
+            <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
+              Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
+            </p>
+            <div style={{
+              display: 'inline-block',
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: '600'
+            }}>
+              👆 Mínimo requerido: <strong>Nombre de la Academia</strong>
+            </div>
+          </motion.div>
+        )}
+
         {/* Información Básica */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
