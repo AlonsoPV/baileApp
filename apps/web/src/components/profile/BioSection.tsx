@@ -109,10 +109,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
     ([_, value]) => value && value.trim() !== ''
   );
 
-  if (!bio && availableSocials.length === 0) {
-    return null;
-  }
-
+  // Siempre mostrar la sección, incluso sin datos
   return (
     <div style={{
       width: '100%',
@@ -133,10 +130,12 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         gap: '1rem'
       }}>
         <h3 style={{
-          margin: 0,
-          fontSize: '1.2rem',
-          fontWeight: '600',
-          color: '#fff',
+          margin: '0 0 1rem 0',
+          fontSize: '1.5rem',
+          fontWeight: '800',
+          background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem'
@@ -191,7 +190,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
       </div>
 
       {/* Biografía */}
-      {bio && (
+      {bio ? (
         <p style={{
           margin: 0,
           fontSize: '0.95rem',
@@ -202,17 +201,18 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         }}>
           {bio}
         </p>
-      )}
-
-      {/* Mensaje si no hay biografía pero sí redes */}
-      {!bio && availableSocials.length > 0 && (
+      ) : (
         <p style={{
           margin: 0,
           fontSize: '0.9rem',
           color: 'rgba(255, 255, 255, 0.5)',
-          fontStyle: 'italic'
+          fontStyle: 'italic',
+          textAlign: 'center',
+          padding: '1rem'
         }}>
-          No hay biografía disponible
+          {availableSocials.length > 0 
+            ? '¡Sígueme en mis redes sociales!' 
+            : 'Aún no hay biografía disponible'}
         </p>
       )}
     </div>
