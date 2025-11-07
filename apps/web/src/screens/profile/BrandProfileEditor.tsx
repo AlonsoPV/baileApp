@@ -439,7 +439,7 @@ export default function BrandProfileEditor() {
                         value={form.bio || ''} 
                         onChange={(e) => setField('bio', e.target.value)} 
                         placeholder="Describe tu marca: historia, materiales, enfoque, estilos que representas, qué te hace único..." 
-                        rows={6} 
+                        rows={2} 
                         className="editor-textarea"
                         style={{
                           fontSize: '1rem',
@@ -620,33 +620,158 @@ export default function BrandProfileEditor() {
                 </div>
               </div>
 
-              {/* Conversión */}
+              {/* Conversión - Diseño optimizado */}
               <div className="editor-section glass-card-container">
-                <h2 className="editor-section-title">🎁 Conversión</h2>
-                <div className="editor-grid-small">
-                  <div>
-                    <label className="editor-field">Encabezado</label>
-                    <input className="editor-input" value={form.conversion?.headline || ''} onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ headline: e.target.value } })} placeholder="10% primera compra" />
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #FB8C00, #FF7043)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
+                  }}>
+                    🎁
                   </div>
                   <div>
-                    <label className="editor-field">Subtítulo / Mensaje</label>
-                    <input className="editor-input" value={form.conversion?.subtitle || ''} onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ subtitle: e.target.value } })} placeholder="Usa el cupón BAILE10" />
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>Conversión</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Promociones y cupones para tus clientes
+                    </p>
                   </div>
                 </div>
-                <div style={{ marginTop: '.6rem' }}>
+
+                {/* Inputs de conversión */}
+                <div style={{ display: 'grid', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                  <div>
+                    <label className="editor-field" style={{ 
+                      fontSize: '0.95rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      ✨ Encabezado de la Promoción
+                    </label>
+                    <input 
+                      className="editor-input" 
+                      value={form.conversion?.headline || ''} 
+                      onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ headline: e.target.value } })} 
+                      placeholder="Ej: 10% de descuento en tu primera compra"
+                      style={{ padding: '0.875rem', fontSize: '1rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="editor-field" style={{ 
+                      fontSize: '0.95rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      💬 Subtítulo / Mensaje
+                    </label>
+                    <input 
+                      className="editor-input" 
+                      value={form.conversion?.subtitle || ''} 
+                      onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ subtitle: e.target.value } })} 
+                      placeholder="Ej: Usa el cupón BAILE10 al finalizar tu compra"
+                      style={{ padding: '0.875rem', fontSize: '1rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Editor de cupones */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1rem', 
+                    fontWeight: '700', 
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    🎟️ Cupones Activos
+                  </h3>
                   <CouponEditor
                     coupons={(form.conversion?.coupons || []) as string[]}
                     onChange={(arr)=> dispatch({ type:'SET_CONVERSION', value:{ coupons: arr } })}
                     onSave={async (arr)=>{
-                      if (!(brand as any)?.id) return;
-                      const next = { ...(form.conversion||{}), coupons: arr };
-                      await supabase.from('profiles_brand').update({ conversion: next }).eq('id', (brand as any).id);
+                      if (!(brand as any)?.id) { 
+                        showToast('Primero guarda la información básica.', 'error'); 
+                        return; 
+                      }
+                      try {
+                        const next = { ...(form.conversion||{}), coupons: arr };
+                        await supabase.from('profiles_brand').update({ conversion: next }).eq('id', (brand as any).id);
+                        showToast('✅ Cupones guardados', 'success');
+                      } catch (e: any) {
+                        showToast('❌ Error al guardar cupones', 'error');
+                      }
                     }}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '.75rem' }}>
-                  <span style={{ fontWeight: 900 }}>{form.conversion?.headline || '10% primera compra'}</span>
-                  <span style={{ opacity: .85 }}>{form.conversion?.subtitle || <>Usa uno de tus cupones</>}</span>
+
+                {/* Vista previa */}
+                <div style={{ 
+                  marginTop: '1.5rem',
+                  padding: '1.25rem',
+                  background: 'rgba(251, 140, 0, 0.08)',
+                  border: '2px solid rgba(251, 140, 0, 0.2)',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ 
+                    fontSize: '0.85rem', 
+                    fontWeight: '600', 
+                    opacity: 0.7, 
+                    marginBottom: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    👀 Vista Previa
+                  </div>
+                  <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ 
+                      fontWeight: 900, 
+                      fontSize: '1.1rem',
+                      background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
+                      {form.conversion?.headline || '10% primera compra'}
+                    </span>
+                    <span style={{ opacity: .85, fontSize: '0.95rem' }}>
+                      {form.conversion?.subtitle || 'Usa uno de tus cupones'}
+                    </span>
+                  </div>
+                  {(form.conversion?.coupons || []).length > 0 && (
+                    <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                      {(form.conversion?.coupons || []).map((c: string) => (
+                        <span key={c} style={{ 
+                          padding: '0.5rem 1rem',
+                          background: 'rgba(255, 255, 255, 0.15)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          borderRadius: '20px',
+                          fontWeight: '700',
+                          fontSize: '0.9rem',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -771,32 +896,172 @@ export default function BrandProfileEditor() {
           {/* === POLICIES === */}
           {tab==='policies' && (
             <div className="editor-section glass-card-container">
-              <h2 className="editor-section-title">🔒 Políticas</h2>
-              <div className="editor-grid">
-                <div>
-                  <label className="editor-field">Envíos</label>
-                  <textarea className="editor-textarea" rows={3} value={form.policies?.shipping || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ shipping: e.target.value } })} placeholder="Tiempos y zonas de envío" />
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '56px', 
+                  height: '56px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #1E88E5, #00BCD4)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.75rem',
+                  boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                }}>
+                  🔒
                 </div>
                 <div>
-                  <label className="editor-field">Cambios / Devoluciones</label>
-                  <textarea className="editor-textarea" rows={3} value={form.policies?.returns || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ returns: e.target.value } })} placeholder="Condiciones para cambios y devoluciones" />
-                </div>
-                <div>
-                  <label className="editor-field">Garantía</label>
-                  <textarea className="editor-textarea" rows={3} value={form.policies?.warranty || ''} onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ warranty: e.target.value } })} placeholder="Cobertura de garantía" />
+                  <h2 className="editor-section-title" style={{ margin: 0 }}>Políticas</h2>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                    Envíos, cambios y garantías de tu marca
+                  </p>
                 </div>
               </div>
-              <div style={{ marginTop: '.6rem' }}>
-                <button type="button" className="editor-back-btn" onClick={async ()=>{
-                  if (!(brand as any)?.id) return;
-                  await supabase.from('profiles_brand').update({ policies: form.policies || {} }).eq('id', (brand as any).id);
-                }}>Guardar políticas</button>
+
+              {/* Grid de políticas */}
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {/* Envíos */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <label className="editor-field" style={{ 
+                    fontSize: '1rem',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: '700'
+                  }}>
+                    📦 Política de Envíos
+                  </label>
+                  <textarea 
+                    className="editor-textarea" 
+                    rows={3} 
+                    value={form.policies?.shipping || ''} 
+                    onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ shipping: e.target.value } })} 
+                    placeholder="Ej: Envíos nacionales 2-5 días hábiles. Envío gratis en compras mayores a $1,000 MXN."
+                    style={{ padding: '1rem', fontSize: '0.95rem', lineHeight: '1.6' }}
+                  />
+                </div>
+
+                {/* Cambios/Devoluciones */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <label className="editor-field" style={{ 
+                    fontSize: '1rem',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: '700'
+                  }}>
+                    🔄 Cambios y Devoluciones
+                  </label>
+                  <textarea 
+                    className="editor-textarea" 
+                    rows={3} 
+                    value={form.policies?.returns || ''} 
+                    onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ returns: e.target.value } })} 
+                    placeholder="Ej: Aceptamos cambios y devoluciones dentro de 15 días. El producto debe estar sin uso y en su empaque original."
+                    style={{ padding: '1rem', fontSize: '0.95rem', lineHeight: '1.6' }}
+                  />
+                </div>
+
+                {/* Garantía */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <label className="editor-field" style={{ 
+                    fontSize: '1rem',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: '700'
+                  }}>
+                    ✅ Garantía
+                  </label>
+                  <textarea 
+                    className="editor-textarea" 
+                    rows={3} 
+                    value={form.policies?.warranty || ''} 
+                    onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ warranty: e.target.value } })} 
+                    placeholder="Ej: 30 días de garantía por defectos de fabricación. No cubre desgaste por uso normal."
+                    style={{ padding: '1rem', fontSize: '0.95rem', lineHeight: '1.6' }}
+                  />
+                </div>
               </div>
-              <div style={{ marginTop: '.75rem' }}>
-                <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
-                  <li><b>Envíos:</b> {form.policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
-                  <li><b>Cambios/Devoluciones:</b> {form.policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
-                  <li><b>Garantía:</b> {form.policies?.warranty || '30 días por defectos de fabricación.'}</li>
+
+              {/* Botón de guardar */}
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  className="editor-back-btn" 
+                  onClick={async ()=>{
+                    if (!(brand as any)?.id) { 
+                      showToast('Primero guarda la información básica.', 'error'); 
+                      return; 
+                    }
+                    try {
+                      await supabase.from('profiles_brand').update({ policies: form.policies || {} }).eq('id', (brand as any).id);
+                      showToast('✅ Políticas guardadas', 'success');
+                    } catch (e: any) {
+                      showToast('❌ Error al guardar políticas', 'error');
+                    }
+                  }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))',
+                    fontWeight: '700',
+                    padding: '0.875rem 1.75rem'
+                  }}
+                >
+                  💾 Guardar Políticas
+                </button>
+              </div>
+
+              {/* Vista previa */}
+              <div style={{ 
+                marginTop: '1.5rem',
+                padding: '1.25rem',
+                background: 'rgba(30, 136, 229, 0.08)',
+                border: '2px solid rgba(30, 136, 229, 0.2)',
+                borderRadius: '12px'
+              }}>
+                <div style={{ 
+                  fontSize: '0.85rem', 
+                  fontWeight: '600', 
+                  opacity: 0.7, 
+                  marginBottom: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  👀 Vista Previa
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.5rem', lineHeight: 1.8, fontSize: '0.95rem' }}>
+                  <li>
+                    <b>📦 Envíos:</b> {form.policies?.shipping || 'Nacionales 2–5 días hábiles.'}
+                  </li>
+                  <li>
+                    <b>🔄 Cambios/Devoluciones:</b> {form.policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}
+                  </li>
+                  <li>
+                    <b>✅ Garantía:</b> {form.policies?.warranty || '30 días por defectos de fabricación.'}
+                  </li>
                 </ul>
               </div>
             </div>
