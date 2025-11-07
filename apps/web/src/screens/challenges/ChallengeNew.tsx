@@ -9,6 +9,22 @@ import { supabase } from '../../lib/supabase';
 // ⬇️ Estilos compartidos
 import '../../styles/event-public.css';
 
+const toLocalInputValue = (iso?: string | null) => {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const tzOffset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - tzOffset * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+const toISOStringOrNull = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
 export default function ChallengeNew() {
   const nav = useNavigate();
   const create = useChallengeCreate();
@@ -52,8 +68,8 @@ export default function ChallengeNew() {
         cover_image_url: form.cover_image_url || null,
         owner_video_url: form.owner_video_url || null,
         ritmo_slug: ritmosSelected[0] || null,
-        submission_deadline: form.submission_deadline || null,
-        voting_deadline: form.voting_deadline || null,
+        submission_deadline: toISOStringOrNull(form.submission_deadline),
+        voting_deadline: toISOStringOrNull(form.voting_deadline),
         requirements,
       });
       console.log('✅ Challenge creado con ID:', id);

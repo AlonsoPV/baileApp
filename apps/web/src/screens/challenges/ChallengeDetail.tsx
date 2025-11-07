@@ -20,6 +20,22 @@ import RitmosChips from '../../components/RitmosChips';
 // ⬇️ Estilos compartidos aplicados
 import '../../styles/event-public.css';
 
+const toLocalInputValue = (iso?: string | null) => {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const tzOffset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - tzOffset * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+const toISOStringOrNull = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
 export default function ChallengeDetail() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -153,8 +169,8 @@ export default function ChallengeDetail() {
         title: challenge.title || '',
         description: (challenge as any).description || '',
         cover_image_url: (challenge as any).cover_image_url || '',
-        submission_deadline: (challenge as any).submission_deadline || '',
-        voting_deadline: (challenge as any).voting_deadline || '',
+        submission_deadline: toLocalInputValue((challenge as any).submission_deadline),
+        voting_deadline: toLocalInputValue((challenge as any).voting_deadline),
         requirements: Array.isArray((challenge as any).requirements)
           ? ((challenge as any).requirements as any[]).map((item) => String(item))
           : []
@@ -304,8 +320,8 @@ export default function ChallengeDetail() {
           title: editForm.title,
           description: editForm.description,
           cover_image_url: coverUrl,
-          submission_deadline: editForm.submission_deadline || null,
-          voting_deadline: editForm.voting_deadline || null,
+          submission_deadline: toISOStringOrNull(editForm.submission_deadline),
+          voting_deadline: toISOStringOrNull(editForm.voting_deadline),
           ritmo_slug: ritmosSelected[0] || null,
           owner_video_url: ownerVideoUrl,
           requirements: editForm.requirements
