@@ -490,6 +490,33 @@ export default function EventDatePublicScreen() {
                       🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
                     </span>
                   )}
+                  {date.lugar && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="chip"
+                      style={{
+                        background: 'rgba(240,147,251,.12)',
+                        border: '1px solid rgba(240,147,251,.25)',
+                        color: '#f093fb',
+                        textDecoration: 'none',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(240,147,251,.20)';
+                        e.currentTarget.style.borderColor = 'rgba(240,147,251,.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(240,147,251,.12)';
+                        e.currentTarget.style.borderColor = 'rgba(240,147,251,.25)';
+                      }}
+                    >
+                      📍 {date.lugar}
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -568,11 +595,141 @@ export default function EventDatePublicScreen() {
           </div>
         </motion.header>
 
-        {/* uBICACIONES Y REQUISITOS */}
+        {/* RSVP Y CALENDARIO - Ahora primero con fondo CTA */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
+          aria-label="Asistencia y calendario"
+          style={{
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            borderRadius: 20,
+            border: '2px solid rgba(30,136,229,0.3)',
+            background: 'linear-gradient(135deg, rgba(30,136,229,0.15) 0%, rgba(0,188,212,0.12) 50%, rgba(240,147,251,0.10) 100%)',
+            boxShadow: '0 12px 32px rgba(30,136,229,0.25), 0 4px 16px rgba(0,0,0,0.2)',
+            backdropFilter: 'blur(16px)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Efecto de brillo CTA */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 30% 50%, rgba(30,136,229,0.15) 0%, transparent 60%)',
+            pointerEvents: 'none'
+          }} />
+          
+          <style>{`
+     .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center; position: relative; z-index: 1; }
+    .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
+    .metrics { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap }
+    .chip-count {
+      padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
+      background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
+      border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
+    }
+    .avatars { display:flex; align-items:center }
+    .avatar {
+      width:28px; height:28px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.25);
+      display:grid; place-items:center; font-size:.75rem; font-weight:800; color:#0b0d10;
+      background:linear-gradient(135deg,#f093fb,#FFD166)
+    }
+    .avatar + .avatar { margin-left:-8px }
+    .muted { color:rgba(255,255,255,.75); font-size:.9rem }
+    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .95rem; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-weight:800
+    }
+    .btn-ghost:hover { border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.1) }
+    .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
+    .subtle { font-size:.85rem; color:rgba(255,255,255,.6) }
+  `}</style>
+          
+          {/* Auth guard util */}
+          
+
+          <div className="rsvp-grid">
+            {/* Columna izquierda: RSVP + prueba social */}
+            <div className="card" aria-label="Confirmar asistencia">
+              <div style={{ display: 'grid', gap: '.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
+                  <h3 className="headline">🎯 Asistencia</h3>
+                </div>
+
+                {/* Botones RSVP */}
+                <RequireLogin>
+                  <RSVPButtons
+                    currentStatus={userStatus}
+                    onStatusChange={toggleInterested}
+                    disabled={isUpdating}
+                    interestedCount={interestedCount}
+                  />
+                </RequireLogin>
+
+                {/* Prueba social + microcopy */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
+
+
+                  {/* Estado actual del usuario */}
+                  <div className="subtle" aria-live="polite">
+                    {userStatus === 'interesado' ? '✅ Este evento es de tu interés' : 'Marca "Me interesa" para añadirlo a tus eventos'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fila 2: Agregar a calendario (solo si interesado) */}
+            {userStatus === 'interesado' && (
+              <div className="card" aria-label="Agregar evento a calendario">
+                <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
+                  <h3 className="headline">🗓️ Calendario</h3>
+                 
+
+                  <div className="cta-row">
+                    <RequireLogin>
+                      <AddToCalendarWithStats
+                        eventId={date.id}
+                        title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
+                        description={date.biografia || parent?.descripcion || undefined}
+                        location={date.lugar || date.ciudad || date.direccion || undefined}
+                        start={(() => {
+                          const fechaStr = (date.fecha || '').split('T')[0] || '';
+                          const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          return isNaN(d.getTime()) ? new Date() : d;
+                        })()}
+                        end={(() => {
+                          const fechaStr = (date.fecha || '').split('T')[0] || '';
+                          const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                          const d = new Date(`${fechaStr}T${h}:00`);
+                          if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
+                          return d;
+                        })()}
+                        showAsIcon={false}
+                      />
+                    </RequireLogin>
+
+                    {/* botón compartir removido en contenedor calendario */}
+                  </div>
+
+
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* UBICACIONES Y REQUISITOS - Ahora después de RSVP */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.1 }}
           aria-label="Ubicación y requisitos"
           style={{
             padding: '1.25rem',
@@ -684,129 +841,7 @@ export default function EventDatePublicScreen() {
           </div>
         </motion.section>
 
-
-
-        {/* RSVP */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          aria-label="Asistencia y calendario"
-          style={{
-            padding: '1.25rem',
-            marginBottom: '1.25rem',
-            borderRadius: 18,
-            border: '1px solid rgba(255,255,255,0.10)',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
-            backdropFilter: 'blur(12px)'
-          }}
-        >
-          <style>{`
-     .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center }
-    .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
-    .metrics { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap }
-    .chip-count {
-      padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
-      background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
-      border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
-    }
-    .avatars { display:flex; align-items:center }
-    .avatar {
-      width:28px; height:28px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.25);
-      display:grid; place-items:center; font-size:.75rem; font-weight:800; color:#0b0d10;
-      background:linear-gradient(135deg,#f093fb,#FFD166)
-    }
-    .avatar + .avatar { margin-left:-8px }
-    .muted { color:rgba(255,255,255,.75); font-size:.9rem }
-    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
-    .btn-ghost {
-      display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .95rem; border-radius:999px;
-      border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-weight:800
-    }
-    .btn-ghost:hover { border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.1) }
-    .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
-    .subtle { font-size:.85rem; color:rgba(255,255,255,.6) }
-  `}</style>
-          
-          {/* Auth guard util */}
-          
-
-          <div className="rsvp-grid">
-            {/* Columna izquierda: RSVP + prueba social */}
-            <div className="card" aria-label="Confirmar asistencia">
-              <div style={{ display: 'grid', gap: '.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
-                  <h3 className="headline">🎯 Asistencia</h3>
-                </div>
-
-                {/* Botones RSVP */}
-                <RequireLogin>
-                  <RSVPButtons
-                    currentStatus={userStatus}
-                    onStatusChange={toggleInterested}
-                    disabled={isUpdating}
-                    interestedCount={interestedCount}
-                  />
-                </RequireLogin>
-
-                {/* Prueba social + microcopy */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
-
-
-                  {/* Estado actual del usuario */}
-                  <div className="subtle" aria-live="polite">
-                    {userStatus === 'interesado' ? '✅ Este evento es de tu interés' : 'Marca “Me interesa” para añadirlo a tus eventos'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Fila 2: Agregar a calendario (solo si interesado) */}
-            {userStatus === 'interesado' && (
-              <div className="card" aria-label="Agregar evento a calendario">
-                <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
-                  <h3 className="headline">🗓️ Calendario</h3>
-                 
-
-                  <div className="cta-row">
-                    <RequireLogin>
-                      <AddToCalendarWithStats
-                        eventId={date.id}
-                        title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                        description={date.biografia || parent?.descripcion || undefined}
-                        location={date.lugar || date.ciudad || date.direccion || undefined}
-                        start={(() => {
-                          const fechaStr = (date.fecha || '').split('T')[0] || '';
-                          const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-                          const d = new Date(`${fechaStr}T${h}:00`);
-                          return isNaN(d.getTime()) ? new Date() : d;
-                        })()}
-                        end={(() => {
-                          const fechaStr = (date.fecha || '').split('T')[0] || '';
-                          const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-                          const d = new Date(`${fechaStr}T${h}:00`);
-                          if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
-                          return d;
-                        })()}
-                        showAsIcon={false}
-                      />
-                    </RequireLogin>
-
-                    {/* botón compartir removido en contenedor calendario */}
-                  </div>
-
-
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.section>
-
-
-
-
-        {/* Flyer de la Fecha */}
+        {/* Flyer de la Fecha - Ahora después de Ubicación y requisitos */}
         {date.flyer_url && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
