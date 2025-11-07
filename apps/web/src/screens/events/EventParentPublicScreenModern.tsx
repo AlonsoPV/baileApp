@@ -1189,7 +1189,7 @@ export default function EventParentPublicScreen() {
                       {futureDates.map((d: any) => (
                         <motion.div 
                           key={d.id} 
-                          style={{ width: '100%', maxWidth: '450px' }}
+                          style={{ width: '100%' }}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
@@ -1235,22 +1235,37 @@ export default function EventParentPublicScreen() {
             }
           `}</style>
 
-          {/* Primera fila: Solo Flyer (Descripción y Ritmos/Zonas ahora están en el Hero) */}
-          <div style={{ marginBottom: '2rem' }}>
-            {/* Flyer del Event Parent */}
-            {avatarUrl && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28 }}
-                className="glass-card-container"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+          {/* Imagen Principal - Más pequeña y centrada */}
+          {avatarUrl && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28 }}
+              style={{
+                marginBottom: '2rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <div style={{
+                width: '100%',
+                maxWidth: '500px',
+                padding: '1.5rem',
+                borderRadius: 24,
+                border: '2px solid rgba(229,57,53,.25)',
+                background: 'linear-gradient(135deg, rgba(229,57,53,.12), rgba(251,140,0,.08))',
+                boxShadow: '0 16px 40px rgba(229,57,53,.3), 0 4px 16px rgba(0,0,0,.3)',
+                backdropFilter: 'blur(12px)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem', justifyContent: 'center' }}>
                   <div style={{
                     width: 48, height: 48, borderRadius: '50%',
                     display: 'grid', placeItems: 'center',
                     background: 'linear-gradient(135deg, #E53935, #FB8C00)',
-                    boxShadow: '0 10px 28px rgba(229,57,53,.35)', fontSize: '1.25rem'
+                    boxShadow: '0 10px 28px rgba(229,57,53,.4)',
+                    fontSize: '1.25rem',
+                    border: '2px solid rgba(229,57,53,.3)'
                   }}>🎟️</div>
                   <div>
                     <h3 style={{
@@ -1266,11 +1281,11 @@ export default function EventParentPublicScreen() {
                 <div style={{
                   width: '100%',
                   aspectRatio: '4 / 5',
-                  borderRadius: 16,
+                  borderRadius: 18,
                   overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,.15)',
-                  boxShadow: '0 12px 32px rgba(0,0,0,.4)',
-                  background: 'linear-gradient(135deg, rgba(229,57,53,.12), rgba(251,140,0,.12))'
+                  border: '2px solid rgba(255,255,255,.2)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,.5)',
+                  background: 'linear-gradient(135deg, rgba(229,57,53,.15), rgba(251,140,0,.15))'
                 }}>
                   <ImageWithFallback
                     src={avatarUrl}
@@ -1280,9 +1295,9 @@ export default function EventParentPublicScreen() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
                 </div>
-              </motion.div>
-            )}
-          </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Próximas Fechas (Slider) - COMENTADO: Ya se muestra en el Hero */}
           {/* {dates && dates.length > 0 && (
