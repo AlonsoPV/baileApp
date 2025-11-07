@@ -261,7 +261,7 @@ export default function ClasesLive({
                     background: 'rgba(240, 147, 251, 0.12)',
                     color: '#f093fb'
                   }}>
-                    📅
+                    📅 {' '}
                     {(it as any)?.fecha ? (() => {
                       try {
                         const d = new Date((it as any).fecha);
@@ -278,7 +278,7 @@ export default function ClasesLive({
                       if (!isNaN(diaId) && diaId >= 0 && diaId <= 6) {
                         return dias[diaId];
                       }
-                      return (it as any)?.diaSemana;
+                      return (it as any)?.diaSemana || 'Día no especificado';
                     })()}
                   </span>
                 )}

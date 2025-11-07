@@ -83,7 +83,9 @@ export default function AcademyCard({ item }: AcademyCardProps) {
               flex: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              color: 'white',
+              
             }}>
               {nombre}
             </span>
@@ -92,15 +94,15 @@ export default function AcademyCard({ item }: AcademyCardProps) {
 
         {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {ritmoNombres.slice(0,3).map((name: string, i: number) => (
+            {ritmoNombres.slice(0, 3).map((name: string, i: number) => (
               <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
             ))}
-            {zonaNombres.slice(0,2).map((name: string, i: number) => (
+            {zonaNombres.slice(0, 2).map((name: string, i: number) => (
               <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
             ))}
           </div>
         )}
-      <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
+        <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
     </LiveLink>
   );

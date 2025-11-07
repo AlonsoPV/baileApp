@@ -92,7 +92,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               color: '#fff',
-              filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.36))'
+              textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
             }}>
               {item.nombre_publico}
             </span>
