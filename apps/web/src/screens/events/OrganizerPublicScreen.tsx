@@ -100,18 +100,18 @@ export function OrganizerPublicScreen() {
       // Intentar como ID numérico primero
       const numId = parseInt(routeId, 10);
       if (!isNaN(numId)) {
-        const { data, error } = await supabase.from('profiles_organizer').select('*').eq('id', numId).maybeSingle();
+        const { data, error } = await supabase.from('v_organizers_public').select('*').eq('id', numId).maybeSingle();
         if (error) throw error;
         if (data) return data;
       }
       // Intentar como UUID
       if (isUUID(routeId)) {
-        const { data, error } = await supabase.from('profiles_organizer').select('*').eq('user_id', routeId).maybeSingle();
+        const { data, error } = await supabase.from('v_organizers_public').select('*').eq('user_id', routeId).maybeSingle();
         if (error) throw error;
         if (data) return data;
       }
       // Intentar como slug
-      const { data, error } = await supabase.from('profiles_organizer').select('*').eq('slug', routeId).maybeSingle();
+      const { data, error } = await supabase.from('v_organizers_public').select('*').eq('slug', routeId).maybeSingle();
       if (error) throw error;
       return data ?? null;
     }
