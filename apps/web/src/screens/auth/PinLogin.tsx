@@ -130,22 +130,127 @@ export default function PinLogin() {
     }
   };
 
-  const container: React.CSSProperties = { minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0b0d10', color: '#e5e7eb' };
-  const card: React.CSSProperties = { width: 380, maxWidth: '92vw', padding: 24, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, background: '#0f1318' };
-  const input: React.CSSProperties = { width: '100%', padding: 12, borderRadius: 10, background: '#111418', border: '1px solid #222', color: '#e5e7eb' };
-  const btn: React.CSSProperties = { width: '100%', padding: 12, borderRadius: 10, border: 'none', background: '#2563EB', color: '#fff', fontWeight: 700, cursor: 'pointer' };
-  const btnGhost: React.CSSProperties = { ...btn, background: 'transparent', border: '1px solid #2a2f36', color: '#93c5fd' };
-  const tabsWrap: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 16 };
+  const container: React.CSSProperties = {
+    minHeight: '100vh',
+    display: 'grid',
+    placeItems: 'center',
+    background: 'linear-gradient(135deg, #0f172a 0%, #111827 45%, #1f2937 100%)',
+    color: '#e5e7eb',
+    padding: '1.5rem'
+  };
+
+  const card: React.CSSProperties = {
+    width: '100%',
+    maxWidth: 520,
+    borderRadius: 24,
+    padding: '2.25rem',
+    border: '2px solid rgba(96, 165, 250, 0.22)',
+    background: 'rgba(15, 23, 42, 0.85)',
+    backdropFilter: 'blur(18px)',
+    boxShadow: '0 30px 80px rgba(15, 23, 42, 0.6)'
+  };
+
+  const headerBadge: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '.5rem',
+    padding: '.5rem .9rem',
+    borderRadius: 999,
+    background: 'rgba(96,165,250,0.18)',
+    border: '1px solid rgba(96,165,250,0.35)',
+    color: '#bfdbfe',
+    fontWeight: 600,
+    fontSize: '.85rem'
+  };
+
+  const input: React.CSSProperties = {
+    width: '100%',
+    padding: '14px 16px',
+    borderRadius: 14,
+    background: 'rgba(15, 23, 42, 0.65)',
+    border: '1px solid rgba(96,165,250,0.25)',
+    color: '#e5e7eb',
+    fontSize: '1rem',
+    transition: 'all .2s'
+  };
+
+  const btnPrimary: React.CSSProperties = {
+    width: '100%',
+    padding: '14px 16px',
+    borderRadius: 14,
+    border: 'none',
+    background: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+    color: '#fff',
+    fontWeight: 800,
+    fontSize: '1rem',
+    cursor: 'pointer',
+    boxShadow: '0 14px 35px rgba(59,130,246,0.35)',
+    transition: 'transform .2s, box-shadow .2s'
+  };
+
+  const btnGhost: React.CSSProperties = {
+    padding: '10px 16px',
+    borderRadius: 12,
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'transparent',
+    color: '#cbd5f5',
+    fontWeight: 600,
+    cursor: 'pointer'
+  };
+
+  const tabsWrap: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: 10,
+    marginBottom: 24
+  };
+
   const tab = (active: boolean): React.CSSProperties => ({
-    padding: '10px 12px', borderRadius: 10, border: '1px solid',
-    borderColor: active ? '#2563EB' : '#2a2f36',
-    background: active ? '#1e293b' : 'transparent',
-    color: active ? '#dbeafe' : '#cbd5e1', cursor: 'pointer', textAlign: 'center', fontWeight: 700
+    padding: '12px 14px',
+    borderRadius: 14,
+    border: '1px solid',
+    borderColor: active ? 'rgba(94, 234, 212, 0.55)' : 'rgba(148, 163, 184, 0.25)',
+    background: active ? 'linear-gradient(135deg, rgba(94,234,212,0.25), rgba(45,212,191,0.35))' : 'rgba(15, 23, 42, 0.45)',
+    color: active ? '#e0f2fe' : '#cbd5f5',
+    cursor: 'pointer',
+    textAlign: 'center',
+    fontWeight: 700,
+    transition: 'all .2s'
   });
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: 8,
+    fontWeight: 600,
+    fontSize: '.9rem',
+    color: 'rgba(226,232,240,0.9)'
+  };
 
   return (
     <div style={container}>
       <div style={card}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={headerBadge}>
+            <span style={{ fontSize: '1.1rem' }}>🔐</span>
+            Acceso seguro con PIN
+          </div>
+          <h1
+            style={{
+              margin: '18px 0 6px',
+              fontSize: '1.9rem',
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
+            Verifica tu identidad
+          </h1>
+          <p style={{ margin: 0, opacity: 0.78, fontSize: '.95rem' }}>
+            Usa tu PIN de 4 dígitos o restablécelo para mantener protegida tu sesión.
+          </p>
+        </div>
+
         <div style={tabsWrap}>
           <button style={tab(mode === 'login')} onClick={() => setMode('login')}>Ingresar con PIN</button>
           <button style={tab(mode === 'reset')} onClick={() => setMode('reset')}>Restablecer PIN</button>
@@ -157,27 +262,56 @@ export default function PinLogin() {
             autoComplete="off"
             noValidate
           >
-            <h1 style={{ margin: 0, marginBottom: 8 }}>Ingresar</h1>
-            <p style={{ opacity: 0.8, marginTop: 0, marginBottom: 16 }}>Introduce tu PIN de 4 dígitos para continuar.</p>
+            <h2 style={{ margin: 0, marginBottom: 12, fontSize: '1.22rem', fontWeight: 700 }}>Introduce tu PIN</h2>
+            <p style={{ opacity: 0.75, marginTop: 0, marginBottom: 20 }}>
+              Solo necesitas tu PIN de 4 dígitos para acceder a tu cuenta.
+            </p>
             <input
               id="pin-input"
               name="pin"
               type="password"
               inputMode="numeric"
               pattern="\\d{4}"
-              placeholder="PIN de 4 dígitos"
+              placeholder="●●●●"
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
               autoComplete="one-time-code"
               autoFocus
-              style={{ ...input, marginBottom: 12 }}
+              style={{
+                ...input,
+                marginBottom: 16,
+                textAlign: 'center',
+                letterSpacing: '0.65rem',
+                fontSize: '1.3rem',
+                fontWeight: 700
+              }}
             />
-            {pinError && <div style={{ color: '#ef4444', marginBottom: 12 }}>{pinError}</div>}
-            <button type="submit" disabled={pinLoading || authLoading || !user} style={{ ...btn, background: pinLoading ? '#374151' : '#2563EB' }}>
-              {pinLoading ? 'Verificando…' : 'Continuar'}
+            {pinError && (
+              <div style={{
+                color: '#fca5a5',
+                marginBottom: 14,
+                padding: '10px 12px',
+                background: 'rgba(248,113,113,0.12)',
+                borderRadius: 12,
+                border: '1px solid rgba(248,113,113,0.28)'
+              }}>
+                {pinError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={pinLoading || authLoading || !user}
+              style={{
+                ...btnPrimary,
+                opacity: (pinLoading || authLoading || !user) ? 0.6 : 1,
+                cursor: (pinLoading || authLoading || !user) ? 'not-allowed' : 'pointer',
+                boxShadow: (pinLoading || authLoading || !user) ? 'none' : btnPrimary.boxShadow
+              }}
+            >
+              {pinLoading ? 'Verificando…' : 'Ingresar ahora'}
             </button>
             {!user && (
-              <div style={{ marginTop: 12, textAlign: 'center', fontSize: 14, opacity: 0.8 }}>
+              <div style={{ marginTop: 12, textAlign: 'center', fontSize: 14, opacity: 0.75 }}>
                 Debes iniciar sesión o usar “Restablecer PIN” para autenticarse.
               </div>
             )}
@@ -186,74 +320,149 @@ export default function PinLogin() {
 
         {mode === 'reset' && (
           <>
-            <h1 style={{ margin: 0, marginBottom: 8 }}>Restablecer PIN</h1>
+            <h2 style={{ margin: 0, marginBottom: 12, fontSize: '1.22rem', fontWeight: 700 }}>Restablecer PIN</h2>
             {!user && (
               <>
-                <p style={{ opacity: 0.8, marginTop: 0, marginBottom: 12 }}>
+                <p style={{ opacity: 0.75, marginTop: 0, marginBottom: 18 }}>
                   Autentícate para poder crear un nuevo PIN.
                 </p>
+                <label style={labelStyle} htmlFor="reset-email">Correo electrónico</label>
                 <input
+                  id="reset-email"
                   type="email"
-                  placeholder="Correo"
+                  placeholder="correo@ejemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ ...input, marginBottom: 10 }}
+                  style={{ ...input, marginBottom: 14 }}
                 />
                 {USE_PASSWORD_LOGIN && (
-                  <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ ...input, marginBottom: 10 }}
-                  />
+                  <>
+                    <label style={labelStyle} htmlFor="reset-password">Contraseña</label>
+                    <input
+                      id="reset-password"
+                      type="password"
+                      placeholder="Tu contraseña"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ ...input, marginBottom: 14 }}
+                    />
+                  </>
                 )}
-                {authErr && <div style={{ color: '#ef4444', marginBottom: 10 }}>{authErr}</div>}
-                {authMsg && <div style={{ color: '#93c5fd', marginBottom: 10 }}>{authMsg}</div>}
+                {authErr && (
+                  <div style={{
+                    color: '#fca5a5',
+                    marginBottom: 12,
+                    padding: '10px 12px',
+                    background: 'rgba(248,113,113,0.12)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(248,113,113,0.28)'
+                  }}>
+                    {authErr}
+                  </div>
+                )}
+                {authMsg && (
+                  <div style={{
+                    color: '#bae6fd',
+                    marginBottom: 12,
+                    padding: '10px 12px',
+                    background: 'rgba(59,130,246,0.18)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(59,130,246,0.32)'
+                  }}>
+                    {authMsg}
+                  </div>
+                )}
                 <button
                   onClick={handlePasswordLogin}
                   disabled={authBusy || (!email || (USE_PASSWORD_LOGIN && !password))}
-                  style={{ ...btn, background: authBusy ? '#374151' : '#2563EB', marginBottom: 16 }}
+                  style={{
+                    ...btnPrimary,
+                    opacity: authBusy ? 0.6 : 1,
+                    cursor: authBusy ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   {USE_PASSWORD_LOGIN ? 'Iniciar sesión' : (otpSent ? 'Enlace enviado' : 'Enviar enlace (OTP)')}
                 </button>
               </>
             )}
 
-            {/* Sección para crear nuevo PIN (cuando ya hay sesión) */}
             {user && (
               <form
                 onSubmit={(e) => { e.preventDefault(); if (!resetBusy) onSaveNewPin(); }}
                 autoComplete="off"
                 noValidate
               >
-                <p style={{ opacity: 0.8, marginTop: 0, marginBottom: 12 }}>
-                  Define tu nuevo PIN (4 dígitos).
+                <p style={{ opacity: 0.75, marginTop: 0, marginBottom: 18 }}>
+                  Define tu nuevo PIN de 4 dígitos.
                 </p>
+                <label style={labelStyle} htmlFor="new-pin">Nuevo PIN</label>
                 <input
+                  id="new-pin"
                   type="password"
                   inputMode="numeric"
                   pattern="\\d{4}"
-                  placeholder="Nuevo PIN"
+                  placeholder="●●●●"
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
-                  style={{ ...input, marginBottom: 10 }}
+                  style={{
+                    ...input,
+                    marginBottom: 14,
+                    textAlign: 'center',
+                    letterSpacing: '0.6rem',
+                    fontSize: '1.2rem',
+                    fontWeight: 700
+                  }}
                 />
+                <label style={labelStyle} htmlFor="confirm-pin">Confirmar PIN</label>
                 <input
+                  id="confirm-pin"
                   type="password"
                   inputMode="numeric"
                   pattern="\\d{4}"
                   placeholder="Confirmar PIN"
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
-                  style={{ ...input, marginBottom: 10 }}
+                  style={{
+                    ...input,
+                    marginBottom: 14,
+                    textAlign: 'center',
+                    letterSpacing: '0.6rem',
+                    fontSize: '1.2rem',
+                    fontWeight: 700
+                  }}
                 />
-                {resetErr && <div style={{ color: '#ef4444', marginBottom: 10 }}>{resetErr}</div>}
-                {resetMsg && <div style={{ color: '#10B981', marginBottom: 10 }}>{resetMsg}</div>}
+                {resetErr && (
+                  <div style={{
+                    color: '#fca5a5',
+                    marginBottom: 12,
+                    padding: '10px 12px',
+                    background: 'rgba(248,113,113,0.12)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(248,113,113,0.28)'
+                  }}>
+                    {resetErr}
+                  </div>
+                )}
+                {resetMsg && (
+                  <div style={{
+                    color: '#8ef5d1',
+                    marginBottom: 12,
+                    padding: '10px 12px',
+                    background: 'rgba(16,185,129,0.15)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(16,185,129,0.32)'
+                  }}>
+                    {resetMsg}
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={resetBusy || !(newPin.length === 4 && confirmPin.length === 4)}
-                  style={{ ...btn, background: resetBusy ? '#374151' : '#2563EB' }}
+                  style={{
+                    ...btnPrimary,
+                    opacity: (resetBusy || !(newPin.length === 4 && confirmPin.length === 4)) ? 0.6 : 1,
+                    cursor: (resetBusy || !(newPin.length === 4 && confirmPin.length === 4)) ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   {resetBusy ? 'Guardando…' : 'Guardar nuevo PIN'}
                 </button>
@@ -262,13 +471,13 @@ export default function PinLogin() {
           </>
         )}
 
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
+        <div style={{ marginTop: 22, textAlign: 'center' }}>
           <button
             type="button"
             onClick={() => setMode(mode === 'login' ? 'reset' : 'login')}
-            style={{ ...btnGhost, width: 'auto', padding: '8px 10px' }}
+            style={btnGhost}
           >
-            {mode === 'login' ? '¿Olvidaste tu NIP? Restablecer' : '← Volver a Ingresar con PIN'}
+            {mode === 'login' ? '¿Olvidaste tu PIN? Restablecer' : '← Volver a Ingresar con PIN'}
           </button>
         </div>
       </div>
