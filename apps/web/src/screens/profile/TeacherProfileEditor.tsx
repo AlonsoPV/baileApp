@@ -90,22 +90,33 @@ export default function TeacherProfileEditor() {
       console.log("📝 [teacherProfileEditor] Nombre público:", form.nombre_publico);
       console.log("📄 [teacherProfileEditor] Bio:", form.bio);
       console.log("🎵 [TeacherProfileEditor] Ritmos:", (form as any).ritmos);
-      // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
-      let outSelected = ((((form as any)?.ritmos_seleccionados) || []) as string[]);
-      const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
-      if ((!outSelected || outSelected.length === 0) && Array.isArray((form as any).ritmos) && (form as any).ritmos.length > 0) {
-        const labelToItemId = new Map<string, string>();
-        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.label, i.id)));
-        const names = ((form as any).ritmos as number[])
-          .map(id => ritmoTags.find((t: any) => t.id === id)?.nombre)
-          .filter(Boolean) as string[];
-        const mapped = names
-          .map(n => labelToItemId.get(n))
-          .filter(Boolean) as string[];
-        if (mapped.length > 0) outSelected = mapped;
+
+      const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
+      
+      // Crear payload limpio con SOLO los campos que existen en profiles_teacher
+      const payload: any = {
+        nombre_publico: form.nombre_publico,
+        bio: form.bio,
+        zonas: (form as any).zonas || [],
+        ubicaciones: (form as any).ubicaciones || [],
+        cronograma: (form as any).cronograma || [],
+        costos: (form as any).costos || [],
+        redes_sociales: form.redes_sociales,
+        estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
+      };
+
+      // Agregar ritmos_seleccionados solo si hay selección
+      if (selectedCatalogIds && selectedCatalogIds.length > 0) {
+        payload.ritmos_seleccionados = selectedCatalogIds;
       }
 
-      await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
+      // Solo incluir id si existe (para updates)
+      if ((form as any)?.id) {
+        payload.id = (form as any).id;
+      }
+
+      console.log("📦 [TeacherProfileEditor] Payload limpio:", payload);
+      await upsert.mutateAsync(payload);
       console.log("✅ [teacherProfileEditor] Guardado exitoso");
     } catch (error) {
       console.error("❌ [teacherProfileEditor] Error guardando:", error);
@@ -541,7 +552,28 @@ export default function TeacherProfileEditor() {
                 </div>
               )}
 
-              <CrearClase
+              {/* Mensaje si no tiene perfil guardado */}
+              {!teacher && (
+                <div style={{
+                  padding: '1.5rem',
+                  marginBottom: '1rem',
+                  background: 'rgba(255, 140, 66, 0.15)',
+                  border: '2px solid rgba(255, 140, 66, 0.3)',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
+                  <p style={{ fontSize: '1rem', fontWeight: '600', margin: 0 }}>
+                    Debes guardar el perfil del maestro primero antes de crear clases
+                  </p>
+                  <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0.5rem 0 0 0' }}>
+                    Completa el nombre del maestro y haz clic en 💾 Guardar arriba
+                  </p>
+                </div>
+              )}
+
+              {teacher && (
+                <CrearClase
                 ritmos={(() => {
                   const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
                   const labelByCatalogId = new Map<string, string>();
@@ -679,8 +711,9 @@ export default function TeacherProfileEditor() {
                   }
                 }}
               />
+              )}
 
-              {Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
+              {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
                 <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
                   {(form as any).cronograma.map((it: any, idx: number) => (
                     <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
