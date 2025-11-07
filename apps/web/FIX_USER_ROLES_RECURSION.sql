@@ -154,7 +154,7 @@ BEGIN
         ON public.challenge_votes
         FOR DELETE
         USING (
-          voter_user_id = auth.uid()
+          user_id = auth.uid()  -- ✅ Corregido: es user_id, no voter_user_id
           OR public.is_superadmin(auth.uid())
         );
 
