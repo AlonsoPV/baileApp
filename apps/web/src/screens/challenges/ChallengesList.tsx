@@ -10,6 +10,16 @@ import '../../styles/event-public.css';
 import RitmosChips from '../../components/RitmosChips';
 
 export default function ChallengesList() {
+  const formatDateTime = React.useCallback((value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString('es-MX', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  }, []);
+
   const nav = useNavigate();
   const { data, isLoading, error } = useChallengesList();
   const { showToast } = useToast();
@@ -284,6 +294,20 @@ export default function ChallengesList() {
                       {c.description}
                     </div>
                   )}
+                    {(formatDateTime(c.submission_deadline) || formatDateTime(c.voting_deadline)) && (
+                      <div style={{ display: 'grid', gap: '.35rem' }}>
+                        {formatDateTime(c.submission_deadline) && (
+                          <span className="cc-soft-chip" style={{ background: 'rgba(59,130,246,.24)', border: '1px solid rgba(59,130,246,.4)' }}>
+                            📮 Envíos: {formatDateTime(c.submission_deadline)}
+                          </span>
+                        )}
+                        {formatDateTime(c.voting_deadline) && (
+                          <span className="cc-soft-chip" style={{ background: 'rgba(245,158,11,.24)', border: '1px solid rgba(245,158,11,.4)' }}>
+                            🗳️ Votos: {formatDateTime(c.voting_deadline)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                     <span
                       style={{

@@ -36,6 +36,16 @@ const toISOStringOrNull = (value?: string | null) => {
   return date.toISOString();
 };
 
+const formatDateTime = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString('es-MX', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+};
+
 export default function ChallengeDetail() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -368,6 +378,20 @@ export default function ChallengeDetail() {
               </div>
               {(challenge as any)?.description && (
                 <div style={{ opacity: .85, fontSize: '.9rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{(challenge as any).description}</div>
+              )}
+              {(formatDateTime((challenge as any).submission_deadline) || formatDateTime((challenge as any).voting_deadline)) && (
+                <div style={{ display: 'flex', gap: '.5rem', marginTop: '.35rem', flexWrap: 'wrap' }}>
+                  {formatDateTime((challenge as any).submission_deadline) && (
+                    <span className="cc-soft-chip" title={`Cierre de envíos: ${formatDateTime((challenge as any).submission_deadline)}`}>
+                      📮 Envíos cierran: {formatDateTime((challenge as any).submission_deadline)}
+                    </span>
+                  )}
+                  {formatDateTime((challenge as any).voting_deadline) && (
+                    <span className="cc-soft-chip" title={`Cierre de votos: ${formatDateTime((challenge as any).voting_deadline)}`}>
+                      🗳️ Votos cierran: {formatDateTime((challenge as any).voting_deadline)}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
