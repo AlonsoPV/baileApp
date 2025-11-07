@@ -14,6 +14,7 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import EventCard from "../../components/explore/cards/EventCard";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado
@@ -81,8 +82,9 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
-              cursor: 'zoom-in'
+              objectFit: 'contain',
+              cursor: 'zoom-in',
+              background: 'rgba(0,0,0,0.3)'
             }}
             onClick={() => setIsFullscreen(true)}
           />
@@ -815,7 +817,7 @@ export default function EventParentPublicScreen() {
               </div>
             </div>
 
-            {/* Columna 2: Fechas Disponibles */}
+            {/* Columna 2: Próximas Fechas */}
             <div>
               <style>{`
                 .dates-container {
@@ -826,21 +828,19 @@ export default function EventParentPublicScreen() {
                   box-shadow: 0 10px 28px rgba(30,136,229,.25);
                 }
                 
-                .dates-list {
+                .dates-grid {
                   display: grid;
-                  gap: .75rem;
-                  max-height: 400px;
+                  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+                  gap: 1.5rem;
+                  max-height: 600px;
                   overflow-y: auto;
                   padding-right: .5rem;
                 }
                 
-                .date-card {
-                  padding: 1rem;
-                  border-radius: 14px;
-                  border: 1px solid rgba(255,255,255,.15);
-                  background: rgba(255,255,255,.06);
-                  cursor: pointer;
-                  transition: all 0.2s;
+                @media (max-width: 1400px) {
+                  .dates-grid {
+                    grid-template-columns: 1fr !important;
+                  }
                 }
                 
                 @media (max-width: 768px) {
@@ -848,12 +848,9 @@ export default function EventParentPublicScreen() {
                     padding: 1.25rem !important;
                   }
                   
-                  .dates-list {
-                    max-height: 300px !important;
-                  }
-                  
-                  .date-card {
-                    padding: 0.85rem !important;
+                  .dates-grid {
+                    max-height: 500px !important;
+                    gap: 1rem !important;
                   }
                 }
                 
@@ -862,117 +859,73 @@ export default function EventParentPublicScreen() {
                     padding: 1rem !important;
                   }
                   
-                  .dates-list {
-                    max-height: 250px !important;
-                    gap: 0.5rem !important;
-                  }
-                  
-                  .date-card {
-                    padding: 0.75rem !important;
-                  }
-                  
-                  .date-card-title {
-                    font-size: 0.9rem !important;
-                  }
-                  
-                  .date-card-chips {
-                    gap: 0.35rem !important;
-                  }
-                  
-                  .date-card-chips span {
-                    padding: 0.3rem 0.6rem !important;
-                    font-size: 0.8rem !important;
+                  .dates-grid {
+                    max-height: 400px !important;
+                    gap: 0.75rem !important;
                   }
                 }
               `}</style>
               
-              {dates && dates.length > 0 ? (
-                <div className="dates-container">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: '50%',
-                      display: 'grid', placeItems: 'center',
-                      background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                      boxShadow: '0 8px 20px rgba(30,136,229,.4)', fontSize: '1.25rem'
-                    }}>📅</div>
-                    <div>
-                      <h3 style={{
-                        margin: 0, fontSize: '1.25rem', fontWeight: 900,
+              {(() => {
+                // Filtrar solo fechas futuras
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const futureDates = (dates || []).filter((d: any) => {
+                  try {
+                    const dateObj = new Date(d.fecha);
+                    dateObj.setHours(0, 0, 0, 0);
+                    return dateObj >= today;
+                  } catch {
+                    return false;
+                  }
+                });
+                
+                return futureDates.length > 0 ? (
+                  <div className="dates-container">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: '50%',
+                        display: 'grid', placeItems: 'center',
                         background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-                      }}>
-                        Fechas Disponibles
-                      </h3>
-                      <p style={{ margin: 0, opacity: .85, fontSize: '0.9rem' }}>
-                        {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
-                      </p>
+                        boxShadow: '0 8px 20px rgba(30,136,229,.4)', fontSize: '1.25rem'
+                      }}>📅</div>
+                      <div>
+                        <h3 style={{
+                          margin: 0, fontSize: '1.25rem', fontWeight: 900,
+                          background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                        }}>
+                          Próximas Fechas
+                        </h3>
+                        <p style={{ margin: 0, opacity: .85, fontSize: '0.9rem' }}>
+                          {futureDates.length} fecha{futureDates.length !== 1 ? 's' : ''} próxima{futureDates.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="dates-grid">
+                      {futureDates.map((d: any) => (
+                        <div key={d.id} style={{ width: '100%', maxWidth: '450px' }}>
+                          <EventCard item={d} />
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                  <div className="dates-list">
-                    {dates.map((d: any) => (
-                      <motion.div
-                        key={d.id}
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        onClick={() => navigate(`/social/fecha/${d.id}`)}
-                        className="date-card"
-                      >
-                        <div className="date-card-title" style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '.5rem', color: '#fff' }}>
-                          {d.nombre || parent.nombre}
-                        </div>
-                        <div className="date-card-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', fontSize: '0.85rem' }}>
-                          <span style={{ 
-                            padding: '.35rem .7rem', 
-                            borderRadius: 999, 
-                            background: 'rgba(240,147,251,.15)',
-                            border: '1px solid rgba(240,147,251,.25)',
-                            color: '#f093fb',
-                            fontWeight: 700
-                          }}>
-                            📅 {new Date(d.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                          </span>
-                          {d.hora_inicio && (
-                            <span style={{ 
-                              padding: '.35rem .7rem', 
-                              borderRadius: 999, 
-                              background: 'rgba(255,209,102,.15)',
-                              border: '1px solid rgba(255,209,102,.25)',
-                              color: '#FFD166',
-                              fontWeight: 700
-                            }}>
-                              🕐 {d.hora_inicio}
-                            </span>
-                          )}
-                          {d.lugar && (
-                            <span style={{ 
-                              padding: '.35rem .7rem', 
-                              borderRadius: 999, 
-                              background: 'rgba(30,136,229,.15)',
-                              border: '1px solid rgba(30,136,229,.25)',
-                              color: '#1E88E5',
-                              fontWeight: 700
-                            }}>
-                              📍 {d.lugar}
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                ) : (
+                  <div style={{
+                    padding: '2rem',
+                    borderRadius: 18,
+                    border: '1px solid rgba(255,255,255,.15)',
+                    background: 'rgba(255,255,255,.05)',
+                    textAlign: 'center',
+                    color: 'rgba(255,255,255,.6)'
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '.5rem' }}>📅</div>
+                    <p style={{ margin: 0 }}>Aún no hay fechas próximas</p>
                   </div>
-                </div>
-              ) : (
-                <div style={{
-                  padding: '2rem',
-                  borderRadius: 18,
-                  border: '1px solid rgba(255,255,255,.15)',
-                  background: 'rgba(255,255,255,.05)',
-                  textAlign: 'center',
-                  color: 'rgba(255,255,255,.6)'
-                }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '.5rem' }}>📅</div>
-                  <p style={{ margin: 0 }}>Aún no hay fechas programadas</p>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </motion.div>
@@ -1132,8 +1085,8 @@ export default function EventParentPublicScreen() {
             )}
           </div>
 
-          {/* Próximas Fechas (Slider) */}
-          {dates && dates.length > 0 && (
+          {/* Próximas Fechas (Slider) - COMENTADO: Ya se muestra en el Hero */}
+          {/* {dates && dates.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1162,7 +1115,7 @@ export default function EventParentPublicScreen() {
 
               <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
             </motion.div>
-          )}
+          )} */}
 
           {/* Ubicaciones */}
           {(parent as any).ubicaciones && Array.isArray((parent as any).ubicaciones) && (parent as any).ubicaciones.length > 0 && (
