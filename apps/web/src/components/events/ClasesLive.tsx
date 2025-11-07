@@ -131,22 +131,38 @@ export default function ClasesLive({
               transition: 'all 0.3s ease'
             }}
           >
-            {/* Fila 1: Nombre + Botón Calendario */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-              <h4 
+            {/* Fila 1: Nombre (en chip) + Botón Calendario */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div
                 onClick={handleClick}
                 style={{
-                  margin: 0,
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  letterSpacing: '0.3px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 18px',
+                  borderRadius: 16,
+                  background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
+                  border: '2px solid rgba(229, 57, 53, 0.4)',
+                  boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)',
                   cursor: isClickable ? 'pointer' : 'default',
-                  flex: 1
+                  transition: 'all 0.2s ease',
+                  flex: 1,
+                  minWidth: 'fit-content'
                 }}
               >
-                {it.titulo || 'Clase'}
-              </h4>
+                <span style={{ fontSize: '1.25rem' }}>📚</span>
+                <h4 style={{
+                  margin: 0,
+                  fontSize: '1.125rem',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '0.3px'
+                }}>
+                  {it.titulo || 'Clase'}
+                </h4>
+              </div>
               
               {/* Botón de calendario (no clickeable para navegación) */}
               {showCalendarButton && (
