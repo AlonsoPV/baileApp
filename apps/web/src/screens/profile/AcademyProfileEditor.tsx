@@ -99,7 +99,9 @@ export default function AcademyProfileEditor() {
         bio: form.bio,
         zonas: (form as any).zonas || [],
         ubicaciones: (form as any).ubicaciones || [],
-        horarios: (form as any).cronograma || [],  // cronograma se guarda como horarios
+        horarios: (form as any).cronograma || [],     // Guardar en horarios
+        cronograma: (form as any).cronograma || [],   // También en cronograma para compatibilidad
+        costos: (form as any).costos || [],           // Guardar costos
         redes_sociales: form.redes_sociales,
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };

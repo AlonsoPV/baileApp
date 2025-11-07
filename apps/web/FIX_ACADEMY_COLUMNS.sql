@@ -73,6 +73,34 @@ BEGIN
         RAISE NOTICE '⏭️  Columna zonas ya existe';
     END IF;
 
+    -- 6. Verificar que costos existe
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'profiles_academy'
+        AND column_name = 'costos'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE public.profiles_academy 
+        ADD COLUMN costos JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE '✅ Columna costos agregada';
+    ELSE
+        RAISE NOTICE '⏭️  Columna costos ya existe';
+    END IF;
+
+    -- 7. Verificar que cronograma existe (alias de horarios para compatibilidad)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'profiles_academy'
+        AND column_name = 'cronograma'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE public.profiles_academy 
+        ADD COLUMN cronograma JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE '✅ Columna cronograma agregada';
+    ELSE
+        RAISE NOTICE '⏭️  Columna cronograma ya existe';
+    END IF;
+
 END $$;
 
 -- Verificar columnas finales

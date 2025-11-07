@@ -20,6 +20,8 @@ SELECT
   redes_sociales,
   ubicaciones,
   horarios,
+  cronograma,  -- ✅ Agregar cronograma (alias de horarios)
+  costos,      -- ✅ Agregar costos
   estado_aprobacion,
   created_at,
   updated_at
