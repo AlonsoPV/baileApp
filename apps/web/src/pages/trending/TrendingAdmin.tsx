@@ -11,10 +11,12 @@ import {
 import { supabase } from "@/lib/supabase";
 import "@/styles/event-public.css";
 import RitmosChips from "@/components/RitmosChips";
+import { useToast } from "@/components/Toast";
 
 type Mode = "per_candidate" | "per_ritmo";
 
 export default function TrendingAdmin() {
+  const { showToast } = useToast();
   const [canAdmin, setCanAdmin] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<any[]>([]);
@@ -126,9 +128,9 @@ export default function TrendingAdmin() {
         { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
       ]);
       await reload(statusFilter || undefined);
-      alert(`Trending creado: #${id}`);
+      showToast(`Trending creado (#${id})`, "success");
     } catch (err: any) {
-      alert(err?.message || 'No se pudo crear');
+      showToast(err?.message || "No se pudo crear el trending", "error");
     } finally {
       setCreating(false);
     }
@@ -136,11 +138,23 @@ export default function TrendingAdmin() {
 
   const doPublish = async (id: number) => {
     if (!canAdmin) return;
-    try { await adminPublishTrending(id); await reload(statusFilter || undefined); } catch (e: any) { alert(e.message || 'Error'); }
+    try {
+      await adminPublishTrending(id);
+      await reload(statusFilter || undefined);
+      showToast('Trending publicado', 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo publicar', 'error');
+    }
   };
   const doClose = async (id: number) => {
     if (!canAdmin) return;
-    try { await adminCloseTrending(id); await reload(statusFilter || undefined); } catch (e: any) { alert(e.message || 'Error'); }
+    try {
+      await adminCloseTrending(id);
+      await reload(statusFilter || undefined);
+      showToast('Trending cerrado', 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo cerrar el trending', 'error');
+    }
   };
 
   // Inline editing state
@@ -173,8 +187,9 @@ export default function TrendingAdmin() {
       });
       setEditId(null);
       await reload(statusFilter || undefined);
+      showToast('Trending actualizado', 'success');
     } catch (e:any) {
-      alert(e.message || 'Error al guardar');
+      showToast(e?.message || 'Error al guardar cambios', 'error');
     }
   };
 
