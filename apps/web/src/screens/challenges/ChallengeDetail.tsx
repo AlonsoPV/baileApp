@@ -25,14 +25,25 @@ export default function ChallengeDetail() {
   const nav = useNavigate();
   const { showToast } = useToast();
   const qc = useQueryClient();
-  const { data: challenge } = useChallenge(id);
-  const { data: subs } = useChallengeSubmissions(id);
-  const { data: leaderboard } = useChallengeLeaderboard(id);
+  const { data: challenge, isLoading: challengeLoading, error: challengeError } = useChallenge(id);
+  const { data: subs, isLoading: subsLoading } = useChallengeSubmissions(id);
+  const { data: leaderboard, isLoading: leaderboardLoading } = useChallengeLeaderboard(id);
   const publish = useChallengePublish();
   const submit = useChallengeSubmit();
   const approve = useSubmissionApprove();
   const reject = useSubmissionReject();
   const vote = useToggleVote();
+
+  // Logs de debugging
+  React.useEffect(() => {
+    console.log('🏆 ChallengeDetail - Estado:', {
+      id,
+      challengeLoading,
+      challengeError,
+      hasChallenge: !!challenge,
+      challenge: challenge
+    });
+  }, [id, challengeLoading, challengeError, challenge]);
 
   const [canModerate, setCanModerate] = React.useState(false);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
@@ -190,8 +201,60 @@ export default function ChallengeDetail() {
     return m;
   }, [subs]);
 
-  if (!id) return <div className="cc-page" style={{ padding: '1rem' }}>Sin id</div>;
-  if (!challenge) return <div className="cc-page" style={{ padding: '1rem' }}>Cargando…</div>;
+  if (!id) {
+    console.error('❌ No hay ID de challenge en la URL');
+    return <div className="cc-page" style={{ padding: '1rem' }}>Sin ID de challenge</div>;
+  }
+  
+  if (challengeError) {
+    console.error('❌ Error cargando challenge:', challengeError);
+    return (
+      <div className="cc-page" style={{ padding: '1rem' }}>
+        <div className="cc-glass" style={{ padding: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <h2 style={{ marginBottom: '0.5rem' }}>Error al cargar el challenge</h2>
+          <p style={{ opacity: 0.85, marginBottom: '1rem' }}>
+            {(challengeError as any)?.message || 'No se pudo cargar el challenge'}
+          </p>
+          <button onClick={() => nav('/challenges')} className="cc-btn cc-btn--primary">
+            ← Volver a challenges
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (challengeLoading) {
+    console.log('⏳ Cargando challenge...');
+    return (
+      <div className="cc-page" style={{ padding: '1rem' }}>
+        <div className="cc-glass" style={{ padding: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <h2>Cargando challenge...</h2>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!challenge) {
+    console.error('❌ Challenge no encontrado después de cargar');
+    return (
+      <div className="cc-page" style={{ padding: '1rem' }}>
+        <div className="cc-glass" style={{ padding: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+          <h2 style={{ marginBottom: '0.5rem' }}>Challenge no encontrado</h2>
+          <p style={{ opacity: 0.85, marginBottom: '1rem' }}>
+            El challenge que buscas no existe o no tienes permisos para verlo.
+          </p>
+          <button onClick={() => nav('/challenges')} className="cc-btn cc-btn--primary">
+            ← Volver a challenges
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  console.log('✅ Challenge cargado correctamente:', challenge);
 
   const pending = (subs || []).filter((s) => s.status === 'pending');
   const approved = (subs || []).filter((s) => s.status === 'approved');
@@ -211,7 +274,7 @@ export default function ChallengeDetail() {
     try {
       setSaving(true);
       let coverUrl = editForm.cover_image_url as string | null;
-      let heroUrl = (challenge as any)?.hero_video_url as string | null;
+      let ownerVideoUrl = (challenge as any)?.owner_video_url as string | null;
 
       // Subidas pendientes
       if (pendingCoverFile) {
@@ -220,7 +283,7 @@ export default function ChallengeDetail() {
       }
       if (pendingOwnerVideo) {
         const ext = pendingOwnerVideo.name.split('.').pop()?.toLowerCase() || 'mp4';
-        heroUrl = await uploadToChallengeBucket(pendingOwnerVideo, `challenges/${id}/owner-${Date.now()}.${ext}`);
+        ownerVideoUrl = await uploadToChallengeBucket(pendingOwnerVideo, `challenges/${id}/owner-${Date.now()}.${ext}`);
       }
 
       const { error } = await supabase
@@ -232,7 +295,7 @@ export default function ChallengeDetail() {
           submission_deadline: editForm.submission_deadline || null,
           voting_deadline: editForm.voting_deadline || null,
           ritmo_slug: ritmosSelected[0] || null,
-          hero_video_url: heroUrl
+          owner_video_url: ownerVideoUrl
         })
         .eq('id', id);
       if (error) throw error;
@@ -368,8 +431,8 @@ export default function ChallengeDetail() {
               )} */}
             </div>
             <div>
-              {(challenge as any).hero_video_url ? (
-                <video controls style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }} src={(challenge as any).hero_video_url} />
+              {(challenge as any).owner_video_url ? (
+                <video controls style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }} src={(challenge as any).owner_video_url} />
               ) : (
                 <div style={{ opacity: .85 }}>Aún no hay video de referencia.</div>
               )}
@@ -389,7 +452,7 @@ export default function ChallengeDetail() {
                   />
                   <button onClick={() => ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">Seleccionar video</button>
                   {pendingOwnerVideo && (<span className="cc-chip">Archivo listo: {pendingOwnerVideo.name}</span>)}
-                  {(challenge as any).hero_video_url && (
+                  {(challenge as any).owner_video_url && (
                     <button
                       onClick={async () => {
                         setConfirmState({
@@ -398,9 +461,9 @@ export default function ChallengeDetail() {
                           message: '¿Eliminar el video? Esta acción no se puede deshacer.',
                           onConfirm: async () => {
                             try {
-                              const path = getStoragePathFromPublicUrl((challenge as any).hero_video_url);
+                              const path = getStoragePathFromPublicUrl((challenge as any).owner_video_url);
                               if (path) await supabase.storage.from('media').remove([path]);
-                              const { error } = await supabase.from('challenges').update({ hero_video_url: null }).eq('id', id as string);
+                              const { error } = await supabase.from('challenges').update({ owner_video_url: null }).eq('id', id as string);
                               if (error) throw error;
                               showToast('Video eliminado', 'success');
                               qc.invalidateQueries({ queryKey: ['challenges', 'detail', id] });
