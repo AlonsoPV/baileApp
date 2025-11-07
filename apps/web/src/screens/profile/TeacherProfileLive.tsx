@@ -129,7 +129,8 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
+                objectPosition: 'center',
                 cursor: 'pointer'
               }}
               onClick={() => setIsFullscreen(true)}
@@ -230,7 +231,8 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
+                  objectFit: 'contain',
+                  objectPosition: 'center'
                 }}
               />
             </button>
@@ -925,7 +927,8 @@ export default function TeacherProfileLive() {
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover'
+                    objectFit: 'contain',
+                    objectPosition: 'center'
                   }}
                 />
               </div>
