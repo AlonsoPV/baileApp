@@ -147,7 +147,12 @@ export default function TrendingDetail() {
         return next;
       });
     } catch (e: any) {
-      alert(e.message ?? "No se pudo votar");
+      const errorMsg = e?.message || '';
+      if (errorMsg.includes('auth_required') || errorMsg.includes('autenticado')) {
+        alert('Inicia sesión para votar ❤️');
+      } else {
+        alert(errorMsg || 'No se pudo votar');
+      }
     }
   };
 

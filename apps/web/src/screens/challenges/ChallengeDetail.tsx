@@ -760,7 +760,12 @@ export default function ChallengeDetail() {
                     setCaption('');
                     showToast('Envío creado', 'success');
                   } catch (e: any) {
-                    showToast(e?.message || 'No se pudo enviar', 'error');
+                    const errorMsg = e?.message || '';
+                    if (errorMsg.includes('auth_required') || errorMsg.includes('autenticado')) {
+                      showToast('Inicia sesión para participar en el challenge 🎥', 'error');
+                    } else {
+                      showToast(errorMsg || 'No se pudo enviar', 'error');
+                    }
                   } finally {
                     setUploadingUser(false);
                     if (userFileRef.current) userFileRef.current.value = '';
@@ -1016,7 +1021,18 @@ export default function ChallengeDetail() {
                             className="cc-btn cc-btn--primary"
                             title={`${vmap.get(s.id) || 0} votos`}
                             aria-label={`Votos: ${vmap.get(s.id) || 0}`}
-                            onClick={async () => { try { await vote.mutateAsync(s.id); } catch (e: any) { showToast(e?.message || 'Error', 'error'); } }}
+                            onClick={async () => { 
+                              try { 
+                                await vote.mutateAsync(s.id); 
+                              } catch (e: any) { 
+                                const errorMsg = e?.message || '';
+                                if (errorMsg.includes('auth_required') || errorMsg.includes('autenticado')) {
+                                  showToast('Inicia sesión para votar ❤️', 'error');
+                                } else {
+                                  showToast(errorMsg || 'Error al votar', 'error');
+                                }
+                              } 
+                            }}
                           >
                             ❤️ {vmap.get(s.id) || 0}
                           </button>
