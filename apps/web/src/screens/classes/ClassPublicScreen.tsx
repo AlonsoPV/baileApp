@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ClasesLive from '@/components/events/ClasesLive';
 import TeacherCard from '@/components/explore/cards/TeacherCard';
 import AcademyCard from '@/components/explore/cards/AcademyCard';
+import AddToCalendarWithStats from '@/components/AddToCalendarWithStats';
 import { useTeacherPublic } from '@/hooks/useTeacher';
 import { useAcademyPublic } from '@/hooks/useAcademy';
 import { urls } from '@/lib/urls';
@@ -263,29 +264,14 @@ export default function ClassPublicScreen() {
                 >
                   ← Volver
                 </motion.button>
-                <span className="chip chip-date">{isTeacher ? '👤 Maestro' : '🏫 Academia'}</span>
               </div>
               
               <h1 className="class-title" style={{ textAlign: 'left' }}>
                 {classTitle}
               </h1>
-              
-              <div style={{ marginBottom: '1.25rem' }}>
-                <Link to={creatorLink} style={{ 
-                  color: '#FFD166', 
-                  fontWeight: 800, 
-                  fontSize: '1rem',
-                  textDecoration: 'none', 
-                  borderBottom: '2px dashed rgba(255,209,102,0.5)',
-                  paddingBottom: '2px',
-                  transition: 'all 0.2s'
-                }}>
-                  Creada por {creatorTypeLabel} · {creatorName}
-                </Link>
-              </div>
 
-              {/* Chips de horario, costo y ubicación */}
-              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Chips de horario, costo, ubicación y nivel */}
+              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
                 {scheduleLabel && (
                   <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>🕒 {scheduleLabel}</span>
                 )}
@@ -295,11 +281,93 @@ export default function ClassPublicScreen() {
                 {locationLabel && (
                   <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>📍 {locationLabel}</span>
                 )}
+                {selectedClass?.nivel && (
+                  <span className="chip" style={{ background: 'rgba(30,136,229,.12)', border: '1px solid rgba(30,136,229,.25)', color: '#1E88E5', fontSize: '1rem', padding: '.6rem 1rem' }}>
+                    🎯 {selectedClass.nivel}
+                  </span>
+                )}
               </div>
+
+              {/* Botón de Agregar a Calendario */}
+              {selectedClass && (
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{ marginBottom: '1.5rem' }}
+                >
+                  <AddToCalendarWithStats
+                    eventId={idNum}
+                    title={classTitle}
+                    description={`Clase de ${classTitle} con ${creatorName}`}
+                    location={locationLabel}
+                    start={(() => {
+                      try {
+                        if (selectedClass.fecha) {
+                          const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                          const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
+                          return new Date(`${fechaStr}T${hora}:00`);
+                        }
+                        // Si es clase semanal, calcular próxima ocurrencia
+                        const now = new Date();
+                        const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
+                        now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
+                        return now;
+                      } catch {
+                        return new Date();
+                      }
+                    })()}
+                    end={(() => {
+                      try {
+                        if (selectedClass.fecha) {
+                          const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                          const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
+                          return new Date(`${fechaStr}T${hora}:00`);
+                        }
+                        const now = new Date();
+                        const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
+                        now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
+                        return now;
+                      } catch {
+                        const end = new Date();
+                        end.setHours(end.getHours() + 2);
+                        return end;
+                      }
+                    })()}
+                    showAsIcon={false}
+                  />
+                </motion.div>
+              )}
             </div>
             
-            {/* Columna 2: Card del creador */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Columna 2: Creada por + Card del creador */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ 
+                padding: '1rem 1.25rem',
+                borderRadius: 16,
+                border: '1px solid rgba(255,255,255,.12)',
+                background: 'rgba(255,255,255,.05)',
+                backdropFilter: 'blur(10px)',
+                textAlign: 'center',
+                width: '100%',
+                maxWidth: '350px'
+              }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,.7)', marginBottom: '.5rem' }}>
+                  Creada por
+                </p>
+                <Link to={creatorLink} style={{ 
+                  color: '#FFD166', 
+                  fontWeight: 900, 
+                  fontSize: '1.1rem',
+                  textDecoration: 'none', 
+                  borderBottom: '2px solid rgba(255,209,102,0.5)',
+                  paddingBottom: '2px',
+                  transition: 'all 0.2s',
+                  display: 'inline-block'
+                }}>
+                  {creatorTypeLabel} · {creatorName}
+                </Link>
+              </div>
+              
               <div style={{ width: '100%', maxWidth: '350px' }}>
                 {isTeacher ? (
                   <TeacherCard item={profile} />
@@ -360,8 +428,8 @@ export default function ClassPublicScreen() {
           </div>
         </motion.section>
 
-        {/* Clases, horarios, costos y agregar a calendario */}
-        <motion.section 
+        {/* Clases, horarios, costos y agregar a calendario - COMENTADO */}
+        {/* <motion.section 
           initial={{ opacity: 0, y: 16 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.25 }} 
@@ -389,7 +457,7 @@ export default function ClassPublicScreen() {
             sourceId={idNum}
             isClickable={false}
           />
-        </motion.section>
+        </motion.section> */}
       </div>
     </div>
   );
