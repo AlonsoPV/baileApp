@@ -75,8 +75,7 @@ export default function AcademyCard({ item }: AcademyCardProps) {
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{
             fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-            background: 'linear-gradient(135deg, #f093fb, #FFD166)', WebkitBackgroundClip: 'text', backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            
             display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
           }}>
             <span style={{
@@ -85,7 +84,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               color: 'white',
-              
+              textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
+
             }}>
               {nombre}
             </span>

@@ -479,10 +479,16 @@ export default function ExploreHomeScreen() {
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : (() => {
               const list = usuarios?.pages?.[0]?.data || [];
-              // La vista v_user_public ya filtra por onboarding_complete = true
-              return list.length > 0 ? (
+              // Filtrar usuarios con onboarding completo y con información básica
+              const validUsers = list.filter((u: any) => {
+                // La vista v_user_public ya filtra por onboarding_complete = true
+                // Pero verificamos que tenga al menos display_name
+                return u && u.display_name && u.display_name.trim() !== '';
+              });
+              
+              return validUsers.length > 0 ? (
               <HorizontalSlider
-                items={list}
+                items={validUsers}
                 renderItem={(u: any, idx: number) => (
                   <motion.div 
                     key={u.user_id ?? idx} 
@@ -490,6 +496,7 @@ export default function ExploreHomeScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05, duration: 0.3 }}
                     whileHover={{ y: -4, scale: 1.02 }} 
+                    onClickCapture={handlePreNavigate}
                     style={{ 
                       background: 'rgba(255,255,255,0.04)', 
                       border: '1px solid rgba(255,255,255,0.08)', 
@@ -503,16 +510,19 @@ export default function ExploreHomeScreen() {
                       id: u.user_id,
                       display_name: u.display_name,
                       bio: u.bio,
-                      avatar_url: (u as any).avatar_url,
-                      media: (u as any).media,
-                      ritmos: (u as any).ritmos,
-                      zonas: (u as any).zonas
+                      avatar_url: u.avatar_url,
+                      banner_url: u.banner_url,
+                      portada_url: u.portada_url,
+                      media: u.media,
+                      ritmos: u.ritmos,
+                      ritmosSeleccionados: u.ritmos_seleccionados,
+                      zonas: u.zonas
                     }} to={`/u/${encodeURIComponent(u.user_id)}`} />
                   </motion.div>
                 )}
               />
               ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles</div>
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles disponibles</div>
               );
             })()}
           </Section>

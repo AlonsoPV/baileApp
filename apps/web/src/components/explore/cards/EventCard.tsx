@@ -22,7 +22,21 @@ export default function EventCard({ item }: EventCardProps) {
     if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
     return v;
   };
-  const flyer = normalizeUrl((item && (item.flyer_url || (Array.isArray(item.media) && ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any))))) as string | undefined);
+  // Prioridad: avatar slot > avatar_url > portada_url > primer media
+  const flyer = (() => {
+    if (Array.isArray(item.media) && item.media.length > 0) {
+      const avatarSlot = item.media.find((m: any) => m?.slot === 'avatar');
+      if (avatarSlot?.url) return normalizeUrl(avatarSlot.url);
+    }
+    if (item.avatar_url) return normalizeUrl(item.avatar_url);
+    if (item.portada_url) return normalizeUrl(item.portada_url);
+    if (item.flyer_url) return normalizeUrl(item.flyer_url);
+    if (Array.isArray(item.media) && item.media.length > 0) {
+      const first = item.media[0];
+      return normalizeUrl((first as any)?.url || (first as any)?.path || first);
+    }
+    return undefined;
+  })();
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const fecha = item.fecha || item.evento_fecha;
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;

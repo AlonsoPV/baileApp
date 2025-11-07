@@ -83,8 +83,6 @@ export default function TeacherCard({ item }: { item: any }) {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: 'inline-block',
-            background: 'rgba(0,0,0,0.45)',
-            border: '1px solid rgba(255,255,255,0.32)',
             padding: '6px 10px',
             borderRadius: 10
           }}>
