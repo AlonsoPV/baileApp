@@ -88,6 +88,71 @@ export default function TrendingList() {
           .trending-title { font-size: 1.75rem !important; }
           .trending-subtitle { font-size: 0.95rem !important; }
         }
+        .trending-card {
+          position: relative;
+          aspect-ratio: 1 / 1;
+          max-width: 450px;
+          width: 100%;
+          margin: 0 auto;
+          border-radius: 24px;
+          overflow: hidden;
+          border: 2px solid rgba(229,57,53,.2);
+          box-shadow: 0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(229,57,53,.1) inset;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: radial-gradient(circle at center, rgba(229,57,53,.12), rgba(18,22,27,.8));
+        }
+
+        .trending-card:hover {
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 0 2px rgba(229,57,53,.3) inset;
+        }
+
+        .trending-card__media {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          background: radial-gradient(circle at center, rgba(229,57,53,.12), rgba(0,0,0,.85));
+        }
+
+        .trending-card__media img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          pointer-events: none;
+          filter: saturate(1.05) contrast(1.05);
+        }
+
+        .trending-card__overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,.4) 0%, rgba(0,0,0,.65) 65%, rgba(0,0,0,.88) 100%);
+        }
+
+        .trending-card__body {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          padding: 1.5rem;
+          gap: 0.75rem;
+          z-index: 2;
+        }
+
+        .trending-card__placeholder {
+          width: 60%;
+          height: 60%;
+          border-radius: 18px;
+          background: linear-gradient(135deg, rgba(229,57,53,.35), rgba(251,140,0,.25));
+          display: grid;
+          place-items: center;
+          font-size: 3rem;
+          color: rgba(255,255,255,.65);
+          border: 2px dashed rgba(255,255,255,.25);
+        }
       `}</style>
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '1.5rem' }}>
         {/* Hero mejorado */}
@@ -159,58 +224,18 @@ export default function TrendingList() {
             {rows.map((r) => (
               <article
                 key={r.id}
-                style={{
-                  position: 'relative',
-                  aspectRatio: '1 / 1',
-                  maxWidth: 450,
-                  width: '100%',
-                  margin: '0 auto',
-                  borderRadius: 24,
-                  overflow: 'hidden',
-                  border: '2px solid rgba(229,57,53,.2)',
-                  boxShadow: '0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(229,57,53,.1) inset',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
+                className="trending-card"
                 onClick={() => navigate(`/trending/${r.id}`)}
-                onMouseEnter={(e) => { 
-                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'; 
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 24px 64px rgba(0,0,0,.6), 0 0 0 2px rgba(229,57,53,.3) inset'; 
-                }}
-                onMouseLeave={(e) => { 
-                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'; 
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(229,57,53,.1) inset'; 
-                }}
               >
-                {/* Background image */}
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage: r.cover_url
-                    ? `url(${r.cover_url})`
-                    : 'linear-gradient(135deg, rgba(229,57,53,.2), rgba(251,140,0,.2), rgba(30,136,229,.2))',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }} />
-                
-                {/* Overlay gradients */}
-                <div style={{ 
-                  position: 'absolute', 
-                  inset: 0, 
-                  background: 'linear-gradient(180deg, rgba(0,0,0,.4) 0%, rgba(0,0,0,.6) 70%, rgba(0,0,0,.85) 100%)'
-                }} />
-                
-                {/* Content */}
-                <div style={{ 
-                  position: 'absolute', 
-                  inset: 0, 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  justifyContent: 'flex-end', 
-                  padding: '1.5rem',
-                  gap: '0.75rem',
-                  zIndex: 1
-                }}>
+                <div className="trending-card__media">
+                  {r.cover_url ? (
+                    <img src={r.cover_url} alt={r.title} loading="lazy" />
+                  ) : (
+                    <div className="trending-card__placeholder">📈</div>
+                  )}
+                </div>
+                <div className="trending-card__overlay" />
+                <div className="trending-card__body">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ 
                       fontWeight: 900, 
