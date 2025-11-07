@@ -430,6 +430,9 @@ export default function AcademyPublicScreen() {
                   referencias: (academy as any)?.ubicaciones?.[0]?.referencias
                 }}
                 showCalendarButton={true}
+                sourceType="academy"
+                sourceId={(academy as any)?.id}
+                isClickable={true}
               />
             </div>
           </motion.section>

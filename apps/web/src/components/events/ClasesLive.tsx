@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import AddToCalendarWithStats from '../../components/AddToCalendarWithStats';
 import RequireLogin from '@/components/auth/RequireLogin';
 
@@ -33,6 +34,9 @@ type Props = {
   ubicacion?: Ubicacion;
   title?: string;
   showCalendarButton?: boolean;
+  sourceType?: 'teacher' | 'academy';
+  sourceId?: number;
+  isClickable?: boolean;
 };
 
 const iconFor = (tipo?: string) => {
@@ -43,7 +47,17 @@ const iconFor = (tipo?: string) => {
   return '🗂️';
 };
 
-export default function ClasesLive({ cronograma = [], costos = [], ubicacion, title = 'Clases & Tarifas', showCalendarButton = false }: Props) {
+export default function ClasesLive({ 
+  cronograma = [], 
+  costos = [], 
+  ubicacion, 
+  title = 'Clases & Tarifas', 
+  showCalendarButton = false,
+  sourceType,
+  sourceId,
+  isClickable = false
+}: Props) {
+  const navigate = useNavigate();
   const costoIndex = useMemo(() => {
     const map = new Map<string, CostoItem[]>();
     for (const c of costos) {
@@ -87,7 +101,14 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
 
       {/* Lista de clases */}
       <div style={{ display: 'grid', gap: 16 }}>
-        {items.map((it, idx) => (
+        {items.map((it, idx) => {
+          const handleClick = () => {
+            if (isClickable && sourceType && sourceId) {
+              navigate(`/clase/${sourceType}/${sourceId}?i=${idx}`);
+            }
+          };
+
+          return (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 8 }}
@@ -97,6 +118,7 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
               scale: 1.02,
               boxShadow: '0 8px 24px rgba(229, 57, 53, 0.2)'
             }}
+            onClick={handleClick}
             style={{
               position: 'relative',
               display: 'grid',
@@ -109,7 +131,8 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
               border: '1px solid rgba(255, 255, 255, 0.15)',
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
               backdropFilter: 'blur(10px)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              cursor: isClickable ? 'pointer' : 'default'
             }}
           >
             {/* Icono destacado */}
@@ -170,6 +193,23 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
                   {it.inicio || '—'} – {it.fin || '—'}
                 </span>
               </div>
+
+              {/* Ubicación en la card */}
+              {((it as any)?.ubicacion || ubicacion?.nombre) && (
+                <div style={{
+                  fontSize: 13,
+                  color: 'rgba(255, 255, 255, 0.75)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginBottom: 10
+                }}>
+                  <span style={{ fontSize: 14 }}>📍</span>
+                  <span style={{ fontWeight: 500 }}>
+                    {(it as any)?.ubicacion || ubicacion?.nombre}
+                  </span>
+                </div>
+              )}
               
               {it.costos && it.costos.length > 0 && (
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
@@ -249,7 +289,8 @@ export default function ClasesLive({ cronograma = [], costos = [], ubicacion, ti
               </div>
             )} */}
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
     </div>

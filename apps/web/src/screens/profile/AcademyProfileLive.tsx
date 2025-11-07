@@ -845,6 +845,9 @@ export default function AcademyProfileLive() {
                   referencias: (academy as any)?.ubicaciones?.[0]?.referencias
                 }}
                 showCalendarButton={true}
+                sourceType="academy"
+                sourceId={academy?.id}
+                isClickable={false}
               />
             </div>
           </motion.section>

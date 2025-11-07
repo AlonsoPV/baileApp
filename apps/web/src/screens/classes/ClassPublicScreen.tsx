@@ -45,7 +45,7 @@ export default function ClassPublicScreen() {
   const creatorLink = isTeacher ? urls.teacherLive(profile?.id) : urls.academyLive(profile?.id);
   const creatorTypeLabel = isTeacher ? 'Maestro' : 'Academia';
 
-  const cronograma = profile?.cronograma || [];
+  const cronograma = profile?.horarios || profile?.cronograma || [];
   const costos = profile?.costos || [];
   const ubicacionBase = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
     ? {
