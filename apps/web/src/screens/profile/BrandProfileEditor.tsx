@@ -1,5 +1,6 @@
 // src/pages/brand/BrandProfileEditor.tsx
 import React from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { useAuth } from "@/contexts/AuthProvider";
