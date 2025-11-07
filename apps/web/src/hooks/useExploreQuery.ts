@@ -49,8 +49,8 @@ function baseSelect(type: ExploreType) {
         `
       };
     case "organizadores":  
-      // Usar tabla profiles_organizer directamente
-      return { table: "profiles_organizer", select: "*" };
+      // Usar vista pública que solo muestra organizadores aprobados
+      return { table: "v_organizers_public", select: "*" };
     case "maestros":       
       return { table: "profiles_teacher", select: "*" };   // si aún no existe, dejar preparado
     case "academias":      
