@@ -677,16 +677,21 @@ export default function EventParentPublicScreen() {
         }
         
         .social-hero-title {
-          font-size: clamp(2rem, 4vw, 3.5rem);
+          font-size: clamp(2.5rem, 5vw, 4.5rem);
           font-weight: 900;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #FFD166 100%);
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 40%, #FFD166 80%, #fff 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin-bottom: 1rem;
-          letter-spacing: -0.03em;
-          line-height: 1.1;
-          text-shadow: 0 2px 20px rgba(240,147,251,.3);
+          margin-bottom: 1.25rem;
+          letter-spacing: -0.04em;
+          line-height: 1.05;
+          text-shadow: 
+            0 4px 30px rgba(240,147,251,.5),
+            0 2px 15px rgba(245,87,108,.4),
+            0 0 40px rgba(255,209,102,.3);
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
+          position: relative;
         }
         
         .social-hero-description {
@@ -739,7 +744,7 @@ export default function EventParentPublicScreen() {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 2.5rem;
-              align-items: start;
+              align-items: center;
               position: relative;
               z-index: 1;
             }
@@ -771,7 +776,9 @@ export default function EventParentPublicScreen() {
               }
               
               .social-hero-title {
-                font-size: 1.75rem !important;
+                font-size: 2rem !important;
+                letter-spacing: -0.03em !important;
+                margin-bottom: 1rem !important;
               }
               
               .social-hero-description {
