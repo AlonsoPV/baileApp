@@ -118,8 +118,14 @@ export default function TeacherProfileEditor() {
       console.log("📦 [TeacherProfileEditor] Payload limpio:", payload);
       await upsert.mutateAsync(payload);
       console.log("✅ [teacherProfileEditor] Guardado exitoso");
+      
+      // Mostrar mensaje de éxito
+      setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
+      setTimeout(() => setStatusMsg(null), 3000);
     } catch (error) {
       console.error("❌ [teacherProfileEditor] Error guardando:", error);
+      setStatusMsg({ type: 'err', text: '❌ Error al guardar el perfil' });
+      setTimeout(() => setStatusMsg(null), 3000);
     }
   };
 
@@ -318,6 +324,31 @@ export default function TeacherProfileEditor() {
             liveHref="/profile/teacher"
           />
         </div>
+
+        {/* Mensaje de estado global */}
+        {statusMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: '1.5rem',
+              padding: '1rem 1.5rem',
+              borderRadius: '12px',
+              border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
+              background: statusMsg.type === 'ok' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+              color: '#fff',
+              fontSize: '1rem',
+              fontWeight: '600',
+              textAlign: 'center',
+              boxShadow: statusMsg.type === 'ok' 
+                ? '0 4px 12px rgba(16,185,129,0.2)' 
+                : '0 4px 12px rgba(239,68,68,0.2)'
+            }}
+          >
+            {statusMsg.text}
+          </motion.div>
+        )}
 
         {/* Banner de Bienvenida (solo para perfiles nuevos) */}
         {!teacher && (
