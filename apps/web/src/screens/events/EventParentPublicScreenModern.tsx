@@ -1055,14 +1055,17 @@ export default function EventParentPublicScreen() {
                 }
                 
                 .dates-grid {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                  display: flex;
+                  flex-direction: column;
                   gap: 1.5rem;
                   max-height: 600px;
                   overflow-y: auto;
                   padding-right: .5rem;
                   position: relative;
                   z-index: 1;
+                  width: 100%;
+                  max-width: 350px;
+                  margin: 0 auto;
                 }
                 
                 /* Custom scrollbar */
@@ -1085,12 +1088,6 @@ export default function EventParentPublicScreen() {
                   background: linear-gradient(135deg, #00BCD4, #f093fb);
                 }
                 
-                @media (max-width: 1400px) {
-                  .dates-grid {
-                    grid-template-columns: 1fr !important;
-                  }
-                }
-                
                 @media (max-width: 768px) {
                   .dates-container {
                     padding: 1.5rem !important;
@@ -1100,6 +1097,7 @@ export default function EventParentPublicScreen() {
                   .dates-grid {
                     max-height: 500px !important;
                     gap: 1rem !important;
+                    max-width: 100% !important;
                   }
                   
                   .dates-header {
@@ -1117,6 +1115,7 @@ export default function EventParentPublicScreen() {
                   .dates-grid {
                     max-height: 400px !important;
                     gap: 0.75rem !important;
+                    max-width: 100% !important;
                   }
                   
                   .dates-header {

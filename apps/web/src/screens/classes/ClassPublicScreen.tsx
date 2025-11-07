@@ -121,17 +121,94 @@ export default function ClassPublicScreen() {
     <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
       <style>{`
         .date-public-root { padding: 24px 0; }
-        .date-public-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        @media (max-width: 768px) { .date-public-root { padding: 16px 0 !important; } .date-public-inner { padding: 0 16px !important; } .two-col-grid { grid-template-columns: 1fr !important; gap: 1rem !important; } }
-        @media (max-width: 480px) { .date-public-root { padding: 12px 0 !important; } .date-public-inner { padding: 0 12px !important; } }
-        .social-header-card { position: relative; border-radius: 18px; background: linear-gradient(135deg, rgba(40,30,45,0.92), rgba(30,20,40,0.92)); border: 1px solid rgba(240,147,251,0.18); box-shadow: 0 10px 28px rgba(0,0,0,0.35); padding: 1.25rem 1.25rem 1rem; }
-        .social-header-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
-        @media (min-width: 768px) { .social-header-grid { grid-template-columns: 1.3fr 1fr; } }
+        .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+        
+        /* Hero Banner */
+        .class-hero-banner {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, 
+            rgba(11,13,16,.98) 0%, 
+            rgba(18,22,27,.95) 50%, 
+            rgba(30,20,40,.96) 100%);
+          padding: 3rem 2.5rem;
+          border-radius: 32px;
+          margin-bottom: 2rem;
+          border: 2px solid rgba(240,147,251,.15);
+          box-shadow: 
+            0 20px 60px rgba(0,0,0,.6),
+            0 0 0 1px rgba(240,147,251,.1) inset,
+            0 4px 20px rgba(240,147,251,.15);
+          backdrop-filter: blur(20px);
+        }
+        
+        .class-hero-banner::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166, #1E88E5);
+          opacity: 0.9;
+        }
+        
+        .class-hero-content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2.5rem;
+          align-items: center;
+          position: relative;
+          z-index: 1;
+        }
+        
+        .class-title {
+          font-size: clamp(2.5rem, 5vw, 4.5rem);
+          font-weight: 900;
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 40%, #FFD166 80%, #fff 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 1.25rem;
+          letter-spacing: -0.04em;
+          line-height: 1.05;
+          text-shadow: 
+            0 4px 30px rgba(240,147,251,.5),
+            0 2px 15px rgba(245,87,108,.4),
+            0 0 40px rgba(255,209,102,.3);
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
+        }
+        
+        @media (max-width: 1024px) {
+          .class-hero-content {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .date-public-root { padding: 16px 0 !important; }
+          .date-public-inner { padding: 0 16px !important; }
+          .class-hero-banner { padding: 2rem 1.5rem !important; }
+          .class-hero-content { gap: 1.5rem !important; }
+        }
+        
+        @media (max-width: 480px) {
+          .date-public-root { padding: 12px 0 !important; }
+          .date-public-inner { padding: 0 12px !important; }
+          .class-hero-banner { padding: 1.5rem 1rem !important; }
+          .class-hero-content { gap: 1.25rem !important; }
+          .class-title { font-size: 2rem !important; }
+        }
+        
         .chip { display:inline-flex;align-items:center;gap:.5rem; padding:.5rem .85rem;border-radius:999px;font-weight:700;font-size:.9rem }
         .chip-date { background:rgba(240,147,251,.12);border:1px solid rgba(240,147,251,.25);color:#f093fb }
-        .mini-card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08) }
-        .list-compact { display:grid; gap:.6rem }
-        .list-compact li { display:flex; justify-content:space-between; gap:.75rem; font-size:.95rem }
+        .glass-card-container {
+          margin-bottom: 2rem; padding: 2rem;
+          background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+          border-radius: 22px; border: 1px solid rgba(255,255,255,.15);
+          box-shadow: 0 10px 32px rgba(0,0,0,.4); backdrop-filter: blur(10px);
+        }
         .ur-col { display:grid; grid-template-columns: 1fr; gap: 1rem; }
         .card{border-radius:14px;padding:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10)}
         .loc{border-color:rgba(240,147,251,0.22);background:linear-gradient(135deg,rgba(240,147,251,.08),rgba(240,147,251,.04))}
@@ -145,41 +222,85 @@ export default function ClassPublicScreen() {
         .btn-copy{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06)}
       `}</style>
       <div className="date-public-inner">
-        <motion.header initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="social-header" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-          <div className="social-header-card">
-            <div className="social-header-grid">
-              {/* Columna izquierda */}
-              <div style={{ display: 'grid', gap: '.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
-                  <button onClick={() => navigate(creatorLink)} style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid rgba(240,147,251,0.28)', background: 'rgba(240,147,251,0.10)', color: '#f093fb', fontWeight: 700, cursor: 'pointer' }}>← Volver</button>
-                </div>
-                {/* Nombre de la clase */}
-                <h1 style={{ margin: 0, fontSize: '2rem', lineHeight: 1.2, fontWeight: 800, background: 'linear-gradient(135deg,#f093fb,#FFD166)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {classTitle}
-                </h1>
-                {/* Propiedad y tipo (Maestro/Academia) */}
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span className="chip chip-date">{isTeacher ? '👤 Maestro' : '🏫 Academia'}</span>
-                  <Link to={creatorLink} style={{ color: '#FFD166', fontWeight: 800, textDecoration: 'none', borderBottom: '1px dashed rgba(255,209,102,0.5)' }}>
-                    Creada por {creatorTypeLabel} · {creatorName}
-                  </Link>
-                </div>
-
-                {/* Chips de horario, costo y ubicación */}
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  {scheduleLabel && (
-                    <span className="chip chip-date">🕒 {scheduleLabel}</span>
-                  )}
-                  {typeof costLabel === 'string' && costLabel && (
-                    <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166' }}>💰 {costLabel}</span>
-                  )}
-                  {locationLabel && (
-                    <span className="chip chip-date">📍 {locationLabel}</span>
-                  )}
-                </div>
+        {/* Hero Banner */}
+        <motion.div
+          className="class-hero-banner"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.36 }}
+        >
+          {/* Efectos decorativos de fondo */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 30%, rgba(30,136,229,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(240,147,251,0.08) 0%, transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }} />
+          
+          <div className="class-hero-content">
+            {/* Columna 1: Info de la clase */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate(creatorLink)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: 999,
+                    border: '2px solid rgba(240,147,251,0.3)',
+                    background: 'rgba(240,147,251,0.15)',
+                    color: '#f093fb',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    boxShadow: '0 8px 20px rgba(240,147,251,.25)'
+                  }}
+                >
+                  ← Volver
+                </motion.button>
+                <span className="chip chip-date">{isTeacher ? '👤 Maestro' : '🏫 Academia'}</span>
               </div>
-              {/* Columna derecha: card del creador */}
-              <div style={{ display: 'grid', gap: '.85rem', alignContent: 'start' }}>
+              
+              <h1 className="class-title" style={{ textAlign: 'left' }}>
+                {classTitle}
+              </h1>
+              
+              <div style={{ marginBottom: '1.25rem' }}>
+                <Link to={creatorLink} style={{ 
+                  color: '#FFD166', 
+                  fontWeight: 800, 
+                  fontSize: '1rem',
+                  textDecoration: 'none', 
+                  borderBottom: '2px dashed rgba(255,209,102,0.5)',
+                  paddingBottom: '2px',
+                  transition: 'all 0.2s'
+                }}>
+                  Creada por {creatorTypeLabel} · {creatorName}
+                </Link>
+              </div>
+
+              {/* Chips de horario, costo y ubicación */}
+              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {scheduleLabel && (
+                  <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>🕒 {scheduleLabel}</span>
+                )}
+                {typeof costLabel === 'string' && costLabel && (
+                  <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166', fontSize: '1rem', padding: '.6rem 1rem' }}>💰 {costLabel}</span>
+                )}
+                {locationLabel && (
+                  <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>📍 {locationLabel}</span>
+                )}
+              </div>
+            </div>
+            
+            {/* Columna 2: Card del creador */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ width: '100%', maxWidth: '350px' }}>
                 {isTeacher ? (
                   <TeacherCard item={profile} />
                 ) : (
@@ -188,11 +309,26 @@ export default function ClassPublicScreen() {
               </div>
             </div>
           </div>
-        </motion.header>
+        </motion.div>
 
         {/* Ubicación detallada (acciones) */}
-        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', marginBottom: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)', backdropFilter: 'blur(12px)' }}>
-          <h3 style={{ margin: 0, marginBottom: '.9rem', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>📍 Ubicación</h3>
+        <motion.section 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.25 }} 
+          className="glass-card-container"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%',
+              display: 'grid', placeItems: 'center',
+              background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+              boxShadow: '0 10px 28px rgba(240,147,251,.4)',
+              fontSize: '1.25rem',
+              border: '2px solid rgba(240,147,251,.3)'
+            }}>📍</div>
+            <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>Ubicación</h3>
+          </div>
           <div className="ur-col">
             <div className="card loc" aria-label="Ubicación">
               {ubicacion ? (
@@ -225,7 +361,24 @@ export default function ClassPublicScreen() {
         </motion.section>
 
         {/* Clases, horarios, costos y agregar a calendario */}
-        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)' }}>
+        <motion.section 
+          initial={{ opacity: 0, y: 16 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.25 }} 
+          className="glass-card-container"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%',
+              display: 'grid', placeItems: 'center',
+              background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+              boxShadow: '0 10px 28px rgba(30,136,229,.4)',
+              fontSize: '1.25rem',
+              border: '2px solid rgba(30,136,229,.3)'
+            }}>📚</div>
+            <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>Detalles de la Clase</h3>
+          </div>
+          
           <ClasesLive 
             title="" 
             cronograma={cronogramaSelected} 
