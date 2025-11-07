@@ -261,7 +261,11 @@ export default function BrandProfileEditor() {
         .editor-input { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: ${colors.light}; font-size: 1rem; }
         .editor-textarea { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: ${colors.light}; font-size: 1rem; resize: vertical; }
         .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
+        .brand-info-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; }
+        .brand-social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
         @media (max-width: 768px) {
+          .brand-info-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; justify-items: center !important; }
+          .brand-social-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
           .editor-container { padding: 1rem !important; }
           .editor-content { max-width: 100% !important; }
           .editor-header { flex-direction: column !important; gap: 1rem !important; text-align: center !important; }
@@ -347,151 +351,225 @@ export default function BrandProfileEditor() {
               <div className="editor-section glass-card-container">
                 <h2 className="editor-section-title">🏷️ Información de la Marca</h2>
                 
-                {/* Logo uploader - Destacado arriba */}
-                <div style={{ 
-                  marginBottom: '2rem', 
-                  padding: '1.5rem',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
+                {/* Layout de dos columnas: Logo | Nombre + Descripción */}
+                <div className="brand-info-grid">
+                  {/* Columna 1: Logo */}
                   <div style={{ 
-                    width: '120px', 
-                    height: '120px', 
-                    borderRadius: '50%', 
-                    overflow: 'hidden',
-                    border: '3px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    background: 'linear-gradient(135deg, #E53935, #FB8C00)'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '1rem'
                   }}>
-                    {form.avatar_url ? (
-                      <ImageWithFallback 
-                        src={form.avatar_url} 
-                        alt="logo" 
-                        style={{ 
+                    <div style={{ 
+                      width: '160px', 
+                      height: '160px', 
+                      borderRadius: '50%', 
+                      overflow: 'hidden',
+                      border: '3px solid rgba(255, 255, 255, 0.2)',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      background: 'linear-gradient(135deg, #E53935, #FB8C00)'
+                    }}>
+                      {form.avatar_url ? (
+                        <ImageWithFallback 
+                          src={form.avatar_url} 
+                          alt="logo" 
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover' 
+                          }} 
+                        />
+                      ) : (
+                        <div style={{ 
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover' 
-                        }} 
-                      />
-                    ) : (
-                      <div style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        fontSize: '3rem'
-                      }}>
-                        🏷️
-                      </div>
-                    )}
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          fontSize: '4rem'
+                        }}>
+                          🏷️
+                        </div>
+                      )}
+                    </div>
+                    <label className="editor-back-btn" style={{ 
+                      cursor: 'pointer',
+                      background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      fontWeight: '700',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
+                      📸 Subir Logo
+                    </label>
                   </div>
-                  <label className="editor-back-btn" style={{ 
-                    cursor: 'pointer',
-                    background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    fontWeight: '700'
-                  }}>
-                    <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
-                    📸 Subir Logo de la Marca
-                  </label>
-                  <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: 0, textAlign: 'center' }}>
-                    El logo aparecerá en tu perfil público y en las tarjetas de exploración
-                  </p>
-                </div>
 
-                {/* Información básica */}
-                <div style={{ display: 'grid', gap: '1.5rem' }}>
-                  <div>
-                    <label className="editor-field" style={{ 
-                      fontSize: '1rem',
-                      marginBottom: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}>
-                      🏷️ Nombre de la Marca *
-                    </label>
-                    <input 
-                      type="text" 
-                      value={form.nombre_publico || ''} 
-                      onChange={(e) => setField('nombre_publico', e.target.value)} 
-                      placeholder="Ej: Zapatos Elegantes MX" 
-                      className="editor-input"
-                      style={{
-                        fontSize: '1.1rem',
-                        padding: '1rem',
-                        fontWeight: '600'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="editor-field" style={{ 
-                      fontSize: '1rem',
-                      marginBottom: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}>
-                      📝 Biografía / Descripción
-                    </label>
-                    <textarea 
-                      value={form.bio || ''} 
-                      onChange={(e) => setField('bio', e.target.value)} 
-                      placeholder="Describe tu marca: historia, materiales, enfoque, estilos que representas, qué te hace único..." 
-                      rows={5} 
-                      className="editor-textarea"
-                      style={{
+                  {/* Columna 2: Nombre + Descripción */}
+                  <div style={{ display: 'grid', gap: '1.5rem' }}>
+                    <div>
+                      <label className="editor-field" style={{ 
                         fontSize: '1rem',
-                        padding: '1rem',
-                        lineHeight: '1.6'
-                      }}
-                    />
+                        marginBottom: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        🏷️ Nombre de la Marca *
+                      </label>
+                      <input 
+                        type="text" 
+                        value={form.nombre_publico || ''} 
+                        onChange={(e) => setField('nombre_publico', e.target.value)} 
+                        placeholder="Ej: Zapatos Elegantes MX" 
+                        className="editor-input"
+                        style={{
+                          fontSize: '1.1rem',
+                          padding: '1rem',
+                          fontWeight: '600'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="editor-field" style={{ 
+                        fontSize: '1rem',
+                        marginBottom: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        📝 Biografía / Descripción
+                      </label>
+                      <textarea 
+                        value={form.bio || ''} 
+                        onChange={(e) => setField('bio', e.target.value)} 
+                        placeholder="Describe tu marca: historia, materiales, enfoque, estilos que representas, qué te hace único..." 
+                        rows={6} 
+                        className="editor-textarea"
+                        style={{
+                          fontSize: '1rem',
+                          padding: '1rem',
+                          lineHeight: '1.6'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Redes Sociales — SOLO aquí */}
+              {/* Redes Sociales — Diseño mejorado */}
               <div className="editor-section glass-card-container">
                 <h2 className="editor-section-title">📱 Redes Sociales</h2>
-                <div className="editor-grid-small">
+                
+                {/* Grid de 2 columnas para inputs */}
+                <div className="brand-social-grid">
                   <div>
-                    <label className="editor-field">📸 Instagram</label>
-                    <input type="text" value={form.redes_sociales?.instagram || ''} onChange={(e)=>setRS('instagram', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      📸 Instagram
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.instagram || ''} 
+                      onChange={(e)=>setRS('instagram', e.target.value)} 
+                      placeholder="@tu_marca" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
                   <div>
-                    <label className="editor-field">🎵 TikTok</label>
-                    <input type="text" value={form.redes_sociales?.tiktok || ''} onChange={(e)=>setRS('tiktok', e.target.value)} placeholder="@tu_marca" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      🎵 TikTok
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.tiktok || ''} 
+                      onChange={(e)=>setRS('tiktok', e.target.value)} 
+                      placeholder="@tu_marca" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
                   <div>
-                    <label className="editor-field">📺 YouTube</label>
-                    <input type="text" value={form.redes_sociales?.youtube || ''} onChange={(e)=>setRS('youtube', e.target.value)} placeholder="Canal o enlace" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      📺 YouTube
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.youtube || ''} 
+                      onChange={(e)=>setRS('youtube', e.target.value)} 
+                      placeholder="Canal o enlace" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
                   <div>
-                    <label className="editor-field">👥 Facebook</label>
-                    <input type="text" value={form.redes_sociales?.facebook || ''} onChange={(e)=>setRS('facebook', e.target.value)} placeholder="Página o perfil" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      👥 Facebook
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.facebook || ''} 
+                      onChange={(e)=>setRS('facebook', e.target.value)} 
+                      placeholder="Página o perfil" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
                   <div>
-                    <label className="editor-field">💬 WhatsApp</label>
-                    <input type="text" value={form.redes_sociales?.whatsapp || ''} onChange={(e)=>setRS('whatsapp', e.target.value)} placeholder="Número de teléfono" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      💬 WhatsApp
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.whatsapp || ''} 
+                      onChange={(e)=>setRS('whatsapp', e.target.value)} 
+                      placeholder="Número de teléfono" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
                   <div>
-                    <label className="editor-field">🌐 Sitio Web</label>
-                    <input type="text" value={form.redes_sociales?.web || ''} onChange={(e)=>setRS('web', e.target.value)} placeholder="https://" className="editor-input" />
+                    <label className="editor-field" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      🌐 Sitio Web
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.redes_sociales?.web || ''} 
+                      onChange={(e)=>setRS('web', e.target.value)} 
+                      placeholder="https://" 
+                      className="editor-input"
+                      style={{ padding: '0.875rem' }}
+                    />
                   </div>
-                </div>
-                <div style={{ marginTop: '1.5rem' }}>
-                  <SocialMediaSection
-                    respuestas={{ redes: form.redes_sociales || {} }}
-                    redes_sociales={form.redes_sociales || {}}
-                    title="🔗 Vista previa de Redes"
-                    availablePlatforms={['instagram','tiktok','youtube','facebook','whatsapp','web']}
-                  />
                 </div>
               </div>
 
