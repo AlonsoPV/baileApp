@@ -32,13 +32,8 @@ export default function AppShell() {
   })();
 
   const menuItems = [
-    { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') },
     { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
-    { id: 'default-profile', label: 'Configurar perfil por defecto', icon: '⚙️', onClick: () => navigate('/app/profile/settings') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
-    { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') },
-    { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') },
-    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: async () => { await signOut(); navigate('/auth/login'); } },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
