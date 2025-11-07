@@ -92,6 +92,7 @@ export default function HorizontalSlider<T>({
         `}</style>
 
         <div
+          className="horizontal-slider-grid"
           style={{
             display: "grid",
             gridAutoFlow: "column",
@@ -104,6 +105,20 @@ export default function HorizontalSlider<T>({
             gap
           }}
         >
+          <style>{`
+            /* Mobile: 1 tarjeta completa por sección */
+            @media (max-width: 768px) {
+              .horizontal-slider-grid {
+                grid-auto-columns: calc(100vw - 120px) !important;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .horizontal-slider-grid {
+                grid-auto-columns: calc(100vw - 100px) !important;
+              }
+            }
+          `}</style>
           {items?.map((it, idx) => renderItem(it, idx))}
         </div>
       </div>
