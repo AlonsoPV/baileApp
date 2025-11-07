@@ -9,6 +9,7 @@ export type Challenge = {
   ritmo_slug?: string | null;
   cover_image_url?: string | null;
   owner_video_url?: string | null;
+  requirements?: string[] | null;
   status: string;
   visibility?: string | null;
   submission_deadline?: string | null;
@@ -86,6 +87,7 @@ export function useChallengeCreate() {
       owner_video_url?: string | null;
       submission_deadline?: string | null;
       voting_deadline?: string | null;
+      requirements?: string[];
     }): Promise<string> => {
       const { data, error } = await supabase.rpc('challenge_create', {
         p_title: payload.title,
@@ -95,6 +97,7 @@ export function useChallengeCreate() {
         p_owner_video_url: payload.owner_video_url ?? null,
         p_submission_deadline: payload.submission_deadline ?? null,
         p_voting_deadline: payload.voting_deadline ?? null,
+        p_requirements: payload.requirements ?? []
       });
       if (error) throw error;
       return data as string;

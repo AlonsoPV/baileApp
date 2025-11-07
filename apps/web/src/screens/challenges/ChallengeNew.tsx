@@ -22,6 +22,8 @@ export default function ChallengeNew() {
     voting_deadline: '',
   });
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
+  const [requirements, setRequirements] = React.useState<string[]>([]);
+  const [requirementDraft, setRequirementDraft] = React.useState('');
   const coverFileRef = React.useRef<HTMLInputElement|null>(null);
   const videoFileRef = React.useRef<HTMLInputElement|null>(null);
   const [pendingCoverFile, setPendingCoverFile] = React.useState<File|null>(null);
@@ -52,6 +54,7 @@ export default function ChallengeNew() {
         ritmo_slug: ritmosSelected[0] || null,
         submission_deadline: form.submission_deadline || null,
         voting_deadline: form.voting_deadline || null,
+        requirements,
       });
       console.log('✅ Challenge creado con ID:', id);
       
@@ -112,6 +115,8 @@ export default function ChallengeNew() {
       
       console.log('🎉 Challenge creado exitosamente!');
       showToast('Challenge creado exitosamente', 'success');
+      setRequirements([]);
+      setRequirementDraft('');
       nav(`/challenges/${id}`);
     } catch (err: any) {
       console.error('❌ Error completo:', err);
@@ -191,6 +196,61 @@ export default function ChallengeNew() {
               <label style={{ display: 'block', marginBottom: 4 }}>Ritmos</label>
               <RitmosChips selected={ritmosSelected} onChange={setRitmosSelected} />
               <div style={{ opacity: .7, fontSize: '.85rem', marginTop: 6 }}>Se guardará el primer ritmo como principal.</div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>Requisitos del Challenge</label>
+              <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '.5rem' }}>
+                <input
+                  value={requirementDraft}
+                  onChange={(e) => setRequirementDraft(e.target.value)}
+                  placeholder="Agregar requisito (ej. Formato de video, duración, etc.)"
+                  style={{
+                    flex: '1 1 240px',
+                    minWidth: 200,
+                    padding: '.5rem .75rem',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255,255,255,.18)',
+                    background: 'rgba(255,255,255,.06)',
+                    color: '#fff'
+                  }}
+                />
+                <button
+                  type="button"
+                  className="cc-btn cc-btn--primary"
+                  onClick={() => {
+                    const trimmed = requirementDraft.trim();
+                    if (!trimmed) return;
+                    setRequirements((prev) => Array.from(new Set([...prev, trimmed])));
+                    setRequirementDraft('');
+                  }}
+                >
+                  Añadir requisito
+                </button>
+              </div>
+              {requirements.length > 0 ? (
+                <ul style={{
+                  listStyle: 'disc',
+                  paddingLeft: '1.5rem',
+                  display: 'grid',
+                  gap: '.35rem'
+                }}>
+                  {requirements.map((req) => (
+                    <li key={req} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
+                      <span style={{ flex: 1 }}>{req}</span>
+                      <button
+                        type="button"
+                        className="cc-btn cc-btn--ghost"
+                        onClick={() => setRequirements((prev) => prev.filter((r) => r !== req))}
+                      >
+                        Quitar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="cc-soft-chip" style={{ opacity: .75 }}>Añade los requisitos que los participantes deben cumplir.</div>
+              )}
             </div>
 
             <div>

@@ -62,8 +62,10 @@ export default function ChallengeDetail() {
     description: '',
     cover_image_url: '',
     submission_deadline: '',
-    voting_deadline: ''
+    voting_deadline: '',
+    requirements: [] as string[]
   });
+  const [editRequirementDraft, setEditRequirementDraft] = React.useState('');
   const [userMeta, setUserMeta] = React.useState<Record<string, { name: string; bio?: string; route?: string }>>({});
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
@@ -152,7 +154,10 @@ export default function ChallengeDetail() {
         description: (challenge as any).description || '',
         cover_image_url: (challenge as any).cover_image_url || '',
         submission_deadline: (challenge as any).submission_deadline || '',
-        voting_deadline: (challenge as any).voting_deadline || ''
+        voting_deadline: (challenge as any).voting_deadline || '',
+        requirements: Array.isArray((challenge as any).requirements)
+          ? ((challenge as any).requirements as any[]).map((item) => String(item))
+          : []
       });
       const slug = (challenge as any).ritmo_slug as string | null;
       if (slug) setRitmosSelected([slug]);
@@ -259,6 +264,13 @@ export default function ChallengeDetail() {
   const pending = (subs || []).filter((s) => s.status === 'pending');
   const approved = (subs || []).filter((s) => s.status === 'approved');
   const mySubmission = (subs || []).find((s:any) => s.user_id === currentUserId);
+  const requirementsList: string[] = React.useMemo(() => {
+    const raw = (challenge as any)?.requirements;
+    if (Array.isArray(raw)) {
+      return raw.map((item: any) => String(item)).filter((s) => s.trim() !== '');
+    }
+    return [];
+  }, [challenge]);
 
   const getStoragePathFromPublicUrl = (url?: string | null) => {
     if (!url) return null;
@@ -295,7 +307,8 @@ export default function ChallengeDetail() {
           submission_deadline: editForm.submission_deadline || null,
           voting_deadline: editForm.voting_deadline || null,
           ritmo_slug: ritmosSelected[0] || null,
-          owner_video_url: ownerVideoUrl
+          owner_video_url: ownerVideoUrl,
+          requirements: editForm.requirements
         })
         .eq('id', id);
       if (error) throw error;
@@ -426,9 +439,21 @@ export default function ChallengeDetail() {
               {(challenge as any).description && (
                 <div className="cc-two-lines" style={{ opacity: .92, marginBottom: 8 }}>{(challenge as any).description}</div>
               )} */}
-             {/*  {(challenge as any).ritmo_slug && (
-                <RitmosChips selected={[String((challenge as any).ritmo_slug)]} onChange={() => { }} readOnly />
-              )} */}
+              {requirementsList.length > 0 && (
+                <div style={{ marginTop: '.75rem', display: 'grid', gap: '.35rem' }}>
+                  <h4 style={{ margin: 0, fontWeight: 800 }}>Requisitos</h4>
+                  <ul style={{
+                    listStyle: 'disc',
+                    paddingLeft: '1.5rem',
+                    display: 'grid',
+                    gap: '.35rem'
+                  }}>
+                    {requirementsList.map((req) => (
+                      <li key={req}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             <div>
               {(challenge as any).owner_video_url ? (
@@ -506,6 +531,66 @@ export default function ChallengeDetail() {
                 <label style={{ display: 'block', marginBottom: 4 }}>Ritmos</label>
                 <RitmosChips selected={ritmosSelected} onChange={setRitmosSelected} />
                 <div style={{ opacity: .7, fontSize: '.85rem', marginTop: 6 }}>Se guardará el primer ritmo como principal.</div>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Requisitos</label>
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '.5rem' }}>
+                  <input
+                    value={editRequirementDraft}
+                    onChange={(e) => setEditRequirementDraft(e.target.value)}
+                    placeholder="Agregar requisito"
+                    style={{
+                      flex: '1 1 240px',
+                      minWidth: 200,
+                      padding: '.5rem .75rem',
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,.18)',
+                      background: 'rgba(255,255,255,.06)',
+                      color: '#fff'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="cc-btn cc-btn--primary"
+                    onClick={() => {
+                      const trimmed = editRequirementDraft.trim();
+                      if (!trimmed) return;
+                      setEditForm((s) => ({
+                        ...s,
+                        requirements: Array.from(new Set([...(s.requirements || []), trimmed]))
+                      }));
+                      setEditRequirementDraft('');
+                    }}
+                  >
+                    Añadir requisito
+                  </button>
+                </div>
+                {(editForm.requirements || []).length > 0 ? (
+                  <ul style={{
+                    listStyle: 'disc',
+                    paddingLeft: '1.5rem',
+                    display: 'grid',
+                    gap: '.35rem'
+                  }}>
+                    {(editForm.requirements || []).map((req) => (
+                      <li key={req} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.5rem' }}>
+                        <span style={{ flex: 1 }}>{req}</span>
+                        <button
+                          type="button"
+                          className="cc-btn cc-btn--ghost"
+                          onClick={() => setEditForm((s) => ({
+                            ...s,
+                            requirements: (s.requirements || []).filter((r) => r !== req)
+                          }))}
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="cc-soft-chip" style={{ opacity: .75 }}>Añade requisitos que los participantes deban cumplir.</div>
+                )}
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: 4 }}>Imagen de portada (URL)</label>
