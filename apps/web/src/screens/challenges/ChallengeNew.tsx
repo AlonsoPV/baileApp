@@ -17,12 +17,15 @@ export default function ChallengeNew() {
     title: '',
     description: '',
     cover_image_url: '',
+    owner_video_url: '',
     submission_deadline: '',
     voting_deadline: '',
   });
   const [ritmosSelected, setRitmosSelected] = React.useState<string[]>([]);
   const coverFileRef = React.useRef<HTMLInputElement|null>(null);
+  const videoFileRef = React.useRef<HTMLInputElement|null>(null);
   const [pendingCoverFile, setPendingCoverFile] = React.useState<File|null>(null);
+  const [pendingVideoFile, setPendingVideoFile] = React.useState<File|null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +34,15 @@ export default function ChallengeNew() {
         title: form.title,
         description: form.description || null,
         cover_image_url: form.cover_image_url || null,
+        owner_video_url: form.owner_video_url || null,
         ritmo_slug: ritmosSelected[0] || null,
         submission_deadline: form.submission_deadline || null,
         voting_deadline: form.voting_deadline || null,
       });
-      // Si se seleccionó archivo de portada, súbelo y actualiza la fila
+      
+      const updates: any = {};
+      
+      // Si se seleccionó archivo de portada, súbelo
       if (pendingCoverFile) {
         const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
         const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
@@ -46,9 +53,29 @@ export default function ChallengeNew() {
         });
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-        await supabase.from('challenges').update({ cover_image_url: pub.publicUrl }).eq('id', id);
+        updates.cover_image_url = pub.publicUrl;
       }
-      showToast('Challenge creado', 'success');
+      
+      // Si se seleccionó video base, súbelo
+      if (pendingVideoFile) {
+        const ext = pendingVideoFile.name.split('.').pop()?.toLowerCase() || 'mp4';
+        const path = `challenges/${id}/owner-video-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('media').upload(path, pendingVideoFile, {
+          upsert: true,
+          cacheControl: '3600',
+          contentType: pendingVideoFile.type || undefined
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
+        updates.owner_video_url = pub.publicUrl;
+      }
+      
+      // Actualizar si hay archivos subidos
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('challenges').update(updates).eq('id', id);
+      }
+      
+      showToast('Challenge creado exitosamente', 'success');
       nav(`/challenges/${id}`);
     } catch (err: any) {
       showToast(err?.message || 'No se pudo crear', 'error');
@@ -109,27 +136,82 @@ export default function ChallengeNew() {
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: 4 }}>Imagen de portada (URL)</label>
-              <input
-                value={form.cover_image_url}
-                onChange={(e) => setForm((s) => ({ ...s, cover_image_url: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '.5rem .75rem',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,.18)',
-                  background: 'rgba(255,255,255,.06)',
-                  color: '#fff',
-                }}
-              />
-          <div style={{ display:'flex', gap:'.5rem', marginTop:8, alignItems:'center', flexWrap:'wrap' }}>
-            <input ref={coverFileRef} type="file" accept="image/*" hidden onChange={(e)=>{
-              const f = e.target.files?.[0];
-              if (!f) return; setPendingCoverFile(f); if (coverFileRef.current) coverFileRef.current.value='';
-            }} />
-            <button type="button" className="cc-btn cc-btn--primary" onClick={()=>coverFileRef.current?.click()}>Seleccionar portada</button>
-            {pendingCoverFile && <span className="cc-chip">Archivo listo: {pendingCoverFile.name}</span>}
-          </div>
+              <label style={{ display: 'block', marginBottom: 4 }}>📸 Imagen de portada</label>
+              <div style={{ display:'flex', gap:'.5rem', alignItems:'center', flexWrap:'wrap' }}>
+                <input ref={coverFileRef} type="file" accept="image/*" hidden onChange={(e)=>{
+                  const f = e.target.files?.[0];
+                  if (!f) return; setPendingCoverFile(f); if (coverFileRef.current) coverFileRef.current.value='';
+                }} />
+                <button 
+                  type="button" 
+                  className="cc-btn cc-btn--primary" 
+                  onClick={()=>coverFileRef.current?.click()}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, rgba(240,147,251,.15), rgba(245,87,108,.15))',
+                    border: '1px solid rgba(240,147,251,.3)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Seleccionar imagen
+                </button>
+                {pendingCoverFile && (
+                  <span style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: 999,
+                    background: 'rgba(16,185,129,.2)',
+                    border: '1px solid rgba(16,185,129,.3)',
+                    fontSize: '0.85rem',
+                    color: '#fff'
+                  }}>
+                    ✓ {pendingCoverFile.name}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4 }}>🎥 Video base (referencia para participantes)</label>
+              <div style={{ display:'flex', gap:'.5rem', alignItems:'center', flexWrap:'wrap' }}>
+                <input ref={videoFileRef} type="file" accept="video/*" hidden onChange={(e)=>{
+                  const f = e.target.files?.[0];
+                  if (!f) return; setPendingVideoFile(f); if (videoFileRef.current) videoFileRef.current.value='';
+                }} />
+                <button 
+                  type="button" 
+                  className="cc-btn cc-btn--primary" 
+                  onClick={()=>videoFileRef.current?.click()}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, rgba(30,136,229,.15), rgba(59,130,246,.15))',
+                    border: '1px solid rgba(30,136,229,.3)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Seleccionar video
+                </button>
+                {pendingVideoFile && (
+                  <span style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: 999,
+                    background: 'rgba(16,185,129,.2)',
+                    border: '1px solid rgba(16,185,129,.3)',
+                    fontSize: '0.85rem',
+                    color: '#fff'
+                  }}>
+                    ✓ {pendingVideoFile.name}
+                  </span>
+                )}
+              </div>
+              <div style={{ opacity: .7, fontSize: '.85rem', marginTop: 6 }}>
+                Este video servirá como referencia para los participantes del challenge.
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>

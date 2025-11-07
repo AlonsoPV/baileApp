@@ -8,6 +8,7 @@ export type Challenge = {
   description?: string | null;
   ritmo_slug?: string | null;
   cover_image_url?: string | null;
+  owner_video_url?: string | null;
   status: string;
   visibility?: string | null;
   submission_deadline?: string | null;
@@ -82,6 +83,7 @@ export function useChallengeCreate() {
       description?: string | null;
       ritmo_slug?: string | null;
       cover_image_url?: string | null;
+      owner_video_url?: string | null;
       submission_deadline?: string | null;
       voting_deadline?: string | null;
     }): Promise<string> => {
@@ -90,6 +92,7 @@ export function useChallengeCreate() {
         p_description: payload.description ?? null,
         p_ritmo_slug: payload.ritmo_slug ?? null,
         p_cover_image_url: payload.cover_image_url ?? null,
+        p_owner_video_url: payload.owner_video_url ?? null,
         p_submission_deadline: payload.submission_deadline ?? null,
         p_voting_deadline: payload.voting_deadline ?? null,
       });
