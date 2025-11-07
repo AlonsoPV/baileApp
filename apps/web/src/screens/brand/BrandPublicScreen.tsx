@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import { BioSection } from "../../components/profile/BioSection";
 import { colors, typography, spacing, borderRadius } from "../../theme/colors";
 import { supabase } from "../../lib/supabase";
 
@@ -234,12 +235,24 @@ export default function BrandProfileLive() {
 
         {/* Contenido principal */}
         <div className="profile-container" style={{ padding: '2rem', margin: '0 auto' }}>
+          {/* Biografía y Redes Sociales */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+          >
+            <BioSection 
+              bio={(brand as any)?.bio}
+              redes={(brand as any)?.redes_sociales}
+            />
+          </motion.div>
+
           {/* Catálogo */}
           <motion.section
             className="glass-card-container"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.05 }}
+            transition={{ duration: 0.24, delay: 0.1 }}
           >
             <h3 className="section-title">🛍️ Catálogo</h3>
             <CatalogTabs items={featured} />
@@ -344,19 +357,6 @@ export default function BrandProfileLive() {
               </div>
             </div>
           </motion.section>
-
-          {/* Redes Sociales */}
-          {(brand as any)?.redes_sociales && (
-            <motion.section
-              className="glass-card-container"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.05 }}
-            >
-              <h3 className="section-title">🌐 Redes Sociales</h3>
-              <SocialMediaSection redes_sociales={(brand as any).redes_sociales} />
-            </motion.section>
-          )}
 
           {/* Galería */}
           {media.length > 0 && (

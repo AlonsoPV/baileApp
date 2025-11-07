@@ -273,28 +273,159 @@ export default function BrandProfileEditor() {
             <ProfileNavigationToggle currentView="edit" profileType="brand" onSave={handleSave} isSaving={upsert.isPending} />
           </div>
 
+          {/* Banner de Bienvenida (solo para perfiles nuevos) */}
+          {!brand && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                padding: '1.5rem',
+                marginBottom: '2rem',
+                background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)',
+                border: '2px solid rgba(229, 57, 53, 0.4)',
+                borderRadius: '16px',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏷️</div>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700',
+                marginBottom: '0.5rem',
+                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                ¡Bienvenido, Marca!
+              </h3>
+              <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
+                Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
+              </p>
+              <div style={{
+                display: 'inline-block',
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600'
+              }}>
+                👆 Mínimo requerido: <strong>Nombre de la Marca</strong>
+              </div>
+            </motion.div>
+          )}
+
           {/* === INFO === */}
           {tab==='info' && (
             <>
               <div className="editor-section glass-card-container">
                 <h2 className="editor-section-title">🏷️ Información de la Marca</h2>
-                <div className="editor-grid">
-                  <div>
-                    <label className="editor-field">Nombre Público</label>
-                    <input type="text" value={form.nombre_publico || ''} onChange={(e) => setField('nombre_publico', e.target.value)} placeholder="Nombre de la marca" className="editor-input" />
+                
+                {/* Logo uploader - Destacado arriba */}
+                <div style={{ 
+                  marginBottom: '2rem', 
+                  padding: '1.5rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '1rem'
+                }}>
+                  <div style={{ 
+                    width: '120px', 
+                    height: '120px', 
+                    borderRadius: '50%', 
+                    overflow: 'hidden',
+                    border: '3px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                    background: 'linear-gradient(135deg, #E53935, #FB8C00)'
+                  }}>
+                    {form.avatar_url ? (
+                      <ImageWithFallback 
+                        src={form.avatar_url} 
+                        alt="logo" 
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover' 
+                        }} 
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '3rem'
+                      }}>
+                        🏷️
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="editor-field">Biografía / Descripción</label>
-                    <textarea value={form.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder="Describe tu marca (materiales, enfoque, estilos)" rows={4} className="editor-textarea" />
-                  </div>
-                </div>
-                {/* Logo uploader */}
-                <div style={{ marginTop: '1rem', display:'flex', gap:'1rem', alignItems:'center' }}>
-                  <ImageWithFallback src={form.avatar_url || ''} alt="logo" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'1px solid rgba(255,255,255,.2)' }} />
-                  <label className="editor-back-btn" style={{ cursor:'pointer' }}>
+                  <label className="editor-back-btn" style={{ 
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    fontWeight: '700'
+                  }}>
                     <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
-                    Subir logo
+                    📸 Subir Logo de la Marca
                   </label>
+                  <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: 0, textAlign: 'center' }}>
+                    El logo aparecerá en tu perfil público y en las tarjetas de exploración
+                  </p>
+                </div>
+
+                {/* Información básica */}
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                  <div>
+                    <label className="editor-field" style={{ 
+                      fontSize: '1rem',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      🏷️ Nombre de la Marca *
+                    </label>
+                    <input 
+                      type="text" 
+                      value={form.nombre_publico || ''} 
+                      onChange={(e) => setField('nombre_publico', e.target.value)} 
+                      placeholder="Ej: Zapatos Elegantes MX" 
+                      className="editor-input"
+                      style={{
+                        fontSize: '1.1rem',
+                        padding: '1rem',
+                        fontWeight: '600'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="editor-field" style={{ 
+                      fontSize: '1rem',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      📝 Biografía / Descripción
+                    </label>
+                    <textarea 
+                      value={form.bio || ''} 
+                      onChange={(e) => setField('bio', e.target.value)} 
+                      placeholder="Describe tu marca: historia, materiales, enfoque, estilos que representas, qué te hace único..." 
+                      rows={5} 
+                      className="editor-textarea"
+                      style={{
+                        fontSize: '1rem',
+                        padding: '1rem',
+                        lineHeight: '1.6'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
