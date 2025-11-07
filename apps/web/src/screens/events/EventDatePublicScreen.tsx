@@ -285,7 +285,22 @@ export default function EventDatePublicScreen() {
   const { data: zonas } = useTags('zona');
 
   // Verificar si el usuario es propietario
-  const isOwner = user && myOrganizer && parent && (myOrganizer as any).user_id === (parent as any).user_id;
+  const isOwner = React.useMemo(() => {
+    if (!user || !myOrganizer || !parent) return false;
+    
+    // Comparar user_id del organizador con user_id del parent
+    const organizerUserId = (myOrganizer as any).user_id;
+    const parentUserId = (parent as any).user_id;
+    
+    console.log('🔐 [EventDatePublicScreen] Verificando propiedad:', {
+      currentUserId: user.id,
+      organizerUserId,
+      parentUserId,
+      isOwner: organizerUserId === parentUserId
+    });
+    
+    return organizerUserId === parentUserId;
+  }, [user, myOrganizer, parent]);
 
   // Hook de RSVP
   const {
@@ -557,7 +572,6 @@ export default function EventDatePublicScreen() {
                   <div className="mini-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
                       <strong>📅 Cronograma</strong>
-                      <span style={{ opacity: .7, fontSize: '.9rem' }}>{date.cronograma.length} item(s)</span>
                     </div>
                     <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                       {date.cronograma.slice(0, 4).map((it: any, i: number) => (
@@ -576,7 +590,6 @@ export default function EventDatePublicScreen() {
                   <div className="mini-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
                       <strong>💰 Costos</strong>
-                      <span style={{ opacity: .7, fontSize: '.9rem' }}>{date.costos.length} opción(es)</span>
                     </div>
                     <ul className="list-compact" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                       {date.costos.slice(0, 4).map((c: any, i: number) => (
