@@ -7,6 +7,14 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { BioSection } from "../../components/profile/BioSection";
 import { colors, typography, spacing, borderRadius } from "../../theme/colors";
 import { supabase } from "../../lib/supabase";
+import { 
+  FaInstagram, 
+  FaFacebookF, 
+  FaTiktok, 
+  FaYoutube,
+  FaWhatsapp,
+  FaGlobe
+} from 'react-icons/fa';
 
 export default function BrandProfileLive() {
   const { brandId } = useParams<{ brandId: string }>();
@@ -242,24 +250,30 @@ export default function BrandProfileLive() {
                         href={redes.instagram.startsWith('http') ? redes.instagram : `https://instagram.com/${redes.instagram.replace('@', '')}`} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="Instagram"
+                        title={`Instagram: ${redes.instagram}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        📸
+                        <FaInstagram size={20} />
                       </a>
                     )}
                     {redes.tiktok && (
@@ -267,24 +281,31 @@ export default function BrandProfileLive() {
                         href={redes.tiktok.startsWith('http') ? redes.tiktok : `https://tiktok.com/@${redes.tiktok.replace('@', '')}`} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="TikTok"
+                        title={`TikTok: ${redes.tiktok}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: '#000000',
+                          border: '2px solid #fff',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        🎵
+                        <FaTiktok size={20} />
                       </a>
                     )}
                     {redes.youtube && (
@@ -292,24 +313,30 @@ export default function BrandProfileLive() {
                         href={redes.youtube} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="YouTube"
+                        title={`YouTube: ${redes.youtube}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: '#FF0000',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        📺
+                        <FaYoutube size={20} />
                       </a>
                     )}
                     {redes.facebook && (
@@ -317,24 +344,30 @@ export default function BrandProfileLive() {
                         href={redes.facebook.startsWith('http') ? redes.facebook : `https://facebook.com/${redes.facebook}`} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="Facebook"
+                        title={`Facebook: ${redes.facebook}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: '#1877F2',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        👥
+                        <FaFacebookF size={20} />
                       </a>
                     )}
                     {redes.whatsapp && (
@@ -342,24 +375,30 @@ export default function BrandProfileLive() {
                         href={`https://wa.me/${String(redes.whatsapp).replace(/\D+/g,'')}`} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="WhatsApp"
+                        title={`WhatsApp: ${redes.whatsapp}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: '#25D366',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        💬
+                        <FaWhatsapp size={20} />
                       </a>
                     )}
                     {redes.web && (
@@ -367,24 +406,30 @@ export default function BrandProfileLive() {
                         href={redes.web} 
                         target="_blank" 
                         rel="noreferrer"
-                        title="Sitio Web"
+                        title={`Sitio Web: ${redes.web}`}
                         style={{ 
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: '44px',
                           height: '44px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: '#6C757D',
                           borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '1.5rem',
-                          transition: '0.2s',
-                          backdropFilter: 'blur(10px)'
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = '';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                         }}
                       >
-                        🌐
+                        <FaGlobe size={20} />
                       </a>
                     )}
                   </div>
