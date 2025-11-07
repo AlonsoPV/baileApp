@@ -93,7 +93,7 @@ export default function BrandProfileEditor() {
   const { showToast } = useToast();
 
   const [form, dispatch] = React.useReducer(formReducer, initialForm);
-  const [tab, setTab] = React.useState<'info'|'products'|'lookbook'|'policies'>('info');
+  const [tab, setTab] = React.useState<'info'|'products'|'policies'>('info');
   const [catFilter, setCatFilter] = React.useState<Category | 'all'>('all');
 
   React.useEffect(() => {
@@ -240,32 +240,6 @@ export default function BrandProfileEditor() {
     }
   };
 
-  const onPickLookbook = async (files: FileList) => {
-    if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el lookbook.'); return; }
-    const brandId = (brand as any).id as number;
-    const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (imgs.length === 0) return;
-    const uploadedUrls: string[] = [];
-    for (const file of imgs) {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${brandId}/lookbook/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from('media').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
-      if (error) { console.error(error); continue; }
-      const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-      uploadedUrls.push(pub.publicUrl);
-    }
-    if (uploadedUrls.length > 0) {
-      const prev = Array.isArray((brand as any)?.media) ? ((brand as any).media as any[]) : [];
-      const next = [ ...uploadedUrls.map(url => ({ type: 'image', url })), ...prev ];
-      await supabase.from('profiles_brand').update({ media: next }).eq('id', (brand as any).id);
-    }
-  };
-
-  // Datos para vistas previas
-  const media: string[] = Array.isArray((brand as any)?.media)
-    ? ((brand as any).media as any[]).map(m => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
-    : [];
-  const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
 
   return (
     <>
@@ -314,16 +288,16 @@ export default function BrandProfileEditor() {
             <div style={{ width: '100px' }} />
           </div>
 
-          {/* Tabs */}
-          <div style={{ display:'flex', gap:'.5rem', marginBottom:'1rem', flexWrap:'wrap', justifyContent:'center' }}>
-            <button onClick={()=>setTab('info')} className="editor-back-btn" style={{ background: tab==='info'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Información</button>
-            <button onClick={()=>setTab('products')} className="editor-back-btn" style={{ background: tab==='products'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Productos</button>
-            <button onClick={()=>setTab('lookbook')} className="editor-back-btn" style={{ background: tab==='lookbook'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Lookbook</button>
-            <button onClick={()=>setTab('policies')} className="editor-back-btn" style={{ background: tab==='policies'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Políticas</button>
+          {/* ProfileNavigationToggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <ProfileNavigationToggle currentView="edit" profileType="brand" onSave={handleSave} isSaving={upsert.isPending} />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-            <ProfileNavigationToggle currentView="edit" profileType="brand" onSave={handleSave} isSaving={upsert.isPending} />
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:'.5rem', marginBottom:'1.5rem', flexWrap:'wrap', justifyContent:'center' }}>
+            <button onClick={()=>setTab('info')} className="editor-back-btn" style={{ background: tab==='info'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Información</button>
+            <button onClick={()=>setTab('products')} className="editor-back-btn" style={{ background: tab==='products'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Productos</button>
+            <button onClick={()=>setTab('policies')} className="editor-back-btn" style={{ background: tab==='policies'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Políticas</button>
           </div>
 
           {/* Banner de Bienvenida (solo para perfiles nuevos) */}
@@ -595,55 +569,267 @@ export default function BrandProfileEditor() {
                 </div>
               </div>
 
-              {/* Guía de tallas y ajuste */}
+              {/* Guía de tallas y ajuste - Diseño optimizado */}
               <div className="editor-section glass-card-container">
-                <h2 className="editor-section-title">📏 Guía de tallas y ajuste</h2>
-
-                {/* Editor de Guía de tallas */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Equivalencias (MX / US / EU)</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '.5rem', alignItems: 'center' }}>
-                    <b>MX</b><b>US</b><b>EU</b><span />
-                    {(form.size_guide || []).map((row, idx) => (
-                      <React.Fragment key={idx}>
-                        <input className="editor-input" value={row.mx} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'mx', value:e.target.value })} />
-                        <input className="editor-input" value={row.us} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'us', value:e.target.value })} />
-                        <input className="editor-input" value={row.eu} onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'eu', value:e.target.value })} />
-                        <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'REMOVE_SIZE', index: idx })}>Eliminar</button>
-                      </React.Fragment>
-                    ))}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #4CAF50, #8BC34A)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(76, 175, 80, 0.4)'
+                  }}>
+                    📏
                   </div>
-                  <div style={{ marginTop: '.6rem' }}>
-                    <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'ADD_SIZE' })}>+ Agregar fila</button>
-                    <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
-                      if (!(brand as any)?.id) return;
-                      await supabase.from('profiles_brand').update({ size_guide: form.size_guide || [] }).eq('id', (brand as any).id);
-                    }}>Guardar guía</button>
+                  <div>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>Guía de Tallas y Ajuste</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Ayuda a tus clientes a elegir la talla correcta
+                    </p>
                   </div>
                 </div>
 
-                {/* Editor de Tips */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <h3 className="editor-section-title" style={{ fontSize: '1.1rem' }}>Consejos de ajuste por estilo</h3>
+                {/* Editor de Equivalencias */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1rem', 
+                    fontWeight: '700', 
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    📐 Equivalencias de Tallas (MX / US / EU)
+                  </h3>
+                  
+                  {/* Tabla de tallas */}
+                  {(form.size_guide || []).length > 0 && (
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '1fr 1fr 1fr auto', 
+                      gap: '0.75rem', 
+                      alignItems: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>MX</div>
+                      <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>US</div>
+                      <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>EU</div>
+                      <span />
+                      {(form.size_guide || []).map((row, idx) => (
+                        <React.Fragment key={idx}>
+                          <input 
+                            className="editor-input" 
+                            value={row.mx} 
+                            onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'mx', value:e.target.value })}
+                            placeholder="22"
+                            style={{ padding: '0.75rem', fontSize: '0.95rem' }}
+                          />
+                          <input 
+                            className="editor-input" 
+                            value={row.us} 
+                            onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'us', value:e.target.value })}
+                            placeholder="5"
+                            style={{ padding: '0.75rem', fontSize: '0.95rem' }}
+                          />
+                          <input 
+                            className="editor-input" 
+                            value={row.eu} 
+                            onChange={(e)=>dispatch({ type:'UPDATE_SIZE', index: idx, key:'eu', value:e.target.value })}
+                            placeholder="35"
+                            style={{ padding: '0.75rem', fontSize: '0.95rem' }}
+                          />
+                          <button 
+                            type="button" 
+                            className="editor-back-btn" 
+                            onClick={()=>dispatch({ type:'REMOVE_SIZE', index: idx })}
+                            style={{ 
+                              background: 'rgba(244, 67, 54, 0.2)',
+                              border: '1px solid rgba(244, 67, 54, 0.4)',
+                              color: '#F44336',
+                              padding: '0.75rem',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Botones de acción */}
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <button 
+                      type="button" 
+                      className="editor-back-btn" 
+                      onClick={()=>dispatch({ type:'ADD_SIZE' })}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #4CAF50, #8BC34A)',
+                        fontWeight: '700'
+                      }}
+                    >
+                      ➕ Agregar Talla
+                    </button>
+                    <button 
+                      type="button" 
+                      className="editor-back-btn" 
+                      onClick={async ()=>{
+                        if (!(brand as any)?.id) { 
+                          showToast('Primero guarda la información básica.', 'error'); 
+                          return; 
+                        }
+                        try {
+                          await supabase.from('profiles_brand').update({ size_guide: form.size_guide || [] }).eq('id', (brand as any).id);
+                          showToast('✅ Guía de tallas guardada', 'success');
+                        } catch (e: any) {
+                          showToast('❌ Error al guardar guía', 'error');
+                        }
+                      }}
+                      style={{ fontWeight: '700' }}
+                    >
+                      💾 Guardar Guía
+                    </button>
+                  </div>
+                </div>
+
+                {/* Editor de Consejos de Ajuste */}
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1rem', 
+                    fontWeight: '700', 
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    💡 Consejos de Ajuste por Estilo
+                  </h3>
+                  
                   {(form.fit_tips || []).map((it, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 3fr auto', gap: '.5rem', alignItems: 'center', marginBottom: '.5rem' }}>
-                      <input className="editor-input" placeholder="Estilo (p. ej. Bachata)" value={it.style} onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'style', value:e.target.value })} />
-                      <input className="editor-input" placeholder="Tip (p. ej. tacón estable, suela flexible)" value={it.tip} onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'tip', value:e.target.value })} />
-                      <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'REMOVE_FIT_TIP', index: idx })}>Eliminar</button>
+                    <div key={idx} style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '200px 1fr auto', 
+                      gap: '0.75rem', 
+                      alignItems: 'start', 
+                      marginBottom: '0.75rem',
+                      padding: '1rem',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}>
+                      <input 
+                        className="editor-input" 
+                        placeholder="Ej: Bachata" 
+                        value={it.style} 
+                        onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'style', value:e.target.value })}
+                        style={{ padding: '0.75rem', fontSize: '0.95rem', fontWeight: '600' }}
+                      />
+                      <textarea 
+                        className="editor-textarea" 
+                        placeholder="Ej: Tacón estable, suela flexible, punta reforzada..." 
+                        value={it.tip} 
+                        onChange={(e)=>dispatch({ type:'UPDATE_FIT_TIP', index: idx, key:'tip', value:e.target.value })}
+                        rows={2}
+                        style={{ padding: '0.75rem', fontSize: '0.9rem', lineHeight: '1.5' }}
+                      />
+                      <button 
+                        type="button" 
+                        className="editor-back-btn" 
+                        onClick={()=>dispatch({ type:'REMOVE_FIT_TIP', index: idx })}
+                        style={{ 
+                          background: 'rgba(244, 67, 54, 0.2)',
+                          border: '1px solid rgba(244, 67, 54, 0.4)',
+                          color: '#F44336',
+                          padding: '0.75rem',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        🗑️
+                      </button>
                     </div>
                   ))}
-                  <button type="button" className="editor-back-btn" onClick={()=>dispatch({ type:'ADD_FIT_TIP' })}>+ Agregar tip</button>
-                  <button type="button" className="editor-back-btn" style={{ marginLeft: '.5rem' }} onClick={async ()=>{
-                    if (!(brand as any)?.id) return;
-                    await supabase.from('profiles_brand').update({ fit_tips: form.fit_tips || [] }).eq('id', (brand as any).id);
-                  }}>Guardar tips</button>
+
+                  {/* Botones de acción */}
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                    <button 
+                      type="button" 
+                      className="editor-back-btn" 
+                      onClick={()=>dispatch({ type:'ADD_FIT_TIP' })}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #4CAF50, #8BC34A)',
+                        fontWeight: '700'
+                      }}
+                    >
+                      ➕ Agregar Consejo
+                    </button>
+                    <button 
+                      type="button" 
+                      className="editor-back-btn" 
+                      onClick={async ()=>{
+                        if (!(brand as any)?.id) { 
+                          showToast('Primero guarda la información básica.', 'error'); 
+                          return; 
+                        }
+                        try {
+                          await supabase.from('profiles_brand').update({ fit_tips: form.fit_tips || [] }).eq('id', (brand as any).id);
+                          showToast('✅ Consejos guardados', 'success');
+                        } catch (e: any) {
+                          showToast('❌ Error al guardar consejos', 'error');
+                        }
+                      }}
+                      style={{ fontWeight: '700' }}
+                    >
+                      💾 Guardar Consejos
+                    </button>
+                  </div>
                 </div>
 
                 {/* Vista previa */}
-                <div className="editor-grid-small">
-                  <SizeGuide rows={form.size_guide || []} />
-                  <FitTips tips={form.fit_tips || []} />
-                </div>
+                {((form.size_guide || []).length > 0 || (form.fit_tips || []).length > 0) && (
+                  <div style={{ 
+                    marginTop: '1.5rem',
+                    padding: '1.25rem',
+                    background: 'rgba(76, 175, 80, 0.08)',
+                    border: '2px solid rgba(76, 175, 80, 0.2)',
+                    borderRadius: '12px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      fontWeight: '600', 
+                      opacity: 0.7, 
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      👀 Vista Previa
+                    </div>
+                    <div className="editor-grid-small">
+                      <SizeGuide rows={form.size_guide || []} />
+                      <FitTips tips={form.fit_tips || []} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Conversión - Diseño optimizado */}
@@ -1201,27 +1387,6 @@ export default function BrandProfileEditor() {
             </div>
           )}
 
-          {/* === LOOKBOOK === */}
-          {tab==='lookbook' && (
-            <div className="editor-section glass-card-container">
-              <h2 className="editor-section-title">🎥 Lookbook</h2>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1rem', marginBottom:'1rem', flexWrap:'wrap' }}>
-                <div style={{ opacity:.8 }}>Sube fotos para tu lookbook.</div>
-                <MediaUploader onPick={onPickLookbook} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
-                {lookbook.map((ph: any) => (
-                  <div key={ph.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
-                    <ImageWithFallback src={ph.image} alt={ph.caption || ''} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12 }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem' }}>
-                      <span style={{ fontWeight: 700 }}>{ph.style || ''}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* === POLICIES === */}
           {tab==='policies' && (
             <div className="editor-section glass-card-container">
@@ -1392,20 +1557,6 @@ export default function BrandProfileEditor() {
                     <b>✅ Garantía:</b> {form.policies?.warranty || '30 días por defectos de fabricación.'}
                   </li>
                 </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Galería (igual) */}
-          {media.length > 0 && (
-            <div className="editor-section glass-card-container">
-              <h2 className="editor-section-title">📷 Galería</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                {media.map((url, i) => (
-                  <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)' }}>
-                    <ImageWithFallback src={url} alt={`media-${i}`} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
-                  </div>
-                ))}
               </div>
             </div>
           )}
