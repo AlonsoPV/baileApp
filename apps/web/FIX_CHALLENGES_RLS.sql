@@ -143,7 +143,7 @@ SELECT challenge_create(
 */
 
 -- ================================================
--- Ver challenges existentes
+-- Ver challenges existentes (últimos 10)
 -- ================================================
 SELECT 
   id,
@@ -155,5 +155,56 @@ SELECT
   created_at
 FROM public.challenges
 ORDER BY created_at DESC
-LIMIT 5;
+LIMIT 10;
+
+-- ================================================
+-- Verificar un challenge específico (reemplaza el ID)
+-- ================================================
+-- Descomenta y reemplaza '1' con el ID real del challenge
+/*
+SELECT 
+  id,
+  owner_id,
+  title,
+  description,
+  status,
+  ritmo_slug,
+  cover_image_url,
+  owner_video_url,
+  submission_deadline,
+  voting_deadline,
+  created_at,
+  updated_at
+FROM public.challenges
+WHERE id = 1;  -- <-- Reemplaza 1 con el ID real
+*/
+
+-- ================================================
+-- Verificar permisos para ver un challenge específico
+-- ================================================
+-- Esto te dirá si puedes ver el challenge según las políticas RLS
+/*
+DO $$
+DECLARE
+  v_challenge_id bigint := 1;  -- <-- Reemplaza con el ID real
+  v_can_see boolean;
+BEGIN
+  -- Verifica si el challenge cumple con las políticas de SELECT
+  SELECT EXISTS(
+    SELECT 1 FROM public.challenges
+    WHERE id = v_challenge_id
+    AND (
+      status IN ('open', 'closed', 'archived')
+      OR owner_id = auth.uid()
+      OR EXISTS (
+        SELECT 1 FROM public.user_roles ur
+        WHERE ur.user_id = auth.uid()
+        AND ur.role_slug = 'superadmin'
+      )
+    )
+  ) INTO v_can_see;
+  
+  RAISE NOTICE 'Puedes ver el challenge %: %', v_challenge_id, v_can_see;
+END $$;
+*/
 
