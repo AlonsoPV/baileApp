@@ -781,7 +781,7 @@ export default function EventParentPublicScreen() {
           `}</style>
           
           <div className="social-hero-content">
-            {/* Columna 1: Nombre, Bio, Botones */}
+            {/* Columna 1: Nombre, Bio, Descripción, Ritmos/Zonas, Botones */}
             <div>
               <motion.h1
                 initial={{ opacity: 0, y: 12 }}
@@ -798,10 +798,111 @@ export default function EventParentPublicScreen() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18, duration: 0.4 }}
                 className="social-hero-description"
-                style={{ textAlign: 'left', marginBottom: '1.5rem' }}
+                style={{ textAlign: 'left', marginBottom: '1.25rem' }}
               >
                 {parent.biografia || 'Descubre más sobre este evento especial'}
               </motion.p>
+
+              {/* Descripción */}
+              {parent.descripcion && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.4 }}
+                  style={{
+                    marginBottom: '1.25rem',
+                    padding: '1rem 1.25rem',
+                    borderRadius: 16,
+                    border: '1px solid rgba(255,255,255,.12)',
+                    background: 'rgba(255,255,255,.05)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <p style={{ 
+                    lineHeight: 1.7, 
+                    fontSize: '1rem', 
+                    color: 'rgba(255,255,255,.88)', 
+                    margin: 0 
+                  }}>
+                    {parent.descripcion}
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Ritmos y Zonas sin títulos */}
+              {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  className="chips-container"
+                  style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem 1.25rem',
+                    borderRadius: 16,
+                    border: '1px solid rgba(240,147,251,.15)',
+                    background: 'linear-gradient(135deg, rgba(240,147,251,.08), rgba(30,136,229,.06))',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}
+                >
+                  <style>{`
+                    .chips-container {
+                      position: relative;
+                      overflow: hidden;
+                    }
+                    
+                    @media (max-width: 768px) {
+                      .chips-container {
+                        padding: 0.85rem 1rem !important;
+                        gap: 0.75rem !important;
+                      }
+                    }
+                    
+                    @media (max-width: 480px) {
+                      .chips-container {
+                        padding: 0.75rem 0.85rem !important;
+                        gap: 0.5rem !important;
+                        border-radius: 14px !important;
+                      }
+                      
+                      .chips-container span {
+                        font-size: 0.8rem !important;
+                        padding: 0.4rem 0.7rem !important;
+                      }
+                    }
+                  `}</style>
+                  
+                  {selectedCatalogIds.length > 0 && (
+                    <div>
+                      <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
+                    </div>
+                  )}
+
+                  {getZonaNombres().length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+                      {getZonaNombres().map((zona) => (
+                        <span
+                          key={zona}
+                          style={{
+                            padding: '.5rem .85rem',
+                            borderRadius: 999,
+                            border: '1px solid rgba(255,255,255,.28)',
+                            background: 'rgba(255,255,255,.10)',
+                            fontWeight: 800,
+                            fontSize: '0.9rem',
+                            color: '#fff'
+                          }}
+                        >
+                          📍 {zona}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
               {/* Acciones */}
               <style>{`
@@ -1134,97 +1235,9 @@ export default function EventParentPublicScreen() {
             }
           `}</style>
 
-          {/* Primera fila: Dos columnas */}
-          <div className="content-two-col" style={{ marginBottom: '2rem' }}>
-            {/* Columna 1: Descripción + Ritmos/Zonas */}
-            <div style={{ display: 'grid', gap: '1.5rem' }}>
-              {/* Descripción */}
-              {parent.descripcion && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.28 }}
-                  className="glass-card-container"
-                >
-                  <h3 style={{
-                    fontSize: '1.5rem', fontWeight: 900, marginBottom: '.75rem',
-                    background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-                  }}>
-                    📝 Descripción
-                  </h3>
-                  <p style={{ lineHeight: 1.7, fontSize: '1.05rem', color: 'rgba(255,255,255,.92)', margin: 0 }}>
-                    {parent.descripcion}
-                  </p>
-                </motion.div>
-              )}
-
-              {/* Ritmos / Zonas */}
-              {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.28 }}
-                  aria-label="Ritmos y zonas del evento"
-                  className="glass-card-container"
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
-                      background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
-                      color: '#fff', boxShadow: '0 10px 24px rgba(30,136,229,.35)'
-                    }}>🎵</div>
-                    <div>
-                      <h3 style={{
-                        margin: 0, fontSize: '1.25rem', fontWeight: 900,
-                        color: '#fff'
-                      }}>
-                        Enfoque Musical y Zonas
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    {selectedCatalogIds.length > 0 && (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.5rem' }}>
-                          <strong style={{ fontSize: '.95rem' }}>🎵 Ritmos</strong>
-                        </div>
-                        <div>
-                          <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
-                        </div>
-                      </div>
-                    )}
-
-                    {getZonaNombres().length > 0 && (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.5rem' }}>
-                          <strong style={{ fontSize: '.95rem' }}>📍 Zonas</strong>
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
-                          {getZonaNombres().map((zona) => (
-                            <span
-                              key={zona}
-                              style={{
-                                padding: '.5rem .85rem',
-                                borderRadius: 999,
-                                border: '1px solid rgba(255,255,255,.28)',
-                                background: 'rgba(255,255,255,.10)',
-                                fontWeight: 800
-                              }}
-                            >
-                              {zona}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Columna 2: Flyer del Event Parent */}
+          {/* Primera fila: Solo Flyer (Descripción y Ritmos/Zonas ahora están en el Hero) */}
+          <div style={{ marginBottom: '2rem' }}>
+            {/* Flyer del Event Parent */}
             {avatarUrl && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
