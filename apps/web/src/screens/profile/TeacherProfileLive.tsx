@@ -886,13 +886,7 @@ export default function TeacherProfileLive() {
             </motion.section>
           )}
 
-          {/* Maestros Invitados */}
-          <InvitedMastersSection
-            masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
-            title="🎭 Maestros Invitados"
-            showTitle={true}
-            isEditable={false}
-          />
+         
 
           {/* Foto Principal */}
           {getMediaBySlot(media as unknown as MediaSlotItem[], 'p1') && (

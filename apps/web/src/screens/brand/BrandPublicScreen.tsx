@@ -206,46 +206,190 @@ export default function BrandProfileLive() {
             </div>
 
             {/* Info */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
               <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 900 }}>{(brand as any).nombre_publico || (brand as any).nombre || 'Marca'}</h1>
-              {(brand as any).slogan && (
-                <p style={{ opacity: .9, margin: '4px 0' }}>{(brand as any).slogan}</p>
+              
+              {/* Biografía integrada en el banner */}
+              {(brand as any)?.bio && (
+                <p style={{ 
+                  opacity: 0.9, 
+                  lineHeight: 1.6, 
+                  margin: '0.5rem 0',
+                  fontSize: '1rem',
+                  color: 'rgba(255, 255, 255, 0.95)'
+                }}>
+                  {(brand as any).bio}
+                </p>
               )}
-              {(brand as any).descripcion && (
-                <p style={{ opacity: .95, lineHeight: 1.6, marginTop: '.25rem' }}>{(brand as any).descripcion}</p>
-              )}
-              {((brand as any)?.redes_sociales) && (
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
-                  {((brand as any).redes_sociales.instagram) && <a href={(brand as any).redes_sociales.instagram} target="_blank" rel="noreferrer" style={{ color: '#fff' }}>📸 Instagram</a>}
-                  {((brand as any).redes_sociales.tiktok) && <a href={(brand as any).redes_sociales.tiktok} target="_blank" rel="noreferrer" style={{ color: '#fff' }}>🎵 TikTok</a>}
-                  {((brand as any).redes_sociales.web) && <a href={(brand as any).redes_sociales.web} target="_blank" rel="noreferrer" style={{ color: '#fff' }}>🌐 Sitio</a>}
-                  {((brand as any).redes_sociales.whatsapp) && <a href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} target="_blank" rel="noreferrer" style={{ color: '#fff' }}>💬 WhatsApp</a>}
-                </div>
-              )}
-             {/*  {((brand as any)?.estado_aprobacion === 'aprobado') ? (
-                <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12, alignSelf: 'center' }}>✅ Verificado</span>
-              ) : (
-                (brand as any)?.estado_aprobacion && (
-                  <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(255, 215, 0, 0.14)', border: '1px solid rgba(255,215,0,0.35)', color: '#ffd700', fontWeight: 800, fontSize: 12, alignSelf: 'center' }}>{`⏳ ${(brand as any).estado_aprobacion}`}</span>
-                )
-              )} */}
+
+              {/* Redes sociales integradas en el banner */}
+              {((brand as any)?.redes_sociales) && (() => {
+                const redes = (brand as any).redes_sociales;
+                const hasAnyRed = redes.instagram || redes.tiktok || redes.youtube || redes.facebook || redes.whatsapp || redes.web;
+                
+                if (!hasAnyRed) return null;
+                
+                return (
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '0.75rem', 
+                    flexWrap: 'wrap', 
+                    marginTop: '0.5rem',
+                    alignItems: 'center'
+                  }}>
+                    {redes.instagram && (
+                      <a 
+                        href={redes.instagram.startsWith('http') ? redes.instagram : `https://instagram.com/${redes.instagram.replace('@', '')}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        📸 Instagram
+                      </a>
+                    )}
+                    {redes.tiktok && (
+                      <a 
+                        href={redes.tiktok.startsWith('http') ? redes.tiktok : `https://tiktok.com/@${redes.tiktok.replace('@', '')}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        🎵 TikTok
+                      </a>
+                    )}
+                    {redes.youtube && (
+                      <a 
+                        href={redes.youtube} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        📺 YouTube
+                      </a>
+                    )}
+                    {redes.facebook && (
+                      <a 
+                        href={redes.facebook.startsWith('http') ? redes.facebook : `https://facebook.com/${redes.facebook}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        👥 Facebook
+                      </a>
+                    )}
+                    {redes.whatsapp && (
+                      <a 
+                        href={`https://wa.me/${String(redes.whatsapp).replace(/\D+/g,'')}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    {redes.web && (
+                      <a 
+                        href={redes.web} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{ 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '20px',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          transition: '0.2s',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        🌐 Sitio Web
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </motion.section>
 
         {/* Contenido principal */}
         <div className="profile-container" style={{ padding: '2rem', margin: '0 auto' }}>
-          {/* Biografía y Redes Sociales */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-          >
-            <BioSection 
-              bio={(brand as any)?.bio}
-              redes={(brand as any)?.redes_sociales}
-            />
-          </motion.div>
 
           {/* Catálogo */}
           <motion.section
