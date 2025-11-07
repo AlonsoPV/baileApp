@@ -12,7 +12,11 @@
 -- que evita la recursión
 -- ============================================
 
--- 1. Crear función helper para verificar si es superadmin
+-- 1. Eliminar función existente si tiene firma diferente
+DROP FUNCTION IF EXISTS public.is_superadmin(uuid);
+DROP FUNCTION IF EXISTS public.is_superadmin();
+
+-- 2. Crear función helper para verificar si es superadmin
 CREATE OR REPLACE FUNCTION public.is_superadmin(check_user_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -29,7 +33,7 @@ BEGIN
 END;
 $$;
 
--- 2. Eliminar políticas existentes
+-- 3. Eliminar políticas existentes
 DROP POLICY IF EXISTS "user_roles_select_own" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_select_public" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_select_superadmin" ON public.user_roles;
@@ -40,7 +44,7 @@ DROP POLICY IF EXISTS "user_roles_update_superadmin" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_delete_own" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_delete_superadmin" ON public.user_roles;
 
--- 3. Crear políticas SIN recursión
+-- 4. Crear políticas SIN recursión
 
 -- SELECT: Los usuarios pueden ver sus propios roles
 CREATE POLICY "user_roles_select_own"
@@ -74,7 +78,7 @@ FOR DELETE
 USING (public.is_superadmin(auth.uid()));
 
 -- ============================================
--- 4. VERIFICAR POLÍTICAS CREADAS
+-- 5. VERIFICAR POLÍTICAS CREADAS
 -- ============================================
 SELECT 
   policyname,
@@ -86,7 +90,7 @@ AND tablename = 'user_roles'
 ORDER BY policyname;
 
 -- ============================================
--- 5. TEST: Verificar que el usuario puede ver sus roles
+-- 6. TEST: Verificar que el usuario puede ver sus roles
 -- ============================================
 -- Descomenta para probar (reemplaza con tu user_id)
 /*
@@ -98,7 +102,7 @@ WHERE user_id = '39555d3a-68fa-4bbe-b35e-c12756477285'::UUID;
 */
 
 -- ============================================
--- 6. VERIFICAR FUNCIÓN HELPER
+-- 7. VERIFICAR FUNCIÓN HELPER
 -- ============================================
 SELECT 
   proname as function_name,
