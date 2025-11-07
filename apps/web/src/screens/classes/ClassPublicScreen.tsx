@@ -270,8 +270,42 @@ export default function ClassPublicScreen() {
                 {classTitle}
               </h1>
 
-              {/* Chips de horario, costo, ubicación y nivel */}
+              {/* Chips de fecha/día, horario, costo, ubicación y nivel */}
               <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
+                {/* Chip de fecha o día */}
+                {(() => {
+                  if (selectedClass?.fecha) {
+                    // Fecha específica
+                    const fechaStr = new Date(selectedClass.fecha).toLocaleDateString('es-ES', { 
+                      weekday: 'short', 
+                      day: 'numeric', 
+                      month: 'short' 
+                    });
+                    return (
+                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                        📅 {fechaStr}
+                      </span>
+                    );
+                  } else if (selectedClass?.diaSemana !== undefined && selectedClass?.diaSemana !== null) {
+                    // Día de la semana
+                    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const dayName = dayNames[selectedClass.diaSemana] || 'Día no especificado';
+                    return (
+                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                        📅 {dayName}
+                      </span>
+                    );
+                  } else if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
+                    // Múltiples días
+                    return (
+                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                        📅 {selectedClass.diasSemana.join(', ')}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+                
                 {scheduleLabel && (
                   <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>🕒 {scheduleLabel}</span>
                 )}
@@ -351,9 +385,9 @@ export default function ClassPublicScreen() {
                 width: '100%',
                 maxWidth: '350px'
               }}>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,.7)', marginBottom: '.5rem' }}>
+                {/* <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,.7)', marginBottom: '.5rem' }}>
                   Creada por
-                </p>
+                </p> */}
                 <Link to={creatorLink} style={{ 
                   color: '#FFD166', 
                   fontWeight: 900, 
