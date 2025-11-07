@@ -225,8 +225,17 @@ export default function ClassPublicScreen() {
         </motion.section>
 
         {/* Clases, horarios, costos y agregar a calendario */}
-        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)', backdropFilter: 'blur(12px)' }}>
-          <ClasesLive title="" cronograma={cronogramaSelected} costos={costos} ubicacion={ubicacion as any} showCalendarButton={true} />
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} style={{ padding: '1.25rem', borderRadius: 18, border: '1px solid rgba(255,255,255,0.10)', background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', boxShadow: '0 8px 24px rgba(0,0,0,0.28)' }}>
+          <ClasesLive 
+            title="" 
+            cronograma={cronogramaSelected} 
+            costos={costos} 
+            ubicacion={ubicacion as any} 
+            showCalendarButton={true}
+            sourceType={sourceType}
+            sourceId={idNum}
+            isClickable={false}
+          />
         </motion.section>
       </div>
     </div>

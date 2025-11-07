@@ -118,7 +118,6 @@ export default function ClasesLive({
               scale: 1.02,
               boxShadow: '0 8px 24px rgba(229, 57, 53, 0.2)'
             }}
-            onClick={handleClick}
             style={{
               position: 'relative',
               display: 'flex',
@@ -129,38 +128,67 @@ export default function ClasesLive({
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-              backdropFilter: 'blur(10px)',
-              transition: 'all 0.3s ease',
-              cursor: isClickable ? 'pointer' : 'default'
+              transition: 'all 0.3s ease'
             }}
           >
-            {/* Fila: Icono + Nombre */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
-                border: '2px solid rgba(229, 57, 53, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)',
-                flexShrink: 0
-              }}>
-                {iconFor(it.tipo)}
-              </div>
-              
-              <h4 style={{
-                margin: 0,
-                fontSize: '1.125rem',
-                fontWeight: 700,
-                color: 'rgba(255, 255, 255, 0.95)',
-                letterSpacing: '0.3px'
-              }}>
+            {/* Fila 1: Nombre + Botón Calendario */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+              <h4 
+                onClick={handleClick}
+                style={{
+                  margin: 0,
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  letterSpacing: '0.3px',
+                  cursor: isClickable ? 'pointer' : 'default',
+                  flex: 1
+                }}
+              >
                 {it.titulo || 'Clase'}
               </h4>
+              
+              {/* Botón de calendario (no clickeable para navegación) */}
+              {showCalendarButton && (
+                <div
+                  style={{ position: 'relative', zIndex: 5, pointerEvents: 'auto' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(() => {
+                    const buildTimeDate = (time?: string) => {
+                      const base = new Date();
+                      const hhmm = (time || '').split(':').slice(0, 2).join(':');
+                      const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
+                      base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
+                      return base;
+                    };
+                    const start = buildTimeDate((it as any).inicio);
+                    const end = (() => {
+                      const e = buildTimeDate((it as any).fin);
+                      if (e.getTime() <= start.getTime()) {
+                        const plus = new Date(start);
+                        plus.setHours(plus.getHours() + 2);
+                        return plus;
+                      }
+                      return e;
+                    })();
+                    const location = ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad;
+                    return (
+                      <RequireLogin>
+                        <AddToCalendarWithStats
+                          eventId={`class-${idx}`}
+                          title={(it as any).titulo || 'Clase'}
+                          description={(it as any).nivel || ''}
+                          location={location}
+                          start={start}
+                          end={end}
+                          showAsIcon={false}
+                        />
+                      </RequireLogin>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             
             {/* Contenido */}
@@ -198,7 +226,15 @@ export default function ClasesLive({
                       } catch {
                         return (it as any).fecha;
                       }
-                    })() : (it as any)?.diaSemana}
+                    })() : (() => {
+                      // Mapear ID de día a nombre
+                      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                      const diaId = Number((it as any)?.diaSemana);
+                      if (!isNaN(diaId) && diaId >= 0 && diaId <= 6) {
+                        return dias[diaId];
+                      }
+                      return (it as any)?.diaSemana;
+                    })()}
                   </span>
                 )}
                 
@@ -259,56 +295,6 @@ export default function ClasesLive({
                 )}
               </div>
             </div>
-            
-            {/* Botón de calendario al final */}
-            {showCalendarButton && (
-              <div
-                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 8, position: 'relative', zIndex: 5, pointerEvents: 'auto' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {(() => {
-                  const buildTimeDate = (time?: string) => {
-                    const base = new Date();
-                    const hhmm = (time || '').split(':').slice(0, 2).join(':');
-                    const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
-                    base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
-                    return base;
-                  };
-                  const start = buildTimeDate((it as any).inicio);
-                  const end = (() => {
-                    const e = buildTimeDate((it as any).fin);
-                    if (e.getTime() <= start.getTime()) {
-                      const plus = new Date(start);
-                      plus.setHours(plus.getHours() + 2);
-                      return plus;
-                    }
-                    return e;
-                  })();
-                  const location = ubicacion?.nombre || ubicacion?.lugar || ubicacion?.direccion || ubicacion?.ciudad;
-                  return (
-                    <RequireLogin>
-                      <AddToCalendarWithStats
-                        eventId={`class-${idx}`}
-                        title={(it as any).titulo || 'Clase'}
-                        description={(it as any).nivel || ''}
-                        location={location}
-                        start={start}
-                        end={end}
-                        showAsIcon={true}
-                      />
-                    </RequireLogin>
-                  );
-                })()}
-              </div>
-            )}
-          {/*   {it.costos && it.costos.length === 1 && (
-              <div style={{ textAlign: 'right', minWidth: 90 }}>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{it.costos[0].tipo ?? ''}</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>
-                  {it.costos[0].precio !== undefined && it.costos[0].precio !== null ? `$${it.costos[0].precio!.toLocaleString()}` : 'Gratis'}
-                </div>
-              </div>
-            )} */}
           </motion.div>
           );
         })}
