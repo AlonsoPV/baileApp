@@ -576,6 +576,23 @@ export default function AcademyProfileEditor() {
                       
                       console.log('[AcademyProfileEditor] ✅ Ritmos filtrados:', filtered.map((t: any) => ({ id: t.id, nombre: t.nombre })));
                       
+                      // Mostrar labels que NO se encontraron
+                      const foundLabels = new Set(filtered.map((t: any) => t.nombre.toLowerCase().trim()));
+                      const notFound = selectedLabels.filter(label => 
+                        !foundLabels.has(label.toLowerCase().trim())
+                      );
+                      
+                      if (notFound.length > 0) {
+                        console.warn('[AcademyProfileEditor] ⚠️  Labels NO encontrados en tags:', notFound);
+                        console.warn('[AcademyProfileEditor] 💡 Posibles coincidencias:', 
+                          ritmoTags
+                            .filter((t: any) => notFound.some(nf => 
+                              t.nombre.toLowerCase().includes(nf.toLowerCase().substring(0, 4))
+                            ))
+                            .map((t: any) => t.nombre)
+                        );
+                      }
+                      
                       if (filtered.length > 0) {
                         return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                       }
