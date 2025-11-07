@@ -120,17 +120,13 @@ export default function BrandProfileEditor() {
   const handleSave = async () => {
     try {
       // Crear payload limpio con SOLO los campos que existen en profiles_brand
+      // NO incluir 'id' porque es GENERATED ALWAYS
       const payload: any = { 
         nombre_publico: form.nombre_publico, 
         bio: form.bio, 
         redes_sociales: form.redes_sociales,
         avatar_url: form.avatar_url || null
       };
-
-      // Solo incluir id si existe (para updates)
-      if ((brand as any)?.id) {
-        payload.id = (brand as any).id;
-      }
 
       // Agregar campos opcionales solo si existen en la tabla
       // (requiere ejecutar FIX_BRAND_COLUMNS.sql primero)

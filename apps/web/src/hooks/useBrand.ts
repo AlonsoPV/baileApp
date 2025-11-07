@@ -54,9 +54,11 @@ export function useUpsertBrand() {
       if (selErr) throw selErr;
 
       if (existing?.id) {
+        // Remover 'id' del payload para UPDATE (GENERATED ALWAYS)
+        const { id, ...updatePayload } = base;
         const { data, error } = await supabase
           .from(TABLE)
-          .update(base)
+          .update(updatePayload)
           .eq('id', existing.id)
           .select('*')
           .single();
