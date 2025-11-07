@@ -3,14 +3,14 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useTeacherMy } from "./useTeacher";
 
-// Bucket para archivos de maestro (crear en Supabase si no existe):
-// - teacher-media (público)
-const BUCKET = "teacher-media";
+// Bucket para archivos de maestro - usa el bucket 'media' con prefijo 'teacher/'
+const BUCKET = "media";
 
 async function uploadTeacherFile(teacherId: number, file: File): Promise<MediaItem> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = file.type.startsWith("image/") ? "image" : "video";
-  const path = `${teacherId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  // Usar prefijo 'teacher/' para organizar archivos en el bucket 'media'
+  const path = `teacher/${teacherId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
