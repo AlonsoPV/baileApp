@@ -6,12 +6,17 @@ export function useEventDatesByParent(parentId?: number) {
     queryKey: ["event", "dates", parentId],
     queryFn: async () => {
       if (!parentId) return [];
+      console.log('[useEventDatesByParent] Fetching dates for parent:', parentId);
       const { data, error } = await supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, ritmos_seleccionados, zonas, cronograma, costos, media, flyer_url, estado_publicacion, ubicaciones, created_at, updated_at")
+        .select("*")
         .eq("parent_id", parentId)
         .order("fecha", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        console.error('[useEventDatesByParent] Error:', error);
+        throw error;
+      }
+      console.log('[useEventDatesByParent] Success:', data);
       return data || [];
     },
     enabled: !!parentId
@@ -30,7 +35,7 @@ export function useEventDate(dateId?: number) {
       
       const { data, error } = await supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, ritmos_seleccionados, zonas, cronograma, costos, media, flyer_url, estado_publicacion, ubicaciones, created_at, updated_at")
+        .select("*")
         .eq("id", dateId)
         .maybeSingle();
         
@@ -38,6 +43,12 @@ export function useEventDate(dateId?: number) {
       
       if (error) {
         console.error('[useEventDate] Supabase error:', error);
+        console.error('[useEventDate] Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       
