@@ -145,9 +145,7 @@ export default function ClasesLive({
                   border: '2px solid rgba(229, 57, 53, 0.4)',
                   boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)',
                   cursor: isClickable ? 'pointer' : 'default',
-                  transition: 'all 0.2s ease',
-                  flex: 1,
-                  minWidth: 'fit-content'
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <span style={{ fontSize: '1.25rem' }}>📚</span>
@@ -171,16 +169,19 @@ export default function ClasesLive({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(() => {
-                    const buildTimeDate = (time?: string) => {
-                      const base = new Date();
+                    const buildTimeDate = (time?: string, fecha?: string) => {
+                      // Si hay fecha específica, usarla; si no, usar fecha actual
+                      const base = fecha ? new Date(fecha) : new Date();
                       const hhmm = (time || '').split(':').slice(0, 2).join(':');
                       const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
                       base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
                       return base;
                     };
-                    const start = buildTimeDate((it as any).inicio);
+                    
+                    const classDate = (it as any)?.fecha;
+                    const start = buildTimeDate((it as any).inicio, classDate);
                     const end = (() => {
-                      const e = buildTimeDate((it as any).fin);
+                      const e = buildTimeDate((it as any).fin, classDate);
                       if (e.getTime() <= start.getTime()) {
                         const plus = new Date(start);
                         plus.setHours(plus.getHours() + 2);
