@@ -70,17 +70,18 @@ export default function BrandProfileLive() {
   const avatarUrl = (brand as any).avatar_url || media[0] || undefined;
   const portadaUrl = (brand as any).portada_url as string | undefined;
 
-  // Normalizaciones simples para catálogo / lookbook (opcional)
+  // Normalizaciones para catálogo
   const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];
   const featured = productos.map((p: any) => ({
     id: p.id || Math.random().toString(36).slice(2),
     name: p.titulo || 'Producto',
-    price: typeof p.precio === 'number' ? `$${p.precio.toLocaleString()}` : (p.precio || ''),
+    description: p.descripcion || '',
+    price: p.price || (typeof p.precio === 'number' ? `$${p.precio.toLocaleString()}` : (p.precio || '')),
     image: p.imagen_url,
     category: (p.categoria || p.category || 'ropa') as 'calzado'|'ropa'|'accesorios',
+    gender: (p.gender || 'unisex') as 'caballero'|'dama'|'unisex',
     sizes: Array.isArray(p.sizes) ? p.sizes : [],
   }));
-  const lookbook = media.map((url, i) => ({ id: i, image: url, caption: '', style: '' }));
   const policies = (brand as any)?.policies || { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
   const sizeGuideRows = Array.isArray((brand as any)?.size_guide) ? (brand as any).size_guide : [];
   const fitTipsRows = Array.isArray((brand as any)?.fit_tips) ? (brand as any).fit_tips : [];
@@ -433,29 +434,6 @@ export default function BrandProfileLive() {
             </div>
           </motion.section>
 
-          {/* Lookbook */}
-          {lookbook.length > 0 && (
-            <motion.section
-              className="glass-card-container"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.24, delay: 0.1 }}
-            >
-              <h3 className="section-title">🎥 Lookbook en vivo</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '.9rem' }}>
-                {lookbook.map((ph: any) => (
-                  <div key={ph.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
-                    <ImageWithFallback src={ph.image} alt={ph.caption || ''} style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 12 }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '.5rem' }}>
-                      <span style={{ fontWeight: 700 }}>{ph.style || ''}</span>
-                      {ph.video_url && <a href={ph.video_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff' }}>▶ Ver reel</a>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.section>
-          )}
-
           {/* Beneficios / Políticas */}
           <motion.section
             className="glass-card-container"
@@ -518,52 +496,108 @@ export default function BrandProfileLive() {
             </div>
           </motion.section>
 
-          {/* Galería */}
-          {media.length > 0 && (
-            <motion.section
-              className="glass-card-container"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.18 }}
-            >
-              <h3 className="section-title">📷 Galería</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                {media.map((url, i) => (
-                  <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)' }}>
-                    <ImageWithFallback src={url} alt={`media-${i}`} style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
-                  </div>
-                ))}
-              </div>
-            </motion.section>
-          )}
         </div>
       </div>
     </>
   );
 }
 
-// Subcomponentes rápidos para catálogo y guía de tallas
+// Subcomponentes para catálogo y guía de tallas
 function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
   const filtered = items.filter((i: any) => i.category === tab);
   const tabs = ['calzado','ropa','accesorios'] as const;
-  const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
-  const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
-  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
+  const btnPrimary: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, #9C27B0, #E91E63)', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.95rem' };
+  const btnGhost: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '1rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column' };
+  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.25rem .6rem', fontSize: '.85rem', fontWeight: '600' };
+  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0, textAlign: 'center', padding: '2rem' };
   return (
     <div>
-      <div style={{ display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>{t[0].toUpperCase()+t.slice(1)}</button>
+          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>
+            {t === 'calzado' ? '👟 Calzado' : t === 'ropa' ? '👕 Ropa' : '💍 Accesorios'}
+          </button>
         ))}
       </div>
       {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1.25rem' }}>
           {filtered.map((p: any) => (
             <article key={p.id} style={prodCard}>
-              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
-              <div style={{ marginTop: '.6rem', fontWeight: 800 }}>{p.name}</div>
+              <div style={{ 
+                position: 'relative',
+                marginBottom: '0.75rem',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                background: 'rgba(0,0,0,0.2)'
+              }}>
+                <ImageWithFallback 
+                  src={p.image} 
+                  alt={p.name} 
+                  style={{ 
+                    width: '100%', 
+                    height: 'auto', 
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    borderRadius: 12 
+                  }} 
+                />
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ 
+                  fontWeight: 800, 
+                  fontSize: '1.05rem', 
+                  marginBottom: '0.5rem',
+                  lineHeight: '1.3'
+                }}>
+                  {p.name || 'Producto sin nombre'}
+                </div>
+                {/* Badge de género */}
+                {p.gender && (
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '0.25rem 0.75rem',
+                    background: 'rgba(156, 39, 176, 0.2)',
+                    border: '1px solid rgba(156, 39, 176, 0.4)',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    marginBottom: '0.5rem',
+                    textTransform: 'capitalize'
+                  }}>
+                    {p.gender === 'caballero' ? '👔' : p.gender === 'dama' ? '👗' : '👥'} {p.gender}
+                  </div>
+                )}
+                {p.description && (
+                  <div style={{ 
+                    fontSize: '0.9rem', 
+                    opacity: .8, 
+                    marginBottom: '0.75rem',
+                    lineHeight: '1.5'
+                  }}>
+                    {p.description}
+                  </div>
+                )}
+                {p.price && (
+                  <div style={{ 
+                    fontSize: '1.1rem',
+                    fontWeight: 900,
+                    background: 'linear-gradient(135deg, #9C27B0, #E91E63)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {p.price}
+                  </div>
+                )}
+                {Array.isArray(p.sizes) && p.sizes.length > 0 && (
+                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
+                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
+                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
+                  </div>
+                )}
+              </div>
             </article>
           ))}
         </div>
