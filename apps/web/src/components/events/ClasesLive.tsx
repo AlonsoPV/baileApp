@@ -121,10 +121,9 @@ export default function ClasesLive({
             onClick={handleClick}
             style={{
               position: 'relative',
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto',
-              alignItems: 'center',
-              gap: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
               padding: '1.25rem 1.5rem',
               borderRadius: 16,
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
@@ -135,114 +134,136 @@ export default function ClasesLive({
               cursor: isClickable ? 'pointer' : 'default'
             }}
           >
-            {/* Icono destacado */}
-            <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
-              border: '2px solid rgba(229, 57, 53, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)'
-            }}>
-              {iconFor(it.tipo)}
+            {/* Fila: Icono + Nombre */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2))',
+                border: '2px solid rgba(229, 57, 53, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.25)',
+                flexShrink: 0
+              }}>
+                {iconFor(it.tipo)}
+              </div>
+              
+              <h4 style={{
+                margin: 0,
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'rgba(255, 255, 255, 0.95)',
+                letterSpacing: '0.3px'
+              }}>
+                {it.titulo || 'Clase'}
+              </h4>
             </div>
             
             {/* Contenido */}
             <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                <h4 style={{
-                  margin: 0,
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  letterSpacing: '0.3px'
-                }}>
-                  {it.titulo || 'Clase'}
-                </h4>
-                {it.nivel && (
+              
+              {/* Fila: Fecha/Día + Hora */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+                marginBottom: 12
+              }}>
+                {/* Fecha o Día de la semana */}
+                {((it as any)?.fecha || (it as any)?.diaSemana) && (
                   <span style={{
-                    fontSize: 11,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 13,
                     fontWeight: 600,
-                    padding: '4px 10px',
+                    padding: '6px 12px',
                     borderRadius: 12,
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
+                    border: '1px solid rgba(240, 147, 251, 0.3)',
+                    background: 'rgba(240, 147, 251, 0.12)',
+                    color: '#f093fb'
                   }}>
-                    {it.nivel}
+                    📅
+                    {(it as any)?.fecha ? (() => {
+                      try {
+                        const d = new Date((it as any).fecha);
+                        const day = d.getDate();
+                        const month = d.toLocaleDateString('es-MX', { month: 'short' });
+                        return `${day} ${month}`;
+                      } catch {
+                        return (it as any).fecha;
+                      }
+                    })() : (it as any)?.diaSemana}
+                  </span>
+                )}
+                
+                {/* Hora de inicio */}
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: '6px 12px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  🕒 {it.inicio || '—'}
+                </span>
+              </div>
+              
+              {/* Fila: Chips de Costo y Ubicación */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {/* Chip de Costo */}
+                {it.costos && it.costos.length > 0 && it.costos[0] && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    border: '1px solid rgba(255, 209, 102, 0.4)',
+                    borderRadius: 12,
+                    padding: '6px 12px',
+                    background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
+                    color: '#FFD166',
+                    boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
+                  }}>
+                    💰 {it.costos[0].precio !== undefined && it.costos[0].precio !== null ? `$${it.costos[0].precio.toLocaleString()}` : 'Gratis'}
+                  </span>
+                )}
+                
+                {/* Chip de Ubicación */}
+                {((it as any)?.ubicacion || ubicacion?.nombre) && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: '6px 12px',
+                    borderRadius: 12,
+                    border: '1px solid rgba(30, 136, 229, 0.3)',
+                    background: 'rgba(30, 136, 229, 0.12)',
+                    color: '#90CAF9'
+                  }}>
+                    📍 {(it as any)?.ubicacion || ubicacion?.nombre}
                   </span>
                 )}
               </div>
-              
-              <div style={{
-                marginBottom: 10,
-                fontSize: 14,
-                color: 'rgba(255, 255, 255, 0.85)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
-              }}>
-                <span style={{ fontSize: 16 }}>🕒</span>
-                <span style={{ fontWeight: 500 }}>
-                  {it.inicio || '—'} – {it.fin || '—'}
-                </span>
-              </div>
-
-              {/* Ubicación en la card */}
-              {((it as any)?.ubicacion || ubicacion?.nombre) && (
-                <div style={{
-                  fontSize: 13,
-                  color: 'rgba(255, 255, 255, 0.75)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginBottom: 10
-                }}>
-                  <span style={{ fontSize: 14 }}>📍</span>
-                  <span style={{ fontWeight: 500 }}>
-                    {(it as any)?.ubicacion || ubicacion?.nombre}
-                  </span>
-                </div>
-              )}
-              
-              {it.costos && it.costos.length > 0 && (
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-                  {it.costos.map((c, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ scale: 0.9 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: idx * 0.03 + i * 0.05 }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        fontSize: 13,
-                        fontWeight: 700,
-                        border: '1px solid rgba(255, 209, 102, 0.4)',
-                        borderRadius: 12,
-                        padding: '6px 12px',
-                        background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
-                        color: '#FFD166',
-                        boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
-                      }}
-                    >
-                      <span style={{ fontSize: 14 }}>💰</span>
-                      <strong>{c.precio !== undefined && c.precio !== null ? `$${c.precio.toLocaleString()}` : 'Gratis'}</strong>
-                    </motion.span>
-                  ))}
-                </div>
-              )}
             </div>
+            
+            {/* Botón de calendario al final */}
             {showCalendarButton && (
               <div
-                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', position: 'relative', zIndex: 5, pointerEvents: 'auto' }}
+                style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 8, position: 'relative', zIndex: 5, pointerEvents: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {(() => {
