@@ -76,7 +76,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             <ImageWithFallback
               src={photos[currentIndex]}
               alt={`Foto ${currentIndex + 1}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', cursor: 'pointer' }}
               onClick={() => setIsFullscreen(true)}
             />
           </div>
@@ -500,7 +500,7 @@ export default function AcademyPublicScreen() {
                 <ImageWithFallback
                   alt="Foto principal"
                   src={getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }}
                 />
               </div>
             </motion.section>
