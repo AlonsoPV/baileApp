@@ -118,19 +118,45 @@ export default function BrandProfileEditor() {
   const setRS = (key: string, value: string) => dispatch({ type:'SET_RS', key, value });
 
   const handleSave = async () => {
-    const payload: any = { 
-      id: (brand as any)?.id, 
-      nombre_publico: form.nombre_publico, 
-      bio: form.bio, 
-      redes_sociales: form.redes_sociales, 
-      productos: form.productos || [],
-      avatar_url: form.avatar_url || null,
-      size_guide: form.size_guide || [],
-      fit_tips: form.fit_tips || [],
-      policies: form.policies || {},
-      conversion: form.conversion || {}
-    };
-    await upsert.mutateAsync(payload);
+    try {
+      // Crear payload limpio con SOLO los campos que existen en profiles_brand
+      const payload: any = { 
+        nombre_publico: form.nombre_publico, 
+        bio: form.bio, 
+        redes_sociales: form.redes_sociales,
+        avatar_url: form.avatar_url || null
+      };
+
+      // Solo incluir id si existe (para updates)
+      if ((brand as any)?.id) {
+        payload.id = (brand as any).id;
+      }
+
+      // Agregar campos opcionales solo si existen en la tabla
+      // (requiere ejecutar FIX_BRAND_COLUMNS.sql primero)
+      if (form.productos && form.productos.length > 0) {
+        payload.productos = form.productos;
+      }
+      if (form.size_guide && form.size_guide.length > 0) {
+        payload.size_guide = form.size_guide;
+      }
+      if (form.fit_tips && form.fit_tips.length > 0) {
+        payload.fit_tips = form.fit_tips;
+      }
+      if (form.policies && Object.keys(form.policies).length > 0) {
+        payload.policies = form.policies;
+      }
+      if (form.conversion && Object.keys(form.conversion).length > 0) {
+        payload.conversion = form.conversion;
+      }
+
+      console.log('📦 [BrandProfileEditor] Payload limpio:', payload);
+      await upsert.mutateAsync(payload);
+      showToast('✅ Perfil guardado exitosamente', 'success');
+    } catch (error: any) {
+      console.error('❌ [BrandProfileEditor] Error guardando:', error);
+      showToast(`❌ Error al guardar: ${error.message || 'Intenta nuevamente'}`, 'error');
+    }
   };
 
   // --- Uploaders (manteniendo UX/UI original) ---
