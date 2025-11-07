@@ -22,61 +22,313 @@ export default function TrendingList() {
   }, []);
 
   return (
-    <div className="cc-page" style={{ minHeight: '100vh' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '1rem' }}>
-        {/* Hero */}
-        <section className="cc-glass" style={{ padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '.5rem' }}>📈</div>
-          <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935, #FB8C00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Trending
-          </h1>
-          <p style={{ opacity: .85, marginTop: '.5rem' }}>
-            Vota por tus favoritos en las categorías activas
-          </p>
+    <div className="cc-page" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)' }}>
+      <style>{`
+        .trending-hero {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, 
+            rgba(11,13,16,.98) 0%, 
+            rgba(18,22,27,.95) 50%, 
+            rgba(30,20,40,.96) 100%);
+          padding: 3rem 2.5rem;
+          border-radius: 32px;
+          margin-bottom: 2rem;
+          border: 2px solid rgba(229,57,53,.15);
+          box-shadow: 
+            0 20px 60px rgba(0,0,0,.6),
+            0 0 0 1px rgba(229,57,53,.1) inset,
+            0 4px 20px rgba(229,57,53,.15);
+          backdrop-filter: blur(20px);
+        }
+        
+        .trending-hero::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166, #FF6B9D);
+          opacity: 0.9;
+        }
+        
+        .trending-title {
+          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-weight: 900;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 40%, #FFD166 80%, #fff 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0 0 1rem;
+          letter-spacing: -0.04em;
+          line-height: 1.05;
+          text-shadow: 
+            0 4px 30px rgba(229,57,53,.5),
+            0 2px 15px rgba(251,140,0,.4),
+            0 0 40px rgba(255,209,102,.3);
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
+        }
+        
+        .trending-subtitle {
+          font-size: clamp(1rem, 2vw, 1.25rem);
+          color: rgba(255,255,255,.88);
+          margin: 0;
+          line-height: 1.6;
+          font-weight: 400;
+        }
+        
+        @media (max-width: 768px) {
+          .cc-page { padding-top: 64px; }
+          .trending-hero { padding: 2rem 1.5rem !important; }
+          .trending-title { font-size: 2rem !important; }
+        }
+        
+        @media (max-width: 480px) {
+          .trending-hero { padding: 1.5rem 1rem !important; }
+          .trending-title { font-size: 1.75rem !important; }
+          .trending-subtitle { font-size: 0.95rem !important; }
+        }
+      `}</style>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '1.5rem' }}>
+        {/* Hero mejorado */}
+        <section className="trending-hero">
+          {/* Efectos decorativos */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 30%, rgba(229,57,53,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(251,140,0,0.08) 0%, transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }} />
+          
+          <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <div style={{ 
+              width: 80, 
+              height: 80, 
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2.5rem',
+              margin: '0 auto 1.5rem',
+              boxShadow: '0 16px 40px rgba(229,57,53,.4)',
+              border: '3px solid rgba(229,57,53,.3)'
+            }}>
+              📈
+            </div>
+            
+            <h1 className="trending-title">Trending</h1>
+            <p className="trending-subtitle">
+              Vota por tus favoritos en las categorías activas
+            </p>
+          </div>
         </section>
 
         {/* Lista de trendings */}
-        <section className="cc-glass" style={{ padding: '1rem' }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</div>
-          ) : rows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', opacity: .75 }}>No hay trendings activos en este momento.</div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-              {rows.map((r) => (
-                <div key={r.id} style={{
+        {loading ? (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(11,13,16,.95), rgba(18,22,27,.92))',
+            borderRadius: 24,
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            boxShadow: '0 16px 48px rgba(0,0,0,.5)'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+            <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,.85)' }}>Cargando...</div>
+          </div>
+        ) : rows.length === 0 ? (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(11,13,16,.95), rgba(18,22,27,.92))',
+            borderRadius: 24,
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            border: '2px dashed rgba(255,255,255,.15)',
+            boxShadow: '0 16px 48px rgba(0,0,0,.5)'
+          }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎯</div>
+            <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,.85)' }}>
+              No hay trendings activos en este momento
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            {rows.map((r) => (
+              <article
+                key={r.id}
+                style={{
                   position: 'relative',
-                  borderRadius: 16,
+                  aspectRatio: '1 / 1',
+                  maxWidth: 450,
+                  width: '100%',
+                  margin: '0 auto',
+                  borderRadius: 24,
                   overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  cursor: 'pointer'
+                  border: '2px solid rgba(229,57,53,.2)',
+                  boxShadow: '0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(229,57,53,.1) inset',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
                 onClick={() => navigate(`/trending/${r.id}`)}
-                >
-                  <div style={{
-                    width: '100%',
-                    aspectRatio: '1 / 1',
-                    background: r.cover_url
-                      ? `url(${r.cover_url}) center/cover no-repeat`
-                      : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))'
-                  }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0.85) 100%)' }} />
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 12, gap: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                      <div style={{ fontWeight: 900, color: '#fff', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.36))', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</div>
-                      <span className="cc-chip" style={{ textTransform: 'uppercase' }}>{r.status}</span>
+                onMouseEnter={(e) => { 
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'; 
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 24px 64px rgba(0,0,0,.6), 0 0 0 2px rgba(229,57,53,.3) inset'; 
+                }}
+                onMouseLeave={(e) => { 
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'; 
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(229,57,53,.1) inset'; 
+                }}
+              >
+                {/* Background image */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage: r.cover_url
+                    ? `url(${r.cover_url})`
+                    : 'linear-gradient(135deg, rgba(229,57,53,.2), rgba(251,140,0,.2), rgba(30,136,229,.2))',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} />
+                
+                {/* Overlay gradients */}
+                <div style={{ 
+                  position: 'absolute', 
+                  inset: 0, 
+                  background: 'linear-gradient(180deg, rgba(0,0,0,.4) 0%, rgba(0,0,0,.6) 70%, rgba(0,0,0,.85) 100%)'
+                }} />
+                
+                {/* Content */}
+                <div style={{ 
+                  position: 'absolute', 
+                  inset: 0, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  justifyContent: 'flex-end', 
+                  padding: '1.5rem',
+                  gap: '0.75rem',
+                  zIndex: 1
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ 
+                      fontWeight: 900, 
+                      fontSize: '1.5rem',
+                      lineHeight: 1.2,
+                      color: '#fff', 
+                      textShadow: '0 2px 8px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4)',
+                      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.5))',
+                      flex: 1
+                    }}>
+                      {r.title}
                     </div>
-                    {r.description && <div className="cc-two-lines" style={{ opacity: .92, color:'#fff' }}>{r.description}</div>}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: .92, color:'#fff' }}>
-                      {r.starts_at && <span>🟢 {new Date(r.starts_at).toLocaleString()}</span>}
-                      {r.ends_at && <span>🔴 {new Date(r.ends_at).toLocaleString()}</span>}
-                    </div>
+                    <span style={{
+                      padding: '0.4rem 0.9rem',
+                      borderRadius: 999,
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      background: r.status === 'open'
+                        ? 'rgba(16,185,129,.35)'
+                        : 'rgba(59,130,246,.3)',
+                      border: `1px solid ${r.status === 'open'
+                        ? 'rgba(16,185,129,.5)'
+                        : 'rgba(59,130,246,.5)'}`,
+                      boxShadow: '0 4px 12px rgba(0,0,0,.3)',
+                      color: '#fff'
+                    }}>
+                      {r.status}
+                    </span>
                   </div>
+                  
+                  {r.description && (
+                    <div className="cc-two-lines" style={{ 
+                      opacity: .92, 
+                      fontSize: '0.95rem',
+                      lineHeight: 1.5,
+                      color: '#fff',
+                      textShadow: '0 1px 4px rgba(0,0,0,.6)'
+                    }}>
+                      {r.description}
+                    </div>
+                  )}
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: 12, 
+                    flexWrap: 'wrap', 
+                    fontSize: '0.85rem', 
+                    opacity: .9, 
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0,0,0,.5)'
+                  }}>
+                    {r.starts_at && (
+                      <span style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 4,
+                        padding: '0.3rem 0.7rem',
+                        borderRadius: 999,
+                        background: 'rgba(16,185,129,.2)',
+                        border: '1px solid rgba(16,185,129,.3)'
+                      }}>
+                        🟢 {new Date(r.starts_at).toLocaleDateString()}
+                      </span>
+                    )}
+                    {r.ends_at && (
+                      <span style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 4,
+                        padding: '0.3rem 0.7rem',
+                        borderRadius: 999,
+                        background: 'rgba(239,68,68,.2)',
+                        border: '1px solid rgba(239,68,68,.3)'
+                      }}>
+                        🔴 {new Date(r.ends_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/trending/${r.id}`);
+                    }}
+                    style={{
+                      marginTop: 8,
+                      padding: '0.7rem 1.5rem',
+                      borderRadius: 999,
+                      border: '2px solid rgba(229,57,53,0.5)',
+                      background: 'linear-gradient(135deg, rgba(229,57,53,.9), rgba(251,140,0,.9))',
+                      color: '#fff',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 20px rgba(229,57,53,.4)',
+                      transition: 'all 0.2s',
+                      width: '100%'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = '0 12px 28px rgba(229,57,53,.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(229,57,53,.4)';
+                    }}
+                  >
+                    Ver y Votar →
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,14 +15,14 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
   const { data: isSuperAdmin } = useIsAdmin();
 
   const menuItems = [
-    { id: 'explore', label: 'Explorar', icon: '🔍', onClick: () => navigate('/explore') },
+    /* { id: 'explore', label: 'Explorar', icon: '🔍', onClick: () => navigate('/explore') }, */
   /*   { id: 'about-us', label: '¿Quiénes somos?', icon: '🏢', onClick: () => navigate('/quienes-somos') }, */
     { id: 'me', label: 'Mi perfil', icon: '👤', onClick: () => navigate('/app/profile') },
    /*  { id: 'default-profile', label: 'Configurar perfil por defecto', icon: '⚙️', onClick: () => navigate('/app/profile/settings') },
      */{ id: 'request-role', label: 'Solicitar rol', icon: '📝', onClick: () => navigate('/app/roles/request') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
    /*  { id: 'info', label: 'Info', icon: 'ℹ️', onClick: () => navigate('/about') }, */
-    { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') },
+   /*  { id: 'legal', label: 'Legal', icon: '📄', onClick: () => navigate('/legal') }, */
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
