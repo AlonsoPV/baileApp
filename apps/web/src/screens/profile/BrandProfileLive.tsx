@@ -207,23 +207,24 @@ export default function BrandProfileLive() {
                         href={redes.instagram.startsWith('http') ? redes.instagram : `https://instagram.com/${redes.instagram.replace('@', '')}`} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="Instagram"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        📸 Instagram
+                        📸
                       </a>
                     )}
                     {redes.tiktok && (
@@ -231,23 +232,24 @@ export default function BrandProfileLive() {
                         href={redes.tiktok.startsWith('http') ? redes.tiktok : `https://tiktok.com/@${redes.tiktok.replace('@', '')}`} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="TikTok"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        🎵 TikTok
+                        🎵
                       </a>
                     )}
                     {redes.youtube && (
@@ -255,23 +257,24 @@ export default function BrandProfileLive() {
                         href={redes.youtube} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="YouTube"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        📺 YouTube
+                        📺
                       </a>
                     )}
                     {redes.facebook && (
@@ -279,23 +282,24 @@ export default function BrandProfileLive() {
                         href={redes.facebook.startsWith('http') ? redes.facebook : `https://facebook.com/${redes.facebook}`} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="Facebook"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        👥 Facebook
+                        👥
                       </a>
                     )}
                     {redes.whatsapp && (
@@ -303,23 +307,24 @@ export default function BrandProfileLive() {
                         href={`https://wa.me/${String(redes.whatsapp).replace(/\D+/g,'')}`} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="WhatsApp"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        💬 WhatsApp
+                        💬
                       </a>
                     )}
                     {redes.web && (
@@ -327,23 +332,24 @@ export default function BrandProfileLive() {
                         href={redes.web} 
                         target="_blank" 
                         rel="noreferrer"
+                        title="Sitio Web"
                         style={{ 
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.5rem 0.875rem',
+                          justifyContent: 'center',
+                          width: '44px',
+                          height: '44px',
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '20px',
+                          borderRadius: '50%',
                           color: '#fff',
                           textDecoration: 'none',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
+                          fontSize: '1.5rem',
                           transition: '0.2s',
                           backdropFilter: 'blur(10px)'
                         }}
                       >
-                        🌐 Sitio Web
+                        🌐
                       </a>
                     )}
                   </div>
