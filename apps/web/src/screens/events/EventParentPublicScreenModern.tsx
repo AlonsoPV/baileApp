@@ -647,24 +647,56 @@ export default function EventParentPublicScreen() {
           }
         }
         .social-hero-modern {
-          position: relative; overflow: hidden;
-          background: linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9));
-          padding: 3.5rem 2.25rem; text-align: center; border-radius: 28px;
-          margin: 1.5rem auto 0; max-width: 1400px;
-          border: 1px solid rgba(255,255,255,.09);
-          box-shadow: 0 16px 48px rgba(0,0,0,.5);
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, 
+            rgba(11,13,16,.98) 0%, 
+            rgba(18,22,27,.95) 50%, 
+            rgba(30,20,40,.96) 100%);
+          padding: 3rem 2.5rem;
+          border-radius: 32px;
+          margin: 1.5rem auto 0;
+          max-width: 1400px;
+          border: 2px solid rgba(240,147,251,.15);
+          box-shadow: 
+            0 20px 60px rgba(0,0,0,.6),
+            0 0 0 1px rgba(240,147,251,.1) inset,
+            0 4px 20px rgba(240,147,251,.15);
+          backdrop-filter: blur(20px);
         }
+        
+        .social-hero-modern::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166, #1E88E5);
+          opacity: 0.9;
+        }
+        
         .social-hero-title {
-          font-size: clamp(2rem, 4vw, 4rem);
+          font-size: clamp(2rem, 4vw, 3.5rem);
           font-weight: 900;
-          background: linear-gradient(135deg, #1E88E5 0%, #00BCD4 50%, #FF3D57 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          margin-bottom: 1rem; letter-spacing: -0.03em; line-height: 1.1;
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #FFD166 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 1rem;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+          text-shadow: 0 2px 20px rgba(240,147,251,.3);
         }
+        
         .social-hero-description {
-          font-size: clamp(1rem, 2vw, 1.25rem);
-          opacity: .95; max-width: 820px; margin: 0 auto 1.25rem; line-height: 1.6;
-          color: rgba(255,255,255,.92);
+          font-size: clamp(1rem, 2vw, 1.15rem);
+          opacity: .92;
+          max-width: 820px;
+          margin: 0 0 1.25rem;
+          line-height: 1.7;
+          color: rgba(255,255,255,.9);
+          font-weight: 400;
         }
         .info-strip {
           display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-start;
@@ -690,18 +722,32 @@ export default function EventParentPublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.36 }}
         >
+          {/* Efectos decorativos de fondo */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 30%, rgba(30,136,229,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(240,147,251,0.08) 0%, transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }} />
+          
           <style>{`
             .social-hero-content {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 2rem;
+              gap: 2.5rem;
               align-items: start;
+              position: relative;
+              z-index: 1;
             }
             
             @media (max-width: 1024px) {
               .social-hero-content {
                 grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
+                gap: 2rem !important;
               }
             }
             
@@ -709,11 +755,19 @@ export default function EventParentPublicScreen() {
               .social-hero-modern {
                 padding: 2rem 1.5rem !important;
               }
+              
+              .social-hero-content {
+                gap: 1.5rem !important;
+              }
             }
             
             @media (max-width: 480px) {
               .social-hero-modern {
                 padding: 1.5rem 1rem !important;
+              }
+              
+              .social-hero-content {
+                gap: 1.25rem !important;
               }
               
               .social-hero-title {
@@ -755,6 +809,34 @@ export default function EventParentPublicScreen() {
                   display: flex;
                   gap: 1rem;
                   flex-wrap: wrap;
+                  margin-top: 1.5rem;
+                }
+                
+                .action-buttons button,
+                .action-buttons > div > button {
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  position: relative;
+                  overflow: hidden;
+                }
+                
+                .action-buttons button::before,
+                .action-buttons > div > button::before {
+                  content: '';
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  width: 0;
+                  height: 0;
+                  border-radius: 50%;
+                  background: rgba(255,255,255,.2);
+                  transform: translate(-50%, -50%);
+                  transition: width 0.6s, height 0.6s;
+                }
+                
+                .action-buttons button:hover::before,
+                .action-buttons > div > button:hover::before {
+                  width: 300px;
+                  height: 300px;
                 }
                 
                 @media (max-width: 480px) {
@@ -778,39 +860,47 @@ export default function EventParentPublicScreen() {
               <div className="action-buttons">
                 {isOwner && (
                   <motion.button
-                    whileHover={{ scale: 1.03 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate(`/social/${parent.id}/edit`)}
                     style={{
-                      padding: '0.9rem 1.6rem',
+                      padding: '1rem 1.75rem',
                       borderRadius: borderRadius.full,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'linear-gradient(135deg, rgba(255,61,87,.9), rgba(255,140,66,.9))',
+                      border: '2px solid rgba(255,61,87,0.4)',
+                      background: 'linear-gradient(135deg, rgba(255,61,87,.95), rgba(255,140,66,.95))',
                       color: colors.gray[50],
                       fontSize: typography.fontSize.base,
                       fontWeight: typography.fontWeight.bold,
                       cursor: 'pointer',
-                      boxShadow: '0 8px 24px rgba(0,0,0,.35)'
+                      boxShadow: '0 10px 30px rgba(255,61,87,.4), 0 4px 12px rgba(0,0,0,.3)',
+                      backdropFilter: 'blur(10px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}
                   >
-                    ✏️ Editar Social
+                    <span style={{ position: 'relative', zIndex: 1 }}>✏️ Editar Social</span>
                   </motion.button>
                 )}
 
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
                   <ShareButton
                     url={typeof window !== 'undefined' ? window.location.href : ''}
                     title={parent.nombre}
                     style={{
-                      padding: '0.9rem 1.6rem',
+                      padding: '1rem 1.75rem',
                       borderRadius: borderRadius.full,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))',
+                      border: '2px solid rgba(30,136,229,0.4)',
+                      background: 'linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))',
                       color: colors.gray[50],
                       fontSize: typography.fontSize.base,
                       fontWeight: typography.fontWeight.bold,
                       cursor: 'pointer',
-                      boxShadow: '0 8px 24px rgba(0,0,0,.35)'
+                      boxShadow: '0 10px 30px rgba(30,136,229,.4), 0 4px 12px rgba(0,0,0,.3)',
+                      backdropFilter: 'blur(10px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}
                   />
                 </motion.div>
@@ -821,11 +911,39 @@ export default function EventParentPublicScreen() {
             <div>
               <style>{`
                 .dates-container {
-                  padding: 1.5rem;
-                  border-radius: 18px;
-                  border: 1px solid rgba(30,136,229,.25);
-                  background: linear-gradient(135deg, rgba(30,136,229,.12), rgba(0,188,212,.08));
-                  box-shadow: 0 10px 28px rgba(30,136,229,.25);
+                  padding: 1.75rem;
+                  border-radius: 24px;
+                  border: 2px solid rgba(30,136,229,.3);
+                  background: linear-gradient(135deg, 
+                    rgba(30,136,229,.18) 0%, 
+                    rgba(0,188,212,.14) 50%, 
+                    rgba(240,147,251,.10) 100%);
+                  box-shadow: 
+                    0 16px 40px rgba(30,136,229,.35),
+                    0 0 0 1px rgba(30,136,229,.2) inset,
+                    0 4px 20px rgba(0,0,0,.3);
+                  backdrop-filter: blur(16px);
+                  position: relative;
+                  overflow: hidden;
+                }
+                
+                .dates-container::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  height: 3px;
+                  background: linear-gradient(90deg, #1E88E5, #00BCD4, #f093fb);
+                  opacity: 0.8;
+                }
+                
+                .dates-header {
+                  position: relative;
+                  z-index: 1;
+                  padding-bottom: 1rem;
+                  border-bottom: 2px solid rgba(255,255,255,.1);
+                  margin-bottom: 1.25rem;
                 }
                 
                 .dates-grid {
@@ -835,6 +953,28 @@ export default function EventParentPublicScreen() {
                   max-height: 600px;
                   overflow-y: auto;
                   padding-right: .5rem;
+                  position: relative;
+                  z-index: 1;
+                }
+                
+                /* Custom scrollbar */
+                .dates-grid::-webkit-scrollbar {
+                  width: 8px;
+                }
+                
+                .dates-grid::-webkit-scrollbar-track {
+                  background: rgba(255,255,255,.05);
+                  border-radius: 10px;
+                }
+                
+                .dates-grid::-webkit-scrollbar-thumb {
+                  background: linear-gradient(135deg, #1E88E5, #00BCD4);
+                  border-radius: 10px;
+                  border: 2px solid rgba(255,255,255,.1);
+                }
+                
+                .dates-grid::-webkit-scrollbar-thumb:hover {
+                  background: linear-gradient(135deg, #00BCD4, #f093fb);
                 }
                 
                 @media (max-width: 1400px) {
@@ -845,23 +985,35 @@ export default function EventParentPublicScreen() {
                 
                 @media (max-width: 768px) {
                   .dates-container {
-                    padding: 1.25rem !important;
+                    padding: 1.5rem !important;
+                    border-radius: 20px !important;
                   }
                   
                   .dates-grid {
                     max-height: 500px !important;
                     gap: 1rem !important;
                   }
+                  
+                  .dates-header {
+                    padding-bottom: 0.75rem !important;
+                    margin-bottom: 1rem !important;
+                  }
                 }
                 
                 @media (max-width: 480px) {
                   .dates-container {
-                    padding: 1rem !important;
+                    padding: 1.25rem !important;
+                    border-radius: 18px !important;
                   }
                   
                   .dates-grid {
                     max-height: 400px !important;
                     gap: 0.75rem !important;
+                  }
+                  
+                  .dates-header {
+                    padding-bottom: 0.5rem !important;
+                    margin-bottom: 0.75rem !important;
                   }
                 }
               `}</style>
@@ -883,32 +1035,66 @@ export default function EventParentPublicScreen() {
                 
                 return futureDates.length > 0 ? (
                   <div className="dates-container">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
-                      <div style={{
-                        width: 48, height: 48, borderRadius: '50%',
-                        display: 'grid', placeItems: 'center',
-                        background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                        boxShadow: '0 8px 20px rgba(30,136,229,.4)', fontSize: '1.25rem'
-                      }}>📅</div>
-                      <div>
-                        <h3 style={{
-                          margin: 0, fontSize: '1.25rem', fontWeight: 900,
-                          background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                    <div className="dates-header">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.85rem' }}>
+                          <div style={{
+                            width: 56, height: 56, borderRadius: '50%',
+                            display: 'grid', placeItems: 'center',
+                            background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                            boxShadow: '0 10px 28px rgba(30,136,229,.5)',
+                            fontSize: '1.5rem',
+                            border: '2px solid rgba(30,136,229,.3)'
+                          }}>📅</div>
+                          <div>
+                            <h3 style={{
+                              margin: 0, fontSize: '1.5rem', fontWeight: 900,
+                              background: 'linear-gradient(135deg, #fff, rgba(255,255,255,.85))',
+                              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                              letterSpacing: '-0.02em',
+                              lineHeight: 1.2
+                            }}>
+                              Próximas Fechas
+                            </h3>
+                            <p style={{ 
+                              margin: 0, 
+                              fontSize: '0.9rem',
+                              color: 'rgba(255,255,255,.75)',
+                              fontWeight: 600
+                            }}>
+                              {futureDates.length} fecha{futureDates.length !== 1 ? 's' : ''} próxima{futureDates.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Badge decorativo */}
+                        <div style={{
+                          padding: '0.5rem 1rem',
+                          borderRadius: 999,
+                          background: 'rgba(255,255,255,.08)',
+                          border: '1px solid rgba(255,255,255,.15)',
+                          fontSize: '0.85rem',
+                          fontWeight: 800,
+                          color: '#fff',
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,.2)'
                         }}>
-                          Próximas Fechas
-                        </h3>
-                        <p style={{ margin: 0, opacity: .85, fontSize: '0.9rem' }}>
-                          {futureDates.length} fecha{futureDates.length !== 1 ? 's' : ''} próxima{futureDates.length !== 1 ? 's' : ''}
-                        </p>
+                          🎉 Disponibles
+                        </div>
                       </div>
                     </div>
 
                     <div className="dates-grid">
                       {futureDates.map((d: any) => (
-                        <div key={d.id} style={{ width: '100%', maxWidth: '450px' }}>
+                        <motion.div 
+                          key={d.id} 
+                          style={{ width: '100%', maxWidth: '450px' }}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
                           <EventCard item={d} />
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
