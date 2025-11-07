@@ -169,9 +169,36 @@ export default function ClasesLive({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(() => {
-                    const buildTimeDate = (time?: string, fecha?: string) => {
-                      // Si hay fecha específica, usarla; si no, usar fecha actual
-                      const base = fecha ? new Date(fecha) : new Date();
+                    const buildTimeDate = (time?: string, fecha?: string, diaSemana?: number) => {
+                      let base: Date;
+                      
+                      // Si hay fecha específica, usarla
+                      if (fecha) {
+                        base = new Date(fecha);
+                      } 
+                      // Si es clase semanal (diaSemana), calcular próxima ocurrencia
+                      else if (diaSemana !== undefined && diaSemana !== null) {
+                        base = new Date();
+                        const today = base.getDay();  // 0=Domingo, 1=Lunes, ..., 6=Sábado
+                        const targetDay = Number(diaSemana);
+                        
+                        // Calcular días hasta el próximo targetDay
+                        let daysUntilTarget = targetDay - today;
+                        
+                        // Si el día ya pasó esta semana, ir a la próxima semana
+                        if (daysUntilTarget <= 0) {
+                          daysUntilTarget += 7;
+                        }
+                        
+                        // Agregar los días
+                        base.setDate(base.getDate() + daysUntilTarget);
+                      } 
+                      // Si no hay fecha ni día, usar fecha actual
+                      else {
+                        base = new Date();
+                      }
+                      
+                      // Establecer hora
                       const hhmm = (time || '').split(':').slice(0, 2).join(':');
                       const [hh, mm] = hhmm && hhmm.includes(':') ? hhmm.split(':').map(n => parseInt(n, 10)) : [20, 0];
                       base.setHours(isNaN(hh) ? 20 : hh, isNaN(mm) ? 0 : mm, 0, 0);
@@ -179,9 +206,10 @@ export default function ClasesLive({
                     };
                     
                     const classDate = (it as any)?.fecha;
-                    const start = buildTimeDate((it as any).inicio, classDate);
+                    const classDiaSemana = (it as any)?.diaSemana;
+                    const start = buildTimeDate((it as any).inicio, classDate, classDiaSemana);
                     const end = (() => {
-                      const e = buildTimeDate((it as any).fin, classDate);
+                      const e = buildTimeDate((it as any).fin, classDate, classDiaSemana);
                       if (e.getTime() <= start.getTime()) {
                         const plus = new Date(start);
                         plus.setHours(plus.getHours() + 2);
