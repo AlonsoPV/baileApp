@@ -13,10 +13,11 @@ import { useToast } from "../../components/Toast";
 
 /* Por qué: Tipos fuertes + reducer = menos bugs al mutar estructuras anidadas. */
 type Category = "calzado" | "ropa" | "accesorios";
+type Gender = "caballero" | "dama" | "unisex";
 type BrandPolicies = { shipping?: string; returns?: string; warranty?: string };
 type FitTip = { style: string; tip: string };
 type SizeRow = { mx: string; us: string; eu: string };
-type ProductItem = { id: string; titulo: string; descripcion?: string; imagen_url: string; category: Category; price?: string; sizes?: string[] };
+type ProductItem = { id: string; titulo: string; descripcion?: string; imagen_url: string; category: Category; gender?: Gender; price?: string; sizes?: string[] };
 type Conversion = { headline?: string; subtitle?: string; coupons?: string[] };
 type BrandForm = {
   nombre_publico: string;
@@ -155,25 +156,50 @@ export default function BrandProfileEditor() {
     }
   };
 
-  // --- Uploaders (manteniendo UX/UI original) ---
+  // --- Uploaders ---
   const onPickCatalog = async (files: FileList) => {
-    if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el catálogo.'); return; }
+    if (!(brand as any)?.id) { 
+      showToast('⚠️ Primero guarda la información básica para habilitar el catálogo.', 'error'); 
+      return; 
+    }
     const brandId = (brand as any).id as number;
     const onlyImages = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (onlyImages.length === 0) return;
+    if (onlyImages.length === 0) {
+      showToast('⚠️ Por favor selecciona al menos una imagen', 'error');
+      return;
+    }
 
+    showToast('📤 Subiendo imágenes...', 'info');
     const uploaded: ProductItem[] = [];
     for (const file of onlyImages) {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const path = `brand/${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from('media').upload(path, file, {
-        cacheControl: '3600', upsert: false, contentType: file.type || undefined,
+        cacheControl: '3600', 
+        upsert: false, 
+        contentType: file.type || undefined,
       });
-      if (error) { console.error('[BrandCatalogUpload] Error:', error); alert(`Error al subir una imagen: ${error.message}`); continue; }
+      if (error) { 
+        console.error('[BrandCatalogUpload] Error:', error); 
+        showToast(`❌ Error al subir ${file.name}: ${error.message}`, 'error'); 
+        continue; 
+      }
       const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-      uploaded.push({ id: path, titulo: '', imagen_url: pub.publicUrl, category: 'ropa' });
+      uploaded.push({ 
+        id: path, 
+        titulo: '', 
+        descripcion: '',
+        imagen_url: pub.publicUrl, 
+        category: 'ropa',
+        gender: 'unisex',
+        price: '',
+        sizes: []
+      });
     }
-    if (uploaded.length > 0) dispatch({ type:'SET_PRODUCTS', value: [...form.productos, ...uploaded] });
+    if (uploaded.length > 0) {
+      dispatch({ type:'SET_PRODUCTS', value: [...form.productos, ...uploaded] });
+      showToast(`✅ ${uploaded.length} imagen(es) subida(s) exitosamente`, 'success');
+    }
   };
 
   const removeCatalogItem = async (prodIdOrPath: string) => {
@@ -884,20 +910,42 @@ export default function BrandProfileEditor() {
                             display:'block' 
                           }} 
                         />
-                        {/* Badge de categoría */}
+                        {/* Badges de categoría y género */}
                         <div style={{
                           position: 'absolute',
                           top: '0.75rem',
                           right: '0.75rem',
-                          padding: '0.5rem 1rem',
-                          background: 'rgba(0, 0, 0, 0.7)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          fontWeight: '700',
-                          textTransform: 'capitalize'
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                          alignItems: 'flex-end'
                         }}>
-                          {p.category === 'calzado' ? '👟' : p.category === 'ropa' ? '👕' : '💍'} {p.category}
+                          {/* Badge categoría */}
+                          <div style={{
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(0, 0, 0, 0.7)',
+                            backdropFilter: 'blur(10px)',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: '700',
+                            textTransform: 'capitalize'
+                          }}>
+                            {p.category === 'calzado' ? '👟' : p.category === 'ropa' ? '👕' : '💍'} {p.category}
+                          </div>
+                          {/* Badge género */}
+                          {p.gender && (
+                            <div style={{
+                              padding: '0.5rem 1rem',
+                              background: 'rgba(156, 39, 176, 0.8)',
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: '20px',
+                              fontSize: '0.85rem',
+                              fontWeight: '700',
+                              textTransform: 'capitalize'
+                            }}>
+                              {p.gender === 'caballero' ? '👔' : p.gender === 'dama' ? '👗' : '👥'} {p.gender}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -978,32 +1026,63 @@ export default function BrandProfileEditor() {
                           />
                         </div>
 
-                        {/* Categoría */}
-                        <div>
-                          <label style={{ 
-                            display: 'block', 
-                            fontSize: '0.85rem', 
-                            fontWeight: '600', 
-                            marginBottom: '0.5rem',
-                            opacity: 0.8
-                          }}>
-                            🏷️ Categoría
-                          </label>
-                          <select
-                            className="editor-input"
-                            value={p.category || 'ropa'}
-                            onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ category: e.target.value as Category } })}
-                            style={{ 
-                              width: '100%', 
-                              padding: '0.75rem',
-                              fontSize: '0.95rem',
-                              fontWeight: '600'
-                            }}
-                          >
-                            <option value="calzado">👟 Calzado</option>
-                            <option value="ropa">👕 Ropa</option>
-                            <option value="accesorios">💍 Accesorios</option>
-                          </select>
+                        {/* Categoría y Género en grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                          {/* Categoría */}
+                          <div>
+                            <label style={{ 
+                              display: 'block', 
+                              fontSize: '0.85rem', 
+                              fontWeight: '600', 
+                              marginBottom: '0.5rem',
+                              opacity: 0.8
+                            }}>
+                              🏷️ Categoría
+                            </label>
+                            <select
+                              className="editor-input"
+                              value={p.category || 'ropa'}
+                              onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ category: e.target.value as Category } })}
+                              style={{ 
+                                width: '100%', 
+                                padding: '0.75rem',
+                                fontSize: '0.95rem',
+                                fontWeight: '600'
+                              }}
+                            >
+                              <option value="calzado">👟 Calzado</option>
+                              <option value="ropa">👕 Ropa</option>
+                              <option value="accesorios">💍 Accesorios</option>
+                            </select>
+                          </div>
+
+                          {/* Género */}
+                          <div>
+                            <label style={{ 
+                              display: 'block', 
+                              fontSize: '0.85rem', 
+                              fontWeight: '600', 
+                              marginBottom: '0.5rem',
+                              opacity: 0.8
+                            }}>
+                              👤 Género
+                            </label>
+                            <select
+                              className="editor-input"
+                              value={p.gender || 'unisex'}
+                              onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ gender: e.target.value as Gender } })}
+                              style={{ 
+                                width: '100%', 
+                                padding: '0.75rem',
+                                fontSize: '0.95rem',
+                                fontWeight: '600'
+                              }}
+                            >
+                              <option value="caballero">👔 Caballero</option>
+                              <option value="dama">👗 Dama</option>
+                              <option value="unisex">👥 Unisex</option>
+                            </select>
+                          </div>
                         </div>
 
                         {/* Botón eliminar */}
@@ -1071,7 +1150,8 @@ export default function BrandProfileEditor() {
                     description: p.descripcion || '',
                     price: p.price || '', 
                     image: p.imagen_url, 
-                    category: (p.category || 'ropa') as any, 
+                    category: (p.category || 'ropa') as any,
+                    gender: (p.gender || 'unisex') as any,
                     sizes: p.sizes || [] 
                   }))} />
                 </div>
@@ -1386,6 +1466,22 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
                 }}>
                   {p.name || 'Producto sin nombre'}
                 </div>
+                {/* Badge de género */}
+                {p.gender && (
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '0.25rem 0.75rem',
+                    background: 'rgba(156, 39, 176, 0.2)',
+                    border: '1px solid rgba(156, 39, 176, 0.4)',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    marginBottom: '0.5rem',
+                    textTransform: 'capitalize'
+                  }}>
+                    {p.gender === 'caballero' ? '👔' : p.gender === 'dama' ? '👗' : '👥'} {p.gender}
+                  </div>
+                )}
                 {p.description && (
                   <div style={{ 
                     fontSize: '0.9rem', 
