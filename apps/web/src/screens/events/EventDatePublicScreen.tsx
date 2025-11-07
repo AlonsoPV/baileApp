@@ -409,14 +409,100 @@ export default function EventDatePublicScreen() {
       <style>{`
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        
+        /* Responsividad general */
         @media (max-width: 768px) {
           .date-public-root { padding: 16px 0 !important; }
           .date-public-inner { padding: 0 16px !important; }
           .two-col-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
         }
+        
         @media (max-width: 480px) {
           .date-public-root { padding: 12px 0 !important; }
           .date-public-inner { padding: 0 12px !important; }
+        }
+        
+        /* Responsividad de secciones */
+        @media (max-width: 768px) {
+          .social-header-card {
+            padding: 1rem !important;
+          }
+          
+          .social-header-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .chip {
+            font-size: 0.85rem !important;
+            padding: 0.4rem 0.7rem !important;
+          }
+          
+          .mini-card {
+            padding: 0.85rem !important;
+          }
+          
+          /* RSVP Section Responsive */
+          .rsvp-section {
+            padding: 1.25rem !important;
+            margin-bottom: 1.25rem !important;
+          }
+          
+          .rsvp-grid {
+            gap: 0.85rem !important;
+          }
+          
+          .card {
+            padding: 0.85rem !important;
+          }
+          
+          .headline {
+            font-size: 1.1rem !important;
+          }
+          
+          .cta-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          
+          .cta-row > * {
+            width: 100% !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .social-header-card {
+            padding: 0.85rem !important;
+          }
+          
+          h1 {
+            font-size: 1.5rem !important;
+          }
+          
+          .chip {
+            font-size: 0.8rem !important;
+            padding: 0.35rem 0.6rem !important;
+          }
+          
+          /* RSVP Section Mobile */
+          .rsvp-section {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
+          
+          .card {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .headline {
+            font-size: 1rem !important;
+          }
+          
+          .subtle {
+            font-size: 0.8rem !important;
+          }
         }
       `}</style>
       <div className="date-public-inner">
@@ -614,6 +700,7 @@ export default function EventDatePublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
           aria-label="Asistencia y calendario"
+          className="rsvp-section"
           style={{
             padding: '1.5rem',
             marginBottom: '1.5rem',
@@ -638,30 +725,175 @@ export default function EventDatePublicScreen() {
           }} />
           
           <style>{`
-     .rsvp-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items:center; position: relative; z-index: 1; }
-    .card { border-radius:14px; padding:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10) }
-    .metrics { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap }
+     .rsvp-grid { 
+       display:grid; 
+       grid-template-columns: 1fr; 
+       gap: 1rem; 
+       align-items:center; 
+       position: relative; 
+       z-index: 1; 
+     }
+     
+    .card { 
+      border-radius:14px; 
+      padding:1rem; 
+      background:rgba(255,255,255,0.04); 
+      border:1px solid rgba(255,255,255,0.10);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .metrics { 
+      display:flex; 
+      align-items:center; 
+      gap:.75rem; 
+      flex-wrap:wrap;
+      justify-content: center;
+    }
+    
     .chip-count {
-      padding:.5rem .85rem; border-radius:999px; font-weight:900; font-size:.95rem;
+      padding:.5rem .85rem; 
+      border-radius:999px; 
+      font-weight:900; 
+      font-size:.95rem;
       background:linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28));
-      border:1px solid rgba(30,136,229,.45); color:#fff; box-shadow:0 8px 22px rgba(30,136,229,.30)
+      border:1px solid rgba(30,136,229,.45); 
+      color:#fff; 
+      box-shadow:0 8px 22px rgba(30,136,229,.30);
+      white-space: nowrap;
     }
-    .avatars { display:flex; align-items:center }
+    
+    .avatars { 
+      display:flex; 
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    
     .avatar {
-      width:28px; height:28px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.25);
-      display:grid; place-items:center; font-size:.75rem; font-weight:800; color:#0b0d10;
-      background:linear-gradient(135deg,#f093fb,#FFD166)
+      width:28px; 
+      height:28px; 
+      border-radius:999px; 
+      overflow:hidden; 
+      border:1px solid rgba(255,255,255,.25);
+      display:grid; 
+      place-items:center; 
+      font-size:.75rem; 
+      font-weight:800; 
+      color:#0b0d10;
+      background:linear-gradient(135deg,#f093fb,#FFD166);
+      flex-shrink: 0;
     }
+    
     .avatar + .avatar { margin-left:-8px }
-    .muted { color:rgba(255,255,255,.75); font-size:.9rem }
-    .cta-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; justify-content:center }
-    .btn-ghost {
-      display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .95rem; border-radius:999px;
-      border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-weight:800
+    
+    .muted { 
+      color:rgba(255,255,255,.75); 
+      font-size:.9rem;
+      text-align: center;
+      width: 100%;
     }
-    .btn-ghost:hover { border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.1) }
-    .headline { margin:0; font-size:1.25rem; font-weight:900; color:#fff; letter-spacing:-0.01em }
-    .subtle { font-size:.85rem; color:rgba(255,255,255,.6) }
+    
+    .cta-row { 
+      display:flex; 
+      gap:.75rem; 
+      flex-wrap:wrap; 
+      align-items:center; 
+      justify-content:center;
+      width: 100%;
+    }
+    
+    .btn-ghost {
+      display:inline-flex; 
+      align-items:center; 
+      gap:.5rem; 
+      padding:.6rem .95rem; 
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); 
+      background:rgba(255,255,255,.06); 
+      color:#fff; 
+      font-weight:800;
+      white-space: nowrap;
+      min-width: fit-content;
+    }
+    
+    .btn-ghost:hover { 
+      border-color:rgba(255,255,255,.28); 
+      background:rgba(255,255,255,.1);
+      transform: translateY(-2px);
+      transition: all 0.2s;
+    }
+    
+    .headline { 
+      margin:0; 
+      font-size:1.25rem; 
+      font-weight:900; 
+      color:#fff; 
+      letter-spacing:-0.01em;
+      text-align: center;
+    }
+    
+    .subtle { 
+      font-size:.85rem; 
+      color:rgba(255,255,255,.6);
+      text-align: center;
+      line-height: 1.4;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .rsvp-grid {
+        gap: 0.85rem;
+      }
+      
+      .card {
+        padding: 0.85rem;
+      }
+      
+      .headline {
+        font-size: 1.1rem;
+      }
+      
+      .chip-count {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.7rem;
+      }
+      
+      .cta-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+      
+      .cta-row > * {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .card {
+        padding: 0.75rem;
+        border-radius: 12px;
+      }
+      
+      .headline {
+        font-size: 1rem;
+      }
+      
+      .subtle {
+        font-size: 0.8rem;
+      }
+      
+      .chip-count {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.6rem;
+      }
+      
+      .btn-ghost {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.9rem;
+      }
+    }
   `}</style>
           
           {/* Auth guard util */}
