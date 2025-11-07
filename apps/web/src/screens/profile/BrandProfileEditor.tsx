@@ -126,7 +126,8 @@ export default function BrandProfileEditor() {
         nombre_publico: form.nombre_publico, 
         bio: form.bio, 
         redes_sociales: form.redes_sociales,
-        avatar_url: form.avatar_url || null
+        avatar_url: form.avatar_url || null,
+        estado_aprobacion: 'aprobado'  // ✅ Marcar como aprobado al guardar
       };
 
       // Agregar campos opcionales solo si existen en la tabla
@@ -148,6 +149,7 @@ export default function BrandProfileEditor() {
       }
 
       console.log('📦 [BrandProfileEditor] Payload limpio:', payload);
+      console.log('✅ [BrandProfileEditor] Estado de aprobación:', payload.estado_aprobacion);
       await upsert.mutateAsync(payload);
       showToast('✅ Perfil guardado exitosamente', 'success');
     } catch (error: any) {

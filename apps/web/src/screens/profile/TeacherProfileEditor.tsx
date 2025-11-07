@@ -941,7 +941,7 @@ export default function TeacherProfileEditor() {
         </div>
 
         {/* Maestros Invitados */}
-        <InvitedMastersSection
+        {/* <InvitedMastersSection
           masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
           title="🎭 Maestros Invitados"
           showTitle={true}
@@ -963,7 +963,7 @@ export default function TeacherProfileEditor() {
             // TODO: Implementar confirmación y eliminación
             console.log('Eliminar maestro:', masterId);
           }}
-        />
+        /> */}
 
         {/* Información para Estudiantes */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>

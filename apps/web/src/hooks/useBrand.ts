@@ -43,7 +43,13 @@ export function useUpsertBrand() {
     mutationFn: async (payload: Partial<BrandProfile>): Promise<BrandProfile> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No session');
+      // ✅ Payload primero, luego defaults (para que payload tenga prioridad)
       const base = { user_id: user.id, ...payload } as any;
+      
+      console.log('🔍 [useBrand] Payload recibido:', payload);
+      console.log('📦 [useBrand] Base con user_id:', base);
+      console.log('✅ [useBrand] Estado de aprobación en base:', base.estado_aprobacion);
+      
       // Intento robusto sin depender de unique constraints
       // 1) ¿Existe ya la marca del usuario?
       const { data: existing, error: selErr } = await supabase
@@ -56,25 +62,36 @@ export function useUpsertBrand() {
       if (existing?.id) {
         // Remover 'id' del payload para UPDATE (GENERATED ALWAYS)
         const { id, ...updatePayload } = base;
+        console.log('🔄 [useBrand] UPDATE payload:', updatePayload);
         const { data, error } = await supabase
           .from(TABLE)
           .update(updatePayload)
           .eq('id', existing.id)
           .select('*')
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error('❌ [useBrand] Error en UPDATE:', error);
+          throw error;
+        }
+        console.log('✅ [useBrand] UPDATE exitoso:', data);
         return data as BrandProfile;
       } else {
+        console.log('➕ [useBrand] INSERT payload:', base);
         const { data, error } = await supabase
           .from(TABLE)
           .insert(base)
           .select('*')
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error('❌ [useBrand] Error en INSERT:', error);
+          throw error;
+        }
+        console.log('✅ [useBrand] INSERT exitoso:', data);
         return data as BrandProfile;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🎉 [useBrand] onSuccess, invalidando queries. Data:', data);
       qc.invalidateQueries({ queryKey: ['brand','mine'] });
     }
   });
