@@ -16,6 +16,23 @@ import {
   FaGlobe
 } from 'react-icons/fa';
 
+// Helper para formatear precios
+function formatPrice(price: string | number | undefined): string {
+  if (!price) return '';
+  
+  // Si ya viene formateado, retornarlo
+  if (typeof price === 'string' && price.includes('MXN')) return price;
+  
+  // Extraer número del string
+  const numStr = typeof price === 'string' ? price.replace(/[^0-9.]/g, '') : String(price);
+  const num = parseFloat(numStr);
+  
+  if (isNaN(num)) return typeof price === 'string' ? price : '';
+  
+  // Formatear con comas y decimales
+  return `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
+}
+
 export default function BrandProfileLive() {
   const navigate = useNavigate();
   const { data: brand, isLoading } = useMyBrand();
@@ -76,7 +93,7 @@ export default function BrandProfileLive() {
     id: p.id || Math.random().toString(36).slice(2),
     name: p.titulo || 'Producto',
     description: p.descripcion || '',
-    price: p.price || (typeof p.precio === 'number' ? `$${p.precio.toLocaleString()}` : (p.precio || '')),
+    price: formatPrice(p.price || p.precio),
     image: p.imagen_url,
     category: (p.categoria || p.category || 'ropa') as 'calzado'|'ropa'|'accesorios',
     gender: (p.gender || 'unisex') as 'caballero'|'dama'|'unisex',
