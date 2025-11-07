@@ -1056,7 +1056,7 @@ export default function EventParentPublicScreen() {
                 
                 .dates-grid {
                   display: grid;
-                  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                   gap: 1.5rem;
                   max-height: 600px;
                   overflow-y: auto;
@@ -1195,8 +1195,7 @@ export default function EventParentPublicScreen() {
                     <div className="dates-grid">
                       {futureDates.map((d: any) => (
                         <motion.div 
-                          key={d.id} 
-                          style={{ width: '100%' }}
+                          key={d.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
