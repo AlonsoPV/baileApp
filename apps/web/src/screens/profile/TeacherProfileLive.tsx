@@ -295,6 +295,14 @@ export default function TeacherProfileLive() {
   const { data: allTags } = useTags();
   // const upsert = useUpsertTeacher();
 
+  // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (DEBE estar ANTES de cualquier return)
+  React.useEffect(() => {
+    if (!isLoading && !teacher) {
+      console.log('[TeacherProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/teacher/edit', { replace: true });
+    }
+  }, [isLoading, teacher, navigate]);
+
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
@@ -353,14 +361,6 @@ export default function TeacherProfileLive() {
       </div>
     );
   }
-
-  // Auto-redirigir a Edit si no tiene perfil de maestro
-  React.useEffect(() => {
-    if (!isLoading && !teacher) {
-      console.log('[TeacherProfileLive] No profile found, redirecting to edit...');
-      navigate('/profile/teacher/edit', { replace: true });
-    }
-  }, [isLoading, teacher, navigate]);
 
   if (!teacher) {
     return (
