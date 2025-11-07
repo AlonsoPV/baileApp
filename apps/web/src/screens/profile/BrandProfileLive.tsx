@@ -426,45 +426,191 @@ export default function BrandProfileLive() {
         <div className="profile-container" style={{ padding: '2rem', margin: '0 auto' }}>
 
           {/* Catálogo */}
-          <motion.section
-            className="glass-card-container"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.1 }}
-          >
-            <h3 className="section-title">🛍️ Catálogo</h3>
-            <CatalogTabs items={featured} />
-          </motion.section>
+          {featured.length > 0 && (
+            <motion.section
+              className="glass-card-container"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, delay: 0.1 }}
+              style={{ textAlign: 'left' }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #9C27B0, #E91E63)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(156, 39, 176, 0.4)'
+                }}>
+                  🛍️
+                </div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Catálogo de Productos</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                    Explora nuestra colección
+                  </p>
+                </div>
+              </div>
+              <CatalogTabs items={featured} />
+            </motion.section>
+          )}
 
           {/* Guía de tallas y FIT */}
-          <motion.section
-            className="glass-card-container"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.08 }}
-          >
-            <h3 className="section-title">📏 Guía de tallas y ajuste</h3>
-            <p style={{ color: 'rgba(255,255,255,.78)', margin: 0 }}>Consulta tus medidas y recomendaciones por estilo.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '.9rem', marginTop: '.9rem' }}>
-              <SizeGuide rows={sizeGuideRows} />
-              <FitTips tips={fitTipsRows} />
-            </div>
-          </motion.section>
+          {(sizeGuideRows.length > 0 || fitTipsRows.length > 0) && (
+            <motion.section
+              className="glass-card-container"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, delay: 0.08 }}
+              style={{ textAlign: 'left' }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #4CAF50, #8BC34A)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(76, 175, 80, 0.4)'
+                }}>
+                  📏
+                </div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Guía de Tallas y Ajuste</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                    Encuentra tu talla perfecta
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1.25rem' }}>
+                {sizeGuideRows.length > 0 && <SizeGuide rows={sizeGuideRows} />}
+                {fitTipsRows.length > 0 && <FitTips tips={fitTipsRows} />}
+              </div>
+            </motion.section>
+          )}
 
           {/* Beneficios / Políticas */}
-          <motion.section
-            className="glass-card-container"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.12 }}
-          >
-            <h3 className="section-title">🔒 Envíos, cambios y garantías</h3>
-            <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.6 }}>
-              <li><b>Envíos:</b> {policies?.shipping || 'Nacionales 2–5 días hábiles.'}</li>
-              <li><b>Cambios/Devoluciones:</b> {policies?.returns || 'Dentro de 15 días (sin uso, en caja).'}</li>
-              <li><b>Garantía:</b> {policies?.warranty || '30 días por defectos de fabricación.'}</li>
-            </ul>
-          </motion.section>
+          {(policies?.shipping || policies?.returns || policies?.warranty) && (
+            <motion.section
+              className="glass-card-container"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, delay: 0.12 }}
+              style={{ textAlign: 'left' }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #1E88E5, #00BCD4)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)'
+                }}>
+                  🔒
+                </div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Políticas de la Marca</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                    Envíos, cambios y garantías
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {policies?.shipping && (
+                  <div style={{ 
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}>
+                    <div style={{ 
+                      fontWeight: '700', 
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '1rem'
+                    }}>
+                      📦 Envíos
+                    </div>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                      {policies.shipping}
+                    </div>
+                  </div>
+                )}
+                {policies?.returns && (
+                  <div style={{ 
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}>
+                    <div style={{ 
+                      fontWeight: '700', 
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '1rem'
+                    }}>
+                      🔄 Cambios y Devoluciones
+                    </div>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                      {policies.returns}
+                    </div>
+                  </div>
+                )}
+                {policies?.warranty && (
+                  <div style={{ 
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}>
+                    <div style={{ 
+                      fontWeight: '700', 
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '1rem'
+                    }}>
+                      ✅ Garantía
+                    </div>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                      {policies.warranty}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.section>
+          )}
 
           {/* Partners / Colabs */}
           {partners.length > 0 && (
@@ -487,31 +633,111 @@ export default function BrandProfileLive() {
           )}
 
           {/* Conversión / CTA */}
-          <motion.section
-            className="glass-card-container"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.16 }}
-          >
-            <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontWeight: 900 }}>🎁 {conversion?.headline || 'Promoción activa'}</span>
-              {conversion?.subtitle && <span style={{ opacity: .85 }}>{conversion.subtitle}</span>}
+          {(conversion?.headline || conversion?.subtitle || (Array.isArray(conversion?.coupons) && conversion.coupons.length > 0)) && (
+            <motion.section
+              className="glass-card-container"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, delay: 0.16 }}
+              style={{ textAlign: 'left' }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #FB8C00, #FF7043)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.5rem',
+                  boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
+                }}>
+                  🎁
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>
+                    {conversion?.headline || 'Promoción Especial'}
+                  </h3>
+                  {conversion?.subtitle && (
+                    <p style={{ fontSize: '0.95rem', opacity: 0.85, margin: '0.25rem 0 0 0' }}>
+                      {conversion.subtitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Cupones */}
               {Array.isArray(conversion?.coupons) && conversion.coupons.length > 0 && (
-                <div style={{ display:'flex', gap:'.4rem', flexWrap:'wrap' }}>
-                  {conversion.coupons.map((c:string) => (
-                    <span key={c} style={{ border:'1px solid rgba(255,255,255,0.2)', borderRadius:999, padding:'.25rem .6rem' }}>
-                      <b>{c}</b>
-                    </span>
-                  ))}
+                <div style={{ 
+                  padding: '1rem',
+                  background: 'rgba(251, 140, 0, 0.08)',
+                  border: '2px solid rgba(251, 140, 0, 0.2)',
+                  borderRadius: '12px',
+                  marginBottom: '1rem'
+                }}>
+                  <div style={{ 
+                    fontSize: '0.85rem', 
+                    fontWeight: '600', 
+                    opacity: 0.7, 
+                    marginBottom: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    🎟️ Cupones Disponibles
+                  </div>
+                  <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+                    {conversion.coupons.map((c:string) => (
+                      <span key={c} style={{ 
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '20px',
+                        fontWeight: '700',
+                        fontSize: '0.9rem',
+                        letterSpacing: '0.05em'
+                      }}>
+                        {c}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                {((brand as any)?.redes_sociales?.whatsapp) && (
-                  <a href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} target="_blank" rel="noreferrer" style={{ padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900 }}>💬 WhatsApp</a>
-                )}
-              </div>
-            </div>
-          </motion.section>
+
+              {/* Botón de contacto */}
+              {((brand as any)?.redes_sociales?.whatsapp) && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <a 
+                    href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    style={{ 
+                      padding: '0.875rem 1.75rem', 
+                      borderRadius: 999, 
+                      border: 'none', 
+                      background: 'linear-gradient(135deg, #25D366, #128C7E)', 
+                      color: '#fff', 
+                      fontWeight: 900,
+                      fontSize: '1rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 4px 16px rgba(37, 211, 102, 0.4)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    💬 Contactar por WhatsApp
+                  </a>
+                </div>
+              )}
+            </motion.section>
+          )}
 
         </div>
       </div>
