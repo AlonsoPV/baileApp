@@ -628,6 +628,22 @@ export default function EventParentPublicScreen() {
           border-radius: 22px; border: 1px solid rgba(255,255,255,.15);
           box-shadow: 0 10px 32px rgba(0,0,0,.4); backdrop-filter: blur(10px);
         }
+        
+        @media (max-width: 768px) {
+          .glass-card-container {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 18px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .glass-card-container {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 16px !important;
+          }
+        }
         .social-hero-modern {
           position: relative; overflow: hidden;
           background: linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9));
@@ -672,10 +688,44 @@ export default function EventParentPublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.36 }}
         >
-          <div className="social-hero-content" style={{
-            display: 'grid', gridTemplateColumns: '1fr 420px', gap: '2rem', alignItems: 'center'
-          }}>
-            {/* Izquierda */}
+          <style>{`
+            .social-hero-content {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 2rem;
+              align-items: start;
+            }
+            
+            @media (max-width: 1024px) {
+              .social-hero-content {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+              }
+            }
+            
+            @media (max-width: 768px) {
+              .social-hero-modern {
+                padding: 2rem 1.5rem !important;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .social-hero-modern {
+                padding: 1.5rem 1rem !important;
+              }
+              
+              .social-hero-title {
+                font-size: 1.75rem !important;
+              }
+              
+              .social-hero-description {
+                font-size: 0.95rem !important;
+              }
+            }
+          `}</style>
+          
+          <div className="social-hero-content">
+            {/* Columna 1: Nombre, Bio, Botones */}
             <div>
               <motion.h1
                 initial={{ opacity: 0, y: 12 }}
@@ -692,22 +742,38 @@ export default function EventParentPublicScreen() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18, duration: 0.4 }}
                 className="social-hero-description"
-                style={{ textAlign: 'left' }}
+                style={{ textAlign: 'left', marginBottom: '1.5rem' }}
               >
                 {parent.biografia || 'Descubre más sobre este evento especial'}
               </motion.p>
 
-              {/* Barra de datos clave (sin RSVP) */}
-              {/*       {nextDate && (
-                <div className="info-strip" aria-label="Datos clave de la próxima fecha">
-                  <span className="info-chip">📅 {new Date(nextDate.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-                  {nextDate.hora_inicio && <span className="info-chip">🕒 {nextDate.hora_inicio}{nextDate.hora_fin ? ` – ${nextDate.hora_fin}` : ''}</span>}
-                  {(nextDate.lugar || nextDate.ciudad) && <span className="info-chip">📍 {nextDate.lugar || nextDate.ciudad}</span>}
-                </div>
-              )} */}
-
               {/* Acciones */}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+              <style>{`
+                .action-buttons {
+                  display: flex;
+                  gap: 1rem;
+                  flex-wrap: wrap;
+                }
+                
+                @media (max-width: 480px) {
+                  .action-buttons {
+                    flex-direction: column;
+                    gap: 0.75rem;
+                  }
+                  
+                  .action-buttons button,
+                  .action-buttons > div {
+                    width: 100%;
+                  }
+                  
+                  .action-buttons button {
+                    padding: 0.75rem 1.25rem !important;
+                    font-size: 0.9rem !important;
+                  }
+                }
+              `}</style>
+              
+              <div className="action-buttons">
                 {isOwner && (
                   <motion.button
                     whileHover={{ scale: 1.03 }}
@@ -747,24 +813,223 @@ export default function EventParentPublicScreen() {
                   />
                 </motion.div>
               </div>
+            </div>
 
-              {/* Ritmos / Zonas - más visible e informativo */}
+            {/* Columna 2: Fechas Disponibles */}
+            <div>
+              <style>{`
+                .dates-container {
+                  padding: 1.5rem;
+                  border-radius: 18px;
+                  border: 1px solid rgba(30,136,229,.25);
+                  background: linear-gradient(135deg, rgba(30,136,229,.12), rgba(0,188,212,.08));
+                  box-shadow: 0 10px 28px rgba(30,136,229,.25);
+                }
+                
+                .dates-list {
+                  display: grid;
+                  gap: .75rem;
+                  max-height: 400px;
+                  overflow-y: auto;
+                  padding-right: .5rem;
+                }
+                
+                .date-card {
+                  padding: 1rem;
+                  border-radius: 14px;
+                  border: 1px solid rgba(255,255,255,.15);
+                  background: rgba(255,255,255,.06);
+                  cursor: pointer;
+                  transition: all 0.2s;
+                }
+                
+                @media (max-width: 768px) {
+                  .dates-container {
+                    padding: 1.25rem !important;
+                  }
+                  
+                  .dates-list {
+                    max-height: 300px !important;
+                  }
+                  
+                  .date-card {
+                    padding: 0.85rem !important;
+                  }
+                }
+                
+                @media (max-width: 480px) {
+                  .dates-container {
+                    padding: 1rem !important;
+                  }
+                  
+                  .dates-list {
+                    max-height: 250px !important;
+                    gap: 0.5rem !important;
+                  }
+                  
+                  .date-card {
+                    padding: 0.75rem !important;
+                  }
+                  
+                  .date-card-title {
+                    font-size: 0.9rem !important;
+                  }
+                  
+                  .date-card-chips {
+                    gap: 0.35rem !important;
+                  }
+                  
+                  .date-card-chips span {
+                    padding: 0.3rem 0.6rem !important;
+                    font-size: 0.8rem !important;
+                  }
+                }
+              `}</style>
+              
+              {dates && dates.length > 0 ? (
+                <div className="dates-container">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: '50%',
+                      display: 'grid', placeItems: 'center',
+                      background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                      boxShadow: '0 8px 20px rgba(30,136,229,.4)', fontSize: '1.25rem'
+                    }}>📅</div>
+                    <div>
+                      <h3 style={{
+                        margin: 0, fontSize: '1.25rem', fontWeight: 900,
+                        background: 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                      }}>
+                        Fechas Disponibles
+                      </h3>
+                      <p style={{ margin: 0, opacity: .85, fontSize: '0.9rem' }}>
+                        {dates.length} fecha{dates.length !== 1 ? 's' : ''} programada{dates.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="dates-list">
+                    {dates.map((d: any) => (
+                      <motion.div
+                        key={d.id}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        onClick={() => navigate(`/social/fecha/${d.id}`)}
+                        className="date-card"
+                      >
+                        <div className="date-card-title" style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '.5rem', color: '#fff' }}>
+                          {d.nombre || parent.nombre}
+                        </div>
+                        <div className="date-card-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', fontSize: '0.85rem' }}>
+                          <span style={{ 
+                            padding: '.35rem .7rem', 
+                            borderRadius: 999, 
+                            background: 'rgba(240,147,251,.15)',
+                            border: '1px solid rgba(240,147,251,.25)',
+                            color: '#f093fb',
+                            fontWeight: 700
+                          }}>
+                            📅 {new Date(d.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                          </span>
+                          {d.hora_inicio && (
+                            <span style={{ 
+                              padding: '.35rem .7rem', 
+                              borderRadius: 999, 
+                              background: 'rgba(255,209,102,.15)',
+                              border: '1px solid rgba(255,209,102,.25)',
+                              color: '#FFD166',
+                              fontWeight: 700
+                            }}>
+                              🕐 {d.hora_inicio}
+                            </span>
+                          )}
+                          {d.lugar && (
+                            <span style={{ 
+                              padding: '.35rem .7rem', 
+                              borderRadius: 999, 
+                              background: 'rgba(30,136,229,.15)',
+                              border: '1px solid rgba(30,136,229,.25)',
+                              color: '#1E88E5',
+                              fontWeight: 700
+                            }}>
+                              📍 {d.lugar}
+                            </span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: '2rem',
+                  borderRadius: 18,
+                  border: '1px solid rgba(255,255,255,.15)',
+                  background: 'rgba(255,255,255,.05)',
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,.6)'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '.5rem' }}>📅</div>
+                  <p style={{ margin: 0 }}>Aún no hay fechas programadas</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* CONTENIDO */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '2rem 1.25rem' }}>
+          <style>{`
+            .content-two-col {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 2rem;
+              align-items: start;
+            }
+            
+            @media (max-width: 1024px) {
+              .content-two-col {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+              }
+            }
+          `}</style>
+
+          {/* Primera fila: Dos columnas */}
+          <div className="content-two-col" style={{ marginBottom: '2rem' }}>
+            {/* Columna 1: Descripción + Ritmos/Zonas */}
+            <div style={{ display: 'grid', gap: '1.5rem' }}>
+              {/* Descripción */}
+              {parent.descripcion && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28 }}
+                  className="glass-card-container"
+                >
+                  <h3 style={{
+                    fontSize: '1.5rem', fontWeight: 900, marginBottom: '.75rem',
+                    background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                  }}>
+                    📝 Descripción
+                  </h3>
+                  <p style={{ lineHeight: 1.7, fontSize: '1.05rem', color: 'rgba(255,255,255,.92)', margin: 0 }}>
+                    {parent.descripcion}
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Ritmos / Zonas */}
               {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.28 }}
                   aria-label="Ritmos y zonas del evento"
-                  style={{
-                    marginTop: '1.25rem',
-                    padding: '1.25rem',
-                    borderRadius: 18,
-                    border: '1px solid rgba(255,255,255,.15)',
-                    background: 'linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))',
-                    boxShadow: '0 10px 28px rgba(0,0,0,.35)'
-                  }}
+                  className="glass-card-container"
                 >
-                  <div style={{ display: 'flex', alignItems: 'left', gap: '.75rem', marginBottom: '.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
                     <div style={{
                       width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
                       background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
@@ -773,28 +1038,20 @@ export default function EventParentPublicScreen() {
                     <div>
                       <h3 style={{
                         margin: 0, fontSize: '1.25rem', fontWeight: 900,
-                        background: 'white',
-                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                        color: '#fff'
                       }}>
-                        Conoce el enfoque musical y donde se realizamos nuestros socialess
+                        Enfoque Musical y Zonas
                       </h3>
-
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '.9rem' }}>
+                  <div style={{ display: 'grid', gap: '1rem' }}>
                     {selectedCatalogIds.length > 0 && (
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.5rem' }}>
                           <strong style={{ fontSize: '.95rem' }}>🎵 Ritmos</strong>
-                          {/* <span style={{
-                            fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
-                            border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
-                          }}>
-                            
-                          </span> */}
                         </div>
-                        <div >
+                        <div>
                           <RitmosChips selected={selectedCatalogIds} onChange={() => { }} readOnly />
                         </div>
                       </div>
@@ -802,14 +1059,8 @@ export default function EventParentPublicScreen() {
 
                     {getZonaNombres().length > 0 && (
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.5rem' }}>
                           <strong style={{ fontSize: '.95rem' }}>📍 Zonas</strong>
-                          {/*   <span style={{
-                            fontSize: '.8rem', fontWeight: 800, padding: '.2rem .6rem', borderRadius: 999,
-                            border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.08)'
-                          }}>
-                             {getZonaNombres().length} zona{getZonaNombres().length !== 1 ? 's' : ''} 
-                          </span> */}
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
                           {getZonaNombres().map((zona) => (
@@ -834,62 +1085,54 @@ export default function EventParentPublicScreen() {
               )}
             </div>
 
-            {/* Derecha: Avatar */}
-            <div style={{ display: 'grid', placeItems: 'center' }}>
-              <div style={{
-                width: '100%', maxWidth: 420, aspectRatio: '1 / 1',
-                borderRadius: 22, overflow: 'hidden',
-                border: '1px solid rgba(255,255,255,.15)',
-                boxShadow: '0 16px 48px rgba(0,0,0,.45)',
-                background: 'linear-gradient(135deg, rgba(30,136,229,.12), rgba(255,61,87,.12))'
-              }}>
-                {avatarUrl ? (
+            {/* Columna 2: Flyer del Event Parent */}
+            {avatarUrl && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28 }}
+                className="glass-card-container"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%',
+                    display: 'grid', placeItems: 'center',
+                    background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                    boxShadow: '0 10px 28px rgba(229,57,53,.35)', fontSize: '1.25rem'
+                  }}>🎟️</div>
+                  <div>
+                    <h3 style={{
+                      margin: 0, fontSize: '1.25rem', fontWeight: 900,
+                      background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                    }}>
+                      Imagen Principal
+                    </h3>
+                  </div>
+                </div>
+
+                <div style={{
+                  width: '100%',
+                  aspectRatio: '4 / 5',
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,.15)',
+                  boxShadow: '0 12px 32px rgba(0,0,0,.4)',
+                  background: 'linear-gradient(135deg, rgba(229,57,53,.12), rgba(251,140,0,.12))'
+                }}>
                   <ImageWithFallback
                     src={avatarUrl}
-                    alt={`${parent.nombre} avatar`}
+                    alt={`${parent.nombre} imagen principal`}
                     loading="lazy"
                     decoding="async"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#fff', fontSize: '3rem' }}>🖼️</div>
-                )}
-              </div>
-            </div>
+                </div>
+              </motion.div>
+            )}
           </div>
 
-          {/* Responsive: 1 columna */}
-          <style>{`
-            @media (max-width: 1024px) {
-              .social-hero-content { grid-template-columns: 1fr !important; }
-            }
-          `}</style>
-        </motion.div>
-
-        {/* CONTENIDO */}
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '2rem 1.25rem' }}>
-          {/* Descripción */}
-          {parent.descripcion && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.28 }}
-              className="glass-card-container"
-            >
-              <h3 style={{
-                fontSize: '1.5rem', fontWeight: 900, marginBottom: '.75rem',
-                background: 'linear-gradient(135deg, #1E88E5, #FF3D57)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-              }}>
-                📝 Descripción
-              </h3>
-              <p style={{ lineHeight: 1.7, fontSize: '1.05rem', color: 'rgba(255,255,255,.92)', margin: 0 }}>
-                {parent.descripcion}
-              </p>
-            </motion.div>
-          )}
-
-          {/* Próximas Fechas */}
+          {/* Próximas Fechas (Slider) */}
           {dates && dates.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
