@@ -50,9 +50,11 @@ export default function OrganizerEventDateEditScreen() {
     estilos: [] as number[],
     ritmos_seleccionados: [] as string[],
     zonas: [] as number[],
+    cronograma: [] as any[],
+    costos: [] as any[],
     flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
-    // ❌ Removidas del form: ubicaciones, cronograma, costos (no existen en events_date)
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+    ubicaciones: [] as any[]
   });
 
   useEffect(() => {
@@ -73,9 +75,11 @@ export default function OrganizerEventDateEditScreen() {
         estilos: (date as any).estilos || [],
         ritmos_seleccionados: ((date as any).ritmos_seleccionados || []) as string[],
         zonas: (date as any).zonas || [],
+        cronograma: (date as any).cronograma || [],
+        costos: (date as any).costos || [],
         flyer_url: (date as any).flyer_url || null,
-        estado_publicacion: (date as any).estado_publicacion || 'borrador'
-        // ❌ Removidas: ubicaciones, cronograma, costos (no existen en events_date)
+        estado_publicacion: (date as any).estado_publicacion || 'borrador',
+        ubicaciones: (date as any).ubicaciones || []
       });
     }
   }, [date]);
@@ -86,7 +90,7 @@ export default function OrganizerEventDateEditScreen() {
     try {
       console.log('💾 [OrganizerEventDateEditScreen] Guardando fecha...');
       
-      // Payload limpio con SOLO columnas que existen en events_date
+      // Payload con TODAS las columnas (ahora existen en events_date)
       const patch = {
         nombre: form.nombre || null,
         biografia: form.biografia || null,
@@ -102,9 +106,11 @@ export default function OrganizerEventDateEditScreen() {
         ritmos_seleccionados: form.ritmos_seleccionados || [],
         estilos: form.estilos || [],
         zonas: form.zonas || [],
+        cronograma: form.cronograma || [],
+        costos: form.costos || [],
         flyer_url: form.flyer_url || null,
-        estado_publicacion: form.estado_publicacion || 'borrador'
-        // ❌ Removidas: ubicaciones, cronograma, costos (no existen en events_date)
+        estado_publicacion: form.estado_publicacion || 'borrador',
+        ubicaciones: form.ubicaciones || []
       } as any;
 
       console.log('📦 [OrganizerEventDateEditScreen] Patch:', patch);

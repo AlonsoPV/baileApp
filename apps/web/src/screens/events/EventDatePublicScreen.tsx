@@ -4,6 +4,8 @@ import { useEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
 import { useEventRSVP } from "../../hooks/useRSVP";
+import { useMyOrganizer } from "../../hooks/useOrganizer";
+import { useAuth } from "@/contexts/AuthProvider";
 import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
@@ -275,10 +277,15 @@ export default function EventDatePublicScreen() {
   const navigate = useNavigate();
   const dateIdNum = dateIdParam ? parseInt(dateIdParam) : undefined;
 
+  const { user } = useAuth();
   const { data: date, isLoading } = useEventDate(dateIdNum);
   const { data: parent } = useEventParent(date?.parent_id);
+  const { data: myOrganizer } = useMyOrganizer();
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
+
+  // Verificar si el usuario es propietario
+  const isOwner = user && myOrganizer && parent && (myOrganizer as any).user_id === (parent as any).user_id;
 
   // Hook de RSVP
   const {
@@ -488,7 +495,30 @@ export default function EventDatePublicScreen() {
 
               {/* Columna derecha */}
               <div style={{ display: 'grid', gap: '.85rem', alignContent: 'start' }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '.5rem', flexWrap: 'wrap' }}>
+                  {isOwner && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/social/fecha/${dateIdNum}/edit`)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 999,
+                        border: '1px solid rgba(30,136,229,0.4)',
+                        background: 'linear-gradient(135deg, rgba(30,136,229,0.2), rgba(0,188,212,0.2))',
+                        color: '#1E88E5',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 4px 12px rgba(30,136,229,0.2)'
+                      }}
+                    >
+                      ✏️ Editar
+                    </motion.button>
+                  )}
                   <ShareButton
                     url={typeof window !== 'undefined' ? window.location.href : ''}
                     title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
