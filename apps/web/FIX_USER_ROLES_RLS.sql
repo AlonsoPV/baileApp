@@ -31,9 +31,13 @@ AND tablename = 'user_roles';
 -- 4. Eliminar políticas existentes
 DROP POLICY IF EXISTS "user_roles_select_own" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_select_public" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_select_superadmin" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_insert_own" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_insert_superadmin" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_update_own" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_update_superadmin" ON public.user_roles;
 DROP POLICY IF EXISTS "user_roles_delete_own" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_delete_superadmin" ON public.user_roles;
 
 -- 5. Crear política para que usuarios puedan ver sus propios roles
 CREATE POLICY "user_roles_select_own"
