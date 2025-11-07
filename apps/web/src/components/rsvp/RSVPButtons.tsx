@@ -34,8 +34,10 @@ export default function RSVPButtons({
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
+      gap: '15px',
       ...style
     }} className={className}>
       <motion.button
@@ -70,6 +72,9 @@ export default function RSVPButtons({
           border: isInterested 
             ? '2px solid rgba(255, 140, 66, 0.5)'
             : '2px solid rgba(255, 140, 66, 0.2)',
+          width: '100%',
+          maxWidth: '300px',
+          justifyContent: 'center'
         }}
       >
         {/* Efecto de brillo en hover */}
@@ -113,6 +118,8 @@ export default function RSVPButtons({
               background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
               display: 'flex',
               alignItems: 'center',
+              flexDirection: 'column',
+              gap: '0px',
               justifyContent: 'center',
               fontSize: '0.8rem',
               boxShadow: '0 2px 8px rgba(255, 61, 87, 0.4)',
@@ -125,7 +132,7 @@ export default function RSVPButtons({
       </motion.button>
 
       {typeof interestedCount === 'number' && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginLeft: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div
             aria-live="polite"
             style={{
