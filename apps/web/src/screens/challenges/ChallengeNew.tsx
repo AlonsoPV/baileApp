@@ -29,7 +29,21 @@ export default function ChallengeNew() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('🏆 Iniciando creación de challenge...');
+    console.log('📝 Datos del formulario:', {
+      title: form.title,
+      description: form.description,
+      ritmo_slug: ritmosSelected[0],
+      has_cover: !!pendingCoverFile,
+      has_video: !!pendingVideoFile,
+      submission_deadline: form.submission_deadline,
+      voting_deadline: form.voting_deadline
+    });
+    
     try {
+      // Paso 1: Crear el challenge
+      console.log('📤 Llamando a challenge_create RPC...');
       const id = await create.mutateAsync({
         title: form.title,
         description: form.description || null,
@@ -39,11 +53,13 @@ export default function ChallengeNew() {
         submission_deadline: form.submission_deadline || null,
         voting_deadline: form.voting_deadline || null,
       });
+      console.log('✅ Challenge creado con ID:', id);
       
       const updates: any = {};
       
-      // Si se seleccionó archivo de portada, súbelo
+      // Paso 2: Subir archivo de portada si existe
       if (pendingCoverFile) {
+        console.log('📸 Subiendo imagen de portada...');
         const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
         const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, pendingCoverFile, {
@@ -51,13 +67,18 @@ export default function ChallengeNew() {
           cacheControl: '3600',
           contentType: pendingCoverFile.type || undefined
         });
-        if (upErr) throw upErr;
+        if (upErr) {
+          console.error('❌ Error subiendo portada:', upErr);
+          throw upErr;
+        }
         const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
         updates.cover_image_url = pub.publicUrl;
+        console.log('✅ Portada subida:', pub.publicUrl);
       }
       
-      // Si se seleccionó video base, súbelo
+      // Paso 3: Subir video base si existe
       if (pendingVideoFile) {
+        console.log('🎥 Subiendo video base...');
         const ext = pendingVideoFile.name.split('.').pop()?.toLowerCase() || 'mp4';
         const path = `challenges/${id}/owner-video-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, pendingVideoFile, {
@@ -65,20 +86,57 @@ export default function ChallengeNew() {
           cacheControl: '3600',
           contentType: pendingVideoFile.type || undefined
         });
-        if (upErr) throw upErr;
+        if (upErr) {
+          console.error('❌ Error subiendo video:', upErr);
+          throw upErr;
+        }
         const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
         updates.owner_video_url = pub.publicUrl;
+        console.log('✅ Video subido:', pub.publicUrl);
       }
       
-      // Actualizar si hay archivos subidos
+      // Paso 4: Actualizar challenge con URLs de archivos
       if (Object.keys(updates).length > 0) {
-        await supabase.from('challenges').update(updates).eq('id', id);
+        console.log('🔄 Actualizando challenge con URLs de archivos...');
+        const { error: updateErr } = await supabase
+          .from('challenges')
+          .update(updates)
+          .eq('id', id);
+        
+        if (updateErr) {
+          console.error('❌ Error actualizando challenge:', updateErr);
+          throw updateErr;
+        }
+        console.log('✅ Challenge actualizado con archivos');
       }
       
+      console.log('🎉 Challenge creado exitosamente!');
       showToast('Challenge creado exitosamente', 'success');
       nav(`/challenges/${id}`);
     } catch (err: any) {
-      showToast(err?.message || 'No se pudo crear', 'error');
+      console.error('❌ Error completo:', err);
+      console.error('📋 Detalles del error:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint
+      });
+      
+      let errorMessage = 'No se pudo crear el challenge';
+      
+      if (err?.message) {
+        if (err.message.includes('Not allowed')) {
+          errorMessage = 'No tienes permisos para crear challenges. Necesitas el rol de usuario o superadmin.';
+        } else if (err.message.includes('row-level security')) {
+          errorMessage = 'Error de permisos. Por favor, contacta al administrador.';
+        } else if (err.message.includes('function')) {
+          errorMessage = 'Error en la base de datos. Asegúrate de ejecutar el script FIX_CHALLENGES_VIDEO_BASE.sql';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      showToast(errorMessage, 'error');
     }
   };
 
