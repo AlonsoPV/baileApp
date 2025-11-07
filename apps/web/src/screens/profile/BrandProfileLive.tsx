@@ -11,6 +11,14 @@ export default function BrandProfileLive() {
   const navigate = useNavigate();
   const { data: brand, isLoading } = useMyBrand();
 
+  // ✅ Auto-redirigir a Edit si no tiene perfil de marca (DEBE estar ANTES de cualquier return)
+  React.useEffect(() => {
+    if (!isLoading && !brand) {
+      console.log('[BrandProfileLive] No profile found, redirecting to edit...');
+      navigate('/profile/brand/edit', { replace: true });
+    }
+  }, [isLoading, brand, navigate]);
+
   if (isLoading) {
     return (
       <div style={{
@@ -25,14 +33,6 @@ export default function BrandProfileLive() {
       </div>
     );
   }
-
-  // Auto-redirigir a Edit si no tiene perfil de marca
-  React.useEffect(() => {
-    if (!isLoading && !brand) {
-      console.log('[BrandProfileLive] No profile found, redirecting to edit...');
-      navigate('/profile/brand/edit', { replace: true });
-    }
-  }, [isLoading, brand, navigate]);
 
   if (!brand) {
     return (
