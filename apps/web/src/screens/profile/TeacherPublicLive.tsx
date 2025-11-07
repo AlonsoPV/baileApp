@@ -8,13 +8,13 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { supabase } from "../../lib/supabase";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
+import { BioSection } from "../../components/profile/BioSection";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -719,33 +719,17 @@ export default function TeacherProfileLive() {
 
         {/* Contenido Principal */}
         <div style={{ padding: '2rem 0' }}>
-          {/* Bio */}
-          {(teacher as any)?.bio && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <h3 className="section-title">💬 Sobre mí</h3>
-              <p style={{
-                fontSize: '1.1rem',
-                lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.9)',
-                margin: 0
-              }}>
-                {(teacher as any)?.bio}
-              </p>
-            </motion.section>
-          )}
+          {/* Biografía y Redes Sociales */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <BioSection 
+              bio={(teacher as any)?.bio}
+              redes={(teacher as any)?.redes_sociales || (teacher as any)?.respuestas?.redes}
+            />
+          </motion.div>
 
           {/* Ritmos de Baile */}
           {/*   {academy.ritmos && academy.ritmos.length > 0 && (
@@ -923,20 +907,6 @@ export default function TeacherProfileLive() {
               </div>
             </motion.section>
           )}
-          {/* Redes Sociales */}
-          <SocialMediaSection respuestas={{ redes: (teacher as any)?.redes_sociales }} redes_sociales={(teacher as any)?.redes_sociales}
-            title="Redes Sociales"
-            availablePlatforms={['instagram', 'facebook', 'whatsapp']}
-            style={{
-              marginBottom: '2rem',
-              padding: '2rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '20px',
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            }}
-          />
 
           {/* Maestros Invitados */}
           <InvitedMastersSection
