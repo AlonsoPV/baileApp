@@ -836,7 +836,7 @@ export default function AcademyProfileLive() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               <ClasesLive
                 title=""
-                cronograma={(academy as any)?.cronograma || []}
+                cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
                 costos={(academy as any)?.costos || []}
                 ubicacion={{
                   nombre: (academy as any)?.ubicaciones?.[0]?.nombre,

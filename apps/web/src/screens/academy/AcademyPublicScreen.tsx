@@ -421,7 +421,7 @@ export default function AcademyPublicScreen() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               <ClasesLive
                 title=""
-                cronograma={(academy as any)?.cronograma || []}
+                cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
                 costos={(academy as any)?.costos || []}
                 ubicacion={{
                   nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
@@ -429,7 +429,7 @@ export default function AcademyPublicScreen() {
                   ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
                   referencias: (academy as any)?.ubicaciones?.[0]?.referencias
                 }}
-                showCalendarButton
+                showCalendarButton={true}
               />
             </div>
           </motion.section>
@@ -447,6 +447,7 @@ export default function AcademyPublicScreen() {
             </motion.section>
           )}
 
+          {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
           {Array.isArray((academy as any)?.faq) && (academy as any).faq.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.7 }}
@@ -481,10 +482,11 @@ export default function AcademyPublicScreen() {
             </motion.section>
           )}
 
+          {/* Maestros Invitados */}
           <InvitedMastersSection
             masters={[]}
             title="🎭 Maestros Invitados"
-            showTitle
+            showTitle={true}
             isEditable={false}
           />
 
