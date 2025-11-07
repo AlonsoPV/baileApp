@@ -232,6 +232,19 @@ export default function ChallengeDetail() {
     return m;
   }, [subs]);
 
+  // IMPORTANTE: Todos los useMemo deben estar ANTES de los returns condicionales
+  const requirementsList: string[] = React.useMemo(() => {
+    const raw = (challenge as any)?.requirements;
+    if (Array.isArray(raw)) {
+      return raw.map((item: any) => String(item)).filter((s) => s.trim() !== '');
+    }
+    return [];
+  }, [challenge]);
+
+  const pending = React.useMemo(() => (subs || []).filter((s) => s.status === 'pending'), [subs]);
+  const approved = React.useMemo(() => (subs || []).filter((s) => s.status === 'approved'), [subs]);
+  const mySubmission = React.useMemo(() => (subs || []).find((s:any) => s.user_id === currentUserId), [subs, currentUserId]);
+
   if (!id) {
     console.error('❌ No hay ID de challenge en la URL');
     return <div className="cc-page" style={{ padding: '1rem' }}>Sin ID de challenge</div>;
@@ -286,17 +299,6 @@ export default function ChallengeDetail() {
   }
   
   console.log('✅ Challenge cargado correctamente:', challenge);
-
-  const pending = (subs || []).filter((s) => s.status === 'pending');
-  const approved = (subs || []).filter((s) => s.status === 'approved');
-  const mySubmission = (subs || []).find((s:any) => s.user_id === currentUserId);
-  const requirementsList: string[] = React.useMemo(() => {
-    const raw = (challenge as any)?.requirements;
-    if (Array.isArray(raw)) {
-      return raw.map((item: any) => String(item)).filter((s) => s.trim() !== '');
-    }
-    return [];
-  }, [challenge]);
 
   const getStoragePathFromPublicUrl = (url?: string | null) => {
     if (!url) return null;
