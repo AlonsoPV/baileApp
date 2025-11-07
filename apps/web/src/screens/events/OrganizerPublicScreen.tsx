@@ -10,7 +10,6 @@ import RitmosChips from "../../components/RitmosChips";
 import { Chip } from '../../components/profile/Chip';
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
-import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
@@ -308,11 +307,6 @@ export function OrganizerPublicScreen() {
         <div style={{ position: 'absolute', top: '10%', left: '5%', width: 100, height: 100, background: colors.gradients.primary, borderRadius: '50%', opacity: 0.1, animation: 'float 8s ease-in-out infinite', zIndex: 0 }} />
         <div style={{ position: 'absolute', top: '20%', right: '10%', width: 60, height: 60, background: colors.gradients.secondary, borderRadius: '50%', opacity: 0.15, animation: 'float 6s ease-in-out infinite reverse', zIndex: 0 }} />
         <div style={{ position: 'absolute', bottom: '20%', left: '15%', width: 80, height: 80, background: colors.gradients.deep, borderRadius: '50%', opacity: 0.1, animation: 'float 7s ease-in-out infinite', zIndex: 0 }} />
-
-        {/* Toolbar / Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <ProfileNavigationToggle currentView="live" profileType="organizer" liveHref="/profile/organizer" editHref="/profile/organizer/edit" />
-        </div>
 
         {/* Banner */}
         <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'hidden', margin: `0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
