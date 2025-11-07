@@ -16,7 +16,7 @@ type Category = "calzado" | "ropa" | "accesorios";
 type BrandPolicies = { shipping?: string; returns?: string; warranty?: string };
 type FitTip = { style: string; tip: string };
 type SizeRow = { mx: string; us: string; eu: string };
-type ProductItem = { id: string; titulo: string; imagen_url: string; category: Category; price?: string; sizes?: string[] };
+type ProductItem = { id: string; titulo: string; descripcion?: string; imagen_url: string; category: Category; price?: string; sizes?: string[] };
 type Conversion = { headline?: string; subtitle?: string; coupons?: string[] };
 type BrandForm = {
   nombre_publico: string;
@@ -780,95 +780,344 @@ export default function BrandProfileEditor() {
           {/* === PRODUCTS === */}
           {tab==='products' && (
             <div className="editor-section glass-card-container">
-              <h2 className="editor-section-title">🛍️ Catálogo</h2>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ opacity: .8 }}>Sube fotos de tus productos. Se crearán entradas en el catálogo.</div>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '1.5rem' 
+              }}>
+                <div style={{ 
+                  width: '56px', 
+                  height: '56px', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #9C27B0, #E91E63)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '1.75rem',
+                  boxShadow: '0 8px 24px rgba(156, 39, 176, 0.4)'
+                }}>
+                  🛍️
+                </div>
+                <div>
+                  <h2 className="editor-section-title" style={{ margin: 0 }}>Catálogo de Productos</h2>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                    Gestiona tu inventario y muestra tus productos
+                  </p>
+                </div>
+              </div>
+
+              {/* Botón de subir fotos */}
+              <div style={{ 
+                padding: '1.25rem',
+                background: 'rgba(156, 39, 176, 0.08)',
+                border: '2px dashed rgba(156, 39, 176, 0.3)',
+                borderRadius: '12px',
+                marginBottom: '1.5rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📸</div>
+                <p style={{ fontSize: '0.95rem', opacity: 0.9, marginBottom: '1rem' }}>
+                  Sube fotos de tus productos para crear entradas en el catálogo
+                </p>
                 <MediaUploader onPick={onPickCatalog} />
               </div>
 
-              {/* Filtro por categoría (manteniendo look de botones) */}
-              <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', marginBottom:'.5rem' }}>
+              {/* Filtro por categoría */}
+              <div style={{ 
+                display:'flex', 
+                gap:'.75rem', 
+                flexWrap:'wrap', 
+                marginBottom:'1.5rem',
+                justifyContent: 'center'
+              }}>
                 {(['all','calzado','ropa','accesorios'] as const).map(cat => (
                   <button
                     key={cat}
                     onClick={()=>setCatFilter(cat)}
                     className="editor-back-btn"
-                    style={{ background: catFilter===cat ? 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))' : 'rgba(255,255,255,0.1)' }}
+                    style={{ 
+                      background: catFilter===cat 
+                        ? 'linear-gradient(135deg, #9C27B0, #E91E63)' 
+                        : 'rgba(255,255,255,0.1)',
+                      padding: '0.75rem 1.5rem',
+                      fontWeight: '700',
+                      fontSize: '0.95rem'
+                    }}
                   >
-                    {cat==='all' ? 'Todos' : cat[0].toUpperCase()+cat.slice(1)}
+                    {cat==='all' ? '🔍 Todos' : 
+                     cat==='calzado' ? '👟 Calzado' : 
+                     cat==='ropa' ? '👕 Ropa' : '💍 Accesorios'}
                   </button>
                 ))}
               </div>
 
-              {/* Grid editable */}
+              {/* Grid de productos */}
               {Array.isArray(form.productos) && form.productos.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1rem', marginTop: '.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                   {form.productos
                     .filter(p => catFilter==='all' ? true : p.category===catFilter)
                     .map((p: any) => (
-                    <article key={p.id} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
-                      <div style={{ display:'flex', justifyContent:'center' }}>
-                        <ImageWithFallback src={p.imagen_url} alt={p.titulo || 'Producto'} style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display:'block' }} />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns:'1fr 1fr auto', alignItems: 'center', marginTop: '.5rem', gap: '.5rem' }}>
-                        <input
-                          value={p.titulo || ''}
-                          onChange={(e) => dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ titulo:e.target.value } })}
-                          placeholder="Nombre del producto (opcional)"
-                          className="editor-input"
-                          style={{ width: '100%' }}
+                    <article key={p.id} style={{ 
+                      border: '1px solid rgba(255,255,255,0.15)', 
+                      borderRadius: 16, 
+                      padding: '1rem', 
+                      background: 'rgba(255,255,255,0.05)',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {/* Imagen del producto */}
+                      <div style={{ 
+                        position: 'relative',
+                        marginBottom: '1rem',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: 'rgba(0,0,0,0.2)'
+                      }}>
+                        <ImageWithFallback 
+                          src={p.imagen_url} 
+                          alt={p.titulo || 'Producto'} 
+                          style={{ 
+                            width: '100%', 
+                            height: 'auto', 
+                            maxHeight: '350px',
+                            objectFit: 'contain',
+                            display:'block' 
+                          }} 
                         />
-                        <select
-                          className="editor-input"
-                          value={p.category || 'ropa'}
-                          onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ category: e.target.value as Category } })}
+                        {/* Badge de categoría */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '0.75rem',
+                          right: '0.75rem',
+                          padding: '0.5rem 1rem',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          backdropFilter: 'blur(10px)',
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          fontWeight: '700',
+                          textTransform: 'capitalize'
+                        }}>
+                          {p.category === 'calzado' ? '👟' : p.category === 'ropa' ? '👕' : '💍'} {p.category}
+                        </div>
+                      </div>
+
+                      {/* Formulario del producto */}
+                      <div style={{ display: 'grid', gap: '0.75rem' }}>
+                        {/* Nombre */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            fontSize: '0.85rem', 
+                            fontWeight: '600', 
+                            marginBottom: '0.5rem',
+                            opacity: 0.8
+                          }}>
+                            📝 Nombre del Producto
+                          </label>
+                          <input
+                            value={p.titulo || ''}
+                            onChange={(e) => dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ titulo:e.target.value } })}
+                            placeholder="Ej: Zapatos de Bachata Pro"
+                            className="editor-input"
+                            style={{ 
+                              width: '100%', 
+                              padding: '0.75rem',
+                              fontSize: '0.95rem',
+                              fontWeight: '600'
+                            }}
+                          />
+                        </div>
+
+                        {/* Descripción */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            fontSize: '0.85rem', 
+                            fontWeight: '600', 
+                            marginBottom: '0.5rem',
+                            opacity: 0.8
+                          }}>
+                            💬 Descripción
+                          </label>
+                          <textarea
+                            value={p.descripcion || ''}
+                            onChange={(e) => dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ descripcion:e.target.value } })}
+                            placeholder="Describe las características, materiales, beneficios..."
+                            className="editor-textarea"
+                            rows={3}
+                            style={{ 
+                              width: '100%', 
+                              padding: '0.75rem',
+                              fontSize: '0.9rem',
+                              lineHeight: '1.5'
+                            }}
+                          />
+                        </div>
+
+                        {/* Precio */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            fontSize: '0.85rem', 
+                            fontWeight: '600', 
+                            marginBottom: '0.5rem',
+                            opacity: 0.8
+                          }}>
+                            💰 Precio
+                          </label>
+                          <input
+                            value={p.price || ''}
+                            onChange={(e) => dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ price:e.target.value } })}
+                            placeholder="Ej: $1,299 MXN"
+                            className="editor-input"
+                            style={{ 
+                              width: '100%', 
+                              padding: '0.75rem',
+                              fontSize: '0.95rem'
+                            }}
+                          />
+                        </div>
+
+                        {/* Categoría */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            fontSize: '0.85rem', 
+                            fontWeight: '600', 
+                            marginBottom: '0.5rem',
+                            opacity: 0.8
+                          }}>
+                            🏷️ Categoría
+                          </label>
+                          <select
+                            className="editor-input"
+                            value={p.category || 'ropa'}
+                            onChange={(e)=> dispatch({ type:'UPDATE_PRODUCT', id:p.id, value:{ category: e.target.value as Category } })}
+                            style={{ 
+                              width: '100%', 
+                              padding: '0.75rem',
+                              fontSize: '0.95rem',
+                              fontWeight: '600'
+                            }}
+                          >
+                            <option value="calzado">👟 Calzado</option>
+                            <option value="ropa">👕 Ropa</option>
+                            <option value="accesorios">💍 Accesorios</option>
+                          </select>
+                        </div>
+
+                        {/* Botón eliminar */}
+                        <button 
+                          type="button" 
+                          onClick={() => removeCatalogItem(p.id)} 
+                          className="editor-back-btn" 
+                          style={{ 
+                            width: '100%',
+                            background: 'rgba(244, 67, 54, 0.2)',
+                            border: '1px solid rgba(244, 67, 54, 0.4)',
+                            color: '#F44336',
+                            fontWeight: '700',
+                            padding: '0.75rem',
+                            marginTop: '0.5rem'
+                          }}
                         >
-                          <option value="calzado">Calzado</option>
-                          <option value="ropa">Ropa</option>
-                          <option value="accesorios">Accesorios</option>
-                        </select>
-                        <button type="button" onClick={() => removeCatalogItem(p.id)} className="editor-back-btn" style={{ whiteSpace: 'nowrap' }}>Eliminar</button>
+                          🗑️ Eliminar Producto
+                        </button>
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
-                <p style={{ color: 'rgba(255,255,255,.75)', margin: 0 }}>Aún no hay productos en el catálogo.</p>
+                <div style={{
+                  padding: '3rem 1.5rem',
+                  textAlign: 'center',
+                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📦</div>
+                  <p style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    Catálogo vacío
+                  </p>
+                  <p style={{ fontSize: '0.95rem', opacity: 0.7, margin: 0 }}>
+                    Sube fotos de tus productos para comenzar
+                  </p>
+                </div>
               )}
 
               {/* Vista previa con pestañas */}
-              <div style={{ marginTop: '1.5rem' }}>
-                <h3 className="editor-section-title" style={{ fontSize: '1.25rem' }}>👀 Vista previa</h3>
-                <CatalogTabs items={(form.productos || []).map((p: any) => ({ id: p.id, name: p.titulo || 'Producto', price: '', image: p.imagen_url, category: (p.category || 'ropa') as any, sizes: p.sizes || [] }))} />
-              </div>
+              {form.productos.length > 0 && (
+                <div style={{ 
+                  marginTop: '1.5rem',
+                  padding: '1.25rem',
+                  background: 'rgba(156, 39, 176, 0.08)',
+                  border: '2px solid rgba(156, 39, 176, 0.2)',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ 
+                    fontSize: '0.85rem', 
+                    fontWeight: '600', 
+                    opacity: 0.7, 
+                    marginBottom: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    👀 Vista Previa del Catálogo
+                  </div>
+                  <CatalogTabs items={(form.productos || []).map((p: any) => ({ 
+                    id: p.id, 
+                    name: p.titulo || 'Producto', 
+                    description: p.descripcion || '',
+                    price: p.price || '', 
+                    image: p.imagen_url, 
+                    category: (p.category || 'ropa') as any, 
+                    sizes: p.sizes || [] 
+                  }))} />
+                </div>
+              )}
 
-               {/* Guardar catálogo */}
-               <div style={{ marginTop: '1rem', display:'flex', justifyContent:'flex-end' }}>
-                 <button type="button" className="editor-back-btn" onClick={async ()=>{
-                   if (!(brand as any)?.id) { showToast('Primero guarda la información básica.', 'error'); return; }
-                   try {
-                     let { data, error } = await supabase
-                       .from('profiles_brand')
-                       .update({ productos: form.productos })
-                       .eq('id', (brand as any).id)
-                       .select('id')
-                       .maybeSingle();
-                     if (error || !data) {
-                       const { data: d2, error: e2 } = await supabase
-                         .from('profiles_brand')
-                         .update({ productos: form.productos })
-                         .eq('user_id', (user as any)?.id)
-                         .select('id')
-                         .maybeSingle();
-                       if (e2 || !d2) throw e2 || new Error('No se pudo guardar catálogo');
-                     }
-                     showToast('Catálogo guardado', 'success');
-                   } catch (e:any) {
-                     console.error('[BrandEditor] Error guardando catálogo:', e);
-                     showToast('No se pudo guardar el catálogo. Revisa tu sesión/RLS.', 'error');
-                   }
-                 }}>Guardar catálogo</button>
-               </div>
+               {/* Botón guardar catálogo */}
+               {form.productos.length > 0 && (
+                 <div style={{ marginTop: '1.5rem', display:'flex', justifyContent:'flex-end' }}>
+                   <button 
+                     type="button" 
+                     className="editor-back-btn" 
+                     onClick={async ()=>{
+                       if (!(brand as any)?.id) { showToast('Primero guarda la información básica.', 'error'); return; }
+                       try {
+                         let { data, error } = await supabase
+                           .from('profiles_brand')
+                           .update({ productos: form.productos })
+                           .eq('id', (brand as any).id)
+                           .select('id')
+                           .maybeSingle();
+                         if (error || !data) {
+                           const { data: d2, error: e2 } = await supabase
+                             .from('profiles_brand')
+                             .update({ productos: form.productos })
+                             .eq('user_id', (user as any)?.id)
+                             .select('id')
+                             .maybeSingle();
+                           if (e2 || !d2) throw e2 || new Error('No se pudo guardar catálogo');
+                         }
+                         showToast('✅ Catálogo guardado exitosamente', 'success');
+                       } catch (e:any) {
+                         console.error('[BrandEditor] Error guardando catálogo:', e);
+                         showToast('❌ Error al guardar el catálogo', 'error');
+                       }
+                     }}
+                     style={{ 
+                       background: 'linear-gradient(135deg, #9C27B0, #E91E63)',
+                       fontWeight: '700',
+                       padding: '0.875rem 1.75rem',
+                       fontSize: '1rem'
+                     }}
+                   >
+                     💾 Guardar Catálogo
+                   </button>
+                 </div>
+               )}
             </div>
           )}
 
@@ -944,7 +1193,7 @@ export default function BrandProfileEditor() {
                   </label>
                   <textarea 
                     className="editor-textarea" 
-                    rows={3} 
+                    rows={2} 
                     value={form.policies?.shipping || ''} 
                     onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ shipping: e.target.value } })} 
                     placeholder="Ej: Envíos nacionales 2-5 días hábiles. Envío gratis en compras mayores a $1,000 MXN."
@@ -971,7 +1220,7 @@ export default function BrandProfileEditor() {
                   </label>
                   <textarea 
                     className="editor-textarea" 
-                    rows={3} 
+                    rows={2} 
                     value={form.policies?.returns || ''} 
                     onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ returns: e.target.value } })} 
                     placeholder="Ej: Aceptamos cambios y devoluciones dentro de 15 días. El producto debe estar sin uso y en su empaque original."
@@ -998,7 +1247,7 @@ export default function BrandProfileEditor() {
                   </label>
                   <textarea 
                     className="editor-textarea" 
-                    rows={3} 
+                    rows={2} 
                     value={form.policies?.warranty || ''} 
                     onChange={(e)=>dispatch({ type:'SET_POLICIES', value:{ warranty: e.target.value } })} 
                     placeholder="Ej: 30 días de garantía por defectos de fabricación. No cubre desgaste por uso normal."
@@ -1086,33 +1335,81 @@ export default function BrandProfileEditor() {
   );
 }
 
-// Subcomponentes (sin cambios visuales)
+// Subcomponentes
 function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
   const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
   const filtered = items.filter((i: any) => i.category === tab);
   const tabs = ['calzado','ropa','accesorios'] as const;
-  const btnPrimary: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))', color: '#fff', fontWeight: 900, cursor: 'pointer' };
-  const btnGhost: React.CSSProperties = { padding: '.65rem 1rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '.75rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', alignItems:'center' };
-  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.15rem .45rem', fontSize: '.82rem' };
-  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0 };
+  const btnPrimary: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, #9C27B0, #E91E63)', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.95rem' };
+  const btnGhost: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem' };
+  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '1rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column' };
+  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.25rem .6rem', fontSize: '.85rem', fontWeight: '600' };
+  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0, textAlign: 'center', padding: '2rem' };
   return (
     <div>
-      <div style={{ display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>{t[0].toUpperCase()+t.slice(1)}</button>
+          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>
+            {t === 'calzado' ? '👟 Calzado' : t === 'ropa' ? '👕 Ropa' : '💍 Accesorios'}
+          </button>
         ))}
       </div>
       {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.9rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1.25rem' }}>
           {filtered.map((p: any) => (
             <article key={p.id} style={prodCard}>
-              <ImageWithFallback src={p.image} alt={p.name} style={{ width: 350, maxWidth:'100%', height: 'auto', borderRadius: 12 }} />
-              <div style={{ marginTop: '.6rem' }}>
-                <div style={{ fontWeight: 800 }}>{p.name}</div>
-                <div style={{ opacity: .85, margin: '.15rem 0' }}>{p.price}</div>
+              <div style={{ 
+                position: 'relative',
+                marginBottom: '0.75rem',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                background: 'rgba(0,0,0,0.2)'
+              }}>
+                <ImageWithFallback 
+                  src={p.image} 
+                  alt={p.name} 
+                  style={{ 
+                    width: '100%', 
+                    height: 'auto', 
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    borderRadius: 12 
+                  }} 
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ 
+                  fontWeight: 800, 
+                  fontSize: '1.05rem', 
+                  marginBottom: '0.5rem',
+                  lineHeight: '1.3'
+                }}>
+                  {p.name || 'Producto sin nombre'}
+                </div>
+                {p.description && (
+                  <div style={{ 
+                    fontSize: '0.9rem', 
+                    opacity: .8, 
+                    marginBottom: '0.75rem',
+                    lineHeight: '1.5'
+                  }}>
+                    {p.description}
+                  </div>
+                )}
+                {p.price && (
+                  <div style={{ 
+                    fontSize: '1.1rem',
+                    fontWeight: 900,
+                    background: 'linear-gradient(135deg, #9C27B0, #E91E63)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {p.price}
+                  </div>
+                )}
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap', margin: '.35rem 0' }}>
+                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
                     {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
                     {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
                   </div>
