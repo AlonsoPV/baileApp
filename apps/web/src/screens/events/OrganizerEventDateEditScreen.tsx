@@ -33,6 +33,8 @@ export default function OrganizerEventDateEditScreen() {
   const { data: myOrg } = useMyOrganizer();
   const allowedCatalogIds = ((myOrg as any)?.ritmos_seleccionados || []) as string[];
 
+  const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  
   const [form, setForm] = useState({
     nombre: '',
     biografia: '',
@@ -48,15 +50,14 @@ export default function OrganizerEventDateEditScreen() {
     estilos: [] as number[],
     ritmos_seleccionados: [] as string[],
     zonas: [] as number[],
-    cronograma: [] as any[],
-    costos: [] as any[],
     flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
-    ubicaciones: [] as any[],
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
+    // ❌ Removidas del form: ubicaciones, cronograma, costos (no existen en events_date)
   });
 
   useEffect(() => {
     if (date) {
+      console.log('📥 [OrganizerEventDateEditScreen] Cargando fecha:', date);
       setForm({
         nombre: date.nombre || '',
         biografia: (date as any).biografia || '',
@@ -72,41 +73,58 @@ export default function OrganizerEventDateEditScreen() {
         estilos: (date as any).estilos || [],
         ritmos_seleccionados: ((date as any).ritmos_seleccionados || []) as string[],
         zonas: (date as any).zonas || [],
-        cronograma: (date as any).cronograma || [],
-        costos: (date as any).costos || [],
         flyer_url: (date as any).flyer_url || null,
-        estado_publicacion: (date as any).estado_publicacion || 'borrador',
-        ubicaciones: (date as any).ubicaciones || [],
+        estado_publicacion: (date as any).estado_publicacion || 'borrador'
+        // ❌ Removidas: ubicaciones, cronograma, costos (no existen en events_date)
       });
     }
   }, [date]);
 
   const handleSave = async () => {
     if (!dateIdNum) return;
-    const patch = {
-      nombre: form.nombre || null,
-      biografia: form.biografia || null,
-      fecha: form.fecha,
-      hora_inicio: form.hora_inicio || null,
-      hora_fin: form.hora_fin || null,
-      lugar: form.lugar || null,
-      direccion: form.direccion || null,
-      ciudad: form.ciudad || null,
-      zona: form.zona || null,
-      referencias: form.referencias || null,
-      requisitos: form.requisitos || null,
-      ritmos_seleccionados: form.ritmos_seleccionados || [],
-      estilos: form.estilos || [],
-      zonas: form.zonas || [],
-      cronograma: form.cronograma || [],
-      costos: form.costos || [],
-      flyer_url: form.flyer_url || null,
-      estado_publicacion: form.estado_publicacion || 'borrador',
-      ubicaciones: form.ubicaciones || [],
-    } as any;
+    
+    try {
+      console.log('💾 [OrganizerEventDateEditScreen] Guardando fecha...');
+      
+      // Payload limpio con SOLO columnas que existen en events_date
+      const patch = {
+        nombre: form.nombre || null,
+        biografia: form.biografia || null,
+        fecha: form.fecha,
+        hora_inicio: form.hora_inicio || null,
+        hora_fin: form.hora_fin || null,
+        lugar: form.lugar || null,
+        direccion: form.direccion || null,
+        ciudad: form.ciudad || null,
+        zona: form.zona || null,
+        referencias: form.referencias || null,
+        requisitos: form.requisitos || null,
+        ritmos_seleccionados: form.ritmos_seleccionados || [],
+        estilos: form.estilos || [],
+        zonas: form.zonas || [],
+        flyer_url: form.flyer_url || null,
+        estado_publicacion: form.estado_publicacion || 'borrador'
+        // ❌ Removidas: ubicaciones, cronograma, costos (no existen en events_date)
+      } as any;
 
-    const updated = await updateDate.mutateAsync({ id: dateIdNum, patch });
-    navigate(`/social/fecha/${updated.id}`);
+      console.log('📦 [OrganizerEventDateEditScreen] Patch:', patch);
+      
+      const updated = await updateDate.mutateAsync({ id: dateIdNum, patch });
+      
+      console.log('✅ [OrganizerEventDateEditScreen] Fecha actualizada:', updated);
+      setStatusMsg({ type: 'ok', text: '✅ Fecha actualizada exitosamente' });
+      
+      // Navegar después de un breve delay para mostrar el mensaje
+      setTimeout(() => {
+        navigate(`/social/fecha/${updated.id}`);
+      }, 1500);
+    } catch (error: any) {
+      console.error('❌ [OrganizerEventDateEditScreen] Error guardando:', error);
+      setStatusMsg({ 
+        type: 'err', 
+        text: `❌ Error al guardar: ${error.message || 'Intenta nuevamente'}` 
+      });
+    }
   };
 
   // Loading
@@ -367,6 +385,35 @@ export default function OrganizerEventDateEditScreen() {
             Modifica la información de esta fecha del evento
           </p>
         </motion.div>
+
+        {/* Mensaje de estado */}
+        {statusMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: '1.5rem',
+              padding: '1rem 1.5rem',
+              borderRadius: '12px',
+              border: statusMsg.type === 'ok' 
+                ? '2px solid rgba(16,185,129,0.4)' 
+                : '2px solid rgba(239,68,68,0.4)',
+              background: statusMsg.type === 'ok' 
+                ? 'rgba(16,185,129,0.15)' 
+                : 'rgba(239,68,68,0.15)',
+              color: '#fff',
+              fontSize: '1rem',
+              fontWeight: '600',
+              textAlign: 'center',
+              boxShadow: statusMsg.type === 'ok' 
+                ? '0 4px 12px rgba(16,185,129,0.2)' 
+                : '0 4px 12px rgba(239,68,68,0.2)'
+            }}
+          >
+            {statusMsg.text}
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
