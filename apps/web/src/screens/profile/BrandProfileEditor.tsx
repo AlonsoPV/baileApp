@@ -1645,12 +1645,11 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
                 )}
                 {p.price && (
                   <div style={{ 
-                    fontSize: '1.1rem',
+                    fontSize: '1.15rem',
                     fontWeight: 900,
-                    background: 'linear-gradient(135deg, #9C27B0, #E91E63)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    marginBottom: '0.5rem'
+                    color: '#fff',
+                    marginBottom: '0.5rem',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
                   }}>
                     {p.price}
                   </div>
