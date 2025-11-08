@@ -225,13 +225,9 @@ export const UserProfileLive: React.FC = () => {
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("following");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
-  const goToProfile = (slug?: string | null, id?: string) => {
-    if (slug) {
-      navigate(`/perfil/${slug}`);
-      return;
-    }
+  const goToProfile = (_slug?: string | null, id?: string) => {
     if (id) {
-      navigate(`/perfil/${id}`);
+      navigate(`/u/${id}`); // vista live pública por userId
     }
   };
 
@@ -903,44 +899,51 @@ export const UserProfileLive: React.FC = () => {
               <div
                 style={{
                   display: 'inline-flex',
-                  padding: '0.25rem',
+                  gap: '10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  padding: '8px',
                   borderRadius: '999px',
-                  background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.12)',
-                  gap: '0.35rem'
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.25)'
                 }}
               >
                 <button
                   onClick={() => setNetworkTab('following')}
                   style={{
-                    border: 'none',
+                    border: networkTab === 'following' ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '999px',
-                    padding: '0.55rem 1.1rem',
+                    padding: '0.6rem 1.2rem',
                     background: networkTab === 'following'
-                      ? 'linear-gradient(135deg, rgba(59,130,246,0.7), rgba(147,51,234,0.7))'
-                      : 'transparent',
+                      ? 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(147,51,234,0.9))'
+                      : 'rgba(255,255,255,0.06)',
                     color: '#fff',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    fontWeight: 800,
+                    letterSpacing: 0.3,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: networkTab === 'following' ? '0 10px 22px rgba(0,0,0,0.28)' : 'inset 0 0 0 rgba(0,0,0,0)'
                   }}
                 >
-                  Sigues {counts.following}
+                  <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> Sigues {counts.following}
                 </button>
                 <button
                   onClick={() => setNetworkTab('followers')}
                   style={{
-                    border: 'none',
+                    border: networkTab === 'followers' ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '999px',
-                    padding: '0.55rem 1.1rem',
+                    padding: '0.6rem 1.2rem',
                     background: networkTab === 'followers'
-                      ? 'linear-gradient(135deg, rgba(59,130,246,0.7), rgba(147,51,234,0.7))'
-                      : 'transparent',
+                      ? 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(147,51,234,0.9))'
+                      : 'rgba(255,255,255,0.06)',
                     color: '#fff',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    fontWeight: 800,
+                    letterSpacing: 0.3,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: networkTab === 'followers' ? '0 10px 22px rgba(0,0,0,0.28)' : 'inset 0 0 0 rgba(0,0,0,0)'
                   }}
                 >
-                  Seguidores {counts.followers}
+                  <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> Seguidores {counts.followers}
                 </button>
               </div>
             </div>
@@ -976,36 +979,45 @@ export const UserProfileLive: React.FC = () => {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.75rem 1rem',
-                      minWidth: '200px',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      background: 'rgba(0,0,0,0.15)',
-                      cursor: 'pointer'
+                      justifyContent: 'space-between',
+                      gap: '0.9rem',
+                      padding: '0.9rem 1.1rem',
+                      minWidth: '220px',
+                      borderRadius: '18px',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
+                      backdropFilter: 'blur(8px)',
+                      cursor: 'pointer',
+                      boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease'
                     }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 28px rgba(0,0,0,0.28)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.22)'; }}
                   >
-                    <ImageWithFallback
-                      src={person.avatar_url || ''}
-                      alt={person.display_name || 'Perfil'}
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '2px solid rgba(255,255,255,0.2)'
-                      }}
-                    />
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>
-                        {person.display_name}
-                      </div>
-                      {person.role && (
-                        <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                          {person.role}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                      <ImageWithFallback
+                        src={person.avatar_url || ''}
+                        alt={person.display_name || 'Perfil'}
+                        style={{
+                          width: '52px',
+                          height: '52px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid rgba(255,255,255,0.22)'
+                        }}
+                      />
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                          {person.display_name}
                         </div>
-                      )}
+                        {person.role && (
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+                            {person.role}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>
                   </button>
                 ))}
               </div>
