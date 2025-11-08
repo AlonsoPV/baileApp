@@ -13,7 +13,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: isAdmin } = useIsAdmin();
-  const { hasUnread } = useUnreadNotifications(user?.id);
+  const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
 
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
 
@@ -142,7 +142,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             type="button"
             className="nav-profile-button"
             aria-label="Ir a mi perfil"
-            onClick={() => navigate(routes.app.profile)}
+            onClick={async () => { await markAllAsRead(); navigate(routes.app.profile); }}
           >
             <span>{profileInitial}</span>
             {hasUnread && <span className="badge-dot" />}

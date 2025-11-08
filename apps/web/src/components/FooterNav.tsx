@@ -7,7 +7,7 @@ export const FooterNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { hasUnread } = useUnreadNotifications(user?.id);
+  const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
 
   const navItems = [
     {
@@ -44,10 +44,13 @@ export const FooterNav: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  const handleNavClick = (item: typeof navItems[0]) => {
+  const handleNavClick = async (item: typeof navItems[0]) => {
     if (item.requiresAuth && !user) {
       navigate('/auth/login');
       return;
+    }
+    if (item.id === 'profile' && user) {
+      await markAllAsRead();
     }
     navigate(item.path);
   };
