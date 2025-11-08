@@ -313,18 +313,45 @@ export function OrganizerPublicScreen() {
           <button
             aria-label="Compartir perfil"
             title="Compartir"
-            onClick={() => {
+            onClick={async () => {
               try {
                 const url = typeof window !== 'undefined' ? window.location.href : '';
                 const title = (org as any)?.nombre_publico || 'Organizador';
                 const text = `Mira el perfil de ${title}`;
                 const navAny = (navigator as any);
+                
+                // Intentar Web Share API (móvil)
                 if (navAny && typeof navAny.share === 'function') {
-                  navAny.share({ title, text, url }).catch(() => {});
+                  try {
+                    await navAny.share({ title, text, url });
+                  } catch (shareError: any) {
+                    if (shareError.name === 'AbortError') return;
+                    throw shareError;
+                  }
                 } else {
-                  navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                  // Fallback: Clipboard API (escritorio)
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  } else {
+                    // Fallback antiguo
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }
                 }
-              } catch {}
+              } catch (error) {
+                console.error('Error al compartir:', error);
+                alert('No se pudo copiar el enlace.');
+              }
             }}
             style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', borderRadius: 999, backdropFilter: 'blur(8px)', cursor: 'pointer', zIndex: 10 }}
           >📤</button>

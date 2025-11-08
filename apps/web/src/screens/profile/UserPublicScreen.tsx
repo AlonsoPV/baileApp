@@ -328,23 +328,48 @@ export const UserProfileLive: React.FC = () => {
     );
   }
 
-  const handleShareProfile = () => {
+  const handleShareProfile = async () => {
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
       const title = profile?.display_name || 'Perfil';
       const text = `Mira el perfil de ${profile?.display_name || 'usuario'}`;
       const navAny = (navigator as any);
+      
+      // Intentar usar Web Share API (móvil)
       if (navAny && typeof navAny.share === 'function') {
-        navAny.share({ title, text, url }).catch(() => {});
+        try {
+          await navAny.share({ title, text, url });
+        } catch (shareError: any) {
+          // Si el usuario cancela el share, no hacer nada
+          if (shareError.name === 'AbortError') return;
+          // Si falla, intentar copiar al portapapeles
+          throw shareError;
+        }
       } else {
-        navigator.clipboard?.writeText(url)
-          .then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          })
-          .catch(() => {});
+        // Fallback: Copiar al portapapeles (escritorio)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } else {
+          // Fallback antiguo para navegadores sin clipboard API
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error al compartir:', error);
+      // Mostrar mensaje de error al usuario
+      alert('No se pudo copiar el enlace. Intenta copiar la URL manualmente desde la barra de direcciones.');
+    }
   };
 
   return (
