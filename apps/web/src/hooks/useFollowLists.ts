@@ -22,11 +22,13 @@ export function useFollowLists(userId?: string) {
       const [followingRes, followersRes] = await Promise.all([
         supabase
           .from('follows')
-          .select('following:following_id ( id, display_name, slug, avatar_url, role )')
+          // Nota: usamos el nombre de la FK para que PostgREST relacione con profiles_user.user_id
+          // y mapeamos user_id como id para mantener compatibilidad con la UI.
+          .select('following:profiles_user!follows_following_id_fkey ( id:user_id, display_name, slug, avatar_url )')
           .eq('follower_id', userId),
         supabase
           .from('follows')
-          .select('follower:follower_id ( id, display_name, slug, avatar_url, role )')
+          .select('follower:profiles_user!follows_follower_id_fkey ( id:user_id, display_name, slug, avatar_url )')
           .eq('following_id', userId),
       ]);
 
