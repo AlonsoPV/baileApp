@@ -1046,57 +1046,86 @@ export const UserProfileLive: React.FC = () => {
                   : `${profile.display_name || 'Este usuario'} todavía no tiene seguidores.`}
               </div>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  overflowX: 'auto',
-                  paddingBottom: '0.5rem'
-                }}
-              >
-                {networkList.map((person) => (
-                  <button
-                    key={person.id}
-                    onClick={() => goToProfile(person.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.9rem',
-                      padding: '0.9rem 1.1rem',
-                      minWidth: '220px',
-                      borderRadius: '18px',
-                      border: '1px solid rgba(255,255,255,0.14)',
-                      background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
-                      backdropFilter: 'blur(8px)',
-                      cursor: 'pointer',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
-                      transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 28px rgba(0,0,0,0.28)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.22)'; }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                      <ImageWithFallback
-                        src={person.avatar_url || ''}
-                        alt={person.display_name || 'Perfil'}
-                        style={{
-                          width: '52px',
-                          height: '52px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          border: '2px solid rgba(255,255,255,0.22)'
-                        }}
-                      />
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
-                          {person.display_name}
+              <div style={{ position: 'relative' }}>
+                {/* Custom scrollbar styles */}
+                <style>{`
+                  .community-scroll {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255,255,255,.25) transparent;
+                    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                  }
+                  .community-scroll::-webkit-scrollbar { height: 8px; }
+                  .community-scroll::-webkit-scrollbar-track { background: transparent; }
+                  .community-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,.22);
+                    border-radius: 999px;
+                  }
+                  .community-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255,255,255,.35);
+                  }
+                `}</style>
+                <div
+                  className="community-scroll"
+                  style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    overflowX: 'auto',
+                    paddingBottom: '0.5rem',
+                    scrollSnapType: 'x mandatory',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  {networkList.map((person) => (
+                    <button
+                      key={person.id}
+                      onClick={() => goToProfile(person.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.9rem',
+                        padding: '0.9rem 1.1rem',
+                        minWidth: '220px',
+                        borderRadius: '18px',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
+                        backdropFilter: 'blur(8px)',
+                        cursor: 'pointer',
+                        boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        scrollSnapAlign: 'start'
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 28px rgba(0,0,0,0.28)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.22)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                        <ImageWithFallback
+                          src={person.avatar_url || ''}
+                          alt={person.display_name || 'Perfil'}
+                          style={{
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid rgba(255,255,255,0.22)'
+                          }}
+                        />
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                            {person.display_name}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>
-                  </button>
-                ))}
+                      <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Edge fades */}
+                <div aria-hidden style={{ pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to right, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
+                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to left, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
+                </div>
               </div>
             )}
           </motion.section>
