@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase';
 export interface FollowProfile {
   id: string;
   display_name: string | null;
-  slug: string | null;
+  slug?: string | null;
   avatar_url: string | null;
-  role: string | null;
+  role?: string | null;
 }
 
 export function useFollowLists(userId?: string) {
@@ -19,18 +19,33 @@ export function useFollowLists(userId?: string) {
     const load = async () => {
       if (!userId) return;
 
-      const [followingRes, followersRes] = await Promise.all([
-        supabase
+      // Primer intento: incluir slug
+      let followingRes: any = await supabase
+        .from('follows')
+        .select('following:profiles_user!follows_following_id_fkey ( id:user_id, display_name, slug, avatar_url )')
+        .eq('follower_id', userId);
+
+      let followersRes: any = await supabase
+        .from('follows')
+        .select('follower:profiles_user!follows_follower_id_fkey ( id:user_id, display_name, slug, avatar_url )')
+        .eq('following_id', userId);
+
+      // Si el proyecto no tiene columna slug, reintenta sin slug para evitar 42703
+      const needsFallback =
+        !!followingRes.error && followingRes.error.code === '42703' ||
+        !!followersRes.error && followersRes.error.code === '42703';
+
+      if (needsFallback) {
+        followingRes = await supabase
           .from('follows')
-          // Nota: usamos el nombre de la FK para que PostgREST relacione con profiles_user.user_id
-          // y mapeamos user_id como id para mantener compatibilidad con la UI.
-          .select('following:profiles_user!follows_following_id_fkey ( id:user_id, display_name, slug, avatar_url )')
-          .eq('follower_id', userId),
-        supabase
+          .select('following:profiles_user!follows_following_id_fkey ( id:user_id, display_name, avatar_url )')
+          .eq('follower_id', userId);
+
+        followersRes = await supabase
           .from('follows')
-          .select('follower:profiles_user!follows_follower_id_fkey ( id:user_id, display_name, slug, avatar_url )')
-          .eq('following_id', userId),
-      ]);
+          .select('follower:profiles_user!follows_follower_id_fkey ( id:user_id, display_name, avatar_url )')
+          .eq('following_id', userId);
+      }
 
       if (!active) return;
 
