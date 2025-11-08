@@ -204,6 +204,11 @@ export default function ExploreHomeScreen() {
     return merged.slice(0, 12);
   }, [academias, maestros]);
 
+  const usuariosList = React.useMemo(
+    () => (usuarios?.pages || []).flatMap((page) => page?.data ?? []),
+    [usuarios]
+  );
+
   const handleFilterChange = (newFilters: typeof filters) => {
     set(newFilters);
   };
@@ -478,7 +483,7 @@ export default function ExploreHomeScreen() {
             {usuariosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : (() => {
-              const list = usuarios?.pages?.[0]?.data || [];
+              const list = usuariosList;
               // Filtrar usuarios con onboarding completo y con información básica
               const validUsers = list.filter((u: any) => {
                 // La vista v_user_public ya filtra por onboarding_complete = true

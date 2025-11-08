@@ -44,6 +44,15 @@ export function ProfileBasics() {
       return;
     }
 
+    // Require avatar: debe existir uno subido en esta pantalla o ya existente en el perfil
+    const hasExistingAvatar = !!profile?.avatar_url;
+    if (!avatarFile && !hasExistingAvatar) {
+      const errorMsg = 'La foto de perfil es requerida. Sube una imagen para continuar.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -67,7 +76,7 @@ export function ProfileBasics() {
       const updates = mergeProfile(profile as any, {
         display_name: displayName,
         bio: bio || undefined,
-        avatar_url: avatarUrl,
+        avatar_url: avatarUrl ?? profile?.avatar_url,
       });
 
       // Upsert profile
@@ -138,7 +147,7 @@ export function ProfileBasics() {
                 color: colors.gray[400],
               }}
             >
-              Foto de Perfil (opcional)
+              Foto de Perfil *
             </label>
             <input
               type="file"
@@ -155,6 +164,11 @@ export function ProfileBasics() {
                 fontSize: '0.875rem',
               }}
             />
+            {!avatarPreview && !profile?.avatar_url && (
+              <div style={{ marginTop: spacing[1], color: colors.gray[400], fontSize: '.8rem' }}>
+                Sube una imagen clara de tu rostro. Este paso es obligatorio.
+              </div>
+            )}
           </div>
 
           {/* Display Name */}
