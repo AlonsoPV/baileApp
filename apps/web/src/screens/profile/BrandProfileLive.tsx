@@ -127,12 +127,14 @@ export default function BrandProfileLive() {
           .profile-container { max-width: 100% !important; padding: 1rem !important; }
           .profile-banner { border-radius: 0 !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
           .banner-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; justify-items: center !important; text-align: center !important; }
-          .banner-avatar { width: 150px !important; height: 150px !important; }
+          .banner-grid h1 { font-size: 2.6rem !important; }
+          .banner-avatar { width: 220px !important; height: 220px !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
           .section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
         }
         @media (max-width: 480px) {
-          .banner-avatar { width: 120px !important; height: 120px !important; }
+          .banner-grid h1 { font-size: 2.2rem !important; }
+          .banner-avatar { width: 180px !important; height: 180px !important; }
           .section-title { font-size: 1.1rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
         }

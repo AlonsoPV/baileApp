@@ -483,15 +483,15 @@ export default function TeacherProfileLive() {
             justify-items: center !important;
           }
           .teacher-banner h1 {
-            font-size: 2rem !important;
+            font-size: 2.6rem !important;
             line-height: 1.2 !important;
           }
           .teacher-banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
+            width: 220px !important;
+            height: 220px !important;
           }
           .teacher-banner-avatar-fallback {
-            font-size: 4rem !important;
+            font-size: 4.6rem !important;
           }
           .glass-card-container {
             padding: 1rem !important;
@@ -501,14 +501,14 @@ export default function TeacherProfileLive() {
         }
         @media (max-width: 480px) {
           .teacher-banner h1 {
-            font-size: 1.75rem !important;
+            font-size: 2.2rem !important;
           }
           .teacher-banner-avatar {
-            width: 150px !important;
-            height: 150px !important;
+            width: 180px !important;
+            height: 180px !important;
           }
           .teacher-banner-avatar-fallback {
-            font-size: 3.5rem !important;
+            font-size: 4.1rem !important;
           }
           .glass-card-container {
             padding: 0.75rem !important;

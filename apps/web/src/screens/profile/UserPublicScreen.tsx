@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,8 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
+import { useFollowStatus } from "../../hooks/useFollowStatus";
+import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -242,6 +244,32 @@ export const UserProfileLive: React.FC = () => {
     }
   });
 
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (mounted) {
+        setSession(data.session);
+      }
+    };
+
+    resolveSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (mounted) {
+        setSession(nextSession);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
   const safeMedia = profile?.media || [];
 
   // Debug logs
@@ -306,6 +334,12 @@ export const UserProfileLive: React.FC = () => {
     .filter(item => item && item.kind === 'photo')
     .map(item => item!.url);
 
+  const profileUserId = profile?.user_id || profile?.id;
+  const { counts, setCounts } = useFollowerCounts(profileUserId);
+  const { isFollowing, toggleFollow, loading: followLoading } = useFollowStatus(profileUserId);
+  const isOwnProfile = session?.user?.id && profileUserId === session.user.id;
+  const showFollowButton = !!session && !isOwnProfile && !!profileUserId;
+
   if (isLoading) {
     return (
       <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -369,6 +403,24 @@ export const UserProfileLive: React.FC = () => {
       console.error('Error al compartir:', error);
       // Mostrar mensaje de error al usuario
       alert('No se pudo copiar el enlace. Intenta copiar la URL manualmente desde la barra de direcciones.');
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    const result = await toggleFollow();
+    if (result?.requiresAuth) {
+      navigate('/auth/login');
+      return;
+    }
+
+    if (typeof result?.following === 'boolean') {
+      setCounts((prev) => ({
+        following: prev.following,
+        followers: Math.max(
+          0,
+          prev.followers + (result.following ? 1 : -1)
+        ),
+      }));
     }
   };
 
@@ -524,15 +576,15 @@ export const UserProfileLive: React.FC = () => {
             text-align: center !important;
           }
           .banner-grid h1 {
-            font-size: 2rem !important;
+            font-size: 2.6rem !important;
             line-height: 1.2 !important;
           }
           .banner-avatar {
-            width: 150px !important;
-            height: 150px !important;
+            width: 200px !important;
+            height: 200px !important;
           }
           .banner-avatar-fallback {
-            font-size: 3.5rem !important;
+            font-size: 4.25rem !important;
           }
           .question-section {
             grid-template-columns: 1fr !important;
@@ -607,14 +659,14 @@ export const UserProfileLive: React.FC = () => {
         
         @media (max-width: 480px) {
           .banner-grid h1 {
-            font-size: 1.75rem !important;
+            font-size: 2.1rem !important;
           }
           .banner-avatar {
-            width: 120px !important;
-            height: 120px !important;
+            width: 170px !important;
+            height: 170px !important;
           }
           .banner-avatar-fallback {
-            font-size: 3rem !important;
+            font-size: 4rem !important;
           }
           .carousel-main {
             max-height: 350px !important;
@@ -775,6 +827,66 @@ export const UserProfileLive: React.FC = () => {
               >
                 {profile?.display_name || 'Usuario'}
               </h1>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}
+              >
+                <span
+                  style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Sigues {counts.following}
+                </span>
+                <span
+                  style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Seguidores {counts.followers}
+                </span>
+
+                {showFollowButton && (
+                  <button
+                    onClick={handleToggleFollow}
+                    disabled={followLoading}
+                    style={{
+                      padding: '0.55rem 1.4rem',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      background: isFollowing
+                        ? 'rgba(34, 197, 94, 0.25)'
+                        : 'linear-gradient(135deg, rgba(59,130,246,0.65), rgba(147,51,234,0.65))',
+                      color: '#fff',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      cursor: followLoading ? 'progress' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 8px 18px rgba(0,0,0,0.2)',
+                      opacity: followLoading ? 0.7 : 1
+                    }}
+                  >
+                    {isFollowing ? 'Siguiendo' : 'Seguir'}
+                  </button>
+                )}
+              </div>
 
               {/* Chips de usuario */}
               <div

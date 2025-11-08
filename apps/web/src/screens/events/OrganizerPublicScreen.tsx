@@ -282,9 +282,9 @@ export function OrganizerPublicScreen() {
           .org-container { max-width: 100% !important; padding: 1rem !important; }
           .org-banner { border-radius: 0 !important; padding: 2rem 1rem !important; margin: 0 auto !important; }
           .org-banner-grid { grid-template-columns: 1fr !important; gap: 2rem !important; justify-items: center !important; text-align: center !important; }
-          .org-banner-avatar { width: 180px !important; height: 180px !important; }
-          .org-banner-avatar-fallback { font-size: 4rem !important; }
-          .org-banner h1 { font-size: 2.5rem !important; line-height: 1.2 !important; }
+          .org-banner-avatar { width: 220px !important; height: 220px !important; }
+          .org-banner-avatar-fallback { font-size: 5rem !important; }
+          .org-banner h1 { font-size: 3rem !important; line-height: 1.2 !important; }
           .org-banner .org-chips { justify-content: center !important; margin-bottom: 1rem !important; }
           .glass-card { margin-bottom: 1.5rem !important; padding: 1.5rem !important; }
           .glass-card h3 { font-size: 1.5rem !important; }
@@ -293,9 +293,9 @@ export function OrganizerPublicScreen() {
         }
         @media (max-width: 480px) {
           .org-banner { padding: 1.5rem 1rem !important; }
-          .org-banner-avatar { width: 150px !important; height: 150px !important; }
-          .org-banner-avatar-fallback { font-size: 3rem !important; }
-          .org-banner h1 { font-size: 2rem !important; }
+          .org-banner-avatar { width: 180px !important; height: 180px !important; }
+          .org-banner-avatar-fallback { font-size: 4.2rem !important; }
+          .org-banner h1 { font-size: 2.6rem !important; }
           .glass-card { padding: 1rem !important; margin-bottom: 1rem !important; }
           .glass-card h3 { font-size: 1.25rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }

@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 export const FooterNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { hasUnread } = useUnreadNotifications(user?.id);
 
   const navItems = [
     {
@@ -195,7 +197,23 @@ export const FooterNav: React.FC = () => {
               onClick={() => handleNavClick(item)}
               aria-label={item.label}
             >
-              <span className="footer-nav-icon">{item.icon}</span>
+              <span className="footer-nav-icon" style={{ position: 'relative' }}>
+                {item.icon}
+                {item.id === 'profile' && hasUnread && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -6,
+                      width: 9,
+                      height: 9,
+                      borderRadius: '999px',
+                      background: '#ff3d57',
+                      boxShadow: '0 0 6px rgba(255,61,87,0.7)'
+                    }}
+                  />
+                )}
+              </span>
               <span className="footer-nav-label">{item.label}</span>
             </button>
           ))}

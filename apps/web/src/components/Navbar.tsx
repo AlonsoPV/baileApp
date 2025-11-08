@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
 interface NavbarProps {
@@ -12,6 +13,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: isAdmin } = useIsAdmin();
+  const { hasUnread } = useUnreadNotifications(user?.id);
+
+  const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
 
   const handleLogout = async () => {
     await signOut();
@@ -45,6 +49,37 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           .nav-left { display: flex !important; }
           .nav-icons { gap: .35rem !important; }
           .nav-icon { font-size: 1.25rem !important; padding: .55rem !important; }
+        }
+
+        .nav-profile-button {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.35);
+          background: rgba(0,0,0,0.15);
+          color: #fff;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nav-profile-button:hover {
+          background: rgba(255,255,255,0.18);
+        }
+
+        .nav-profile-button .badge-dot {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          width: 10px;
+          height: 10px;
+          border-radius: 999px;
+          background: #ff3d57;
+          box-shadow: 0 0 6px rgba(255,61,87,0.7);
         }
       `}</style>
       <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -100,6 +135,18 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           >
             ⚙️
           </Link>
+        )}
+
+        {user && (
+          <button
+            type="button"
+            className="nav-profile-button"
+            aria-label="Ir a mi perfil"
+            onClick={() => navigate(routes.app.profile)}
+          >
+            <span>{profileInitial}</span>
+            {hasUnread && <span className="badge-dot" />}
+          </button>
         )}
       </div>
     </nav>

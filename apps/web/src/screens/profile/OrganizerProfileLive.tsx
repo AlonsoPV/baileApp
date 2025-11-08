@@ -706,14 +706,14 @@ export function OrganizerProfileLive() {
             text-align: center !important;
           }
           .org-banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
+            width: 220px !important;
+            height: 220px !important;
           }
           .org-banner-avatar-fallback {
-            font-size: 4rem !important;
+            font-size: 5rem !important;
           }
           .org-banner h1 {
-            font-size: 2.5rem !important;
+            font-size: 3rem !important;
             line-height: 1.2 !important;
           }
           .org-banner .org-chips {
@@ -771,14 +771,14 @@ export function OrganizerProfileLive() {
             padding: 1.5rem 1rem !important;
           }
           .org-banner-avatar {
-            width: 150px !important;
-            height: 150px !important;
+            width: 180px !important;
+            height: 180px !important;
           }
           .org-banner-avatar-fallback {
-            font-size: 3rem !important;
+            font-size: 4.2rem !important;
           }
           .org-banner h1 {
-            font-size: 2rem !important;
+            font-size: 2.6rem !important;
           }
           .glass-card {
             padding: 1rem !important;

@@ -20,6 +20,8 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
+import { useFollowerCounts } from "../../hooks/useFollowerCounts";
+import { useFollowLists } from "../../hooks/useFollowLists";
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -218,6 +220,20 @@ export const UserProfileLive: React.FC = () => {
   const { data: allTags } = useTags();
   const { media, addMedia, removeMedia } = useUserMedia();
   const [copied, setCopied] = useState(false);
+  const { counts } = useFollowerCounts(user?.id);
+  const { following, followers } = useFollowLists(user?.id);
+  const [networkTab, setNetworkTab] = useState<"following" | "followers">("following");
+  const networkList = networkTab === "following" ? following : followers;
+  const networkIsEmpty = networkList.length === 0;
+  const goToProfile = (slug?: string | null, id?: string) => {
+    if (slug) {
+      navigate(`/perfil/${slug}`);
+      return;
+    }
+    if (id) {
+      navigate(`/perfil/${id}`);
+    }
+  };
 
   // Estados para carga de media
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -505,15 +521,15 @@ export const UserProfileLive: React.FC = () => {
             text-align: center !important;
           }
           .banner-grid h1 {
-            font-size: 2rem !important;
+            font-size: 2.6rem !important;
             line-height: 1.2 !important;
           }
           .banner-avatar {
-            width: 150px !important;
-            height: 150px !important;
+            width: 200px !important;
+            height: 200px !important;
           }
           .banner-avatar-fallback {
-            font-size: 3.5rem !important;
+            font-size: 4.25rem !important;
           }
           .question-section {
             grid-template-columns: 1fr !important;
@@ -588,14 +604,14 @@ export const UserProfileLive: React.FC = () => {
         
         @media (max-width: 480px) {
           .banner-grid h1 {
-            font-size: 1.75rem !important;
+            font-size: 2.1rem !important;
           }
           .banner-avatar {
-            width: 120px !important;
-            height: 120px !important;
+            width: 170px !important;
+            height: 170px !important;
           }
           .banner-avatar-fallback {
-            font-size: 3rem !important;
+            font-size: 4rem !important;
           }
           .carousel-main {
             max-height: 350px !important;
@@ -782,6 +798,42 @@ export const UserProfileLive: React.FC = () => {
                 {profile?.display_name || 'Usuario'}
               </h1>
 
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}
+              >
+                <span
+                  style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Sigues {counts.following}
+                </span>
+                <span
+                  style={{
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Seguidores {counts.followers}
+                </span>
+              </div>
+
               {/* Chips de usuario */}
               <div
                 id="user-profile-tags"
@@ -831,6 +883,134 @@ export const UserProfileLive: React.FC = () => {
               redes={profile?.redes_sociales || (profile?.respuestas as any)?.redes}
             />
           </motion.div>
+
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card-container"
+            style={{ textAlign: 'left' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                marginBottom: '1.25rem'
+              }}
+            >
+              <h3 className="section-title" style={{ marginBottom: 0 }}>Tu comunidad</h3>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  padding: '0.25rem',
+                  borderRadius: '999px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  gap: '0.35rem'
+                }}
+              >
+                <button
+                  onClick={() => setNetworkTab('following')}
+                  style={{
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '0.55rem 1.1rem',
+                    background: networkTab === 'following'
+                      ? 'linear-gradient(135deg, rgba(59,130,246,0.7), rgba(147,51,234,0.7))'
+                      : 'transparent',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Sigues {counts.following}
+                </button>
+                <button
+                  onClick={() => setNetworkTab('followers')}
+                  style={{
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '0.55rem 1.1rem',
+                    background: networkTab === 'followers'
+                      ? 'linear-gradient(135deg, rgba(59,130,246,0.7), rgba(147,51,234,0.7))'
+                      : 'transparent',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Seguidores {counts.followers}
+                </button>
+              </div>
+            </div>
+
+            {networkIsEmpty ? (
+              <div
+                style={{
+                  padding: '1.5rem',
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '16px',
+                  border: '1px dashed rgba(255,255,255,0.15)',
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,0.7)'
+                }}
+              >
+                {networkTab === 'following'
+                  ? 'Aún no sigues a nadie. Descubre nuevos perfiles en Explorar.'
+                  : 'Todavía no tienes seguidores. Comparte tu perfil para que más personas te encuentren.'}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '1rem',
+                  overflowX: 'auto',
+                  paddingBottom: '0.5rem'
+                }}
+              >
+                {networkList.map((person) => (
+                  <button
+                    key={person.id}
+                    onClick={() => goToProfile(person.slug, person.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      minWidth: '200px',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'rgba(0,0,0,0.15)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ImageWithFallback
+                      src={person.avatar_url || ''}
+                      alt={person.display_name || 'Perfil'}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid rgba(255,255,255,0.2)'
+                      }}
+                    />
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>
+                        {person.display_name}
+                      </div>
+                      {person.role && (
+                        <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+                          {person.role}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.section>
 
           {/* Sección 1: Foto - Pregunta */}
           <motion.section

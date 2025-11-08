@@ -247,15 +247,15 @@ export default function AcademyPublicScreen() {
           .academy-container { max-width: 100% !important; padding: 1rem !important; }
           .academy-banner { border-radius: 16px !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
           .academy-banner-grid { grid-template-columns: 1fr !important; text-align: center; gap: 1.5rem !important; justify-items: center !important; }
-          .academy-banner h1 { font-size: 2rem !important; line-height: 1.2 !important; }
-          .academy-banner-avatar { width: 180px !important; height: 180px !important; }
-          .academy-banner-avatar-fallback { font-size: 4rem !important; }
+          .academy-banner h1 { font-size: 2.6rem !important; line-height: 1.2 !important; }
+          .academy-banner-avatar { width: 220px !important; height: 220px !important; }
+          .academy-banner-avatar-fallback { font-size: 4.6rem !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
         }
         @media (max-width: 480px) {
-          .academy-banner h1 { font-size: 1.75rem !important; }
-          .academy-banner-avatar { width: 150px !important; height: 150px !important; }
-          .academy-banner-avatar-fallback { font-size: 3.5rem !important; }
+          .academy-banner h1 { font-size: 2.2rem !important; }
+          .academy-banner-avatar { width: 180px !important; height: 180px !important; }
+          .academy-banner-avatar-fallback { font-size: 4.1rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
         }
         .academy-section { margin-bottom: 2rem; padding: 2rem; }
