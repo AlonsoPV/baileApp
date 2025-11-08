@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { supabaseAdmin } from '../src/lib/supabaseServer';
+import { supabaseAdmin } from './_supabaseAdmin';
 
 interface FollowToggleRequestBody {
   targetUserId?: string;
