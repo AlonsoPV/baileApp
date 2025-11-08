@@ -899,29 +899,33 @@ export const UserProfileLive: React.FC = () => {
               <div
                 style={{
                   display: 'inline-flex',
-                  gap: '10px',
-                  background: 'rgba(255,255,255,0.06)',
-                  padding: '8px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  boxShadow: '0 6px 16px rgba(0,0,0,0.25)'
+                  gap: '12px',
+                  background: 'rgba(30,30,35,0.6)',
+                  padding: '10px 12px',
+                  borderRadius: '28px',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(12px)'
                 }}
               >
                 <button
                   onClick={() => setNetworkTab('following')}
                   style={{
-                    border: networkTab === 'following' ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '999px',
-                    padding: '0.6rem 1.2rem',
+                    border: networkTab === 'following' ? '1px solid rgba(255,255,255,0.35)' : '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '22px',
+                    padding: '0.65rem 1.35rem',
                     background: networkTab === 'following'
-                      ? 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(147,51,234,0.9))'
-                      : 'rgba(255,255,255,0.06)',
+                      ? 'linear-gradient(135deg, rgba(82,144,250,0.95), rgba(174,94,255,0.95))'
+                      : 'linear-gradient(135deg, rgba(40,40,48,0.7), rgba(30,30,40,0.7))',
                     color: '#fff',
                     fontWeight: 800,
                     letterSpacing: 0.3,
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: networkTab === 'following' ? '0 10px 22px rgba(0,0,0,0.28)' : 'inset 0 0 0 rgba(0,0,0,0)'
+                    transition: 'all 0.25s ease',
+                    boxShadow: networkTab === 'following'
+                      ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.08)',
+                    transform: networkTab === 'following' ? 'translateY(-1px)' : 'translateY(0)'
                   }}
                 >
                   <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> Sigues {counts.following}
@@ -929,18 +933,21 @@ export const UserProfileLive: React.FC = () => {
                 <button
                   onClick={() => setNetworkTab('followers')}
                   style={{
-                    border: networkTab === 'followers' ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '999px',
-                    padding: '0.6rem 1.2rem',
+                    border: networkTab === 'followers' ? '1px solid rgba(255,255,255,0.35)' : '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '22px',
+                    padding: '0.65rem 1.35rem',
                     background: networkTab === 'followers'
-                      ? 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(147,51,234,0.9))'
-                      : 'rgba(255,255,255,0.06)',
+                      ? 'linear-gradient(135deg, rgba(82,144,250,0.95), rgba(174,94,255,0.95))'
+                      : 'linear-gradient(135deg, rgba(40,40,48,0.7), rgba(30,30,40,0.7))',
                     color: '#fff',
                     fontWeight: 800,
                     letterSpacing: 0.3,
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: networkTab === 'followers' ? '0 10px 22px rgba(0,0,0,0.28)' : 'inset 0 0 0 rgba(0,0,0,0)'
+                    transition: 'all 0.25s ease',
+                    boxShadow: networkTab === 'followers'
+                      ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.08)',
+                    transform: networkTab === 'followers' ? 'translateY(-1px)' : 'translateY(0)'
                   }}
                 >
                   <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> Seguidores {counts.followers}

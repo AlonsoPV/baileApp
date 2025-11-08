@@ -152,7 +152,7 @@ export default function ExploreHomeScreen() {
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 8
+    pageSize: 32
   });
 
   // Sociales (event parents)
