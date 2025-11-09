@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useParentsByOrganizer, useCreateParent, useUpdateParent } from "../../hooks/useEvents";
@@ -9,6 +9,7 @@ import EventDatesSection from "../../components/events/EventDatesSection";
 import EventPricingSection from "../../components/events/EventPricingSection";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -35,6 +36,14 @@ export const EventEditor: React.FC = () => {
   // Media management
   const { media, add, remove } = useEventParentMedia(currentEvent?.id);
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  const [locationsDraft, setLocationsDraft] = useState<any[]>(currentEvent?.ubicaciones || []);
+  const [locationsDirty, setLocationsDirty] = useState(false);
+  const [locationsSaving, setLocationsSaving] = useState(false);
+
+  useEffect(() => {
+    setLocationsDraft(currentEvent?.ubicaciones || []);
+    setLocationsDirty(false);
+  }, [currentEvent]);
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
@@ -81,6 +90,7 @@ export const EventEditor: React.FC = () => {
         sede_general: values.sede_general || null,
         estilos: values.estilos || [],
         media: values.media || [],
+        ubicaciones: locationsDraft || [],
       };
       await updateMutation.mutateAsync({ id: currentEvent.id, patch: payload });
     } else {
@@ -92,8 +102,27 @@ export const EventEditor: React.FC = () => {
         estilos: values.estilos || [],
         media: values.media || [],
         organizer_id: organizer.id,
+        ubicaciones: locationsDraft || [],
       };
       await createMutation.mutateAsync(payload);
+    }
+  };
+
+  const handleSaveLocations = async () => {
+    if (!currentEvent) return;
+    setLocationsSaving(true);
+    try {
+      await updateMutation.mutateAsync({
+        id: currentEvent.id,
+        patch: { ubicaciones: locationsDraft || [] }
+      });
+      showToast('Ubicaciones guardadas ✅', 'success');
+      setLocationsDirty(false);
+    } catch (error) {
+      console.error('[EventEditor] Error updating locations:', error);
+      showToast('Error al guardar las ubicaciones', 'error');
+    } finally {
+      setLocationsSaving(false);
     }
   };
 
@@ -168,6 +197,49 @@ export const EventEditor: React.FC = () => {
           margin: '0 auto',
           padding: '0 24px',
         }}>
+          {/* Ubicaciones */}
+          <div style={{ marginTop: '48px' }}>
+            <div style={{
+              padding: '24px',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)',
+              display: 'grid',
+              gap: 16,
+            }}>
+              <UbicacionesEditor
+                value={locationsDraft}
+                onChange={(next) => {
+                  setLocationsDraft(next);
+                  setLocationsDirty(true);
+                }}
+                title="📍 Ubicaciones del Evento"
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={handleSaveLocations}
+                  disabled={locationsSaving || !locationsDirty}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    background: locationsSaving || !locationsDirty
+                      ? 'rgba(255,255,255,0.2)'
+                      : 'linear-gradient(135deg, #1E88E5, #FF3D57)',
+                    color: '#F5F5F5',
+                    fontWeight: 600,
+                    cursor: locationsSaving || !locationsDirty ? 'default' : 'pointer',
+                    opacity: locationsSaving || !locationsDirty ? 0.7 : 1,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {locationsSaving ? 'Guardando...' : '💾 Guardar ubicaciones'}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Event Dates Section */}
           <div style={{ marginTop: '48px' }}>
             <EventDatesSection eventId={currentEvent.id} eventName={currentEvent.nombre} />

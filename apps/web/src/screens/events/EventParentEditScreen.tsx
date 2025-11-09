@@ -5,7 +5,7 @@ import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useCreateParent, useUpdateParent, useParentsByOrganizer } from "../../hooks/useEvents";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
-import UbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import RitmosChips from "@/components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { useEventParentMedia } from "../../hooks/useEventParentMedia";
@@ -357,6 +357,7 @@ export function EventParentEditScreen() {
         <UbicacionesEditor
           value={form.ubicaciones}
           onChange={(ubicaciones) => setForm({...form, ubicaciones})}
+          title="Ubicaciones del evento"
         />
       </div>
 

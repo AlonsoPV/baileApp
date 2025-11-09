@@ -406,6 +406,20 @@ export function OrganizerProfileLive() {
       .map(tag => tag!.nombre);
   };
 
+  // Agregar agregación de ubicaciones desde los sociales (events_parent)
+  const aggregatedLocations = (() => {
+    try {
+      const items = (parents || []).flatMap((p: any) => Array.isArray(p?.ubicaciones) ? p.ubicaciones : []);
+      // Deduplicar por nombre+direccion
+      const key = (u: any) => `${(u?.nombre || '').trim()}|${(u?.direccion || '').trim()}`;
+      const map = new Map<string, any>();
+      items.forEach((u: any) => map.set(key(u), u));
+      return Array.from(map.values());
+    } catch {
+      return [];
+    }
+  })();
+
   if (isLoading) {
     return (
       <div style={{
@@ -1048,6 +1062,71 @@ export function OrganizerProfileLive() {
               redes={(org as any)?.redes_sociales || (org as any)?.respuestas?.redes}
             />
           </motion.div>
+
+          {/* Ubicaciones de los Sociales (agregadas) */}
+          {aggregatedLocations.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="glass-card"
+              style={{
+                marginBottom: spacing[8],
+                padding: spacing[8],
+                borderRadius: borderRadius['2xl']
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: colors.gradients.primary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: typography.fontSize['2xl'],
+                  boxShadow: colors.shadows.glow
+                }}>
+                  📍
+                </div>
+                <div>
+                  <h3 className="section-title">Ubicaciones</h3>
+                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>
+                    Lugares donde realizamos nuestros sociales
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gap: spacing[3] }}>
+                {aggregatedLocations.map((u: any, idx: number) => (
+                  <div key={idx} style={{
+                    display: 'grid',
+                    gap: 8,
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.05)'
+                  }}>
+                    <div style={{ fontWeight: 700 }}>{u?.nombre || 'Ubicación'}</div>
+                    <div style={{ opacity: 0.9 }}>{u?.direccion}</div>
+                    {u?.referencias && <div style={{ opacity: 0.75, fontSize: 13 }}>Ref: {u.referencias}</div>}
+                    {!!(u?.zonaIds?.length) && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {(u.zonaIds as number[]).map((zid) => {
+                          const z = allTags?.find((t: any) => t.id === zid && t.tipo === 'zona');
+                          return z ? (
+                            <span key={zid} style={{ fontSize: 12, fontWeight: 600, color: '#fff', border: '1px solid rgba(25,118,210,0.35)', background: 'rgba(25,118,210,0.16)', padding: '2px 8px', borderRadius: 999 }}>
+                              {z.nombre}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
 
           {/* Maestros Invitados */}
           <div

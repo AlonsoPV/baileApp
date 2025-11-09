@@ -24,6 +24,7 @@ export function useEventParentsByOrganizer(organizerId?: number) {
           organizer_id,
           nombre,
           descripcion,
+          ubicaciones,
           biografia,
           estilos,
           zonas,

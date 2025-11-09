@@ -175,7 +175,7 @@ export default function CrearClase({
   locations,
   title = 'Crear Clase',
   style,
-  className
+  className,
   enableDate = true
 }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);

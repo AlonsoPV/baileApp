@@ -31,6 +31,7 @@ import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
+import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -617,6 +618,8 @@ export default function OrganizerProfileEditor() {
 
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  // Estado local para edición de ubicaciones por social (no se guarda en profiles_organizer)
+  const [locationsDraftByParent, setLocationsDraftByParent] = useState<Record<number, any[]>>({});
 
   // Estado para formulario de crear fecha
   const [showDateForm, setShowDateForm] = useState(false);
@@ -1587,6 +1590,44 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-events-list"
             className="org-events-section"
           >
+            {/* Sección: Ubicaciones de mis sociales (edita por social) */}
+            {parents && parents.length > 0 && (
+              <div className="org-editor-card" style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#FFFFFF' }}>
+                  📍 Ubicaciones de mis sociales
+                </h2>
+                <p style={{ marginTop: 0, marginBottom: '1rem', opacity: 0.9 }}>
+                  Administra las ubicaciones por cada social. Esto no modifica tu perfil de organizador.
+                </p>
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {parents.map((parent: any) => {
+                    const current = locationsDraftByParent[parent.id] ?? (parent.ubicaciones || []);
+                    return (
+                      <div key={parent.id} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                          <strong style={{ fontSize: '1rem' }}>🎭 {parent.nombre}</strong>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/social/${parent.id}/edit`)}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}
+                          >
+                            ✏️ Abrir editor
+                          </button>
+                        </div>
+                        <UbicacionesEditor
+                          value={current}
+                          onChange={(next) => setLocationsDraftByParent((prev) => ({ ...prev, [parent.id]: next }))}
+                          title="Ubicaciones"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: 12, fontSize: 13, opacity: 0.8 }}>
+                  Tip: Para guardar estas ubicaciones, usa el botón "Abrir editor" del social y guarda desde ahí.
+                </div>
+              </div>
+            )}
 
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
