@@ -6,6 +6,7 @@ import { colors, typography, spacing, borderRadius, transitions } from '../../th
 import { isValidEmail } from '../../utils/validation';
 import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkAuth';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ export function Login() {
   const [isSuccess, setIsSuccess] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleMagicLink = async (isSignUp: boolean = false) => {
     if (!email.trim()) {
@@ -83,10 +85,7 @@ export function Login() {
     setMessage('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password
-      });
+      const { data, error } = await signIn(email.trim(), password);
 
       if (error) {
         throw error;
