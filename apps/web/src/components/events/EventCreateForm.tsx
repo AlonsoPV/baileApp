@@ -17,6 +17,8 @@ import { useEventParentMedia } from "../../hooks/useEventParentMedia";
 import RitmosChips from "../RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import UbicacionesEditor from "../academy/UbicacionesEditor";
+import { useOrganizerLocations } from "../../hooks/useOrganizerLocations";
+import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
 
 const colors = {
   coral: '#FF3D57',
@@ -54,6 +56,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const navigate = useNavigate();
   const { data: organizer } = useMyOrganizer();
   const { showToast } = useToast();
+  const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
 
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
@@ -617,6 +620,48 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   📍 Ubicación Específica
                 </h2>
+
+                {orgLocations.length > 4 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <OrganizerLocationPicker
+                      organizerId={organizer?.id}
+                      onPick={(u) => {
+                        setValue('lugar', u.nombre || '');
+                        setValue('direccion', u.direccion || '');
+                        setValue('referencias', u.referencias || '');
+                        if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
+                          setValue('zonas' as any, u.zona_ids as any);
+                        }
+                      }}
+                      title="Buscar y usar ubicación guardada"
+                    />
+                  </div>
+                )}
+                
+                {orgLocations.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>Usar mis ubicaciones guardadas</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {orgLocations.map((u: any) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => {
+                            setValue('lugar', u.nombre || '');
+                            setValue('direccion', u.direccion || '');
+                            setValue('referencias', u.referencias || '');
+                            if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
+                              setValue('zonas' as any, u.zona_ids as any);
+                            }
+                          }}
+                          style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${colors.light}33`, background: 'rgba(255,255,255,0.06)', color: colors.light, cursor: 'pointer', fontSize: 12 }}
+                        >
+                          ➕ {u.nombre || 'Ubicación'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>

@@ -10,6 +10,8 @@ import EventPricingSection from "../../components/events/EventPricingSection";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
+import { useOrganizerLocations } from "../../hooks/useOrganizerLocations";
+import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
 
 const colors = {
   coral: '#FF3D57',
@@ -27,6 +29,7 @@ export const EventEditor: React.FC = () => {
   
   const { data: organizer } = useMyOrganizer();
   const { data: events } = useParentsByOrganizer(organizer?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
   const createMutation = useCreateParent();
   const updateMutation = useUpdateParent();
   const { showToast } = useToast();
@@ -207,6 +210,52 @@ export const EventEditor: React.FC = () => {
               display: 'grid',
               gap: 16,
             }}>
+              {orgLocations.length > 4 && (
+                <OrganizerLocationPicker
+                  organizerId={organizer?.id}
+                  onPick={(u) => {
+                    const add = {
+                      id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+                      nombre: u.nombre || '',
+                      direccion: u.direccion || '',
+                      referencias: u.referencias || '',
+                      zonaIds: Array.isArray(u.zona_ids) ? u.zona_ids : []
+                    };
+                    const next = Array.isArray(locationsDraft) ? [...locationsDraft, add] : [add];
+                    setLocationsDraft(next);
+                    setLocationsDirty(true);
+                  }}
+                  title="Buscar y agregar ubicación guardada"
+                />
+              )}
+              {orgLocations.length > 0 && (
+                <div>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>Usar mis ubicaciones guardadas</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {orgLocations.map((u: any) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => {
+                          const add = {
+                            id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+                            nombre: u.nombre || '',
+                            direccion: u.direccion || '',
+                            referencias: u.referencias || '',
+                            zonaIds: Array.isArray(u.zona_ids) ? u.zona_ids : []
+                          };
+                          const next = Array.isArray(locationsDraft) ? [...locationsDraft, add] : [add];
+                          setLocationsDraft(next);
+                          setLocationsDirty(true);
+                        }}
+                        style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontSize: 12 }}
+                      >
+                        ➕ {u.nombre || 'Ubicación'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <UbicacionesEditor
                 value={locationsDraft}
                 onChange={(next) => {

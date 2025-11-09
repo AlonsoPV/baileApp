@@ -32,6 +32,7 @@ import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
+import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation } from "../../hooks/useOrganizerLocations";
 
 const colors = {
   coral: '#FF3D57',
@@ -612,6 +613,10 @@ export default function OrganizerProfileEditor() {
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
   const { data: parents } = useParentsByOrganizer(org?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations(org?.id);
+  const createOrgLoc = useCreateOrganizerLocation();
+  const updateOrgLoc = useUpdateOrganizerLocation();
+  const deleteOrgLoc = useDeleteOrganizerLocation();
   const deleteParent = useDeleteParent();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
@@ -2280,6 +2285,98 @@ export default function OrganizerProfileEditor() {
                   rows={3}
                   className="org-editor-textarea"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Mis ubicaciones reutilizables */}
+          <div className="org-editor-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📍 Mis ubicaciones
+            </h2>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {/* Editor simple basado en botones para crear/editar/eliminar */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!org?.id) return;
+                    await createOrgLoc.mutateAsync({
+                      organizer_id: org.id,
+                      nombre: 'Nueva ubicación',
+                      direccion: '',
+                      referencias: '',
+                      zona_ids: []
+                    } as any);
+                  }}
+                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}
+                >
+                  ➕ Agregar ubicación
+                </button>
+              </div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {orgLocations.map((u: any) => (
+                  <div key={u.id} style={{ display: 'grid', gap: 8, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 8 }}>
+                      <input
+                        value={u.nombre || ''}
+                        onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { nombre: e.target.value } })}
+                        placeholder="Nombre"
+                        className="org-editor-input"
+                        style={{ padding: 10 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => deleteOrgLoc.mutate({ id: u.id, organizer_id: org!.id })}
+                        style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(229,57,53,0.35)', background: 'rgba(229,57,53,0.12)', color: '#fff', cursor: 'pointer' }}
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                    <input
+                      value={u.direccion || ''}
+                      onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { direccion: e.target.value } })}
+                      placeholder="Dirección"
+                      className="org-editor-input"
+                      style={{ padding: 10 }}
+                    />
+                    <input
+                      value={u.referencias || ''}
+                      onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { referencias: e.target.value } })}
+                      placeholder="Referencias"
+                      className="org-editor-input"
+                      style={{ padding: 10 }}
+                    />
+                    {/* Chips simples de zonas: reutilizar zonaTags */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {zonaTags.map((z: any) => {
+                        const active = Array.isArray(u.zona_ids) && u.zona_ids.includes(z.id);
+                        return (
+                          <button
+                            key={z.id}
+                            type="button"
+                            onClick={() => {
+                              const current = new Set<number>(Array.isArray(u.zona_ids) ? u.zona_ids : []);
+                              active ? current.delete(z.id) : current.add(z.id);
+                              updateOrgLoc.mutate({ id: u.id, patch: { zona_ids: Array.from(current) } });
+                            }}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: 999,
+                              border: active ? '1px solid #1976D2' : '1px solid rgba(255,255,255,0.25)',
+                              background: active ? 'rgba(25,118,210,0.18)' : 'rgba(255,255,255,0.06)',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: 12
+                            }}
+                          >
+                            {z.nombre}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
