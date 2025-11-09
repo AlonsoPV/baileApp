@@ -404,33 +404,36 @@ export default function ExploreHomeScreen() {
           <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
             {fechasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : fechas && fechas.pages?.[0]?.data?.length > 0 ? (
-              <HorizontalSlider
-                items={fechas.pages[0].data}
-                renderItem={(fechaEvento: any, idx: number) => (
-                  <motion.div 
-                    key={fechaEvento.id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <EventCard item={fechaEvento} />
-                  </motion.div>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-            )}
+            ) : (() => {
+              const list = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
+              return list.length ? (
+                <HorizontalSlider
+                  items={list}
+                  renderItem={(fechaEvento: any, idx: number) => (
+                    <motion.div 
+                      key={fechaEvento.id ?? idx} 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, duration: 0.3 }}
+                      whileHover={{ y: -4, scale: 1.02 }} 
+                      onClickCapture={handlePreNavigate}
+                      style={{ 
+                        background: 'rgba(255,255,255,0.04)', 
+                        border: '1px solid rgba(255,255,255,0.08)', 
+                        borderRadius: 16, 
+                        padding: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <EventCard item={fechaEvento} />
+                    </motion.div>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+              );
+            })()}
           </Section>
           )}
 

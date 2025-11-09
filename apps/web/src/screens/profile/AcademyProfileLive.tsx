@@ -603,24 +603,24 @@ export default function AcademyProfileLive() {
                 <motion.span
                   whileHover={{ scale: 1.05 }}
                   style={{
-                    padding: '8px 16px',
+                    padding: '4px 8px',
                     borderRadius: 9999,
                     background: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? 'linear-gradient(135deg, #10B981cc, #10B98199)'
-                      : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                    border: `2px solid ${(academy as any)?.estado_aprobacion === 'aprobado' ? '#10B981' : '#1E88E5'}`,
-                    color: '#FFFFFF',
-                    fontSize: '0.875rem',
-                    fontWeight: 800,
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? '0 4px 16px rgba(16,185,129,0.4)'
-                      : '0 4px 16px rgba(30,136,229,0.4)',
+                      ? 'rgba(16,185,129,0.12)'
+                      : 'rgba(30,136,229,0.12)',
+                    border: (academy as any)?.estado_aprobacion === 'aprobado'
+                      ? '1px solid rgba(16,185,129,0.35)'
+                      : '1px solid rgba(30,136,229,0.35)',
+                    color: (academy as any)?.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    boxShadow: 'none',
+                    backdropFilter: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
+                    textTransform: 'none',
+                    letterSpacing: 0
                   }}
                 >
                   {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}

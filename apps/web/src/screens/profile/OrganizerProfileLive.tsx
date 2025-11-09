@@ -945,24 +945,24 @@ export function OrganizerProfileLive() {
                 <motion.span
                   whileHover={{ scale: 1.05 }}
                   style={{
-                    padding: `${spacing[2]} ${spacing[4]}`,
+                    padding: `${spacing[1]} ${spacing[3]}`,
                     borderRadius: borderRadius.full,
                     background: org.estado_aprobacion === 'aprobado'
-                      ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)`
-                      : colors.gradients.secondary,
-                    border: `2px solid ${org.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`,
-                    color: colors.light,
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.bold,
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: org.estado_aprobacion === 'aprobado'
-                      ? `0 4px 16px ${colors.success}66`
-                      : `0 4px 16px ${colors.secondary[500]}66`,
+                      ? 'rgba(16,185,129,0.12)'
+                      : 'rgba(30,136,229,0.12)',
+                    border: org.estado_aprobacion === 'aprobado'
+                      ? '1px solid rgba(16,185,129,0.35)'
+                      : '1px solid rgba(30,136,229,0.35)',
+                    color: org.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
+                    fontSize: typography.fontSize.xs,
+                    fontWeight: typography.fontWeight.semibold,
+                    backdropFilter: 'none',
+                    boxShadow: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: spacing[1],
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
+                    textTransform: 'none',
+                    letterSpacing: 0
                   }}
                 >
                   {org.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${org.estado_aprobacion}`}

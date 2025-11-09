@@ -23,6 +23,7 @@ export type CrearClaseValue = {
   tipo?: 'clases sueltas' | 'paquetes' | 'coreografia' | 'entrenamiento' | 'otro';
   precio?: number | null;
   regla?: string;
+  nivel?: string | null;
   fechaModo?: 'especifica' | 'semanal';
   fecha?: string;
   diaSemana?: number | null;
@@ -154,6 +155,13 @@ const diasSemana = [
   { id: 6, nombre: 'Sábado' },
 ];
 
+const niveles = [
+  'Todos los niveles',
+  'Principiante',
+  'Intermedio',
+  'Avanzado'
+] as const;
+
 export default function CrearClase({
   value,
   editIndex,
@@ -176,6 +184,7 @@ export default function CrearClase({
     tipo: value?.tipo || 'clases sueltas',
     precio: value?.precio ?? null,
     regla: value?.regla || '',
+    nivel: value?.nivel ?? null,
     fechaModo: value?.fechaModo || 'especifica',
     fecha: value?.fecha || '',
     diaSemana: value?.diaSemana ?? null,
@@ -199,6 +208,7 @@ export default function CrearClase({
         tipo: effective?.tipo || 'clases sueltas',
         precio: effective?.precio ?? null,
         regla: effective?.regla || '',
+        nivel: effective?.nivel ?? null,
         fechaModo: effective?.fechaModo || 'especifica',
         fecha: effective?.fecha || '',
         diaSemana: effective?.diaSemana ?? null,
@@ -281,6 +291,7 @@ export default function CrearClase({
       tipo: 'clases sueltas',
       precio: null,
       regla: '',
+      nivel: null,
       fechaModo: 'especifica',
       fecha: '',
       diaSemana: null,
@@ -381,6 +392,21 @@ export default function CrearClase({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* NIVEL */}
+            <div style={sectionHeader}><span>🏷️</span><b>Nivel</b></div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {niveles.map(n => (
+                <button
+                  type="button"
+                  key={n}
+                  onClick={() => setField('nivel', n)}
+                  style={chip(form.nivel === n)}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
 
             {/* FECHA */}
