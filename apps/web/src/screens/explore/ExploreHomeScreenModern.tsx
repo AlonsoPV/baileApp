@@ -469,40 +469,40 @@ export default function ExploreHomeScreen() {
           </Section>
           )}
 
-          {(showAll || selectedType === 'sociales') && (
-          <Section title="Sociales" toAll="/explore/list?type=sociales">
-            {socialesLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : (() => {
-              const list = sociales?.pages?.[0]?.data || [];
-              return list.length ? (
-                <HorizontalSlider
-                  items={list}
-                  renderItem={(social: any, idx: number) => (
-                    <motion.div 
-                      key={social.id ?? idx} 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }} 
-                      onClickCapture={handlePreNavigate}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.04)', 
-                        border: '1px solid rgba(255,255,255,0.08)', 
-                        borderRadius: 16, 
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <SocialCard item={social} />
-                    </motion.div>
-                  )}
-                />
-              ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
-            })()}
-          </Section>
-          )}
+          {/* {(showAll || selectedType === 'sociales') && (
+            <Section title="Sociales" toAll="/explore/list?type=sociales">
+              {socialesLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (() => {
+                const list = sociales?.pages?.[0]?.data || [];
+                return list.length ? (
+                  <HorizontalSlider
+                    items={list}
+                    renderItem={(social: any, idx: number) => (
+                      <motion.div 
+                        key={social.id ?? idx} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }} 
+                        onClickCapture={handlePreNavigate}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.04)', 
+                          border: '1px solid rgba(255,255,255,0.08)', 
+                          borderRadius: 16, 
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <SocialCard item={social} />
+                      </motion.div>
+                    )}
+                  />
+                ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
+              })()}
+            </Section>
+          )} */}
 
           {(showAll || selectedType === 'academias') && (
           <Section title="Academias" toAll="/explore/list?type=academias">
@@ -538,39 +538,39 @@ export default function ExploreHomeScreen() {
           </Section>
           )}
 
-          {(showAll || selectedType === 'organizadores') && (
-          <Section title="Organizadores" toAll="/explore/list?type=organizadores">
-            {organizadoresLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
-              <HorizontalSlider
-                items={organizadores.pages[0].data}
-                renderItem={(organizador: any, idx: number) => (
-                  <motion.div 
-                    key={organizador.id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <OrganizerCard item={organizador} />
-                  </motion.div>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-            )}
-          </Section>
-          )}
+          {/* {(showAll || selectedType === 'organizadores') && (
+            <Section title="Organizadores" toAll="/explore/list?type=organizadores">
+              {organizadoresLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
+                <HorizontalSlider
+                  items={organizadores.pages[0].data}
+                  renderItem={(organizador: any, idx: number) => (
+                    <motion.div 
+                      key={organizador.id ?? idx} 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, duration: 0.3 }}
+                      whileHover={{ y: -4, scale: 1.02 }} 
+                      onClickCapture={handlePreNavigate}
+                      style={{ 
+                        background: 'rgba(255,255,255,0.04)', 
+                        border: '1px solid rgba(255,255,255,0.08)', 
+                        borderRadius: 16, 
+                        padding: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <OrganizerCard item={organizador} />
+                    </motion.div>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+              )}
+            </Section>
+          )} */}
 
           {(showAll || selectedType === 'usuarios') && (
           <Section title="¿Con quién bailar?" toAll="/explore/list?type=usuarios">

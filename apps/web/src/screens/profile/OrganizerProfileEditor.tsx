@@ -868,18 +868,39 @@ export default function OrganizerProfileEditor() {
 
   // Función para crear fecha
   const handleCreateDate = async () => {
-    if (!selectedParentId) {
-      showToast('Selecciona un evento social', 'error');
-      return;
-    }
     if (!dateForm.fecha) {
       showToast('La fecha es obligatoria', 'error');
       return;
     }
 
     try {
+      // Si no existe un evento padre seleccionado, crear uno automáticamente
+      let parentIdToUse = selectedParentId;
+      if (!parentIdToUse) {
+        const parentPayload: any = {
+          organizer_id: org?.id,
+          nombre: dateForm.nombre ? `🎉 ${dateForm.nombre}` : '🎉 Nuevo Social',
+          descripcion: dateForm.biografia || 'Evento creado automáticamente al crear una fecha.',
+          ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
+          zonas: dateForm.zonas || []
+        };
+
+        const { data: newParent, error: parentErr } = await supabase
+          .from('events_parent')
+          .insert(parentPayload)
+          .select('id')
+          .single();
+
+        if (parentErr) {
+          console.error('Error creando evento padre automáticamente:', parentErr);
+          showToast('No se pudo crear el evento automáticamente', 'error');
+          return;
+        }
+        parentIdToUse = newParent?.id;
+      }
+
       await createEventDate.mutateAsync({
-        parent_id: selectedParentId,
+        parent_id: Number(parentIdToUse),
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         fecha: dateForm.fecha,
@@ -1668,7 +1689,7 @@ export default function OrganizerProfileEditor() {
               </div>
 
               {/* Formulario de crear fecha */}
-              {showDateForm && parents && parents.length > 0 && (
+              {showDateForm && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -1685,8 +1706,17 @@ export default function OrganizerProfileEditor() {
                     gap: '1.5rem'
                   }}
                 >
-                  {/* Selector de evento padre */}
-                  {parents.length > 1 && (
+                  {/* Info/Selector de evento padre */}
+                  {(!parents || parents.length === 0) && (
+                    <div className="org-editor-card" style={{ borderStyle: 'dashed' }}>
+                      <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)' }}>
+                        No tienes eventos sociales aún. Al crear esta fecha, se creará automáticamente un evento
+                        social base con la información proporcionada.
+                      </p>
+                    </div>
+                  )}
+
+                  {parents && parents.length > 1 && (
                     <div className="org-editor-card">
                       <label className="org-editor-field">
                         Evento Social *
