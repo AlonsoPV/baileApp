@@ -6,7 +6,9 @@ export type OrganizerLocation = {
   organizer_id: number;
   nombre?: string | null;
   direccion?: string | null;
+  ciudad?: string | null;
   referencias?: string | null;
+  zona_id?: number | null;
   zona_ids?: number[] | null;
   created_at?: string;
   updated_at?: string;

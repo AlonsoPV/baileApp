@@ -33,6 +33,8 @@ import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation } from "../../hooks/useOrganizerLocations";
+import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import type { AcademyLocation } from "../../types/academy";
 
 const colors = {
   coral: '#FF3D57',
@@ -1595,14 +1597,14 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-events-list"
             className="org-events-section"
           >
-            {/* Sección: Ubicaciones de mis sociales (edita por social) */}
+            {/* Sección: Ubicaciones por social (edita por social) */}
             {parents && parents.length > 0 && (
               <div className="org-editor-card" style={{ marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#FFFFFF' }}>
-                  📍 Ubicaciones de mis sociales
+                  📍 Ubicaciones
                 </h2>
                 <p style={{ marginTop: 0, marginBottom: '1rem', opacity: 0.9 }}>
-                  Administra las ubicaciones por cada social. Esto no modifica tu perfil de organizador.
+                  Administra las ubicaciones por cada social. Estas son independientes y luego podrás usarlas en las fechas.
                 </p>
                 <div style={{ display: 'grid', gap: '1rem' }}>
                   {parents.map((parent: any) => {
@@ -2289,96 +2291,103 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
-          {/* Mis ubicaciones reutilizables */}
+          {/* Mis ubicaciones reutilizables (exactamente el mismo editor que academia) */}
           <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               📍 Mis ubicaciones
             </h2>
-            <div style={{ display: 'grid', gap: 12 }}>
-              {/* Editor simple basado en botones para crear/editar/eliminar */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!org?.id) return;
-                    await createOrgLoc.mutateAsync({
-                      organizer_id: org.id,
-                      nombre: 'Nueva ubicación',
-                      direccion: '',
-                      referencias: '',
-                      zona_ids: []
-                    } as any);
-                  }}
-                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}
-                >
-                  ➕ Agregar ubicación
-                </button>
-              </div>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {orgLocations.map((u: any) => (
-                  <div key={u.id} style={{ display: 'grid', gap: 8, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 8 }}>
-                      <input
-                        value={u.nombre || ''}
-                        onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { nombre: e.target.value } })}
-                        placeholder="Nombre"
-                        className="org-editor-input"
-                        style={{ padding: 10 }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => deleteOrgLoc.mutate({ id: u.id, organizer_id: org!.id })}
-                        style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(229,57,53,0.35)', background: 'rgba(229,57,53,0.12)', color: '#fff', cursor: 'pointer' }}
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    </div>
-                    <input
-                      value={u.direccion || ''}
-                      onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { direccion: e.target.value } })}
-                      placeholder="Dirección"
-                      className="org-editor-input"
-                      style={{ padding: 10 }}
-                    />
-                    <input
-                      value={u.referencias || ''}
-                      onChange={(e) => updateOrgLoc.mutate({ id: u.id, patch: { referencias: e.target.value } })}
-                      placeholder="Referencias"
-                      className="org-editor-input"
-                      style={{ padding: 10 }}
-                    />
-                    {/* Chips simples de zonas: reutilizar zonaTags */}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {zonaTags.map((z: any) => {
-                        const active = Array.isArray(u.zona_ids) && u.zona_ids.includes(z.id);
-                        return (
-                          <button
-                            key={z.id}
-                            type="button"
-                            onClick={() => {
-                              const current = new Set<number>(Array.isArray(u.zona_ids) ? u.zona_ids : []);
-                              active ? current.delete(z.id) : current.add(z.id);
-                              updateOrgLoc.mutate({ id: u.id, patch: { zona_ids: Array.from(current) } });
-                            }}
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: 999,
-                              border: active ? '1px solid #1976D2' : '1px solid rgba(255,255,255,0.25)',
-                              background: active ? 'rgba(25,118,210,0.18)' : 'rgba(255,255,255,0.06)',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              fontSize: 12
-                            }}
-                          >
-                            {z.nombre}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {(() => {
+              // Estado local de items e ids alineados por índice
+              const [items, setItems] = React.useState<AcademyLocation[]>(
+                (orgLocations || []).map((u: any) => ({
+                  sede: u?.nombre || '',
+                  direccion: u?.direccion || '',
+                  ciudad: u?.ciudad || '',
+                  zona_id: typeof u?.zona_id === 'number' ? u.zona_id : (Array.isArray(u?.zona_ids) ? (u.zona_ids[0] ?? null) : null),
+                  referencias: u?.referencias || ''
+                }))
+              );
+              const [ids, setIds] = React.useState<number[]>(
+                (orgLocations || []).map((u: any) => u.id)
+              );
+              const prevItemsRef = React.useRef<AcademyLocation[]>(items);
+              const prevIdsRef = React.useRef<number[]>(ids);
+
+              React.useEffect(() => {
+                const mapped = (orgLocations || []).map((u: any) => ({
+                  sede: u?.nombre || '',
+                  direccion: u?.direccion || '',
+                  ciudad: u?.ciudad || '',
+                  zona_id: typeof u?.zona_id === 'number' ? u.zona_id : (Array.isArray(u?.zona_ids) ? (u.zona_ids[0] ?? null) : null),
+                  referencias: u?.referencias || ''
+                }));
+                setItems(mapped);
+                setIds((orgLocations || []).map((u: any) => u.id));
+                prevItemsRef.current = mapped;
+                prevIdsRef.current = (orgLocations || []).map((u: any) => u.id);
+              }, [orgLocations]);
+
+              const shallowEq = (a?: AcademyLocation, b?: AcademyLocation) => {
+                return (a?.sede||'') === (b?.sede||'')
+                  && (a?.direccion||'') === (b?.direccion||'')
+                  && (a?.ciudad||'') === (b?.ciudad||'')
+                  && (a?.zona_id||null) === (b?.zona_id||null)
+                  && (a?.referencias||'') === (b?.referencias||'');
+              };
+
+              const handleChange = (next: AcademyLocation[]) => {
+                const prev = prevItemsRef.current;
+                const prevIds = prevIdsRef.current;
+                // Detect delete por diferencia de largo
+                if (next.length < prev.length) {
+                  let removedIndex = prev.length - 1;
+                  for (let i = 0; i < next.length; i++) {
+                    if (!shallowEq(next[i], prev[i])) { removedIndex = i; break; }
+                  }
+                  const removedId = prevIds[removedIndex];
+                  if (removedId) {
+                    deleteOrgLoc.mutate({ id: removedId, organizer_id: org!.id });
+                  }
+                  const nextIds = [...prevIds];
+                  nextIds.splice(removedIndex, 1);
+                  setIds(nextIds);
+                  prevIdsRef.current = nextIds;
+                }
+                setItems(next);
+                prevItemsRef.current = next;
+              };
+
+              const handleSaveItem = async (index: number, it: AcademyLocation) => {
+                if (!org?.id) return;
+                const payload = {
+                  organizer_id: org.id,
+                  nombre: it.sede || '',
+                  direccion: it.direccion || '',
+                  ciudad: it.ciudad || '',
+                  referencias: it.referencias || '',
+                  zona_id: it.zona_id ?? null,
+                  zona_ids: (typeof it.zona_id === 'number' ? [it.zona_id] : [])
+                } as any;
+                const idAt = ids[index];
+                if (idAt) {
+                  await updateOrgLoc.mutateAsync({ id: idAt, patch: payload });
+                } else {
+                  const created = await createOrgLoc.mutateAsync(payload);
+                  const nextIds = [...ids];
+                  nextIds[index] = created.id!;
+                  setIds(nextIds);
+                  prevIdsRef.current = nextIds;
+                }
+              };
+
+              return (
+                <AcademyUbicacionesEditor
+                  value={items}
+                  onChange={handleChange}
+                  onSaveItem={handleSaveItem}
+                />
+              );
+            })()}
           </div>
 
           {/* Sección de Fotos */}
