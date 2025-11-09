@@ -9,10 +9,17 @@ export function useUserRoles(userId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('role_slug, created_at, id, user_id')
+        .select('*')
         .eq('user_id', userId!);
       if (error) throw error;
-      return (data || []) as UserRole[];
+      const rows = (data || []) as any[];
+      // Normalizar: soportar 'role_slug' o 'role'
+      return rows.map((r) => ({
+        id: r.id,
+        user_id: r.user_id,
+        role_slug: (r.role_slug ?? r.role) as any,
+        created_at: r.created_at,
+      })) as UserRole[];
     },
     staleTime: 0,
     refetchOnMount: 'always',

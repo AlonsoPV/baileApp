@@ -25,12 +25,12 @@ export default function OnboardingGate() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('onboarding_complete')
+        .select('onboarding_complete, pin_hash')
         .eq('user_id', user!.id)
         .limit(1);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      return row ?? { onboarding_complete: false };
+      return row ?? { onboarding_complete: false, pin_hash: null };
     },
     staleTime: 30000,
   });
@@ -69,16 +69,15 @@ export default function OnboardingGate() {
   }
 
   const complete = data?.onboarding_complete === true;
+  const hasPin = !!data?.pin_hash;
 
   // 4) Si completo ⇒ libera la app
   if (complete) {
     // Enforce PIN verification for protected areas
     const onPinRoutes = location.pathname.startsWith(routes.auth.pin) || location.pathname.startsWith(routes.auth.pinSetup);
-    if (!onPinRoutes) {
-      // Solo exigir PIN justo después de login o si no verificado aún en esta sesión
+    if (!onPinRoutes && hasPin) {
+      // Solo exigir PIN si el usuario tiene PIN configurado
       if (needsPinVerify(user.id) && !isPinVerified(user.id)) {
-        // Decide whether user has PIN configured – if not, redirect to setup
-        // Defer check to server by letting PinLogin/Setup handle flow; send to PIN login
         return <Navigate to={routes.auth.pin} replace />;
       }
     }

@@ -58,15 +58,42 @@ export function useUpsertAcademy() {
         if (error) throw error;
         return data as AcademyProfile;
       } else {
-        const insertData: any = { user_id: user.id, ...payload };
-        delete insertData.id; // asegurar no enviar id en insert
-        const { data, error } = await supabase
+        // Evitar duplicados si el onboarding/flujo corre dos veces:
+        // buscar si ya existe un registro para este user_id
+        const { data: existingByUser, error: findErr } = await supabase
           .from(TABLE)
-          .insert(insertData)
-          .select('*')
-          .single();
-        if (error) throw error;
-        return data as AcademyProfile;
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (findErr) throw findErr;
+
+        const insertData: any = { user_id: user.id, ...payload };
+        // Asegurar NOT NULL: nombre_publico
+        if (!insertData.nombre_publico || String(insertData.nombre_publico).trim() === '') {
+          insertData.nombre_publico = 'Mi Academia';
+        }
+        delete insertData.id; // asegurar no enviar id en insert/update
+
+        if (existingByUser?.id) {
+          // Ya existe -> hacer update para evitar duplicados
+          const { data, error } = await supabase
+            .from(TABLE)
+            .update(insertData)
+            .eq('id', existingByUser.id)
+            .select('*')
+            .single();
+          if (error) throw error;
+          return data as AcademyProfile;
+        } else {
+          // No existe -> insertar
+          const { data, error } = await supabase
+            .from(TABLE)
+            .insert(insertData)
+            .select('*')
+            .single();
+          if (error) throw error;
+          return data as AcademyProfile;
+        }
       }
     },
     onSuccess: () => {
