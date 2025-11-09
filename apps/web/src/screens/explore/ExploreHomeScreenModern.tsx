@@ -98,6 +98,32 @@ export default function ExploreHomeScreen() {
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
 
+  // Fecha presets: hoy / semana / siguientes
+  const todayYmd = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const applyDatePreset = (preset: 'todos'|'hoy'|'semana'|'siguientes') => {
+    if (preset === 'todos') {
+      set({ datePreset: preset, dateFrom: undefined, dateTo: undefined });
+      return;
+    }
+    const base = new Date();
+    if (preset === 'hoy') {
+      const ymd = base.toISOString().slice(0,10);
+      set({ datePreset: preset, dateFrom: ymd, dateTo: ymd });
+      return;
+    }
+    if (preset === 'semana') {
+      const from = base.toISOString().slice(0,10);
+      const to = addDays(base, 6).toISOString().slice(0,10);
+      set({ datePreset: preset, dateFrom: from, dateTo: to });
+      return;
+    }
+    if (preset === 'siguientes') {
+      const from = addDays(base, 7).toISOString().slice(0,10);
+      set({ datePreset: preset, dateFrom: from, dateTo: undefined });
+    }
+  };
+
   const handlePreNavigate = React.useCallback(() => {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch {}
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch {}
@@ -201,7 +227,46 @@ export default function ExploreHomeScreen() {
     const fromTeachers = allM.flatMap((tc: any) => (Array.isArray(tc?.cronograma) ? tc.cronograma.map((c: any) => mapClase(tc, c, 'teacher')) : []));
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
-    return merged.slice(0, 12);
+    // Filtro por preset de fechas
+    const weekdayIndex = (name: string) => dayNames.findIndex(d => d.toLowerCase() === String(name).toLowerCase());
+    const nextOccurrence = (c: any): Date | null => {
+      try {
+        if (c.fecha) return new Date(c.fecha);
+        const days: string[] = Array.isArray(c.diasSemana) ? c.diasSemana : [];
+        if (!days.length) return null;
+        const today = new Date();
+        const todayIdx = today.getDay(); // 0..6
+        let minDelta: number | null = null;
+        for (const dn of days) {
+          const idx = weekdayIndex(dn);
+          if (idx < 0) continue;
+          const delta = (idx - todayIdx + 7) % 7;
+          if (minDelta === null || delta < minDelta) minDelta = delta;
+        }
+        if (minDelta === null) return null;
+        return addDays(today, minDelta);
+      } catch { return null; }
+    };
+    const preset = filters.datePreset || 'todos';
+    const inPreset = (c: any) => {
+      if (preset === 'todos') return true;
+      const d = nextOccurrence(c);
+      if (!d) return true;
+      const start = new Date(todayYmd);
+      const endWeek = addDays(start, 6);
+      if (preset === 'hoy') {
+        return d.toISOString().slice(0,10) === todayYmd;
+      }
+      if (preset === 'semana') {
+        return d >= start && d <= endWeek;
+      }
+      if (preset === 'siguientes') {
+        return d > endWeek;
+      }
+      return true;
+    };
+    const filtered = merged.filter(inPreset);
+    return filtered.slice(0, 12);
   }, [academias, maestros]);
 
   const usuariosList = React.useMemo(
@@ -303,7 +368,36 @@ export default function ExploreHomeScreen() {
 
         <div className="wrap">
           <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
-            <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
+          <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
+          {/* Presets de fechas */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+            {([
+              { id: 'todos', label: 'Todos' },
+              { id: 'hoy', label: 'Hoy' },
+              { id: 'semana', label: 'Esta semana' },
+              { id: 'siguientes', label: 'Siguientes' },
+            ] as const).map(p => {
+              const active = (filters.datePreset || 'todos') === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => applyDatePreset(p.id)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 999,
+                    border: active ? '1px solid rgba(240,147,251,0.55)' : '1px solid rgba(255,255,255,0.12)',
+                    background: active ? 'linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18))' : 'rgba(30,30,35,0.45)',
+                    color: active ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
+                    fontWeight: 700,
+                    letterSpacing: 0.2,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
           </div>
 
           {(showAll || selectedType === 'fechas') && (

@@ -107,8 +107,8 @@ export function useUpsertMyOrganizer() {
         console.log("📦 [useOrganizer] Patch creado:", patch);
         console.log("📊 [useOrganizer] Claves del patch:", Object.keys(patch));
 
-        // Algunas columnas no existen en ciertos entornos (ej. respuestas). Si el registro previo no las tiene, eliminarlas.
-        if (!Object.prototype.hasOwnProperty.call(prev, "respuestas") && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
+        const hasRespuestasColumn = Object.prototype.hasOwnProperty.call(prev, "respuestas");
+        if (!hasRespuestasColumn && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
           console.log("⚠️ [useOrganizer] Removiendo 'respuestas' del patch porque la columna no existe en este entorno.");
           delete (patch as any).respuestas;
         }
@@ -118,39 +118,51 @@ export function useUpsertMyOrganizer() {
           return existing.id;
         }
 
-        console.log("🚀 [useOrganizer] Llamando a merge_profiles_organizer...");
-        console.log("  📤 Parámetros:", {
-          p_id: existing.id,
-          p_owner: user.id,
-          p_patch: patch
-        });
+        if (hasRespuestasColumn) {
+          console.log("🚀 [useOrganizer] Llamando a merge_profiles_organizer...");
+          console.log("  📤 Parámetros:", {
+            p_id: existing.id,
+            p_owner: user.id,
+            p_patch: patch
+          });
 
-        const { error } = await supabase.rpc("merge_profiles_organizer", {
-          p_id: existing.id,
-          p_owner: user.id,
-          p_patch: patch
-        });
-        
-        if (error) {
-          console.warn("⚠️ [useOrganizer] RPC merge_profiles_organizer falló, intentando fallback update", error);
-          const { error: updError } = await supabase
+          const { error } = await supabase.rpc("merge_profiles_organizer", {
+            p_id: existing.id,
+            p_owner: user.id,
+            p_patch: patch
+          });
+          
+          if (error) {
+            console.warn("⚠️ [useOrganizer] RPC merge_profiles_organizer falló, intentando fallback update", error);
+            const { error: updError } = await supabase
+              .from("profiles_organizer")
+              .update(patch as any)
+              .eq("id", existing.id);
+            if (updError) {
+              console.error("❌ [useOrganizer] Fallback update falló:", updError);
+              throw updError;
+            }
+          } else {
+            // Refuerzo: si el RPC ignoró columnas nuevas como ritmos_seleccionados, aplica update directo de esas claves
+            const needsDirect: any = {};
+            if (Object.prototype.hasOwnProperty.call(patch, 'ritmos_seleccionados')) {
+              (needsDirect as any).ritmos_seleccionados = (patch as any).ritmos_seleccionados;
+            }
+            if (Object.keys(needsDirect).length > 0) {
+              await supabase.from("profiles_organizer").update(needsDirect).eq("id", existing.id);
+            }
+            console.log("✅ [useOrganizer] merge_profiles_organizer ejecutado (con refuerzo si fue necesario)");
+          }
+        } else {
+          console.log("ℹ️ [useOrganizer] Entorno sin columna 'respuestas', aplicando update directo sin RPC.");
+          const { error: directErr } = await supabase
             .from("profiles_organizer")
             .update(patch as any)
             .eq("id", existing.id);
-          if (updError) {
-            console.error("❌ [useOrganizer] Fallback update falló:", updError);
-            throw updError;
+          if (directErr) {
+            console.error("❌ [useOrganizer] Update directo falló:", directErr);
+            throw directErr;
           }
-        } else {
-          // Refuerzo: si el RPC ignoró columnas nuevas como ritmos_seleccionados, aplica update directo de esas claves
-          const needsDirect: any = {};
-          if (Object.prototype.hasOwnProperty.call(patch, 'ritmos_seleccionados')) {
-            (needsDirect as any).ritmos_seleccionados = (patch as any).ritmos_seleccionados;
-          }
-          if (Object.keys(needsDirect).length > 0) {
-            await supabase.from("profiles_organizer").update(needsDirect).eq("id", existing.id);
-          }
-          console.log("✅ [useOrganizer] merge_profiles_organizer ejecutado (con refuerzo si fue necesario)");
         }
         return existing.id;
       } else {

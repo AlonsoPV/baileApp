@@ -69,13 +69,13 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
             style={{
               padding: '6px 14px',
               borderRadius: 18,
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.85)',
+              border: '1px solid rgba(240,147,251,0.25)',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.22), rgba(245,87,108,0.22))',
+              color: 'rgba(240,147,251,0.92)',
               fontSize: 13,
               fontWeight: 600,
               letterSpacing: 0.15,
-              boxShadow: 'none'
+              boxShadow: '0 4px 12px rgba(240,147,251,0.18)'
             }}
           >
             <span>{r.label}</span>
@@ -100,9 +100,9 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
               style={{
                 padding: '8px 14px',
                 borderRadius: 999,
-                border: isOpen || active ? '1px solid rgba(240,147,251,0.4)' : '1px solid rgba(255,255,255,0.12)',
-                background: isOpen || active ? 'rgba(240,147,251,0.12)' : 'rgba(30,30,35,0.5)',
-                color: 'rgba(255,255,255,0.85)',
+                border: isOpen || active ? '1px solid rgba(240,147,251,0.55)' : '1px solid rgba(255,255,255,0.1)',
+                background: isOpen || active ? 'linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18))' : 'rgba(30,30,35,0.45)',
+                color: isOpen || active ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: 'pointer',
@@ -135,9 +135,11 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
                 style={{
                   padding: '6px 14px',
                   borderRadius: 18,
-                  border: `1px solid ${isActive ? 'rgba(240,147,251,0.45)' : 'rgba(255,255,255,0.12)'}`,
-                  background: isActive ? 'rgba(240,147,251,0.14)' : 'rgba(24,24,28,0.45)',
-                  color: isActive ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
+                  border: `1px solid ${isActive ? 'rgba(240,147,251,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                  background: isActive
+                    ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                    : 'rgba(24,24,28,0.4)',
+                  color: isActive ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.78)',
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',

@@ -9,6 +9,7 @@ export type ExploreFilters = {
   zonas: number[];     // tags de tipo 'zona'
   dateFrom?: string;   // YYYY-MM-DD (solo eventos)
   dateTo?: string;     // YYYY-MM-DD (solo eventos)
+  datePreset?: 'todos' | 'hoy' | 'semana' | 'siguientes';
   pageSize: number;
 };
 
@@ -25,6 +26,7 @@ const defaultFilters: ExploreFilters = {
   q: "",
   ritmos: [],
   zonas: [],
+  datePreset: 'todos',
   pageSize: 12,
 };
 

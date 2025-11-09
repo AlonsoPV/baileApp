@@ -14,6 +14,21 @@ export default function EventCard({ item }: EventCardProps) {
   const eventId = item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
   const { data: allTags } = useTags() as any;
+  const formatHHMM = (t?: string) => {
+    if (!t) return '';
+    try {
+      const s = String(t);
+      if (s.includes(':')) {
+        const [hh = '', mm = ''] = s.split(':');
+        const h2 = hh.padStart(2, '0').slice(-2);
+        const m2 = mm.padStart(2, '0').slice(-2);
+        return `${h2}:${m2}`;
+      }
+      // Fallback simple: si viene como "2000" -> "20:00"
+      if (s.length === 4) return `${s.slice(0,2)}:${s.slice(2,4)}`;
+    } catch {}
+    return t;
+  };
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();
@@ -210,7 +225,7 @@ export default function EventCard({ item }: EventCardProps) {
             )}
             {horaInicio && (
               <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
-                🕒 {horaInicio}
+                🕒 {formatHHMM(horaInicio)}
               </span>
             )}
           </div>

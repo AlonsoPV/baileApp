@@ -10,7 +10,7 @@ interface ChipProps {
   style?: React.CSSProperties;
 }
 
-const colors = {
+const baseColors = {
   coral: '#FF3D57',
   orange: '#FF8C42',
   yellow: '#FFD166',
@@ -21,10 +21,10 @@ const colors = {
 };
 
 const variantColors = {
-  ritmo: colors.coral,
-  zona: colors.yellow,
-  perfil: colors.purple,
-  custom: colors.blue,
+  ritmo: baseColors.coral,
+  zona: baseColors.blue,
+  perfil: baseColors.purple,
+  custom: baseColors.orange,
 };
 
 export function Chip({ label, icon, variant = 'custom', color, onClick, active, style }: ChipProps) {
@@ -47,9 +47,9 @@ export function Chip({ label, icon, variant = 'custom', color, onClick, active, 
         borderRadius: 20,
         background: active
           ? `linear-gradient(135deg, ${chipColor}ee, ${chipColor}cc)`
-          : `${chipColor}22`,
-        border: `2px solid ${active ? chipColor : `${chipColor}66`}`,
-        color: active ? colors.light : chipColor,
+          : `${chipColor}1A`,
+        border: `2px solid ${active ? chipColor : `${chipColor}55`}`,
+        color: active ? baseColors.light : chipColor,
         boxShadow: active
           ? `0 4px 16px ${chipColor}55, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
           : `0 2px 8px ${chipColor}33`,
