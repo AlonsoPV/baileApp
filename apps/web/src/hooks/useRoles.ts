@@ -60,9 +60,12 @@ export function useCreateRoleRequest() {
       phone: string;
       socials: RoleRequest['socials'];
     }) => {
+      const { role_slug, ...rest } = payload;
       const { error } = await supabase.from('role_requests').insert({
         user_id: user!.id,
-        ...payload,
+        role_slug,
+        role: role_slug, // compat con columna NOT NULL (role)
+        ...rest,
         status: 'pending',
       });
       if (error) throw error;

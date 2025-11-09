@@ -158,7 +158,7 @@ export default function UserProfileEditor() {
       console.log('[UserProfileEditor] Candidate:', candidate);
 
       if (Object.keys(patch).length === 0) {
-        showToast('No hay cambios para guardar', 'info');
+        showToast('No hay cambios de información por guardar. Tus fotos y videos se guardan automáticamente ✅', 'info');
         return;
       }
 
