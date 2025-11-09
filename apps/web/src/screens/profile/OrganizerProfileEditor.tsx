@@ -1623,42 +1623,40 @@ export default function OrganizerProfileEditor() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  {parents && parents.length > 0 && (
-                    <motion.button
-                      whileHover={{ scale: 1.06 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setShowDateForm(!showDateForm);
-                        if (!showDateForm && parents.length === 1) {
-                          setSelectedParentId(parents[0].id);
-                        }
-                      }}
-                      style={{
-                        padding: '0.9rem 1.6rem',
-                        borderRadius: '14px',
-                        border: '1px solid rgba(255, 255, 255, 0.28)',
-                        background: showDateForm
-                          ? 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12))'
-                          : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                        color: '#FFFFFF',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        boxShadow: showDateForm
-                          ? '0 8px 24px rgba(255,255,255,0.08)'
-                          : '0 8px 24px rgba(30,136,229,0.45)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        letterSpacing: '0.2px'
-                      }}
-                    >
-                      <span>{showDateForm ? '✖️' : '📅'}</span>
-                      <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
-                    </motion.button>
-                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setShowDateForm(!showDateForm);
+                      if (!showDateForm && parents && parents.length === 1) {
+                        setSelectedParentId(parents[0].id);
+                      }
+                    }}
+                    style={{
+                      padding: '0.9rem 1.6rem',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.28)',
+                      background: showDateForm
+                        ? 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12))'
+                        : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
+                      color: '#FFFFFF',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: showDateForm
+                        ? '0 8px 24px rgba(255,255,255,0.08)'
+                        : '0 8px 24px rgba(30,136,229,0.45)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      letterSpacing: '0.2px'
+                    }}
+                  >
+                    <span>{showDateForm ? '✖️' : '📅'}</span>
+                    <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
+                  </motion.button>
 
                   <motion.button
                     whileHover={{ scale: 1.06 }}
@@ -2066,7 +2064,7 @@ export default function OrganizerProfileEditor() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleCreateDate}
-                      disabled={createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)}
+                      disabled={createEventDate.isPending || !dateForm.fecha || (((parents?.length) || 0) > 1 && !selectedParentId)}
                       style={{
                         padding: '12px 24px',
                         borderRadius: '12px',
