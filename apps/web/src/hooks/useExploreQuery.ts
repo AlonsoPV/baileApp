@@ -30,6 +30,7 @@ function baseSelect(type: ExploreType) {
           direccion,
           ciudad,
           zona,
+          estado_publicacion,
           estilos,
           ritmos_seleccionados,
           media,
@@ -107,6 +108,9 @@ async function fetchPage(params: QueryParams, page: number) {
     
     // TEMPORARY: Comment out future events filter to debug
     // query = query.gte("fecha", today);
+
+    // Mostrar solo fechas publicadas
+    query = query.eq("estado_publicacion", "publicado");
     
     // Filtrar por organizadores aprobados (removido por ahora - el !inner falla si no hay relación)
     // query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
