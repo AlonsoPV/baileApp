@@ -766,12 +766,10 @@ export default function OrganizerProfileEditor() {
         
         try {
           // Crear evento padre por defecto
-          const parentPayload = {
+          const parentPayload: any = {
             organizer_id: profileId,
             nombre: '🎉 Mi Primer Social',
             descripcion: 'Este es tu primer evento social. Edita el nombre, descripción y agrega fechas desde el editor.',
-            estado_aprobacion: 'borrador',
-            estado_publicacion: 'borrador',
             ritmos_seleccionados: outSelected || [],
             zonas: form.zonas || []
           };

@@ -106,6 +106,12 @@ export function useUpsertMyOrganizer() {
         
         console.log("📦 [useOrganizer] Patch creado:", patch);
         console.log("📊 [useOrganizer] Claves del patch:", Object.keys(patch));
+
+        // Algunas columnas no existen en ciertos entornos (ej. respuestas). Si el registro previo no las tiene, eliminarlas.
+        if (!Object.prototype.hasOwnProperty.call(prev, "respuestas") && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
+          console.log("⚠️ [useOrganizer] Removiendo 'respuestas' del patch porque la columna no existe en este entorno.");
+          delete (patch as any).respuestas;
+        }
         
         if (Object.keys(patch).length === 0) {
           console.log("ℹ️ [useOrganizer] No hay cambios para guardar");
