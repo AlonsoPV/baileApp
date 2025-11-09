@@ -1,14 +1,15 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
 import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
 import { isValidEmail } from '../../utils/validation';
 import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkAuth';
+import { supabase } from '../../lib/supabase';
 
 export function Login() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -56,6 +57,58 @@ export function Login() {
     }
   };
 
+  const handlePasswordLogin = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (!email.trim()) {
+      setError('Por favor ingresa tu email');
+      setIsSuccess(false);
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError('Email inválido');
+      setIsSuccess(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('Por favor ingresa tu contraseña');
+      setIsSuccess(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.user) {
+        showToast('Inicio de sesión exitoso ✅', 'success');
+        navigate('/app/profile');
+      } else {
+        setError('No pudimos iniciar sesión. Revisa tus credenciales.');
+        showToast('No pudimos iniciar sesión. Revisa tus credenciales.', 'error');
+      }
+    } catch (err: any) {
+      console.error('[Login] Password sign-in error', err);
+      const msg = err?.message ?? 'Error al iniciar sesión con contraseña.';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
       style={{
@@ -82,9 +135,10 @@ export function Login() {
             ¡Bienvenido! 💃
           </h1>
           <p style={{ color: colors.gray[400] }}>
-            Accede con tu email - Sin contraseñas
+            Accede con tu email o contraseña
           </p>
         </div>
+        <form onSubmit={handlePasswordLogin}>
           <div style={{ marginBottom: spacing[3] }}>
             <label
               htmlFor="email"
@@ -115,6 +169,39 @@ export function Login() {
                 fontSize: '1rem',
               }}
               placeholder="tu@email.com"
+            />
+          </div>
+
+          <div style={{ marginBottom: spacing[3] }}>
+            <label
+              htmlFor="password"
+              style={{
+                display: 'block',
+                marginBottom: spacing[1],
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.gray[400],
+              }}
+            >
+              🔒 Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: spacing[2],
+                background: colors.glass.medium,
+                border: `1px solid ${colors.glass.medium}`,
+                borderRadius: borderRadius.md,
+                color: colors.gray[200],
+                fontSize: '1rem',
+              }}
+              placeholder="Tu contraseña segura"
+              autoComplete="current-password"
             />
           </div>
 
@@ -150,45 +237,60 @@ export function Login() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: spacing[2], marginBottom: spacing[3] }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], marginBottom: spacing[3] }}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                opacity: isLoading ? 0.5 : 1,
+                background: colors.gradients.primary,
+              }}
+            >
+              {isLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
+            </Button>
+
             <Button
               onClick={() => handleMagicLink(false)}
               disabled={isLoading}
               style={{
-                flex: 1,
+                width: '100%',
                 opacity: isLoading ? 0.5 : 1,
+                background: colors.gradients.secondary,
               }}
             >
-              {isLoading ? '⏳ Enviando...' : '🔑 Iniciar Sesión'}
+              {isLoading ? '⏳ Enviando...' : '📬 Enlace mágico'}
             </Button>
 
             <Button
               onClick={() => handleMagicLink(true)}
               disabled={isLoading}
               style={{
-                flex: 1,
+                width: '100%',
                 opacity: isLoading ? 0.5 : 1,
-                background: colors.gradients.secondary,
+                background: colors.gradients.tertiary ?? colors.gradients.secondary,
               }}
             >
               {isLoading ? '⏳ Enviando...' : '✨ Registrarse'}
             </Button>
           </div>
 
-        <div style={{ 
-          textAlign: 'center', 
-          fontSize: '0.875rem', 
-          color: colors.gray[400],
-          marginTop: spacing[3],
-          padding: spacing[2],
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: borderRadius.md,
-        }}>
-          <p style={{ margin: 0, fontSize: '0.8rem' }}>
-            💡 Te enviaremos un enlace mágico a tu email.<br/>
-            Haz clic en el enlace para acceder sin contraseña.
-          </p>
-        </div>
+          <div
+            style={{
+              textAlign: 'center',
+              fontSize: '0.875rem',
+              color: colors.gray[400],
+              marginTop: spacing[3],
+              padding: spacing[2],
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: borderRadius.md,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: '0.8rem' }}>
+              💡 Usa tu contraseña o solicita un enlace mágico directo a tu email.
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );
