@@ -53,6 +53,7 @@ type Props = {
   title?: string;
   style?: React.CSSProperties;
   className?: string;
+  enableDate?: boolean;
 };
 
 const card: React.CSSProperties = {
@@ -175,6 +176,7 @@ export default function CrearClase({
   title = 'Crear Clase',
   style,
   className
+  enableDate = true
 }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [submitState, setSubmitState] = useState<'idle'|'saving'|'success'|'error'>('idle');
@@ -185,9 +187,9 @@ export default function CrearClase({
     precio: value?.precio ?? null,
     regla: value?.regla || '',
     nivel: value?.nivel ?? null,
-    fechaModo: value?.fechaModo || 'especifica',
-    fecha: value?.fecha || '',
-    diaSemana: value?.diaSemana ?? null,
+    fechaModo: enableDate ? (value?.fechaModo || 'especifica') : undefined,
+    fecha: enableDate ? (value?.fecha || '') : undefined,
+    diaSemana: enableDate ? (value?.diaSemana ?? null) : null,
     inicio: normalizeTime(value?.inicio),
     fin: normalizeTime(value?.fin),
     ritmoId: value?.ritmoId ?? null,
@@ -209,9 +211,9 @@ export default function CrearClase({
         precio: effective?.precio ?? null,
         regla: effective?.regla || '',
         nivel: effective?.nivel ?? null,
-        fechaModo: effective?.fechaModo || 'especifica',
-        fecha: effective?.fecha || '',
-        diaSemana: effective?.diaSemana ?? null,
+        fechaModo: enableDate ? (effective?.fechaModo || 'especifica') : undefined,
+        fecha: enableDate ? (effective?.fecha || '') : undefined,
+        diaSemana: enableDate ? (effective?.diaSemana ?? null) : null,
         inicio: normalizeTime(effective?.inicio),
         fin: normalizeTime(effective?.fin),
         ritmoId: effective?.ritmoId ?? null,
@@ -259,29 +261,33 @@ export default function CrearClase({
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
     const horarioOk = Boolean(form.inicio && form.fin);
-    const fechaOk = form.fechaModo === 'especifica' ? Boolean(form.fecha) : form.diaSemana !== null;
+    const fechaOk = enableDate
+      ? form.fechaModo === 'especifica' ? Boolean(form.fecha) : form.diaSemana !== null
+      : true;
     return nombreOk && horarioOk && fechaOk;
-  }, [form]);
+  }, [form, enableDate]);
 
   // Validaciones visuales (solo estilos, sin cambiar estructura)
   const invalid = {
     nombre: !(form.nombre || '').trim(),
-    fecha: form.fechaModo === 'especifica' && !form.fecha,
-    dia: form.fechaModo === 'semanal' && form.diaSemana === null,
+    fecha: enableDate && form.fechaModo === 'especifica' && !form.fecha,
+    dia: enableDate && form.fechaModo === 'semanal' && form.diaSemana === null,
     inicio: !form.inicio,
     fin: !form.fin,
   };
 
   const completion = useMemo(() => {
-    const total = 5;
+    const total = enableDate ? 5 : 4;
     let done = 0;
     if (!invalid.nombre) done++;
     if (!invalid.inicio) done++;
     if (!invalid.fin) done++;
-    if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
+    if (enableDate) {
+      if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
+    }
     if (form.ritmoId) done++;
     return Math.round((done / total) * 100);
-  }, [invalid, form.fechaModo, form.ritmoId]);
+  }, [invalid, form.fechaModo, form.ritmoId, enableDate]);
 
   const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
 
@@ -292,9 +298,9 @@ export default function CrearClase({
       precio: null,
       regla: '',
       nivel: null,
-      fechaModo: 'especifica',
-      fecha: '',
-      diaSemana: null,
+      fechaModo: enableDate ? 'especifica' : undefined,
+      fecha: enableDate ? '' : undefined,
+      diaSemana: enableDate ? null : null,
       inicio: '',
       fin: '',
       ritmoId: null,
@@ -410,48 +416,52 @@ export default function CrearClase({
             </div>
 
             {/* FECHA */}
-            <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
-            <div style={row}>
-              <div>
-                <div style={label}>Modo</div>
-                <div style={chipWrap}>
-                  <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</button>
-                  <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</button>
-                </div>
-              </div>
-              <div>
-                {form.fechaModo === 'especifica' ? (
-                  <>
-                    <div style={fieldShell(invalid.fecha)}>
-                      <div style={leftIcon('📆')} />
-                      <input
-                        style={inputBase}
-                        type="date"
-                        value={form.fecha || ''}
-                        onChange={(e)=>setField('fecha', e.target.value)}
-                      />
-                    </div>
-                    {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
-                  </>
-                ) : (
-                  <>
+            {enableDate && (
+              <>
+                <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
+                <div style={row}>
+                  <div>
+                    <div style={label}>Modo</div>
                     <div style={chipWrap}>
-                      {diasSemana.map(d => (
-                        <button
-                          type="button"
-                          key={d.id}
-                          style={chip(form.diaSemana === d.id)}
-                          onClick={()=>setField('diaSemana', d.id)}
-                        >
-                          {d.nombre}
-                        </button>
-                      ))}
+                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</button>
+                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</button>
                     </div>
-                    {invalid.dia && <div style={helpText(true)}>Elige un día de la semana</div>}
-                  </>
-                )}
-              </div>
-            </div>
+                  </div>
+                  <div>
+                    {form.fechaModo === 'especifica' ? (
+                      <>
+                        <div style={fieldShell(invalid.fecha)}>
+                          <div style={leftIcon('📆')} />
+                          <input
+                            style={inputBase}
+                            type="date"
+                            value={form.fecha || ''}
+                            onChange={(e)=>setField('fecha', e.target.value)}
+                          />
+                        </div>
+                        {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
+                      </>
+                    ) : (
+                      <>
+                        <div style={chipWrap}>
+                          {diasSemana.map(d => (
+                            <button
+                              type="button"
+                              key={d.id}
+                              style={chip(form.diaSemana === d.id)}
+                              onClick={()=>setField('diaSemana', d.id)}
+                            >
+                              {d.nombre}
+                            </button>
+                          ))}
+                        </div>
+                        {invalid.dia && <div style={helpText(true)}>Elige un día de la semana</div>}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* HORARIO */}
             <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
@@ -643,7 +653,11 @@ export default function CrearClase({
               if (submitState === 'saving') return;
               try {
                 setSubmitState('saving');
-                await Promise.resolve(onSubmit?.(form));
+                const submission = enableDate ? form : (() => {
+                  const { fecha, fechaModo, diaSemana, ...rest } = form;
+                  return rest as CrearClaseValue;
+                })();
+                await Promise.resolve(onSubmit?.(submission));
                 setSubmitState('success');
                 // Reiniciar siempre después de éxito (tanto crear como editar)
                 resetForm();

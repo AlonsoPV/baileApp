@@ -357,20 +357,7 @@ export default function ScheduleEditorPlus({
                     style={input}
                   />
 
-                  {/* fecha, horario */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fecha</div>
-                      <input
-                        type="date"
-                        value={item.fecha || ''}
-                        onChange={(e)=> updateItem(index, 'fecha', e.target.value)}
-                        style={input}
-                      />
-                    </div>
-                    <div />
-                  </div>
-
+                  {/* horario */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
                       <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Inicio (HH:MM)</div>
@@ -452,7 +439,7 @@ export default function ScheduleEditorPlus({
                       {item.titulo || (item.ritmoId ? ritmos.find(r=>r.id===item.ritmoId)?.nombre : '')}
                     </h4>
                     <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8 }}>
-                      🗓️ {item.fecha || '—'} · 🕐 {item.inicio} - {item.fin}
+                      🕐 {item.inicio} - {item.fin}
                     </p>
                     {item.ubicacion && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>📍 {item.ubicacion}</p>}
                     {item.referenciaCosto && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>💲 {item.referenciaCosto}</p>}

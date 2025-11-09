@@ -996,7 +996,7 @@ export default function EventDatePublicScreen() {
       background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#fff}
     .row{display:grid;grid-template-columns:22px 1fr;gap:.5rem;align-items:start;color:rgba(255,255,255,.92)}
     .row+.row{margin-top:.5rem}
-    .muted{color:rgba(255,255,255,.72)}
+    .muted{color:rgba(255,255,255,.72);font-weight:500}
     .divider{height:1px;background:rgba(255,255,255,.12);margin:.75rem 0}
     .actions{display:flex;gap:.5rem;flex-wrap:wrap}
     .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em}
@@ -1071,18 +1071,14 @@ export default function EventDatePublicScreen() {
             </div>
 
             {/* Fila 2: Requisitos */}
-            <div className="card req" aria-label="Requisitos">
-              {date.requisitos ? (
-                <>
-                  <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
-                  <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)' }}>
-                    {date.requisitos}
-                  </p>
-                </>
-              ) : (
-                <div className="muted">Sin requisitos específicos.</div>
-              )}
-            </div>
+            {date.requisitos && (
+              <div className="card req" aria-label="Requisitos">
+                <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
+                <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)', fontWeight: 500 }}>
+                  {date.requisitos}
+                </p>
+              </div>
+            )}
           </div>
         </motion.section>
 

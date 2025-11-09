@@ -56,7 +56,13 @@ export function useUpsertMyOrganizer() {
         
         // Usar merge profundo
         const prev = existing;
-        const { media, ...candidate } = next; // media va por otro hook
+        const {
+          media,
+          ubicaciones,
+          respuestas: nextRespuestas,
+          redes_sociales: nextRedes,
+          ...candidate
+        } = next as any; // media va por otro hook, campos no existentes se filtran
         
         console.log("📋 [useOrganizer] ANÁLISIS DETALLADO:");
         console.log("  📝 nombre_publico:", {
@@ -111,6 +117,16 @@ export function useUpsertMyOrganizer() {
         if (!hasRespuestasColumn && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
           console.log("⚠️ [useOrganizer] Removiendo 'respuestas' del patch porque la columna no existe en este entorno.");
           delete (patch as any).respuestas;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(patch, "ubicaciones")) {
+          console.log("⚠️ [useOrganizer] Removiendo 'ubicaciones' del patch porque la columna no existe.");
+          delete (patch as any).ubicaciones;
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(prev, "redes_sociales") && Object.prototype.hasOwnProperty.call(patch, "redes_sociales")) {
+          console.log("⚠️ [useOrganizer] Removiendo 'redes_sociales' del patch porque la columna no existe.");
+          delete (patch as any).redes_sociales;
         }
         
         if (Object.keys(patch).length === 0) {
