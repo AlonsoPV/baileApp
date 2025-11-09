@@ -66,7 +66,7 @@ export function useCreateRoleRequest() {
         role_slug,
         role: role_slug, // compat con columna NOT NULL (role)
         ...rest,
-        status: 'pending',
+        status: 'pendiente', // constraint usa español
       });
       if (error) throw error;
     },
