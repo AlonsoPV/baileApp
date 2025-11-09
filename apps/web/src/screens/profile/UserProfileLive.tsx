@@ -240,6 +240,34 @@ export const UserProfileLive: React.FC = () => {
   const safeMedia = media || [];
   const { data: rsvpEvents } = useUserRSVPEvents('interesado');
 
+  // Helper to convert Supabase storage paths to public URLs
+  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
+    if (!maybePath) return undefined;
+    const v = String(maybePath).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+    const slash = v.indexOf('/');
+    if (slash > 0) {
+      const bucket = v.slice(0, slash);
+      const path = v.slice(slash + 1);
+      try {
+        return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      } catch {
+        return v;
+      }
+    }
+    return v;
+  };
+
+  // Unified avatar URL resolution (p1 slot → profile.avatar_url → 'avatar' slot)
+  const avatarUrl = (() => {
+    const p1 = getMediaBySlot(safeMedia as any, 'p1');
+    if (p1?.url) return p1.url;
+    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
+    const avatar = getMediaBySlot(safeMedia as any, 'avatar');
+    if (avatar?.url) return avatar.url;
+    return undefined;
+  })();
+
   // Debug logs
   React.useEffect(() => {
     console.log('[UserProfileLive] Profile data:', profile);
@@ -740,9 +768,9 @@ export const UserProfileLive: React.FC = () => {
                   background: colors.gradients.primary
                 }}
               >
-                {getMediaBySlot(safeMedia as any, 'p1')?.url ? (
+                {avatarUrl ? (
                   <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p1')!.url}
+                    src={avatarUrl}
                     alt="Avatar"
                     style={{
                       width: '100%',

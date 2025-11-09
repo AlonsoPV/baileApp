@@ -71,6 +71,42 @@ export default function UserProfileEditor() {
   // Estados para carga
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
 
+  // Helper to convert Supabase storage paths to public URLs
+  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
+    if (!maybePath) return undefined;
+    const v = String(maybePath).trim();
+    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+    const slash = v.indexOf('/');
+    if (slash > 0) {
+      const bucket = v.slice(0, slash);
+      const path = v.slice(slash + 1);
+      try {
+        return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      } catch {
+        return v;
+      }
+    }
+    return v;
+  };
+
+  // Si no existe foto en slot p1 pero sí existe avatar_url (del onboarding), mostrarlo como fallback
+  const mediaWithAvatarFallback: MediaItem[] = React.useMemo(() => {
+    const base = Array.isArray(media) ? media.slice() : [];
+    const hasP1 = !!getMediaBySlot(base as any, 'p1');
+    if (!hasP1 && profile?.avatar_url) {
+      const url = toSupabasePublicUrl(profile.avatar_url);
+      if (url) {
+        base.push({
+          slot: 'p1',
+          kind: 'photo',
+          url,
+          id: 'avatar-fallback'
+        } as MediaItem);
+      }
+    }
+    return base as MediaItem[];
+  }, [media, profile?.avatar_url]);
+
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
     if (!user) return;
@@ -591,7 +627,7 @@ export default function UserProfileEditor() {
 
         {/* Sección de Fotos */}
         <PhotoManagementSection
-          media={media}
+          media={mediaWithAvatarFallback}
           uploading={uploading}
           uploadFile={uploadFile}
           removeFile={removeFile}
@@ -603,7 +639,7 @@ export default function UserProfileEditor() {
 
         {/* Secciones destacadas (p2 - p3) */}
         <PhotoManagementSection
-          media={media}
+          media={mediaWithAvatarFallback}
           uploading={uploading}
           uploadFile={uploadFile}
           removeFile={removeFile}
@@ -615,7 +651,7 @@ export default function UserProfileEditor() {
 
         {/* Sección de Fotos Adicionales */}
         <PhotoManagementSection
-          media={media}
+          media={mediaWithAvatarFallback}
           uploading={uploading}
           uploadFile={uploadFile}
           removeFile={removeFile}
@@ -627,7 +663,7 @@ export default function UserProfileEditor() {
 
         {/* Sección de Videos */}
         <VideoManagementSection
-          media={media}
+          media={mediaWithAvatarFallback}
           uploading={uploading}
           uploadFile={uploadFile}
           removeFile={removeFile}
