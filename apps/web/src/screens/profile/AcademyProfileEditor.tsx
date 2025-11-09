@@ -538,7 +538,7 @@ export default function AcademyProfileEditor() {
               onChange={(v) => setField('ubicaciones' as any, v as any)}
               title="Ubicaciones"
             />
-            {/* Crear Clase rápida */}
+            {/* Crear Clase rápida  */}
             <div>
               {statusMsg && (
                 <div style={{
