@@ -729,7 +729,7 @@ export default function OrganizerProfileEditor() {
         handleDateUbicacionesChange([first]);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDateForm, orgLocations, dateForm.ubicaciones?.length]);
 
   // Función para subir archivo
@@ -1030,8 +1030,8 @@ export default function OrganizerProfileEditor() {
         zona: typeof dateForm.zona === 'number'
           ? dateForm.zona
           : typeof primaryLocation?.zona_id === 'number'
-          ? primaryLocation.zona_id
-          : null,
+            ? primaryLocation.zona_id
+            : null,
         referencias: (dateForm.referencias || primaryLocation?.referencias) || null,
         requisitos: dateForm.requisitos || null,
         estilos: dateForm.estilos || [],
@@ -1672,16 +1672,11 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-social-networks"
             className="org-editor-card"
           >
+
+
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
               📱 Redes Sociales
             </h2>
- {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
- <div className="org-editor-card">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              📍 Mis ubicaciones
-            </h2>
-            <OrganizerUbicacionesEditor organizerId={org?.id} />
-          </div> 
             <div className="org-editor-grid-small">
               <div>
                 <label className="org-editor-field">
@@ -1723,7 +1718,13 @@ export default function OrganizerProfileEditor() {
               </div>
             </div>
           </div>
-
+          {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
+          <div className="org-editor-card">
+            {/* <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📍 Mis ubicaciones
+            </h2> */}
+            <OrganizerUbicacionesEditor organizerId={org?.id} />
+          </div>
           {/* Maestros Invitados */}
           {/* <InvitedMastersSection
             masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
@@ -2037,7 +2038,7 @@ export default function OrganizerProfileEditor() {
                       value={dateForm.ubicaciones || []}
                       onChange={(list) => handleDateUbicacionesChange(list)}
                     />
-                    
+
                   </div>
 
                   {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
@@ -2355,7 +2356,7 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
-         
+
 
           {/* Sección de Fotos */}
           <PhotoManagementSection

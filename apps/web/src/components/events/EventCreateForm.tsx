@@ -628,7 +628,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       onPick={(u) => {
                         setValue('lugar', u.nombre || '');
                         setValue('direccion', u.direccion || '');
+                        setValue('ciudad', u.ciudad || '');
                         setValue('referencias', u.referencias || '');
+                        if (typeof u.zona_id === 'number') {
+                          setValue('zona' as any, u.zona_id as any);
+                        }
                         if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
                           setValue('zonas' as any, u.zona_ids as any);
                         }
@@ -649,7 +653,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                           onClick={() => {
                             setValue('lugar', u.nombre || '');
                             setValue('direccion', u.direccion || '');
+                            setValue('ciudad', u.ciudad || '');
                             setValue('referencias', u.referencias || '');
+                            if (typeof u.zona_id === 'number') {
+                              setValue('zona' as any, u.zona_id as any);
+                            }
                             if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
                               setValue('zonas' as any, u.zona_ids as any);
                             }
