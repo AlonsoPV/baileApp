@@ -1621,10 +1621,10 @@ export default function OrganizerProfileEditor() {
                           </button>
                         </div>
                         <UbicacionesEditor
-                          value={current}
-                          onChange={(next) => setLocationsDraftByParent((prev) => ({ ...prev, [parent.id]: next }))}
-                          title="Ubicaciones"
-                        />
+              value={(form as any).ubicaciones || []}
+              onChange={(v) => setField('ubicaciones' as any, v as any)}
+              title="Ubicaciones"
+            />
                       </div>
                     );
                   })}
