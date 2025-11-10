@@ -12,6 +12,7 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import { useOrganizerLocations } from "../../hooks/useOrganizerLocations";
 import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
+import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 
 const colors = {
   coral: '#FF3D57',
@@ -50,6 +51,19 @@ export const EventEditor: React.FC = () => {
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    if (kind === 'video') {
+      try {
+        await ensureMaxVideoDuration(file, 25);
+      } catch (error) {
+        console.error('[EventEditor] Video demasiado largo:', error);
+        showToast(
+          error instanceof Error ? error.message : 'El video debe durar máximo 25 segundos',
+          'error'
+        );
+        return;
+      }
+    }
+
     setUploading(prev => ({ ...prev, [slot]: true }));
     
     try {

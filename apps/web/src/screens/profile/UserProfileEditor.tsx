@@ -20,6 +20,8 @@ import { buildSafePatch } from '../../utils/safePatch';
 import { useQueryClient } from '@tanstack/react-query';
 import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
+import { ensureMaxVideoDuration } from '../../utils/videoValidation';
+import { ensureMaxVideoDuration } from '../../utils/videoValidation';
 
 const colors = {
   dark: '#121212',
@@ -110,6 +112,19 @@ export default function UserProfileEditor() {
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
     if (!user) return;
+
+    if (kind === 'video') {
+      try {
+        await ensureMaxVideoDuration(file, 25);
+      } catch (error) {
+        console.error('[UserProfileEditor] Video demasiado largo:', error);
+        showToast(
+          error instanceof Error ? error.message : 'El video debe durar máximo 25 segundos',
+          'error'
+        );
+        return;
+      }
+    }
     
     setUploading(prev => ({ ...prev, [slot]: true }));
     

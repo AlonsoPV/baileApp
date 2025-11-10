@@ -36,6 +36,7 @@ import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLo
 import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEditor";
 import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import type { AcademyLocation } from "../../types/academy";
+import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 
 const colors = {
   coral: '#FF3D57',
@@ -675,6 +676,19 @@ export default function OrganizerProfileEditor() {
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    if (kind === 'video') {
+      try {
+        await ensureMaxVideoDuration(file, 25);
+      } catch (error) {
+        console.error('[OrganizerProfileEditor] Video demasiado largo:', error);
+        showToast(
+          error instanceof Error ? error.message : 'El video debe durar máximo 25 segundos',
+          'error'
+        );
+        return;
+      }
+    }
+
     setUploading(prev => ({ ...prev, [slot]: true }));
 
     try {

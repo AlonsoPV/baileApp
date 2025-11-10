@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 import EventCreateForm from "../../components/events/EventCreateForm";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 
 const colors = {
   coral: '#FF3D57',
@@ -37,6 +38,19 @@ export const EventDateEditor: React.FC = () => {
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
+    if (kind === 'video') {
+      try {
+        await ensureMaxVideoDuration(file, 25);
+      } catch (error) {
+        console.error('[EventDateEditor] Video demasiado largo:', error);
+        showToast(
+          error instanceof Error ? error.message : 'El video debe durar máximo 25 segundos',
+          'error'
+        );
+        return;
+      }
+    }
+
     setUploading(prev => ({ ...prev, [slot]: true }));
     
     try {

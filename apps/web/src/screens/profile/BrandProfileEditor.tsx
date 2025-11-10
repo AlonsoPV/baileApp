@@ -132,7 +132,7 @@ export default function BrandProfileEditor() {
 
       // Agregar campos opcionales solo si existen en la tabla
       // (requiere ejecutar FIX_BRAND_COLUMNS.sql primero)
-      if (form.productos && form.productos.length > 0) {
+      if (form.productos) {
         payload.productos = form.productos;
       }
       if (form.size_guide && form.size_guide.length > 0) {
@@ -1090,6 +1090,9 @@ export default function BrandProfileEditor() {
                         <ImageWithFallback 
                           src={p.imagen_url} 
                           alt={p.titulo || 'Producto'} 
+                          width={400}
+                          height={320}
+                          sizes="(max-width: 768px) 100vw, 400px"
                           style={{ 
                             width: '100%', 
                             height: 'auto', 

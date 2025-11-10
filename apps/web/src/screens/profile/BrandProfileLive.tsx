@@ -155,7 +155,14 @@ export default function BrandProfileLive() {
         >
           {portadaUrl && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
-              <ImageWithFallback src={portadaUrl} alt="portada" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <ImageWithFallback
+                    src={portadaUrl}
+                    alt="portada"
+                    width={1200}
+                    height={500}
+                    sizes="(max-width: 768px) 100vw, 1200px"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
             </div>
           )}
 
@@ -164,7 +171,14 @@ export default function BrandProfileLive() {
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
               <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '50%', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary }}>
                 {avatarUrl ? (
-                  <ImageWithFallback src={avatarUrl} alt="avatar marca" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <ImageWithFallback
+                    src={avatarUrl}
+                    alt="avatar marca"
+                    width={300}
+                    height={300}
+                    sizes="(max-width: 768px) 50vw, 300px"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
