@@ -18,8 +18,8 @@ import RitmosChips from "../RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import UbicacionesEditor from "../academy/UbicacionesEditor";
 import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
-import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
 import type { AcademyLocation } from "../../types/academy";
+import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
 
 const colors = {
   coral: '#FF3D57',
@@ -80,11 +80,57 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     setValue('direccion', '');
     setValue('ciudad', '');
     setValue('referencias', '');
+    setValue('ubicaciones' as any, [] as any);
   };
 
   const updateManualLocationField = (field: 'lugar' | 'direccion' | 'ciudad' | 'referencias', value: string) => {
     setSelectedLocationId('');
     setValue(field, value);
+    const current = ((values as any)?.ubicaciones || []) as AcademyLocation[];
+    const base: AcademyLocation = {
+      sede: (values as any)?.lugar || '',
+      direccion: (values as any)?.direccion || '',
+      ciudad: (values as any)?.ciudad || '',
+      referencias: (values as any)?.referencias || '',
+      zona_id: typeof (values as any)?.zona === 'number' ? (values as any).zona : null,
+    };
+    const next = current.length ? [...current] : [base];
+    const primary = { ...base, ...(next[0] || {}) };
+    if (field === 'lugar') primary.sede = value;
+    if (field === 'direccion') primary.direccion = value;
+    if (field === 'ciudad') primary.ciudad = value;
+    if (field === 'referencias') primary.referencias = value;
+    next[0] = primary;
+    setValue('ubicaciones' as any, next as any);
+  };
+
+  const handleUbicacionesChange = (list: AcademyLocation[]) => {
+    setValue('ubicaciones' as any, list as any);
+    const primary = list[0];
+    if (primary) {
+      setValue('lugar', primary.sede || '');
+      setValue('direccion', primary.direccion || '');
+      setValue('ciudad', primary.ciudad || '');
+      setValue('referencias', primary.referencias || '');
+      if (typeof primary.zona_id === 'number') {
+        setValue('zona' as any, primary.zona_id as any);
+      }
+    } else {
+      setValue('lugar', '');
+      setValue('direccion', '');
+      setValue('ciudad', '');
+      setValue('referencias', '');
+    }
+    const match = primary
+      ? orgLocations.find(
+          (loc) =>
+            (loc.nombre || '') === (primary.sede || '') &&
+            (loc.direccion || '') === (primary.direccion || '') &&
+            (loc.ciudad || '') === (primary.ciudad || '') &&
+            (loc.referencias || '') === (primary.referencias || '')
+        )
+      : undefined;
+    setSelectedLocationId(match?.id ? String(match.id) : '');
   };
 
   useEffect(() => {
@@ -923,8 +969,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 border: `1px solid ${colors.light}22`,
               }}>
                 <UbicacionesEditor
-                  value={(values as any)?.ubicaciones || []}
-                  onChange={(ubicaciones) => setValue('ubicaciones' as any, ubicaciones as any)}
+                  value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
+                  onChange={(ubicaciones) => handleUbicacionesChange(ubicaciones as AcademyLocation[])}
                 />
               </div>
 
