@@ -740,6 +740,18 @@ export default function OrganizerProfileEditor() {
     handleDateUbicacionesChange([converted]);
   };
 
+  const updateManualDateLocationField = (
+    key: 'lugar' | 'direccion' | 'ciudad' | 'referencias',
+    value: string
+  ) => {
+    setSelectedDateLocationId('');
+    setDateForm((prev) => ({
+      ...prev,
+      [key]: value,
+      ubicaciones: [],
+    }));
+  };
+
   useEffect(() => {
     if (!showDateForm) return;
     if (!orgLocations.length) return;
@@ -2107,13 +2119,13 @@ export default function OrganizerProfileEditor() {
                     </h3>
                     {orgLocations.length > 0 && (
                       <>
-                        <div style={{ marginBottom: 12 }}>
+                        {/* <div style={{ marginBottom: 12 }}>
                           <OrganizerLocationPicker
                             organizerId={org?.id}
                             title="Buscar ubicación guardada"
                             onPick={(u) => applyOrganizerLocationToDateForm(u as OrganizerLocation)}
                           />
-                        </div>
+                        </div> */}
                         <div style={{ marginBottom: 16 }}>
                           <label className="org-editor-field">Elegir ubicación existente</label>
                           <div style={{ position: 'relative' }}>
@@ -2169,14 +2181,51 @@ export default function OrganizerProfileEditor() {
                         </div>
                       </>
                     )}
-                    <UbicacionesEditor
-                      value={dateForm.ubicaciones || []}
-                      onChange={(list) => {
-                        setSelectedDateLocationId('');
-                        handleDateUbicacionesChange(list);
-                      }}
-                      title="Ubicaciones del evento"
-                    />
+                  {/* Formulario de ubicación manual (como en CrearClase) */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <label className="org-editor-field">Nombre de la ubicación</label>
+                      <input
+                        type="text"
+                        value={dateForm.lugar || ''}
+                        onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
+                        placeholder="Ej: Sede Central / Salón Principal"
+                        className="org-editor-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="org-editor-field">Dirección</label>
+                      <input
+                        type="text"
+                        value={dateForm.direccion || ''}
+                        onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
+                        placeholder="Calle, número, colonia"
+                        className="org-editor-input"
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    <div>
+                      <label className="org-editor-field">Ciudad</label>
+                      <input
+                        type="text"
+                        value={dateForm.ciudad || ''}
+                        onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
+                        placeholder="Ciudad"
+                        className="org-editor-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="org-editor-field">Notas o referencias</label>
+                      <input
+                        type="text"
+                        value={dateForm.referencias || ''}
+                        onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
+                        placeholder="Ej. Entrada lateral, 2do piso"
+                        className="org-editor-input"
+                      />
+                    </div>
+                  </div>
                   </div>
 
                   {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
