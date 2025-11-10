@@ -32,7 +32,7 @@ import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
-import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation } from "../../hooks/useOrganizerLocations";
+import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEditor";
 import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
 import type { AcademyLocation } from "../../types/academy";
@@ -48,6 +48,21 @@ const colors = {
 };
 
 // Componente para mostrar un social con sus fechas
+const mapOrganizerLocationToAcademy = (loc?: Partial<OrganizerLocation> | null): AcademyLocation | null => {
+  if (!loc) return null;
+  return {
+    sede: loc.nombre || '',
+    direccion: loc.direccion || '',
+    ciudad: loc.ciudad || '',
+    zona_id: typeof loc.zona_id === 'number'
+      ? loc.zona_id
+      : Array.isArray(loc.zona_ids) && loc.zona_ids.length
+        ? loc.zona_ids[0] ?? null
+        : null,
+    referencias: loc.referencias || '',
+  };
+};
+
 function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
@@ -703,6 +718,20 @@ export default function OrganizerProfileEditor() {
     }));
   };
 
+  useEffect(() => {
+    if (
+      showDateForm &&
+      orgLocations.length > 0 &&
+      (!(dateForm.ubicaciones && dateForm.ubicaciones.length))
+    ) {
+      const first = mapOrganizerLocationToAcademy(orgLocations[0]);
+      if (first) {
+        handleDateUbicacionesChange([first]);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDateForm, orgLocations, dateForm.ubicaciones?.length]);
+
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
     if (kind === 'video') {
@@ -972,9 +1001,19 @@ export default function OrganizerProfileEditor() {
         parentIdToUse = newParent?.id;
       }
 
-      const primaryLocation = (dateForm.ubicaciones || [])[0];
+      const manualLocations = dateForm.ubicaciones || [];
+      const fallbackLocation = !manualLocations.length && orgLocations.length
+        ? mapOrganizerLocationToAcademy(orgLocations[0])
+        : null;
+      const effectiveLocations = manualLocations.length
+        ? manualLocations
+        : fallbackLocation
+          ? [fallbackLocation]
+          : [];
+
+      const primaryLocation = effectiveLocations[0];
       const zonasFromLocations = new Set<number>();
-      (dateForm.ubicaciones || []).forEach((loc) => {
+      (effectiveLocations || []).forEach((loc) => {
         if (typeof loc?.zona_id === 'number') zonasFromLocations.add(loc.zona_id);
       });
 
@@ -1986,13 +2025,8 @@ export default function OrganizerProfileEditor() {
                           organizerId={org?.id}
                           title="Buscar ubicación guardada"
                           onPick={(u) => {
-                            const entry: AcademyLocation = {
-                              sede: u.nombre || '',
-                              direccion: u.direccion || '',
-                              ciudad: (u as any).ciudad || '',
-                              zona_id: Array.isArray(u.zona_ids) && u.zona_ids.length ? u.zona_ids[0] : null,
-                              referencias: u.referencias || ''
-                            };
+                            const entry = mapOrganizerLocationToAcademy(u);
+                            if (!entry) return;
                             const next = [...(dateForm.ubicaciones || []), entry];
                             handleDateUbicacionesChange(next);
                           }}

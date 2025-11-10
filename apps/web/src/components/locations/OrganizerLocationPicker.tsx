@@ -3,7 +3,15 @@ import { useOrganizerLocations } from '../../hooks/useOrganizerLocations';
 
 type Props = {
   organizerId?: number;
-  onPick: (loc: { nombre?: string; direccion?: string; referencias?: string; zona_ids?: number[] }) => void;
+  onPick: (loc: {
+    id?: number;
+    nombre?: string;
+    direccion?: string;
+    ciudad?: string | null;
+    referencias?: string;
+    zona_id?: number | null;
+    zona_ids?: number[] | null;
+  }) => void;
   title?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -61,7 +69,17 @@ export default function OrganizerLocationPicker({ organizerId, onPick, title = '
             <button
               key={u.id}
               type="button"
-              onClick={() => onPick({ nombre: u.nombre, direccion: u.direccion, referencias: u.referencias, zona_ids: u.zona_ids })}
+              onClick={() =>
+                onPick({
+                  id: u.id,
+                  nombre: u.nombre,
+                  direccion: u.direccion,
+                  ciudad: u.ciudad,
+                  referencias: u.referencias,
+                  zona_id: typeof u.zona_id === 'number' ? u.zona_id : null,
+                  zona_ids: u.zona_ids,
+                })
+              }
               style={{
                 textAlign: 'left',
                 border: `1px solid ${colors.line}`,
