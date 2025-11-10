@@ -9,7 +9,6 @@ import { useHydratedForm } from "../../hooks/useHydratedForm";
 import ChipPicker from "../common/ChipPicker";
 import FAQEditor from "../common/FAQEditor";
 import ScheduleEditor from "./ScheduleEditor";
-import CostsEditor from "./CostsEditor";
 import DateFlyerUploader from "./DateFlyerUploader";
 import { MediaGrid } from "../MediaGrid";
 import { MediaUploader } from "../MediaUploader";
@@ -133,25 +132,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     setSelectedLocationId(match?.id ? String(match.id) : '');
   };
 
-  useEffect(() => {
-    if (!orgLocations.length) {
-      if (selectedLocationId) setSelectedLocationId('');
-      return;
-    }
-    const match = orgLocations.find((loc) =>
-      (loc.nombre || '') === (values?.lugar || '') &&
-      (loc.direccion || '') === (values?.direccion || '') &&
-      (loc.ciudad || '') === (values?.ciudad || '') &&
-      (loc.referencias || '') === (values?.referencias || '')
-    );
-    if (match) {
-      if (selectedLocationId !== String(match.id)) {
-        setSelectedLocationId(String(match.id));
-      }
-    } else if (selectedLocationId) {
-      setSelectedLocationId('');
-    }
-  }, [orgLocations, values?.lugar, values?.direccion, values?.ciudad, values?.referencias, selectedLocationId]);
+  
 
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
@@ -220,6 +201,26 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ubicaciones: [] as any[],
     }
   });
+
+  useEffect(() => {
+    if (!orgLocations.length) {
+      if (selectedLocationId) setSelectedLocationId('');
+      return;
+    }
+    const match = orgLocations.find((loc) =>
+      (loc.nombre || '') === ((values as any)?.lugar || '') &&
+      (loc.direccion || '') === ((values as any)?.direccion || '') &&
+      (loc.ciudad || '') === ((values as any)?.ciudad || '') &&
+      (loc.referencias || '') === ((values as any)?.referencias || '')
+    );
+    if (match) {
+      if (selectedLocationId !== String(match.id)) {
+        setSelectedLocationId(String(match.id));
+      }
+    } else if (selectedLocationId) {
+      setSelectedLocationId('');
+    }
+  }, [orgLocations, (values as any)?.lugar, (values as any)?.direccion, (values as any)?.ciudad, (values as any)?.referencias, selectedLocationId]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
@@ -900,8 +901,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       Requisitos
                     </label>
                     <textarea
-                      value={values?.requisitos || ''}
-                      onChange={(e) => setValue('requisitos', e.target.value)}
+                      value={(values as any)?.requisitos || ''}
+                      onChange={(e) => setValue('requisitos' as any, e.target.value)}
                       placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
                       rows={3}
                       style={{
@@ -947,26 +948,15 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   📅 Cronograma del Evento
                 </h2>
-                {(ScheduleEditor as any)({
-                  value: values?.cronograma || [],
-                  onChange: (cronograma: any) => setValue('cronograma', cronograma)
-                })}
+                <ScheduleEditor
+                  schedule={values?.cronograma || []}
+                  onChangeSchedule={(cronograma) => setValue('cronograma', cronograma)}
+                  costos={values?.costos || []}
+                  onChangeCostos={(costos) => setValue('costos', costos)}
+                  ritmos={ritmoTags}
+                  eventFecha={values?.fecha || ''}
+                />
               </div>
-
-              {/* Costos - Solo para fechas */}
-              {!isParent && (
-                <div style={{
-                  padding: '24px',
-                  background: `${colors.dark}66`,
-                  borderRadius: '16px',
-                  border: `1px solid ${colors.light}22`,
-                }}>
-                  <CostsEditor
-                    value={values?.costos || []}
-                    onChange={(costos) => setValue('costos', costos)}
-                  />
-                </div>
-              )}
 
               {/* Flyer - Solo para fechas */}
               {!isParent && (

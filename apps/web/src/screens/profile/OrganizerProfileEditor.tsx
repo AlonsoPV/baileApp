@@ -346,7 +346,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                 }}
               >
                 {/* Barra decorativa superior para fechas */}
-               {/*  <div style={{
+                {/*  <div style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -2109,13 +2109,7 @@ export default function OrganizerProfileEditor() {
                     </h3>
                     {orgLocations.length > 0 && (
                       <>
-                        {/* <div style={{ marginBottom: 12 }}>
-                          <OrganizerLocationPicker
-                            organizerId={org?.id}
-                            title="Buscar ubicación guardada"
-                            onPick={(u) => applyOrganizerLocationToDateForm(u as OrganizerLocation)}
-                          />
-                        </div> */}
+
                         <div style={{ marginBottom: 16 }}>
                           <label className="org-editor-field">Elegir ubicación existente o ingresa una nueva</label>
                           <div style={{ position: 'relative' }}>
@@ -2171,55 +2165,54 @@ export default function OrganizerProfileEditor() {
                         </div>
                       </>
                     )}
-                  {/* Formulario de ubicación manual (como en CrearClase) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label className="org-editor-field">Nombre de la ubicación</label>
-                      <input
-                        type="text"
-                        value={dateForm.lugar || ''}
-                        onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
-                        placeholder="Ej: Sede Central / Salón Principal"
-                        className="org-editor-input"
-                      />
+                    {/* Formulario de ubicación manual (como en CrearClase) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label className="org-editor-field">Nombre de la ubicación</label>
+                        <input
+                          type="text"
+                          value={dateForm.lugar || ''}
+                          onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
+                          placeholder="Ej: Sede Central / Salón Principal"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">Dirección</label>
+                        <input
+                          type="text"
+                          value={dateForm.direccion || ''}
+                          onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
+                          placeholder="Calle, número, colonia"
+                          className="org-editor-input"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="org-editor-field">Dirección</label>
-                      <input
-                        type="text"
-                        value={dateForm.direccion || ''}
-                        onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
-                        placeholder="Calle, número, colonia"
-                        className="org-editor-input"
-                      />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                      <div>
+                        <label className="org-editor-field">Ciudad</label>
+                        <input
+                          type="text"
+                          value={dateForm.ciudad || ''}
+                          onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
+                          placeholder="Ciudad"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">Notas o referencias</label>
+                        <input
+                          type="text"
+                          value={dateForm.referencias || ''}
+                          onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
+                          placeholder="Ej. Entrada lateral, 2do piso"
+                          className="org-editor-input"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
-                    <div>
-                      <label className="org-editor-field">Ciudad</label>
-                      <input
-                        type="text"
-                        value={dateForm.ciudad || ''}
-                        onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
-                        placeholder="Ciudad"
-                        className="org-editor-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="org-editor-field">Notas o referencias</label>
-                      <input
-                        type="text"
-                        value={dateForm.referencias || ''}
-                        onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
-                        placeholder="Ej. Entrada lateral, 2do piso"
-                        className="org-editor-input"
-                      />
-                    </div>
-                  </div>
                   </div>
 
-                  {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
-
+               
                   {/* Cronograma */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
