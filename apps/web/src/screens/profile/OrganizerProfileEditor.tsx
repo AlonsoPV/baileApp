@@ -33,8 +33,7 @@ import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation } from "../../hooks/useOrganizerLocations";
-import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
-import type { AcademyLocation } from "../../types/academy";
+import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -2291,103 +2290,12 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
-          {/* Mis ubicaciones reutilizables (exactamente el mismo editor que academia) */}
+          {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
           <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               📍 Mis ubicaciones
             </h2>
-            {(() => {
-              // Estado local de items e ids alineados por índice
-              const [items, setItems] = React.useState<AcademyLocation[]>(
-                (orgLocations || []).map((u: any) => ({
-                  sede: u?.nombre || '',
-                  direccion: u?.direccion || '',
-                  ciudad: u?.ciudad || '',
-                  zona_id: typeof u?.zona_id === 'number' ? u.zona_id : (Array.isArray(u?.zona_ids) ? (u.zona_ids[0] ?? null) : null),
-                  referencias: u?.referencias || ''
-                }))
-              );
-              const [ids, setIds] = React.useState<number[]>(
-                (orgLocations || []).map((u: any) => u.id)
-              );
-              const prevItemsRef = React.useRef<AcademyLocation[]>(items);
-              const prevIdsRef = React.useRef<number[]>(ids);
-
-              React.useEffect(() => {
-                const mapped = (orgLocations || []).map((u: any) => ({
-                  sede: u?.nombre || '',
-                  direccion: u?.direccion || '',
-                  ciudad: u?.ciudad || '',
-                  zona_id: typeof u?.zona_id === 'number' ? u.zona_id : (Array.isArray(u?.zona_ids) ? (u.zona_ids[0] ?? null) : null),
-                  referencias: u?.referencias || ''
-                }));
-                setItems(mapped);
-                setIds((orgLocations || []).map((u: any) => u.id));
-                prevItemsRef.current = mapped;
-                prevIdsRef.current = (orgLocations || []).map((u: any) => u.id);
-              }, [orgLocations]);
-
-              const shallowEq = (a?: AcademyLocation, b?: AcademyLocation) => {
-                return (a?.sede||'') === (b?.sede||'')
-                  && (a?.direccion||'') === (b?.direccion||'')
-                  && (a?.ciudad||'') === (b?.ciudad||'')
-                  && (a?.zona_id||null) === (b?.zona_id||null)
-                  && (a?.referencias||'') === (b?.referencias||'');
-              };
-
-              const handleChange = (next: AcademyLocation[]) => {
-                const prev = prevItemsRef.current;
-                const prevIds = prevIdsRef.current;
-                // Detect delete por diferencia de largo
-                if (next.length < prev.length) {
-                  let removedIndex = prev.length - 1;
-                  for (let i = 0; i < next.length; i++) {
-                    if (!shallowEq(next[i], prev[i])) { removedIndex = i; break; }
-                  }
-                  const removedId = prevIds[removedIndex];
-                  if (removedId) {
-                    deleteOrgLoc.mutate({ id: removedId, organizer_id: org!.id });
-                  }
-                  const nextIds = [...prevIds];
-                  nextIds.splice(removedIndex, 1);
-                  setIds(nextIds);
-                  prevIdsRef.current = nextIds;
-                }
-                setItems(next);
-                prevItemsRef.current = next;
-              };
-
-              const handleSaveItem = async (index: number, it: AcademyLocation) => {
-                if (!org?.id) return;
-                const payload = {
-                  organizer_id: org.id,
-                  nombre: it.sede || '',
-                  direccion: it.direccion || '',
-                  ciudad: it.ciudad || '',
-                  referencias: it.referencias || '',
-                  zona_id: it.zona_id ?? null,
-                  zona_ids: (typeof it.zona_id === 'number' ? [it.zona_id] : [])
-                } as any;
-                const idAt = ids[index];
-                if (idAt) {
-                  await updateOrgLoc.mutateAsync({ id: idAt, patch: payload });
-                } else {
-                  const created = await createOrgLoc.mutateAsync(payload);
-                  const nextIds = [...ids];
-                  nextIds[index] = created.id!;
-                  setIds(nextIds);
-                  prevIdsRef.current = nextIds;
-                }
-              };
-
-              return (
-                <AcademyUbicacionesEditor
-                  value={items}
-                  onChange={handleChange}
-                  onSaveItem={handleSaveItem}
-                />
-              );
-            })()}
+            <OrganizerUbicacionesEditor organizerId={org?.id} />
           </div>
 
           {/* Sección de Fotos */}
