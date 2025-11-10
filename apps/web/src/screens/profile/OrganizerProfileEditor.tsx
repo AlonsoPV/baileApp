@@ -25,15 +25,17 @@ import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import ChipPicker from "../../components/common/ChipPicker";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
+import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
 import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation } from "../../hooks/useOrganizerLocations";
 import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEditor";
+import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
+import type { AcademyLocation } from "../../types/academy";
 
 const colors = {
   coral: '#FF3D57',
@@ -89,8 +91,8 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
       }} />
 
       {/* FILA 1: Información del Social */}
-      <div style={{ 
-        position: 'relative', 
+      <div style={{
+        position: 'relative',
         zIndex: 2,
         display: 'flex',
         alignItems: 'flex-start',
@@ -119,7 +121,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
         >
           🎭
         </motion.div>
-        
+
         {/* Contenido principal */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Nombre del social */}
@@ -137,7 +139,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
           }}>
             {parent.nombre}
           </h3>
-          
+
           {/* Descripción */}
           {parent.descripcion && (
             <p style={{
@@ -152,10 +154,10 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             </p>
           )}
         </div>
-        
+
         {/* Botones de acción */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           gap: '0.75rem',
           flexShrink: 0,
           alignItems: 'flex-start'
@@ -184,7 +186,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             <span>👁️</span>
             <span>Ver</span>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -212,7 +214,7 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
             <span>✏️</span>
             <span>Editar</span>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -258,336 +260,336 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                 e.stopPropagation();
                 setExpanded(!expanded);
               }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              background: 'rgba(30, 136, 229, 0.1)',
-              border: '2px solid rgba(30, 136, 229, 0.2)',
-              color: colors.light,
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: '700',
-              marginBottom: expanded ? '1rem' : '0',
-              padding: '1rem 1.25rem',
-              borderRadius: '14px',
-              width: '100%',
-              textAlign: 'left',
-              transition: 'all 0.3s ease',
-              boxShadow: expanded ? '0 4px 16px rgba(30, 136, 229, 0.2)' : 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.2rem' }}>📅</span>
-              <span>{dates.length} fecha{dates.length > 1 ? 's' : ''} disponible{dates.length > 1 ? 's' : ''}</span>
-            </div>
-            <motion.span
-              animate={{ rotate: expanded ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ fontSize: '0.875rem', opacity: 0.8 }}
-            >
-              ▼
-            </motion.span>
-          </motion.button>
-
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                marginTop: '1rem',
-                padding: '1.5rem',
-                borderRadius: '20px',
-                border: '2px solid rgba(30, 136, 229, 0.3)',
-                background: 'rgba(15, 15, 15, 0.4)',
-                position: 'relative',
-                overflow: 'hidden'
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                background: 'rgba(30, 136, 229, 0.1)',
+                border: '2px solid rgba(30, 136, 229, 0.2)',
+                color: colors.light,
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: '700',
+                marginBottom: expanded ? '1rem' : '0',
+                padding: '1rem 1.25rem',
+                borderRadius: '14px',
+                width: '100%',
+                textAlign: 'left',
+                transition: 'all 0.3s ease',
+                boxShadow: expanded ? '0 4px 16px rgba(30, 136, 229, 0.2)' : 'none'
               }}
             >
-              {/* Barra decorativa superior para fechas */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
-                borderRadius: '20px 20px 0 0',
-              }} />
-              {dates.map((date: any, index: number) => {
-                // Debug log para cada fecha
-                console.log('[EventParentCard] Date item:', date);
-                console.log('[EventParentCard] Date nombre:', date.nombre);
-                console.log('[EventParentCard] Date fecha:', date.fecha);
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📅</span>
+                <span>{dates.length} fecha{dates.length > 1 ? 's' : ''} disponible{dates.length > 1 ? 's' : ''}</span>
+              </div>
+              <motion.span
+                animate={{ rotate: expanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ fontSize: '0.875rem', opacity: 0.8 }}
+              >
+                ▼
+              </motion.span>
+            </motion.button>
 
-                return (
-                  <motion.div
-                    key={date.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.08, duration: 0.3 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/social/fecha/${date.id}`);
-                    }}
-                    style={{
-                      padding: '1.5rem',
-                      borderRadius: '16px',
-                      border: '2px solid rgba(255, 255, 255, 0.15)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '1rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      background: 'rgba(20, 20, 20, 0.5)'
-                    }}
-                    whileHover={{
-                      y: -4,
-                      borderColor: 'rgba(30, 136, 229, 0.5)',
-                      background: 'rgba(30, 30, 30, 0.6)'
-                    }}
-                  >
-                    {/* Efecto de brillo en hover */}
+            {expanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  marginTop: '1rem',
+                  padding: '1.5rem',
+                  borderRadius: '20px',
+                  border: '2px solid rgba(30, 136, 229, 0.3)',
+                  background: 'rgba(15, 15, 15, 0.4)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Barra decorativa superior para fechas */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '3px',
+                  background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
+                  borderRadius: '20px 20px 0 0',
+                }} />
+                {dates.map((date: any, index: number) => {
+                  // Debug log para cada fecha
+                  console.log('[EventParentCard] Date item:', date);
+                  console.log('[EventParentCard] Date nombre:', date.nombre);
+                  console.log('[EventParentCard] Date fecha:', date.fecha);
+
+                  return (
                     <motion.div
-                      initial={{ x: '-100%' }}
-                      whileHover={{ x: '100%' }}
-                      transition={{ duration: 0.6, ease: 'easeInOut' }}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
-                        zIndex: 1,
-                        pointerEvents: 'none'
+                      key={date.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.08, duration: 0.3 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/social/fecha/${date.id}`);
                       }}
-                    />
+                      style={{
+                        padding: '1.5rem',
+                        borderRadius: '16px',
+                        border: '2px solid rgba(255, 255, 255, 0.15)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        background: 'rgba(20, 20, 20, 0.5)'
+                      }}
+                      whileHover={{
+                        y: -4,
+                        borderColor: 'rgba(30, 136, 229, 0.5)',
+                        background: 'rgba(30, 30, 30, 0.6)'
+                      }}
+                    >
+                      {/* Efecto de brillo en hover */}
+                      <motion.div
+                        initial={{ x: '-100%' }}
+                        whileHover={{ x: '100%' }}
+                        transition={{ duration: 0.6, ease: 'easeInOut' }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
+                          zIndex: 1,
+                          pointerEvents: 'none'
+                        }}
+                      />
 
-                    {/* FILA 1: Nombre y fecha principal */}
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      gap: '1rem',
-                      position: 'relative',
-                      zIndex: 2,
-                      paddingBottom: '1rem',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                        <motion.div
-                          whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                          transition={{ duration: 0.4 }}
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.4rem',
-                            background: 'rgba(30, 136, 229, 0.15)',
-                            border: '2px solid rgba(30, 136, 229, 0.3)',
-                            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-                            flexShrink: 0
-                          }}
-                        >
-                          📅
-                        </motion.div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: '1.2rem',
-                            fontWeight: '800',
-                            color: colors.light,
-                            lineHeight: 1.3,
-                            letterSpacing: '-0.01em',
-                            marginBottom: '0.25rem'
-                          }}>
-                            {date.nombre || 'Fecha sin nombre'}
-                          </div>
-                          {/* Fecha en chip compacto */}
-                          <div style={{
-                            fontSize: '0.875rem',
-                            color: colors.blue,
-                            fontWeight: '700',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '0.4rem 0.75rem',
-                            background: 'rgba(30, 136, 229, 0.15)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(30, 136, 229, 0.25)',
-                            width: 'fit-content'
-                          }}>
-                            <span>📅</span>
-                            <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
-                              weekday: 'short',
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Botones de acción en la primera fila */}
-                      <div style={{ 
-                        display: 'flex', 
-                        gap: '0.5rem',
-                        flexShrink: 0
+                      {/* FILA 1: Nombre y fecha principal */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1rem',
+                        position: 'relative',
+                        zIndex: 2,
+                        paddingBottom: '1rem',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
                       }}>
-                        <motion.button
-                          whileHover={{ scale: 1.08, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/social/fecha/${date.id}/edit`);
-                          }}
-                          style={{
-                            padding: '0.6rem 1rem',
-                            background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '10px',
-                            fontSize: '0.8rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <span>✏️</span>
-                          <span>Editar</span>
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.08, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implementar eliminación de fecha
-                            console.log('Eliminar fecha:', date.id);
-                          }}
-                          style={{
-                            padding: '0.6rem 1rem',
-                            background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '10px',
-                            fontSize: '0.8rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <span>🗑️</span>
-                          <span>Eliminar</span>
-                        </motion.button>
-                      </div>
-                    </div>
-
-                    {/* FILA 2: Detalles de la fecha */}
-                    <div style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.75rem',
-                      alignItems: 'center',
-                      position: 'relative',
-                      zIndex: 2
-                    }}>
-                          {date.hora_inicio && date.hora_fin && (
-                            <div style={{
-                              fontSize: '0.875rem',
-                              color: colors.light,
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                          <motion.div
+                            whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                            transition={{ duration: 0.4 }}
+                            style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.5rem 0.875rem',
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              width: 'fit-content'
+                              justifyContent: 'center',
+                              fontSize: '1.4rem',
+                              background: 'rgba(30, 136, 229, 0.15)',
+                              border: '2px solid rgba(30, 136, 229, 0.3)',
+                              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
+                              flexShrink: 0
+                            }}
+                          >
+                            📅
+                          </motion.div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '1.2rem',
+                              fontWeight: '800',
+                              color: colors.light,
+                              lineHeight: 1.3,
+                              letterSpacing: '-0.01em',
+                              marginBottom: '0.25rem'
                             }}>
-                              <span>🕐</span>
-                              <span>{date.hora_inicio} - {date.hora_fin}</span>
+                              {date.nombre || 'Fecha sin nombre'}
                             </div>
-                          )}
-
-                          {date.lugar && (
+                            {/* Fecha en chip compacto */}
                             <div style={{
                               fontSize: '0.875rem',
-                              color: colors.light,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.5rem 0.875rem',
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              width: 'fit-content'
-                            }}>
-                              <span>📍</span>
-                              <span>{date.lugar}</span>
-                            </div>
-                          )}
-
-                          {date.ciudad && (
-                            <div style={{
-                              fontSize: '0.8rem',
-                              color: 'rgba(255, 255, 255, 0.8)',
-                              display: 'flex',
+                              color: colors.blue,
+                              fontWeight: '700',
+                              display: 'inline-flex',
                               alignItems: 'center',
                               gap: '6px',
                               padding: '0.4rem 0.75rem',
-                              background: 'rgba(255, 255, 255, 0.06)',
+                              background: 'rgba(30, 136, 229, 0.15)',
                               borderRadius: '8px',
+                              border: '1px solid rgba(30, 136, 229, 0.25)',
                               width: 'fit-content'
                             }}>
-                              <span>🏙️</span>
-                              <span>{date.ciudad}</span>
+                              <span>📅</span>
+                              <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}</span>
                             </div>
-                          )}
-                          
-                          {/* Contador de RSVP */}
+                          </div>
+                        </div>
+
+                        {/* Botones de acción en la primera fila */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexShrink: 0
+                        }}>
+                          <motion.button
+                            whileHover={{ scale: 1.08, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/social/fecha/${date.id}/edit`);
+                            }}
+                            style={{
+                              padding: '0.6rem 1rem',
+                              background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.8rem',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.3s ease',
+                              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <span>✏️</span>
+                            <span>Editar</span>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.08, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Implementar eliminación de fecha
+                              console.log('Eliminar fecha:', date.id);
+                            }}
+                            style={{
+                              padding: '0.6rem 1rem',
+                              background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.8rem',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.3s ease',
+                              boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <span>🗑️</span>
+                            <span>Eliminar</span>
+                          </motion.button>
+                        </div>
+                      </div>
+
+                      {/* FILA 2: Detalles de la fecha */}
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.75rem',
+                        alignItems: 'center',
+                        position: 'relative',
+                        zIndex: 2
+                      }}>
+                        {date.hora_inicio && date.hora_fin && (
                           <div style={{
-                            marginLeft: 'auto',
-                            padding: '0.5rem 0.875rem',
-                            background: 'rgba(255, 140, 66, 0.15)',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255, 140, 66, 0.3)',
+                            fontSize: '0.875rem',
+                            color: colors.light,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px'
+                            gap: '6px',
+                            padding: '0.5rem 0.875rem',
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            width: 'fit-content'
                           }}>
-                            <RSVPCounter 
-                              eventDateId={date.id} 
-                              variant="minimal"
-                              showIcons={true}
-                            />
+                            <span>🕐</span>
+                            <span>{date.hora_inicio} - {date.hora_fin}</span>
                           </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          )}
+                        )}
+
+                        {date.lugar && (
+                          <div style={{
+                            fontSize: '0.875rem',
+                            color: colors.light,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '0.5rem 0.875rem',
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            width: 'fit-content'
+                          }}>
+                            <span>📍</span>
+                            <span>{date.lugar}</span>
+                          </div>
+                        )}
+
+                        {date.ciudad && (
+                          <div style={{
+                            fontSize: '0.8rem',
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '0.4rem 0.75rem',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            borderRadius: '8px',
+                            width: 'fit-content'
+                          }}>
+                            <span>🏙️</span>
+                            <span>{date.ciudad}</span>
+                          </div>
+                        )}
+
+                        {/* Contador de RSVP */}
+                        <div style={{
+                          marginLeft: 'auto',
+                          padding: '0.5rem 0.875rem',
+                          background: 'rgba(255, 140, 66, 0.15)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 140, 66, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <RSVPCounter
+                            eventDateId={date.id}
+                            variant="minimal"
+                            showIcons={true}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
           </>
         ) : (
           <div style={{
@@ -642,6 +644,7 @@ export default function OrganizerProfileEditor() {
     direccion: '',
     referencias: '',
     requisitos: '',
+    ubicaciones: [] as AcademyLocation[],
     zona: null as number | null,
     estilos: [] as number[],
     ritmos_seleccionados: [] as string[],
@@ -651,6 +654,24 @@ export default function OrganizerProfileEditor() {
     flyer_url: null as string | null,
     estado_publicacion: 'borrador' as 'borrador' | 'publicado'
   });
+
+  const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
+    const primary = list?.[0] || {};
+    const zonasSet = new Set<number>();
+    (list || []).forEach((loc) => {
+      if (typeof loc?.zona_id === 'number') zonasSet.add(loc.zona_id);
+    });
+    setDateForm((prev) => ({
+      ...prev,
+      ubicaciones: list,
+      lugar: primary?.sede || '',
+      ciudad: primary?.ciudad || '',
+      direccion: primary?.direccion || '',
+      referencias: primary?.referencias || '',
+      zona: typeof primary?.zona_id === 'number' ? primary.zona_id : null,
+      zonas: Array.from(zonasSet),
+    }));
+  };
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
@@ -762,17 +783,17 @@ export default function OrganizerProfileEditor() {
 
       const wasNewProfile = !org; // Detectar si es un perfil nuevo
       console.log("📊 [OrganizerProfileEditor] wasNewProfile:", wasNewProfile);
-      
+
       const profileId = await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
       console.log("📊 [OrganizerProfileEditor] profileId retornado:", profileId);
       console.log("✅ [OrganizerProfileEditor] Guardado exitoso");
-      
+
       // Si es un perfil nuevo, crear evento y fecha por defecto
       if (wasNewProfile && profileId) {
         console.log("🌱 [OrganizerProfileEditor] Creando evento y fecha por defecto para organizador ID:", profileId);
         console.log("🌱 [OrganizerProfileEditor] Ritmos a usar:", outSelected);
         console.log("🌱 [OrganizerProfileEditor] Zonas a usar:", form.zonas);
-        
+
         try {
           // Crear evento padre por defecto
           const parentPayload: any = {
@@ -782,9 +803,9 @@ export default function OrganizerProfileEditor() {
             ritmos_seleccionados: outSelected || [],
             zonas: form.zonas || []
           };
-          
+
           console.log("📦 [OrganizerProfileEditor] Payload para evento padre:", parentPayload);
-          
+
           const { data: newParent, error: parentErr } = await supabase
             .from('events_parent')
             .insert(parentPayload)
@@ -796,7 +817,7 @@ export default function OrganizerProfileEditor() {
             showToast('⚠️ Perfil creado, pero no se pudo crear el evento por defecto', 'info');
           } else if (newParent) {
             console.log("✅ [OrganizerProfileEditor] Social por defecto creado:", newParent.id);
-            
+
             // Crear fecha por defecto (para 7 días adelante)
             const fechaBase = new Date();
             fechaBase.setDate(fechaBase.getDate() + 7);
@@ -817,7 +838,7 @@ export default function OrganizerProfileEditor() {
               cronograma: [],
               costos: []
             };
-            
+
             console.log("📦 [OrganizerProfileEditor] Payload para fecha:", datePayload);
 
             const { error: dateErr } = await supabase
@@ -838,7 +859,7 @@ export default function OrganizerProfileEditor() {
         console.log("   - wasNewProfile:", wasNewProfile);
         console.log("   - profileId:", profileId);
       }
-      
+
       // Toast final basado en si es nuevo o actualización
       if (wasNewProfile) {
         showToast('✅ Perfil de organizador creado con evento de ejemplo', 'success');
@@ -908,6 +929,12 @@ export default function OrganizerProfileEditor() {
         parentIdToUse = newParent?.id;
       }
 
+      const primaryLocation = (dateForm.ubicaciones || [])[0];
+      const zonasFromLocations = new Set<number>();
+      (dateForm.ubicaciones || []).forEach((loc) => {
+        if (typeof loc?.zona_id === 'number') zonasFromLocations.add(loc.zona_id);
+      });
+
       await createEventDate.mutateAsync({
         parent_id: Number(parentIdToUse),
         nombre: dateForm.nombre || null,
@@ -915,15 +942,21 @@ export default function OrganizerProfileEditor() {
         fecha: dateForm.fecha,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
-        lugar: dateForm.lugar || null,
-        direccion: dateForm.direccion || null,
-        ciudad: dateForm.ciudad || null,
-        zona: dateForm.zona || null,
-        referencias: dateForm.referencias || null,
+        lugar: (dateForm.lugar || primaryLocation?.sede) || null,
+        direccion: (dateForm.direccion || primaryLocation?.direccion) || null,
+        ciudad: (dateForm.ciudad || primaryLocation?.ciudad) || null,
+        zona: typeof dateForm.zona === 'number'
+          ? dateForm.zona
+          : typeof primaryLocation?.zona_id === 'number'
+          ? primaryLocation.zona_id
+          : null,
+        referencias: (dateForm.referencias || primaryLocation?.referencias) || null,
         requisitos: dateForm.requisitos || null,
         estilos: dateForm.estilos || [],
         ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
-        zonas: dateForm.zonas || [],
+        zonas: (dateForm.zonas && dateForm.zonas.length)
+          ? dateForm.zonas
+          : Array.from(zonasFromLocations),
         cronograma: dateForm.cronograma || [],
         costos: dateForm.costos || [],
         flyer_url: dateForm.flyer_url || null,
@@ -942,6 +975,7 @@ export default function OrganizerProfileEditor() {
         direccion: '',
         referencias: '',
         requisitos: '',
+        ubicaciones: [],
         zona: null,
         estilos: [],
         ritmos_seleccionados: [],
@@ -1382,8 +1416,8 @@ export default function OrganizerProfileEditor() {
               }}
             >
               <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎤</div>
-              <h3 style={{ 
-                fontSize: '1.5rem', 
+              <h3 style={{
+                fontSize: '1.5rem',
                 fontWeight: '700',
                 marginBottom: '0.5rem',
                 background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
@@ -1413,7 +1447,7 @@ export default function OrganizerProfileEditor() {
             id="organizer-basic-info"
             data-test-id="organizer-basic-info"
             className="org-editor-card"
-          > 
+          >
             <h2 style={{ fontSize: '1rem', marginBottom: '1rem', color: colors.light }}>
               🏢 Información del Organizador
             </h2>
@@ -1589,7 +1623,7 @@ export default function OrganizerProfileEditor() {
             }}
           /> */}
 
-         
+
           {/* Mis Eventos */}
           <div
             id="organizer-events-list"
@@ -1621,10 +1655,10 @@ export default function OrganizerProfileEditor() {
                           </button>
                         </div>
                         <UbicacionesEditor
-              value={(form as any).ubicaciones || []}
-              onChange={(v) => setField('ubicaciones' as any, v as any)}
-              title="Ubicaciones"
-            />
+                          value={(form as any).ubicaciones || []}
+                          onChange={(v) => setField('ubicaciones' as any, v as any)}
+                          title="Ubicaciones"
+                        />
                       </div>
                     );
                   })}
@@ -1847,21 +1881,6 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Zonas */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📍 Zonas de la Ciudad
-                    </h3>
-                    <ChipPicker
-                      tipo="zona"
-                      selected={dateForm.zonas || []}
-                      onChange={(selected) => setDateForm({ ...dateForm, zonas: selected as number[] })}
-                      label="Zonas de la Ciudad"
-                      placeholder="Selecciona las zonas donde se realizará"
-                      maxSelections={3}
-                    />
-                  </div>
-
                   {/* Fecha y Hora */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
@@ -1908,72 +1927,45 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Ubicación Específica */}
+                  {/* Ubicaciones */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📍 Ubicación Específica
+                      📍 Ubicaciones
                     </h3>
-                    <div className="org-editor-grid">
-                      <div>
-                        <label className="org-editor-field">
-                          Lugar
-                        </label>
-                        <input
-                          type="text"
-                          value={dateForm.lugar}
-                          onChange={(e) => setDateForm({ ...dateForm, lugar: e.target.value })}
-                          placeholder="Nombre del lugar"
-                          className="org-editor-input"
+                    {orgLocations.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <OrganizerLocationPicker
+                          organizerId={org?.id}
+                          title="Buscar ubicación guardada"
+                          onPick={(u) => {
+                            const entry: AcademyLocation = {
+                              sede: u.nombre || '',
+                              direccion: u.direccion || '',
+                              ciudad: (u as any).ciudad || '',
+                              zona_id: Array.isArray(u.zona_ids) && u.zona_ids.length ? u.zona_ids[0] : null,
+                              referencias: u.referencias || ''
+                            };
+                            const next = [...(dateForm.ubicaciones || []), entry];
+                            handleDateUbicacionesChange(next);
+                          }}
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">
-                          Ciudad
-                        </label>
-                        <input
-                          type="text"
-                          value={dateForm.ciudad}
-                          onChange={(e) => setDateForm({ ...dateForm, ciudad: e.target.value })}
-                          placeholder="Ciudad"
-                          className="org-editor-input"
-                        />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          Dirección
-                        </label>
-                        <input
-                          type="text"
-                          value={dateForm.direccion}
-                          onChange={(e) => setDateForm({ ...dateForm, direccion: e.target.value })}
-                          placeholder="Dirección completa"
-                          className="org-editor-input"
-                        />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          Referencias
-                        </label>
-                        <input
-                          type="text"
-                          value={dateForm.referencias}
-                          onChange={(e) => setDateForm({ ...dateForm, referencias: e.target.value })}
-                          placeholder="Puntos de referencia, cómo llegar..."
-                          className="org-editor-input"
-                        />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          Requisitos
-                        </label>
-                        <textarea
-                          value={dateForm.requisitos}
-                          onChange={(e) => setDateForm({ ...dateForm, requisitos: e.target.value })}
-                          placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
-                          rows={3}
-                          className="org-editor-textarea"
-                        />
-                      </div>
+                    )}
+                    <AcademyUbicacionesEditor
+                      value={dateForm.ubicaciones || []}
+                      onChange={(list) => handleDateUbicacionesChange(list)}
+                    />
+                    <div style={{ marginTop: '1rem' }}>
+                      <label className="org-editor-field">
+                        Requisitos
+                      </label>
+                      <textarea
+                        value={dateForm.requisitos}
+                        onChange={(e) => setDateForm({ ...dateForm, requisitos: e.target.value })}
+                        placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
+                        rows={3}
+                        className="org-editor-textarea"
+                      />
                     </div>
                   </div>
 
@@ -2083,6 +2075,7 @@ export default function OrganizerProfileEditor() {
                           direccion: '',
                           referencias: '',
                           requisitos: '',
+                          ubicaciones: [],
                           zona: null,
                           estilos: [],
                           ritmos_seleccionados: [],
@@ -2255,8 +2248,8 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
           {/* Botón Crear Evento (movido a cabecera, se elimina el flotante) */}
- {/* Información para Asistentes */}
- <div className="org-editor-card">
+          {/* Información para Asistentes */}
+          <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               💬 Información para Asistentes
             </h2>
