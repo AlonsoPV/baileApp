@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
+import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
 type DancerItem = {
@@ -76,7 +77,15 @@ export default function DancerCard({ item, to }: Props) {
   const ritmoNames: string[] = React.useMemo(() => {
     try {
       const fromCatalog = (item.ritmosSeleccionados || []) as string[];
-      if (Array.isArray(fromCatalog) && fromCatalog.length > 0) return fromCatalog as string[];
+      if (Array.isArray(fromCatalog) && fromCatalog.length > 0) {
+        const mapSlugToLabel = new Map<string, string>();
+        RITMOS_CATALOG.forEach(group =>
+          group.items.forEach(entry => mapSlugToLabel.set(entry.id, entry.label))
+        );
+        return fromCatalog
+          .map((slug) => mapSlugToLabel.get(slug) || slug)
+          .filter(Boolean) as string[];
+      }
       const fromNums = (item.ritmos || []) as number[];
       if (Array.isArray(allTags) && fromNums.length > 0) {
         return fromNums
