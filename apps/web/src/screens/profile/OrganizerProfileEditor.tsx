@@ -339,15 +339,15 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                   gap: '1rem',
                   marginTop: '1rem',
                   padding: '1.5rem',
-                  borderRadius: '20px',
-                  border: '2px solid rgba(30, 136, 229, 0.3)',
+                  /* borderRadius: '20px',
+                  border: '2px solid rgba(30, 136, 229, 0.3)', */
                   background: 'rgba(15, 15, 15, 0.4)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
               >
                 {/* Barra decorativa superior para fechas */}
-                <div style={{
+               {/*  <div style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -355,7 +355,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                   height: '3px',
                   background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
                   borderRadius: '20px 20px 0 0',
-                }} />
+                }} /> */}
                 {dates.map((date: any, index: number) => {
                   // Debug log para cada fecha
                   console.log('[EventParentCard] Date item:', date);
