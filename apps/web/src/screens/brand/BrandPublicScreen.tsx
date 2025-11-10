@@ -212,7 +212,7 @@ export default function BrandProfileLive() {
                     width={300}
                     height={300}
                     sizes="(max-width: 768px) 50vw, 300px"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.25)' }}
                   />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>

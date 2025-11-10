@@ -48,7 +48,7 @@ const colors = {
 };
 
 // Componente para mostrar un social con sus fechas
-function EventParentCard({ parent, onDelete, isDeleting }: any) {
+function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
@@ -475,6 +475,35 @@ function EventParentCard({ parent, onDelete, isDeleting }: any) {
                             <span>✏️</span>
                             <span>Editar</span>
                           </motion.button>
+                          {onDuplicateDate && (
+                            <motion.button
+                              whileHover={{ scale: 1.08, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDuplicateDate(date);
+                              }}
+                              style={{
+                                padding: '0.6rem 1rem',
+                                background: `linear-gradient(135deg, ${colors.yellow}, ${colors.blue})`,
+                                color: '#0B0B0B',
+                                border: 'none',
+                                borderRadius: '10px',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 12px rgba(255, 209, 102, 0.35)',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              <span>📄</span>
+                              <span>Duplicar</span>
+                            </motion.button>
+                          )}
                           <motion.button
                             whileHover={{ scale: 1.08, y: -2 }}
                             whileTap={{ scale: 0.95 }}
@@ -1003,6 +1032,44 @@ export default function OrganizerProfileEditor() {
     } catch (err: any) {
       console.error('Error creating date:', err);
       showToast('Error al crear fecha', 'error');
+    }
+  };
+
+  const handleDuplicateDate = async (date: any) => {
+    if (!date) return;
+    if (createEventDate.isPending) {
+      showToast('Espera a que termine la operación en curso antes de duplicar.', 'info');
+      return;
+    }
+
+    try {
+      const payload = {
+        parent_id: Number(date.parent_id),
+        nombre: date.nombre ? `${date.nombre} (copia)` : null,
+        biografia: date.biografia || null,
+        fecha: date.fecha,
+        hora_inicio: date.hora_inicio || null,
+        hora_fin: date.hora_fin || null,
+        lugar: date.lugar || null,
+        direccion: date.direccion || null,
+        ciudad: date.ciudad || null,
+        zona: typeof date.zona === 'number' ? date.zona : null,
+        referencias: date.referencias || null,
+        requisitos: date.requisitos || null,
+        estilos: Array.isArray(date.estilos) ? [...date.estilos] : [],
+        ritmos_seleccionados: Array.isArray(date.ritmos_seleccionados) ? [...date.ritmos_seleccionados] : [],
+        zonas: Array.isArray(date.zonas) ? [...date.zonas] : [],
+        cronograma: Array.isArray(date.cronograma) ? date.cronograma.map((item: any) => ({ ...item })) : [],
+        costos: Array.isArray(date.costos) ? date.costos.map((item: any) => ({ ...item })) : [],
+        flyer_url: date.flyer_url || null,
+        estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+      };
+
+      await createEventDate.mutateAsync(payload);
+      showToast('Fecha duplicada como borrador ✅', 'success');
+    } catch (error: any) {
+      console.error('[OrganizerProfileEditor] Error duplicating date:', error);
+      showToast('No se pudo duplicar la fecha. Intenta de nuevo.', 'error');
     }
   };
 
@@ -1650,45 +1717,6 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-events-list"
             className="org-events-section"
           >
-            {/* Sección: Ubicaciones por social (edita por social) */}
-            {parents && parents.length > 0 && (
-              <div className="org-editor-card" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#FFFFFF' }}>
-                  📍 Ubicaciones
-                </h2>
-                <p style={{ marginTop: 0, marginBottom: '1rem', opacity: 0.9 }}>
-                  Administra las ubicaciones por cada social. Estas son independientes y luego podrás usarlas en las fechas.
-                </p>
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {parents.map((parent: any) => {
-                    const current = locationsDraftByParent[parent.id] ?? (parent.ubicaciones || []);
-                    return (
-                      <div key={parent.id} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-                          <strong style={{ fontSize: '1rem' }}>🎭 {parent.nombre}</strong>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/social/${parent.id}/edit`)}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer' }}
-                          >
-                            ✏️ Abrir editor
-                          </button>
-                        </div>
-                        <UbicacionesEditor
-                          value={(form as any).ubicaciones || []}
-                          onChange={(v) => setField('ubicaciones' as any, v as any)}
-                          title="Ubicaciones"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ marginTop: 12, fontSize: 13, opacity: 0.8 }}>
-                  Tip: Para guardar estas ubicaciones, usa el botón "Abrir editor" del social y guarda desde ahí.
-                </div>
-              </div>
-            )}
-
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -2153,6 +2181,7 @@ export default function OrganizerProfileEditor() {
                         parent={parent}
                         onDelete={handleDeleteEvent}
                         isDeleting={deleteParent.isPending}
+                        onDuplicateDate={handleDuplicateDate}
                       />
                     </motion.div>
                   ))}

@@ -122,12 +122,20 @@ export default function BrandProfileEditor() {
     try {
       // Crear payload limpio con SOLO los campos que existen en profiles_brand
       // NO incluir 'id' porque es GENERATED ALWAYS
+      const redesSanitizadas = Object.entries(form.redes_sociales || {}).reduce<Record<string, string>>((acc, [key, value]) => {
+        if (typeof value !== 'string') return acc;
+        const trimmed = value.trim();
+        if (!trimmed) return acc;
+        acc[key] = trimmed;
+        return acc;
+      }, {});
+
       const payload: any = { 
         nombre_publico: form.nombre_publico, 
         bio: form.bio, 
-        redes_sociales: form.redes_sociales,
+        redes_sociales: redesSanitizadas,
         avatar_url: form.avatar_url || null,
-        estado_aprobacion: 'aprobado'  // ✅ Marcar como aprobado al guardar
+        estado_aprobacion: 'aprobado'
       };
 
       // Agregar campos opcionales solo si existen en la tabla
@@ -371,10 +379,14 @@ export default function BrandProfileEditor() {
                         <ImageWithFallback 
                           src={form.avatar_url} 
                           alt="logo" 
+                          width={160}
+                          height={160}
+                          sizes="160px"
                           style={{ 
                             width: '100%', 
                             height: '100%', 
-                            objectFit: 'cover' 
+                            objectFit: 'contain',
+                            backgroundColor: 'rgba(0,0,0,0.35)'
                           }} 
                         />
                       ) : (

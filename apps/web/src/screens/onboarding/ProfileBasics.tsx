@@ -37,8 +37,11 @@ export function ProfileBasics() {
     setError('');
 
     // Validate display name
-    if (!isValidDisplayName(displayName)) {
-      const errorMsg = 'El nombre debe tener entre 2 y 50 caracteres y contener solo letras, números, espacios y caracteres permitidos';
+    const nameValidation = isValidDisplayName(displayName);
+    if (!nameValidation.valid) {
+      const errorMsg =
+        nameValidation.error ||
+        'El nombre debe tener entre 2 y 50 caracteres y puede incluir letras con acentos, números, espacios y símbolos comunes.';
       setError(errorMsg);
       showToast(errorMsg, 'error');
       return;

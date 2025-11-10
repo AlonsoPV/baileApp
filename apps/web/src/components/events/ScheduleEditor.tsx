@@ -206,6 +206,25 @@ export default function ScheduleEditorPlus({
     onChangeSchedule(schedule.filter((_, i) => i !== index));
   };
 
+  const duplicateItem = (index: number) => {
+    const original = schedule[index];
+    if (!original) return;
+    const clone = {
+      ...original,
+      titulo: original.titulo
+        ? `${original.titulo} (copia)`
+        : original.titulo,
+      inicio: normalizeTime(original.inicio),
+      fin: normalizeTime(original.fin),
+    };
+    const next = [
+      ...schedule.slice(0, index + 1),
+      clone,
+      ...schedule.slice(index + 1),
+    ];
+    onChangeSchedule(next);
+  };
+
   const startEdit = (i: number) => setEditingIndex(i);
   const finishEdit = () => setEditingIndex(null);
 
@@ -449,6 +468,10 @@ export default function ScheduleEditorPlus({
                       onClick={()=> startEdit(index)}
                       style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.blue, color: colors.light, cursor: 'pointer' }}
                     >✏️</motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={() => duplicateItem(index)}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.yellow, color: colors.dark, cursor: 'pointer' }}
+                    >📄</motion.button>
                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                       onClick={()=> removeItem(index)}
                       style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.coral, color: colors.light, cursor: 'pointer' }}

@@ -31,17 +31,36 @@ export function isValidPassword(password: string): boolean {
 /**
  * Validates if a display name is valid
  */
-export function isValidDisplayName(name: string): boolean {
-  if (!name || typeof name !== 'string') return false;
-  
+type DisplayNameValidationResult = {
+  valid: boolean;
+  error?: string;
+};
+
+export function isValidDisplayName(name: string): DisplayNameValidationResult {
+  if (!name || typeof name !== "string") {
+    return { valid: false, error: "El nombre es obligatorio." };
+  }
+
   const trimmed = name.trim();
-  
-  // Must be between 2 and 50 characters
-  if (trimmed.length < 2 || trimmed.length > 50) return false;
-  
-  // Must contain only letters, numbers, spaces, and common punctuation
-  const validNameRegex = /^[a-zA-Z0-9\s\-'\.]+$/;
-  return validNameRegex.test(trimmed);
+
+  if (trimmed.length < 2 || trimmed.length > 50) {
+    return {
+      valid: false,
+      error: "El nombre debe tener entre 2 y 50 caracteres.",
+    };
+  }
+
+  // Permitir letras (incluyendo acentos), números, espacios y símbolos comunes
+  const validNameRegex = /^[\p{L}\p{M}\p{N}\s\-_'.,!&@()]+$/u;
+  if (!validNameRegex.test(trimmed)) {
+    return {
+      valid: false,
+      error:
+        "Puedes usar letras con acentos, números, espacios y símbolos comunes como . , - _ ' ! & @ ( ).",
+    };
+  }
+
+  return { valid: true };
 }
 
 /**

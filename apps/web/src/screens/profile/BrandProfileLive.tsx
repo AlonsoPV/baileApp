@@ -161,7 +161,7 @@ export default function BrandProfileLive() {
                     width={1200}
                     height={500}
                     sizes="(max-width: 768px) 100vw, 1200px"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.25)' }}
                   />
             </div>
           )}
