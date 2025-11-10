@@ -8,6 +8,8 @@ import RitmosChips from "../../components/RitmosChips";
 import ChipPicker from "../../components/common/ChipPicker";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
+import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 
 const colors = {
@@ -17,6 +19,23 @@ const colors = {
   blue: '#1E88E5',
   dark: '#121212',
   light: '#F5F5F5',
+};
+
+const toFormLocation = (loc?: OrganizerLocation | null) => {
+  if (!loc) return null;
+  return {
+    id: loc.id ?? null,
+    sede: loc.nombre || '',
+    direccion: loc.direccion || '',
+    ciudad: loc.ciudad || '',
+    referencias: loc.referencias || '',
+    zona_id: typeof loc.zona_id === 'number'
+      ? loc.zona_id
+      : Array.isArray(loc.zona_ids) && loc.zona_ids.length
+        ? loc.zona_ids[0] ?? null
+        : null,
+    zona_ids: Array.isArray(loc.zona_ids) ? loc.zona_ids : [],
+  };
 };
 
 export default function OrganizerEventDateEditScreen() {
@@ -32,6 +51,7 @@ export default function OrganizerEventDateEditScreen() {
 
   const { data: myOrg } = useMyOrganizer();
   const allowedCatalogIds = ((myOrg as any)?.ritmos_seleccionados || []) as string[];
+  const { data: orgLocations = [] } = useOrganizerLocations(myOrg?.id);
 
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   
@@ -56,6 +76,83 @@ export default function OrganizerEventDateEditScreen() {
     estado_publicacion: 'borrador' as 'borrador' | 'publicado',
     ubicaciones: [] as any[]
   });
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+
+  const applyOrganizerLocation = (loc?: OrganizerLocation | null) => {
+    if (!loc) {
+      setSelectedLocationId('');
+      setForm((prev) => ({
+        ...prev,
+        ubicaciones: [],
+      }));
+      return;
+    }
+    setSelectedLocationId(loc.id ? String(loc.id) : '');
+    const mapped = toFormLocation(loc);
+    setForm((prev) => ({
+      ...prev,
+      lugar: loc.nombre || '',
+      direccion: loc.direccion || '',
+      ciudad: loc.ciudad || '',
+      referencias: loc.referencias || '',
+      zona: typeof loc.zona_id === 'number' ? loc.zona_id : prev.zona,
+      zonas: Array.isArray(loc.zona_ids) && loc.zona_ids.length ? loc.zona_ids as number[] : prev.zonas,
+      ubicaciones: mapped ? [mapped] : prev.ubicaciones,
+    }));
+  };
+
+  const clearLocationSelection = () => {
+    setSelectedLocationId('');
+    setForm((prev) => ({
+      ...prev,
+      ubicaciones: [],
+      lugar: '',
+      direccion: '',
+      ciudad: '',
+      referencias: '',
+    }));
+  };
+
+  const updateManualLocationField = (field: 'lugar' | 'direccion' | 'ciudad' | 'referencias', value: string) => {
+    setSelectedLocationId('');
+    setForm((prev) => {
+      const updated = { ...prev, [field]: value };
+      const base = {
+        sede: field === 'lugar' ? value : updated.lugar || '',
+        direccion: field === 'direccion' ? value : updated.direccion || '',
+        ciudad: field === 'ciudad' ? value : updated.ciudad || '',
+        referencias: field === 'referencias' ? value : updated.referencias || '',
+        zona_id: updated.zona ?? null,
+      };
+      return {
+        ...updated,
+        ubicaciones: updated.ubicaciones && updated.ubicaciones.length
+          ? [{ ...updated.ubicaciones[0], ...base }]
+          : [base],
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (!orgLocations.length) {
+      if (selectedLocationId) setSelectedLocationId('');
+      return;
+    }
+    const match = orgLocations.find(
+      (loc) =>
+        (loc.nombre || '') === (form.lugar || '') &&
+        (loc.direccion || '') === (form.direccion || '') &&
+        (loc.ciudad || '') === (form.ciudad || '') &&
+        (loc.referencias || '') === (form.referencias || '')
+    );
+    if (match) {
+      if (selectedLocationId !== String(match.id)) {
+        setSelectedLocationId(String(match.id));
+      }
+    } else if (selectedLocationId) {
+      setSelectedLocationId('');
+    }
+  }, [orgLocations, form.lugar, form.direccion, form.ciudad, form.referencias, selectedLocationId]);
 
   useEffect(() => {
     if (date) {
@@ -720,6 +817,69 @@ export default function OrganizerEventDateEditScreen() {
               }}>📍</span>
               Ubicación Específica
             </h3>
+            {orgLocations.length > 0 && (
+              <>
+                <div style={{ marginBottom: '12px' }}>
+                  <OrganizerLocationPicker
+                    organizerId={myOrg?.id}
+                    title="Buscar ubicación guardada"
+                    onPick={(loc) => applyOrganizerLocation(loc as OrganizerLocation)}
+                  />
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="date-editor-field">Elegir ubicación existente o ingresa una nueva</label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={selectedLocationId}
+                      onChange={(e) => {
+                        const nextId = e.target.value;
+                        if (!nextId) {
+                          clearLocationSelection();
+                          return;
+                        }
+                        const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
+                        applyOrganizerLocation(found);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        color: colors.light,
+                        outline: 'none',
+                        fontSize: 14,
+                        borderRadius: 12,
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                      }}
+                    >
+                      <option value="">— Escribir manualmente —</option>
+                      {orgLocations.map((loc) => (
+                        <option
+                          key={loc.id}
+                          value={String(loc.id)}
+                          style={{ color: '#111' }}
+                        >
+                          {loc.nombre || loc.direccion || 'Ubicación'}
+                        </option>
+                      ))}
+                    </select>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: 14,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        pointerEvents: 'none',
+                        color: 'rgba(255,255,255,0.6)',
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
             <div className="org-editor-grid">
               <div>
                 <label className="date-editor-field">
@@ -728,7 +888,7 @@ export default function OrganizerEventDateEditScreen() {
                 <input
                   type="text"
                   value={form.lugar}
-                  onChange={(e) => setForm({ ...form, lugar: e.target.value })}
+                  onChange={(e) => updateManualLocationField('lugar', e.target.value)}
                   placeholder="Nombre del lugar"
                   className="date-editor-input"
                 />
@@ -740,7 +900,7 @@ export default function OrganizerEventDateEditScreen() {
                 <input
                   type="text"
                   value={form.ciudad}
-                  onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
+                  onChange={(e) => updateManualLocationField('ciudad', e.target.value)}
                   placeholder="Ciudad"
                   className="date-editor-input"
                 />
@@ -752,7 +912,7 @@ export default function OrganizerEventDateEditScreen() {
                 <input
                   type="text"
                   value={form.direccion}
-                  onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                  onChange={(e) => updateManualLocationField('direccion', e.target.value)}
                   placeholder="Dirección completa"
                   className="date-editor-input"
                 />
@@ -764,7 +924,7 @@ export default function OrganizerEventDateEditScreen() {
                 <input
                   type="text"
                   value={form.referencias}
-                  onChange={(e) => setForm({ ...form, referencias: e.target.value })}
+                  onChange={(e) => updateManualLocationField('referencias', e.target.value)}
                   placeholder="Puntos de referencia, cómo llegar..."
                   className="date-editor-input"
                 />
@@ -827,6 +987,7 @@ export default function OrganizerEventDateEditScreen() {
               onChangeCostos={(costos) => setForm({ ...form, costos })}
               ritmos={ritmoTags}
               zonas={zonaTags}
+              eventFecha={form.fecha || ''}
             />
           </motion.div>
 
