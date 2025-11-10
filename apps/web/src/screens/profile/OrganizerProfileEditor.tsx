@@ -886,7 +886,7 @@ export default function OrganizerProfileEditor() {
           const parentPayload: any = {
             organizer_id: profileId,
             nombre: '🎉 Mi Primer Social',
-            descripcion: 'Este es tu primer evento social. Edita el nombre, descripción y agrega fechas desde el editor.',
+            descripcion: 'Crea tus eventos. Edita el nombre, descripción y agrega fechas desde el editor.',
             ritmos_seleccionados: outSelected || [],
             zonas: form.zonas || []
           };
@@ -2229,9 +2229,9 @@ export default function OrganizerProfileEditor() {
                         padding: '12px 24px',
                         borderRadius: '12px',
                         border: 'none',
-                        background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
+                        /* background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
                           ? 'rgba(255, 255, 255, 0.2)'
-                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))',
+                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))', */
                         color: '#FFFFFF',
                         fontSize: '0.9rem',
                         fontWeight: '700',
