@@ -187,16 +187,23 @@ export function useDeleteDate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("events_date")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id,parent_id")
+        .single();
       if (error) throw error; 
-      return id;
+      return data as { id: number; parent_id: number };
     },
-    onSuccess: (id) => {
+    onSuccess: ({ id, parent_id }) => {
       qc.invalidateQueries({ queryKey: ["dates"] });
       qc.invalidateQueries({ queryKey: ["date", id] });
+      qc.invalidateQueries({ queryKey: ["dates", parent_id] });
+      qc.invalidateQueries({ queryKey: ["event", "dates", parent_id] });
+      qc.invalidateQueries({ queryKey: ["event", "date", id] });
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
     }
   });
 }

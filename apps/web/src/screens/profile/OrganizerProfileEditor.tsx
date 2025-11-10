@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
-import { useParentsByOrganizer, useDeleteParent, useDatesByParent } from "../../hooks/useEvents";
+import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate } from "../../hooks/useEvents";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useCreateEventDate } from "../../hooks/useEventDate";
 import { MediaUploader } from "../../components/MediaUploader";
@@ -63,10 +63,28 @@ const mapOrganizerLocationToAcademy = (loc?: Partial<OrganizerLocation> | null):
   };
 };
 
-function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any) {
+function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
+
+  const formatEsDate = (input?: string) => {
+    try {
+      if (!input) return '';
+      const base = input.includes('T') ? input.split('T')[0] : input;
+      const [yyyy, mm, dd] = base.split('-').map(n => parseInt(n, 10));
+      if (!yyyy || !mm || !dd) return base;
+      const dt = new Date(yyyy, (mm - 1), dd);
+      return dt.toLocaleDateString('es-ES', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return input || '';
+    }
+  };
 
   // Debug logs
   console.log('[EventParentCard] Parent:', parent);
@@ -447,12 +465,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any)
                               width: 'fit-content'
                             }}>
                               <span>📅</span>
-                              <span>{new Date(date.fecha).toLocaleDateString('es-ES', {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}</span>
+                              <span>{formatEsDate(date.fecha)}</span>
                             </div>
                           </div>
                         </div>
@@ -524,9 +537,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any)
                             whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              // TODO: Implementar eliminación de fecha
-                              console.log('Eliminar fecha:', date.id);
+                              onDeleteDate?.(date);
                             }}
+                            disabled={Boolean(deletingDateId && deletingDateId === date.id)}
                             style={{
                               padding: '0.6rem 1rem',
                               background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
@@ -535,7 +548,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any)
                               borderRadius: '10px',
                               fontSize: '0.8rem',
                               fontWeight: '700',
-                              cursor: 'pointer',
+                              cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '4px',
@@ -544,8 +557,8 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate }: any)
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            <span>🗑️</span>
-                            <span>Eliminar</span>
+                            <span>{deletingDateId === date.id ? '⏳' : '🗑️'}</span>
+                            <span>{deletingDateId === date.id ? 'Eliminando...' : 'Eliminar'}</span>
                           </motion.button>
                         </div>
                       </div>
@@ -666,6 +679,7 @@ export default function OrganizerProfileEditor() {
   const updateOrgLoc = useUpdateOrganizerLocation();
   const deleteOrgLoc = useDeleteOrganizerLocation();
   const deleteParent = useDeleteParent();
+  const deleteDate = useDeleteDate();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
 
@@ -678,6 +692,7 @@ export default function OrganizerProfileEditor() {
   const [showDateForm, setShowDateForm] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const createEventDate = useCreateEventDate();
+  const [deletingDateId, setDeletingDateId] = useState<number | null>(null);
   const [dateForm, setDateForm] = useState({
     nombre: '',
     biografia: '',
@@ -1081,12 +1096,29 @@ export default function OrganizerProfileEditor() {
       return;
     }
 
+    const computeNextDate = (src?: string) => {
+      try {
+        if (!src) return src;
+        const base = src.includes('T') ? src.split('T')[0] : src;
+        const [yyyy, mm, dd] = base.split('-').map((n: string) => parseInt(n, 10));
+        if (!yyyy || !mm || !dd) return src;
+        const dt = new Date(yyyy, mm - 1, dd);
+        dt.setDate(dt.getDate() + 7); // siguiente semana por defecto
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const d = String(dt.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      } catch {
+        return src;
+      }
+    };
+
     try {
       const payload = {
         parent_id: Number(date.parent_id),
         nombre: date.nombre ? `${date.nombre} (copia)` : null,
         biografia: date.biografia || null,
-        fecha: date.fecha,
+        fecha: computeNextDate(date.fecha),
         hora_inicio: date.hora_inicio || null,
         hora_fin: date.hora_fin || null,
         lugar: date.lugar || null,
@@ -1109,6 +1141,22 @@ export default function OrganizerProfileEditor() {
     } catch (error: any) {
       console.error('[OrganizerProfileEditor] Error duplicating date:', error);
       showToast('No se pudo duplicar la fecha. Intenta de nuevo.', 'error');
+    }
+  };
+
+  const handleDeleteDate = async (date: any) => {
+    if (!date?.id) return;
+    const confirmDelete = window.confirm(`¿Eliminar la fecha "${date.nombre || 'sin nombre'}"? Esta acción no se puede deshacer.`);
+    if (!confirmDelete) return;
+    try {
+      setDeletingDateId(date.id);
+      await deleteDate.mutateAsync(date.id);
+      showToast('Fecha eliminada ✅', 'success');
+    } catch (error: any) {
+      console.error('[OrganizerProfileEditor] Error deleting date:', error);
+      showToast('No se pudo eliminar la fecha. Intenta nuevamente.', 'error');
+    } finally {
+      setDeletingDateId(null);
     }
   };
 
@@ -2034,7 +2082,7 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     )}
-                    <AcademyUbicacionesEditor
+                    <UbicacionesEditor
                       value={dateForm.ubicaciones || []}
                       onChange={(list) => handleDateUbicacionesChange(list)}
                     />
@@ -2217,6 +2265,8 @@ export default function OrganizerProfileEditor() {
                         onDelete={handleDeleteEvent}
                         isDeleting={deleteParent.isPending}
                         onDuplicateDate={handleDuplicateDate}
+                        onDeleteDate={handleDeleteDate}
+                        deletingDateId={deletingDateId}
                       />
                     </motion.div>
                   ))}
