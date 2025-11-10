@@ -752,17 +752,7 @@ export default function OrganizerProfileEditor() {
     }));
   };
 
-  useEffect(() => {
-    if (!showDateForm) return;
-    if (!orgLocations.length) return;
-    if (selectedDateLocationId) return;
-    if (dateForm.ubicaciones && dateForm.ubicaciones.length) return;
-    const first = toAcademyLocation(orgLocations[0]);
-    if (first) {
-      setSelectedDateLocationId(orgLocations[0].id ? String(orgLocations[0].id) : '');
-      handleDateUbicacionesChange([first]);
-    }
-  }, [showDateForm, orgLocations, selectedDateLocationId, dateForm.ubicaciones]);
+  // Nota: No auto-seleccionar la primera ubicación guardada para permitir entrada manual por defecto
 
   useEffect(() => {
     if (!selectedDateLocationId) return;
@@ -2127,7 +2117,7 @@ export default function OrganizerProfileEditor() {
                           />
                         </div> */}
                         <div style={{ marginBottom: 16 }}>
-                          <label className="org-editor-field">Elegir ubicación existente</label>
+                          <label className="org-editor-field">Elegir ubicación existente o ingresa una nueva</label>
                           <div style={{ position: 'relative' }}>
                             <select
                               value={selectedDateLocationId}
