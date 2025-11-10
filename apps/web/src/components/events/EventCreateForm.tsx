@@ -17,8 +17,9 @@ import { useEventParentMedia } from "../../hooks/useEventParentMedia";
 import RitmosChips from "../RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import UbicacionesEditor from "../academy/UbicacionesEditor";
-import { useOrganizerLocations } from "../../hooks/useOrganizerLocations";
+import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
+import type { AcademyLocation } from "../../types/academy";
 
 const colors = {
   coral: '#FF3D57',
@@ -57,6 +58,56 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const { data: organizer } = useMyOrganizer();
   const { showToast } = useToast();
   const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const applyOrganizerLocationToForm = (loc?: OrganizerLocation | null) => {
+    if (!loc) return;
+    setSelectedLocationId(loc.id ? String(loc.id) : '');
+    setValue('lugar', loc.nombre || '');
+    setValue('direccion', loc.direccion || '');
+    setValue('ciudad', loc.ciudad || '');
+    setValue('referencias', loc.referencias || '');
+    if (typeof loc.zona_id === 'number') {
+      setValue('zona' as any, loc.zona_id as any);
+    }
+    if (Array.isArray(loc.zona_ids) && loc.zona_ids.length) {
+      setValue('zonas' as any, loc.zona_ids as any);
+    }
+  };
+
+  const clearLocationSelection = () => {
+    setSelectedLocationId('');
+    setValue('lugar', '');
+    setValue('direccion', '');
+    setValue('ciudad', '');
+    setValue('referencias', '');
+  };
+
+  const updateManualLocationField = (field: 'lugar' | 'direccion' | 'ciudad' | 'referencias', value: string) => {
+    setSelectedLocationId('');
+    setValue(field, value);
+  };
+
+  useEffect(() => {
+    if (!orgLocations.length) {
+      if (selectedLocationId) setSelectedLocationId('');
+      return;
+    }
+    const match = orgLocations.find((loc) =>
+      (loc.nombre || '') === (values?.lugar || '') &&
+      (loc.direccion || '') === (values?.direccion || '') &&
+      (loc.ciudad || '') === (values?.ciudad || '') &&
+      (loc.referencias || '') === (values?.referencias || '')
+    );
+    if (match) {
+      if (selectedLocationId !== String(match.id)) {
+        setSelectedLocationId(String(match.id));
+      }
+    } else if (selectedLocationId) {
+      setSelectedLocationId('');
+    }
+  }, [orgLocations, values?.lugar, values?.direccion, values?.ciudad, values?.referencias, selectedLocationId]);
+
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
@@ -88,6 +139,48 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   }
 
   const { form: values, setField: setValue, dirty: isDirty, setFromServer: reset } = useHydratedForm({
+  const mapOrganizerLocationToFormLocation = (loc?: any): AcademyLocation | null => {
+    if (!loc) return null;
+    return {
+      sede: loc.nombre || '',
+      direccion: loc.direccion || '',
+      ciudad: loc.ciudad || '',
+      referencias: loc.referencias || '',
+      zona_id: typeof loc.zona_id === 'number'
+        ? loc.zona_id
+        : Array.isArray(loc.zona_ids) && loc.zona_ids.length
+          ? loc.zona_ids[0] ?? null
+          : null,
+    };
+  };
+
+  const applyLocationToForm = (loc: AcademyLocation | null, extra?: { zonas?: number[] }) => {
+    setValue('lugar', loc?.sede || '');
+    setValue('direccion', loc?.direccion || '');
+    setValue('ciudad', loc?.ciudad || '');
+    setValue('referencias', loc?.referencias || '');
+    setValue('zona' as any, loc?.zona_id ?? null);
+    setValue('ubicaciones' as any, loc ? [loc] as any : []);
+    if (extra?.zonas) {
+      setValue('zonas' as any, extra.zonas as any);
+    }
+  };
+
+  const updateManualLocation = (patch: Partial<AcademyLocation>) => {
+    setSelectedLocationId('');
+    const current: AcademyLocation = {
+      sede: values?.lugar || '',
+      direccion: values?.direccion || '',
+      ciudad: values?.ciudad || '',
+      referencias: values?.referencias || '',
+      zona_id: typeof (values as any)?.zona === 'number' ? (values as any).zona : null,
+    };
+    const next = {
+      ...current,
+      ...patch,
+    };
+    applyLocationToForm(next);
+  };
     draftKey: isParent 
       ? `event-parent-${props.parent?.id || 'new'}-${isActuallyEditing ? 'edit' : 'create'}`
       : `event-date-${props.date?.id || 'new'}-${props.parentId}-${isActuallyEditing ? 'edit' : 'create'}`,
@@ -621,54 +714,64 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   📍 Ubicación Específica
                 </h2>
 
-                {orgLocations.length > 4 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <OrganizerLocationPicker
-                      organizerId={organizer?.id}
-                      onPick={(u) => {
-                        setValue('lugar', u.nombre || '');
-                        setValue('direccion', u.direccion || '');
-                        setValue('ciudad', u.ciudad || '');
-                        setValue('referencias', u.referencias || '');
-                        if (typeof u.zona_id === 'number') {
-                          setValue('zona' as any, u.zona_id as any);
-                        }
-                        if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
-                          setValue('zonas' as any, u.zona_ids as any);
-                        }
-                      }}
-                      title="Buscar y usar ubicación guardada"
-                    />
-                  </div>
-                )}
-                
                 {orgLocations.length > 0 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 8 }}>Usar mis ubicaciones guardadas</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {orgLocations.map((u: any) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => {
-                            setValue('lugar', u.nombre || '');
-                            setValue('direccion', u.direccion || '');
-                            setValue('ciudad', u.ciudad || '');
-                            setValue('referencias', u.referencias || '');
-                            if (typeof u.zona_id === 'number') {
-                              setValue('zona' as any, u.zona_id as any);
-                            }
-                            if (Array.isArray(u.zona_ids) && u.zona_ids.length) {
-                              setValue('zonas' as any, u.zona_ids as any);
-                            }
-                          }}
-                          style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${colors.light}33`, background: 'rgba(255,255,255,0.06)', color: colors.light, cursor: 'pointer', fontSize: 12 }}
-                        >
-                          ➕ {u.nombre || 'Ubicación'}
-                        </button>
-                      ))}
+                  <>
+                    <div style={{ marginBottom: 12 }}>
+                      <OrganizerLocationPicker
+                        organizerId={organizer?.id}
+                        onPick={(u) => applyOrganizerLocationToForm(u as OrganizerLocation)}
+                        title="Buscar y usar ubicación guardada"
+                      />
                     </div>
-                  </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 8 }}>Elegir ubicación existente</div>
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={selectedLocationId}
+                          onChange={(e) => {
+                            const nextId = e.target.value;
+                            if (!nextId) {
+                              clearLocationSelection();
+                              return;
+                            }
+                            const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
+                            applyOrganizerLocationToForm(found);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            background: 'rgba(255,255,255,0.08)',
+                            border: `1px solid ${colors.light}33`,
+                            color: colors.light,
+                            fontSize: '1rem',
+                            outline: 'none',
+                            appearance: 'none',
+                            WebkitAppearance: 'none',
+                          }}
+                        >
+                          <option value="">— Escribir manualmente —</option>
+                          {orgLocations.map((loc) => (
+                            <option key={loc.id} value={String(loc.id)} style={{ color: '#111' }}>
+                              {loc.nombre || loc.direccion || 'Ubicación'}
+                            </option>
+                          ))}
+                        </select>
+                        <span
+                          style={{
+                            position: 'absolute',
+                            right: 18,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            pointerEvents: 'none',
+                            color: 'rgba(255,255,255,0.6)',
+                          }}
+                        >
+                          ▼
+                        </span>
+                      </div>
+                    </div>
+                  </>
                 )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -686,7 +789,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       <input
                         type="text"
                         value={values?.lugar || ''}
-                        onChange={(e) => setValue('lugar', e.target.value)}
+                        onChange={(e) => updateManualLocationField('lugar', e.target.value)}
                         placeholder="Nombre del lugar"
                         style={{
                           width: '100%',
@@ -713,7 +816,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       <input
                         type="text"
                         value={values?.ciudad || ''}
-                        onChange={(e) => setValue('ciudad', e.target.value)}
+                        onChange={(e) => updateManualLocationField('ciudad', e.target.value)}
                         placeholder="Ciudad"
                         style={{
                           width: '100%',
@@ -741,7 +844,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     <input
                       type="text"
                       value={values?.direccion || ''}
-                      onChange={(e) => setValue('direccion', e.target.value)}
+                        onChange={(e) => updateManualLocationField('direccion', e.target.value)}
                       placeholder="Dirección completa"
                       style={{
                         width: '100%',
@@ -768,7 +871,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     <input
                       type="text"
                       value={values?.referencias || ''}
-                      onChange={(e) => setValue('referencias', e.target.value)}
+                      onChange={(e) => updateManualLocationField('referencias', e.target.value)}
                       placeholder="Puntos de referencia, cómo llegar..."
                       style={{
                         width: '100%',

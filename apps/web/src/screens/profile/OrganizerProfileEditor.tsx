@@ -30,12 +30,9 @@ import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
-import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
 import { useOrganizerLocations, useCreateOrganizerLocation, useUpdateOrganizerLocation, useDeleteOrganizerLocation, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEditor";
-import AcademyUbicacionesEditor from "../../components/academy/UbicacionesEditor";
-import type { AcademyLocation } from "../../types/academy";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 
 const colors = {
@@ -48,21 +45,6 @@ const colors = {
 };
 
 // Componente para mostrar un social con sus fechas
-const mapOrganizerLocationToAcademy = (loc?: Partial<OrganizerLocation> | null): AcademyLocation | null => {
-  if (!loc) return null;
-  return {
-    sede: loc.nombre || '',
-    direccion: loc.direccion || '',
-    ciudad: loc.ciudad || '',
-    zona_id: typeof loc.zona_id === 'number'
-      ? loc.zona_id
-      : Array.isArray(loc.zona_ids) && loc.zona_ids.length
-        ? loc.zona_ids[0] ?? null
-        : null,
-    referencias: loc.referencias || '',
-  };
-};
-
 function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
@@ -693,6 +675,7 @@ export default function OrganizerProfileEditor() {
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const createEventDate = useCreateEventDate();
   const [deletingDateId, setDeletingDateId] = useState<number | null>(null);
+  const [selectedDateLocationId, setSelectedDateLocationId] = useState<string>('');
   const [dateForm, setDateForm] = useState({
     nombre: '',
     biografia: '',
@@ -704,7 +687,6 @@ export default function OrganizerProfileEditor() {
     direccion: '',
     referencias: '',
     requisitos: '',
-    ubicaciones: [] as AcademyLocation[],
     zona: null as number | null,
     estilos: [] as number[],
     ritmos_seleccionados: [] as string[],
@@ -715,37 +697,49 @@ export default function OrganizerProfileEditor() {
     estado_publicacion: 'borrador' as 'borrador' | 'publicado'
   });
 
-  const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
-    const primary = list?.[0] || {};
-    const zonasSet = new Set<number>();
-    (list || []).forEach((loc) => {
-      if (typeof loc?.zona_id === 'number') zonasSet.add(loc.zona_id);
-    });
+  const applyOrganizerLocationToDateForm = (loc?: OrganizerLocation | null) => {
+    const id = loc?.id ? String(loc.id) : '';
+    setSelectedDateLocationId(id);
     setDateForm((prev) => ({
       ...prev,
-      ubicaciones: list,
-      lugar: primary?.sede || '',
-      ciudad: primary?.ciudad || '',
-      direccion: primary?.direccion || '',
-      referencias: primary?.referencias || '',
-      zona: typeof primary?.zona_id === 'number' ? primary.zona_id : null,
-      zonas: Array.from(zonasSet),
+      lugar: loc?.nombre || '',
+      direccion: loc?.direccion || '',
+      ciudad: loc?.ciudad || '',
+      referencias: loc?.referencias || '',
+      zona: typeof loc?.zona_id === 'number'
+        ? loc.zona_id
+        : Array.isArray(loc?.zona_ids) && loc.zona_ids.length
+          ? loc.zona_ids[0] ?? prev.zona
+          : prev.zona,
+      zonas: Array.isArray(loc?.zona_ids) && loc.zona_ids.length
+        ? [...loc.zona_ids]
+        : prev.zonas,
+    }));
+  };
+
+  const updateManualDateLocationField = (key: 'lugar' | 'direccion' | 'ciudad' | 'referencias', value: string) => {
+    setSelectedDateLocationId('');
+    setDateForm((prev) => ({
+      ...prev,
+      [key]: value,
     }));
   };
 
   useEffect(() => {
-    if (
-      showDateForm &&
-      orgLocations.length > 0 &&
-      (!(dateForm.ubicaciones && dateForm.ubicaciones.length))
-    ) {
-      const first = mapOrganizerLocationToAcademy(orgLocations[0]);
-      if (first) {
-        handleDateUbicacionesChange([first]);
-      }
+    if (!showDateForm) return;
+    if (!orgLocations.length) return;
+    if (selectedDateLocationId) return;
+    if (dateForm.lugar || dateForm.direccion || dateForm.ciudad || dateForm.referencias) return;
+    applyOrganizerLocationToDateForm(orgLocations[0]);
+  }, [showDateForm, orgLocations, selectedDateLocationId, dateForm.lugar, dateForm.direccion, dateForm.ciudad, dateForm.referencias]);
+
+  useEffect(() => {
+    if (!selectedDateLocationId) return;
+    const exists = orgLocations.some((loc) => String(loc.id ?? '') === selectedDateLocationId);
+    if (!exists) {
+      setSelectedDateLocationId('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDateForm, orgLocations, dateForm.ubicaciones?.length]);
+  }, [orgLocations, selectedDateLocationId]);
 
   // Función para subir archivo
   const uploadFile = async (file: File, slot: string, kind: "photo" | "video") => {
@@ -1016,21 +1010,26 @@ export default function OrganizerProfileEditor() {
         parentIdToUse = newParent?.id;
       }
 
-      const manualLocations = dateForm.ubicaciones || [];
-      const fallbackLocation = !manualLocations.length && orgLocations.length
-        ? mapOrganizerLocationToAcademy(orgLocations[0])
-        : null;
-      const effectiveLocations = manualLocations.length
-        ? manualLocations
-        : fallbackLocation
-          ? [fallbackLocation]
-          : [];
+      const selectedOrganizerLocation = selectedDateLocationId
+        ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
+        : undefined;
 
-      const primaryLocation = effectiveLocations[0];
-      const zonasFromLocations = new Set<number>();
-      (effectiveLocations || []).forEach((loc) => {
-        if (typeof loc?.zona_id === 'number') zonasFromLocations.add(loc.zona_id);
-      });
+      const resolvedLugar = dateForm.lugar || selectedOrganizerLocation?.nombre || null;
+      const resolvedDireccion = dateForm.direccion || selectedOrganizerLocation?.direccion || null;
+      const resolvedCiudad = dateForm.ciudad || selectedOrganizerLocation?.ciudad || null;
+      const resolvedReferencias = dateForm.referencias || selectedOrganizerLocation?.referencias || null;
+      const resolvedZona = typeof dateForm.zona === 'number'
+        ? dateForm.zona
+        : typeof selectedOrganizerLocation?.zona_id === 'number'
+          ? selectedOrganizerLocation.zona_id
+          : Array.isArray(selectedOrganizerLocation?.zona_ids) && selectedOrganizerLocation.zona_ids.length
+            ? selectedOrganizerLocation.zona_ids[0] ?? null
+            : null;
+      const resolvedZonas = (dateForm.zonas && dateForm.zonas.length)
+        ? dateForm.zonas
+        : Array.isArray(selectedOrganizerLocation?.zona_ids)
+          ? [...selectedOrganizerLocation.zona_ids]
+          : [];
 
       await createEventDate.mutateAsync({
         parent_id: Number(parentIdToUse),
@@ -1039,21 +1038,15 @@ export default function OrganizerProfileEditor() {
         fecha: dateForm.fecha,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
-        lugar: (dateForm.lugar || primaryLocation?.sede) || null,
-        direccion: (dateForm.direccion || primaryLocation?.direccion) || null,
-        ciudad: (dateForm.ciudad || primaryLocation?.ciudad) || null,
-        zona: typeof dateForm.zona === 'number'
-          ? dateForm.zona
-          : typeof primaryLocation?.zona_id === 'number'
-            ? primaryLocation.zona_id
-            : null,
-        referencias: (dateForm.referencias || primaryLocation?.referencias) || null,
+        lugar: resolvedLugar,
+        direccion: resolvedDireccion,
+        ciudad: resolvedCiudad,
+        zona: resolvedZona,
+        referencias: resolvedReferencias,
         requisitos: dateForm.requisitos || null,
         estilos: dateForm.estilos || [],
         ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
-        zonas: (dateForm.zonas && dateForm.zonas.length)
-          ? dateForm.zonas
-          : Array.from(zonasFromLocations),
+        zonas: resolvedZonas,
         cronograma: dateForm.cronograma || [],
         costos: dateForm.costos || [],
         flyer_url: dateForm.flyer_url || null,
@@ -1072,7 +1065,6 @@ export default function OrganizerProfileEditor() {
         direccion: '',
         referencias: '',
         requisitos: '',
-        ubicaciones: [],
         zona: null,
         estilos: [],
         ritmos_seleccionados: [],
@@ -1082,6 +1074,7 @@ export default function OrganizerProfileEditor() {
         flyer_url: null,
         estado_publicacion: 'borrador'
       });
+      setSelectedDateLocationId('');
       setSelectedParentId(null);
     } catch (err: any) {
       console.error('Error creating date:', err);
@@ -1150,11 +1143,19 @@ export default function OrganizerProfileEditor() {
     if (!confirmDelete) return;
     try {
       setDeletingDateId(date.id);
+      // Intentar limpiar dependencias conocidas (por FK), p.ej. RSVPs
+      try {
+        await supabase.from('rsvp').delete().eq('event_date_id', date.id);
+      } catch (e) {
+        // continuar; si no hay RLS para rsvp o no existen registros, no bloquear
+        console.warn('[OrganizerProfileEditor] No se pudieron limpiar RSVPs antes de eliminar la fecha (continuando).', e);
+      }
       await deleteDate.mutateAsync(date.id);
       showToast('Fecha eliminada ✅', 'success');
     } catch (error: any) {
       console.error('[OrganizerProfileEditor] Error deleting date:', error);
-      showToast('No se pudo eliminar la fecha. Intenta nuevamente.', 'error');
+      const msg = error?.message || 'No se pudo eliminar la fecha. Intenta nuevamente.';
+      showToast(msg, 'error');
     } finally {
       setDeletingDateId(null);
     }
@@ -2066,27 +2067,122 @@ export default function OrganizerProfileEditor() {
                   {/* Ubicaciones */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📍 Selecciona tus ubicaciones
+                      📍 Ubicación del Evento
                     </h3>
                     {orgLocations.length > 0 && (
-                      <div style={{ marginBottom: 12 }}>
-                        <OrganizerLocationPicker
-                          organizerId={org?.id}
-                          title="Buscar ubicación guardada"
-                          onPick={(u) => {
-                            const entry = mapOrganizerLocationToAcademy(u);
-                            if (!entry) return;
-                            const next = [...(dateForm.ubicaciones || []), entry];
-                            handleDateUbicacionesChange(next);
-                          }}
+                      <>
+                        <div style={{ marginBottom: 12 }}>
+                          <OrganizerLocationPicker
+                            organizerId={org?.id}
+                            title="Buscar ubicación guardada"
+                            onPick={(u) => applyOrganizerLocationToDateForm(u as OrganizerLocation)}
+                          />
+                        </div>
+                        <div style={{ marginBottom: 16 }}>
+                          <label className="org-editor-field">Elegir ubicación existente</label>
+                          <div style={{ position: 'relative' }}>
+                            <select
+                              value={selectedDateLocationId}
+                              onChange={(e) => {
+                                const nextId = e.target.value;
+                                if (!nextId) {
+                                  setSelectedDateLocationId('');
+                                  setDateForm((prev) => ({
+                                    ...prev,
+                                    lugar: '',
+                                    direccion: '',
+                                    ciudad: '',
+                                    referencias: '',
+                                  }));
+                                  return;
+                                }
+                                const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
+                                applyOrganizerLocationToDateForm(found);
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '12px 14px',
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: colors.light,
+                                outline: 'none',
+                                fontSize: 14,
+                                borderRadius: 12,
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                              }}
+                            >
+                              <option value="">— Escribir manualmente —</option>
+                              {orgLocations.map((loc) => (
+                                <option
+                                  key={loc.id}
+                                  value={String(loc.id)}
+                                  style={{ color: '#111' }}
+                                >
+                                  {loc.nombre || loc.direccion || 'Ubicación'}
+                                </option>
+                              ))}
+                            </select>
+                            <span
+                              style={{
+                                position: 'absolute',
+                                right: 14,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                pointerEvents: 'none',
+                                color: 'rgba(255,255,255,0.6)',
+                              }}
+                            >
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label className="org-editor-field">Nombre de la ubicación</label>
+                        <input
+                          type="text"
+                          value={dateForm.lugar || ''}
+                          onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
+                          placeholder="Ej. Sede Centro / Salón Principal"
+                          className="org-editor-input"
                         />
                       </div>
-                    )}
-                    <UbicacionesEditor
-                      value={dateForm.ubicaciones || []}
-                      onChange={(list) => handleDateUbicacionesChange(list)}
-                    />
-
+                      <div>
+                        <label className="org-editor-field">Dirección</label>
+                        <input
+                          type="text"
+                          value={dateForm.direccion || ''}
+                          onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
+                          placeholder="Calle, número, colonia, ciudad"
+                          className="org-editor-input"
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                      <div>
+                        <label className="org-editor-field">Ciudad</label>
+                        <input
+                          type="text"
+                          value={dateForm.ciudad || ''}
+                          onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
+                          placeholder="Ciudad"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">Notas o referencias</label>
+                        <input
+                          type="text"
+                          value={dateForm.referencias || ''}
+                          onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
+                          placeholder="Ej. Entrada por puerta lateral, 2do piso"
+                          className="org-editor-input"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
@@ -2195,7 +2291,6 @@ export default function OrganizerProfileEditor() {
                           direccion: '',
                           referencias: '',
                           requisitos: '',
-                          ubicaciones: [],
                           zona: null,
                           estilos: [],
                           ritmos_seleccionados: [],
@@ -2205,6 +2300,7 @@ export default function OrganizerProfileEditor() {
                           flyer_url: null,
                           estado_publicacion: 'borrador'
                         });
+                        setSelectedDateLocationId('');
                         setSelectedParentId(null);
                       }}
                       style={{
