@@ -1179,12 +1179,12 @@ export default function OrganizerProfileEditor() {
     if (!confirmDelete) return;
     try {
       setDeletingDateId(date.id);
-      // Intentar limpiar dependencias conocidas (por FK), p.ej. RSVPs
+      // Intentar limpiar dependencias conocidas (FK) en public.event_rsvp
       try {
-        await supabase.from('rsvp').delete().eq('event_date_id', date.id);
+        await supabase.from('event_rsvp').delete().eq('event_date_id', date.id);
       } catch (e) {
-        // continuar; si no hay RLS para rsvp o no existen registros, no bloquear
-        console.warn('[OrganizerProfileEditor] No se pudieron limpiar RSVPs antes de eliminar la fecha (continuando).', e);
+        // continuar; si no hay RLS o la tabla no existe/no hay filas, no bloquear
+        console.warn('[OrganizerProfileEditor] Limpieza de RSVPs omitida/ya vacía:', e);
       }
       await deleteDate.mutateAsync(date.id);
       showToast('Fecha eliminada ✅', 'success');

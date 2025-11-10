@@ -185,48 +185,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   }
 
   const { form: values, setField: setValue, dirty: isDirty, setFromServer: reset } = useHydratedForm({
-  const mapOrganizerLocationToFormLocation = (loc?: any): AcademyLocation | null => {
-    if (!loc) return null;
-    return {
-      sede: loc.nombre || '',
-      direccion: loc.direccion || '',
-      ciudad: loc.ciudad || '',
-      referencias: loc.referencias || '',
-      zona_id: typeof loc.zona_id === 'number'
-        ? loc.zona_id
-        : Array.isArray(loc.zona_ids) && loc.zona_ids.length
-          ? loc.zona_ids[0] ?? null
-          : null,
-    };
-  };
-
-  const applyLocationToForm = (loc: AcademyLocation | null, extra?: { zonas?: number[] }) => {
-    setValue('lugar', loc?.sede || '');
-    setValue('direccion', loc?.direccion || '');
-    setValue('ciudad', loc?.ciudad || '');
-    setValue('referencias', loc?.referencias || '');
-    setValue('zona' as any, loc?.zona_id ?? null);
-    setValue('ubicaciones' as any, loc ? [loc] as any : []);
-    if (extra?.zonas) {
-      setValue('zonas' as any, extra.zonas as any);
-    }
-  };
-
-  const updateManualLocation = (patch: Partial<AcademyLocation>) => {
-    setSelectedLocationId('');
-    const current: AcademyLocation = {
-      sede: values?.lugar || '',
-      direccion: values?.direccion || '',
-      ciudad: values?.ciudad || '',
-      referencias: values?.referencias || '',
-      zona_id: typeof (values as any)?.zona === 'number' ? (values as any).zona : null,
-    };
-    const next = {
-      ...current,
-      ...patch,
-    };
-    applyLocationToForm(next);
-  };
+    // Configuración del formulario
     draftKey: isParent 
       ? `event-parent-${props.parent?.id || 'new'}-${isActuallyEditing ? 'edit' : 'create'}`
       : `event-date-${props.date?.id || 'new'}-${props.parentId}-${isActuallyEditing ? 'edit' : 'create'}`,
@@ -254,7 +213,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ciudad: '',
       zona: null,
       referencias: '',
-      requisitos: '',
       cronograma: [],
       costos: [],
       flyer_url: null,
