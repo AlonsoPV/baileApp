@@ -728,7 +728,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       />
                     </div>
                     <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontWeight: 600, marginBottom: 8 }}>Elegir ubicación existente</div>
+                      <div style={{ fontWeight: 600, marginBottom: 8 }}>Elegir ubicación existente o ingresa una nueva</div>
                       <div style={{ position: 'relative' }}>
                         <select
                           value={selectedLocationId}
