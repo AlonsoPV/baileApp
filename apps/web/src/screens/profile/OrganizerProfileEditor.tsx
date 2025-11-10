@@ -1478,7 +1478,7 @@ export default function OrganizerProfileEditor() {
                   value={form.bio}
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Cuéntanos sobre tu organización..."
-                  rows={4}
+                  rows={2}
                   className="org-editor-textarea"
                 />
               </div>
@@ -1555,7 +1555,13 @@ export default function OrganizerProfileEditor() {
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
               📱 Redes Sociales
             </h2>
-
+ {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
+ <div className="org-editor-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📍 Mis ubicaciones
+            </h2>
+            <OrganizerUbicacionesEditor organizerId={org?.id} />
+          </div> 
             <div className="org-editor-grid-small">
               <div>
                 <label className="org-editor-field">
@@ -1844,7 +1850,7 @@ export default function OrganizerProfileEditor() {
                           value={dateForm.biografia}
                           onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
                           placeholder="Describe el evento, su propósito, qué esperar..."
-                          rows={4}
+                          rows={2}
                           className="org-editor-textarea"
                         />
                       </div>
@@ -1930,7 +1936,7 @@ export default function OrganizerProfileEditor() {
                   {/* Ubicaciones */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📍 Ubicaciones
+                      📍 Selecciona tus ubicaciones
                     </h3>
                     {orgLocations.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
@@ -1955,18 +1961,7 @@ export default function OrganizerProfileEditor() {
                       value={dateForm.ubicaciones || []}
                       onChange={(list) => handleDateUbicacionesChange(list)}
                     />
-                    <div style={{ marginTop: '1rem' }}>
-                      <label className="org-editor-field">
-                        Requisitos
-                      </label>
-                      <textarea
-                        value={dateForm.requisitos}
-                        onChange={(e) => setDateForm({ ...dateForm, requisitos: e.target.value })}
-                        placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
-                        rows={3}
-                        className="org-editor-textarea"
-                      />
-                    </div>
+                    
                   </div>
 
                   {/* Ubicaciones Múltiples (sección movida fuera del form, se mantiene ubicación específica aquí) */}
@@ -2263,7 +2258,7 @@ export default function OrganizerProfileEditor() {
                   value={form.respuestas.musica_tocaran}
                   onChange={(e) => setNested('respuestas.musica_tocaran', e.target.value)}
                   placeholder="Describe el tipo de música que tocarán..."
-                  rows={3}
+                  rows={2}
                   className="org-editor-textarea"
                 />
               </div>
@@ -2276,20 +2271,14 @@ export default function OrganizerProfileEditor() {
                   value={form.respuestas.hay_estacionamiento}
                   onChange={(e) => setNested('respuestas.hay_estacionamiento', e.target.value)}
                   placeholder="Información sobre estacionamiento..."
-                  rows={3}
+                  rows={2}
                   className="org-editor-textarea"
                 />
               </div>
             </div>
           </div>
 
-          {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
-          <div className="org-editor-card">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              📍 Mis ubicaciones
-            </h2>
-            <OrganizerUbicacionesEditor organizerId={org?.id} />
-          </div>
+         
 
           {/* Sección de Fotos */}
           <PhotoManagementSection
