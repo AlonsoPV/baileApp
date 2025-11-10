@@ -58,7 +58,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const { data: organizer } = useMyOrganizer();
   const { showToast } = useToast();
   const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+
   const applyOrganizerLocationToForm = (loc?: OrganizerLocation | null) => {
     if (!loc) return;
     setSelectedLocationId(loc.id ? String(loc.id) : '');
