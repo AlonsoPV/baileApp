@@ -290,6 +290,42 @@ const colors = {
   orange: '#FF9800'
 };
 
+const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+const formatCurrency = (value?: number | null) => {
+  if (value === null || value === undefined) return 'Gratis';
+  try {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `$${value.toLocaleString()}`;
+  }
+};
+
+const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
+  if (fecha) {
+    const parsed = new Date(fecha);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  }
+  if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+    return dayNames[diaSemana];
+  }
+  return null;
+};
+
+const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
+  promocion: { icon: '✨', label: 'Promoción' },
+  paquete: { icon: '🧾', label: 'Paquete' },
+  descuento: { icon: '💸', label: 'Descuento' },
+  membresia: { icon: '🎟️', label: 'Membresía' },
+  otro: { icon: '💡', label: 'Otros' },
+};
+
 export default function TeacherProfileLive() {
   const navigate = useNavigate();
   const { data: teacher, isLoading } = useTeacherMy();
@@ -347,6 +383,8 @@ export default function TeacherProfileLive() {
     if (!allTags || !zonas) return [];
     return zonas.map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'zona')?.nombre).filter(Boolean);
   };
+
+  const promotions = Array.isArray((teacher as any)?.promociones) ? (teacher as any).promociones : [];
 
   console.log('[TeacherProfileLive] Teacher data:', teacher);
   console.log('[TeacherProfileLive] Teacher redes_sociales:', (teacher as any)?.redes_sociales);
@@ -830,6 +868,186 @@ export default function TeacherProfileLive() {
               <ClasesLive title="" cronograma={(teacher as any)?.cronograma || []} costos={(teacher as any)?.costos || []} ubicacion={{ nombre: (teacher as any)?.ubicaciones?.[0]?.nombre, direccion: (teacher as any)?.ubicaciones?.[0]?.direccion, ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad, referencias: (teacher as any)?.ubicaciones?.[0]?.referencias }} showCalendarButton={true} />
             </div>
           </motion.section>
+
+          {promotions.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="teacher-section"
+              style={{
+                marginBottom: '2rem',
+                padding: '2.5rem',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+                borderRadius: '24px',
+                border: '2px solid rgba(255,255,255,0.15)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.28)',
+                position: 'relative',
+                overflow: 'hidden',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #1E88E5, #7C4DFF, #f093fb)',
+                opacity: 0.9,
+              }} />
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '2rem',
+                position: 'relative',
+                zIndex: 1,
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(240,147,251,0.9))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.75rem',
+                  boxShadow: '0 10px 28px rgba(30,136,229,0.35)',
+                }}>
+                  💸
+                </div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Promociones y Paquetes</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                    Paquetes especiales, descuentos y membresías disponibles
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                {promotions.map((promo: any, index: number) => {
+                  const typeMeta = promotionTypeMeta[promo?.tipo] || promotionTypeMeta.otro;
+                  const validityParts: string[] = [];
+                  const desde = formatDateOrDay(promo?.validoDesde, null);
+                  const hasta = formatDateOrDay(promo?.validoHasta, null);
+                  if (desde) validityParts.push(`desde ${desde}`);
+                  if (hasta) validityParts.push(`hasta ${hasta}`);
+
+                  return (
+                    <motion.div
+                      key={`${promo?.nombre || 'promo'}-${index}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.07 }}
+                      style={{
+                        padding: '1.35rem 1.5rem',
+                        borderRadius: 18,
+                        background: 'rgba(18, 20, 28, 0.65)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: 999,
+                            background: 'rgba(240,147,251,0.12)',
+                            border: '1px solid rgba(240,147,251,0.28)',
+                            color: '#f3c6ff',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                          }}>
+                            {typeMeta.icon} {typeMeta.label}
+                          </span>
+                          {promo?.activo === false && (
+                            <span style={{
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: 999,
+                              background: 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              color: 'rgba(255,255,255,0.7)',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                            }}>
+                              Inactiva
+                            </span>
+                          )}
+                          {promo?.codigo && (
+                            <span style={{
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: 999,
+                              background: 'rgba(16,185,129,0.12)',
+                              border: '1px solid rgba(16,185,129,0.35)',
+                              color: '#86efac',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                            }}>
+                              Código: {String(promo.codigo).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span style={{
+                          padding: '0.4rem 0.9rem',
+                          borderRadius: 999,
+                          background: 'rgba(30,136,229,0.12)',
+                          border: '1px solid rgba(30,136,229,0.32)',
+                          color: '#90caf9',
+                          fontWeight: 700,
+                        }}>
+                          {formatCurrency(promo?.precio)}
+                        </span>
+                      </div>
+
+                      <h4 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>
+                        {promo?.nombre || 'Promoción'}
+                      </h4>
+
+                      {promo?.descripcion && (
+                        <p style={{
+                          margin: '0.5rem 0 0',
+                          color: 'rgba(255,255,255,0.78)',
+                          fontSize: '0.95rem',
+                          lineHeight: 1.6,
+                        }}>
+                          {promo.descripcion}
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginTop: '0.9rem' }}>
+                        {promo?.condicion && (
+                          <span style={{
+                            padding: '0.4rem 0.8rem',
+                            borderRadius: 10,
+                            background: 'rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(255,255,255,0.16)',
+                            color: 'rgba(255,255,255,0.75)',
+                            fontSize: '0.82rem',
+                          }}>
+                            📋 {promo.condicion}
+                          </span>
+                        )}
+                        {validityParts.length > 0 && (
+                          <span style={{
+                            padding: '0.4rem 0.8rem',
+                            borderRadius: 10,
+                            background: 'rgba(255,209,102,0.14)',
+                            border: '1px solid rgba(255,209,102,0.32)',
+                            color: '#ffe09a',
+                            fontSize: '0.82rem',
+                          }}>
+                            ⏰ Vigente {validityParts.join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
 
           {/* Ubicaciones (live) */}
           {Array.isArray((teacher as any)?.ubicaciones) && (teacher as any).ubicaciones.length > 0 && (

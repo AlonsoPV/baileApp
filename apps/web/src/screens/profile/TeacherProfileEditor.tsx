@@ -110,6 +110,11 @@ export default function TeacherProfileEditor() {
     } as any
   });
 
+  const supportsPromotions = React.useMemo(() => {
+    if (!teacher) return false;
+    return Object.prototype.hasOwnProperty.call(teacher, 'promociones');
+  }, [teacher]);
+
   const handleSave = async () => {
     try {
       console.log("🚀 [teacherProfileEditor] ===== INICIANDO GUARDADO =====");
@@ -129,10 +134,13 @@ export default function TeacherProfileEditor() {
         ubicaciones: (form as any).ubicaciones || [],
         cronograma: (form as any).cronograma || [],
         costos: (form as any).costos || [],
-      promociones: (form as any).promociones || [],
         redes_sociales: form.redes_sociales,
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
+
+      if (supportsPromotions) {
+        payload.promociones = (form as any).promociones || [];
+      }
 
       // Agregar ritmos_seleccionados solo si hay selección
       if (selectedCatalogIds && selectedCatalogIds.length > 0) {
@@ -1023,18 +1031,20 @@ export default function TeacherProfileEditor() {
         /> */}
 
         {/* Promociones y paquetes */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
-            💸 Promociones y Paquetes
-          </h2>
-          <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
-            Crea promociones especiales, paquetes de clases o descuentos con fecha de vigencia para tus estudiantes.
-          </p>
-          <CostsPromotionsEditor
-            value={(form as any).promociones || []}
-            onChange={(items) => setField('promociones' as any, items as any)}
-          />
-        </div>
+        {supportsPromotions && (
+          <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
+              💸 Promociones y Paquetes
+            </h2>
+            <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
+              Crea promociones especiales, paquetes de clases o descuentos con fecha de vigencia para tus estudiantes.
+            </p>
+            <CostsPromotionsEditor
+              value={(form as any).promociones || []}
+              onChange={(items) => setField('promociones' as any, items as any)}
+            />
+          </div>
+        )}
 
         {/* Información para Estudiantes */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>

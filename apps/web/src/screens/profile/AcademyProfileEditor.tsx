@@ -111,6 +111,11 @@ export default function AcademyProfileEditor() {
     } as any
   });
 
+  const supportsPromotions = React.useMemo(() => {
+    if (!academy) return false;
+    return Object.prototype.hasOwnProperty.call(academy, 'promociones');
+  }, [academy]);
+
   const handleSave = async () => {
     try {
       console.log("🚀 [AcademyProfileEditor] ===== INICIANDO GUARDADO =====");
@@ -130,10 +135,13 @@ export default function AcademyProfileEditor() {
         horarios: (form as any).cronograma || [],     // Guardar en horarios
         cronograma: (form as any).cronograma || [],   // También en cronograma para compatibilidad
         costos: (form as any).costos || [],           // Guardar costos
-        promociones: (form as any).promociones || [],
         redes_sociales: form.redes_sociales,
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
+
+      if (supportsPromotions) {
+        payload.promociones = (form as any).promociones || [];
+      }
 
       // Agregar ritmos_seleccionados solo si hay selección (requiere ejecutar SCRIPT_ADD_RITMOS_SELECCIONADOS_TO_ACADEMY.sql)
       if (selectedCatalogIds && selectedCatalogIds.length > 0) {
@@ -1041,18 +1049,20 @@ export default function AcademyProfileEditor() {
         />
 
         {/* Promociones y paquetes */}
-        <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
-            💸 Promociones y Paquetes
-          </h2>
-          <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
-            Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia.
-          </p>
-          <CostsPromotionsEditor
-            value={(form as any).promociones || []}
-            onChange={(items) => setField('promociones' as any, items as any)}
-          />
-        </div>
+        {supportsPromotions && (
+          <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
+              💸 Promociones y Paquetes
+            </h2>
+            <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
+              Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia.
+            </p>
+            <CostsPromotionsEditor
+              value={(form as any).promociones || []}
+              onChange={(items) => setField('promociones' as any, items as any)}
+            />
+          </div>
+        )}
 
         {/* Información para Estudiantes */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
