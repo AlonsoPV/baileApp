@@ -560,25 +560,26 @@ export default function ExploreHomeScreen() {
                     const stableKey =
                       `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
                     return (
-                    <motion.div 
-                      key={stableKey} 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }} 
-                      onClickCapture={handlePreNavigate}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.04)', 
-                        border: '1px solid rgba(255,255,255,0.08)', 
-                        borderRadius: 16, 
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <ClassCard item={clase} />
-                    </motion.div>
-                  )}
+                      <motion.div 
+                        key={stableKey} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }} 
+                        onClickCapture={handlePreNavigate}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.04)', 
+                          border: '1px solid rgba(255,255,255,0.08)', 
+                          borderRadius: 16, 
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <ClassCard item={clase} />
+                      </motion.div>
+                    );
+                  }}
                 />
               );
             })()}
