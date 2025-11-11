@@ -16,6 +16,12 @@ import DancerCard from "../../components/explore/cards/DancerCard";
 import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 
+const addDays = (d: Date, n: number) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
   return (
     <motion.section 
@@ -97,31 +103,53 @@ export default function ExploreHomeScreen() {
   const { filters, set } = useExploreFilters();
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
+  const [isMobile, setIsMobile] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  const computePresetRange = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
+    const base = new Date();
+    const ymd = base.toISOString().slice(0, 10);
+    if (preset === 'todos') {
+      return { from: undefined, to: undefined };
+    }
+    if (preset === 'hoy') {
+      return { from: ymd, to: ymd };
+    }
+    if (preset === 'semana') {
+      const from = ymd;
+      const to = addDays(base, 6).toISOString().slice(0, 10);
+      return { from, to };
+    }
+    if (preset === 'siguientes') {
+      const from = addDays(base, 7).toISOString().slice(0, 10);
+      return { from, to: undefined };
+    }
+    return { from: undefined, to: undefined };
+  }, []);
+
+  React.useEffect(() => {
+    const preset = filters.datePreset || 'todos';
+    const { from, to } = computePresetRange(preset);
+    if (filters.dateFrom !== from || filters.dateTo !== to) {
+      set({ dateFrom: from, dateTo: to });
+    }
+  }, [filters.datePreset, computePresetRange, set, filters.dateFrom, filters.dateTo]);
 
   // Fecha presets: hoy / semana / siguientes
   const todayYmd = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
   const applyDatePreset = (preset: 'todos'|'hoy'|'semana'|'siguientes') => {
-    if (preset === 'todos') {
-      set({ datePreset: preset, dateFrom: undefined, dateTo: undefined });
-      return;
-    }
-    const base = new Date();
-    if (preset === 'hoy') {
-      const ymd = base.toISOString().slice(0,10);
-      set({ datePreset: preset, dateFrom: ymd, dateTo: ymd });
-      return;
-    }
-    if (preset === 'semana') {
-      const from = base.toISOString().slice(0,10);
-      const to = addDays(base, 6).toISOString().slice(0,10);
-      set({ datePreset: preset, dateFrom: from, dateTo: to });
-      return;
-    }
-    if (preset === 'siguientes') {
-      const from = addDays(base, 7).toISOString().slice(0,10);
-      set({ datePreset: preset, dateFrom: from, dateTo: undefined });
-    }
+    const { from, to } = computePresetRange(preset);
+    set({ datePreset: preset, dateFrom: from, dateTo: to });
   };
 
   const handlePreNavigate = React.useCallback(() => {
@@ -278,6 +306,50 @@ export default function ExploreHomeScreen() {
     set(newFilters);
   };
 
+  const renderDatePresetButtons = (mobile = false) => (
+    <div
+      style={{
+        display: 'flex',
+        gap: mobile ? 6 : 8,
+        flexWrap: mobile ? 'nowrap' : 'wrap',
+        overflowX: mobile ? 'auto' : 'visible',
+        marginTop: mobile ? 8 : 12,
+        padding: mobile ? '0 4px' : 0,
+      }}
+    >
+      {([
+        { id: 'todos', label: 'Todos' },
+        { id: 'hoy', label: 'Hoy' },
+        { id: 'semana', label: 'Esta semana' },
+        { id: 'siguientes', label: 'Siguientes' },
+      ] as const).map((p) => {
+        const active = (filters.datePreset || 'todos') === p.id;
+        return (
+          <button
+            key={p.id}
+            onClick={() => applyDatePreset(p.id)}
+            style={{
+              padding: mobile ? '8px 12px' : '8px 14px',
+              borderRadius: 999,
+              border: active ? '1px solid rgba(240,147,251,0.55)' : '1px solid rgba(255,255,255,0.12)',
+              background: active
+                ? 'linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18))'
+                : 'rgba(30,30,35,0.45)',
+              color: active ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
+              fontWeight: 700,
+              letterSpacing: 0.2,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              minWidth: mobile ? 105 : undefined,
+            }}
+          >
+            {p.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
       <style>{`
@@ -368,37 +440,15 @@ export default function ExploreHomeScreen() {
 
         <div className="wrap">
           <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
-          <FilterBar filters={filters} onFiltersChange={handleFilterChange} />
-          {/* Presets de fechas */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            {([
-              { id: 'todos', label: 'Todos' },
-              { id: 'hoy', label: 'Hoy' },
-              { id: 'semana', label: 'Esta semana' },
-              { id: 'siguientes', label: 'Siguientes' },
-            ] as const).map(p => {
-              const active = (filters.datePreset || 'todos') === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => applyDatePreset(p.id)}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: 999,
-                    border: active ? '1px solid rgba(240,147,251,0.55)' : '1px solid rgba(255,255,255,0.12)',
-                    background: active ? 'linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18))' : 'rgba(30,30,35,0.45)',
-                    color: active ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
-                    fontWeight: 700,
-                    letterSpacing: 0.2,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
+          <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
+          {!isMobile && renderDatePresetButtons(false)}
           </div>
-          </div>
+
+          {isMobile && (
+            <div style={{ margin: '0 0 1.5rem 0' }}>
+              {renderDatePresetButtons(true)}
+            </div>
+          )}
 
           {(showAll || selectedType === 'fechas') && (
           <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">

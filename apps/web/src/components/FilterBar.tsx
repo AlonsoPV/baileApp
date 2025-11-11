@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTags } from "../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
@@ -9,6 +9,7 @@ interface FilterBarProps {
   filters: ExploreFilters;
   onFiltersChange: (filters: ExploreFilters) => void;
   className?: string;
+  showTypeFilter?: boolean;
 }
 
 const PERFIL_OPTIONS = [
@@ -23,10 +24,32 @@ const PERFIL_OPTIONS = [
   { value: 'usuarios', label: 'Bailarines', icon: '💃' },
 ];
 
-export default function FilterBar({ filters, onFiltersChange, className = '' }: FilterBarProps) {
+export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
+  const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 768;
+  });
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 768;
+  });
   const { ritmos, zonas } = useTags();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => {
+      const desktop = window.innerWidth >= 768;
+      setIsDesktop(desktop);
+      if (desktop) {
+        setIsSearchExpanded(true);
+      }
+    };
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   const toggleDropdown = (dropdown: string) => {
     setOpenDropdown(openDropdown === dropdown ? null : dropdown);
@@ -68,14 +91,17 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
       q: '',
       ritmos: [],
       zonas: [],
-      pageSize: 12
+      datePreset: 'todos',
+      dateFrom: undefined,
+      dateTo: undefined,
+      pageSize: filters.pageSize ?? 12
     });
     setOpenDropdown(null);
   };
 
   const hasActiveFilters = () => {
     return filters.q !== '' || 
-           filters.type !== 'all' ||
+           (showTypeFilter && filters.type !== 'all') ||
            filters.ritmos.length > 0 || 
            filters.zonas.length > 0 || 
            filters.dateFrom || 
@@ -85,7 +111,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
   const getActiveFilterCount = () => {
     let count = 0;
     if (filters.q) count++;
-    if (filters.type !== 'all') count++;
+    if (showTypeFilter && filters.type !== 'all') count++;
     count += filters.ritmos.length;
     count += filters.zonas.length;
     if (filters.dateFrom || filters.dateTo) count++;
@@ -157,59 +183,102 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
             flexWrap: 'wrap'
           }} className="filters-row">
             {/* Búsqueda por palabra clave */}
-            <div style={{ flex: '1 1 300px', minWidth: '200px', position: 'relative' }} className="filters-search">
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <span style={{
-                  position: 'absolute',
-                  left: '12px',
-                  fontSize: '1.25rem',
-                  pointerEvents: 'none'
+            <div style={{ flex: '1 1 300px', minWidth: isDesktop ? '200px' : '160px', position: 'relative' }} className="filters-search">
+              {isSearchExpanded ? (
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}>
-                  🔍
-                </span>
-                <input
-                  type="text"
-                  placeholder="Buscar fechas, academias, maestros..."
-                  value={filters.q}
-                  onChange={(e) => handleSearchChange(e.target.value)}
+                  <span style={{
+                    position: 'absolute',
+                    left: '12px',
+                    fontSize: '1.25rem',
+                    pointerEvents: 'none'
+                  }}>
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar fechas, academias, maestros..."
+                    value={filters.q}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem 1rem 0.875rem 3.25rem',
+                      borderRadius: '14px',
+                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      background: filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+                      color: 'white',
+                      fontSize: '0.9rem',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = '2px solid rgba(240, 147, 251, 0.6)';
+                      e.currentTarget.style.background = 'rgba(240, 147, 251, 0.12)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(240, 147, 251, 0.25), 0 6px 20px rgba(240, 147, 251, 0.3)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)';
+                      e.currentTarget.style.background = filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.boxShadow = filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)';
+                    }}
+                  />
+                  {!isDesktop && (
+                    <button
+                      onClick={() => setIsSearchExpanded(false)}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        fontSize: '0.9rem',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.7)',
+                        cursor: 'pointer'
+                      }}
+                      aria-label="Cerrar búsqueda"
+                    >
+                      ✖
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSearchExpanded(true)}
                   style={{
-                    width: '100%',
-                    padding: '0.875rem 1rem 0.875rem 3.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.2rem',
                     borderRadius: '14px',
-                    border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
-                    background: filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    background: 'rgba(255,255,255,0.06)',
                     color: 'white',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                    transition: 'all 0.3s ease',
-                    boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
                   }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.border = '2px solid rgba(240, 147, 251, 0.6)';
-                    e.currentTarget.style.background = 'rgba(240, 147, 251, 0.12)';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(240, 147, 251, 0.25), 0 6px 20px rgba(240, 147, 251, 0.3)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.border = filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)';
-                    e.currentTarget.style.background = filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.boxShadow = filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)';
-                  }}
-                />
-              </div>
+                >
+                  <span>🔍</span>
+                  <span>Buscar</span>
+                </motion.button>
+              )}
             </div>
 
             {/* Botón Tipos */}
-            <FilterButton
-              label="Tipos"
-              icon="👥"
-              isOpen={openDropdown === 'tipos'}
-              onClick={() => toggleDropdown('tipos')}
-              activeCount={filters.type !== 'all' ? 1 : 0}
-            />
+            {showTypeFilter && (
+              <FilterButton
+                label="Tipos"
+                icon="👥"
+                isOpen={openDropdown === 'tipos'}
+                onClick={() => toggleDropdown('tipos')}
+                activeCount={filters.type !== 'all' ? 1 : 0}
+              />
+            )}
 
             {/* Botón Ritmos */}
             <FilterButton
@@ -274,7 +343,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '' }: 
           {/* Dropdowns */}
           <AnimatePresence>
             {/* Dropdown Tipos */}
-            {openDropdown === 'tipos' && (
+            {showTypeFilter && openDropdown === 'tipos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 <div style={{
                   display: 'flex',

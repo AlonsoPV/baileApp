@@ -10,6 +10,7 @@ import { Chip } from "../../components/profile/Chip";
 import ShareLink from '../../components/ShareLink';
 import ImageWithFallback from "../../components/ImageWithFallback";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
+import { useToast } from "../../components/Toast";
 import { useEventRSVP } from "../../hooks/useRSVP";
 
 const colors = {
@@ -35,6 +36,7 @@ export function DateLiveScreen() {
   const { data: social } = useEventParent(date?.parent_id);
   const { data: allTags } = useTags();
   const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
+  const { showToast } = useToast();
   
   // Debug logs
   console.log('[DateLiveScreen] Date data:', date);
@@ -55,6 +57,41 @@ export function DateLiveScreen() {
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
+  };
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareData: ShareData = {
+      title: date?.nombre || social?.nombre || 'BaileApp',
+      text: date?.biografia || social?.biografia || 'Mira este evento en BaileApp',
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        if (!navigator.canShare || navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          showToast('Compartido correctamente', 'success');
+          return;
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          return; // usuario canceló
+        }
+        console.warn('[DateLiveScreen] navigator.share falló, usando fallback:', err);
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Enlace copiado al portapapeles', 'success');
+    } catch (clipboardError) {
+      console.warn('[DateLiveScreen] clipboard.writeText falló, usando prompt:', clipboardError);
+      const fallback = prompt('Copia el enlace del evento:', shareUrl);
+      if (fallback !== null) {
+        showToast('Copiá el enlace para compartirlo', 'info');
+      }
+    }
   };
 
   if (isLoading) {
@@ -859,18 +896,7 @@ export function DateLiveScreen() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: date.nombre || social.nombre,
-                      text: date.biografia || social.biografia,
-                      url: window.location.href
-                    });
-                  } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert('¡Enlace copiado al portapapeles!');
-                  }
-                }}
+                onClick={handleShare}
                 style={{
                   padding: '1rem 1.5rem',
                   background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2))',
