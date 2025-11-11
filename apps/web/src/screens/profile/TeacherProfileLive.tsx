@@ -326,6 +326,22 @@ const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
   otro: { icon: '💡', label: 'Otros' },
 };
 
+const promotionTypeStyles: Record<string, { background: string; border: string; color: string }> = {
+  promocion: { background: 'rgba(240,147,251,0.16)', border: '1px solid rgba(240,147,251,0.28)', color: '#f3c6ff' },
+  paquete: { background: 'rgba(59, 130, 246, 0.18)', border: '1px solid rgba(59, 130, 246, 0.35)', color: '#a7c8ff' },
+  descuento: { background: 'rgba(255, 138, 101, 0.18)', border: '1px solid rgba(255, 138, 101, 0.35)', color: '#ffc1b3' },
+  membresia: { background: 'rgba(129,199,132,0.18)', border: '1px solid rgba(129,199,132,0.32)', color: '#bdf2c1' },
+  otro: { background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: '#f1f5f9' },
+};
+
+const formatPriceLabel = (value: any) => {
+  if (value === undefined || value === null || value === '') return 'Consultar';
+  if (typeof value === 'number') return formatCurrency(value);
+  const numeric = Number(value);
+  if (!Number.isNaN(numeric)) return formatCurrency(numeric);
+  return String(value);
+};
+
 export default function TeacherProfileLive() {
   const navigate = useNavigate();
   const { data: teacher, isLoading } = useTeacherMy();
@@ -489,6 +505,144 @@ export default function TeacherProfileLive() {
         .teacher-banner-avatar-fallback {
           font-size: 6rem;
         }
+        .profile-promos-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(18, 20, 28, 0.78);
+          border-radius: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+          position: relative;
+          overflow: hidden;
+          backdrop-filter: blur(12px);
+        }
+        .profile-promos-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, rgba(30,136,229,0.16), transparent 55%);
+          pointer-events: none;
+        }
+        .profile-promos-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          position: relative;
+          z-index: 1;
+        }
+        .profile-promos-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.75rem;
+          background: linear-gradient(135deg, rgba(30,136,229,0.9), rgba(240,147,251,0.9));
+          box-shadow: 0 10px 26px rgba(30,136,229,0.28);
+        }
+        .profile-promos-title {
+          margin: 0;
+        }
+        .profile-promos-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0.35rem 0 0 0;
+          font-weight: 500;
+          color: rgba(255,255,255,0.9);
+        }
+        .profile-promos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 1.1rem;
+          position: relative;
+          z-index: 1;
+        }
+        .profile-promo-card {
+          padding: 1.4rem 1.5rem;
+          border-radius: 16px;
+          background: rgba(8, 10, 18, 0.55);
+          border: 1px solid rgba(255,255,255,0.1);
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          min-height: 180px;
+        }
+        .profile-promo-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+        .profile-promo-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .profile-promo-title {
+          margin: 0;
+          color: #fff;
+          font-size: 1.1rem;
+          font-weight: 700;
+        }
+        .profile-promo-description {
+          margin: 0;
+          font-size: 0.92rem;
+          color: rgba(255,255,255,0.78);
+          line-height: 1.55;
+        }
+        .profile-promo-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .profile-promo-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.35rem 0.75rem;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+        }
+        .profile-promo-chip--muted {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.18);
+          color: rgba(255,255,255,0.72);
+        }
+        .profile-promo-chip--success {
+          background: rgba(16,185,129,0.14);
+          border: 1px solid rgba(16,185,129,0.32);
+          color: #98f5c5;
+        }
+        .profile-promo-chip--warning {
+          background: rgba(255,209,102,0.14);
+          border: 1px solid rgba(255,209,102,0.32);
+          color: #ffe3a6;
+        }
+        .profile-promo-chip--meta {
+          background: rgba(255,255,255,0.09);
+          border: 1px solid rgba(255,255,255,0.16);
+          color: rgba(255,255,255,0.8);
+        }
+        .profile-promo-price {
+          padding: 0.4rem 0.85rem;
+          border-radius: 12px;
+          background: rgba(30,136,229,0.18);
+          border: 1px solid rgba(30,136,229,0.35);
+          color: #bbdcff;
+          font-weight: 700;
+          font-size: 0.95rem;
+        }
+        .profile-promo-price.is-placeholder {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.18);
+          color: rgba(255,255,255,0.8);
+        }
+
         @media (max-width: 768px) {
           .teacher-container {
             max-width: 100% !important;
@@ -521,6 +675,21 @@ export default function TeacherProfileLive() {
             margin-bottom: 1rem !important;
             border-radius: 16px !important;
           }
+          .profile-promos-section {
+            padding: 1.5rem !important;
+            border-radius: 18px !important;
+          }
+          .profile-promos-header {
+            align-items: flex-start;
+          }
+          .profile-promos-icon {
+            width: 52px;
+            height: 52px;
+            font-size: 1.55rem;
+          }
+          .profile-promos-grid {
+            grid-template-columns: 1fr;
+          }
         }
         @media (max-width: 480px) {
           .teacher-banner h1 {
@@ -536,6 +705,19 @@ export default function TeacherProfileLive() {
           .glass-card-container {
             padding: 0.75rem !important;
             border-radius: 12px !important;
+          }
+          .profile-promos-section {
+            padding: 1.25rem !important;
+            border-radius: 16px !important;
+          }
+          .profile-promo-card {
+            padding: 1.1rem 1.15rem !important;
+          }
+          .profile-promo-title {
+            font-size: 1rem !important;
+          }
+          .profile-promo-description {
+            font-size: 0.88rem !important;
           }
         }
         
@@ -874,174 +1056,92 @@ export default function TeacherProfileLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="teacher-section"
-              style={{
-                marginBottom: '2rem',
-                padding: '2.5rem',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-                borderRadius: '24px',
-                border: '2px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.28)',
-                position: 'relative',
-                overflow: 'hidden',
-                backdropFilter: 'blur(10px)',
-              }}
+              className="profile-promos-section"
             >
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: 'linear-gradient(90deg, #1E88E5, #7C4DFF, #f093fb)',
-                opacity: 0.9,
-              }} />
-
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-                marginBottom: '2rem',
-                position: 'relative',
-                zIndex: 1,
-              }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, rgba(30,136,229,0.9), rgba(240,147,251,0.9))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.75rem',
-                  boxShadow: '0 10px 28px rgba(30,136,229,0.35)',
-                }}>
-                  💸
-                </div>
+              <div className="profile-promos-header">
+                <div className="profile-promos-icon">💸</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Promociones y Paquetes</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                  <h3 className="section-title profile-promos-title">Promociones y Paquetes</h3>
+                  <p className="profile-promos-subtitle">
                     Paquetes especiales, descuentos y membresías disponibles
                   </p>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gap: '1rem', position: 'relative', zIndex: 1 }}>
+              <div className="profile-promos-grid">
                 {promotions.map((promo: any, index: number) => {
-                  const typeMeta = promotionTypeMeta[promo?.tipo] || promotionTypeMeta.otro;
+                  const typeKey = promo?.tipo && promotionTypeMeta[promo.tipo] ? promo.tipo : 'otro';
+                  const typeMeta = promotionTypeMeta[typeKey];
+                  const typeStyle = promotionTypeStyles[typeKey];
                   const validityParts: string[] = [];
-                  const desde = formatDateOrDay(promo?.validoDesde, null);
-                  const hasta = formatDateOrDay(promo?.validoHasta, null);
+                  const desde = formatDateOrDay(promo?.validoDesde);
+                  const hasta = formatDateOrDay(promo?.validoHasta);
                   if (desde) validityParts.push(`desde ${desde}`);
                   if (hasta) validityParts.push(`hasta ${hasta}`);
+                  const priceLabel = formatPriceLabel(promo?.precio);
+                  const priceIsPlaceholder = priceLabel === 'Consultar';
 
                   return (
                     <motion.div
                       key={`${promo?.nombre || 'promo'}-${index}`}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.07 }}
-                      style={{
-                        padding: '1.35rem 1.5rem',
-                        borderRadius: 18,
-                        background: 'rgba(18, 20, 28, 0.65)',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-                      }}
+                      transition={{ delay: index * 0.05 }}
+                      className="profile-promo-card"
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: 999,
-                            background: 'rgba(240,147,251,0.12)',
-                            border: '1px solid rgba(240,147,251,0.28)',
-                            color: '#f3c6ff',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                          }}>
-                            {typeMeta.icon} {typeMeta.label}
-                          </span>
-                          {promo?.activo === false && (
-                            <span style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: 999,
-                              background: 'rgba(255,255,255,0.08)',
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              color: 'rgba(255,255,255,0.7)',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}>
-                              Inactiva
-                            </span>
-                          )}
-                          {promo?.codigo && (
-                            <span style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: 999,
-                              background: 'rgba(16,185,129,0.12)',
-                              border: '1px solid rgba(16,185,129,0.35)',
-                              color: '#86efac',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                            }}>
-                              Código: {String(promo.codigo).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <span style={{
-                          padding: '0.4rem 0.9rem',
-                          borderRadius: 999,
-                          background: 'rgba(30,136,229,0.12)',
-                          border: '1px solid rgba(30,136,229,0.32)',
-                          color: '#90caf9',
-                          fontWeight: 700,
-                        }}>
-                          {formatCurrency(promo?.precio)}
+                      <div className="profile-promo-header">
+                        <span
+                          className="profile-promo-chip"
+                          style={typeStyle}
+                        >
+                          {typeMeta.icon} {typeMeta.label}
+                        </span>
+                        <span
+                          className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}
+                        >
+                          {priceLabel}
                         </span>
                       </div>
 
-                      <h4 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>
+                      {(promo?.codigo || promo?.activo === false) && (
+                        <div className="profile-promo-meta">
+                          {promo?.codigo && (
+                            <span className="profile-promo-chip profile-promo-chip--success">
+                              Código: {String(promo.codigo).toUpperCase()}
+                            </span>
+                          )}
+                          {promo?.activo === false && (
+                            <span className="profile-promo-chip profile-promo-chip--muted">
+                              Inactiva
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <h4 className="profile-promo-title">
                         {promo?.nombre || 'Promoción'}
                       </h4>
 
                       {promo?.descripcion && (
-                        <p style={{
-                          margin: '0.5rem 0 0',
-                          color: 'rgba(255,255,255,0.78)',
-                          fontSize: '0.95rem',
-                          lineHeight: 1.6,
-                        }}>
+                        <p className="profile-promo-description">
                           {promo.descripcion}
                         </p>
                       )}
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginTop: '0.9rem' }}>
-                        {promo?.condicion && (
-                          <span style={{
-                            padding: '0.4rem 0.8rem',
-                            borderRadius: 10,
-                            background: 'rgba(255,255,255,0.08)',
-                            border: '1px solid rgba(255,255,255,0.16)',
-                            color: 'rgba(255,255,255,0.75)',
-                            fontSize: '0.82rem',
-                          }}>
-                            📋 {promo.condicion}
-                          </span>
-                        )}
-                        {validityParts.length > 0 && (
-                          <span style={{
-                            padding: '0.4rem 0.8rem',
-                            borderRadius: 10,
-                            background: 'rgba(255,209,102,0.14)',
-                            border: '1px solid rgba(255,209,102,0.32)',
-                            color: '#ffe09a',
-                            fontSize: '0.82rem',
-                          }}>
-                            ⏰ Vigente {validityParts.join(' · ')}
-                          </span>
-                        )}
-                      </div>
+                      {(promo?.condicion || validityParts.length > 0) && (
+                        <div className="profile-promo-chips">
+                          {promo?.condicion && (
+                            <span className="profile-promo-chip profile-promo-chip--meta">
+                              📋 {promo.condicion}
+                            </span>
+                          )}
+                          {validityParts.length > 0 && (
+                            <span className="profile-promo-chip profile-promo-chip--warning">
+                              ⏰ Vigente {validityParts.join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}

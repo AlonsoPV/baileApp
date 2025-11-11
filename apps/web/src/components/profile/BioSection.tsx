@@ -7,6 +7,7 @@ import {
   FaTwitter,
   FaLinkedinIn,
   FaSpotify,
+  FaWhatsapp,
   FaGlobe
 } from 'react-icons/fa';
 
@@ -20,6 +21,7 @@ interface BioSectionProps {
     twitter?: string;
     linkedin?: string;
     spotify?: string;
+    whatsapp?: string;
     website?: string;
   } | null;
 }
@@ -52,6 +54,8 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return <FaLinkedinIn size={20} />;
       case 'spotify':
         return <FaSpotify size={20} />;
+      case 'whatsapp':
+        return <FaWhatsapp size={20} />;
       case 'website':
         return <FaGlobe size={20} />;
       default:
@@ -75,6 +79,8 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return '#0A66C2';
       case 'spotify':
         return '#1DB954';
+      case 'whatsapp':
+        return '#25D366';
       case 'website':
         return '#6C757D';
       default:
@@ -106,6 +112,10 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return `https://linkedin.com/in/${cleanUsername}`;
       case 'spotify':
         return `https://open.spotify.com/user/${cleanUsername}`;
+      case 'whatsapp': {
+        const digits = username.replace(/\D+/g, '');
+        return digits ? `https://wa.me/${digits}` : username;
+      }
       case 'website':
         return username;
       default:
