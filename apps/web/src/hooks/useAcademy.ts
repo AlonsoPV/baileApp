@@ -32,7 +32,21 @@ export function useAcademyPublic(id: number) {
         .eq('id', id)
         .maybeSingle();
       if (error) throw error;
-      return data as AcademyProfile | null;
+      if (!data) return null;
+
+      let result: any = { ...data };
+      if (typeof result.promociones === 'undefined') {
+        const { data: promosData, error: promosError } = await supabase
+          .from('profiles_academy')
+          .select('promociones')
+          .eq('id', id)
+          .maybeSingle();
+        if (!promosError && promosData && typeof promosData.promociones !== 'undefined') {
+          result.promociones = promosData.promociones;
+        }
+      }
+
+      return result as AcademyProfile;
     }
   });
 }
