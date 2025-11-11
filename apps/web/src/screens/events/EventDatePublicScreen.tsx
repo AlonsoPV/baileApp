@@ -539,25 +539,12 @@ export default function EventDatePublicScreen() {
     }
     .event-title {
       margin: 0;
-      font-size: clamp(2.35rem, 4.5vw, 3.35rem);
-      line-height: 1.15;
+      font-size: clamp(2.1rem, 4vw, 3rem);
+      line-height: 1.1;
       font-weight: 900;
       letter-spacing: -0.01em;
       color: #fff;
       text-transform: none;
-      position: relative;
-      padding: 0.45rem 0.65rem;
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(240,147,251,0.22), rgba(255,209,102,0.18));
-      border: 2px solid rgba(240,147,251,0.35);
-      box-shadow: 0 12px 32px rgba(240,147,251,0.18);
-      backdrop-filter: blur(16px);
-    }
-    @media (max-width: 768px) {
-      .event-title {
-        font-size: clamp(1.9rem, 6vw, 2.65rem);
-        padding: 0.35rem 0.55rem;
-      }
     }
     .chip {
       display:inline-flex;

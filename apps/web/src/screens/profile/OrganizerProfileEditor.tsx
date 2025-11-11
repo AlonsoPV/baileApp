@@ -346,7 +346,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                   flexDirection: 'column',
                   gap: '1rem',
                   marginTop: '1rem',
-                  padding: '1.5rem',
+                  padding: isMobile ? '0' : '1.5rem',
                   /* borderRadius: '20px',
                   border: '2px solid rgba(30, 136, 229, 0.3)', */
                   background: 'rgba(15, 15, 15, 0.4)',
@@ -1244,7 +1244,10 @@ export default function OrganizerProfileEditor() {
       rechazado: { bg: colors.coral, text: 'Rechazado', icon: '❌' },
     };
 
-    const badge = badges[org.estado_aprobacion] || badges.borrador;
+    const estado = org.estado_aprobacion;
+    if (!estado || estado === 'borrador') return null;
+
+    const badge = badges[estado] || badges.en_revision;
 
     return (
       <span
@@ -1284,6 +1287,8 @@ export default function OrganizerProfileEditor() {
 
   // Si no hay perfil, mostrar el formulario vacío (no bloquear)
   const isNewProfile = !org;
+
+  const estadoBadge = getEstadoBadge();
 
   return (
     <>
@@ -2612,11 +2617,12 @@ export default function OrganizerProfileEditor() {
                 ⚙️ Estado y Acciones
               </h2>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                  Estado: {getEstadoBadge()}
-                </span>
-              </div>
+              {estadoBadge && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '0.875rem', opacity: 0.75 }}>Estado:</span>
+                  {estadoBadge}
+                </div>
+              )}
 
               {org.estado_aprobacion === "borrador" && (
                 <motion.button

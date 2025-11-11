@@ -17,8 +17,6 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
-import EventScheduleEditor from "../../components/events/ScheduleEditor";
-import EventCostsEditor from "../../components/events/CostsEditor";
 // import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
@@ -28,6 +26,7 @@ import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import '@/styles/organizer.css';
+import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 
 const colors = {
   primary: '#E53935',
@@ -37,6 +36,34 @@ const colors = {
   light: '#F5F5F5',
   dark: '#1A1A1A',
   orange: '#FF9800'
+};
+
+const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+const formatCurrency = (value?: number | null) => {
+  if (value === null || value === undefined) return 'Gratis';
+  try {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `$${value.toLocaleString()}`;
+  }
+};
+
+const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
+  if (fecha) {
+    const parsed = new Date(fecha);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  }
+  if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+    return dayNames[diaSemana];
+  }
+  return null;
 };
 
 export default function AcademyProfileEditor() {
@@ -64,6 +91,7 @@ export default function AcademyProfileEditor() {
       zonas: [] as number[],
       cronograma: [] as any[],
       costos: [] as any[],
+      promociones: [] as any[],
       ubicaciones: [] as any[],
       redes_sociales: {
         instagram: "",
@@ -102,6 +130,7 @@ export default function AcademyProfileEditor() {
         horarios: (form as any).cronograma || [],     // Guardar en horarios
         cronograma: (form as any).cronograma || [],   // También en cronograma para compatibilidad
         costos: (form as any).costos || [],           // Guardar costos
+        promociones: (form as any).promociones || [],
         redes_sociales: form.redes_sociales,
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
@@ -661,6 +690,9 @@ export default function AcademyProfileEditor() {
                       ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                     }
 
+                    const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                      ? c.ritmoIds
+                      : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
                     const updatedItem = {
                       ...prev,
                       tipo: 'clase',
@@ -672,7 +704,8 @@ export default function AcademyProfileEditor() {
                       fin: c.fin,
                       nivel: c.nivel || undefined,
                       referenciaCosto: c.nombre,
-                      ritmoId: c.ritmoId,
+                      ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+                      ritmoIds,
                       zonaId: c.zonaId,
                       ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
                       ubicacionId: c.ubicacionId || (match?.id || null)
@@ -719,6 +752,9 @@ export default function AcademyProfileEditor() {
                       ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                     }
 
+                    const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                      ? c.ritmoIds
+                      : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
                     const nextCrono = ([...currentCrono, {
                       tipo: 'clase',
                       titulo: c.nombre,
@@ -729,7 +765,8 @@ export default function AcademyProfileEditor() {
                       fin: c.fin,
                       nivel: c.nivel || undefined,
                       referenciaCosto: c.nombre,
-                      ritmoId: c.ritmoId,
+                      ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+                      ritmoIds,
                       zonaId: c.zonaId,
                       ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
                       ubicacionId: c.ubicacionId || (match?.id || null)
@@ -765,29 +802,48 @@ export default function AcademyProfileEditor() {
 
               {academy && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
                 <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
-                  {(form as any).cronograma.map((it: any, idx: number) => (
-                    <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
-                        <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'} {it.fecha ? `· 📅 ${it.fecha}` : ''}</span>
-                      </div>
-                      <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
+                  {(form as any).cronograma.map((it: any, idx: number) => {
+                    const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
+                    const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === refKey);
+                    const costoLabel = costo ? formatCurrency(costo.precio) : null;
+                    const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null);
+                    return (
+                      <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
+                          <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'}</span>
+                          {(fechaLabel || costoLabel) && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                              {fechaLabel && (
+                                <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(240,147,251,0.15)', border: '1px solid rgba(240,147,251,0.28)' }}>
+                                  📅 {fechaLabel}
+                                </span>
+                              )}
+                              {costoLabel && (
+                                <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.28)' }}>
+                                  💰 {costoLabel}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
                         <button
                           type="button"
                           onClick={() => {
-                            const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase());
                             setEditingIndex(idx);
                             setEditInitial({
                               nombre: it.titulo || '',
-                              tipo: (costo?.tipo as any) || 'clases sueltas',
-                              precio: costo?.precio ?? null,
-                              regla: costo?.regla || '',
+                                tipo: (costo?.tipo as any) || 'clases sueltas',
+                                precio: costo?.precio ?? null,
+                                regla: costo?.regla || '',
                               fechaModo: it.fecha ? 'especifica' : 'semanal',
                               fecha: it.fecha || '',
                               diaSemana: (it as any)?.diaSemana ?? null,
                               inicio: it.inicio || '',
                               fin: it.fin || '',
-                              ritmoId: it.ritmoId ?? null,
+                                ritmoId: it.ritmoId ?? null,
+                                ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
                               zonaId: it.zonaId ?? null,
                               ubicacion: it.ubicacion || '',
                               ubicacionId: (it as any)?.ubicacionId || null
@@ -815,7 +871,6 @@ export default function AcademyProfileEditor() {
                             const currentCrono = ([...((form as any).cronograma || [])] as any[]);
                             const currentCostos = ([...((form as any).costos || [])] as any[]);
 
-                            const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
                             const nextCrono = currentCrono.filter((_: any, i: number) => i !== idx);
                             const nextCostos = refKey
                               ? currentCostos.filter((c: any) => (c?.nombre || '').trim().toLowerCase() !== refKey)
@@ -852,8 +907,9 @@ export default function AcademyProfileEditor() {
                           Eliminar
                         </button>
                       </div>
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -983,6 +1039,20 @@ export default function AcademyProfileEditor() {
             console.log('Eliminar maestro:', masterId);
           }}
         />
+
+        {/* Promociones y paquetes */}
+        <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
+            💸 Promociones y Paquetes
+          </h2>
+          <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
+            Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia.
+          </p>
+          <CostsPromotionsEditor
+            value={(form as any).promociones || []}
+            onChange={(items) => setField('promociones' as any, items as any)}
+          />
+        </div>
 
         {/* Información para Estudiantes */}
         <div className="org-editor__card" style={{ marginBottom: '3rem' }}>

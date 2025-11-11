@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const colors = {
@@ -30,6 +30,7 @@ export type CrearClaseValue = {
   inicio?: string;
   fin?: string;
   ritmoId?: number | null;
+  ritmoIds?: number[];
   zonaId?: number | null;
   ubicacion?: string;
   ubicacionNombre?: string;
@@ -192,7 +193,8 @@ export default function CrearClase({
     diaSemana: enableDate ? (value?.diaSemana ?? null) : null,
     inicio: normalizeTime(value?.inicio),
     fin: normalizeTime(value?.fin),
-    ritmoId: value?.ritmoId ?? null,
+    ritmoId: value?.ritmoId ?? (value?.ritmoIds && value.ritmoIds.length ? value.ritmoIds[0] ?? null : null),
+    ritmoIds: value?.ritmoIds ? [...value.ritmoIds] : (value?.ritmoId ? [value.ritmoId] : []),
     zonaId: value?.zonaId ?? null,
     ubicacion: value?.ubicacion || '',
     ubicacionNombre: value?.ubicacionNombre || '',
@@ -216,7 +218,8 @@ export default function CrearClase({
         diaSemana: enableDate ? (effective?.diaSemana ?? null) : null,
         inicio: normalizeTime(effective?.inicio),
         fin: normalizeTime(effective?.fin),
-        ritmoId: effective?.ritmoId ?? null,
+        ritmoId: effective?.ritmoId ?? (effective?.ritmoIds && effective.ritmoIds.length ? effective.ritmoIds[0] ?? null : null),
+        ritmoIds: effective?.ritmoIds ? [...effective.ritmoIds] : (effective?.ritmoId ? [effective.ritmoId] : []),
         zonaId: effective?.zonaId ?? null,
         ubicacion: effective?.ubicacion || '',
         ubicacionNombre: effective?.ubicacionNombre || '',
@@ -252,11 +255,32 @@ export default function CrearClase({
     }
   }, [selectedLocationId, locations]);
 
-  const setField = (k: keyof CrearClaseValue, v: any) => {
-    const next = { ...form, [k]: v };
-    setForm(next);
-    onChange?.(next);
-  };
+  const updateForm = useCallback((updater: (prev: CrearClaseValue) => CrearClaseValue) => {
+    setForm(prev => {
+      const next = updater(prev);
+      onChange?.(next);
+      return next;
+    });
+  }, [onChange]);
+
+  const setField = useCallback((k: keyof CrearClaseValue, v: any) => {
+    updateForm(prev => ({ ...prev, [k]: v }));
+  }, [updateForm]);
+
+  const toggleRitmoChip = useCallback((ritmoId: number) => {
+    updateForm(prev => {
+      const baseIds = prev.ritmoIds && prev.ritmoIds.length
+        ? prev.ritmoIds
+        : (prev.ritmoId !== null && prev.ritmoId !== undefined ? [prev.ritmoId] : []);
+      const exists = baseIds.includes(ritmoId);
+      const nextIds = exists ? baseIds.filter(id => id !== ritmoId) : [...baseIds, ritmoId];
+      return {
+        ...prev,
+        ritmoIds: nextIds,
+        ritmoId: nextIds.length ? nextIds[0] ?? null : null,
+      };
+    });
+  }, [updateForm]);
 
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
@@ -285,14 +309,15 @@ export default function CrearClase({
     if (enableDate) {
       if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
     }
-    if (form.ritmoId) done++;
+    const hasRitmo = (form.ritmoIds && form.ritmoIds.length > 0) || !!form.ritmoId;
+    if (hasRitmo) done++;
     return Math.round((done / total) * 100);
-  }, [invalid, form.fechaModo, form.ritmoId, enableDate]);
+  }, [invalid, form.fechaModo, form.ritmoIds, form.ritmoId, enableDate]);
 
   const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
 
   const resetForm = () => {
-    setForm({
+    const base: CrearClaseValue = {
       nombre: '',
       tipo: 'clases sueltas',
       precio: null,
@@ -304,13 +329,16 @@ export default function CrearClase({
       inicio: '',
       fin: '',
       ritmoId: null,
+      ritmoIds: [],
       zonaId: null,
       ubicacion: '',
       ubicacionNombre: '',
       ubicacionDireccion: '',
       ubicacionNotas: '',
       ubicacionId: null,
-    });
+    };
+    setForm(base);
+    onChange?.(base);
     setSelectedLocationId('');
   };
 

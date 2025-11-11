@@ -166,18 +166,10 @@ export default function ClassPublicScreen() {
         .class-title {
           font-size: clamp(2.5rem, 5vw, 4.5rem);
           font-weight: 900;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 40%, #FFD166 80%, #fff 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
           margin-bottom: 1.25rem;
           letter-spacing: -0.04em;
           line-height: 1.05;
-          text-shadow: 
-            0 4px 30px rgba(240,147,251,.5),
-            0 2px 15px rgba(245,87,108,.4),
-            0 0 40px rgba(255,209,102,.3);
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
+          color: #fff;
         }
         
         @media (max-width: 1024px) {
@@ -202,8 +194,46 @@ export default function ClassPublicScreen() {
           .class-title { font-size: 2rem !important; }
         }
         
-        .chip { display:inline-flex;align-items:center;gap:.5rem; padding:.5rem .85rem;border-radius:999px;font-weight:700;font-size:.9rem }
-        .chip-date { background:rgba(240,147,251,.12);border:1px solid rgba(240,147,251,.25);color:#f093fb }
+        .chip {
+          display:inline-flex;
+          align-items:center;
+          gap:.45rem;
+          padding:.55rem .95rem;
+          border-radius:12px;
+          font-weight:700;
+          font-size:.92rem;
+          background:rgba(255,255,255,0.05);
+          border:1.5px solid rgba(255,255,255,0.12);
+          color:#f4f4f5;
+          box-shadow:0 6px 18px rgba(0,0,0,0.18);
+          backdrop-filter: blur(8px);
+          transition: all 0.2s ease;
+        }
+        .chip-date { 
+          background:linear-gradient(135deg, rgba(240,147,251,.18), rgba(152,71,255,0.16));
+          border-color:rgba(240,147,251,.38);
+          color:#f5d6ff;
+        }
+        .chip-time {
+          background:linear-gradient(135deg, rgba(255,209,102,.18), rgba(255,159,67,0.14));
+          border-color:rgba(255,209,102,.38);
+          color:#FFE6A8;
+        }
+        .chip-cost {
+          background:linear-gradient(135deg, rgba(30,136,229,0.14), rgba(0,188,212,0.1));
+          border-color:rgba(30,136,229,0.32);
+          color:#d4f0ff;
+        }
+        .chip-location {
+          background:linear-gradient(135deg, rgba(30,136,229,0.14), rgba(0,188,212,0.1));
+          border-color:rgba(30,136,229,0.32);
+          color:#d4f0ff;
+        }
+        .chip-level {
+          background:linear-gradient(135deg, rgba(30,136,229,0.18), rgba(240,147,251,0.16));
+          border-color:rgba(30,136,229,0.35);
+          color:#e5edff;
+        }
         .glass-card-container {
           margin-bottom: 2rem; padding: 2rem;
           background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
@@ -282,7 +312,7 @@ export default function ClassPublicScreen() {
                       month: 'short' 
                     });
                     return (
-                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                      <span className="chip chip-date">
                         📅 {fechaStr}
                       </span>
                     );
@@ -291,14 +321,14 @@ export default function ClassPublicScreen() {
                     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                     const dayName = dayNames[selectedClass.diaSemana] || 'Día no especificado';
                     return (
-                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                      <span className="chip chip-date">
                         📅 {dayName}
                       </span>
                     );
                   } else if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
                     // Múltiples días
                     return (
-                      <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>
+                      <span className="chip chip-date">
                         📅 {selectedClass.diasSemana.join(', ')}
                       </span>
                     );
@@ -307,16 +337,16 @@ export default function ClassPublicScreen() {
                 })()}
                 
                 {scheduleLabel && (
-                  <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>🕒 {scheduleLabel}</span>
+                  <span className="chip chip-time">🕒 {scheduleLabel}</span>
                 )}
                 {typeof costLabel === 'string' && costLabel && (
-                  <span className="chip" style={{ background: 'rgba(255,209,102,.12)', border: '1px solid rgba(255,209,102,.25)', color: '#FFD166', fontSize: '1rem', padding: '.6rem 1rem' }}>💰 {costLabel}</span>
+                  <span className="chip chip-cost">💰 {costLabel}</span>
                 )}
                 {locationLabel && (
-                  <span className="chip chip-date" style={{ fontSize: '1rem', padding: '.6rem 1rem' }}>📍 {locationLabel}</span>
+                  <span className="chip chip-location">📍 {locationLabel}</span>
                 )}
                 {selectedClass?.nivel && (
-                  <span className="chip" style={{ background: 'rgba(30,136,229,.12)', border: '1px solid rgba(30,136,229,.25)', color: '#1E88E5', fontSize: '1rem', padding: '.6rem 1rem' }}>
+                  <span className="chip chip-level">
                     🎯 {selectedClass.nivel}
                   </span>
                 )}
