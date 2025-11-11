@@ -537,12 +537,66 @@ export default function EventDatePublicScreen() {
     @media (min-width: 768px) {
        .social-header-grid { grid-template-columns: 1.3fr 1fr; }
     }
-    .chip {
-      display:inline-flex;align-items:center;gap:.5rem;
-      padding:.5rem .85rem;border-radius:999px;font-weight:700;font-size:.9rem
+    .event-title {
+      margin: 0;
+      font-size: clamp(2.35rem, 4.5vw, 3.35rem);
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      color: #fff;
+      text-transform: none;
+      position: relative;
+      padding: 0.45rem 0.65rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(240,147,251,0.22), rgba(255,209,102,0.18));
+      border: 2px solid rgba(240,147,251,0.35);
+      box-shadow: 0 12px 32px rgba(240,147,251,0.18);
+      backdrop-filter: blur(16px);
     }
-    .chip-date { background:rgba(240,147,251,.12);border:1px solid rgba(240,147,251,.25);color:#f093fb }
-    .chip-time { background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.25);color:#FFD166 }
+    @media (max-width: 768px) {
+      .event-title {
+        font-size: clamp(1.9rem, 6vw, 2.65rem);
+        padding: 0.35rem 0.55rem;
+      }
+    }
+    .chip {
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding:.55rem .95rem;
+      border-radius:12px;
+      font-weight:700;
+      font-size:.92rem;
+      background:rgba(255,255,255,0.05);
+      border:1.5px solid rgba(255,255,255,0.12);
+      color:#f4f4f5;
+      box-shadow:0 6px 18px rgba(0,0,0,0.18);
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+    }
+    .chip-date { 
+      background:linear-gradient(135deg, rgba(240,147,251,.18), rgba(152,71,255,0.16));
+      border-color:rgba(240,147,251,.38);
+      color:#f5d6ff;
+    }
+    .chip-time { 
+      background:linear-gradient(135deg, rgba(255,209,102,.18), rgba(255,159,67,0.14));
+      border-color:rgba(255,209,102,.38);
+      color:#FFE6A8;
+    }
+    .chip-location {
+      background:linear-gradient(135deg, rgba(30,136,229,0.14), rgba(0,188,212,0.1));
+      border-color:rgba(30,136,229,0.32);
+      color:#d4f0ff;
+    }
+    .chip-link {
+      text-decoration: none;
+      color: inherit;
+    }
+    .chip-link:hover {
+      transform: translateY(-2px);
+      box-shadow:0 10px 26px rgba(240,147,251,.28);
+    }
     .mini-card {
       border-radius:14px; padding:1rem; 
       background: rgba(255,255,255,0.04);
@@ -570,11 +624,7 @@ export default function EventDatePublicScreen() {
                   </button>
                 </div>
 
-                <h1 style={{
-                  margin: 0, fontSize: '2rem', lineHeight: 1.2, fontWeight: 800,
-                  background: 'linear-gradient(135deg,#f093fb,#FFD166)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-                }}>
+                <h1 className="event-title">
                   {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
                 </h1>
 
@@ -593,27 +643,12 @@ export default function EventDatePublicScreen() {
                   )}
                   {date.lugar && (
                     <a
+                      className="chip chip-location chip-link"
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                         `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="chip"
-                      style={{
-                        background: 'rgba(240,147,251,.12)',
-                        border: '1px solid rgba(240,147,251,.25)',
-                        color: '#f093fb',
-                        textDecoration: 'none',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(240,147,251,.20)';
-                        e.currentTarget.style.borderColor = 'rgba(240,147,251,.35)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(240,147,251,.12)';
-                        e.currentTarget.style.borderColor = 'rgba(240,147,251,.25)';
-                      }}
                     >
                       📍 {date.lugar}
                     </a>

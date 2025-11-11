@@ -310,6 +310,12 @@ export default function ExploreHomeScreen() {
     [usuarios]
   );
 
+  const validUsuarios = React.useMemo(
+    () =>
+      usuariosList.filter((u: any) => u && u.display_name && u.display_name.trim() !== ''),
+    [usuariosList]
+  );
+
   const handleFilterChange = (newFilters: typeof filters) => {
     set(newFilters);
   };
@@ -649,22 +655,14 @@ export default function ExploreHomeScreen() {
           )} */}
 
           {(showAll || selectedType === 'usuarios') && (
-          <Section title="¿Con quién bailar?" toAll="/explore/list?type=usuarios">
+          <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
             {usuariosLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : (() => {
-              const list = usuariosList;
-              // Filtrar usuarios con onboarding completo y con información básica
-              const validUsers = list.filter((u: any) => {
-                // La vista v_user_public ya filtra por onboarding_complete = true
-                // Pero verificamos que tenga al menos display_name
-                return u && u.display_name && u.display_name.trim() !== '';
-              });
-              
-              return validUsers.length > 0 ? (
+              return validUsuarios.length > 0 ? (
               <HorizontalSlider
                 {...sliderProps}
-                items={validUsers}
+                items={validUsuarios}
                 renderItem={(u: any, idx: number) => (
                   <motion.div 
                     key={u.user_id ?? idx} 
