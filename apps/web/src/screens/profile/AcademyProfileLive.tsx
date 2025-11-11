@@ -821,33 +821,31 @@ export default function AcademyProfileLive() {
                 )}
               </div>
               {/* Estado debajo del avatar */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 9999,
-                    background: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? 'rgba(16,185,129,0.12)'
-                      : 'rgba(30,136,229,0.12)',
-                    border: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? '1px solid rgba(16,185,129,0.35)'
-                      : '1px solid rgba(30,136,229,0.35)',
-                    color: (academy as any)?.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    boxShadow: 'none',
-                    backdropFilter: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    textTransform: 'none',
-                    letterSpacing: 0
-                  }}
-                >
-                  {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}
-                </motion.span>
-              </div>
+              {((academy as any)?.estado_aprobacion === 'aprobado') && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <motion.span
+                    whileHover={{ scale: 1.05 }}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: 9999,
+                      background: 'rgba(16,185,129,0.12)',
+                      border: '1px solid rgba(16,185,129,0.35)',
+                      color: '#9be7a1',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      boxShadow: 'none',
+                      backdropFilter: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      textTransform: 'none',
+                      letterSpacing: 0
+                    }}
+                  >
+                    ✅ Verificado
+                  </motion.span>
+                </div>
+              )}
             </div>
 
             <div>
