@@ -108,6 +108,14 @@ export default function ExploreHomeScreen() {
     return window.innerWidth < 768;
   });
 
+  const sliderProps = React.useMemo(
+    () => ({
+      className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
+      autoColumns: isMobile ? 'minmax(0, calc(100vw - 2rem))' : undefined
+    }),
+    [isMobile]
+  );
+
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -394,6 +402,18 @@ export default function ExploreHomeScreen() {
           margin-bottom: 4rem;
           position: relative;
         }
+        .explore-slider {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .explore-slider--mobile {
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+          }
+          .explore-slider--mobile > button {
+            display: none !important;
+          }
+        }
         @media (max-width: 768px) {
           .cards-grid {
             gap: 1.25rem !important;
@@ -458,6 +478,7 @@ export default function ExploreHomeScreen() {
               const list = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
               return list.length ? (
                 <HorizontalSlider
+                  {...sliderProps}
                   items={list}
                   renderItem={(fechaEvento: any, idx: number) => (
                     <motion.div 
@@ -495,6 +516,7 @@ export default function ExploreHomeScreen() {
               if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
               return (
                 <HorizontalSlider
+                  {...sliderProps}
                   items={classesList}
                   renderItem={(clase: any, idx: number) => (
                     <motion.div 
@@ -563,6 +585,7 @@ export default function ExploreHomeScreen() {
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : academias && academias.pages?.[0]?.data?.length > 0 ? (
               <HorizontalSlider
+                {...sliderProps}
                 items={academias.pages[0].data}
                 renderItem={(academia: any, idx: number) => (
                   <motion.div 
@@ -640,6 +663,7 @@ export default function ExploreHomeScreen() {
               
               return validUsers.length > 0 ? (
               <HorizontalSlider
+                {...sliderProps}
                 items={validUsers}
                 renderItem={(u: any, idx: number) => (
                   <motion.div 
@@ -686,6 +710,7 @@ export default function ExploreHomeScreen() {
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
               <HorizontalSlider
+                {...sliderProps}
                 items={maestros.pages[0].data}
                 renderItem={(maestro: any, idx: number) => (
                   <motion.div 
@@ -720,6 +745,7 @@ export default function ExploreHomeScreen() {
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
               <HorizontalSlider
+                {...sliderProps}
                 items={marcas.pages[0].data}
                 renderItem={(brand: any, idx: number) => (
                   <motion.div 

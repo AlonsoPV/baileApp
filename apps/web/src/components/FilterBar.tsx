@@ -27,10 +27,7 @@ const PERFIL_OPTIONS = [
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
-  const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    return window.innerWidth >= 768;
-  });
+  const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
@@ -42,9 +39,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
     const handler = () => {
       const desktop = window.innerWidth >= 768;
       setIsDesktop(desktop);
-      if (desktop) {
-        setIsSearchExpanded(true);
-      }
+      if (!desktop) setIsSearchExpanded(false);
     };
     handler();
     window.addEventListener('resize', handler);
@@ -131,10 +126,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             padding-bottom: 0.5rem;
           }
           .filters-row::-webkit-scrollbar { display: none; }
-          .filters-search { 
-            flex: 1 0 85% !important; 
-            min-width: 85% !important; 
-          }
           .dropdown-panel { 
             width: 100% !important; 
             padding: 1.25rem !important;
@@ -151,10 +142,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
         }
         @media (max-width: 480px) {
           .filters-wrap { padding: 0 !important; }
-          .filters-search { 
-            min-width: 100% !important;
-            margin-bottom: 0.5rem;
-          }
           .dropdown-panel { 
             padding: 1rem !important;
           }
@@ -182,93 +169,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             alignItems: 'center',
             flexWrap: 'wrap'
           }} className="filters-row">
-            {/* Búsqueda por palabra clave */}
-            <div style={{ flex: '1 1 300px', minWidth: isDesktop ? '200px' : '160px', position: 'relative' }} className="filters-search">
-              {isSearchExpanded ? (
-                <div style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '12px',
-                    fontSize: '1.25rem',
-                    pointerEvents: 'none'
-                  }}>
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Buscar fechas, academias, maestros..."
-                    value={filters.q}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem 1rem 0.875rem 3.25rem',
-                      borderRadius: '14px',
-                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
-                      background: filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)',
-                      color: 'white',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                      boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.border = '2px solid rgba(240, 147, 251, 0.6)';
-                      e.currentTarget.style.background = 'rgba(240, 147, 251, 0.12)';
-                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(240, 147, 251, 0.25), 0 6px 20px rgba(240, 147, 251, 0.3)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.border = filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)';
-                      e.currentTarget.style.background = filters.q ? 'rgba(240, 147, 251, 0.1)' : 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.boxShadow = filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)';
-                    }}
-                  />
-                  {!isDesktop && (
-                    <button
-                      onClick={() => setIsSearchExpanded(false)}
-                      style={{
-                        position: 'absolute',
-                        right: '10px',
-                        fontSize: '0.9rem',
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'rgba(255,255,255,0.7)',
-                        cursor: 'pointer'
-                      }}
-                      aria-label="Cerrar búsqueda"
-                    >
-                      ✖
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsSearchExpanded(true)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.2rem',
-                    borderRadius: '14px',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <span>🔍</span>
-                  <span>Buscar</span>
-                </motion.button>
-              )}
-            </div>
-
             {/* Botón Tipos */}
             {showTypeFilter && (
               <FilterButton
@@ -287,6 +187,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               isOpen={openDropdown === 'ritmos'}
               onClick={() => toggleDropdown('ritmos')}
               activeCount={filters.ritmos.length}
+              iconOnly
+              ariaLabel="Filtrar por ritmos"
             />
 
             {/* Botón Zonas */}
@@ -296,6 +198,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               isOpen={openDropdown === 'zonas'}
               onClick={() => toggleDropdown('zonas')}
               activeCount={filters.zonas.length}
+              iconOnly
+              ariaLabel="Filtrar por zonas"
             />
 
             {/* Botón Fechas */}
@@ -305,6 +209,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               isOpen={openDropdown === 'fechas'}
               onClick={() => toggleDropdown('fechas')}
               activeCount={filters.dateFrom || filters.dateTo ? 1 : 0}
+              iconOnly
+              ariaLabel="Filtrar por fechas"
             />
 
             {/* Botón Limpiar Filtros */}
@@ -338,6 +244,82 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                 <span>Limpiar ({getActiveFilterCount()})</span>
               </motion.button>
             )}
+
+            {/* Búsqueda por palabra clave al final */}
+            <div style={{ flex: '0 0 auto', position: 'relative' }} className="filters-search">
+              {isSearchExpanded ? (
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: isDesktop ? 320 : 'min(85vw, 320px)'
+                }}>
+                  <span style={{
+                    position: 'absolute',
+                    left: '12px',
+                    fontSize: '1.1rem',
+                    pointerEvents: 'none'
+                  }}>
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar fechas, academias, maestros..."
+                    value={filters.q}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem 1rem 0.8rem 3rem',
+                      borderRadius: '14px',
+                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      background: filters.q ? 'rgba(240, 147, 251, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                      color: 'white',
+                      fontSize: '0.9rem',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    }}
+                  />
+                  <button
+                    onClick={() => setIsSearchExpanded(false)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      fontSize: '0.85rem',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.7)',
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Cerrar búsqueda"
+                  >
+                    ✖
+                  </button>
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSearchExpanded(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0.75rem',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    background: 'rgba(255,255,255,0.06)',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                  aria-label="Abrir búsqueda"
+                >
+                  <span>🔍</span>
+                </motion.button>
+              )}
+            </div>
           </div>
 
           {/* Dropdowns */}
@@ -571,25 +553,33 @@ function FilterButton({
   icon, 
   isOpen, 
   onClick, 
-  activeCount 
+  activeCount,
+  iconOnly = false,
+  ariaLabel
 }: { 
   label: string; 
   icon: string; 
   isOpen: boolean; 
   onClick: () => void; 
   activeCount: number;
+  iconOnly?: boolean;
+  ariaLabel?: string;
 }) {
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
+      aria-label={iconOnly ? ariaLabel || label : undefined}
       style={{
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        gap: '0.5rem',
-        padding: '0.875rem 1.5rem',
+        justifyContent: 'center',
+        gap: iconOnly ? 0 : '0.5rem',
+        padding: iconOnly ? '0.75rem' : '0.875rem 1.5rem',
+        width: iconOnly ? 48 : undefined,
+        height: iconOnly ? 48 : undefined,
         borderRadius: '14px',
         border: isOpen ? '2px solid rgba(240, 147, 251, 0.6)' : '1px solid rgba(255, 255, 255, 0.15)',
         background: isOpen 
@@ -608,7 +598,7 @@ function FilterButton({
       }}
     >
       <span>{icon}</span>
-      <span>{label}</span>
+      {!iconOnly && <span>{label}</span>}
       {activeCount > 0 && (
         <motion.div
           initial={{ scale: 0 }}
@@ -636,13 +626,15 @@ function FilterButton({
           {activeCount}
         </motion.div>
       )}
-      <motion.span
-        animate={{ rotate: isOpen ? 180 : 0 }}
-        transition={{ duration: 0.2 }}
-        style={{ fontSize: '0.75rem', opacity: 0.7 }}
-      >
-        ▼
-      </motion.span>
+      {!iconOnly && (
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          style={{ fontSize: '0.75rem', opacity: 0.7 }}
+        >
+          ▼
+        </motion.span>
+      )}
     </motion.button>
   );
 }

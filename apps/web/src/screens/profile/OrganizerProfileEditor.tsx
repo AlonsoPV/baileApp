@@ -62,7 +62,7 @@ const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | nu
 };
 
 // Componente para mostrar un social con sus fechas
-function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId }: any) {
+function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
@@ -99,8 +99,8 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        padding: 'clamp(1.5rem, 2.5vw, 2.5rem)',
-        borderRadius: 'clamp(16px, 2.5vw, 28px)',
+        padding: isMobile ? '1.5rem' : 'clamp(1.5rem, 2.5vw, 2.5rem)',
+        borderRadius: isMobile ? '18px' : 'clamp(16px, 2.5vw, 28px)',
         border: '2px solid rgba(255, 255, 255, 0.2)',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
@@ -128,7 +128,8 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
         position: 'relative',
         zIndex: 2,
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: isMobile ? 'stretch' : 'flex-start',
+        flexDirection: isMobile ? 'column' : 'row',
         gap: '1.5rem',
         paddingBottom: '1.5rem',
         borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
@@ -193,7 +194,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
           display: 'flex',
           gap: '0.75rem',
           flexShrink: 0,
-          alignItems: 'flex-start'
+          alignItems: isMobile ? 'stretch' : 'flex-start',
+          flexDirection: isMobile ? 'column' : 'row',
+          width: isMobile ? '100%' : 'auto'
         }}>
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
@@ -213,7 +216,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center'
             }}
           >
             <span>👁️</span>
@@ -241,7 +246,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center'
             }}
           >
             <span>✏️</span>
@@ -273,7 +280,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center'
             }}
           >
             <span>{isDeleting ? '⏳' : '🗑️'}</span>
@@ -372,7 +381,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         navigate(`/social/fecha/${date.id}`);
                       }}
                       style={{
-                        padding: '1.5rem',
+                        padding: isMobile ? '1.25rem' : '1.5rem',
                         borderRadius: '16px',
                         border: '2px solid rgba(255, 255, 255, 0.15)',
                         display: 'flex',
@@ -410,26 +419,27 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                       {/* FILA 1: Nombre y fecha principal */}
                       <div style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: isMobile ? 'stretch' : 'center',
                         justifyContent: 'space-between',
                         gap: '1rem',
                         position: 'relative',
                         zIndex: 2,
                         paddingBottom: '1rem',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                        flexDirection: isMobile ? 'column' : 'row'
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, flexDirection: isMobile ? 'column' : 'row', textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
                           <motion.div
                             whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
                             transition={{ duration: 0.4 }}
                             style={{
-                              width: '48px',
-                              height: '48px',
+                              width: isMobile ? '44px' : '48px',
+                              height: isMobile ? '44px' : '48px',
                               borderRadius: '50%',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '1.4rem',
+                              fontSize: isMobile ? '1.2rem' : '1.4rem',
                               background: 'rgba(30, 136, 229, 0.15)',
                               border: '2px solid rgba(30, 136, 229, 0.3)',
                               boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
@@ -440,7 +450,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                           </motion.div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{
-                              fontSize: '1.2rem',
+                              fontSize: isMobile ? '1.1rem' : '1.2rem',
                               fontWeight: '800',
                               color: colors.light,
                               lineHeight: 1.3,
@@ -461,7 +471,8 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                               background: 'rgba(30, 136, 229, 0.15)',
                               borderRadius: '8px',
                               border: '1px solid rgba(30, 136, 229, 0.25)',
-                              width: 'fit-content'
+                              width: 'fit-content',
+                              margin: isMobile ? '0 auto' : undefined
                             }}>
                               <span>📅</span>
                               <span>{formatEsDate(date.fecha)}</span>
@@ -473,7 +484,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         <div style={{
                           display: 'flex',
                           gap: '0.5rem',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          flexDirection: isMobile ? 'column' : 'row',
+                          width: isMobile ? '100%' : 'auto'
                         }}>
                           <motion.button
                             whileHover={{ scale: 1.08, y: -2 }}
@@ -496,7 +509,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                               gap: '4px',
                               transition: 'all 0.3s ease',
                               boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              width: isMobile ? '100%' : 'auto',
+                              justifyContent: 'center'
                             }}
                           >
                             <span>✏️</span>
@@ -524,7 +539,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                                 gap: '4px',
                                 transition: 'all 0.3s ease',
                                 boxShadow: '0 4px 12px rgba(255, 209, 102, 0.35)',
-                                whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              width: isMobile ? '100%' : 'auto',
+                              justifyContent: 'center'
                               }}
                             >
                               <span>📄</span>
@@ -553,7 +570,9 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                               gap: '4px',
                               transition: 'all 0.3s ease',
                               boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              width: isMobile ? '100%' : 'auto',
+                              justifyContent: 'center'
                             }}
                           >
                             <span>{deletingDateId === date.id ? '⏳' : '🗑️'}</span>
@@ -569,7 +588,8 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         gap: '0.75rem',
                         alignItems: 'center',
                         position: 'relative',
-                        zIndex: 2
+                        zIndex: 2,
+                        justifyContent: isMobile ? 'center' : 'flex-start'
                       }}>
                         {date.hora_inicio && date.hora_fin && (
                           <div style={{
@@ -626,14 +646,16 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
 
                         {/* Contador de RSVP */}
                         <div style={{
-                          marginLeft: 'auto',
+                          marginLeft: isMobile ? 0 : 'auto',
                           padding: '0.5rem 0.875rem',
                           background: 'rgba(255, 140, 66, 0.15)',
                           borderRadius: '10px',
                           border: '1px solid rgba(255, 140, 66, 0.3)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '6px'
+                          gap: '6px',
+                          width: isMobile ? '100%' : 'auto',
+                          justifyContent: isMobile ? 'center' : 'flex-start'
                         }}>
                           <RSVPCounter
                             eventDateId={date.id}
@@ -669,6 +691,10 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
 
 export default function OrganizerProfileEditor() {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 768;
+  });
   const { data: org, isLoading } = useMyOrganizer();
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
@@ -681,6 +707,14 @@ export default function OrganizerProfileEditor() {
   const deleteDate = useDeleteDate();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
@@ -1846,22 +1880,22 @@ export default function OrganizerProfileEditor() {
           >
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexDirection: isMobile ? 'column' : 'row', width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
                   <div style={{
-                    width: '60px',
-                    height: '60px',
+                    width: isMobile ? '52px' : '60px',
+                    height: isMobile ? '52px' : '60px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.5rem',
+                    fontSize: isMobile ? '1.25rem' : '1.5rem',
                     boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
                   }}>
                     🎭
                   </div>
                   <div>
                     <h2 style={{
-                      fontSize: '1.75rem',
+                      fontSize: isMobile ? '1.5rem' : '1.75rem',
                       fontWeight: '800',
                       margin: 0,
                       color: '#FFFFFF',
@@ -1878,7 +1912,7 @@ export default function OrganizerProfileEditor() {
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
                   <motion.button
                     whileHover={{ scale: 1.06 }}
                     whileTap={{ scale: 0.95 }}
@@ -1907,7 +1941,9 @@ export default function OrganizerProfileEditor() {
                       gap: '0.6rem',
                       position: 'relative',
                       overflow: 'hidden',
-                      letterSpacing: '0.2px'
+                      letterSpacing: '0.2px',
+                      width: isMobile ? '100%' : 'auto',
+                      justifyContent: 'center'
                     }}
                   >
                     <span>{showDateForm ? '✖️' : '📅'}</span>
@@ -1933,7 +1969,9 @@ export default function OrganizerProfileEditor() {
                       gap: '0.6rem',
                       position: 'relative',
                       overflow: 'hidden',
-                      letterSpacing: '0.2px'
+                      letterSpacing: '0.2px',
+                      width: isMobile ? '100%' : 'auto',
+                      justifyContent: 'center'
                     }}
                   >
                     <span>🎉</span>
@@ -2390,6 +2428,7 @@ export default function OrganizerProfileEditor() {
                         onDuplicateDate={handleDuplicateDate}
                         onDeleteDate={handleDeleteDate}
                         deletingDateId={deletingDateId}
+                        isMobile={isMobile}
                       />
                     </motion.div>
                   ))}
