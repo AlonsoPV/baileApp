@@ -54,16 +54,19 @@ const typeOptions: Array<{ value: PromotionType; label: string; icon: string }> 
   { value: "otro", label: "Otro", icon: "💡" },
 ];
 
-const formatCurrency = (value?: number | null) => {
-  if (value === undefined || value === null) return "Gratis";
+const formatCurrency = (value?: number | string | null) => {
+  if (value === undefined || value === null || value === "") return "Gratis";
+  const numeric = typeof value === "string" ? Number(value) : value;
+  if (numeric === null || Number.isNaN(numeric)) return `$${String(value)}`;
   try {
-    return new Intl.NumberFormat("es-CO", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "COP",
+      currency: "USD",
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    }).format(numeric);
   } catch {
-    return `$${value.toLocaleString()}`;
+    return `$${Number(numeric).toLocaleString("en-US")}`;
   }
 };
 

@@ -100,12 +100,24 @@ export default function ClassPublicScreen() {
           const ref = (selectedClass as any).referenciaCosto;
           const match = (costos as any[]).find((c: any) => (c?.nombre || c?.titulo || c?.tipo) === ref);
           const precio = match?.precio;
-          if (typeof precio === 'number') return `$${precio.toLocaleString()}`;
+          if (typeof precio === 'number') {
+            return new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }).format(precio);
+          }
         }
         const nums = (costos as any[]).map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
         if (nums.length) {
           const min = Math.min(...(nums as number[]));
-          return `$${min.toLocaleString()}`;
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(min);
         }
       }
       return undefined;
@@ -243,11 +255,15 @@ export default function ClassPublicScreen() {
         .ur-col { display:grid; grid-template-columns: 1fr; gap: 1rem; }
         .card{border-radius:14px;padding:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10)}
         .loc{border-color:rgba(240,147,251,0.22);background:linear-gradient(135deg,rgba(240,147,251,.08),rgba(240,147,251,.04))}
-        .loc-inline{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-        .loc-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .75rem;border-radius:999px;font-weight:800; background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#fff}
+        .loc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.25rem}
+        .loc-item{display:flex;align-items:flex-start;gap:.75rem;padding:1rem;border-radius:18px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);box-shadow:0 10px 24px rgba(0,0,0,0.18)}
+        .loc-item-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;background:linear-gradient(135deg,rgba(240,147,251,0.22),rgba(240,147,251,0.08));border:1px solid rgba(240,147,251,0.32);color:#f5d6ff}
+        .loc-item-content{display:flex;flex-direction:column;gap:.25rem}
+        .loc-item-content strong{font-size:.95rem;color:#fff;letter-spacing:.01em}
+        .loc-item-content span{font-size:.9rem;color:rgba(255,255,255,.78);line-height:1.45}
         .muted{color:rgba(255,255,255,.72)}
         .divider{height:1px;background:rgba(255,255,255,.12);margin:.75rem 0}
-        .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+        .actions{display:flex;gap:.75rem;flex-wrap:wrap}
         .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em}
         .btn-maps{border:1px solid rgba(240,147,251,.4);color:#f7d9ff; background:radial-gradient(120% 120% at 0% 0%,rgba(240,147,251,.18),rgba(240,147,251,.08)); box-shadow:0 6px 18px rgba(240,147,251,.20) }
         .btn-copy{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06)}
@@ -465,13 +481,44 @@ export default function ClassPublicScreen() {
             <div className="card loc" aria-label="Ubicación">
               {ubicacion ? (
                 <>
-                  <div className="loc-inline">
-                    {ubicacion.nombre && (<span className="loc-chip">🏷️ <b>Lugar:</b> <span className="muted">{ubicacion.nombre}</span></span>)}
-                    {ubicacion.direccion && (<span className="loc-chip">🧭 <b>Dirección:</b> <span className="muted">{ubicacion.direccion}</span></span>)}
-                    {ubicacion.ciudad && (<span className="loc-chip">🏙️ <b>Ciudad:</b> <span className="muted">{ubicacion.ciudad}</span></span>)}
-                    {ubicacion.referencias && (<span className="loc-chip">📌 <b>Referencias:</b> <span className="muted">{ubicacion.referencias}</span></span>)}
+                  <div className="loc-grid">
+                    {ubicacion.nombre && (
+                      <div className="loc-item">
+                        <div className="loc-item-icon">🏷️</div>
+                        <div className="loc-item-content">
+                          <strong>Nombre del lugar</strong>
+                          <span>{ubicacion.nombre}</span>
+                        </div>
+                      </div>
+                    )}
+                    {ubicacion.direccion && (
+                      <div className="loc-item">
+                        <div className="loc-item-icon">🧭</div>
+                        <div className="loc-item-content">
+                          <strong>Dirección</strong>
+                          <span>{ubicacion.direccion}</span>
+                        </div>
+                      </div>
+                    )}
+                    {ubicacion.ciudad && (
+                      <div className="loc-item">
+                        <div className="loc-item-icon">🏙️</div>
+                        <div className="loc-item-content">
+                          <strong>Ciudad</strong>
+                          <span>{ubicacion.ciudad}</span>
+                        </div>
+                      </div>
+                    )}
+                    {ubicacion.referencias && (
+                      <div className="loc-item">
+                        <div className="loc-item-icon">📌</div>
+                        <div className="loc-item-content">
+                          <strong>Referencias</strong>
+                          <span>{ubicacion.referencias}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {(ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && <div className="divider" />}
                   <div className="actions">
                     {(ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
                       <a className="btn btn-maps" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ubicacion.nombre ?? ''} ${ubicacion.direccion ?? ''} ${ubicacion.ciudad ?? ''}`.trim())}`} target="_blank" rel="noopener noreferrer">

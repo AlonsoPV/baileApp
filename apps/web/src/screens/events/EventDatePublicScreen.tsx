@@ -385,19 +385,37 @@ export default function EventDatePublicScreen() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-ES', {
+    if (!dateStr) return '';
+    const safeDate = (() => {
+      const plain = String(dateStr).split('T')[0];
+      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+      if (
+        Number.isFinite(year) &&
+        Number.isFinite(month) &&
+        Number.isFinite(day)
+      ) {
+        // Colocar el día a mediodía en UTC para evitar desfases al formatear en CDMX
+        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      }
+      const parsed = new Date(dateStr);
+      return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+    })();
+
+    return safeDate.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'America/Mexico_City'
     });
   };
 
   const formatTime = (timeStr: string) => {
-    return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!timeStr) return '';
+    const segments = timeStr.split(':');
+    const hours = segments[0] ?? '00';
+    const minutes = segments[1] ?? '00';
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   };
 
   return (

@@ -232,6 +232,26 @@ export default function ExploreHomeScreen() {
     const allA = (academias?.pages || []).flatMap(p => p?.data || []);
     const allM = (maestros?.pages || []).flatMap(p => p?.data || []);
 
+    const parseYmdToDate = (value?: string | null) => {
+      if (!value) return null;
+      const plain = String(value).split('T')[0];
+      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+      if (
+        Number.isFinite(year) &&
+        Number.isFinite(month) &&
+        Number.isFinite(day)
+      ) {
+        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      }
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const rangeFrom = parseYmdToDate(filters.dateFrom);
+    const rangeTo = parseYmdToDate(filters.dateTo);
+    const todayBase = parseYmdToDate(todayYmd);
+    const weekEnd = todayBase ? addDays(todayBase, 6) : null;
+
     const resolveOwnerCover = (owner: any) => {
       const direct = owner?.avatar_url || owner?.portada_url || owner?.banner_url || owner?.avatar || owner?.portada || owner?.banner;
       if (direct) return String(direct);
@@ -267,7 +287,9 @@ export default function ExploreHomeScreen() {
     const weekdayIndex = (name: string) => dayNames.findIndex(d => d.toLowerCase() === String(name).toLowerCase());
     const nextOccurrence = (c: any): Date | null => {
       try {
-        if (c.fecha) return new Date(c.fecha);
+        if (c.fecha) {
+          return parseYmdToDate(c.fecha);
+        }
         const days: string[] = Array.isArray(c.diasSemana) ? c.diasSemana : [];
         if (!days.length) return null;
         const today = new Date();
@@ -280,30 +302,40 @@ export default function ExploreHomeScreen() {
           if (minDelta === null || delta < minDelta) minDelta = delta;
         }
         if (minDelta === null) return null;
-        return addDays(today, minDelta);
+        const upcoming = addDays(today, minDelta);
+        return new Date(Date.UTC(
+          upcoming.getUTCFullYear(),
+          upcoming.getUTCMonth(),
+          upcoming.getUTCDate(),
+          12, 0, 0
+        ));
       } catch { return null; }
     };
     const preset = filters.datePreset || 'todos';
-    const inPreset = (c: any) => {
+
+    const matchesPresetAndRange = (item: any) => {
+      const occurrence = nextOccurrence(item);
+      if (rangeFrom && occurrence && occurrence < rangeFrom) return false;
+      if (rangeTo && occurrence && occurrence > rangeTo) return false;
       if (preset === 'todos') return true;
-      const d = nextOccurrence(c);
-      if (!d) return true;
-      const start = new Date(todayYmd);
-      const endWeek = addDays(start, 6);
+      if (!occurrence) return true;
       if (preset === 'hoy') {
-        return d.toISOString().slice(0,10) === todayYmd;
+        return occurrence.toISOString().slice(0, 10) === todayYmd;
       }
       if (preset === 'semana') {
-        return d >= start && d <= endWeek;
+        if (!todayBase || !weekEnd) return true;
+        return occurrence >= todayBase && occurrence <= weekEnd;
       }
       if (preset === 'siguientes') {
-        return d > endWeek;
+        if (!weekEnd) return true;
+        return occurrence > weekEnd;
       }
       return true;
     };
-    const filtered = merged.filter(inPreset);
+
+    const filtered = merged.filter(matchesPresetAndRange);
     return filtered.slice(0, 12);
-  }, [academias, maestros]);
+  }, [academias, maestros, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
 
   const usuariosList = React.useMemo(
     () => (usuarios?.pages || []).flatMap((page) => page?.data ?? []),
