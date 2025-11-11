@@ -556,9 +556,12 @@ export default function ExploreHomeScreen() {
                 <HorizontalSlider
                   {...sliderProps}
                   items={classesList}
-                  renderItem={(clase: any, idx: number) => (
+                  renderItem={(clase: any, idx: number) => {
+                    const stableKey =
+                      `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
+                    return (
                     <motion.div 
-                      key={idx} 
+                      key={stableKey} 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}

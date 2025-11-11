@@ -110,11 +110,10 @@ export default function ClassCard({ item }: Props) {
         transition={{ duration: 0.15 }}
         style={{
           ...card,
-          background: bg
-            ? `url(${bg})`
-            : card.background,
+          backgroundImage: bg ? `url(${bg})` : undefined,
           backgroundSize: bg ? 'cover' : undefined,
-          backgroundPosition: bg ? 'center' : undefined
+          backgroundPosition: bg ? 'center' : undefined,
+          backgroundRepeat: bg ? 'no-repeat' : undefined
         }}
       >
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />

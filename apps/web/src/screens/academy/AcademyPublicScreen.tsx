@@ -152,6 +152,54 @@ const colors = {
   orange: '#FF9800'
 };
 
+const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
+  promocion: { icon: '✨', label: 'Promoción' },
+  paquete: { icon: '🧾', label: 'Paquete' },
+  descuento: { icon: '💸', label: 'Descuento' },
+  membresia: { icon: '🎟️', label: 'Membresía' },
+  otro: { icon: '💡', label: 'Otros' },
+};
+
+const promotionTypeStyles: Record<string, { background: string; border: string; color: string }> = {
+  promocion: { background: 'rgba(240,147,251,0.16)', border: '1px solid rgba(240,147,251,0.28)', color: '#f3c6ff' },
+  paquete: { background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.35)', color: '#a7c8ff' },
+  descuento: { background: 'rgba(255,138,101,0.18)', border: '1px solid rgba(255,138,101,0.35)', color: '#ffc1b3' },
+  membresia: { background: 'rgba(129,199,132,0.18)', border: '1px solid rgba(129,199,132,0.32)', color: '#bdf2c1' },
+  otro: { background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: '#f1f5f9' },
+};
+
+const formatCurrency = (value?: number | string | null) => {
+  if (value === null || value === undefined || value === '') return 'Gratis';
+  const numeric = typeof value === 'string' ? Number(value) : value;
+  if (numeric === null || Number.isNaN(numeric)) return `$${String(value)}`;
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numeric);
+  } catch {
+    return `$${Number(numeric).toLocaleString('en-US')}`;
+  }
+};
+
+const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
+  if (fecha) {
+    const plain = String(fecha).split('T')[0];
+    const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+      const safe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Mexico_City' });
+    }
+  }
+  if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return dayNames[diaSemana];
+  }
+  return null;
+};
+
 export default function AcademyPublicScreen() {
   const { academyId } = useParams();
   const id = Number(academyId);
@@ -167,6 +215,8 @@ export default function AcademyPublicScreen() {
   const videos = VIDEO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
+
+  const promotions = Array.isArray((academy as any)?.promociones) ? (academy as any).promociones : [];
 
   const getRitmoNombres = () => {
     const names: string[] = [];
@@ -260,16 +310,159 @@ export default function AcademyPublicScreen() {
         }
         .academy-section { margin-bottom: 2rem; padding: 2rem; }
         .academy-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .profile-promos-section {
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(18, 20, 28, 0.78);
+          border-radius: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+          position: relative;
+          overflow: hidden;
+          backdrop-filter: blur(12px);
+        }
+        .profile-promos-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, rgba(30,136,229,0.16), transparent 55%);
+          pointer-events: none;
+        }
+        .profile-promos-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          position: relative;
+          z-index: 1;
+        }
+        .profile-promos-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.75rem;
+          background: linear-gradient(135deg, rgba(30,136,229,0.9), rgba(240,147,251,0.9));
+          box-shadow: 0 10px 26px rgba(30,136,229,0.28);
+        }
+        .profile-promos-title { margin: 0; }
+        .profile-promos-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0.35rem 0 0 0;
+          font-weight: 500;
+          color: rgba(255,255,255,0.9);
+        }
+        .profile-promos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 1.1rem;
+          position: relative;
+          z-index: 1;
+        }
+        .profile-promo-card {
+          padding: 1.4rem 1.5rem;
+          border-radius: 16px;
+          background: rgba(8, 10, 18, 0.55);
+          border: 1px solid rgba(255,255,255,0.1);
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          min-height: 180px;
+        }
+        .profile-promo-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+        .profile-promo-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .profile-promo-title {
+          margin: 0;
+          color: #fff;
+          font-size: 1.1rem;
+          font-weight: 700;
+        }
+        .profile-promo-description {
+          margin: 0;
+          font-size: 0.92rem;
+          color: rgba(255,255,255,0.78);
+          line-height: 1.55;
+        }
+        .profile-promo-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .profile-promo-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.35rem 0.75rem;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+        }
+        .profile-promo-chip--muted {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.18);
+          color: rgba(255,255,255,0.72);
+        }
+        .profile-promo-chip--success {
+          background: rgba(16,185,129,0.14);
+          border: 1px solid rgba(16,185,129,0.32);
+          color: #98f5c5;
+        }
+        .profile-promo-chip--warning {
+          background: rgba(255,209,102,0.14);
+          border: 1px solid rgba(255,209,102,0.32);
+          color: #ffe3a6;
+        }
+        .profile-promo-chip--meta {
+          background: rgba(255,255,255,0.09);
+          border: 1px solid rgba(255,255,255,0.16);
+          color: rgba(255,255,255,0.8);
+        }
+        .profile-promo-price {
+          padding: 0.4rem 0.85rem;
+          border-radius: 12px;
+          background: rgba(30,136,229,0.18);
+          border: 1px solid rgba(30,136,229,0.35);
+          color: #bbdcff;
+          font-weight: 700;
+          font-size: 0.95rem;
+        }
+        .profile-promo-price.is-placeholder {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.18);
+          color: rgba(255,255,255,0.8);
+        }
         @media (max-width: 768px) {
           .academy-container { padding: 1rem !important; }
           .academy-section { padding: 1rem !important; margin-bottom: 1.5rem !important; }
           .academy-section h2, .academy-section h3 { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
           .academy-videos-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .profile-promos-section { padding: 1.5rem !important; border-radius: 18px !important; }
+          .profile-promos-header { align-items: flex-start; }
+          .profile-promos-icon { width: 52px; height: 52px; font-size: 1.55rem; }
+          .profile-promos-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 480px) {
           .academy-section { padding: 0.75rem !important; margin-bottom: 1rem !important; border-radius: 12px !important; }
           .academy-section h2, .academy-section h3 { font-size: 1.1rem !important; }
           .academy-videos-grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+          .profile-promos-section { padding: 1.25rem !important; border-radius: 16px !important; }
+          .profile-promo-card { padding: 1.1rem 1.15rem !important; }
+          .profile-promo-title { font-size: 1rem !important; }
+          .profile-promo-description { font-size: 0.88rem !important; }
         }
       `}</style>
 
@@ -446,6 +639,95 @@ export default function AcademyPublicScreen() {
               />
             </div>
           </motion.section>
+
+          {promotions.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
+              className="profile-promos-section"
+            >
+              <div className="profile-promos-header">
+                <div className="profile-promos-icon">💸</div>
+                <div>
+                  <h2 className="section-title profile-promos-title">Promociones y Paquetes</h2>
+                  <p className="profile-promos-subtitle">
+                    Ofertas especiales, descuentos y membresías vigentes
+                  </p>
+                </div>
+              </div>
+
+              <div className="profile-promos-grid">
+                {promotions.map((promo: any, index: number) => {
+                  const typeKey = promo?.tipo && promotionTypeMeta[promo.tipo] ? promo.tipo : 'otro';
+                  const typeMeta = promotionTypeMeta[typeKey];
+                  const typeStyle = promotionTypeStyles[typeKey];
+                  const validityParts: string[] = [];
+                  const desde = formatDateOrDay(promo?.validoDesde);
+                  const hasta = formatDateOrDay(promo?.validoHasta);
+                  if (desde) validityParts.push(`desde ${desde}`);
+                  if (hasta) validityParts.push(`hasta ${hasta}`);
+                  const priceLabel = formatCurrency(promo?.precio);
+                  const priceIsPlaceholder = priceLabel === 'Gratis' || priceLabel === 'Consultar';
+
+                  return (
+                    <motion.div
+                      key={`${promo?.nombre || 'promo'}-${index}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="profile-promo-card"
+                    >
+                      <div className="profile-promo-header">
+                        <span className="profile-promo-chip" style={typeStyle}>
+                          {typeMeta.icon} {typeMeta.label}
+                        </span>
+                        <span className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}>
+                          {priceLabel}
+                        </span>
+                      </div>
+
+                      {(promo?.codigo || promo?.activo === false) && (
+                        <div className="profile-promo-meta">
+                          {promo?.codigo && (
+                            <span className="profile-promo-chip profile-promo-chip--success">
+                              Código: {String(promo.codigo).toUpperCase()}
+                            </span>
+                          )}
+                          {promo?.activo === false && (
+                            <span className="profile-promo-chip profile-promo-chip--muted">
+                              Inactiva
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <h4 className="profile-promo-title">{promo?.nombre || 'Promoción'}</h4>
+
+                      {promo?.descripcion && (
+                        <p className="profile-promo-description">{promo.descripcion}</p>
+                      )}
+
+                      {(promo?.condicion || validityParts.length > 0) && (
+                        <div className="profile-promo-chips">
+                          {promo?.condicion && (
+                            <span className="profile-promo-chip profile-promo-chip--meta">
+                              📋 {promo.condicion}
+                            </span>
+                          )}
+                          {validityParts.length > 0 && (
+                            <span className="profile-promo-chip profile-promo-chip--warning">
+                              ⏰ Vigente {validityParts.join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
 
           {Array.isArray((academy as any)?.ubicaciones) && (academy as any).ubicaciones.length > 0 && (
             <motion.section
