@@ -120,7 +120,7 @@ export function useAcceptedTeachers(academyId?: number) {
         // Intentar obtener desde profiles_teacher (debe tener RLS que permita ver maestros aprobados)
         const { data: directData, error: directError } = await supabase
           .from('profiles_teacher')
-          .select('id, avatar_url, portada_url')
+          .select('id, avatar_url, portada_url, media')
           .in('id', teacherIds)
           .eq('estado_aprobacion', 'aprobado'); // Solo maestros aprobados
         
@@ -148,14 +148,41 @@ export function useAcceptedTeachers(academyId?: number) {
       // Combinar los datos de la vista con los datos completos del perfil
       const enrichedData = data.map((t: any) => {
         const fullProfile = teacherMap.get(t.teacher_id);
+        
+        // Intentar obtener avatar/portada del campo media si no están en las URLs directas
+        let avatarFromMedia = null;
+        let portadaFromMedia = null;
+        if (fullProfile?.media && Array.isArray(fullProfile.media)) {
+          // Buscar imagen de portada (cover, p1) o primera imagen
+          const coverImage = fullProfile.media.find((m: any) => 
+            m?.slot === 'cover' || m?.slot === 'p1' || m?.type === 'image'
+          );
+          if (coverImage?.url) {
+            portadaFromMedia = coverImage.url;
+          }
+          // Buscar avatar
+          const avatarImage = fullProfile.media.find((m: any) => 
+            m?.slot === 'avatar' || (m?.type === 'image' && !coverImage)
+          );
+          if (avatarImage?.url) {
+            avatarFromMedia = avatarImage.url;
+          }
+          // Si no hay portada pero hay una imagen, usarla como portada
+          if (!portadaFromMedia && fullProfile.media[0]?.url) {
+            portadaFromMedia = fullProfile.media[0].url;
+          }
+        }
+        
         const enriched = {
           ...t,
-          teacher_avatar: fullProfile?.avatar_url || t.teacher_avatar || null,
-          teacher_portada: fullProfile?.portada_url || t.teacher_portada || null,
+          teacher_avatar: fullProfile?.avatar_url || avatarFromMedia || t.teacher_avatar || null,
+          teacher_portada: fullProfile?.portada_url || portadaFromMedia || t.teacher_portada || null,
+          teacher_media: fullProfile?.media || t.teacher_media || [],
         };
         console.log('[useAcceptedTeachers] Datos enriquecidos para teacher_id', t.teacher_id, ':', {
           teacher_avatar: enriched.teacher_avatar,
-          teacher_portada: enriched.teacher_portada
+          teacher_portada: enriched.teacher_portada,
+          teacher_media: enriched.teacher_media
         });
         return enriched;
       });
@@ -240,7 +267,7 @@ export function useTeacherAcademies(teacherId?: number) {
       try {
         const { data: publicData, error: publicError } = await supabase
           .from('v_academies_public')
-          .select('id, avatar_url, portada_url')
+          .select('id, avatar_url, portada_url, media')
           .in('id', academyIds);
         
         if (!publicError && publicData) {
@@ -251,7 +278,7 @@ export function useTeacherAcademies(teacherId?: number) {
           console.log('[useTeacherAcademies] Intentando desde profiles_academy directamente...');
           const { data: directData, error: directError } = await supabase
             .from('profiles_academy')
-            .select('id, avatar_url, portada_url')
+            .select('id, avatar_url, portada_url, media')
             .in('id', academyIds);
           
           if (directError) {
@@ -279,14 +306,41 @@ export function useTeacherAcademies(teacherId?: number) {
       // Combinar los datos de la vista con los datos completos del perfil
       const enrichedData = data.map((a: any) => {
         const fullProfile = academyMap.get(a.academy_id);
+        
+        // Intentar obtener avatar/portada del campo media si no están en las URLs directas
+        let avatarFromMedia = null;
+        let portadaFromMedia = null;
+        if (fullProfile?.media && Array.isArray(fullProfile.media)) {
+          // Buscar imagen de portada (cover, p1) o primera imagen
+          const coverImage = fullProfile.media.find((m: any) => 
+            m?.slot === 'cover' || m?.slot === 'p1' || m?.type === 'image'
+          );
+          if (coverImage?.url) {
+            portadaFromMedia = coverImage.url;
+          }
+          // Buscar avatar
+          const avatarImage = fullProfile.media.find((m: any) => 
+            m?.slot === 'avatar' || (m?.type === 'image' && !coverImage)
+          );
+          if (avatarImage?.url) {
+            avatarFromMedia = avatarImage.url;
+          }
+          // Si no hay portada pero hay una imagen, usarla como portada
+          if (!portadaFromMedia && fullProfile.media[0]?.url) {
+            portadaFromMedia = fullProfile.media[0].url;
+          }
+        }
+        
         const enriched = {
           ...a,
-          academy_avatar: fullProfile?.avatar_url || a.academy_avatar || null,
-          academy_portada: fullProfile?.portada_url || a.academy_portada || null,
+          academy_avatar: fullProfile?.avatar_url || avatarFromMedia || a.academy_avatar || null,
+          academy_portada: fullProfile?.portada_url || portadaFromMedia || a.academy_portada || null,
+          academy_media: fullProfile?.media || a.academy_media || [],
         };
         console.log('[useTeacherAcademies] Datos enriquecidos para academy_id', a.academy_id, ':', {
           academy_avatar: enriched.academy_avatar,
-          academy_portada: enriched.academy_portada
+          academy_portada: enriched.academy_portada,
+          academy_media: enriched.academy_media
         });
         return enriched;
       });

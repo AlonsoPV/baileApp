@@ -1213,7 +1213,7 @@ export default function TeacherProfileLive() {
                       ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
                       : academy.academy_avatar 
                       ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-                      : []
+                      : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
                   };
                   console.log('[TeacherProfileLive] Mapped academyData:', academyData);
                   return <AcademyCard key={academy.academy_id} item={academyData} />;
