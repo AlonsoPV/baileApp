@@ -1146,7 +1146,6 @@ export default function AcademyProfileEditor() {
                           >
                             🗑️
                           </button>
-                        )}
                       </div>
                     );
                   })}
