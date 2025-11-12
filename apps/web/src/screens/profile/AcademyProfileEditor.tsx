@@ -27,6 +27,8 @@ import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
+import { useAvailableTeachers, useAcceptedTeachers, useSendInvitation, useCancelInvitation } from "../../hooks/useAcademyTeacherInvitations";
+import { supabase } from "@/lib/supabase";
 
 const colors = {
   primary: '#E53935',
@@ -118,6 +120,25 @@ export default function AcademyProfileEditor() {
     if (!academy) return false;
     return Object.prototype.hasOwnProperty.call(academy, 'promociones');
   }, [academy]);
+
+  // Hooks para invitaciones
+  const academyId = (academy as any)?.id;
+  const { data: availableTeachers, isLoading: loadingTeachers } = useAvailableTeachers(academyId);
+  const { data: acceptedTeachers } = useAcceptedTeachers(academyId);
+  const sendInvitation = useSendInvitation();
+  const cancelInvitation = useCancelInvitation();
+  const [showTeacherModal, setShowTeacherModal] = React.useState(false);
+
+  // Asegurar que redes_sociales siempre sea un objeto, no null
+  React.useEffect(() => {
+    if (form.redes_sociales === null || typeof form.redes_sociales !== 'object') {
+      setField('redes_sociales', {
+        instagram: "",
+        facebook: "",
+        whatsapp: ""
+      });
+    }
+  }, [form.redes_sociales, setField]);
 
   const handleSave = async () => {
     try {
@@ -967,7 +988,7 @@ export default function AcademyProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.instagram}
+                value={form.redes_sociales?.instagram || ""}
                 onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
                 placeholder="@tu_organizacion"
                 style={{
@@ -988,7 +1009,7 @@ export default function AcademyProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.facebook}
+                value={form.redes_sociales?.facebook || ""}
                 onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
                 placeholder="Página o perfil"
                 style={{
@@ -1009,7 +1030,7 @@ export default function AcademyProfileEditor() {
               </label>
               <input
                 type="text"
-                value={form.redes_sociales.whatsapp}
+                value={form.redes_sociales?.whatsapp || ""}
                 onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
                 placeholder="Número de teléfono"
                 style={{
@@ -1027,29 +1048,222 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Maestros Invitados */}
-        <InvitedMastersSection
-          masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
-          title="🎭 Maestros Invitados"
-          showTitle={true}
-          isEditable={true}
-          availableUserMasters={[]} // TODO: Obtener usuarios con perfil de maestro
-          onAddMaster={() => {
-            // TODO: Implementar modal para agregar maestro externo
-            console.log('Agregar maestro externo');
-          }}
-          onAssignUserMaster={() => {
-            // TODO: Implementar modal para asignar usuario maestro
-            console.log('Asignar usuario maestro');
-          }}
-          onEditMaster={(master) => {
-            // TODO: Implementar modal para editar maestro
-            console.log('Editar maestro:', master);
-          }}
-          onRemoveMaster={(masterId) => {
-            // TODO: Implementar confirmación y eliminación
-            console.log('Eliminar maestro:', masterId);
-          }}
-        />
+        {academyId && (
+          <>
+            <InvitedMastersSection
+              masters={(acceptedTeachers || []).map((t: any) => ({
+                id: String(t.teacher_id),
+                user_id: t.teacher_user_id,
+                name: t.teacher_name,
+                specialty: Array.isArray(t.teacher_ritmos) && t.teacher_ritmos.length > 0 
+                  ? `${t.teacher_ritmos.length} ritmo${t.teacher_ritmos.length > 1 ? 's' : ''}`
+                  : 'Maestro',
+                avatar: t.teacher_avatar || undefined,
+                bio: t.teacher_bio || undefined,
+                social_media: t.teacher_redes_sociales || undefined,
+                is_confirmed: true,
+                is_user_master: true,
+              }))}
+              title="🎭 Maestros Invitados"
+              showTitle={true}
+              isEditable={true}
+              availableUserMasters={(availableTeachers || []).map((t: any) => ({
+                id: String(t.id),
+                user_id: t.user_id,
+                name: t.nombre_publico,
+                specialty: Array.isArray(t.ritmos) && t.ritmos.length > 0 
+                  ? `${t.ritmos.length} ritmo${t.ritmos.length > 1 ? 's' : ''}`
+                  : 'Maestro',
+                avatar: t.avatar_url || undefined,
+              }))}
+              onAddMaster={() => {
+                // No se usa para maestros externos por ahora
+                console.log('Agregar maestro externo');
+              }}
+              onAssignUserMaster={() => {
+                setShowTeacherModal(true);
+              }}
+              onEditMaster={(master) => {
+                // No se edita, solo se puede eliminar
+                console.log('Editar maestro:', master);
+              }}
+              onRemoveMaster={async (masterId) => {
+                if (!academyId) return;
+                const ok = window.confirm('¿Eliminar este maestro de tu academia?');
+                if (!ok) return;
+
+                // Buscar la invitación aceptada para cancelarla
+                const accepted = acceptedTeachers?.find((t: any) => String(t.teacher_id) === masterId);
+                if (accepted) {
+                  // Necesitamos el ID de la invitación, no el teacher_id
+                  // Por ahora, cancelamos todas las invitaciones para este maestro
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+
+                    const { data: invitations } = await supabase
+                      .from('academy_teacher_invitations')
+                      .select('id')
+                      .eq('academy_id', academyId)
+                      .eq('teacher_id', Number(masterId))
+                      .eq('status', 'accepted')
+                      .maybeSingle();
+
+                    if (invitations) {
+                      await cancelInvitation.mutateAsync(invitations.id);
+                      setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado' });
+                      setTimeout(() => setStatusMsg(null), 3000);
+                    }
+                  } catch (error: any) {
+                    setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
+                    setTimeout(() => setStatusMsg(null), 3000);
+                  }
+                }
+              }}
+            />
+
+            {/* Modal para seleccionar maestro */}
+            {showTeacherModal && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                padding: '1rem'
+              }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  style={{
+                    background: colors.dark,
+                    borderRadius: '20px',
+                    padding: '2rem',
+                    maxWidth: '600px',
+                    width: '100%',
+                    maxHeight: '80vh',
+                    overflow: 'auto',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
+                      👥 Seleccionar Maestro
+                    </h2>
+                    <button
+                      onClick={() => setShowTeacherModal(false)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: colors.light,
+                        fontSize: '1.5rem',
+                        cursor: 'pointer',
+                        padding: '0.5rem'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {loadingTeachers ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: colors.light }}>
+                      Cargando maestros...
+                    </div>
+                  ) : !availableTeachers || availableTeachers.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: colors.light }}>
+                      <p>No hay maestros disponibles para invitar</p>
+                      <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem' }}>
+                        Todos los maestros aprobados ya tienen una invitación pendiente o aceptada
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                      {availableTeachers.map((teacher: any) => (
+                        <div
+                          key={teacher.id}
+                          style={{
+                            padding: '1rem',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem'
+                          }}
+                        >
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            background: teacher.avatar_url 
+                              ? `url(${teacher.avatar_url}) center/cover`
+                              : 'linear-gradient(135deg, #E53935, #FB8C00)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: '700',
+                            fontSize: '1.25rem',
+                            flexShrink: 0
+                          }}>
+                            {!teacher.avatar_url && (teacher.nombre_publico?.[0]?.toUpperCase() || '👤')}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem' }}>
+                              {teacher.nombre_publico}
+                            </h3>
+                            {teacher.bio && (
+                              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', opacity: 0.7, color: colors.light }}>
+                                {teacher.bio.substring(0, 100)}{teacher.bio.length > 100 ? '...' : ''}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!academyId) return;
+                              try {
+                                await sendInvitation.mutateAsync({
+                                  academyId,
+                                  teacherId: teacher.id
+                                });
+                                setStatusMsg({ type: 'ok', text: `✅ Invitación enviada a ${teacher.nombre_publico}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                                setShowTeacherModal(false);
+                              } catch (error: any) {
+                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              }
+                            }}
+                            disabled={sendInvitation.isPending}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: sendInvitation.isPending 
+                                ? 'rgba(255, 255, 255, 0.1)' 
+                                : 'linear-gradient(135deg, #10B981, #059669)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: 'white',
+                              fontWeight: '600',
+                              cursor: sendInvitation.isPending ? 'not-allowed' : 'pointer',
+                              opacity: sendInvitation.isPending ? 0.6 : 1
+                            }}
+                          >
+                            {sendInvitation.isPending ? 'Enviando...' : '📤 Invitar'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Promociones y paquetes */}
         {supportsPromotions && (

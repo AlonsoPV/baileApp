@@ -20,6 +20,7 @@ import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
+import { useAcceptedTeachers } from "../../hooks/useAcademyTeacherInvitations";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -349,6 +350,10 @@ export default function AcademyProfileLive() {
   const { data: academy, isLoading } = useAcademyMy();
   const { media } = useAcademyMedia();
   const { data: allTags } = useTags();
+  
+  // Obtener maestros aceptados
+  const academyId = (academy as any)?.id;
+  const { data: acceptedTeachers } = useAcceptedTeachers(academyId);
   const upsert = useUpsertAcademy();
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
@@ -508,217 +513,152 @@ export default function AcademyProfileLive() {
           font-size: 6rem;
         }
         .profile-promos-section {
-          margin-bottom: 2.5rem;
-          padding: 2.5rem;
-          background: linear-gradient(135deg, rgba(18, 20, 28, 0.95) 0%, rgba(12, 14, 22, 0.95) 100%);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           position: relative;
-          overflow: hidden;
-          backdrop-filter: blur(16px);
-        }
-        .profile-promos-section::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 5px;
-          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166, #43A047, #1E88E5);
-          opacity: 0.9;
-        }
-        .profile-promos-section::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at 20% 30%, rgba(30,136,229,0.12) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 70%, rgba(240,147,251,0.1) 0%, transparent 50%);
-          pointer-events: none;
         }
         .profile-promos-header {
           display: flex;
           align-items: center;
-          gap: 1.25rem;
-          margin-bottom: 2rem;
-          position: relative;
-          z-index: 1;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
         }
         .profile-promos-icon {
-          width: 70px;
-          height: 70px;
-          border-radius: 18px;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 2rem;
-          background: linear-gradient(135deg, #1E88E5 0%, #F093FB 100%);
-          box-shadow: 0 12px 32px rgba(30,136,229,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
-          position: relative;
-          overflow: hidden;
-        }
-        .profile-promos-icon::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-          pointer-events: none;
+          font-size: 1.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .profile-promos-title {
           margin: 0;
-          font-size: 2rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #FFFFFF 0%, rgba(255,255,255,0.85) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #fff;
         }
         .profile-promos-subtitle {
-          font-size: 1rem;
-          opacity: 0.85;
-          margin: 0.5rem 0 0 0;
-          font-weight: 500;
-          color: rgba(255,255,255,0.9);
-          letter-spacing: 0.01em;
+          font-size: 0.9rem;
+          margin: 0.25rem 0 0 0;
+          font-weight: 400;
+          color: rgba(255,255,255,0.7);
         }
         .profile-promos-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-          position: relative;
-          z-index: 1;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 1.25rem;
         }
         .profile-promo-card {
-          padding: 0;
-          border-radius: 20px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
-          border: 1px solid rgba(255,255,255,0.15);
-          display: flex;
-          flex-direction: column;
-          min-height: 220px;
-          overflow: hidden;
-          position: relative;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.05) inset;
-          transition: all 0.3s ease;
-        }
-        .profile-promo-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
-          border-color: rgba(255,255,255,0.25);
-        }
-        .profile-promo-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, rgba(30,136,229,0.8), rgba(240,147,251,0.8));
-          opacity: 0.6;
-        }
-        .profile-promo-card-content {
-          padding: 1.75rem;
+          padding: 1.5rem;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           display: flex;
           flex-direction: column;
           gap: 1rem;
-          flex: 1;
+          transition: all 0.2s ease;
+        }
+        .profile-promo-card:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.18);
+          transform: translateY(-2px);
+        }
+        .profile-promo-card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
         }
         .profile-promo-header {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: space-between;
-          gap: 1rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
         }
         .profile-promo-type-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          border-radius: 12px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          letter-spacing: 0.02em;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          gap: 0.4rem;
+          padding: 0.4rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
         }
         .profile-promo-meta {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.6rem;
-          margin-top: 0.25rem;
+          gap: 0.5rem;
         }
         .profile-promo-title {
           margin: 0;
           color: #fff;
-          font-size: 1.35rem;
-          font-weight: 800;
-          line-height: 1.3;
-          letter-spacing: -0.01em;
+          font-size: 1.15rem;
+          font-weight: 600;
+          line-height: 1.4;
         }
         .profile-promo-description {
           margin: 0;
-          font-size: 0.95rem;
-          color: rgba(255,255,255,0.82);
-          line-height: 1.65;
-          flex: 1;
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.75);
+          line-height: 1.6;
         }
         .profile-promo-chips {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.6rem;
-          margin-top: auto;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
           padding-top: 0.75rem;
-          border-top: 1px solid rgba(255,255,255,0.1);
+          border-top: 1px solid rgba(255,255,255,0.08);
         }
         .profile-promo-chip {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          padding: 0.45rem 0.9rem;
-          border-radius: 10px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          letter-spacing: 0.01em;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          gap: 0.35rem;
+          padding: 0.35rem 0.7rem;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 500;
         }
         .profile-promo-chip--muted {
-          background: rgba(255,255,255,0.1);
-          border: 1px solid rgba(255,255,255,0.2);
-          color: rgba(255,255,255,0.75);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.6);
         }
         .profile-promo-chip--success {
-          background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.12));
-          border: 1px solid rgba(16,185,129,0.4);
-          color: #a8f5d0;
-          box-shadow: 0 2px 8px rgba(16,185,129,0.2);
+          background: rgba(16,185,129,0.15);
+          border: 1px solid rgba(16,185,129,0.25);
+          color: #81e6b3;
         }
         .profile-promo-chip--warning {
-          background: linear-gradient(135deg, rgba(255,209,102,0.2), rgba(255,209,102,0.12));
-          border: 1px solid rgba(255,209,102,0.4);
-          color: #ffe8b8;
-          box-shadow: 0 2px 8px rgba(255,209,102,0.2);
+          background: rgba(255,209,102,0.15);
+          border: 1px solid rgba(255,209,102,0.25);
+          color: #ffd98c;
         }
         .profile-promo-chip--meta {
-          background: rgba(255,255,255,0.12);
-          border: 1px solid rgba(255,255,255,0.2);
-          color: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.8);
         }
         .profile-promo-price {
-          padding: 0.6rem 1.1rem;
-          border-radius: 14px;
-          background: linear-gradient(135deg, rgba(30,136,229,0.25), rgba(30,136,229,0.15));
-          border: 1px solid rgba(30,136,229,0.4);
-          color: #c4e3ff;
-          font-weight: 800;
-          font-size: 1.1rem;
-          box-shadow: 0 4px 12px rgba(30,136,229,0.25);
+          padding: 0.5rem 0.9rem;
+          border-radius: 8px;
+          background: rgba(30,136,229,0.15);
+          border: 1px solid rgba(30,136,229,0.25);
+          color: #90caf9;
+          font-weight: 700;
+          font-size: 1rem;
           white-space: nowrap;
         }
         .profile-promo-price.is-placeholder {
-          background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-          border: 1px solid rgba(255,255,255,0.2);
-          color: rgba(255,255,255,0.85);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.7);
         }
         @media (max-width: 768px) {
           .academy-container {
@@ -753,31 +693,14 @@ export default function AcademyProfileLive() {
             border-radius: 16px !important;
           }
           .profile-promos-section {
-            padding: 1.75rem !important;
-            border-radius: 20px !important;
-          }
-          .profile-promos-header {
-            align-items: flex-start;
-            margin-bottom: 1.5rem !important;
-          }
-          .profile-promos-icon {
-            width: 60px;
-            height: 60px;
-            font-size: 1.75rem;
-            border-radius: 16px;
-          }
-          .profile-promos-title {
-            font-size: 1.65rem !important;
-          }
-          .profile-promos-subtitle {
-            font-size: 0.95rem !important;
+            padding: 1.5rem !important;
           }
           .profile-promos-grid {
-            grid-template-columns: 1fr;
-            gap: 1.25rem !important;
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
           }
-          .profile-promo-card-content {
-            padding: 1.5rem !important;
+          .profile-promo-card {
+            padding: 1.25rem !important;
           }
         }
         @media (max-width: 480px) {
@@ -796,29 +719,10 @@ export default function AcademyProfileLive() {
             border-radius: 12px !important;
           }
           .profile-promos-section {
-            padding: 1.5rem !important;
-            border-radius: 18px !important;
-          }
-          .profile-promos-icon {
-            width: 56px;
-            height: 56px;
-            font-size: 1.6rem;
-          }
-          .profile-promos-title {
-            font-size: 1.5rem !important;
-          }
-          .profile-promo-card-content {
             padding: 1.25rem !important;
           }
-          .profile-promo-title {
-            font-size: 1.2rem !important;
-          }
-          .profile-promo-description {
-            font-size: 0.9rem !important;
-          }
-          .profile-promo-price {
-            font-size: 1rem !important;
-            padding: 0.5rem 0.9rem !important;
+          .profile-promo-card {
+            padding: 1rem !important;
           }
         }
         
@@ -1182,11 +1086,11 @@ export default function AcademyProfileLive() {
               <div className="profile-promos-header">
                 <div className="profile-promos-icon">💸</div>
                 <div>
-                  <h2 className="section-title profile-promos-title">
+                  <h2 className="profile-promos-title">
                     Promociones y Paquetes
                   </h2>
                   <p className="profile-promos-subtitle">
-                    Ofertas especiales, descuentos y membresías vigentes
+                    Ofertas especiales y descuentos disponibles
                   </p>
                 </div>
               </div>
@@ -1207,67 +1111,59 @@ export default function AcademyProfileLive() {
                   return (
                     <motion.div
                       key={`${promo?.nombre || 'promo'}-${index}`}
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08, duration: 0.4 }}
+                      transition={{ delay: index * 0.05 }}
                       className="profile-promo-card"
-                      whileHover={{ scale: 1.02 }}
                     >
-                      <div className="profile-promo-card-content">
-                        <div className="profile-promo-header">
-                          <span
-                            className="profile-promo-type-badge"
-                            style={typeStyle}
-                          >
-                            {typeMeta.icon} {typeMeta.label}
-                          </span>
-                          <span
-                            className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}
-                          >
-                            {priceLabel}
-                          </span>
-                        </div>
-
-                        {(promo?.codigo || promo?.activo === false) && (
-                          <div className="profile-promo-meta">
-                            {promo?.codigo && (
-                              <span className="profile-promo-chip profile-promo-chip--success">
-                                🎟️ Código: {String(promo.codigo).toUpperCase()}
-                              </span>
-                            )}
-                            {promo?.activo === false && (
-                              <span className="profile-promo-chip profile-promo-chip--muted">
-                                ⏸️ Inactiva
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        <h4 className="profile-promo-title">
-                          {promo?.nombre || 'Promoción'}
-                        </h4>
-
-                        {promo?.descripcion && (
-                          <p className="profile-promo-description">
-                            {promo.descripcion}
-                          </p>
-                        )}
-
-                        {(promo?.condicion || validityParts.length > 0) && (
-                          <div className="profile-promo-chips">
-                            {promo?.condicion && (
-                              <span className="profile-promo-chip profile-promo-chip--meta">
-                                📋 {promo.condicion}
-                              </span>
-                            )}
-                            {validityParts.length > 0 && (
-                              <span className="profile-promo-chip profile-promo-chip--warning">
-                                ⏰ Vigente {validityParts.join(' · ')}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      <div className="profile-promo-header">
+                        <span
+                          className="profile-promo-type-badge"
+                          style={typeStyle}
+                        >
+                          {typeMeta.icon} {typeMeta.label}
+                        </span>
+                        <span
+                          className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}
+                        >
+                          {priceLabel}
+                        </span>
                       </div>
+
+                      <h4 className="profile-promo-title">
+                        {promo?.nombre || 'Promoción'}
+                      </h4>
+
+                      {promo?.descripcion && (
+                        <p className="profile-promo-description">
+                          {promo.descripcion}
+                        </p>
+                      )}
+
+                      {(promo?.codigo || promo?.activo === false || promo?.condicion || validityParts.length > 0) && (
+                        <div className="profile-promo-chips">
+                          {promo?.codigo && (
+                            <span className="profile-promo-chip profile-promo-chip--success">
+                              🎟️ {String(promo.codigo).toUpperCase()}
+                            </span>
+                          )}
+                          {promo?.activo === false && (
+                            <span className="profile-promo-chip profile-promo-chip--muted">
+                              Inactiva
+                            </span>
+                          )}
+                          {promo?.condicion && (
+                            <span className="profile-promo-chip profile-promo-chip--meta">
+                              {promo.condicion}
+                            </span>
+                          )}
+                          {validityParts.length > 0 && (
+                            <span className="profile-promo-chip profile-promo-chip--warning">
+                              ⏰ {validityParts.join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -1331,12 +1227,26 @@ export default function AcademyProfileLive() {
           )}
 
           {/* Maestros Invitados */}
-          <InvitedMastersSection
-            masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
-            title="🎭 Maestros Invitados"
-            showTitle={true}
-            isEditable={false}
-          />
+          {acceptedTeachers && acceptedTeachers.length > 0 && (
+            <InvitedMastersSection
+              masters={(acceptedTeachers || []).map((t: any) => ({
+                id: String(t.teacher_id),
+                user_id: t.teacher_user_id,
+                name: t.teacher_name,
+                specialty: Array.isArray(t.teacher_ritmos) && t.teacher_ritmos.length > 0 
+                  ? `${t.teacher_ritmos.length} ritmo${t.teacher_ritmos.length > 1 ? 's' : ''}`
+                  : 'Maestro',
+                avatar: t.teacher_avatar || undefined,
+                bio: t.teacher_bio || undefined,
+                social_media: t.teacher_redes_sociales || undefined,
+                is_confirmed: true,
+                is_user_master: true,
+              }))}
+              title="🎭 Maestros Invitados"
+              showTitle={true}
+              isEditable={false}
+            />
+          )}
 
           {/* Foto Principal */}
           {getMediaBySlot(media as unknown as MediaSlotItem[], 'p1') && (

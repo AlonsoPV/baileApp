@@ -26,6 +26,7 @@ import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
+import { useTeacherInvitations, useRespondToInvitation } from "../../hooks/useAcademyTeacherInvitations";
 
 const colors = {
   primary: '#E53935',
@@ -78,6 +79,11 @@ export default function TeacherProfileEditor() {
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
+
+  // Hooks para invitaciones
+  const teacherId = (teacher as any)?.id;
+  const { data: invitations, isLoading: loadingInvitations } = useTeacherInvitations(teacherId);
+  const respondToInvitation = useRespondToInvitation();
 
   // Hook para cambio de rol
   useRoleChange();
@@ -1008,30 +1014,182 @@ export default function TeacherProfileEditor() {
           </div>
         </div>
 
-        {/* Maestros Invitados */}
-        {/* <InvitedMastersSection
-          masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
-          title="🎭 Maestros Invitados"
-          showTitle={true}
-          isEditable={true}
-          availableUserMasters={[]} // TODO: Obtener usuarios con perfil de maestro
-          onAddMaster={() => {
-            // TODO: Implementar modal para agregar maestro externo
-            console.log('Agregar maestro externo');
-          }}
-          onAssignUserMaster={() => {
-            // TODO: Implementar modal para asignar usuario maestro
-            console.log('Asignar usuario maestro');
-          }}
-          onEditMaster={(master) => {
-            // TODO: Implementar modal para editar maestro
-            console.log('Editar maestro:', master);
-          }}
-          onRemoveMaster={(masterId) => {
-            // TODO: Implementar confirmación y eliminación
-            console.log('Eliminar maestro:', masterId);
-          }}
-        /> */}
+        {/* Invitaciones de Academias */}
+        {teacherId && (
+          <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              📨 Invitaciones de Academias
+            </h2>
+            {loadingInvitations ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: colors.light }}>
+                Cargando invitaciones...
+              </div>
+            ) : !invitations || invitations.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: colors.light, opacity: 0.7 }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+                <p>No tienes invitaciones pendientes</p>
+                <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Las academias pueden invitarte a colaborar con ellas
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {invitations.map((inv: any) => {
+                  const academy = inv.academy;
+                  if (!academy) return null;
+
+                  return (
+                    <div
+                      key={inv.id}
+                      style={{
+                        padding: '1.5rem',
+                        background: inv.status === 'pending' 
+                          ? 'rgba(255, 193, 7, 0.1)' 
+                          : inv.status === 'accepted'
+                          ? 'rgba(16, 185, 129, 0.1)'
+                          : 'rgba(239, 68, 68, 0.1)',
+                        borderRadius: '12px',
+                        border: `1px solid ${
+                          inv.status === 'pending' 
+                            ? 'rgba(255, 193, 7, 0.3)' 
+                            : inv.status === 'accepted'
+                            ? 'rgba(16, 185, 129, 0.3)'
+                            : 'rgba(239, 68, 68, 0.3)'
+                        }`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}
+                    >
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        background: academy.avatar_url 
+                          ? `url(${academy.avatar_url}) center/cover`
+                          : 'linear-gradient(135deg, #E53935, #FB8C00)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: '700',
+                        fontSize: '1.25rem',
+                        flexShrink: 0
+                      }}>
+                        {!academy.avatar_url && (academy.nombre_publico?.[0]?.toUpperCase() || '🎓')}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem' }}>
+                          {academy.nombre_publico}
+                        </h3>
+                        {academy.bio && (
+                          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', opacity: 0.7, color: colors.light }}>
+                            {academy.bio.substring(0, 100)}{academy.bio.length > 100 ? '...' : ''}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{
+                            padding: '0.25rem 0.5rem',
+                            background: inv.status === 'pending' 
+                              ? 'rgba(255, 193, 7, 0.2)' 
+                              : inv.status === 'accepted'
+                              ? 'rgba(16, 185, 129, 0.2)'
+                              : 'rgba(239, 68, 68, 0.2)',
+                            border: `1px solid ${
+                              inv.status === 'pending' 
+                                ? '#FFC107' 
+                                : inv.status === 'accepted'
+                                ? '#10B981'
+                                : '#EF4444'
+                            }`,
+                            borderRadius: '8px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            color: inv.status === 'pending' 
+                              ? '#FFC107' 
+                              : inv.status === 'accepted'
+                              ? '#10B981'
+                              : '#EF4444'
+                          }}>
+                            {inv.status === 'pending' && '⏳ Pendiente'}
+                            {inv.status === 'accepted' && '✅ Aceptada'}
+                            {inv.status === 'rejected' && '❌ Rechazada'}
+                            {inv.status === 'cancelled' && '🚫 Cancelada'}
+                          </span>
+                          {inv.invited_at && (
+                            <span style={{ fontSize: '0.75rem', opacity: 0.6, color: colors.light }}>
+                              {new Date(inv.invited_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {inv.status === 'pending' && (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await respondToInvitation.mutateAsync({
+                                  invitationId: inv.id,
+                                  status: 'accepted'
+                                });
+                                setStatusMsg({ type: 'ok', text: '✅ Invitación aceptada' });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              } catch (error: any) {
+                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              }
+                            }}
+                            disabled={respondToInvitation.isPending}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: 'linear-gradient(135deg, #10B981, #059669)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: 'white',
+                              fontWeight: '600',
+                              cursor: respondToInvitation.isPending ? 'not-allowed' : 'pointer',
+                              opacity: respondToInvitation.isPending ? 0.6 : 1
+                            }}
+                          >
+                            ✅ Aceptar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await respondToInvitation.mutateAsync({
+                                  invitationId: inv.id,
+                                  status: 'rejected'
+                                });
+                                setStatusMsg({ type: 'ok', text: 'Invitación rechazada' });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              } catch (error: any) {
+                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              }
+                            }}
+                            disabled={respondToInvitation.isPending}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid #EF4444',
+                              borderRadius: '8px',
+                              color: '#EF4444',
+                              fontWeight: '600',
+                              cursor: respondToInvitation.isPending ? 'not-allowed' : 'pointer',
+                              opacity: respondToInvitation.isPending ? 0.6 : 1
+                            }}
+                          >
+                            ❌ Rechazar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Promociones y paquetes */}
         {supportsPromotions && (
