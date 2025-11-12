@@ -1198,6 +1198,9 @@ export default function TeacherProfileLive() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
                 {academies.map((academy: any) => {
+                  console.log('[TeacherProfileLive] Academy data:', academy);
+                  console.log('[TeacherProfileLive] academy_avatar:', academy.academy_avatar);
+                  console.log('[TeacherProfileLive] academy_portada:', academy.academy_portada);
                   const academyData = {
                     id: academy.academy_id,
                     nombre_publico: academy.academy_name,
@@ -1212,6 +1215,7 @@ export default function TeacherProfileLive() {
                       ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
                       : []
                   };
+                  console.log('[TeacherProfileLive] Mapped academyData:', academyData);
                   return <AcademyCard key={academy.academy_id} item={academyData} />;
                 })}
               </div>

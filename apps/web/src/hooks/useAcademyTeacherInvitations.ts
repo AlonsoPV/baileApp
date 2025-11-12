@@ -23,6 +23,7 @@ export type AcceptedTeacher = {
   teacher_name: string;
   teacher_bio?: string | null;
   teacher_avatar?: string | null;
+  teacher_portada?: string | null;
   teacher_ritmos: number[];
   teacher_zonas: number[];
   teacher_redes_sociales?: any;
