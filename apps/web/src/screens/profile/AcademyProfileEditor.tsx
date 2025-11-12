@@ -1127,9 +1127,11 @@ export default function AcademyProfileEditor() {
 
                                 if (invitations) {
                                   await cancelInvitation.mutateAsync(invitations.id);
-                                  setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado' });
-                                  setTimeout(() => setStatusMsg(null), 3000);
+                                  setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado. Puedes volver a invitarlo si lo deseas.' });
+                                  setTimeout(() => setStatusMsg(null), 4000);
+                                  // Refetch para actualizar las listas
                                   await refetchAccepted();
+                                  await refetchAvailable();
                                 }
                               } catch (error: any) {
                                 setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
@@ -1201,7 +1203,10 @@ export default function AcademyProfileEditor() {
                       👥 Seleccionar Maestro
                     </h2>
                     <button
-                      onClick={() => setShowTeacherModal(false)}
+                      onClick={() => {
+                        setShowTeacherModal(false);
+                        setStatusMsg(null);
+                      }}
                       style={{
                         background: 'transparent',
                         border: 'none',
@@ -1214,6 +1219,29 @@ export default function AcademyProfileEditor() {
                       ✕
                     </button>
                   </div>
+
+                  {/* Mensaje de éxito/error dentro del modal */}
+                  {statusMsg && statusMsg.text.includes('Invitación enviada') && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      style={{
+                        marginBottom: '1.5rem',
+                        padding: '1rem 1.5rem',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(16,185,129,0.4)',
+                        background: 'rgba(16,185,129,0.15)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        textAlign: 'center',
+                        boxShadow: '0 4px 12px rgba(16,185,129,0.2)'
+                      }}
+                    >
+                      {statusMsg.text}
+                    </motion.div>
+                  )}
 
                   {loadingTeachers ? (
                     <div style={{ textAlign: 'center', padding: '2rem', color: colors.light }}>
@@ -1276,17 +1304,28 @@ export default function AcademyProfileEditor() {
                                   academyId,
                                   teacherId: teacher.id
                                 });
-                                setStatusMsg({ type: 'ok', text: `✅ Invitación enviada a ${teacher.nombre_publico}` });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                                setShowTeacherModal(false);
+                                
+                                // Mostrar mensaje de éxito dentro del modal
+                                setStatusMsg({ type: 'ok', text: `✅ Invitación enviada exitosamente a ${teacher.nombre_publico}` });
+                                
+                                // Cerrar el modal después de mostrar el mensaje
+                                setTimeout(() => {
+                                  setShowTeacherModal(false);
+                                  // Mantener el mensaje visible en el componente principal
+                                  setTimeout(() => {
+                                    setStatusMsg({ type: 'ok', text: `✅ Invitación enviada a ${teacher.nombre_publico}. El maestro recibirá una notificación.` });
+                                    setTimeout(() => setStatusMsg(null), 5000);
+                                  }, 300);
+                                }, 1500);
+                                
                                 // Forzar refetch después de un breve delay
                                 setTimeout(async () => {
                                   await refetchAvailable();
                                   await refetchAccepted();
                                 }, 500);
                               } catch (error: any) {
-                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
-                                setTimeout(() => setStatusMsg(null), 3000);
+                                setStatusMsg({ type: 'err', text: `❌ Error al enviar invitación: ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 4000);
                               }
                             }}
                             disabled={sendInvitation.isPending}

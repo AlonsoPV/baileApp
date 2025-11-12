@@ -67,6 +67,8 @@ export function useAvailableTeachers(academyId?: number) {
       if (!allTeachers || allTeachers.length === 0) return [];
 
       // Obtener invitaciones existentes para esta academia
+      // Solo excluir maestros con invitaciones 'pending' o 'accepted'
+      // Los maestros con invitaciones 'cancelled' o 'rejected' pueden volver a ser invitados
       const { data: existingInvitations, error: invError } = await supabase
         .from('academy_teacher_invitations')
         .select('teacher_id, status')
@@ -76,6 +78,8 @@ export function useAvailableTeachers(academyId?: number) {
       if (invError) throw invError;
 
       // Filtrar maestros que ya tienen invitación pendiente o aceptada
+      // NOTA: Los maestros con status 'cancelled' o 'rejected' NO se excluyen,
+      // permitiendo que puedan volver a ser invitados
       const excludedTeacherIds = new Set(
         (existingInvitations || []).map((inv: any) => inv.teacher_id)
       );
@@ -501,8 +505,13 @@ export function useCancelInvitation() {
       return data as AcademyTeacherInvitation;
     },
     onSuccess: () => {
+      // Invalidar queries para que el maestro vuelva a aparecer en la lista de disponibles
       qc.invalidateQueries({ queryKey: ['available-teachers'] });
+      qc.invalidateQueries({ queryKey: ['accepted-teachers'] });
       qc.invalidateQueries({ queryKey: ['teacher-invitations'] });
+      // Refetch inmediato para actualizar la UI
+      qc.refetchQueries({ queryKey: ['available-teachers'] });
+      qc.refetchQueries({ queryKey: ['accepted-teachers'] });
     },
   });
 }
