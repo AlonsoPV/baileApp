@@ -15,6 +15,7 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import TeacherCard from "../../components/explore/cards/TeacherCard";
 import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 // import CostosyHorarios from './CostosyHorarios';
@@ -1058,77 +1059,108 @@ export default function AcademyProfileEditor() {
         {/* Maestros Invitados */}
         {academyId && (
           <>
-            <InvitedMastersSection
-              masters={(acceptedTeachers || []).map((t: any) => ({
-                id: String(t.teacher_id),
-                user_id: t.teacher_user_id,
-                name: t.teacher_name,
-                specialty: Array.isArray(t.teacher_ritmos) && t.teacher_ritmos.length > 0 
-                  ? `${t.teacher_ritmos.length} ritmo${t.teacher_ritmos.length > 1 ? 's' : ''}`
-                  : 'Maestro',
-                avatar: t.teacher_avatar || undefined,
-                bio: t.teacher_bio || undefined,
-                social_media: t.teacher_redes_sociales || undefined,
-                is_confirmed: true,
-                is_user_master: true,
-              }))}
-              title="🎭 Maestros Invitados"
-              showTitle={true}
-              isEditable={true}
-              availableUserMasters={(availableTeachers || []).map((t: any) => ({
-                id: String(t.id),
-                user_id: t.user_id,
-                name: t.nombre_publico,
-                specialty: Array.isArray(t.ritmos) && t.ritmos.length > 0 
-                  ? `${t.ritmos.length} ritmo${t.ritmos.length > 1 ? 's' : ''}`
-                  : 'Maestro',
-                avatar: t.avatar_url || undefined,
-              }))}
-              onAddMaster={() => {
-                // No se usa para maestros externos por ahora
-                console.log('Agregar maestro externo');
-              }}
-              onAssignUserMaster={() => {
-                setShowTeacherModal(true);
-              }}
-              onEditMaster={(master) => {
-                // No se edita, solo se puede eliminar
-                console.log('Editar maestro:', master);
-              }}
-              onRemoveMaster={async (masterId) => {
-                if (!academyId) return;
-                const ok = window.confirm('¿Eliminar este maestro de tu academia?');
-                if (!ok) return;
+            <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
+                  🎭 Maestros Invitados
+                </h2>
+                <button
+                  onClick={() => setShowTeacherModal(true)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  👥 Invitar Maestro
+                </button>
+              </div>
 
-                // Buscar la invitación aceptada para cancelarla
-                const accepted = acceptedTeachers?.find((t: any) => String(t.teacher_id) === masterId);
-                if (accepted) {
-                  // Necesitamos el ID de la invitación, no el teacher_id
-                  // Por ahora, cancelamos todas las invitaciones para este maestro
-                  try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
+              {acceptedTeachers && acceptedTeachers.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                  {acceptedTeachers.map((t: any) => {
+                    // Mapear datos de la vista a formato de TeacherCard
+                    const teacherData = {
+                      id: t.teacher_id,
+                      nombre_publico: t.teacher_name,
+                      bio: t.teacher_bio || '',
+                      avatar_url: t.teacher_avatar || null,
+                      ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
+                      zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
+                      media: t.teacher_avatar ? [{ url: t.teacher_avatar, type: 'image' }] : []
+                    };
+                    return (
+                      <div key={t.teacher_id} style={{ position: 'relative' }}>
+                        <TeacherCard item={teacherData} />
+                        <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const ok = window.confirm('¿Eliminar este maestro de tu academia?');
+                              if (!ok) return;
 
-                    const { data: invitations } = await supabase
-                      .from('academy_teacher_invitations')
-                      .select('id')
-                      .eq('academy_id', academyId)
-                      .eq('teacher_id', Number(masterId))
-                      .eq('status', 'accepted')
-                      .maybeSingle();
+                              try {
+                                const { data: { user } } = await supabase.auth.getUser();
+                                if (!user) return;
 
-                    if (invitations) {
-                      await cancelInvitation.mutateAsync(invitations.id);
-                      setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado' });
-                      setTimeout(() => setStatusMsg(null), 3000);
-                    }
-                  } catch (error: any) {
-                    setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
-                    setTimeout(() => setStatusMsg(null), 3000);
-                  }
-                }
-              }}
-            />
+                                const { data: invitations } = await supabase
+                                  .from('academy_teacher_invitations')
+                                  .select('id')
+                                  .eq('academy_id', academyId)
+                                  .eq('teacher_id', t.teacher_id)
+                                  .eq('status', 'accepted')
+                                  .maybeSingle();
+
+                                if (invitations) {
+                                  await cancelInvitation.mutateAsync(invitations.id);
+                                  setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado' });
+                                  setTimeout(() => setStatusMsg(null), 3000);
+                                  await refetchAccepted();
+                                }
+                              } catch (error: any) {
+                                setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              }
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '0.5rem',
+                              right: '0.5rem',
+                              padding: '0.5rem',
+                              background: 'rgba(239, 68, 68, 0.9)',
+                              border: '1px solid #EF4444',
+                              borderRadius: '8px',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              zIndex: 10
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: colors.light, opacity: 0.7 }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎭</div>
+                  <p>No hay maestros invitados aún</p>
+                  <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                    Haz clic en "Invitar Maestro" para agregar maestros a tu academia
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Modal para seleccionar maestro */}
             {showTeacherModal && (

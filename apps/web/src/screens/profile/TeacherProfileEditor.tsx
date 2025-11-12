@@ -27,6 +27,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
+import AcademyCard from "../../components/explore/cards/AcademyCard";
 
 const colors = {
   primary: '#E53935',
@@ -1029,74 +1030,21 @@ export default function TeacherProfileEditor() {
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               🎓 Doy clases en
             </h2>
-            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-              {academies.map((academy: any) => (
-                <div
-                  key={academy.academy_id}
-                  onClick={() => navigate(`/academia/${academy.academy_id}`)}
-                  style={{
-                    padding: '1.5rem',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.4)';
-                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <div style={{
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '50%',
-                      background: academy.academy_avatar 
-                        ? `url(${academy.academy_avatar}) center/cover`
-                        : 'linear-gradient(135deg, #E53935, #FB8C00)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontWeight: '700',
-                      fontSize: '1.25rem',
-                      flexShrink: 0
-                    }}>
-                      {!academy.academy_avatar && (academy.academy_name?.[0]?.toUpperCase() || '🎓')}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.25rem', color: '#fff' }}>
-                        {academy.academy_name}
-                      </h4>
-                      {academy.academy_bio && (
-                        <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: 0, lineHeight: 1.4 }}>
-                          {academy.academy_bio.substring(0, 80)}{academy.academy_bio.length > 80 ? '...' : ''}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                    <span style={{
-                      padding: '0.25rem 0.5rem',
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '1px solid #10B981',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      color: '#10B981'
-                    }}>
-                      ✅ Colaborando
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {academies.map((academy: any) => {
+                // Mapear datos de la vista a formato de AcademyCard
+                const academyData = {
+                  id: academy.academy_id,
+                  nombre_publico: academy.academy_name,
+                  bio: academy.academy_bio || '',
+                  avatar_url: academy.academy_avatar || null,
+                  portada_url: academy.academy_portada || null,
+                  ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+                  zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+                  media: academy.academy_avatar ? [{ url: academy.academy_avatar, type: 'image' }] : []
+                };
+                return <AcademyCard key={academy.academy_id} item={academyData} />;
+              })}
             </div>
           </div>
         )}

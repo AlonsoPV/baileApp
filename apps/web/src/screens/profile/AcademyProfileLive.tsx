@@ -12,6 +12,7 @@ import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import TeacherCard from "../../components/explore/cards/TeacherCard";
 import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
 import CrearClase from "../../components/events/CrearClase";
@@ -1228,24 +1229,43 @@ export default function AcademyProfileLive() {
 
           {/* Maestros Invitados */}
           {acceptedTeachers && acceptedTeachers.length > 0 && (
-            <InvitedMastersSection
-              masters={(acceptedTeachers || []).map((t: any) => ({
-                id: String(t.teacher_id),
-                user_id: t.teacher_user_id,
-                name: t.teacher_name,
-                specialty: Array.isArray(t.teacher_ritmos) && t.teacher_ritmos.length > 0 
-                  ? `${t.teacher_ritmos.length} ritmo${t.teacher_ritmos.length > 1 ? 's' : ''}`
-                  : 'Maestro',
-                avatar: t.teacher_avatar || undefined,
-                bio: t.teacher_bio || undefined,
-                social_media: t.teacher_redes_sociales || undefined,
-                is_confirmed: true,
-                is_user_master: true,
-              }))}
-              title="🎭 Maestros Invitados"
-              showTitle={true}
-              isEditable={false}
-            />
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              style={{
+                marginBottom: '2rem',
+                marginTop: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #E53935, #FB8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)' }}>🎭</div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Maestros Invitados</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Maestros que colaboran con la academia</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {acceptedTeachers.map((t: any) => {
+                  const teacherData = {
+                    id: t.teacher_id,
+                    nombre_publico: t.teacher_name,
+                    bio: t.teacher_bio || '',
+                    avatar_url: t.teacher_avatar || null,
+                    ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
+                    zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
+                    media: t.teacher_avatar ? [{ url: t.teacher_avatar, type: 'image' }] : []
+                  };
+                  return <TeacherCard key={t.teacher_id} item={teacherData} />;
+                })}
+              </div>
+            </motion.section>
           )}
 
           {/* Foto Principal */}
