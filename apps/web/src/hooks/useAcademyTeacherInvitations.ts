@@ -110,6 +110,7 @@ export function useAcceptedTeachers(academyId?: number) {
 
       // Obtener los IDs de los maestros
       const teacherIds = data.map((t: any) => t.teacher_id);
+      console.log('[useAcceptedTeachers] IDs de maestros a buscar:', teacherIds);
       
       // Hacer una consulta adicional para obtener los datos completos de los maestros
       const { data: teacherProfiles, error: teacherError } = await supabase
@@ -120,12 +121,15 @@ export function useAcceptedTeachers(academyId?: number) {
       if (teacherError) {
         console.error('[useAcceptedTeachers] Error al obtener perfiles de maestros:', teacherError);
         // Continuar sin los datos adicionales
+      } else {
+        console.log('[useAcceptedTeachers] Perfiles de maestros obtenidos:', teacherProfiles);
       }
 
       // Crear un mapa de teacher_id -> perfil completo
       const teacherMap = new Map();
       if (teacherProfiles) {
         teacherProfiles.forEach((profile: any) => {
+          console.log('[useAcceptedTeachers] Mapeando perfil:', profile.id, 'avatar:', profile.avatar_url, 'portada:', profile.portada_url);
           teacherMap.set(profile.id, profile);
         });
       }
@@ -133,11 +137,16 @@ export function useAcceptedTeachers(academyId?: number) {
       // Combinar los datos de la vista con los datos completos del perfil
       const enrichedData = data.map((t: any) => {
         const fullProfile = teacherMap.get(t.teacher_id);
-        return {
+        const enriched = {
           ...t,
           teacher_avatar: fullProfile?.avatar_url || t.teacher_avatar || null,
           teacher_portada: fullProfile?.portada_url || t.teacher_portada || null,
         };
+        console.log('[useAcceptedTeachers] Datos enriquecidos para teacher_id', t.teacher_id, ':', {
+          teacher_avatar: enriched.teacher_avatar,
+          teacher_portada: enriched.teacher_portada
+        });
+        return enriched;
       });
 
       if (enrichedData.length > 0) {
@@ -211,6 +220,7 @@ export function useTeacherAcademies(teacherId?: number) {
 
       // Obtener los IDs de las academias
       const academyIds = data.map((a: any) => a.academy_id);
+      console.log('[useTeacherAcademies] IDs de academias a buscar:', academyIds);
       
       // Hacer una consulta adicional para obtener los datos completos de las academias
       const { data: academyProfiles, error: academyError } = await supabase
@@ -221,12 +231,15 @@ export function useTeacherAcademies(teacherId?: number) {
       if (academyError) {
         console.error('[useTeacherAcademies] Error al obtener perfiles de academias:', academyError);
         // Continuar sin los datos adicionales
+      } else {
+        console.log('[useTeacherAcademies] Perfiles de academias obtenidos:', academyProfiles);
       }
 
       // Crear un mapa de academy_id -> perfil completo
       const academyMap = new Map();
       if (academyProfiles) {
         academyProfiles.forEach((profile: any) => {
+          console.log('[useTeacherAcademies] Mapeando perfil:', profile.id, 'avatar:', profile.avatar_url, 'portada:', profile.portada_url);
           academyMap.set(profile.id, profile);
         });
       }
@@ -234,11 +247,16 @@ export function useTeacherAcademies(teacherId?: number) {
       // Combinar los datos de la vista con los datos completos del perfil
       const enrichedData = data.map((a: any) => {
         const fullProfile = academyMap.get(a.academy_id);
-        return {
+        const enriched = {
           ...a,
           academy_avatar: fullProfile?.avatar_url || a.academy_avatar || null,
           academy_portada: fullProfile?.portada_url || a.academy_portada || null,
         };
+        console.log('[useTeacherAcademies] Datos enriquecidos para academy_id', a.academy_id, ':', {
+          academy_avatar: enriched.academy_avatar,
+          academy_portada: enriched.academy_portada
+        });
+        return enriched;
       });
 
       if (enrichedData.length > 0) {
