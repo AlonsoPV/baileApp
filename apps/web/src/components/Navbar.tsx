@@ -81,6 +81,34 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           background: #ff3d57;
           box-shadow: 0 0 6px rgba(255,61,87,0.7);
         }
+
+        .nav-login-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.35);
+          background: rgba(255,255,255,0.15);
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+        }
+
+        .nav-login-button:hover {
+          background: rgba(255,255,255,0.25);
+          border-color: rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 768px) {
+          .nav-login-button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+          }
+        }
       `}</style>
       <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {/* Hamburger Button (only when logged in) */}
@@ -149,7 +177,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           </Link>
         )}
 
-        {user && (
+        {user ? (
           <button
             type="button"
             className="nav-profile-button"
@@ -159,6 +187,15 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             <span>{profileInitial}</span>
             {hasUnread && <span className="badge-dot" />}
           </button>
+        ) : (
+          <Link
+            to={routes.auth.login}
+            className="nav-login-button"
+            aria-label="Iniciar sesión"
+            title="Iniciar sesión"
+          >
+            Iniciar sesión
+          </Link>
         )}
       </div>
     </nav>
