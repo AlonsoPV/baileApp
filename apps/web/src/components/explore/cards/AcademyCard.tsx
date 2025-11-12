@@ -23,10 +23,15 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   const nombre = item.nombre_publico || item.nombre || "Academia";
   const bio = item.bio || "";
   // Priorizar el avatar usado en el banner (equivalente a academy-banner-avatar): avatar_url -> portada_url -> media[0]
+  console.log('[AcademyCard] Item recibido:', item);
+  console.log('[AcademyCard] avatar_url:', item.avatar_url);
+  console.log('[AcademyCard] portada_url:', item.portada_url);
+  console.log('[AcademyCard] media:', item.media);
   const avatar = normalizeUrl((item.avatar_url)
     || (item.portada_url)
     || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined))
     || null;
+  console.log('[AcademyCard] URL final de avatar/banner:', avatar);
 
   // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
   const ritmoNombres: string[] = (() => {

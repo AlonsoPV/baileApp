@@ -16,18 +16,41 @@ export default function TeacherCard({ item }: { item: any }) {
   };
   // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
   const bannerUrl: string | undefined = (() => {
+    console.log('[TeacherCard] Item recibido:', item);
+    console.log('[TeacherCard] avatar_url:', item?.avatar_url);
+    console.log('[TeacherCard] portada_url:', item?.portada_url);
+    console.log('[TeacherCard] banner_url:', item?.banner_url);
+    console.log('[TeacherCard] media:', item?.media);
     // Intentar múltiples claves comunes
     const direct = item?.avatar_url || item?.banner_url || item?.portada_url || item?.avatar || item?.portada || item?.banner;
-    if (direct) return normalizeUrl(direct as string) as string;
+    console.log('[TeacherCard] direct URL encontrada:', direct);
+    if (direct) {
+      const normalized = normalizeUrl(direct as string) as string;
+      console.log('[TeacherCard] URL normalizada:', normalized);
+      return normalized;
+    }
     const media = Array.isArray(item?.media) ? item.media : [];
+    console.log('[TeacherCard] media array:', media);
     if (media.length) {
       // Buscar por slot común
       const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
-      if (bySlot?.url) return normalizeUrl(bySlot.url as string) as string;
-      if (bySlot?.path) return normalizeUrl(bySlot.path as string) as string;
+      console.log('[TeacherCard] bySlot encontrado:', bySlot);
+      if (bySlot?.url) {
+        const normalized = normalizeUrl(bySlot.url as string) as string;
+        console.log('[TeacherCard] URL de bySlot normalizada:', normalized);
+        return normalized;
+      }
+      if (bySlot?.path) {
+        const normalized = normalizeUrl(bySlot.path as string) as string;
+        console.log('[TeacherCard] path de bySlot normalizada:', normalized);
+        return normalized;
+      }
       const first = media[0];
-      return normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
+      const firstUrl = normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
+      console.log('[TeacherCard] URL del primer media:', firstUrl);
+      return firstUrl;
     }
+    console.log('[TeacherCard] No se encontró ninguna URL de imagen');
     return undefined;
   })();
   const ritmoNombres: string[] = (item.ritmos || [])

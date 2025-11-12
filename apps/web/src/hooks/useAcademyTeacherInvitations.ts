@@ -105,6 +105,12 @@ export function useAcceptedTeachers(academyId?: number) {
         throw error;
       }
       console.log('[useAcceptedTeachers] Maestros encontrados:', data?.length || 0, data);
+      if (data && data.length > 0) {
+        console.log('[useAcceptedTeachers] Primer maestro completo:', data[0]);
+        console.log('[useAcceptedTeachers] teacher_avatar:', data[0].teacher_avatar);
+        console.log('[useAcceptedTeachers] teacher_portada:', data[0].teacher_portada);
+        console.log('[useAcceptedTeachers] Todas las claves:', Object.keys(data[0]));
+      }
       return (data || []) as AcceptedTeacher[];
     },
   });
