@@ -105,13 +105,48 @@ export function useAcceptedTeachers(academyId?: number) {
         throw error;
       }
       console.log('[useAcceptedTeachers] Maestros encontrados:', data?.length || 0, data);
-      if (data && data.length > 0) {
-        console.log('[useAcceptedTeachers] Primer maestro completo:', data[0]);
-        console.log('[useAcceptedTeachers] teacher_avatar:', data[0].teacher_avatar);
-        console.log('[useAcceptedTeachers] teacher_portada:', data[0].teacher_portada);
-        console.log('[useAcceptedTeachers] Todas las claves:', Object.keys(data[0]));
+      
+      if (!data || data.length === 0) return [];
+
+      // Obtener los IDs de los maestros
+      const teacherIds = data.map((t: any) => t.teacher_id);
+      
+      // Hacer una consulta adicional para obtener los datos completos de los maestros
+      const { data: teacherProfiles, error: teacherError } = await supabase
+        .from('profiles_teacher')
+        .select('id, avatar_url, portada_url')
+        .in('id', teacherIds);
+
+      if (teacherError) {
+        console.error('[useAcceptedTeachers] Error al obtener perfiles de maestros:', teacherError);
+        // Continuar sin los datos adicionales
       }
-      return (data || []) as AcceptedTeacher[];
+
+      // Crear un mapa de teacher_id -> perfil completo
+      const teacherMap = new Map();
+      if (teacherProfiles) {
+        teacherProfiles.forEach((profile: any) => {
+          teacherMap.set(profile.id, profile);
+        });
+      }
+
+      // Combinar los datos de la vista con los datos completos del perfil
+      const enrichedData = data.map((t: any) => {
+        const fullProfile = teacherMap.get(t.teacher_id);
+        return {
+          ...t,
+          teacher_avatar: fullProfile?.avatar_url || t.teacher_avatar || null,
+          teacher_portada: fullProfile?.portada_url || t.teacher_portada || null,
+        };
+      });
+
+      if (enrichedData.length > 0) {
+        console.log('[useAcceptedTeachers] Primer maestro enriquecido:', enrichedData[0]);
+        console.log('[useAcceptedTeachers] teacher_avatar:', enrichedData[0].teacher_avatar);
+        console.log('[useAcceptedTeachers] teacher_portada:', enrichedData[0].teacher_portada);
+      }
+      
+      return enrichedData as AcceptedTeacher[];
     },
   });
 }
@@ -171,7 +206,48 @@ export function useTeacherAcademies(teacherId?: number) {
         throw error;
       }
       console.log('[useTeacherAcademies] Academias encontradas:', data?.length || 0, data);
-      return (data || []) as TeacherAcademy[];
+      
+      if (!data || data.length === 0) return [];
+
+      // Obtener los IDs de las academias
+      const academyIds = data.map((a: any) => a.academy_id);
+      
+      // Hacer una consulta adicional para obtener los datos completos de las academias
+      const { data: academyProfiles, error: academyError } = await supabase
+        .from('profiles_academy')
+        .select('id, avatar_url, portada_url')
+        .in('id', academyIds);
+
+      if (academyError) {
+        console.error('[useTeacherAcademies] Error al obtener perfiles de academias:', academyError);
+        // Continuar sin los datos adicionales
+      }
+
+      // Crear un mapa de academy_id -> perfil completo
+      const academyMap = new Map();
+      if (academyProfiles) {
+        academyProfiles.forEach((profile: any) => {
+          academyMap.set(profile.id, profile);
+        });
+      }
+
+      // Combinar los datos de la vista con los datos completos del perfil
+      const enrichedData = data.map((a: any) => {
+        const fullProfile = academyMap.get(a.academy_id);
+        return {
+          ...a,
+          academy_avatar: fullProfile?.avatar_url || a.academy_avatar || null,
+          academy_portada: fullProfile?.portada_url || a.academy_portada || null,
+        };
+      });
+
+      if (enrichedData.length > 0) {
+        console.log('[useTeacherAcademies] Primera academia enriquecida:', enrichedData[0]);
+        console.log('[useTeacherAcademies] academy_avatar:', enrichedData[0].academy_avatar);
+        console.log('[useTeacherAcademies] academy_portada:', enrichedData[0].academy_portada);
+      }
+      
+      return enrichedData as TeacherAcademy[];
     },
   });
 }
