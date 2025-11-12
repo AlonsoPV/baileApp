@@ -113,16 +113,27 @@ export function useAcceptedTeachers(academyId?: number) {
       console.log('[useAcceptedTeachers] IDs de maestros a buscar:', teacherIds);
       
       // Hacer una consulta adicional para obtener los datos completos de los maestros
-      const { data: teacherProfiles, error: teacherError } = await supabase
-        .from('profiles_teacher')
-        .select('id, avatar_url, portada_url')
-        .in('id', teacherIds);
-
-      if (teacherError) {
-        console.error('[useAcceptedTeachers] Error al obtener perfiles de maestros:', teacherError);
-        // Continuar sin los datos adicionales
-      } else {
-        console.log('[useAcceptedTeachers] Perfiles de maestros obtenidos:', teacherProfiles);
+      let teacherProfiles: any[] | null = null;
+      let teacherError: any = null;
+      
+      try {
+        // Intentar obtener desde profiles_teacher (debe tener RLS que permita ver maestros aprobados)
+        const { data: directData, error: directError } = await supabase
+          .from('profiles_teacher')
+          .select('id, avatar_url, portada_url')
+          .in('id', teacherIds)
+          .eq('estado_aprobacion', 'aprobado'); // Solo maestros aprobados
+        
+        if (directError) {
+          teacherError = directError;
+          console.error('[useAcceptedTeachers] Error al obtener perfiles de maestros:', directError);
+        } else {
+          teacherProfiles = directData;
+          console.log('[useAcceptedTeachers] Perfiles de maestros obtenidos:', teacherProfiles);
+        }
+      } catch (err) {
+        teacherError = err;
+        console.error('[useAcceptedTeachers] Excepción al obtener perfiles:', err);
       }
 
       // Crear un mapa de teacher_id -> perfil completo
@@ -222,17 +233,38 @@ export function useTeacherAcademies(teacherId?: number) {
       const academyIds = data.map((a: any) => a.academy_id);
       console.log('[useTeacherAcademies] IDs de academias a buscar:', academyIds);
       
-      // Hacer una consulta adicional para obtener los datos completos de las academias
-      const { data: academyProfiles, error: academyError } = await supabase
-        .from('profiles_academy')
-        .select('id, avatar_url, portada_url')
-        .in('id', academyIds);
-
-      if (academyError) {
-        console.error('[useTeacherAcademies] Error al obtener perfiles de academias:', academyError);
-        // Continuar sin los datos adicionales
-      } else {
-        console.log('[useTeacherAcademies] Perfiles de academias obtenidos:', academyProfiles);
+      // Intentar obtener desde la vista pública primero (solo academias aprobadas)
+      let academyProfiles: any[] | null = null;
+      let academyError: any = null;
+      
+      try {
+        const { data: publicData, error: publicError } = await supabase
+          .from('v_academies_public')
+          .select('id, avatar_url, portada_url')
+          .in('id', academyIds);
+        
+        if (!publicError && publicData) {
+          academyProfiles = publicData;
+          console.log('[useTeacherAcademies] Perfiles obtenidos desde v_academies_public:', academyProfiles);
+        } else {
+          // Si falla la vista pública, intentar directamente desde profiles_academy
+          console.log('[useTeacherAcademies] Intentando desde profiles_academy directamente...');
+          const { data: directData, error: directError } = await supabase
+            .from('profiles_academy')
+            .select('id, avatar_url, portada_url')
+            .in('id', academyIds);
+          
+          if (directError) {
+            academyError = directError;
+            console.error('[useTeacherAcademies] Error al obtener perfiles de academias:', directError);
+          } else {
+            academyProfiles = directData;
+            console.log('[useTeacherAcademies] Perfiles obtenidos desde profiles_academy:', academyProfiles);
+          }
+        }
+      } catch (err) {
+        academyError = err;
+        console.error('[useTeacherAcademies] Excepción al obtener perfiles:', err);
       }
 
       // Crear un mapa de academy_id -> perfil completo
