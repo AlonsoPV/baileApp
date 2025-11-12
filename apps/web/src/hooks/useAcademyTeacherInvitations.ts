@@ -380,7 +380,7 @@ export function useSendInvitation() {
         throw new Error('No tienes permiso para enviar invitaciones desde esta academia');
       }
 
-      // Verificar que no existe una invitación previa
+      // Verificar si existe una invitación previa
       const { data: existing, error: checkError } = await supabase
         .from('academy_teacher_invitations')
         .select('id, status')
@@ -390,6 +390,9 @@ export function useSendInvitation() {
 
       if (checkError) throw checkError;
 
+      let data;
+      let error;
+
       if (existing) {
         if (existing.status === 'pending') {
           throw new Error('Ya existe una invitación pendiente para este maestro');
@@ -397,19 +400,38 @@ export function useSendInvitation() {
         if (existing.status === 'accepted') {
           throw new Error('Este maestro ya colabora con tu academia');
         }
-        // Si fue rechazada o cancelada, podemos crear una nueva
+        // Si fue rechazada o cancelada, actualizar la invitación existente en lugar de crear una nueva
+        // Esto evita el error 409 (Conflict) por la restricción UNIQUE(academy_id, teacher_id)
+        const { data: updatedData, error: updateError } = await supabase
+          .from('academy_teacher_invitations')
+          .update({
+            status: 'pending',
+            invited_by: user.id,
+            invited_at: new Date().toISOString(),
+            responded_at: null, // Limpiar la fecha de respuesta anterior
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        
+        data = updatedData;
+        error = updateError;
+      } else {
+        // No existe invitación previa, crear una nueva
+        const { data: insertedData, error: insertError } = await supabase
+          .from('academy_teacher_invitations')
+          .insert({
+            academy_id: academyId,
+            teacher_id: teacherId,
+            status: 'pending',
+            invited_by: user.id,
+          })
+          .select()
+          .single();
+        
+        data = insertedData;
+        error = insertError;
       }
-
-      const { data, error } = await supabase
-        .from('academy_teacher_invitations')
-        .insert({
-          academy_id: academyId,
-          teacher_id: teacherId,
-          status: 'pending',
-          invited_by: user.id,
-        })
-        .select()
-        .single();
 
       if (error) throw error;
       return data as AcademyTeacherInvitation;
