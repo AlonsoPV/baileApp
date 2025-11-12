@@ -123,8 +123,8 @@ export default function AcademyProfileEditor() {
 
   // Hooks para invitaciones
   const academyId = (academy as any)?.id;
-  const { data: availableTeachers, isLoading: loadingTeachers } = useAvailableTeachers(academyId);
-  const { data: acceptedTeachers } = useAcceptedTeachers(academyId);
+  const { data: availableTeachers, isLoading: loadingTeachers, refetch: refetchAvailable } = useAvailableTeachers(academyId);
+  const { data: acceptedTeachers, refetch: refetchAccepted } = useAcceptedTeachers(academyId);
   const sendInvitation = useSendInvitation();
   const cancelInvitation = useCancelInvitation();
   const [showTeacherModal, setShowTeacherModal] = React.useState(false);
@@ -139,6 +139,14 @@ export default function AcademyProfileEditor() {
       });
     }
   }, [form.redes_sociales, setField]);
+
+  // Debug: Log de maestros aceptados
+  React.useEffect(() => {
+    if (academyId) {
+      console.log('[AcademyProfileEditor] academyId:', academyId);
+      console.log('[AcademyProfileEditor] acceptedTeachers:', acceptedTeachers);
+    }
+  }, [academyId, acceptedTeachers]);
 
   const handleSave = async () => {
     try {
@@ -1234,6 +1242,11 @@ export default function AcademyProfileEditor() {
                                 setStatusMsg({ type: 'ok', text: `✅ Invitación enviada a ${teacher.nombre_publico}` });
                                 setTimeout(() => setStatusMsg(null), 3000);
                                 setShowTeacherModal(false);
+                                // Forzar refetch después de un breve delay
+                                setTimeout(async () => {
+                                  await refetchAvailable();
+                                  await refetchAccepted();
+                                }, 500);
                               } catch (error: any) {
                                 setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
                                 setTimeout(() => setStatusMsg(null), 3000);

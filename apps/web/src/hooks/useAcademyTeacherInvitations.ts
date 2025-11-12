@@ -92,13 +92,18 @@ export function useAcceptedTeachers(academyId?: number) {
     queryFn: async (): Promise<AcceptedTeacher[]> => {
       if (!academyId) return [];
 
+      console.log('[useAcceptedTeachers] Buscando maestros aceptados para academia:', academyId);
       const { data, error } = await supabase
         .from('v_academy_accepted_teachers')
         .select('*')
         .eq('academy_id', academyId)
         .order('responded_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useAcceptedTeachers] Error:', error);
+        throw error;
+      }
+      console.log('[useAcceptedTeachers] Maestros encontrados:', data?.length || 0, data);
       return (data || []) as AcceptedTeacher[];
     },
   });
@@ -147,13 +152,18 @@ export function useTeacherAcademies(teacherId?: number) {
     queryFn: async (): Promise<TeacherAcademy[]> => {
       if (!teacherId) return [];
 
+      console.log('[useTeacherAcademies] Buscando academias para maestro:', teacherId);
       const { data, error } = await supabase
         .from('v_teacher_academies')
         .select('*')
         .eq('teacher_id', teacherId)
         .order('responded_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useTeacherAcademies] Error:', error);
+        throw error;
+      }
+      console.log('[useTeacherAcademies] Academias encontradas:', data?.length || 0, data);
       return (data || []) as TeacherAcademy[];
     },
   });
@@ -259,6 +269,11 @@ export function useRespondToInvitation() {
       qc.invalidateQueries({ queryKey: ['teacher-invitations'] });
       qc.invalidateQueries({ queryKey: ['accepted-teachers'] });
       qc.invalidateQueries({ queryKey: ['teacher-academies'] });
+      qc.invalidateQueries({ queryKey: ['available-teachers'] });
+      // Forzar refetch inmediato
+      qc.refetchQueries({ queryKey: ['teacher-invitations'] });
+      qc.refetchQueries({ queryKey: ['accepted-teachers'] });
+      qc.refetchQueries({ queryKey: ['teacher-academies'] });
     },
   });
 }
