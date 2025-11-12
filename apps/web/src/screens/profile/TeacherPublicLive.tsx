@@ -1187,7 +1187,11 @@ export default function TeacherProfileLive() {
                     portada_url: academy.academy_portada || null,
                     ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
                     zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-                    media: academy.academy_avatar ? [{ url: academy.academy_avatar, type: 'image' }] : []
+                    media: academy.academy_portada 
+                      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
+                      : academy.academy_avatar 
+                      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
+                      : []
                   };
                   return <AcademyCard key={academy.academy_id} item={academyData} />;
                 })}

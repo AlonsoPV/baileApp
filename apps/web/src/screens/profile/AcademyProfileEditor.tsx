@@ -1093,9 +1093,15 @@ export default function AcademyProfileEditor() {
                       nombre_publico: t.teacher_name,
                       bio: t.teacher_bio || '',
                       avatar_url: t.teacher_avatar || null,
+                      portada_url: t.teacher_portada || null,
+                      banner_url: t.teacher_portada || t.teacher_avatar || null,
                       ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
                       zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
-                      media: t.teacher_avatar ? [{ url: t.teacher_avatar, type: 'image' }] : []
+                      media: t.teacher_portada 
+                        ? [{ url: t.teacher_portada, type: 'image', slot: 'cover' }]
+                        : t.teacher_avatar 
+                        ? [{ url: t.teacher_avatar, type: 'image', slot: 'avatar' }]
+                        : []
                     };
                     return (
                       <div key={t.teacher_id} style={{ position: 'relative' }}>
