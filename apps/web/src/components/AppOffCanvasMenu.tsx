@@ -11,8 +11,18 @@ type Props = {
 
 export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: isSuperAdmin } = useIsAdmin();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+      onClose();
+    } catch (error) {
+      console.error('[AppOffCanvasMenu] Error al cerrar sesión:', error);
+    }
+  };
 
   const menuItems = [
     { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },
@@ -21,6 +31,7 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
     { id: 'request-role', label: 'Solicitar rol', icon: '📝', onClick: () => navigate('/app/roles/request') },
     { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
+    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: handleLogout },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (

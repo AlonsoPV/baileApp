@@ -30,12 +30,23 @@ export default function AppShell() {
     return undefined;
   })();
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+      setMenuOpen(false);
+    } catch (error) {
+      console.error('[AppShell] Error al cerrar sesión:', error);
+    }
+  };
+
   const menuItems = [
     { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },
     { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
     { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
     { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
+    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: handleLogout },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
