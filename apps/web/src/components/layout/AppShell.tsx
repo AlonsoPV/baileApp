@@ -45,19 +45,6 @@ export default function AppShell() {
           min-height: 100vh;
           background: #0b0d10;
           color: #e5e7eb;
-          padding-bottom: 100px;
-        }
-        
-        @media (max-width: 768px) {
-          .app-shell-root {
-            padding-bottom: 90px;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .app-shell-root {
-            padding-bottom: 80px;
-          }
         }
       `}</style>
       <div className="app-shell-root">

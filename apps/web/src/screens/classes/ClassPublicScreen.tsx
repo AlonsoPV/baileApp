@@ -140,6 +140,7 @@ export default function ClassPublicScreen() {
         .class-hero-banner {
           position: relative;
           overflow: hidden;
+          height: 100vh;
           background: linear-gradient(135deg, 
             rgba(11,13,16,.98) 0%, 
             rgba(18,22,27,.95) 50%, 
@@ -153,6 +154,9 @@ export default function ClassPublicScreen() {
             0 0 0 1px rgba(240,147,251,.1) inset,
             0 4px 20px rgba(240,147,251,.15);
           backdrop-filter: blur(20px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         
         .class-hero-banner::before {
@@ -171,8 +175,12 @@ export default function ClassPublicScreen() {
           grid-template-columns: 1fr 1fr;
           gap: 2.5rem;
           align-items: center;
+          justify-content: center;
           position: relative;
           z-index: 1;
+          width: 100%;
+          height: 100%;
+          padding: 2rem 0;
         }
         
         .class-title {
@@ -194,15 +202,27 @@ export default function ClassPublicScreen() {
         @media (max-width: 768px) {
           .date-public-root { padding: 16px 0 !important; }
           .date-public-inner { padding: 0 16px !important; }
-          .class-hero-banner { padding: 2rem 1.5rem !important; }
-          .class-hero-content { gap: 1.5rem !important; }
+          .class-hero-banner { 
+            padding: 2rem 1.5rem !important;
+            height: 100vh !important;
+          }
+          .class-hero-content { 
+            gap: 1.5rem !important;
+            padding: 1.5rem 0 !important;
+          }
         }
         
         @media (max-width: 480px) {
           .date-public-root { padding: 12px 0 !important; }
           .date-public-inner { padding: 0 12px !important; }
-          .class-hero-banner { padding: 1.5rem 1rem !important; }
-          .class-hero-content { gap: 1.25rem !important; }
+          .class-hero-banner { 
+            padding: 1.5rem 1rem !important;
+            height: 100vh !important;
+          }
+          .class-hero-content { 
+            gap: 1.25rem !important;
+            padding: 1rem 0 !important;
+          }
           .class-title { font-size: 2rem !important; }
         }
         
