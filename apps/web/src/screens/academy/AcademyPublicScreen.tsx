@@ -633,30 +633,44 @@ export default function AcademyPublicScreen() {
                   Cargando clases...
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
-                <ClasesLiveTabs
-                  classes={classesFromTables}
-                  title=""
-                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
-                  sourceType="academy"
-                  sourceId={(academy as any)?.id}
-                  isClickable={true}
-                />
+                <>
+                  {process.env.NODE_ENV === 'development' && (
+                    <div style={{ padding: '0.5rem', marginBottom: '1rem', background: 'rgba(0,255,0,0.1)', borderRadius: 8, fontSize: '0.75rem', color: '#fff' }}>
+                      Debug: Mostrando ClasesLiveTabs con {classesFromTables.length} clases
+                    </div>
+                  )}
+                  <ClasesLiveTabs
+                    classes={classesFromTables}
+                    title=""
+                    subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                    sourceType="academy"
+                    sourceId={(academy as any)?.id}
+                    isClickable={true}
+                  />
+                </>
               ) : (
-                <ClasesLive
-                  title=""
-                  cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
-                  costos={(academy as any)?.costos || []}
-                  ubicacion={{
-                    nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-                    direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-                    ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-                    referencias: (academy as any)?.ubicaciones?.[0]?.referencias
-                  }}
-                  showCalendarButton={true}
-                  sourceType="academy"
-                  sourceId={(academy as any)?.id}
-                  isClickable={true}
-                />
+                <>
+                  {process.env.NODE_ENV === 'development' && (
+                    <div style={{ padding: '0.5rem', marginBottom: '1rem', background: 'rgba(255,0,0,0.1)', borderRadius: 8, fontSize: '0.75rem', color: '#fff' }}>
+                      Debug: Fallback a ClasesLive. ClassesFromTables: {classesFromTables?.length || 0} clases
+                    </div>
+                  )}
+                  <ClasesLive
+                    title=""
+                    cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
+                    costos={(academy as any)?.costos || []}
+                    ubicacion={{
+                      nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                      direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                      ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                      referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+                    }}
+                    showCalendarButton={true}
+                    sourceType="academy"
+                    sourceId={(academy as any)?.id}
+                    isClickable={true}
+                  />
+                </>
               )}
             </div>
           </motion.section>

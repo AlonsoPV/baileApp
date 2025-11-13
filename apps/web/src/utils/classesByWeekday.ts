@@ -22,6 +22,7 @@ export function getWeekdayLabel(key: WeekdayKey) {
  * - Si una clase no tiene ninguno, se ignora
  */
 export function groupClassesByWeekday(classes: Clase[]) {
+  console.log("[groupClassesByWeekday] Input classes:", classes);
   const map = new Map<WeekdayKey, Clase[]>();
   
   for (const c of classes) {
@@ -29,16 +30,23 @@ export function groupClassesByWeekday(classes: Clase[]) {
 
     if (c.fecha) {
       wd = dateToWeekdayKey(c.fecha);
+      console.log(`[groupClassesByWeekday] Class ${c.id} has fecha ${c.fecha}, weekday: ${wd}`);
     } else if (typeof c.dia_semana === "number" && c.dia_semana >= 0 && c.dia_semana <= 6) {
       wd = c.dia_semana as WeekdayKey;
+      console.log(`[groupClassesByWeekday] Class ${c.id} has dia_semana ${c.dia_semana}`);
     } else if (typeof c.diaSemana === "number" && c.diaSemana >= 0 && c.diaSemana <= 6) {
       wd = c.diaSemana as WeekdayKey;
+      console.log(`[groupClassesByWeekday] Class ${c.id} has diaSemana ${c.diaSemana}`);
+    } else {
+      console.warn(`[groupClassesByWeekday] Class ${c.id} (${c.titulo || c.nombre}) has no fecha or dia_semana, skipping`);
     }
 
     if (wd === null) continue;
     if (!map.has(wd)) map.set(wd, []);
     map.get(wd)!.push(c);
   }
+  
+  console.log("[groupClassesByWeekday] Grouped map:", Array.from(map.entries()));
 
   // Ordenar clases dentro de cada día por hora de inicio si existe
   for (const [k, arr] of map.entries()) {

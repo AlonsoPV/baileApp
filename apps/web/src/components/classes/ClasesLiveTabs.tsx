@@ -35,8 +35,15 @@ export default function ClasesLiveTabs({
   isClickable = false
 }: Props) {
   const navigate = useNavigate();
-  const days = React.useMemo(() => groupClassesByWeekday(classes || []), [classes]);
+  console.log("[ClasesLiveTabs] Received classes:", classes);
+  const days = React.useMemo(() => {
+    const grouped = groupClassesByWeekday(classes || []);
+    console.log("[ClasesLiveTabs] Grouped days:", grouped);
+    return grouped;
+  }, [classes]);
   const [activeIdx, setActiveIdx] = React.useState(0);
+  
+  console.log("[ClasesLiveTabs] Days length:", days.length, "Active idx:", activeIdx);
 
   React.useEffect(() => {
     if (activeIdx >= days.length) setActiveIdx(0);
@@ -62,6 +69,16 @@ export default function ClasesLiveTabs({
         <div style={{ fontWeight: 900, fontSize: "1.25rem", marginBottom: ".25rem" }}>{title}</div>
         {subtitle && <div style={{ opacity: 0.8, marginBottom: "1rem" }}>{subtitle}</div>}
         <div style={{ opacity: 0.8 }}>No hay clases programadas por ahora.</div>
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ marginTop: "1rem", padding: "0.5rem", background: "rgba(255,0,0,0.1)", borderRadius: 8, fontSize: "0.75rem" }}>
+            Debug: {classes?.length || 0} clases recibidas. 
+            {classes?.length > 0 && (
+              <div style={{ marginTop: "0.5rem" }}>
+                Clases sin dia_semana/fecha: {classes.filter(c => !c.dia_semana && !c.diaSemana && !c.fecha).length}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
