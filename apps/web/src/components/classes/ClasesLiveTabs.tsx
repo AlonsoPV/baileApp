@@ -131,7 +131,13 @@ export default function ClasesLiveTabs({
 
   const handleClassClick = (clase: Clase, index: number) => {
     if (isClickable && sourceType && sourceId) {
-      navigate(`/clase/${sourceType}/${sourceId}?i=${index}`);
+      // Asegurar que sourceId sea un string válido
+      const sourceIdStr = String(sourceId);
+      const route = `/clase/${sourceType}/${sourceIdStr}${index !== undefined && index !== null ? `?i=${index}` : ''}`;
+      console.log("[ClasesLiveTabs] 🔍 Navegando a:", route, { sourceType, sourceId, sourceIdStr, index });
+      navigate(route);
+    } else {
+      console.warn("[ClasesLiveTabs] ⚠️ No se puede navegar - faltan datos:", { isClickable, sourceType, sourceId });
     }
   };
 
@@ -430,7 +436,8 @@ export default function ClasesLiveTabs({
                                     {(() => {
                                       // Generar classId único basado en el índice (similar a useLiveClasses)
                                       // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
-                                      const classIdForMetrics = c.id || (idx * 1000);
+                                      // Usar ?? en lugar de || para permitir classId = 0
+                                      const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
                                       console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario:", {
                                         idx,
                                         classId: c.id,
@@ -732,7 +739,8 @@ export default function ClasesLiveTabs({
                               {(() => {
                                 // Generar classId único basado en el índice (similar a useLiveClasses)
                                 // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
-                                const classIdForMetrics = c.id || (idx * 1000);
+                                // Usar ?? en lugar de || para permitir classId = 0
+                                const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
                                 console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario (desktop):", {
                                   idx,
                                   classId: c.id,

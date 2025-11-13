@@ -45,6 +45,7 @@ export function useTeacherMy() {
 export function useTeacherPublic(id: number) {
   return useQuery({
     queryKey: ['teacher','public', id],
+    enabled: typeof id === 'number' && !Number.isNaN(id) && id > 0,
     queryFn: async (): Promise<TeacherProfile|null> => {
       const { data, error } = await supabase
         .from(TABLE)

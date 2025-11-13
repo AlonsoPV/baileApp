@@ -104,7 +104,13 @@ export default function ClasesLive({
         {items.map((it, idx) => {
           const handleClick = () => {
             if (isClickable && sourceType && sourceId) {
-              navigate(`/clase/${sourceType}/${sourceId}?i=${idx}`);
+              // Asegurar que sourceId sea un string válido
+              const sourceIdStr = String(sourceId);
+              const route = `/clase/${sourceType}/${sourceIdStr}${idx !== undefined && idx !== null ? `?i=${idx}` : ''}`;
+              console.log("[ClasesLive] 🔍 Navegando a:", route, { sourceType, sourceId, sourceIdStr, idx });
+              navigate(route);
+            } else {
+              console.warn("[ClasesLive] ⚠️ No se puede navegar - faltan datos:", { isClickable, sourceType, sourceId });
             }
           };
 

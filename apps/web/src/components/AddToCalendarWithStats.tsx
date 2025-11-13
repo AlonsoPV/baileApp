@@ -141,7 +141,8 @@ export default function AddToCalendarWithStats({
       });
       console.log("[AddToCalendarWithStats] 🔍 ========== DEBUG FIN ==========");
       
-      if (finalClassId && !Number.isNaN(finalClassId)) {
+      // Validar que classId sea un número válido (incluyendo 0)
+      if (typeof finalClassId === 'number' && !Number.isNaN(finalClassId)) {
         console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
         try {
           // Intentar insertar primero

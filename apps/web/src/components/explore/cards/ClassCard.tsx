@@ -70,11 +70,24 @@ export default function ClassCard({ item }: Props) {
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
   // Si no, usar query params como fallback
-  const href = item.ownerType && item.ownerId
-    ? `/clase/${item.ownerType}/${item.ownerId}`
-    : (item.ownerId 
-      ? `/clase?type=${item.ownerType || 'teacher'}&id=${item.ownerId}`
-      : `/clase?type=${item.ownerType || 'teacher'}`);
+  const href = React.useMemo(() => {
+    if (item.ownerType && item.ownerId) {
+      // Asegurar que ownerId sea un string válido
+      const ownerIdStr = String(item.ownerId);
+      const route = `/clase/${item.ownerType}/${ownerIdStr}`;
+      console.log("[ClassCard] 🔍 Ruta generada:", route, { ownerType: item.ownerType, ownerId: item.ownerId, ownerIdStr });
+      return route;
+    }
+    if (item.ownerId) {
+      const ownerIdStr = String(item.ownerId);
+      const route = `/clase?type=${item.ownerType || 'teacher'}&id=${ownerIdStr}`;
+      console.log("[ClassCard] 🔍 Ruta con query params:", route, { ownerType: item.ownerType, ownerId: item.ownerId, ownerIdStr });
+      return route;
+    }
+    const route = `/clase?type=${item.ownerType || 'teacher'}`;
+    console.log("[ClassCard] 🔍 Ruta fallback:", route, { ownerType: item.ownerType, ownerId: item.ownerId });
+    return route;
+  }, [item.ownerType, item.ownerId]);
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();
