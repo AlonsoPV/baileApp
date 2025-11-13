@@ -427,19 +427,36 @@ export default function ClasesLiveTabs({
                               <>
                                 {calendarStart && calendarEnd && (
                                   <div onClick={(e) => e.stopPropagation()}>
-                                    <AddToCalendarWithStats
-                                      eventId={c.id || idx}
-                                      classId={c.id || undefined}
-                                      academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
-                                      roleBaile={userProfile?.rol_baile || null}
-                                      zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
-                                      title={titulo}
-                                      description={c.descripcion || undefined}
-                                      location={ubicacion || undefined}
-                                      start={calendarStart}
-                                      end={calendarEnd}
-                                      showAsIcon={true}
-                                    />
+                                    {(() => {
+                                      // Generar classId único basado en el índice (similar a useLiveClasses)
+                                      // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
+                                      const classIdForMetrics = c.id || (idx * 1000);
+                                      console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario:", {
+                                        idx,
+                                        classId: c.id,
+                                        classIdForMetrics,
+                                        titulo,
+                                        sourceType,
+                                        sourceId,
+                                        academyId: sourceType === 'academy' && sourceId ? Number(sourceId) : undefined,
+                                        roleBaile: userProfile?.rol_baile || null,
+                                      });
+                                      return (
+                                        <AddToCalendarWithStats
+                                          eventId={c.id || idx}
+                                          classId={classIdForMetrics}
+                                          academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                          roleBaile={userProfile?.rol_baile || null}
+                                          zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
+                                          title={titulo}
+                                          description={c.descripcion || undefined}
+                                          location={ubicacion || undefined}
+                                          start={calendarStart}
+                                          end={calendarEnd}
+                                          showAsIcon={true}
+                                        />
+                                      );
+                                    })()}
                                   </div>
                                 )}
                                 <div onClick={(e) => e.stopPropagation()}>
@@ -712,19 +729,36 @@ export default function ClasesLiveTabs({
                         <>
                           {calendarStart && calendarEnd && (
                             <div onClick={(e) => e.stopPropagation()}>
-                              <AddToCalendarWithStats
-                                eventId={c.id || idx}
-                                classId={c.id || undefined}
-                                academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
-                                roleBaile={userProfile?.rol_baile || null}
-                                zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
-                                title={titulo}
-                                description={c.descripcion || undefined}
-                                location={ubicacion || undefined}
-                                start={calendarStart}
-                                end={calendarEnd}
-                                showAsIcon={true}
-                              />
+                              {(() => {
+                                // Generar classId único basado en el índice (similar a useLiveClasses)
+                                // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
+                                const classIdForMetrics = c.id || (idx * 1000);
+                                console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario (desktop):", {
+                                  idx,
+                                  classId: c.id,
+                                  classIdForMetrics,
+                                  titulo,
+                                  sourceType,
+                                  sourceId,
+                                  academyId: sourceType === 'academy' && sourceId ? Number(sourceId) : undefined,
+                                  roleBaile: userProfile?.rol_baile || null,
+                                });
+                                return (
+                                  <AddToCalendarWithStats
+                                    eventId={c.id || idx}
+                                    classId={classIdForMetrics}
+                                    academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                    roleBaile={userProfile?.rol_baile || null}
+                                    zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
+                                    title={titulo}
+                                    description={c.descripcion || undefined}
+                                    location={ubicacion || undefined}
+                                    start={calendarStart}
+                                    end={calendarEnd}
+                                    showAsIcon={true}
+                                  />
+                                );
+                              })()}
                             </div>
                           )}
                           <div onClick={(e) => e.stopPropagation()}>

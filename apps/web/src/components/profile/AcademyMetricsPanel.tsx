@@ -7,8 +7,29 @@ type PanelProps = { academyId: number };
 export function AcademyMetricsPanel({ academyId }: PanelProps) {
   const { global, porClase, loading, error, refetch } = useAcademyClassMetrics(academyId);
   
+  console.log("[AcademyMetricsPanel] 🔍 ========== DEBUG PANEL ==========");
   console.log("[AcademyMetricsPanel] 🔍 academyId recibido:", academyId);
-  console.log("[AcademyMetricsPanel] 📊 Métricas:", { global, porClase, loading, error });
+  console.log("[AcademyMetricsPanel] 📊 Métricas completas:", { 
+    global, 
+    porClase, 
+    loading, 
+    error,
+    porClaseLength: porClase?.length || 0,
+  });
+  if (porClase && porClase.length > 0) {
+    console.log("[AcademyMetricsPanel] 🔍 Detalles de porClase:");
+    porClase.forEach((cl, idx) => {
+      console.log(`[AcademyMetricsPanel] 🔍 Clase ${idx}:`, {
+        class_id: cl.class_id,
+        nombre: cl.nombre,
+        fecha: cl.fecha,
+        precio: cl.precio,
+        totalTentativos: cl.totalTentativos,
+        porRol: cl.porRol,
+      });
+    });
+  }
+  console.log("[AcademyMetricsPanel] 🔍 ========== FIN DEBUG PANEL ==========");
   
   // Refrescar métricas cada vez que se monta el componente y cuando cambian los datos
   React.useEffect(() => {
@@ -176,6 +197,12 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
             {porClase.map((cl) => {
+              console.log(`[AcademyMetricsPanel] 🔍 Renderizando clase ${cl.class_id}:`, {
+                nombre: cl.nombre,
+                fecha: cl.fecha,
+                precio: cl.precio,
+              });
+              
               // Formatear fecha si existe
               const fechaFormateada = cl.fecha 
                 ? new Date(cl.fecha).toLocaleDateString("es-MX", {
@@ -194,6 +221,11 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                     minimumFractionDigits: 0,
                   }).format(cl.precio)
                 : null;
+              
+              console.log(`[AcademyMetricsPanel] 🔍 Valores formateados:`, {
+                fechaFormateada,
+                precioFormateado,
+              });
               
               return (
               <motion.div

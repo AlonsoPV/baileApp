@@ -132,6 +132,19 @@ export function useAcademyClassMetrics(academyId?: number) {
       }
       
       console.log("[useAcademyClassMetrics] ✅ Procesando", metricsData.length, "registros de métricas");
+      console.log("[useAcademyClassMetrics] 🔍 ========== DEBUG DATOS RPC ==========");
+      console.log("[useAcademyClassMetrics] 🔍 Datos completos de RPC:", JSON.stringify(metricsData, null, 2));
+      metricsData.forEach((row: any, idx: number) => {
+        console.log(`[useAcademyClassMetrics] 🔍 Registro ${idx}:`, {
+          class_id: row.class_id,
+          total_tentativos: row.total_tentativos,
+          nombre_clase: row.nombre_clase,
+          fecha_clase: row.fecha_clase,
+          precio_clase: row.precio_clase,
+          por_rol: row.por_rol,
+        });
+      });
+      console.log("[useAcademyClassMetrics] 🔍 ========== FIN DEBUG DATOS RPC ==========");
 
       const rolEmpty: RolCounts = { leader: 0, follower: 0, ambos: 0, otros: 0 };
       const g: GlobalMetrics = {
@@ -147,6 +160,14 @@ export function useAcademyClassMetrics(academyId?: number) {
         const nombreClase = row.nombre_clase || `Clase #${classId}`;
         const fechaClase = row.fecha_clase || null;
         const precioClase = row.precio_clase !== null && row.precio_clase !== undefined ? Number(row.precio_clase) : null;
+        
+        console.log(`[useAcademyClassMetrics] 🔍 Procesando clase ${classId}:`, {
+          nombreClase,
+          fechaClase,
+          precioClase,
+          total,
+          porRol,
+        });
 
         g.totalTentativos += total;
         g.porRol.leader += Number(porRol.leader) || 0;

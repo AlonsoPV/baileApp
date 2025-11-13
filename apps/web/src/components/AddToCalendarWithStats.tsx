@@ -119,6 +119,7 @@ export default function AddToCalendarWithStats({
 
       // Registrar asistencia tentativa en clase_asistencias (si hay classId o academyId)
       const finalClassId = classId || (typeof eventId === 'number' ? eventId : Number(eventIdStr));
+      console.log("[AddToCalendarWithStats] 🔍 ========== DEBUG INICIO ==========");
       console.log("[AddToCalendarWithStats] 🔍 Datos para clase_asistencias:", {
         finalClassId,
         classId,
@@ -130,6 +131,15 @@ export default function AddToCalendarWithStats({
         userId: user.id,
         isValidClassId: finalClassId && !Number.isNaN(finalClassId),
       });
+      console.log("[AddToCalendarWithStats] 🔍 Props recibidos:", {
+        classId,
+        academyId,
+        roleBaile,
+        zonaTagId,
+        eventId,
+        title,
+      });
+      console.log("[AddToCalendarWithStats] 🔍 ========== DEBUG FIN ==========");
       
       if (finalClassId && !Number.isNaN(finalClassId)) {
         console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
