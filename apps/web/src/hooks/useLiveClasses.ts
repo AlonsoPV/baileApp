@@ -27,18 +27,33 @@ function cronoItemToClases(
   index: number,
   academyId?: number,
   teacherId?: number,
-  ubicaciones?: any[]
+  ubicaciones?: any[],
+  costos?: any[] // Array de costos para buscar el precio por referenciaCosto
 ): Clase[] {
   const clases: Clase[] = [];
   const titulo = item.titulo || item.nombre || 'Clase';
   const inicio = item.inicio || item.hora_inicio || null;
   const fin = item.fin || item.hora_fin || null;
   const nivel = item.nivel || null;
-  const ritmo = item.ritmo || item.ritmo_id || null;
-  const ritmos = item.ritmos || item.ritmos_seleccionados || (ritmo ? [ritmo] : null);
+  const ritmo = item.ritmo || item.ritmoId || item.ritmo_id || null;
+  // Manejar ritmos: puede venir como ritmoIds (array) o ritmoId (número)
+  const ritmos = item.ritmos_seleccionados || item.ritmoIds || (ritmo ? [ritmo] : null);
   const fecha = item.fecha || null;
   const descripcion = item.descripcion || null;
-  const costo = item.costo || item.precio || null;
+  
+  // Buscar costo en el array de costos usando referenciaCosto o titulo
+  let costo: number | null = item.costo || item.precio || null;
+  if (!costo && costos && Array.isArray(costos)) {
+    const referencia = item.referenciaCosto || item.titulo || item.nombre;
+    if (referencia) {
+      const costoItem = costos.find((c: any) => 
+        (c.nombre || '').trim().toLowerCase() === referencia.trim().toLowerCase()
+      );
+      if (costoItem && costoItem.precio !== null && costoItem.precio !== undefined) {
+        costo = Number(costoItem.precio);
+      }
+    }
+  }
   
   // Obtener ubicación (puede venir del item o de la lista de ubicaciones)
   let ubicacion: string | null = null;
@@ -210,13 +225,47 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
 
       // Convertir cada item del cronograma a objetos Clase
       const clases: Clase[] = [];
+      // Obtener costos si están disponibles (para academias/teachers)
+      let costos: any[] = [];
+      if (opts?.academyId) {
+        const { data: academyDataWithCostos } = await supabase
+          .from("v_academies_public")
+          .select("costos")
+          .eq("id", opts.academyId)
+          .single();
+        if (academyDataWithCostos?.costos && Array.isArray(academyDataWithCostos.costos)) {
+          costos = academyDataWithCostos.costos;
+        } else {
+          // Fallback a profiles_academy
+          const { data: directDataWithCostos } = await supabase
+            .from("profiles_academy")
+            .select("costos")
+            .eq("id", opts.academyId)
+            .single();
+          if (directDataWithCostos?.costos && Array.isArray(directDataWithCostos.costos)) {
+            costos = directDataWithCostos.costos;
+          }
+        }
+      } else if (opts?.teacherId) {
+        const { data: teacherDataWithCostos } = await supabase
+          .from("profiles_teacher")
+          .select("costos")
+          .eq("id", opts.teacherId)
+          .single();
+        if (teacherDataWithCostos?.costos && Array.isArray(teacherDataWithCostos.costos)) {
+          costos = teacherDataWithCostos.costos;
+        }
+      }
+
+      // Convertir cada item del cronograma a objetos Clase
       cronograma.forEach((item, index) => {
         const clasesFromItem = cronoItemToClases(
           item,
           index,
           opts?.academyId,
           opts?.teacherId,
-          ubicaciones
+          ubicaciones,
+          costos
         );
         clases.push(...clasesFromItem);
       });
