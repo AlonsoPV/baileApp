@@ -67,8 +67,9 @@ export default function AcademyCard({ item }: AcademyCardProps) {
           background: avatar
             ? `url(${avatar})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: 'cover',
+          backgroundSize: avatar ? 'contain' : 'cover',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',

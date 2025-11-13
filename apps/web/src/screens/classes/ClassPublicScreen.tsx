@@ -174,13 +174,26 @@ export default function ClassPublicScreen() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 2.5rem;
-          align-items: center;
+          align-items: stretch;
           justify-content: center;
           position: relative;
           z-index: 1;
           width: 100%;
           height: 100%;
           padding: 2rem 0;
+        }
+        
+        .class-hero-content > div:first-child {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        
+        .class-hero-content > div:last-child {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: center;
         }
         
         .class-title {
