@@ -18,6 +18,7 @@ type ClaseItem = {
   ownerCoverUrl?: string;
   ritmos?: number[];
   ritmosSeleccionados?: string[];
+  cronogramaIndex?: number; // Índice original en el cronograma
 };
 
 interface Props {
@@ -74,20 +75,35 @@ export default function ClassCard({ item }: Props) {
     if (item.ownerType && item.ownerId) {
       // Asegurar que ownerId sea un string válido
       const ownerIdStr = String(item.ownerId);
-      const route = `/clase/${item.ownerType}/${ownerIdStr}`;
-      console.log("[ClassCard] 🔍 Ruta generada:", route, { ownerType: item.ownerType, ownerId: item.ownerId, ownerIdStr });
+      // Si hay cronogramaIndex, incluirlo en la URL como query param
+      const indexParam = (item.cronogramaIndex !== null && item.cronogramaIndex !== undefined) ? `?i=${item.cronogramaIndex}` : '';
+      const route = `/clase/${item.ownerType}/${ownerIdStr}${indexParam}`;
+      console.log("[ClassCard] 🔍 Ruta generada:", route, { 
+        ownerType: item.ownerType, 
+        ownerId: item.ownerId, 
+        ownerIdStr,
+        cronogramaIndex: item.cronogramaIndex,
+        indexParam
+      });
       return route;
     }
     if (item.ownerId) {
       const ownerIdStr = String(item.ownerId);
-      const route = `/clase?type=${item.ownerType || 'teacher'}&id=${ownerIdStr}`;
-      console.log("[ClassCard] 🔍 Ruta con query params:", route, { ownerType: item.ownerType, ownerId: item.ownerId, ownerIdStr });
+      const indexParam = (item.cronogramaIndex !== null && item.cronogramaIndex !== undefined) ? `&i=${item.cronogramaIndex}` : '';
+      const route = `/clase?type=${item.ownerType || 'teacher'}&id=${ownerIdStr}${indexParam}`;
+      console.log("[ClassCard] 🔍 Ruta con query params:", route, { 
+        ownerType: item.ownerType, 
+        ownerId: item.ownerId, 
+        ownerIdStr,
+        cronogramaIndex: item.cronogramaIndex,
+        indexParam
+      });
       return route;
     }
     const route = `/clase?type=${item.ownerType || 'teacher'}`;
     console.log("[ClassCard] 🔍 Ruta fallback:", route, { ownerType: item.ownerType, ownerId: item.ownerId });
     return route;
-  }, [item.ownerType, item.ownerId]);
+  }, [item.ownerType, item.ownerId, item.cronogramaIndex]);
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();

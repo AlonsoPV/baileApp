@@ -94,6 +94,7 @@ function cronoItemToClases(
       maestro_id: teacherId || null,
       teacher_id: teacherId || null,
       cover_url: null,
+      cronogramaIndex: index, // Preservar índice original del cronograma
     });
   }
   // Si tiene diasSemana (array de strings), crear una clase por cada día
@@ -123,6 +124,7 @@ function cronoItemToClases(
           maestro_id: teacherId || null,
           teacher_id: teacherId || null,
           cover_url: null,
+          cronogramaIndex: index, // Preservar índice original del cronograma
         });
       }
     });
@@ -152,6 +154,7 @@ function cronoItemToClases(
       maestro_id: teacherId || null,
       teacher_id: teacherId || null,
       cover_url: null,
+      cronogramaIndex: index, // Preservar índice original del cronograma
     });
   }
 

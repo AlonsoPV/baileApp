@@ -131,10 +131,25 @@ export default function ClasesLiveTabs({
 
   const handleClassClick = (clase: Clase, index: number) => {
     if (isClickable && sourceType && sourceId) {
+      // Usar cronogramaIndex si está disponible, si no usar el índice calculado desde el id
+      // El id se calcula como: cronogramaIndex * 1000 + diaIdx
+      // Entonces: cronogramaIndex = Math.floor(id / 1000)
+      const cronogramaIndex = clase.cronogramaIndex !== null && clase.cronogramaIndex !== undefined 
+        ? clase.cronogramaIndex 
+        : Math.floor(clase.id / 1000);
+      
       // Asegurar que sourceId sea un string válido
       const sourceIdStr = String(sourceId);
-      const route = `/clase/${sourceType}/${sourceIdStr}${index !== undefined && index !== null ? `?i=${index}` : ''}`;
-      console.log("[ClasesLiveTabs] 🔍 Navegando a:", route, { sourceType, sourceId, sourceIdStr, index });
+      const route = `/clase/${sourceType}/${sourceIdStr}?i=${cronogramaIndex}`;
+      console.log("[ClasesLiveTabs] 🔍 Navegando a:", route, { 
+        sourceType, 
+        sourceId, 
+        sourceIdStr, 
+        index,
+        claseId: clase.id,
+        cronogramaIndex,
+        claseCronogramaIndex: clase.cronogramaIndex
+      });
       navigate(route);
     } else {
       console.warn("[ClasesLiveTabs] ⚠️ No se puede navegar - faltan datos:", { isClickable, sourceType, sourceId });
@@ -423,8 +438,13 @@ export default function ClasesLiveTabs({
                               calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
                             }
 
+                            // Calcular cronogramaIndex desde el id de la clase
+                            const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
+                              ? c.cronogramaIndex 
+                              : Math.floor((c.id || 0) / 1000);
+                            
                             const shareUrl = isClickable && sourceType && sourceId 
-                              ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
+                              ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
                               : (sourceType && sourceId 
                                 ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
                                 : window.location.href);
@@ -726,8 +746,13 @@ export default function ClasesLiveTabs({
                         calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
                       }
 
+                      // Calcular cronogramaIndex desde el id de la clase
+                      const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
+                        ? c.cronogramaIndex 
+                        : Math.floor((c.id || 0) / 1000);
+                      
                       const shareUrl = isClickable && sourceType && sourceId 
-                        ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
+                        ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
                         : (sourceType && sourceId 
                           ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
                           : window.location.href);

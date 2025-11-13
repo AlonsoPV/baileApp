@@ -28,5 +28,6 @@ export type Clase = {
   nivel?: string | null; // opcional
   ritmo?: string | null; // opcional
   ritmos_seleccionados?: string[] | number[] | null;
+  cronogramaIndex?: number; // Índice original en el cronograma (para navegación)
 };
 

@@ -266,7 +266,7 @@ export default function ExploreHomeScreen() {
       return undefined as unknown as string | undefined;
     };
 
-    const mapClase = (owner: any, c: any, ownerType: 'academy'|'teacher') => ({
+    const mapClase = (owner: any, c: any, ownerType: 'academy'|'teacher', cronogramaIndex: number) => ({
       titulo: c?.titulo,
       fecha: c?.fecha,
       diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
@@ -276,11 +276,12 @@ export default function ExploreHomeScreen() {
       ownerType,
       ownerId: owner?.id,
       ownerName: owner?.nombre_publico,
-      ownerCoverUrl: resolveOwnerCover(owner)
+      ownerCoverUrl: resolveOwnerCover(owner),
+      cronogramaIndex // Índice original en el cronograma
     });
 
-    const fromAcademies = allA.flatMap((ac: any) => (Array.isArray(ac?.cronograma) ? ac.cronograma.map((c: any) => mapClase(ac, c, 'academy')) : []));
-    const fromTeachers = allM.flatMap((tc: any) => (Array.isArray(tc?.cronograma) ? tc.cronograma.map((c: any) => mapClase(tc, c, 'teacher')) : []));
+    const fromAcademies = allA.flatMap((ac: any) => (Array.isArray(ac?.cronograma) ? ac.cronograma.map((c: any, idx: number) => mapClase(ac, c, 'academy', idx)) : []));
+    const fromTeachers = allM.flatMap((tc: any) => (Array.isArray(tc?.cronograma) ? tc.cronograma.map((c: any, idx: number) => mapClase(tc, c, 'teacher', idx)) : []));
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
     // Filtro por preset de fechas
