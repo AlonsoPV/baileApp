@@ -81,6 +81,17 @@ export default function AddToCalendarWithStats({
   }, [user, eventIdStr]);
 
   const handleAdd = async (href: string) => {
+    console.log("[AddToCalendarWithStats] 🎯 handleAdd llamado con:", {
+      href,
+      userId: user?.id,
+      alreadyAdded,
+      classId,
+      academyId,
+      eventId,
+      roleBaile,
+      zonaTagId,
+    });
+    
     if (!user?.id) {
       alert("Inicia sesión para añadir al calendario 🙌");
       setOpen(false);
@@ -88,6 +99,7 @@ export default function AddToCalendarWithStats({
     }
 
     if (alreadyAdded) {
+      console.log("[AddToCalendarWithStats] ⚠️ Ya agregado, solo abriendo calendario");
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
@@ -97,6 +109,7 @@ export default function AddToCalendarWithStats({
 
     setLoading(true);
     try {
+      console.log("[AddToCalendarWithStats] 📝 Iniciando proceso de agregar a calendario...");
       // Registrar en eventos_interesados (lógica existente)
       const { error: errorInteresados } = await supabase.from("eventos_interesados").insert({
         event_id: eventIdStr,
@@ -115,9 +128,11 @@ export default function AddToCalendarWithStats({
         roleBaile,
         zonaTagId,
         userId: user.id,
+        isValidClassId: finalClassId && !Number.isNaN(finalClassId),
       });
       
       if (finalClassId && !Number.isNaN(finalClassId)) {
+        console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
         try {
           // Intentar insertar primero
           const insertPayload = {
@@ -177,8 +192,15 @@ export default function AddToCalendarWithStats({
             }
           }
         } catch (err) {
-          console.error("[AddToCalendarWithStats] Error inesperado:", err);
+          console.error("[AddToCalendarWithStats] ❌ Error inesperado:", err);
         }
+      } else {
+        console.warn("[AddToCalendarWithStats] ⚠️ No se puede insertar: classId inválido o NaN", {
+          finalClassId,
+          classId,
+          eventId,
+          eventIdStr,
+        });
       }
 
       setAdded(true);
