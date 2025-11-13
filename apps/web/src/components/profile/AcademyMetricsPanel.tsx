@@ -204,14 +204,30 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
               });
               
               // Formatear fecha si existe
-              const fechaFormateada = cl.fecha 
-                ? new Date(cl.fecha).toLocaleDateString("es-MX", {
-                    weekday: "short",
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : null;
+              // cl.fecha puede ser una fecha (YYYY-MM-DD) o un día de la semana (ej: "Lunes")
+              let fechaFormateada: string | null = null;
+              if (cl.fecha) {
+                // Verificar si es una fecha válida (formato YYYY-MM-DD)
+                const fechaMatch = String(cl.fecha).match(/^\d{4}-\d{2}-\d{2}$/);
+                if (fechaMatch) {
+                  try {
+                    const fechaDate = new Date(cl.fecha + 'T12:00:00'); // Agregar hora para evitar problemas de timezone
+                    if (!isNaN(fechaDate.getTime())) {
+                      fechaFormateada = fechaDate.toLocaleDateString("es-MX", {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      });
+                    }
+                  } catch (e) {
+                    console.error("[AcademyMetricsPanel] Error formateando fecha:", e);
+                  }
+                } else {
+                  // Si no es una fecha, asumir que es un día de la semana y mostrarlo directamente
+                  fechaFormateada = String(cl.fecha);
+                }
+              }
               
               // Formatear precio si existe
               const precioFormateado = cl.precio !== null && cl.precio !== undefined
