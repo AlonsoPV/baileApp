@@ -446,7 +446,7 @@ export default function ClassPublicScreen() {
                     <AddToCalendarWithStats
                       eventId={idNum}
                       classId={idNum}
-                      academyId={!isTeacher ? idNum : undefined}
+                      academyId={!isTeacher ? profile?.id : undefined}
                       roleBaile={userProfile?.rol_baile || null}
                       zonaTagId={profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
                       title={classTitle}

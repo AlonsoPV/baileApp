@@ -7,9 +7,13 @@ type PanelProps = { academyId: number };
 export function AcademyMetricsPanel({ academyId }: PanelProps) {
   const { global, porClase, loading, error, refetch } = useAcademyClassMetrics(academyId);
   
+  console.log("[AcademyMetricsPanel] 🔍 academyId recibido:", academyId);
+  console.log("[AcademyMetricsPanel] 📊 Métricas:", { global, porClase, loading, error });
+  
   // Refrescar métricas cada vez que se monta el componente
   React.useEffect(() => {
     if (academyId) {
+      console.log("[AcademyMetricsPanel] 🔄 Refrescando métricas para academyId:", academyId);
       refetch();
     }
   }, [academyId, refetch]);

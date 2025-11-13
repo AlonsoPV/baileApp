@@ -106,23 +106,39 @@ export default function AddToCalendarWithStats({
 
       // Registrar asistencia tentativa en clase_asistencias (si hay classId o academyId)
       const finalClassId = classId || (typeof eventId === 'number' ? eventId : Number(eventIdStr));
+      console.log("[AddToCalendarWithStats] 🔍 Datos para clase_asistencias:", {
+        finalClassId,
+        classId,
+        eventId,
+        eventIdStr,
+        academyId,
+        roleBaile,
+        zonaTagId,
+        userId: user.id,
+      });
+      
       if (finalClassId && !Number.isNaN(finalClassId)) {
         try {
           // Intentar insertar primero
-          const { error: insertError } = await supabase
+          const insertPayload = {
+            user_id: user.id,
+            class_id: finalClassId,
+            academy_id: academyId || null,
+            role_baile: roleBaile || null,
+            zona_tag_id: zonaTagId || null,
+            status: "tentative" as const,
+          };
+          console.log("[AddToCalendarWithStats] 📤 Insertando en clase_asistencias:", insertPayload);
+          
+          const { data: insertData, error: insertError } = await supabase
             .from("clase_asistencias")
-            .insert({
-              user_id: user.id,
-              class_id: finalClassId,
-              academy_id: academyId || null,
-              role_baile: roleBaile || null,
-              zona_tag_id: zonaTagId || null,
-              status: "tentative",
-            });
+            .insert(insertPayload)
+            .select();
           
           // Si falla por conflicto (ya existe), actualizar
           if (insertError && insertError.code === '23505') {
-            const { error: updateError } = await supabase
+            console.log("[AddToCalendarWithStats] ⚠️ Conflicto detectado, actualizando registro existente...");
+            const { data: updateData, error: updateError } = await supabase
               .from("clase_asistencias")
               .update({
                 academy_id: academyId || null,
@@ -131,23 +147,32 @@ export default function AddToCalendarWithStats({
                 status: "tentative",
               })
               .eq("user_id", user.id)
-              .eq("class_id", finalClassId);
+              .eq("class_id", finalClassId)
+              .select();
             
             if (updateError) {
-              console.error("[AddToCalendarWithStats] Error actualizando asistencia tentative:", updateError);
+              console.error("[AddToCalendarWithStats] ❌ Error actualizando asistencia tentative:", updateError);
             } else {
-              console.log("[AddToCalendarWithStats] ✅ Asistencia actualizada exitosamente");
+              console.log("[AddToCalendarWithStats] ✅ Asistencia actualizada exitosamente:", updateData);
               // Invalidar queries de métricas si hay academyId
               if (academyId) {
+                console.log("[AddToCalendarWithStats] 🔄 Invalidando queries para academyId:", academyId);
                 qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
               }
             }
           } else if (insertError) {
-            console.error("[AddToCalendarWithStats] Error insertando asistencia tentative:", insertError);
+            console.error("[AddToCalendarWithStats] ❌ Error insertando asistencia tentative:", insertError);
+            console.error("[AddToCalendarWithStats] Detalles del error:", {
+              code: insertError.code,
+              message: insertError.message,
+              details: insertError.details,
+              hint: insertError.hint,
+            });
           } else {
-            console.log("[AddToCalendarWithStats] ✅ Asistencia registrada exitosamente");
+            console.log("[AddToCalendarWithStats] ✅ Asistencia registrada exitosamente:", insertData);
             // Invalidar queries de métricas si hay academyId
             if (academyId) {
+              console.log("[AddToCalendarWithStats] 🔄 Invalidando queries para academyId:", academyId);
               qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
             }
           }

@@ -33,13 +33,25 @@ export function useAcademyClassMetrics(academyId?: number) {
     queryKey: ["academy-class-metrics", academyId],
     enabled: !!academyId,
     queryFn: async () => {
+      console.log("[useAcademyClassMetrics] 🔍 Consultando métricas para academyId:", academyId);
+      
       // Usar función RPC para obtener métricas agregadas (permite a academias ver sus métricas)
       const { data: metricsData, error: rpcError } = await supabase
         .rpc("get_academy_class_metrics", { p_academy_id: academyId! });
+      
+      console.log("[useAcademyClassMetrics] 📊 Resultado RPC:", { metricsData, rpcError });
 
       if (rpcError) {
-        console.error("[useAcademyClassMetrics] Error en RPC:", rpcError);
+        console.error("[useAcademyClassMetrics] ❌ Error en RPC:", rpcError);
+        console.error("[useAcademyClassMetrics] Detalles del error RPC:", {
+          code: rpcError.code,
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint,
+        });
+        
         // Si falla RPC, intentar consulta directa (solo para superadmins)
+        console.log("[useAcademyClassMetrics] 🔄 Intentando consulta directa a clase_asistencias...");
         const { data, error: fetchError } = await supabase
           .from("clase_asistencias")
           .select(`
@@ -51,7 +63,12 @@ export function useAcademyClassMetrics(academyId?: number) {
           .eq("academy_id", academyId!)
           .eq("status", "tentative");
 
-        if (fetchError) throw fetchError;
+        console.log("[useAcademyClassMetrics] 📊 Resultado consulta directa:", { data, fetchError });
+        
+        if (fetchError) {
+          console.error("[useAcademyClassMetrics] ❌ Error en consulta directa:", fetchError);
+          throw fetchError;
+        }
 
         // Procesar datos directos
         const rolEmpty: RolCounts = { leader: 0, follower: 0, ambos: 0, otros: 0 };
@@ -97,11 +114,22 @@ export function useAcademyClassMetrics(academyId?: number) {
 
       // Procesar datos de RPC
       if (!metricsData || metricsData.length === 0) {
+        console.log("[useAcademyClassMetrics] ⚠️ No hay datos de métricas (array vacío o null)");
+        // Verificar si hay registros en la tabla directamente
+        const { count } = await supabase
+          .from("clase_asistencias")
+          .select("*", { count: "exact", head: true })
+          .eq("academy_id", academyId!)
+          .eq("status", "tentative");
+        console.log("[useAcademyClassMetrics] 📊 Total de registros en clase_asistencias para academyId:", count);
+        
         return {
           global: { totalTentativos: 0, porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 } },
           porClase: [],
         };
       }
+      
+      console.log("[useAcademyClassMetrics] ✅ Procesando", metricsData.length, "registros de métricas");
 
       const rolEmpty: RolCounts = { leader: 0, follower: 0, ambos: 0, otros: 0 };
       const g: GlobalMetrics = {
