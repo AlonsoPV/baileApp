@@ -366,6 +366,14 @@ export default function ExploreHomeScreen() {
       return dateA.getTime() - dateB.getTime();
     });
     
+    // Log para debug
+    console.log("[ExploreHomeScreenModern] 🔍 Clases mapeadas con cronogramaIndex:", sorted.map((c: any) => ({
+      titulo: c.titulo,
+      ownerType: c.ownerType,
+      ownerId: c.ownerId,
+      cronogramaIndex: c.cronogramaIndex
+    })));
+    
     return sorted.slice(0, 12);
   }, [academias, maestros, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
 

@@ -44,9 +44,24 @@ export default function ClasesLiveTabs({
   const { data: allTags } = useTags() as any;
   const { profile: userProfile } = useUserProfile();
   console.log("[ClasesLiveTabs] Received classes:", classes);
+  console.log("[ClasesLiveTabs] 🔍 Clases con cronogramaIndex:", classes.map((c: Clase) => ({
+    id: c.id,
+    titulo: c.titulo,
+    cronogramaIndex: c.cronogramaIndex,
+    calculatedIndex: Math.floor(c.id / 1000)
+  })));
   const days = React.useMemo(() => {
     const grouped = groupClassesByWeekday(classes || []);
     console.log("[ClasesLiveTabs] Grouped days:", grouped);
+    // Log para verificar que el cronogramaIndex se preserve después de agrupar
+    grouped.forEach((d, dayIdx) => {
+      console.log(`[ClasesLiveTabs] 🔍 Día ${d.label} (${d.key}):`, d.items.map((c: Clase) => ({
+        id: c.id,
+        titulo: c.titulo,
+        cronogramaIndex: c.cronogramaIndex,
+        calculatedIndex: Math.floor(c.id / 1000)
+      })));
+    });
     return grouped;
   }, [classes]);
   const [activeIdx, setActiveIdx] = React.useState(0);
@@ -129,7 +144,7 @@ export default function ClasesLiveTabs({
     });
   };
 
-  const handleClassClick = (clase: Clase, index: number) => {
+  const handleClassClick = (clase: Clase) => {
     if (isClickable && sourceType && sourceId) {
       // Usar cronogramaIndex si está disponible, si no usar el índice calculado desde el id
       // El id se calcula como: cronogramaIndex * 1000 + diaIdx
@@ -145,10 +160,10 @@ export default function ClasesLiveTabs({
         sourceType, 
         sourceId, 
         sourceIdStr, 
-        index,
         claseId: clase.id,
         cronogramaIndex,
-        claseCronogramaIndex: clase.cronogramaIndex
+        claseCronogramaIndex: clase.cronogramaIndex,
+        titulo: clase.titulo
       });
       navigate(route);
     } else {
@@ -343,7 +358,7 @@ export default function ClasesLiveTabs({
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: .25 }}
-                      onClick={() => handleClassClick(c, idx)}
+                      onClick={() => handleClassClick(c)}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -508,7 +523,7 @@ export default function ClasesLiveTabs({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleClassClick(c, idx);
+                                      handleClassClick(c);
                                     }}
                                     style={{
                                       padding: ".6rem 1rem",
@@ -650,7 +665,7 @@ export default function ClasesLiveTabs({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: .25 }}
-                onClick={() => handleClassClick(c, idx)}
+                onClick={() => handleClassClick(c)}
                 style={{
                   display: "grid",
                   /* gridTemplateColumns: "140px 1fr", */
@@ -816,7 +831,7 @@ export default function ClasesLiveTabs({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleClassClick(c, idx);
+                                handleClassClick(c);
                               }}
                               style={{
                                 padding: ".7rem 1.1rem",
