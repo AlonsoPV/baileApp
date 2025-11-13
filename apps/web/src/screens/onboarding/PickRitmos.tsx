@@ -36,12 +36,7 @@ export function PickRitmos() {
     }
   };
 
-  // Skip if already has ritmos
-  const handleSkip = () => {
-    if (profile?.ritmos_seleccionados && profile.ritmos_seleccionados.length > 0) {
-      navigate('/onboarding/zonas');
-    }
-  };
+  // Removed handleSkip - users must click "Continuar" to proceed
 
   return (
     <div
@@ -102,36 +97,16 @@ export function PickRitmos() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: spacing[2] }}>
-            {profile?.ritmos_seleccionados && profile.ritmos_seleccionados.length > 0 && (
-              <button
-                type="button"
-                onClick={handleSkip}
-                disabled={isLoading}
-                style={{
-                  flex: 1,
-                  padding: spacing[2],
-                  background: 'transparent',
-                  border: `1px solid ${colors.gray[300]}`,
-                  borderRadius: borderRadius.md,
-                  color: colors.gray[400],
-                  cursor: 'pointer',
-                }}
-              >
-                Omitir
-              </button>
-            )}
-            <Button
-              type="submit"
-              disabled={isLoading || selectedSlugs.length === 0}
-              style={{
-                flex: 1,
-                opacity: isLoading || selectedSlugs.length === 0 ? 0.5 : 1,
-              }}
-            >
-              {isLoading ? 'Guardando...' : 'Continuar →'}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={isLoading || selectedSlugs.length === 0}
+            style={{
+              width: '100%',
+              opacity: isLoading || selectedSlugs.length === 0 ? 0.5 : 1,
+            }}
+          >
+            {isLoading ? 'Guardando...' : 'Continuar →'}
+          </Button>
         </form>
       </div>
     </div>

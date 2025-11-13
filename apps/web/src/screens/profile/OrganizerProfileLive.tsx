@@ -883,7 +883,7 @@ export function OrganizerProfileLive() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
             position: 'relative',
-            overflow: 'hidden',
+            overflow: 'visible',
             margin: `0 auto`,
             maxWidth: '900px',
             width: '100%',
@@ -954,33 +954,100 @@ export function OrganizerProfileLive() {
                   borderRadius: '50%'
                 }} />
               </div>
-              {/* Estado debajo del avatar */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: `${spacing[1]} ${spacing[3]}`,
-                    borderRadius: borderRadius.full,
-                    background: org.estado_aprobacion === 'aprobado'
-                      ? 'rgba(16,185,129,0.12)'
-                      : 'rgba(30,136,229,0.12)',
-                    border: org.estado_aprobacion === 'aprobado'
-                      ? '1px solid rgba(16,185,129,0.35)'
-                      : '1px solid rgba(30,136,229,0.35)',
-                    color: org.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
-                    fontSize: typography.fontSize.xs,
-                    fontWeight: typography.fontWeight.semibold,
-                    backdropFilter: 'none',
-                    boxShadow: 'none',
+              {/* Badge de verificación y botón de compartir inline debajo del avatar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap'
+              }}>
+                {org.estado_aprobacion === 'aprobado' && (
+                  <div className="badge" style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: spacing[1],
-                    textTransform: 'none',
-                    letterSpacing: 0
+                    gap: '.45rem',
+                    padding: '.35rem .6rem',
+                    borderRadius: '999px',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #106c37, #0b5)',
+                    border: '1px solid #13a65a',
+                    boxShadow: '0 8px 18px rgba(0,0,0,.35)',
+                    fontSize: '.82rem',
+                    color: '#fff'
+                  }}>
+                    <div className="dot" style={{
+                      width: '16px',
+                      height: '16px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: '#16c784',
+                      borderRadius: '50%',
+                      color: '#062d1f',
+                      fontSize: '.75rem',
+                      fontWeight: 900
+                    }}>✓</div>
+                    <span>✅</span>
+                  </div>
+                )}
+                <button
+                  aria-label="Compartir perfil"
+                  title="Compartir"
+                  onClick={() => {
+                    try {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const title = org.nombre_publico || 'Organizador';
+                      const text = `Mira el perfil de ${title}`;
+                      const navAny = (navigator as any);
+                      if (navAny && typeof navAny.share === 'function') {
+                        navAny.share({ title, text, url }).catch(() => {});
+                      } else {
+                        navigator.clipboard?.writeText(url).then(() => { 
+                          setCopied(true); 
+                          setTimeout(() => setCopied(false), 1500); 
+                        }).catch(() => {});
+                      }
+                    } catch {}
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255,255,255,0.10)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    backdropFilter: 'blur(8px)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 700
                   }}
                 >
-                  {org.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${org.estado_aprobacion}`}
-                </motion.span>
+                  📤 Compartir
+                </button>
+                {copied && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      padding: '4px 8px',
+                      borderRadius: 8,
+                      background: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      zIndex: 10
+                    }}
+                  >
+                    Copiado
+                  </div>
+                )}
               </div>
             </motion.div>
 

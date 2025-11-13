@@ -21,7 +21,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
 import { ensureMaxVideoDuration } from '../../utils/videoValidation';
-import { ensureMaxVideoDuration } from '../../utils/videoValidation';
 
 const colors = {
   dark: '#121212',
@@ -475,7 +474,7 @@ export default function UserProfileEditor() {
                   value={form.bio}
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Cuéntanos sobre ti..."
-                  rows={4}
+                  rows={2}
                   className="editor-textarea"
                 />
               </div>
@@ -674,7 +673,7 @@ export default function UserProfileEditor() {
                   setNested('respuestas.dato_curioso', e.target.value);
                 }}
                 placeholder="Comparte algo interesante sobre ti..."
-                rows={3}
+                rows={2}
                 className="editor-textarea"
               />
             </div>
@@ -690,7 +689,7 @@ export default function UserProfileEditor() {
                   setNested('respuestas.gusta_bailar', e.target.value);
                 }}
                 placeholder="Cuéntanos qué te apasiona del baile..."
-                rows={3}
+                rows={2}
                 className="editor-textarea"
               />
             </div>

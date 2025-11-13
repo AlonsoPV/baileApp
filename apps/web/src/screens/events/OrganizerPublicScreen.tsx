@@ -322,56 +322,10 @@ export function OrganizerPublicScreen() {
         <div style={{ position: 'absolute', bottom: '20%', left: '15%', width: 80, height: 80, background: colors.gradients.deep, borderRadius: '50%', opacity: 0.1, animation: 'float 7s ease-in-out infinite', zIndex: 0 }} />
 
         {/* Banner */}
-        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'hidden', margin: `0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
-          <button
-            aria-label="Compartir perfil"
-            title="Compartir"
-            onClick={async () => {
-              try {
-                const url = typeof window !== 'undefined' ? window.location.href : '';
-                const title = (org as any)?.nombre_publico || 'Organizador';
-                const text = `Mira el perfil de ${title}`;
-                const navAny = (navigator as any);
-                
-                // Intentar Web Share API (móvil)
-                if (navAny && typeof navAny.share === 'function') {
-                  try {
-                    await navAny.share({ title, text, url });
-                  } catch (shareError: any) {
-                    if (shareError.name === 'AbortError') return;
-                    throw shareError;
-                  }
-                } else {
-                  // Fallback: Clipboard API (escritorio)
-                  if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(url);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  } else {
-                    // Fallback antiguo
-                    const textArea = document.createElement('textarea');
-                    textArea.value = url;
-                    textArea.style.position = 'fixed';
-                    textArea.style.left = '-999999px';
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }
-                }
-              } catch (error) {
-                console.error('Error al compartir:', error);
-                alert('No se pudo copiar el enlace.');
-              }
-            }}
-            style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', borderRadius: 999, backdropFilter: 'blur(8px)', cursor: 'pointer', zIndex: 10 }}
-          >📤</button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 56, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
           <div className="org-banner-grid">
             {/* Avatar */}
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10 }}>
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>
               <div id="organizer-avatar" data-test-id="organizer-avatar" className="org-banner-avatar" style={{ width: 250, height: 250, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${colors.glass.strong}`, boxShadow: `${colors.shadows.glow}, 0 20px 40px rgba(0,0,0,0.3)`, background: colors.gradients.primary, position: 'relative' }}>
                 {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
                   <img src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''} alt="Logo del organizador" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -382,11 +336,125 @@ export function OrganizerPublicScreen() {
                 )}
                 <div className="shimmer-effect" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: '50%' }} />
               </div>
-              {/* Estado */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <motion.span whileHover={{ scale: 1.05 }} style={{ padding: `${spacing[2]} ${spacing[4]}`, borderRadius: borderRadius.full, background: (org as any)?.estado_aprobacion === 'aprobado' ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)` : colors.gradients.secondary, border: `2px solid ${(org as any)?.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`, color: colors.light, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold, backdropFilter: 'blur(10px)', boxShadow: (org as any)?.estado_aprobacion === 'aprobado' ? `0 4px 16px ${colors.success}66` : `0 4px 16px ${colors.secondary[500]}66`, display: 'inline-flex', alignItems: 'center', gap: spacing[1], textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {(org as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(org as any)?.estado_aprobacion}`}
-                </motion.span>
+              {/* Badge de verificación y botón de compartir inline debajo del avatar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                position: 'relative'
+              }}>
+                {(org as any)?.estado_aprobacion === 'aprobado' && (
+                  <div className="badge" style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '.45rem',
+                    padding: '.35rem .6rem',
+                    borderRadius: '999px',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #106c37, #0b5)',
+                    border: '1px solid #13a65a',
+                    boxShadow: '0 8px 18px rgba(0,0,0,.35)',
+                    fontSize: '.82rem',
+                    color: '#fff'
+                  }}>
+                    <div className="dot" style={{
+                      width: '16px',
+                      height: '16px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: '#16c784',
+                      borderRadius: '50%',
+                      color: '#062d1f',
+                      fontSize: '.75rem',
+                      fontWeight: 900
+                    }}>✓</div>
+                    <span>✅</span>
+                  </div>
+                )}
+                <button
+                  aria-label="Compartir perfil"
+                  title="Compartir"
+                  onClick={async () => {
+                    try {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const title = (org as any)?.nombre_publico || 'Organizador';
+                      const text = `Mira el perfil de ${title}`;
+                      const navAny = (navigator as any);
+                      
+                      // Intentar Web Share API (móvil)
+                      if (navAny && typeof navAny.share === 'function') {
+                        try {
+                          await navAny.share({ title, text, url });
+                        } catch (shareError: any) {
+                          if (shareError.name === 'AbortError') return;
+                          throw shareError;
+                        }
+                      } else {
+                        // Fallback: Clipboard API (escritorio)
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          await navigator.clipboard.writeText(url);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500);
+                        } else {
+                          // Fallback antiguo
+                          const textArea = document.createElement('textarea');
+                          textArea.value = url;
+                          textArea.style.position = 'fixed';
+                          textArea.style.left = '-999999px';
+                          document.body.appendChild(textArea);
+                          textArea.select();
+                          document.execCommand('copy');
+                          document.body.removeChild(textArea);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error al compartir:', error);
+                      alert('No se pudo copiar el enlace.');
+                    }
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255,255,255,0.10)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    backdropFilter: 'blur(8px)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 700
+                  }}
+                >
+                  📤 Compartir
+                </button>
+                {copied && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      padding: '4px 8px',
+                      borderRadius: 8,
+                      background: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      zIndex: 10
+                    }}
+                  >
+                    Copiado
+                  </div>
+                )}
               </div>
             </motion.div>
 

@@ -69,17 +69,7 @@ export function PickZonas() {
     }
   };
 
-  // Skip if already has zonas
-  const handleSkip = async () => {
-    if (profile?.zonas && profile.zonas.length > 0) {
-      try {
-        await finishOnboarding.mutateAsync();
-      } catch (err) {
-        console.error('Error marking onboarding complete:', err);
-        navigate(routes.app.profile);
-      }
-    }
-  };
+  // Removed handleSkip - users must click "Finalizar" to proceed
 
   return (
     <div
@@ -148,36 +138,16 @@ export function PickZonas() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: spacing[2] }}>
-              {profile?.zonas && profile.zonas.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleSkip}
-                  disabled={isLoading}
-                  style={{
-                    flex: 1,
-                    padding: spacing[2],
-                    background: 'transparent',
-                    border: `1px solid ${colors.gray[300]}`,
-                    borderRadius: borderRadius.md,
-                    color: colors.gray[400],
-                    cursor: 'pointer',
-                  }}
-                >
-                  Omitir
-                </button>
-              )}
-              <Button
-                type="submit"
-                disabled={isLoading || selectedIds.length === 0}
-                style={{
-                  flex: 1,
-                  opacity: isLoading || selectedIds.length === 0 ? 0.5 : 1,
-                }}
-              >
-                {isLoading ? 'Guardando...' : 'Finalizar ✨'}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              disabled={isLoading || selectedIds.length === 0}
+              style={{
+                width: '100%',
+                opacity: isLoading || selectedIds.length === 0 ? 0.5 : 1,
+              }}
+            >
+              {isLoading ? 'Guardando...' : 'Finalizar ✨'}
+            </Button>
           </form>
         )}
       </div>

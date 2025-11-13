@@ -368,55 +368,88 @@ export default function ClassPublicScreen() {
                 )}
               </div>
 
-              {/* Botón de Agregar a Calendario */}
-              {selectedClass && (
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{ marginBottom: '1.5rem' }}
-                >
-                  <AddToCalendarWithStats
-                    eventId={idNum}
-                    title={classTitle}
-                    description={`Clase de ${classTitle} con ${creatorName}`}
-                    location={locationLabel}
-                    start={(() => {
-                      try {
-                        if (selectedClass.fecha) {
-                          const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+              {/* Botones de acción */}
+              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                {/* Botón Ver en Maps */}
+                {ubicacion && (ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
+                  <motion.a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ubicacion.nombre ?? ''} ${ubicacion.direccion ?? ''} ${ubicacion.ciudad ?? ''}`.trim())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '.55rem',
+                      padding: '.6rem 1.1rem',
+                      borderRadius: 999,
+                      border: '1px solid rgba(240,147,251,.4)',
+                      color: '#f7d9ff',
+                      background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
+                      boxShadow: '0 6px 18px rgba(240,147,251,.20)',
+                      fontWeight: 800,
+                      fontSize: '.9rem',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>📍</span>
+                    <span>Ver en Maps</span>
+                    <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
+                  </motion.a>
+                )}
+
+                {/* Botón de Agregar a Calendario */}
+                {selectedClass && (
+                  <motion.div
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <AddToCalendarWithStats
+                      eventId={idNum}
+                      title={classTitle}
+                      description={`Clase de ${classTitle} con ${creatorName}`}
+                      location={locationLabel}
+                      start={(() => {
+                        try {
+                          if (selectedClass.fecha) {
+                            const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                            const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
+                            return new Date(`${fechaStr}T${hora}:00`);
+                          }
+                          // Si es clase semanal, calcular próxima ocurrencia
+                          const now = new Date();
                           const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
-                          return new Date(`${fechaStr}T${hora}:00`);
+                          now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
+                          return now;
+                        } catch {
+                          return new Date();
                         }
-                        // Si es clase semanal, calcular próxima ocurrencia
-                        const now = new Date();
-                        const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
-                        now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
-                        return now;
-                      } catch {
-                        return new Date();
-                      }
-                    })()}
-                    end={(() => {
-                      try {
-                        if (selectedClass.fecha) {
-                          const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                      })()}
+                      end={(() => {
+                        try {
+                          if (selectedClass.fecha) {
+                            const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                            const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
+                            return new Date(`${fechaStr}T${hora}:00`);
+                          }
+                          const now = new Date();
                           const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
-                          return new Date(`${fechaStr}T${hora}:00`);
+                          now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
+                          return now;
+                        } catch {
+                          const end = new Date();
+                          end.setHours(end.getHours() + 2);
+                          return end;
                         }
-                        const now = new Date();
-                        const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
-                        now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
-                        return now;
-                      } catch {
-                        const end = new Date();
-                        end.setHours(end.getHours() + 2);
-                        return end;
-                      }
-                    })()}
-                    showAsIcon={false}
-                  />
-                </motion.div>
-              )}
+                      })()}
+                      showAsIcon={false}
+                    />
+                  </motion.div>
+                )}
+              </div>
             </div>
             
             {/* Columna 2: Creada por + Card del creador */}
@@ -458,85 +491,6 @@ export default function ClassPublicScreen() {
             </div>
           </div>
         </motion.div>
-
-        {/* Ubicación detallada (acciones) */}
-        <motion.section 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.25 }} 
-          className="glass-card-container"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: '50%',
-              display: 'grid', placeItems: 'center',
-              background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-              boxShadow: '0 10px 28px rgba(240,147,251,.4)',
-              fontSize: '1.25rem',
-              border: '2px solid rgba(240,147,251,.3)'
-            }}>📍</div>
-            <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>Ubicación</h3>
-          </div>
-          <div className="ur-col">
-            <div className="card loc" aria-label="Ubicación">
-              {ubicacion ? (
-                <>
-                  <div className="loc-grid">
-                    {ubicacion.nombre && (
-                      <div className="loc-item">
-                        <div className="loc-item-icon">🏷️</div>
-                        <div className="loc-item-content">
-                          <strong>{ubicacion.nombre}</strong>
-                        </div>
-                      </div>
-                    )}
-                    {ubicacion.direccion && (
-                      <div className="loc-item">
-                        <div className="loc-item-icon">🧭</div>
-                        <div className="loc-item-content">
-                          <strong>Dirección</strong>
-                          <span>{ubicacion.direccion}</span>
-                        </div>
-                      </div>
-                    )}
-                    {ubicacion.ciudad && (
-                      <div className="loc-item">
-                        <div className="loc-item-icon">🏙️</div>
-                        <div className="loc-item-content">
-                          <strong>Ciudad</strong>
-                          <span>{ubicacion.ciudad}</span>
-                        </div>
-                      </div>
-                    )}
-                    {ubicacion.referencias && (
-                      <div className="loc-item">
-                        <div className="loc-item-icon">📌</div>
-                        <div className="loc-item-content">
-                          <strong>Referencias</strong>
-                          <span>{ubicacion.referencias}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="actions">
-                    {(ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
-                      <a className="btn btn-maps" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ubicacion.nombre ?? ''} ${ubicacion.direccion ?? ''} ${ubicacion.ciudad ?? ''}`.trim())}`} target="_blank" rel="noopener noreferrer">
-                        <span className="pin">📍</span> Ver en Maps <span aria-hidden>↗</span>
-                      </a>
-                    )}
-                    {ubicacion.direccion && (
-                      <button type="button" className="btn btn-copy" onClick={() => { const text = `${ubicacion.nombre ?? ''}\n${ubicacion.direccion ?? ''}\n${ubicacion.ciudad ?? ''}`.trim(); navigator.clipboard?.writeText(text).catch(() => {}); }}>
-                        📋 Copiar dirección
-                      </button>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="muted">Sin información de ubicación.</div>
-              )}
-            </div>
-          </div>
-        </motion.section>
 
         {/* Clases, horarios, costos y agregar a calendario - COMENTADO */}
         {/* <motion.section 
