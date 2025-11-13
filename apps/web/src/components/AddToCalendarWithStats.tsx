@@ -135,15 +135,21 @@ export default function AddToCalendarWithStats({
         console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
         try {
           // Intentar insertar primero
+          // Normalizar role_baile: convertir 'lead' a 'leader' y 'follow' a 'follower' para consistencia
+          let normalizedRoleBaile = roleBaile;
+          if (roleBaile === 'lead') normalizedRoleBaile = 'leader';
+          else if (roleBaile === 'follow') normalizedRoleBaile = 'follower';
+          
           const insertPayload = {
             user_id: user.id,
             class_id: finalClassId,
             academy_id: academyId || null,
-            role_baile: roleBaile || null,
+            role_baile: normalizedRoleBaile || null,
             zona_tag_id: zonaTagId || null,
             status: "tentative" as const,
           };
           console.log("[AddToCalendarWithStats] 📤 Insertando en clase_asistencias:", insertPayload);
+          console.log("[AddToCalendarWithStats] 🔍 roleBaile original:", roleBaile, "→ normalizado:", normalizedRoleBaile);
           
           const { data: insertData, error: insertError } = await supabase
             .from("clase_asistencias")
@@ -157,7 +163,7 @@ export default function AddToCalendarWithStats({
               .from("clase_asistencias")
               .update({
                 academy_id: academyId || null,
-                role_baile: roleBaile || null,
+                role_baile: normalizedRoleBaile || null,
                 zona_tag_id: zonaTagId || null,
                 status: "tentative",
               })

@@ -19,6 +19,7 @@ type ClaseMetric = {
   class_id: number;
   nombre: string;
   fecha: string | null;
+  precio: number | null;
   totalTentativos: number;
   porRol: RolCounts;
 };
@@ -95,6 +96,7 @@ export function useAcademyClassMetrics(academyId?: number) {
             class_id: classId,
             nombre: `Clase #${classId}`,
             fecha: null,
+            precio: null,
             totalTentativos: 0,
             porRol: { ...rolEmpty },
           };
@@ -142,6 +144,9 @@ export function useAcademyClassMetrics(academyId?: number) {
         const classId = row.class_id as number;
         const total = Number(row.total_tentativos) || 0;
         const porRol = row.por_rol || {};
+        const nombreClase = row.nombre_clase || `Clase #${classId}`;
+        const fechaClase = row.fecha_clase || null;
+        const precioClase = row.precio_clase !== null && row.precio_clase !== undefined ? Number(row.precio_clase) : null;
 
         g.totalTentativos += total;
         g.porRol.leader += Number(porRol.leader) || 0;
@@ -151,8 +156,9 @@ export function useAcademyClassMetrics(academyId?: number) {
 
         mapPorClase.set(classId, {
           class_id: classId,
-          nombre: `Clase #${classId}`,
-          fecha: null,
+          nombre: nombreClase,
+          fecha: fechaClase,
+          precio: precioClase,
           totalTentativos: total,
           porRol: {
             leader: Number(porRol.leader) || 0,

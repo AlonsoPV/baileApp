@@ -168,7 +168,27 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
           </p>
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
-            {porClase.map((cl) => (
+            {porClase.map((cl) => {
+              // Formatear fecha si existe
+              const fechaFormateada = cl.fecha 
+                ? new Date(cl.fecha).toLocaleDateString("es-MX", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : null;
+              
+              // Formatear precio si existe
+              const precioFormateado = cl.precio !== null && cl.precio !== undefined
+                ? new Intl.NumberFormat("es-MX", {
+                    style: "currency",
+                    currency: "MXN",
+                    minimumFractionDigits: 0,
+                  }).format(cl.precio)
+                : null;
+              
+              return (
               <motion.div
                 key={cl.class_id}
                 initial={{ opacity: 0, x: -12 }}
@@ -183,18 +203,21 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "1rem", flexWrap: "wrap" }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "0.25rem", color: "#fff" }}>
+                    <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "0.5rem", color: "#fff" }}>
                       {cl.nombre}
                     </div>
-                    {cl.fecha && (
-                      <div style={{ fontSize: "0.875rem", opacity: 0.8, color: "rgba(255,255,255,0.7)" }}>
-                        {new Date(cl.fecha).toLocaleDateString("es-MX", {
-                          weekday: "short",
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </div>
-                    )}
+                    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+                      {fechaFormateada && (
+                        <span style={{ fontSize: "0.875rem", opacity: 0.8, color: "rgba(255,255,255,0.7)" }}>
+                          📅 {fechaFormateada}
+                        </span>
+                      )}
+                      {precioFormateado && (
+                        <span style={{ fontSize: "0.875rem", opacity: 0.9, color: "#4CAF50", fontWeight: 600 }}>
+                          💰 {precioFormateado}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div
                     style={{
@@ -265,7 +288,8 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                   )}
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         )}
       </motion.section>
