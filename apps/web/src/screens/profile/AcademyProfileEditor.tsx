@@ -438,8 +438,8 @@ export default function AcademyProfileEditor() {
         )}
 
         {activeTab === "perfil" && (
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+          <>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
             currentView="edit"
             profileType="academy"
@@ -1466,7 +1466,8 @@ export default function AcademyProfileEditor() {
           description="Videos promocionales, clases de muestra, testimonios"
           slots={[...VIDEO_SLOTS]}
         />
-        </div>
+            </div>
+          </>
         )}
 
       </div>
