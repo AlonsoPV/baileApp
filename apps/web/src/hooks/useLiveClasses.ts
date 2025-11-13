@@ -3,7 +3,148 @@ import { supabase } from "@/lib/supabase";
 import type { Clase } from "@/types/classes";
 
 /**
- * Obtiene clases visibles de una academia/maestro (opcionalmente por owner).
+ * Convierte nombre de día en español a número (0=Dom, 1=Lun, ..., 6=Sáb)
+ */
+function dayNameToNumber(dayName: string): number | null {
+  const normalized = dayName.toLowerCase().trim();
+  const map: Record<string, number> = {
+    'domingo': 0, 'dom': 0,
+    'lunes': 1, 'lun': 1,
+    'martes': 2, 'mar': 2,
+    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+    'jueves': 4, 'jue': 4,
+    'viernes': 5, 'vie': 5,
+    'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+  };
+  return map[normalized] ?? null;
+}
+
+/**
+ * Convierte un item del cronograma JSONB a uno o más objetos Clase
+ */
+function cronoItemToClases(
+  item: any,
+  index: number,
+  academyId?: number,
+  teacherId?: number,
+  ubicaciones?: any[]
+): Clase[] {
+  const clases: Clase[] = [];
+  const titulo = item.titulo || item.nombre || 'Clase';
+  const inicio = item.inicio || item.hora_inicio || null;
+  const fin = item.fin || item.hora_fin || null;
+  const nivel = item.nivel || null;
+  const ritmo = item.ritmo || item.ritmo_id || null;
+  const ritmos = item.ritmos || item.ritmos_seleccionados || (ritmo ? [ritmo] : null);
+  const fecha = item.fecha || null;
+  const descripcion = item.descripcion || null;
+  const costo = item.costo || item.precio || null;
+  
+  // Obtener ubicación (puede venir del item o de la lista de ubicaciones)
+  let ubicacion: string | null = null;
+  let ubicacionJson: any = null;
+  if (item.ubicacion) {
+    if (typeof item.ubicacion === 'string') {
+      ubicacion = item.ubicacion;
+    } else {
+      ubicacion = item.ubicacion.nombre || item.ubicacion.direccion || item.ubicacion.lugar || null;
+      ubicacionJson = item.ubicacion;
+    }
+  } else if (ubicaciones && ubicaciones.length > 0) {
+    const primeraUbicacion = ubicaciones[0];
+    ubicacion = primeraUbicacion.nombre || primeraUbicacion.direccion || primeraUbicacion.lugar || null;
+    ubicacionJson = primeraUbicacion;
+  }
+
+  // Si tiene fecha específica, crear una clase con esa fecha
+  if (fecha) {
+    clases.push({
+      id: index * 1000 + 0, // ID único basado en índice
+      titulo,
+      nombre: titulo,
+      descripcion,
+      fecha,
+      hora_inicio: inicio,
+      hora_fin: fin,
+      inicio,
+      fin,
+      nivel,
+      ritmo: ritmo ? String(ritmo) : null,
+      ritmos_seleccionados: ritmos,
+      ubicacion,
+      ubicacionJson,
+      costo: costo ? Number(costo) : null,
+      moneda: 'MXN',
+      academia_id: academyId || null,
+      maestro_id: teacherId || null,
+      teacher_id: teacherId || null,
+      cover_url: null,
+    });
+  }
+  // Si tiene diasSemana (array de strings), crear una clase por cada día
+  else if (item.diasSemana && Array.isArray(item.diasSemana)) {
+    item.diasSemana.forEach((diaStr: string, diaIdx: number) => {
+      const diaNum = dayNameToNumber(diaStr);
+      if (diaNum !== null) {
+        clases.push({
+          id: index * 1000 + diaIdx, // ID único basado en índice y día
+          titulo,
+          nombre: titulo,
+          descripcion,
+          dia_semana: diaNum,
+          diaSemana: diaNum,
+          hora_inicio: inicio,
+          hora_fin: fin,
+          inicio,
+          fin,
+          nivel,
+          ritmo: ritmo ? String(ritmo) : null,
+          ritmos_seleccionados: ritmos,
+          ubicacion,
+          ubicacionJson,
+          costo: costo ? Number(costo) : null,
+          moneda: 'MXN',
+          academia_id: academyId || null,
+          maestro_id: teacherId || null,
+          teacher_id: teacherId || null,
+          cover_url: null,
+        });
+      }
+    });
+  }
+  // Si tiene diaSemana como número directo
+  else if (typeof item.diaSemana === 'number' || typeof item.dia_semana === 'number') {
+    const diaNum = item.diaSemana ?? item.dia_semana;
+    clases.push({
+      id: index * 1000,
+      titulo,
+      nombre: titulo,
+      descripcion,
+      dia_semana: diaNum,
+      diaSemana: diaNum,
+      hora_inicio: inicio,
+      hora_fin: fin,
+      inicio,
+      fin,
+      nivel,
+      ritmo: ritmo ? String(ritmo) : null,
+      ritmos_seleccionados: ritmos,
+      ubicacion,
+      ubicacionJson,
+      costo: costo ? Number(costo) : null,
+      moneda: 'MXN',
+      academia_id: academyId || null,
+      maestro_id: teacherId || null,
+      teacher_id: teacherId || null,
+      cover_url: null,
+    });
+  }
+
+  return clases;
+}
+
+/**
+ * Obtiene clases visibles de una academia/maestro desde cronograma JSONB.
  * Si pasas academyId o teacherId, filtra.
  */
 export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }) {
@@ -11,95 +152,54 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
     queryKey: ["live-classes", opts?.academyId, opts?.teacherId],
     enabled: !!(opts?.academyId || opts?.teacherId),
     queryFn: async (): Promise<Clase[]> => {
-      let data: any[] = [];
+      let cronograma: any[] = [];
+      let ubicaciones: any[] = [];
       let error: any = null;
 
       if (opts?.academyId) {
-        // Obtener desde vista pública de academias
+        // Obtener desde profiles_academy o v_academies_public
         const { data: academyData, error: academyError } = await supabase
-          .from("v_academy_classes_public")
-          .select("*")
-          .eq("academy_id", opts.academyId)
-          .order("dia_semana", { ascending: true })
-          .order("hora_inicio", { ascending: true });
+          .from("v_academies_public")
+          .select("id, cronograma, ubicaciones")
+          .eq("id", opts.academyId)
+          .single();
 
         if (academyError) {
-          error = academyError;
-          console.error("[useLiveClasses] Error fetching academy classes:", academyError);
+          // Si falla la vista, intentar directamente desde profiles_academy
+          const { data: directData, error: directError } = await supabase
+            .from("profiles_academy")
+            .select("id, cronograma, ubicaciones")
+            .eq("id", opts.academyId)
+            .single();
+
+          if (directError) {
+            error = directError;
+            console.error("[useLiveClasses] Error fetching academy:", directError);
+          } else {
+            cronograma = Array.isArray(directData?.cronograma) ? directData.cronograma : [];
+            ubicaciones = Array.isArray(directData?.ubicaciones) ? directData.ubicaciones : [];
+            console.log("[useLiveClasses] Academy cronograma from profiles_academy:", cronograma);
+          }
         } else {
-          console.log("[useLiveClasses] Academy classes raw data:", academyData);
-          data = (academyData || []).map((c: any) => {
-            // Convertir hora_inicio y hora_fin de time a string HH:mm
-            const horaInicio = c.hora_inicio 
-              ? (typeof c.hora_inicio === 'string' ? c.hora_inicio : c.hora_inicio.toString().slice(0, 5))
-              : null;
-            const horaFin = c.hora_fin 
-              ? (typeof c.hora_fin === 'string' ? c.hora_fin : c.hora_fin.toString().slice(0, 5))
-              : null;
-            
-            return {
-              id: c.id,
-              titulo: c.nombre,
-              nombre: c.nombre,
-              descripcion: c.descripcion,
-              dia_semana: c.dia_semana,
-              hora_inicio: horaInicio,
-              hora_fin: horaFin,
-              costo: c.costo ? Number(c.costo) : null,
-              moneda: "MXN",
-              ubicacion: c.ubicacion?.nombre || c.ubicacion?.direccion || c.ubicacion?.lugar || null,
-              ubicacionJson: c.ubicacion,
-              nivel: c.nivel,
-              ritmos_seleccionados: c.ritmos_seleccionados,
-              academia_id: c.academy_id,
-              cover_url: null, // Las vistas públicas no incluyen cover_url por ahora
-            };
-          });
-          console.log("[useLiveClasses] Mapped academy classes:", data);
+          cronograma = Array.isArray(academyData?.cronograma) ? academyData.cronograma : [];
+          ubicaciones = Array.isArray(academyData?.ubicaciones) ? academyData.ubicaciones : [];
+          console.log("[useLiveClasses] Academy cronograma from v_academies_public:", cronograma);
         }
       } else if (opts?.teacherId) {
-        // Obtener desde vista pública de maestros
+        // Obtener desde profiles_teacher
         const { data: teacherData, error: teacherError } = await supabase
-          .from("v_teacher_classes_public")
-          .select("*")
-          .eq("teacher_id", opts.teacherId)
-          .order("dia_semana", { ascending: true })
-          .order("hora_inicio", { ascending: true });
+          .from("profiles_teacher")
+          .select("id, cronograma, ubicaciones")
+          .eq("id", opts.teacherId)
+          .single();
 
         if (teacherError) {
           error = teacherError;
-          console.error("[useLiveClasses] Error fetching teacher classes:", teacherError);
+          console.error("[useLiveClasses] Error fetching teacher:", teacherError);
         } else {
-          console.log("[useLiveClasses] Teacher classes raw data:", teacherData);
-          data = (teacherData || []).map((c: any) => {
-            // Convertir hora_inicio y hora_fin de time a string HH:mm
-            const horaInicio = c.hora_inicio 
-              ? (typeof c.hora_inicio === 'string' ? c.hora_inicio : c.hora_inicio.toString().slice(0, 5))
-              : null;
-            const horaFin = c.hora_fin 
-              ? (typeof c.hora_fin === 'string' ? c.hora_fin : c.hora_fin.toString().slice(0, 5))
-              : null;
-            
-            return {
-              id: c.id,
-              titulo: c.nombre,
-              nombre: c.nombre,
-              descripcion: c.descripcion,
-              dia_semana: c.dia_semana,
-              hora_inicio: horaInicio,
-              hora_fin: horaFin,
-              costo: c.costo ? Number(c.costo) : null,
-              moneda: "MXN",
-              ubicacion: c.ubicacion?.nombre || c.ubicacion?.direccion || c.ubicacion?.lugar || null,
-              ubicacionJson: c.ubicacion,
-              nivel: c.nivel,
-              ritmos_seleccionados: c.ritmos_seleccionados,
-              teacher_id: c.teacher_id,
-              maestro_id: c.teacher_id,
-              cover_url: null, // Las vistas públicas no incluyen cover_url por ahora
-            };
-          });
-          console.log("[useLiveClasses] Mapped teacher classes:", data);
+          cronograma = Array.isArray(teacherData?.cronograma) ? teacherData.cronograma : [];
+          ubicaciones = Array.isArray(teacherData?.ubicaciones) ? teacherData.ubicaciones : [];
+          console.log("[useLiveClasses] Teacher cronograma:", cronograma);
         }
       }
 
@@ -108,7 +208,21 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
         throw error;
       }
 
-      return data as Clase[];
+      // Convertir cada item del cronograma a objetos Clase
+      const clases: Clase[] = [];
+      cronograma.forEach((item, index) => {
+        const clasesFromItem = cronoItemToClases(
+          item,
+          index,
+          opts?.academyId,
+          opts?.teacherId,
+          ubicaciones
+        );
+        clases.push(...clasesFromItem);
+      });
+
+      console.log("[useLiveClasses] Mapped classes:", clases);
+      return clases;
     },
   });
 }

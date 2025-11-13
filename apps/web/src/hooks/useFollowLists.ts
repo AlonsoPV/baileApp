@@ -16,156 +16,80 @@ export function useFollowLists(userId?: string) {
   const load = async () => {
     if (!userId) return;
 
-      // Intentar diferentes sintaxis de foreign keys según la estructura de la BD
-      let followingRes: any;
-      let followersRes: any;
+    // Usar consultas separadas para evitar problemas con sintaxis de foreign keys
+    // Esto es más confiable y funciona siempre
+    
+    // 1. Obtener IDs de usuarios que sigue
+    const { data: followingIds, error: followingIdsError } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+    
+    // 2. Obtener IDs de usuarios que lo siguen
+    const { data: followerIds, error: followerIdsError } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('following_id', userId);
+
+    if (followingIdsError) {
+      console.error('[useFollowLists] Error fetching following IDs:', followingIdsError);
+    }
+    if (followerIdsError) {
+      console.error('[useFollowLists] Error fetching follower IDs:', followerIdsError);
+    }
+
+    // 3. Obtener perfiles de usuarios que sigue
+    let followingData: FollowProfile[] = [];
+    if (followingIds && followingIds.length > 0) {
+      const userIds = followingIds.map((f: any) => f.following_id);
+      const { data: followingProfiles, error: followingProfilesError } = await supabase
+        .from('profiles_user')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
       
-      // Opción 1: Intentar con nombres explícitos de foreign keys
-      followingRes = await supabase
-        .from('follows')
-        .select(`
-          following_id,
-          following:profiles_user!follows_following_id_fkey (
-            user_id,
-            display_name,
-            slug,
-            avatar_url
-          )
-        `)
-        .eq('follower_id', userId);
-
-      followersRes = await supabase
-        .from('follows')
-        .select(`
-          follower_id,
-          follower:profiles_user!follows_follower_id_fkey (
-            user_id,
-            display_name,
-            slug,
-            avatar_url
-          )
-        `)
-        .eq('following_id', userId);
-
-      // Si falla, intentar sin especificar el nombre de la foreign key
-      if (followingRes.error || followersRes.error) {
-        console.log('[useFollowLists] Intentando sintaxis alternativa...');
-        
-        // Opción 2: Usar sintaxis sin nombre explícito de foreign key
-        followingRes = await supabase
-          .from('follows')
-          .select(`
-            following_id,
-            profiles_user!follows_following_id_fkey (
-              user_id,
-              display_name,
-              avatar_url
-            )
-          `)
-          .eq('follower_id', userId);
-
-        followersRes = await supabase
-          .from('follows')
-          .select(`
-            follower_id,
-            profiles_user!follows_follower_id_fkey (
-              user_id,
-              display_name,
-              avatar_url
-            )
-          `)
-          .eq('following_id', userId);
+      if (followingProfilesError) {
+        console.error('[useFollowLists] Error fetching following profiles:', followingProfilesError);
+      } else {
+        followingData = (followingProfiles || [])
+          .map((p: any) => ({
+            id: p.user_id || p.id || '',
+            display_name: p.display_name || null,
+            slug: p.slug || null,
+            avatar_url: p.avatar_url || null,
+          }))
+          .filter((p: FollowProfile) => p.id) as FollowProfile[];
       }
+    }
 
-      // Si aún falla, hacer consultas separadas
-      if (followingRes.error || followersRes.error) {
-        console.log('[useFollowLists] Usando consultas separadas...');
-        
-        // Obtener IDs primero
-        const { data: followingIds } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', userId);
-        
-        const { data: followerIds } = await supabase
-          .from('follows')
-          .select('follower_id')
-          .eq('following_id', userId);
-
-        // Luego obtener los perfiles
-        if (followingIds && followingIds.length > 0) {
-          const userIds = followingIds.map((f: any) => f.following_id);
-          const { data: followingProfiles } = await supabase
-            .from('profiles_user')
-            .select('user_id, display_name, avatar_url')
-            .in('user_id', userIds);
-          
-          followingRes = { data: followingProfiles?.map((p: any) => ({ following: p })) || [], error: null };
-        } else {
-          followingRes = { data: [], error: null };
-        }
-
-        if (followerIds && followerIds.length > 0) {
-          const userIds = followerIds.map((f: any) => f.follower_id);
-          const { data: followerProfiles } = await supabase
-            .from('profiles_user')
-            .select('user_id, display_name, avatar_url')
-            .in('user_id', userIds);
-          
-          followersRes = { data: followerProfiles?.map((p: any) => ({ follower: p })) || [], error: null };
-        } else {
-          followersRes = { data: [], error: null };
-        }
+    // 4. Obtener perfiles de usuarios que lo siguen
+    let followersData: FollowProfile[] = [];
+    if (followerIds && followerIds.length > 0) {
+      const userIds = followerIds.map((f: any) => f.follower_id);
+      const { data: followerProfiles, error: followerProfilesError } = await supabase
+        .from('profiles_user')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+      
+      if (followerProfilesError) {
+        console.error('[useFollowLists] Error fetching follower profiles:', followerProfilesError);
+      } else {
+        followersData = (followerProfiles || [])
+          .map((p: any) => ({
+            id: p.user_id || p.id || '',
+            display_name: p.display_name || null,
+            slug: p.slug || null,
+            avatar_url: p.avatar_url || null,
+          }))
+          .filter((p: FollowProfile) => p.id) as FollowProfile[];
       }
+    }
 
-      if (followingRes.error) {
-        console.error('[useFollowLists] following error', followingRes.error);
-      }
-      if (followersRes.error) {
-        console.error('[useFollowLists] followers error', followersRes.error);
-      }
+    console.log('[useFollowLists] Following data:', followingData);
+    console.log('[useFollowLists] Followers data:', followersData);
 
-      // Mapear los datos correctamente según la estructura de la respuesta
-      let followingData: FollowProfile[] = [];
-      let followersData: FollowProfile[] = [];
+    setFollowing(followingData);
+    setFollowers(followersData);
 
-      if (followingRes.data) {
-        followingData = followingRes.data
-          .map((row: any) => {
-            // Puede venir como row.following o directamente como row
-            const profile = row.following || row;
-            if (!profile) return null;
-            return {
-              id: profile.user_id || profile.id || '',
-              display_name: profile.display_name || null,
-              slug: profile.slug || null,
-              avatar_url: profile.avatar_url || null,
-            };
-          })
-          .filter(Boolean) as FollowProfile[];
-      }
-
-      if (followersRes.data) {
-        followersData = followersRes.data
-          .map((row: any) => {
-            // Puede venir como row.follower o directamente como row
-            const profile = row.follower || row;
-            if (!profile) return null;
-            return {
-              id: profile.user_id || profile.id || '',
-              display_name: profile.display_name || null,
-              slug: profile.slug || null,
-              avatar_url: profile.avatar_url || null,
-            };
-          })
-          .filter(Boolean) as FollowProfile[];
-      }
-
-      console.log('[useFollowLists] Following data:', followingData);
-      console.log('[useFollowLists] Followers data:', followersData);
-
-      setFollowing(followingData);
-      setFollowers(followersData);
   };
 
   useEffect(() => {

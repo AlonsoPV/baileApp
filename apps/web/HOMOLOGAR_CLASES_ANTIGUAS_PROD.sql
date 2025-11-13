@@ -40,11 +40,11 @@ FROM (VALUES
 -- 3. OPCIÓN B: Eliminar tablas antiguas (si NO se usan)
 -- Descomenta SOLO si estás seguro de que no se usan
 
--- DROP VIEW IF EXISTS public.classes_live CASCADE;
--- DROP VIEW IF EXISTS public.sessions_live CASCADE;
--- DROP VIEW IF EXISTS public.v_classes_parent_with_owner CASCADE;
--- DROP TABLE IF EXISTS public.classes_session CASCADE;
--- DROP TABLE IF EXISTS public.classes_parent CASCADE;
+DROP VIEW IF EXISTS public.classes_live CASCADE;
+ DROP VIEW IF EXISTS public.sessions_live CASCADE;
+ DROP VIEW IF EXISTS public.v_classes_parent_with_owner CASCADE;
+ DROP TABLE IF EXISTS public.classes_session CASCADE;
+ DROP TABLE IF EXISTS public.classes_parent CASCADE; 
 
 COMMIT;
 
