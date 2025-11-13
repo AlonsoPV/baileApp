@@ -15,6 +15,8 @@ import SocialCard from "../../components/explore/cards/SocialCard";
 import DancerCard from "../../components/explore/cards/DancerCard";
 import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
@@ -100,6 +102,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
 
 export default function ExploreHomeScreen() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { filters, set } = useExploreFilters();
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
@@ -107,6 +110,11 @@ export default function ExploreHomeScreen() {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
   });
+  const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
+  const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
+  
+  // Obtener preferencias de filtros del usuario
+  const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
 
   const sliderProps = React.useMemo(
     () => ({
@@ -152,6 +160,121 @@ export default function ExploreHomeScreen() {
       set({ dateFrom: from, dateTo: to });
     }
   }, [filters.datePreset, computePresetRange, set, filters.dateFrom, filters.dateTo]);
+
+  // Aplicar filtros predeterminados si el usuario tiene preferencias y no hay filtros manuales
+  React.useEffect(() => {
+    if (!user || prefsLoading || hasAppliedDefaults) return;
+    
+    // Verificar si los filtros están en su estado inicial (sin filtros manuales)
+    const isInitialState = 
+      filters.ritmos.length === 0 &&
+      filters.zonas.length === 0 &&
+      (filters.datePreset === 'todos' || !filters.datePreset) &&
+      !filters.q;
+
+    if (isInitialState && preferences) {
+      const defaultFilters = applyDefaultFilters();
+      
+      // Solo aplicar si hay preferencias configuradas
+      const hasPreferences = 
+        (defaultFilters.ritmos.length > 0) ||
+        (defaultFilters.zonas.length > 0) ||
+        (defaultFilters.fechaDesde !== null || defaultFilters.fechaHasta !== null);
+
+      if (hasPreferences) {
+        const updates: any = {};
+        
+        if (defaultFilters.ritmos.length > 0) {
+          updates.ritmos = defaultFilters.ritmos;
+        }
+        if (defaultFilters.zonas.length > 0) {
+          updates.zonas = defaultFilters.zonas;
+        }
+        if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
+          // Convertir fechas a formato YYYY-MM-DD
+          if (defaultFilters.fechaDesde) {
+            updates.dateFrom = defaultFilters.fechaDesde.toISOString().slice(0, 10);
+          }
+          if (defaultFilters.fechaHasta) {
+            updates.dateTo = defaultFilters.fechaHasta.toISOString().slice(0, 10);
+          }
+          // Determinar el preset más cercano
+          if (preferences.date_range === 'hoy') {
+            updates.datePreset = 'hoy';
+          } else if (preferences.date_range === 'semana') {
+            updates.datePreset = 'semana';
+          } else {
+            updates.datePreset = undefined; // Custom o mes
+          }
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          set(updates);
+          setUsingFavoriteFilters(true);
+        }
+      }
+      
+      setHasAppliedDefaults(true);
+    }
+  }, [user, prefsLoading, preferences, filters, applyDefaultFilters, hasAppliedDefaults, set]);
+
+  // Detectar cuando el usuario cambia los filtros manualmente (ya no son favoritos)
+  React.useEffect(() => {
+    if (!hasAppliedDefaults) return;
+    
+    // Comparar con las preferencias para ver si coinciden
+    if (preferences) {
+      const defaultFilters = applyDefaultFilters();
+      const matchesDefaults = 
+        JSON.stringify(filters.ritmos.sort()) === JSON.stringify(defaultFilters.ritmos.sort()) &&
+        JSON.stringify(filters.zonas.sort()) === JSON.stringify(defaultFilters.zonas.sort());
+      
+      // Si no coinciden, ya no está usando favoritos
+      if (!matchesDefaults) {
+        setUsingFavoriteFilters(false);
+      }
+    }
+  }, [filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults]);
+
+  // Función para restablecer a los filtros favoritos
+  const resetToFavoriteFilters = React.useCallback(() => {
+    if (!preferences) return;
+    const defaultFilters = applyDefaultFilters();
+    const updates: any = {};
+    
+    if (defaultFilters.ritmos.length > 0) {
+      updates.ritmos = defaultFilters.ritmos;
+    } else {
+      updates.ritmos = [];
+    }
+    if (defaultFilters.zonas.length > 0) {
+      updates.zonas = defaultFilters.zonas;
+    } else {
+      updates.zonas = [];
+    }
+    if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
+      if (defaultFilters.fechaDesde) {
+        updates.dateFrom = defaultFilters.fechaDesde.toISOString().slice(0, 10);
+      }
+      if (defaultFilters.fechaHasta) {
+        updates.dateTo = defaultFilters.fechaHasta.toISOString().slice(0, 10);
+      }
+      if (preferences.date_range === 'hoy') {
+        updates.datePreset = 'hoy';
+      } else if (preferences.date_range === 'semana') {
+        updates.datePreset = 'semana';
+      } else {
+        updates.datePreset = undefined;
+      }
+    } else {
+      updates.datePreset = 'todos';
+      updates.dateFrom = undefined;
+      updates.dateTo = undefined;
+    }
+    
+    set(updates);
+    setUsingFavoriteFilters(true);
+  }, [preferences, applyDefaultFilters, set]);
 
   // Fecha presets: hoy / semana / siguientes
   const todayYmd = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -537,6 +660,55 @@ export default function ExploreHomeScreen() {
         {/* Hero removido para una vista más directa al contenido */}
 
         <div className="wrap">
+          {/* Indicador de filtros favoritos */}
+          {usingFavoriteFilters && user && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.15))',
+                border: '1px solid rgba(240,147,251,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff' }}>
+                <span style={{ fontSize: '1.25rem' }}>⭐</span>
+                <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                  Usando tus filtros favoritos
+                </span>
+              </div>
+              <button
+                onClick={resetToFavoriteFilters}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                }}
+              >
+                🔄 Restablecer favoritos
+              </button>
+            </motion.div>
+          )}
+
           <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
           <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
           {!isMobile && renderDatePresetButtons(false)}

@@ -21,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
 import { ensureMaxVideoDuration } from '../../utils/videoValidation';
+import { FilterPreferencesModal } from '../../components/profile/FilterPreferencesModal';
 
 const colors = {
   dark: '#121212',
@@ -72,6 +73,7 @@ export default function UserProfileEditor() {
 
   // Estados para carga
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  const [showFilterPreferences, setShowFilterPreferences] = useState(false);
 
   // Helper to convert Supabase storage paths to public URLs
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
@@ -696,6 +698,41 @@ export default function UserProfileEditor() {
           </div>
         </div>
 
+        {/* Preferencias de Filtros */}
+        <div className="editor-section glass-card-container">
+          <h2 className="editor-section-title">
+            ⭐ Preferencias de Filtros
+          </h2>
+          <p style={{ marginBottom: '1.5rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
+            Configura tus filtros favoritos (ritmos, zonas, fechas) para aplicarlos automáticamente al explorar eventos y clases
+          </p>
+          <button
+            onClick={() => setShowFilterPreferences(true)}
+            style={{
+              padding: '1rem 2rem',
+              borderRadius: '12px',
+              border: 'none',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.8), rgba(245,87,108,0.8))',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '1rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(240,147,251,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.3)';
+            }}
+          >
+            ⚙️ Configurar Preferencias de Filtros
+          </button>
+        </div>
+
         {/* Sección de Fotos */}
         <PhotoManagementSection
           media={mediaWithAvatarFallback}
@@ -744,6 +781,12 @@ export default function UserProfileEditor() {
         />
         </div>
       </div>
+
+      {/* Modal de Preferencias de Filtros */}
+      <FilterPreferencesModal
+        isOpen={showFilterPreferences}
+        onClose={() => setShowFilterPreferences(false)}
+      />
     </>
   );
 }
