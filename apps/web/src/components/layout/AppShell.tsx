@@ -34,6 +34,7 @@ export default function AppShell() {
     { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },
     { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
     { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
+    { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 

@@ -78,6 +78,7 @@ import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
 import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
 import RequestRoleScreen from './screens/roles/RequestRoleScreen';
 import RolesInfoScreen from './screens/roles/RolesInfoScreen';
+import ValidationInfoScreen from './screens/static/ValidationInfoScreen';
 import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
 
 // Challenges
@@ -164,6 +165,7 @@ export default function AppRouter() {
           <Route path="/profile/roles/request" element={<RequestRoleScreen />} />
           <Route path="/app/roles/request" element={<RequestRoleScreen />} />
           <Route path="/app/roles/info" element={<RolesInfoScreen />} />
+          <Route path="/validation/info" element={<ValidationInfoScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin/trending" element={<TrendingAdmin />} />

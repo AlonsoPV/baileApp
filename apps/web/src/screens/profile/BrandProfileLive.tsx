@@ -207,7 +207,7 @@ export default function BrandProfileLive() {
                     letterSpacing: 0
                   }}
                 >
-                  {(brand as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
+                  {(brand as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
                 </motion.span>
               </div>
             </div>

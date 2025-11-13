@@ -19,6 +19,7 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
     { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
     { id: 'me', label: 'Mi perfil', icon: '👤', onClick: () => navigate('/app/profile') },
     { id: 'request-role', label: 'Solicitar rol', icon: '📝', onClick: () => navigate('/app/roles/request') },
+    { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 

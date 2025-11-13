@@ -385,7 +385,7 @@ export function OrganizerPublicScreen() {
               {/* Estado */}
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <motion.span whileHover={{ scale: 1.05 }} style={{ padding: `${spacing[2]} ${spacing[4]}`, borderRadius: borderRadius.full, background: (org as any)?.estado_aprobacion === 'aprobado' ? `linear-gradient(135deg, ${colors.success}cc, ${colors.success}99)` : colors.gradients.secondary, border: `2px solid ${(org as any)?.estado_aprobacion === 'aprobado' ? colors.success : colors.secondary[500]}`, color: colors.light, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.bold, backdropFilter: 'blur(10px)', boxShadow: (org as any)?.estado_aprobacion === 'aprobado' ? `0 4px 16px ${colors.success}66` : `0 4px 16px ${colors.secondary[500]}66`, display: 'inline-flex', alignItems: 'center', gap: spacing[1], textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {(org as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(org as any)?.estado_aprobacion}`}
+                  {(org as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(org as any)?.estado_aprobacion}`}
                 </motion.span>
               </div>
             </motion.div>

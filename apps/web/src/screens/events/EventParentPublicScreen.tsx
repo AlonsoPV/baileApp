@@ -918,7 +918,7 @@ export default function EventParentPublicScreen() {
                     ← Volver DOS
                   </motion.button>
                   {(((parent as any)?.profiles_organizer?.estado_aprobacion === 'aprobado') || ((parent as any)?.estado_aprobacion === 'aprobado')) && (
-                    <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12 }}>✅ Verificado</span>
+                    <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(46, 204, 113, 0.18)', border: '1px solid rgba(46,204,113,0.35)', color: '#2ecc71', fontWeight: 800, fontSize: 12 }}>✅</span>
                   )}
                 </div>
                 <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: 0, marginBottom: 10, color: '#fff', lineHeight: 1.2 }}>{parent.nombre}</h1>

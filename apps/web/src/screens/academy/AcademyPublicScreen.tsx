@@ -322,60 +322,93 @@ export default function AcademyPublicScreen() {
         .academy-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
         .profile-promos-section {
           margin-bottom: 2rem;
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
           position: relative;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(10px);
+        }
+        .profile-promos-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166, #1E88E5);
+          border-radius: 24px 24px 0 0;
+          opacity: 0.8;
         }
         .profile-promos-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 1.25rem;
+          margin-bottom: 2rem;
         }
         .profile-promos-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          font-size: 1.75rem;
+          background: linear-gradient(135deg, rgba(240, 147, 251, 0.25), rgba(245, 87, 108, 0.2));
+          border: 2px solid rgba(240, 147, 251, 0.4);
+          box-shadow: 0 4px 16px rgba(240, 147, 251, 0.3);
         }
         .profile-promos-title { 
           margin: 0;
-          font-size: 1.5rem;
-          font-weight: 700;
+          font-size: 1.75rem;
+          font-weight: 900;
           color: #fff;
+          letter-spacing: -0.02em;
         }
         .profile-promos-subtitle {
-          font-size: 0.9rem;
-          margin: 0.25rem 0 0 0;
-          font-weight: 400;
-          color: rgba(255,255,255,0.7);
+          font-size: 0.95rem;
+          margin: 0.5rem 0 0 0;
+          font-weight: 500;
+          color: rgba(255,255,255,0.8);
         }
         .profile-promos-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1.25rem;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.5rem;
         }
         .profile-promo-card {
-          padding: 1.5rem;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          padding: 1.75rem;
+          border-radius: 18px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+          border: 1.5px solid rgba(255, 255, 255, 0.18);
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          transition: all 0.2s ease;
+          gap: 1.25rem;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        .profile-promo-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(30, 136, 229, 0.6));
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
         .profile-promo-card:hover {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.18);
-          transform: translateY(-2px);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+          border-color: rgba(240, 147, 251, 0.4);
+          transform: translateY(-4px);
+          box-shadow: 0 8px 32px rgba(240, 147, 251, 0.25);
+        }
+        .profile-promo-card:hover::before {
+          opacity: 1;
         }
         .profile-promo-header {
           display: flex;
@@ -392,15 +425,16 @@ export default function AcademyPublicScreen() {
         .profile-promo-title {
           margin: 0;
           color: #fff;
-          font-size: 1.15rem;
-          font-weight: 600;
-          line-height: 1.4;
+          font-size: 1.3rem;
+          font-weight: 800;
+          line-height: 1.3;
+          letter-spacing: -0.01em;
         }
         .profile-promo-description {
           margin: 0;
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.75);
-          line-height: 1.6;
+          font-size: 0.95rem;
+          color: rgba(255,255,255,0.85);
+          line-height: 1.65;
         }
         .profile-promo-chips {
           display: flex;
@@ -413,11 +447,15 @@ export default function AcademyPublicScreen() {
         .profile-promo-chip {
           display: inline-flex;
           align-items: center;
-          gap: 0.35rem;
-          padding: 0.35rem 0.7rem;
-          border-radius: 6px;
-          font-size: 0.75rem;
-          font-weight: 500;
+          gap: 0.4rem;
+          padding: 0.45rem 0.85rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        }
+        .profile-promo-chip:hover {
+          transform: translateY(-1px);
         }
         .profile-promo-chip--muted {
           background: rgba(255,255,255,0.08);
@@ -439,20 +477,32 @@ export default function AcademyPublicScreen() {
           border: 1px solid rgba(255,255,255,0.12);
           color: rgba(255,255,255,0.8);
         }
-        .profile-promo-price {
+        .profile-promo-type-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
           padding: 0.5rem 0.9rem;
-          border-radius: 8px;
-          background: rgba(30,136,229,0.15);
-          border: 1px solid rgba(30,136,229,0.25);
-          color: #90caf9;
+          border-radius: 10px;
+          font-size: 0.85rem;
           font-weight: 700;
-          font-size: 1rem;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .profile-promo-price {
+          padding: 0.65rem 1.1rem;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(30,136,229,0.25), rgba(0,188,212,0.2));
+          border: 1.5px solid rgba(30,136,229,0.4);
+          color: #90caf9;
+          font-weight: 800;
+          font-size: 1.1rem;
           white-space: nowrap;
+          box-shadow: 0 2px 12px rgba(30,136,229,0.2);
         }
         .profile-promo-price.is-placeholder {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.7);
+          background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+          border: 1.5px solid rgba(255,255,255,0.2);
+          color: rgba(255,255,255,0.8);
+          box-shadow: none;
         }
         @media (max-width: 768px) {
           .academy-container { padding: 1rem !important; }
@@ -545,7 +595,7 @@ export default function AcademyPublicScreen() {
                     letterSpacing: 0
                   }}
                 >
-                  {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅ Verificado' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}
+                  {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}
                 </motion.span>
               </div>
             </div>
