@@ -71,10 +71,16 @@ function cronoItemToClases(
     ubicacionJson = primeraUbicacion;
   }
 
+  // Usar el ID de la clase si está disponible, si no, generar uno basado en el índice
+  // Esto permite que las clases tengan IDs únicos y persistentes
+  const classId = (item.id && typeof item.id === 'number' && item.id > 0) 
+    ? item.id 
+    : (index * 1000);
+
   // Si tiene fecha específica, crear una clase con esa fecha
   if (fecha) {
     clases.push({
-      id: index * 1000 + 0, // ID único basado en índice
+      id: classId, // Usar ID de la clase si existe, si no usar índice * 1000
       titulo,
       nombre: titulo,
       descripcion,
@@ -102,8 +108,12 @@ function cronoItemToClases(
     item.diasSemana.forEach((diaStr: string, diaIdx: number) => {
       const diaNum = dayNameToNumber(diaStr);
       if (diaNum !== null) {
+        // Si la clase tiene un ID único, usarlo; si no, generar uno basado en índice y día
+        const dayClassId = (item.id && typeof item.id === 'number' && item.id > 0)
+          ? item.id + diaIdx // Si tiene ID base, añadir el índice del día
+          : (index * 1000 + diaIdx); // Si no, usar índice * 1000 + día
         clases.push({
-          id: index * 1000 + diaIdx, // ID único basado en índice y día
+          id: dayClassId,
           titulo,
           nombre: titulo,
           descripcion,
@@ -133,7 +143,7 @@ function cronoItemToClases(
   else if (typeof item.diaSemana === 'number' || typeof item.dia_semana === 'number') {
     const diaNum = item.diaSemana ?? item.dia_semana;
     clases.push({
-      id: index * 1000,
+      id: classId, // Usar ID de la clase si existe, si no usar índice * 1000
       titulo,
       nombre: titulo,
       descripcion,

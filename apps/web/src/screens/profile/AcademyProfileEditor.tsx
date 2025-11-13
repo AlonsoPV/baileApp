@@ -28,6 +28,7 @@ import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
+import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
 import { useAvailableTeachers, useAcceptedTeachers, useSendInvitation, useCancelInvitation } from "../../hooks/useAcademyTeacherInvitations";
 import { supabase } from "@/lib/supabase";
 import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPanel";
@@ -150,6 +151,32 @@ export default function AcademyProfileEditor() {
       console.log('[AcademyProfileEditor] acceptedTeachers:', acceptedTeachers);
     }
   }, [academyId, acceptedTeachers]);
+
+  // Asegurar que todas las clases tengan un ID único (solo una vez al cargar)
+  const hasEnsuredIds = React.useRef(false);
+  React.useEffect(() => {
+    if (hasEnsuredIds.current) return; // Ya se aseguraron los IDs
+    const cronograma = (form as any)?.cronograma;
+    if (Array.isArray(cronograma) && cronograma.length > 0 && (form as any)?.id) {
+      const needsUpdate = cronograma.some((it: any) => !it.id || typeof it.id !== 'number');
+      if (needsUpdate) {
+        hasEnsuredIds.current = true;
+        const updatedCrono = cronograma.map((it: any) => ({
+          ...it,
+          id: ensureClassId(it)
+        }));
+        setField('cronograma' as any, updatedCrono as any);
+        // Actualizar también en la base de datos silenciosamente
+        const payload: any = { id: (form as any)?.id, cronograma: updatedCrono };
+        upsert.mutateAsync(payload).catch((e) => {
+          console.error('[AcademyProfileEditor] Error actualizando IDs de clases', e);
+          hasEnsuredIds.current = false; // Reset si falla para intentar de nuevo
+        });
+      } else {
+        hasEnsuredIds.current = true; // Todas las clases ya tienen IDs
+      }
+    }
+  }, [academy, (form as any)?.cronograma, (form as any)?.id, setField, upsert]);
 
   const handleSave = async () => {
     try {
@@ -790,6 +817,7 @@ export default function AcademyProfileEditor() {
                       : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
                     const updatedItem = {
                       ...prev,
+                      id: ensureClassId(prev), // Preservar ID existente o generar uno nuevo si no existe
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
@@ -851,6 +879,7 @@ export default function AcademyProfileEditor() {
                       ? c.ritmoIds
                       : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
                     const nextCrono = ([...currentCrono, {
+                      id: generateClassId(), // Generar ID único para la nueva clase
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
