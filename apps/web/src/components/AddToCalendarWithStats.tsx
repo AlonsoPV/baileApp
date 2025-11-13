@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
+import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
 
 type AddToCalendarProps = {
   eventId: string | number;
@@ -18,6 +19,10 @@ type AddToCalendarProps = {
   academyId?: number;    // ID de academia dueña de la clase
   roleBaile?: 'lead' | 'follow' | 'ambos' | null; // Rol de baile del usuario
   zonaTagId?: number | null; // ID de tag de zona
+  // Información de la clase para calcular fechas específicas
+  fecha?: string | null; // Fecha específica (YYYY-MM-DD) - si existe, no es recurrente
+  diaSemana?: number | null; // Día de la semana (0-6) para clases recurrentes
+  diasSemana?: number[] | null; // Array de días de la semana para clases con múltiples días
 };
 
 export default function AddToCalendarWithStats({
@@ -33,6 +38,9 @@ export default function AddToCalendarWithStats({
   academyId,
   roleBaile,
   zonaTagId,
+  fecha,
+  diaSemana,
+  diasSemana,
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
@@ -145,72 +153,89 @@ export default function AddToCalendarWithStats({
       if (typeof finalClassId === 'number' && !Number.isNaN(finalClassId)) {
         console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
         try {
-          // Intentar insertar primero
           // Normalizar role_baile: convertir 'lead' a 'leader' y 'follow' a 'follower' para consistencia
           let normalizedRoleBaile = roleBaile;
           if (roleBaile === 'lead') normalizedRoleBaile = 'leader';
           else if (roleBaile === 'follow') normalizedRoleBaile = 'follower';
           
-          const insertPayload = {
+          // Calcular fechas específicas para clases recurrentes
+          let fechasEspecificas: string[] = [];
+          
+          // Si tiene fecha específica, usar solo esa fecha
+          if (fecha) {
+            fechasEspecificas = [fecha];
+          }
+          // Si tiene múltiples días de la semana, calcular todas las fechas
+          else if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
+            fechasEspecificas = calculateMultipleRecurringDates(diasSemana, 3);
+          }
+          // Si tiene un solo día de la semana, calcular fechas recurrentes
+          else if (diaSemana !== null && diaSemana !== undefined && typeof diaSemana === 'number') {
+            fechasEspecificas = calculateRecurringDates(diaSemana, 3);
+          }
+          // Si no tiene fecha ni día, usar null (clase sin fecha específica)
+          else {
+            fechasEspecificas = [null as any]; // null significa sin fecha específica
+          }
+          
+          console.log("[AddToCalendarWithStats] 📅 Fechas específicas calculadas:", fechasEspecificas);
+          
+          // Insertar un registro por cada fecha específica
+          const insertPayloads = fechasEspecificas.map(fechaEspecifica => ({
             user_id: user.id,
             class_id: finalClassId,
             academy_id: academyId || null,
             role_baile: normalizedRoleBaile || null,
             zona_tag_id: zonaTagId || null,
             status: "tentative" as const,
-          };
-          console.log("[AddToCalendarWithStats] 📤 Insertando en clase_asistencias:", insertPayload);
-          console.log("[AddToCalendarWithStats] 🔍 roleBaile original:", roleBaile, "→ normalizado:", normalizedRoleBaile);
+            fecha_especifica: fechaEspecifica || null,
+          }));
           
+          console.log("[AddToCalendarWithStats] 📤 Insertando", insertPayloads.length, "registros en clase_asistencias");
+          
+          // Insertar todos los registros
           const { data: insertData, error: insertError } = await supabase
             .from("clase_asistencias")
-            .insert(insertPayload)
+            .insert(insertPayloads)
             .select();
           
-          // Si falla por conflicto (ya existe), actualizar
-          if (insertError && insertError.code === '23505') {
-            console.log("[AddToCalendarWithStats] ⚠️ Conflicto detectado, actualizando registro existente...");
-            const { data: updateData, error: updateError } = await supabase
-              .from("clase_asistencias")
-              .update({
-                academy_id: academyId || null,
-                role_baile: normalizedRoleBaile || null,
-                zona_tag_id: zonaTagId || null,
-                status: "tentative",
-              })
-              .eq("user_id", user.id)
-              .eq("class_id", finalClassId)
-              .select();
-            
-            if (updateError) {
-              console.error("[AddToCalendarWithStats] ❌ Error actualizando asistencia tentative:", updateError);
+          if (insertError) {
+            // Si hay conflictos (algunos registros ya existen), intentar actualizar solo los que faltan
+            if (insertError.code === '23505') {
+              console.log("[AddToCalendarWithStats] ⚠️ Algunos registros ya existen, actualizando...");
+              
+              // Para cada fecha, intentar insertar o actualizar
+              const results = await Promise.allSettled(
+                insertPayloads.map(async (payload) => {
+                  const { data: upsertData, error: upsertError } = await supabase
+                    .from("clase_asistencias")
+                    .upsert(payload, {
+                      onConflict: 'user_id,class_id,fecha_especifica',
+                    })
+                    .select();
+                  
+                  if (upsertError) {
+                    console.error("[AddToCalendarWithStats] ❌ Error en upsert:", upsertError);
+                    throw upsertError;
+                  }
+                  return upsertData;
+                })
+              );
+              
+              const successful = results.filter(r => r.status === 'fulfilled').length;
+              console.log("[AddToCalendarWithStats] ✅", successful, "registros procesados exitosamente");
             } else {
-              console.log("[AddToCalendarWithStats] ✅ Asistencia actualizada exitosamente:", updateData);
-              // Invalidar y refetch queries de métricas si hay academyId
-              if (academyId) {
-                console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
-                qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
-                // Forzar refetch inmediato
-                qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
-              }
+              console.error("[AddToCalendarWithStats] ❌ Error insertando asistencias:", insertError);
             }
-          } else if (insertError) {
-            console.error("[AddToCalendarWithStats] ❌ Error insertando asistencia tentative:", insertError);
-            console.error("[AddToCalendarWithStats] Detalles del error:", {
-              code: insertError.code,
-              message: insertError.message,
-              details: insertError.details,
-              hint: insertError.hint,
-            });
           } else {
-            console.log("[AddToCalendarWithStats] ✅ Asistencia registrada exitosamente:", insertData);
-            // Invalidar y refetch queries de métricas si hay academyId
-            if (academyId) {
-              console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
-              qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
-              // Forzar refetch inmediato
-              qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
-            }
+            console.log("[AddToCalendarWithStats] ✅", insertData?.length || 0, "asistencias registradas exitosamente");
+          }
+          
+          // Invalidar y refetch queries de métricas si hay academyId
+          if (academyId) {
+            console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
+            qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+            qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
           }
         } catch (err) {
           console.error("[AddToCalendarWithStats] ❌ Error inesperado:", err);

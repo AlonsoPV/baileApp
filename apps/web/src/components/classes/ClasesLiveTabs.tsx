@@ -496,6 +496,27 @@ export default function ClasesLiveTabs({
                                           start={calendarStart}
                                           end={calendarEnd}
                                           showAsIcon={true}
+                                          fecha={c.fecha || null}
+                                          diaSemana={c.diaSemana ?? c.dia_semana ?? null}
+                                          diasSemana={(() => {
+                                            // Si tiene diasSemana como array de strings, convertir a números
+                                            if (c.diasSemana && Array.isArray(c.diasSemana)) {
+                                              const dayMap: Record<string, number> = {
+                                                'domingo': 0, 'dom': 0,
+                                                'lunes': 1, 'lun': 1,
+                                                'martes': 2, 'mar': 2,
+                                                'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                                                'jueves': 4, 'jue': 4,
+                                                'viernes': 5, 'vie': 5,
+                                                'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                                              };
+                                              const dias = c.diasSemana
+                                                .map((d: string) => dayMap[String(d).toLowerCase().trim()])
+                                                .filter((d: number | undefined) => d !== undefined) as number[];
+                                              return dias.length > 0 ? dias : null;
+                                            }
+                                            return null;
+                                          })()}
                                         />
                                       );
                                     })()}

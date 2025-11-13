@@ -469,6 +469,23 @@ export default function ClassPublicScreen() {
                       title={classTitle}
                       description={`Clase de ${classTitle} con ${creatorName}`}
                       location={locationLabel}
+                      fecha={selectedClass?.fecha || null}
+                      diaSemana={selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null}
+                      diasSemana={selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) ? (() => {
+                        const dayMap: Record<string, number> = {
+                          'domingo': 0, 'dom': 0,
+                          'lunes': 1, 'lun': 1,
+                          'martes': 2, 'mar': 2,
+                          'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                          'jueves': 4, 'jue': 4,
+                          'viernes': 5, 'vie': 5,
+                          'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                        };
+                        const dias = selectedClass.diasSemana
+                          .map((d: string) => dayMap[String(d).toLowerCase().trim()])
+                          .filter((d: number | undefined) => d !== undefined) as number[];
+                        return dias.length > 0 ? dias : null;
+                      })() : null}
                       start={(() => {
                         try {
                           if (selectedClass.fecha) {
