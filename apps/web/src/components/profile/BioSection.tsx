@@ -195,6 +195,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
           white-space: pre-wrap;
           word-wrap: break-word;
           font-weight: 400;
+          text-align: center;
         }
 
         /* Tablet */

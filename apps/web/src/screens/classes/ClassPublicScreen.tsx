@@ -486,8 +486,7 @@ export default function ClassPublicScreen() {
                       <div className="loc-item">
                         <div className="loc-item-icon">🏷️</div>
                         <div className="loc-item-content">
-                          <strong>Nombre del lugar</strong>
-                          <span>{ubicacion.nombre}</span>
+                          <strong>{ubicacion.nombre}</strong>
                         </div>
                       </div>
                     )}

@@ -6,6 +6,8 @@ import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import AddToCalendarWithStats from "@/components/AddToCalendarWithStats";
 import ShareButton from "@/components/events/ShareButton";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { useTags } from "@/hooks/useTags";
 
 type Props = {
   classes: Clase[];
@@ -38,6 +40,7 @@ export default function ClasesLiveTabs({
 }: Props) {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = React.useState(false);
+  const { data: allTags } = useTags() as any;
   console.log("[ClasesLiveTabs] Received classes:", classes);
   const days = React.useMemo(() => {
     const grouped = groupClassesByWeekday(classes || []);
@@ -48,6 +51,45 @@ export default function ClasesLiveTabs({
   const [expandedDays, setExpandedDays] = React.useState<Set<number>>(new Set());
   
   console.log("[ClasesLiveTabs] Days length:", days.length, "Active idx:", activeIdx);
+
+  // Función para convertir ritmo (ID numérico, slug, o nombre) al nombre legible
+  const getRitmoName = React.useCallback((ritmo: string | number | null | undefined, ritmosSeleccionados?: string[] | number[] | null): string | null => {
+    if (!ritmo && (!ritmosSeleccionados || ritmosSeleccionados.length === 0)) return null;
+    
+    // 1. Priorizar ritmos_seleccionados (slugs del catálogo)
+    if (Array.isArray(ritmosSeleccionados) && ritmosSeleccionados.length > 0) {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      const firstSlug = String(ritmosSeleccionados[0]);
+      const name = labelById.get(firstSlug);
+      if (name) return name;
+    }
+    
+    // 2. Si ritmo es un slug del catálogo
+    if (typeof ritmo === 'string') {
+      const labelById = new Map<string, string>();
+      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
+      const name = labelById.get(ritmo);
+      if (name) return name;
+      
+      // Si ya es un nombre legible, devolverlo
+      if (labelById.has(ritmo) || RITMOS_CATALOG.some(g => g.items.some(i => i.label === ritmo))) {
+        return ritmo;
+      }
+    }
+    
+    // 3. Si ritmo es un ID numérico, buscar en tags
+    if (typeof ritmo === 'number' || (typeof ritmo === 'string' && /^\d+$/.test(ritmo))) {
+      const ritmoId = typeof ritmo === 'number' ? ritmo : parseInt(ritmo, 10);
+      if (allTags && Array.isArray(allTags)) {
+        const tag = allTags.find((t: any) => t.id === ritmoId && t.tipo === 'ritmo');
+        if (tag?.nombre) return tag.nombre;
+      }
+    }
+    
+    // 4. Si no se encontró, devolver el valor original como string
+    return ritmo ? String(ritmo) : null;
+  }, [allTags]);
 
   // Detectar si es móvil
   React.useEffect(() => {
@@ -319,17 +361,20 @@ export default function ClasesLiveTabs({
                             <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900 }}>{titulo}</h4>
                             {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
                               <span style={{ 
-                                fontSize: ".9rem", 
-                                opacity: 0.8, 
-                                fontWeight: 600,
-                                color: "rgba(255,255,255,0.9)"
+                                fontSize: "1rem", 
+                                opacity: 1, 
+                                fontWeight: 800,
+                                color: "#fff",
+                                padding: ".3rem .6rem",
+                                borderRadius: 8,
+                                background: "rgba(30,136,229,0.2)",
+                                border: "1px solid rgba(30,136,229,0.4)"
                               }}>
-                                {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                                📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
                               </span>
                             )}
                           </div>
                           <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                            {/* {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>} */}
                             {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
                           </div>
                         </div>
@@ -414,21 +459,26 @@ export default function ClasesLiveTabs({
                                       handleClassClick(c, idx);
                                     }}
                                     style={{
-                                      padding: ".5rem .8rem",
+                                      padding: ".6rem 1rem",
                                       borderRadius: 999,
-                                      border: "1px solid rgba(255,255,255,.2)",
-                                      background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
+                                      border: "1px solid rgba(30,136,229,.5)",
+                                      background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
                                       color: "#fff",
-                                      fontWeight: 700,
-                                      fontSize: ".85rem",
+                                      fontWeight: 800,
+                                      fontSize: ".9rem",
                                       cursor: "pointer",
                                       transition: "all 0.2s ease",
+                                      boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
                                     }}
                                     onMouseEnter={(e) => {
-                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
+                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
+                                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
+                                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
                                     }}
                                     onMouseLeave={(e) => {
-                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
+                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
+                                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
+                                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
                                     }}
                                   >
                                     👁️ Ver detalle
@@ -590,17 +640,20 @@ export default function ClasesLiveTabs({
                       <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
                       {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
                         <span style={{ 
-                          fontSize: ".95rem", 
-                          opacity: 0.8, 
-                          fontWeight: 600,
-                          color: "rgba(255,255,255,0.9)"
+                          fontSize: "1.05rem", 
+                          opacity: 1, 
+                          fontWeight: 800,
+                          color: "#fff",
+                          padding: ".35rem .7rem",
+                          borderRadius: 8,
+                          background: "rgba(30,136,229,0.2)",
+                          border: "1px solid rgba(30,136,229,0.4)"
                         }}>
-                          {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                          📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
                         </span>
                       )}
                     </div>
                     <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                      {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>}
                       {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
                     </div>
                   </div>
@@ -685,21 +738,26 @@ export default function ClasesLiveTabs({
                                 handleClassClick(c, idx);
                               }}
                               style={{
-                                padding: ".6rem .9rem",
+                                padding: ".7rem 1.1rem",
                                 borderRadius: 999,
-                                border: "1px solid rgba(255,255,255,.2)",
-                                background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
+                                border: "1px solid rgba(30,136,229,.5)",
+                                background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
                                 color: "#fff",
-                                fontWeight: 700,
-                                fontSize: ".9rem",
+                                fontWeight: 800,
+                                fontSize: ".95rem",
                                 cursor: "pointer",
                                 transition: "all 0.2s ease",
+                                boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
                               }}
                               onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
+                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
+                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
+                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
                               }}
                               onMouseLeave={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
+                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
+                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
+                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
                               }}
                             >
                               👁️ Ver detalle
