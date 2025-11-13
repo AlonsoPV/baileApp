@@ -414,6 +414,19 @@ export default function AcademyProfileEditor() {
           <div style={{ width: 100 }} />
         </div>
 
+        {/* Toggle de navegación (arriba de las pestañas) */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <ProfileNavigationToggle
+            currentView="edit"
+            profileType="academy"
+            onSave={handleSave}
+            isSaving={upsert.isPending}
+            saveDisabled={!form.nombre_publico?.trim()}
+            editHref="/profile/academy/edit"
+            liveHref="/profile/academy"
+          />
+        </div>
+
         {/* Tabs */}
         <div style={{ 
           display: 'flex', 
@@ -466,17 +479,6 @@ export default function AcademyProfileEditor() {
 
         {activeTab === "perfil" && (
           <>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle
-            currentView="edit"
-            profileType="academy"
-            onSave={handleSave}
-            isSaving={upsert.isPending}
-            saveDisabled={!form.nombre_publico?.trim()}
-            editHref="/profile/academy/edit"
-            liveHref="/profile/academy"
-          />
-        </div>
 
         {/* Mensaje de estado global */}
         {statusMsg && (
