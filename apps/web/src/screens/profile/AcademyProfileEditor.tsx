@@ -439,7 +439,7 @@ export default function AcademyProfileEditor() {
 
         {activeTab === "perfil" && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
             currentView="edit"
             profileType="academy"
@@ -903,9 +903,9 @@ export default function AcademyProfileEditor() {
                     const costoLabel = costo ? formatCurrency(costo.precio) : null;
                     const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null);
                     return (
-                      <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
+                        <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
                           <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'}</span>
                           {(fechaLabel || costoLabel) && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -921,23 +921,23 @@ export default function AcademyProfileEditor() {
                               )}
                             </div>
                           )}
-                        </div>
-                        <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
+                      </div>
+                      <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
                         <button
                           type="button"
                           onClick={() => {
                             setEditingIndex(idx);
                             setEditInitial({
                               nombre: it.titulo || '',
-                                tipo: (costo?.tipo as any) || 'clases sueltas',
-                                precio: costo?.precio ?? null,
-                                regla: costo?.regla || '',
+                              tipo: (costo?.tipo as any) || 'clases sueltas',
+                              precio: costo?.precio ?? null,
+                              regla: costo?.regla || '',
                               fechaModo: it.fecha ? 'especifica' : 'semanal',
                               fecha: it.fecha || '',
                               diaSemana: (it as any)?.diaSemana ?? null,
                               inicio: it.inicio || '',
                               fin: it.fin || '',
-                                ritmoId: it.ritmoId ?? null,
+                              ritmoId: it.ritmoId ?? null,
                                 ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
                               zonaId: it.zonaId ?? null,
                               ubicacion: it.ubicacion || '',
@@ -1002,7 +1002,7 @@ export default function AcademyProfileEditor() {
                           Eliminar
                         </button>
                       </div>
-                      </div>
+                    </div>
                     );
                   })}
                 </div>
@@ -1466,12 +1466,11 @@ export default function AcademyProfileEditor() {
           description="Videos promocionales, clases de muestra, testimonios"
           slots={[...VIDEO_SLOTS]}
         />
-            </div>
           </>
         )}
 
       </div>
-      </div>
+    </div>
     </>
   );
 }
