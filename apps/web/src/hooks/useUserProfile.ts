@@ -9,6 +9,7 @@ export type ProfileUser = {
   display_name?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  rol_baile?: 'lead' | 'follow' | 'ambos' | null;
   ritmos_seleccionados?: string[]; // catálogo (RITMOS_CATALOG)
   ritmos?: number[];
   zonas?: number[];
@@ -31,7 +32,7 @@ export function useUserProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles_user")
-        .select("user_id, display_name, bio, avatar_url, ritmos_seleccionados, ritmos, zonas, respuestas, updated_at")
+        .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, updated_at")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;

@@ -1,4 +1,4 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
 import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
@@ -12,6 +12,7 @@ import { mergeProfile } from '../../utils/mergeProfile';
 export function ProfileBasics() {
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [rolBaile, setRolBaile] = useState<'lead' | 'follow' | 'ambos' | ''>('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [error, setError] = useState('');
@@ -21,6 +22,20 @@ export function ProfileBasics() {
   const { profile, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  // Inicializar valores desde el perfil existente
+  useEffect(() => {
+    if (profile) {
+      if (profile.display_name) setDisplayName(profile.display_name);
+      if (profile.bio) setBio(profile.bio);
+      if ((profile as any).rol_baile) {
+        setRolBaile((profile as any).rol_baile as 'lead' | 'follow' | 'ambos');
+      }
+      if (profile.avatar_url) {
+        setAvatarPreview(profile.avatar_url);
+      }
+    }
+  }, [profile]);
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,6 +95,7 @@ export function ProfileBasics() {
         display_name: displayName,
         bio: bio || undefined,
         avatar_url: avatarUrl ?? profile?.avatar_url,
+        rol_baile: rolBaile || undefined,
       });
 
       // Upsert profile
@@ -241,6 +257,66 @@ export function ProfileBasics() {
               }}
               placeholder="Cuéntanos sobre tu pasión por el baile..."
             />
+          </div>
+
+          {/* Como te identificas */}
+          <div style={{ marginBottom: spacing[3] }}>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: spacing[1],
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.gray[400],
+              }}
+            >
+              ¿Cómo te identificas? (opcional)
+            </label>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing[2]
+            }}>
+              {(['lead', 'follow', 'ambos'] as const).map((rol) => (
+                <label
+                  key={rol}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                    padding: spacing[2],
+                    background: rolBaile === rol ? colors.glass.strong : colors.glass.medium,
+                    border: `2px solid ${rolBaile === rol ? colors.gradients.primary : colors.glass.medium}`,
+                    borderRadius: borderRadius.md,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="rolBaile"
+                    value={rol}
+                    checked={rolBaile === rol}
+                    onChange={(e) => setRolBaile(e.target.value as 'lead' | 'follow' | 'ambos')}
+                    disabled={isLoading}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span style={{
+                    color: colors.gray[200],
+                    fontSize: '0.95rem',
+                    fontWeight: rolBaile === rol ? '600' : '400',
+                  }}>
+                    {rol === 'lead' && '👨‍💼 Lead (Guía)'}
+                    {rol === 'follow' && '👩‍💼 Follow (Seguidor/a)'}
+                    {rol === 'ambos' && '🔄 Ambos'}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {error && (

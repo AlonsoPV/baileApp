@@ -339,12 +339,21 @@ const promotionTypeStyles: Record<string, { background: string; border: string; 
   otro: { background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: '#f1f5f9' },
 };
 
-const formatPriceLabel = (value: any) => {
-  if (value === undefined || value === null || value === '') return 'Consultar';
-  if (typeof value === 'number') return formatCurrency(value);
-  const numeric = Number(value);
-  if (!Number.isNaN(numeric)) return formatCurrency(numeric);
-  return String(value);
+const formatPriceLabel = (value: any): string | null => {
+  // Si no hay precio (null, undefined, vacío), no mostrar nada
+  if (value === undefined || value === null || value === '') return null;
+  
+  // Convertir a número
+  const numeric = typeof value === 'number' ? value : Number(value);
+  
+  // Si no es un número válido, no mostrar
+  if (Number.isNaN(numeric)) return null;
+  
+  // Si es cero, mostrar "Gratis"
+  if (numeric === 0) return 'Gratis';
+  
+  // Si tiene valor, formatear como moneda
+  return formatCurrency(numeric);
 };
 
 export default function TeacherProfileLive() {
@@ -1172,7 +1181,7 @@ export default function TeacherProfileLive() {
                   if (desde) validityParts.push(`desde ${desde}`);
                   if (hasta) validityParts.push(`hasta ${hasta}`);
                   const priceLabel = formatPriceLabel(promo?.precio);
-                  const priceIsPlaceholder = priceLabel === 'Consultar';
+                  const priceIsPlaceholder = priceLabel === 'Gratis';
 
                   return (
                     <motion.div
@@ -1189,11 +1198,13 @@ export default function TeacherProfileLive() {
                         >
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        <span
-                          className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}
-                        >
-                          {priceLabel}
-                        </span>
+                        {priceLabel !== null && (
+                          <span
+                            className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}
+                          >
+                            {priceLabel}
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="profile-promo-title">

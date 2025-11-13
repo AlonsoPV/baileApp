@@ -304,7 +304,6 @@ const promotionTypeStyles: Record<string, { background: string; border: string; 
 };
 
 const formatCurrency = (value?: number | string | null) => {
-  if (value === null || value === undefined || value === '') return 'Gratis';
   const numeric = typeof value === 'string' ? Number(value) : value;
   if (numeric === null || Number.isNaN(numeric)) return `$${String(value)}`;
   try {
@@ -317,6 +316,23 @@ const formatCurrency = (value?: number | string | null) => {
   } catch {
     return `$${Number(numeric).toLocaleString('en-US')}`;
   }
+};
+
+const formatPriceLabel = (value: any): string | null => {
+  // Si no hay precio (null, undefined, vacío), no mostrar nada
+  if (value === undefined || value === null || value === '') return null;
+  
+  // Convertir a número
+  const numeric = typeof value === 'number' ? value : Number(value);
+  
+  // Si no es un número válido, no mostrar
+  if (Number.isNaN(numeric)) return null;
+  
+  // Si es cero, mostrar "Gratis"
+  if (numeric === 0) return 'Gratis';
+  
+  // Si tiene valor, formatear como moneda
+  return formatCurrency(numeric);
 };
 
 const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
@@ -1150,8 +1166,8 @@ export default function TeacherProfileLive() {
                   const hasta = formatDateOrDay(promo?.validoHasta);
                   if (desde) validityParts.push(`desde ${desde}`);
                   if (hasta) validityParts.push(`hasta ${hasta}`);
-                  const priceLabel = formatCurrency(promo?.precio);
-                  const priceIsPlaceholder = priceLabel === 'Gratis' || priceLabel === 'Consultar';
+                  const priceLabel = formatPriceLabel(promo?.precio);
+                  const priceIsPlaceholder = priceLabel === 'Gratis';
 
                   return (
                     <motion.div
@@ -1165,9 +1181,11 @@ export default function TeacherProfileLive() {
                         <span className="profile-promo-chip" style={typeStyle}>
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        <span className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}>
-                          {priceLabel}
-                        </span>
+                        {priceLabel !== null && (
+                          <span className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}>
+                            {priceLabel}
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="profile-promo-title">{promo?.nombre || 'Promoción'}</h4>

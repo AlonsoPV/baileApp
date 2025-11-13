@@ -52,6 +52,7 @@ export default function UserProfileEditor() {
     defaults: {
       display_name: "",
       bio: "",
+      rol_baile: null as 'lead' | 'follow' | 'ambos' | null,
       ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
@@ -188,6 +189,7 @@ export default function UserProfileEditor() {
       const candidate = {
         display_name: form.display_name,
         bio: form.bio,
+        rol_baile: (form as any).rol_baile || null,
         ritmos_seleccionados: outRitmosSeleccionados || [],
         ritmos: form.ritmos,
         zonas: form.zonas,
@@ -465,7 +467,7 @@ export default function UserProfileEditor() {
                 />
               </div>
               
-              <div>
+              <div style={{ marginBottom: '1rem' }}>
                 <label className="editor-field">
                   Biografía
                 </label>
@@ -473,9 +475,64 @@ export default function UserProfileEditor() {
                   value={form.bio}
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Cuéntanos sobre ti..."
-                  rows={6}
+                  rows={4}
                   className="editor-textarea"
                 />
+              </div>
+
+              {/* Como te identificas */}
+              <div>
+                <label className="editor-field">
+                  ¿Cómo te identificas?
+                </label>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem'
+                }}>
+                  {(['lead', 'follow', 'ambos'] as const).map((rol) => (
+                    <label
+                      key={rol}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '0.75rem',
+                        background: (form as any).rol_baile === rol 
+                          ? 'rgba(255, 255, 255, 0.15)' 
+                          : 'rgba(255, 255, 255, 0.05)',
+                        border: `2px solid ${(form as any).rol_baile === rol 
+                          ? 'rgba(255, 255, 255, 0.4)' 
+                          : 'rgba(255, 255, 255, 0.1)'}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="rolBaile"
+                        value={rol}
+                        checked={(form as any).rol_baile === rol}
+                        onChange={(e) => setField('rol_baile', e.target.value as 'lead' | 'follow' | 'ambos')}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                      <span style={{
+                        color: '#F5F5F5',
+                        fontSize: '0.95rem',
+                        fontWeight: (form as any).rol_baile === rol ? '600' : '400',
+                      }}>
+                        {rol === 'lead' && '👨‍💼 Lead (Guía)'}
+                        {rol === 'follow' && '👩‍💼 Follow (Seguidor/a)'}
+                        {rol === 'ambos' && '🔄 Ambos'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
