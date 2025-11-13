@@ -13,6 +13,10 @@ type AddToCalendarProps = {
   end: string | Date;
   allDay?: boolean;
   showAsIcon?: boolean;
+  classId?: number;      // ID de clase (si es diferente de eventId)
+  academyId?: number;    // ID de academia dueña de la clase
+  roleBaile?: 'lead' | 'follow' | 'ambos' | null; // Rol de baile del usuario
+  zonaTagId?: number | null; // ID de tag de zona
 };
 
 export default function AddToCalendarWithStats({
@@ -24,6 +28,10 @@ export default function AddToCalendarWithStats({
   end,
   allDay,
   showAsIcon = false,
+  classId,
+  academyId,
+  roleBaile,
+  zonaTagId,
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
@@ -87,11 +95,34 @@ export default function AddToCalendarWithStats({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("eventos_interesados").insert({
+      // Registrar en eventos_interesados (lógica existente)
+      const { error: errorInteresados } = await supabase.from("eventos_interesados").insert({
         event_id: eventIdStr,
         user_id: user.id,
       });
-      if (error) throw error;
+      if (errorInteresados) throw errorInteresados;
+
+      // Registrar asistencia tentativa en clase_asistencias (si hay classId o academyId)
+      const finalClassId = classId || (typeof eventId === 'number' ? eventId : Number(eventIdStr));
+      if (finalClassId && !Number.isNaN(finalClassId)) {
+        const { error: errorAsistencia } = await supabase
+          .from("clase_asistencias")
+          .upsert({
+            user_id: user.id,
+            class_id: finalClassId,
+            academy_id: academyId || null,
+            role_baile: roleBaile || null,
+            zona_tag_id: zonaTagId || null,
+            status: "tentative",
+          }, {
+            onConflict: 'user_id,class_id'
+          });
+        
+        if (errorAsistencia) {
+          console.error("[AddToCalendarWithStats] Error registrando asistencia tentative:", errorAsistencia);
+          // No lanzar error aquí, solo loguear, para no interrumpir el flujo principal
+        }
+      }
 
       setAdded(true);
       setAlreadyAdded(true);

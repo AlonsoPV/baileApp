@@ -192,8 +192,9 @@ export default function ClassPublicScreen() {
         .class-hero-content > div:last-child {
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: center;
           align-items: center;
+          gap: 1rem;
         }
         
         .class-title {

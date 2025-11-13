@@ -30,6 +30,7 @@ import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { useAvailableTeachers, useAcceptedTeachers, useSendInvitation, useCancelInvitation } from "../../hooks/useAcademyTeacherInvitations";
 import { supabase } from "@/lib/supabase";
+import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPanel";
 
 const colors = {
   primary: '#E53935',
@@ -83,6 +84,7 @@ export default function AcademyProfileEditor() {
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
+  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
 
   // Hook para cambio de rol
   useRoleChange();
@@ -384,6 +386,58 @@ export default function AcademyProfileEditor() {
           <h1 className="org-editor__title">✏️ Editar Academia</h1>
           <div style={{ width: 100 }} />
         </div>
+
+        {/* Tabs */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          marginBottom: '2rem',
+          borderBottom: '2px solid rgba(255,255,255,0.1)',
+          paddingBottom: '0.5rem'
+        }}>
+          <button
+            onClick={() => setActiveTab("perfil")}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px 12px 0 0',
+              border: 'none',
+              background: activeTab === "perfil" 
+                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                : 'transparent',
+              color: '#fff',
+              fontWeight: activeTab === "perfil" ? 800 : 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              borderBottom: activeTab === "perfil" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
+            }}
+          >
+            📝 Perfil
+          </button>
+          <button
+            onClick={() => setActiveTab("metricas")}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px 12px 0 0',
+              border: 'none',
+              background: activeTab === "metricas" 
+                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                : 'transparent',
+              color: '#fff',
+              fontWeight: activeTab === "metricas" ? 800 : 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              borderBottom: activeTab === "metricas" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
+            }}
+          >
+            📊 Métricas clases
+          </button>
+        </div>
+
+        {activeTab === "metricas" && academyId && (
+          <AcademyMetricsPanel academyId={academyId} />
+        )}
+
+        {activeTab === "perfil" && (
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
           <ProfileNavigationToggle
@@ -1412,8 +1466,11 @@ export default function AcademyProfileEditor() {
           description="Videos promocionales, clases de muestra, testimonios"
           slots={[...VIDEO_SLOTS]}
         />
+        </div>
+        )}
+
       </div>
-    </div>
+      </div>
     </>
   );
 }

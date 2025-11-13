@@ -298,7 +298,11 @@ export default function ExploreHomeScreen() {
         for (const dn of days) {
           const idx = weekdayIndex(dn);
           if (idx < 0) continue;
-          const delta = (idx - todayIdx + 7) % 7;
+          // Si el día ya pasó esta semana (idx < todayIdx), calcular para la próxima semana
+          // Si el día es hoy o futuro (idx >= todayIdx), calcular para esta semana
+          const delta = idx >= todayIdx 
+            ? idx - todayIdx  // Esta semana
+            : (idx - todayIdx + 7) % 7; // Próxima semana (si ya pasó, sumar 7 días)
           if (minDelta === null || delta < minDelta) minDelta = delta;
         }
         if (minDelta === null) return null;
@@ -315,6 +319,22 @@ export default function ExploreHomeScreen() {
 
     const matchesPresetAndRange = (item: any) => {
       const occurrence = nextOccurrence(item);
+      // Filtrar fechas pasadas: si la ocurrencia es anterior a hoy (sin hora), eliminar
+      if (occurrence && todayBase) {
+        const occurrenceDate = new Date(Date.UTC(
+          occurrence.getUTCFullYear(),
+          occurrence.getUTCMonth(),
+          occurrence.getUTCDate(),
+          0, 0, 0
+        ));
+        const todayDate = new Date(Date.UTC(
+          todayBase.getUTCFullYear(),
+          todayBase.getUTCMonth(),
+          todayBase.getUTCDate(),
+          0, 0, 0
+        ));
+        if (occurrenceDate < todayDate) return false;
+      }
       if (rangeFrom && occurrence && occurrence < rangeFrom) return false;
       if (rangeTo && occurrence && occurrence > rangeTo) return false;
       if (preset === 'todos') return true;
@@ -334,7 +354,18 @@ export default function ExploreHomeScreen() {
     };
 
     const filtered = merged.filter(matchesPresetAndRange);
-    return filtered.slice(0, 12);
+    
+    // Ordenar por fecha cronológica (próxima ocurrencia)
+    const sorted = filtered.sort((a, b) => {
+      const dateA = nextOccurrence(a);
+      const dateB = nextOccurrence(b);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1; // Sin fecha al final
+      if (!dateB) return -1; // Sin fecha al final
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    return sorted.slice(0, 12);
   }, [academias, maestros, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
 
   const usuariosList = React.useMemo(
@@ -513,7 +544,54 @@ export default function ExploreHomeScreen() {
             {fechasLoading ? (
               <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
             ) : (() => {
-              const list = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
+              const parseYmdToDate = (value?: string | null) => {
+                if (!value) return null;
+                const plain = String(value).split('T')[0];
+                const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+                if (
+                  Number.isFinite(year) &&
+                  Number.isFinite(month) &&
+                  Number.isFinite(day)
+                ) {
+                  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+                }
+                const parsed = new Date(value);
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+              };
+              const todayBase = parseYmdToDate(todayYmd);
+              
+              // Filtrar fechas pasadas y ordenar cronológicamente
+              const allFechas = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
+              const filteredFechas = allFechas.filter((fecha: any) => {
+                const fechaDate = parseYmdToDate(fecha?.fecha);
+                if (!fechaDate || !todayBase) return true;
+                // Comparar solo la fecha (sin hora)
+                const fechaDateOnly = new Date(Date.UTC(
+                  fechaDate.getUTCFullYear(),
+                  fechaDate.getUTCMonth(),
+                  fechaDate.getUTCDate(),
+                  0, 0, 0
+                ));
+                const todayDateOnly = new Date(Date.UTC(
+                  todayBase.getUTCFullYear(),
+                  todayBase.getUTCMonth(),
+                  todayBase.getUTCDate(),
+                  0, 0, 0
+                ));
+                return fechaDateOnly >= todayDateOnly;
+              });
+              
+              // Ordenar por fecha cronológica
+              const sortedFechas = filteredFechas.sort((a: any, b: any) => {
+                const dateA = parseYmdToDate(a?.fecha);
+                const dateB = parseYmdToDate(b?.fecha);
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                return dateA.getTime() - dateB.getTime();
+              });
+              
+              const list = sortedFechas;
               return list.length ? (
                 <HorizontalSlider
                   {...sliderProps}
