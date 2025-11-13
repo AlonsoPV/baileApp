@@ -128,7 +128,7 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
               transform: 'translate(-50%, -50%)',
               width: '90%',
               maxWidth: '600px',
-              maxHeight: '90vh',
+              maxHeight: '85vh',
               background: 'linear-gradient(135deg, rgba(19,21,27,0.95), rgba(16,18,24,0.95))',
               borderRadius: '24px',
               border: '1px solid rgba(255,255,255,0.15)',
@@ -142,17 +142,18 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
             {/* Header */}
             <div
               style={{
-                padding: '2rem 2rem 1.5rem',
+                padding: '1.5rem 1.5rem 1rem',
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
                 background: 'linear-gradient(135deg, rgba(240,147,251,0.1), rgba(245,87,108,0.1))',
+                flexShrink: 0,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>
                     ⭐ Preferencias de Filtros
                   </h2>
-                  <p style={{ margin: 0, fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)' }}>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)' }}>
                     Configura tus filtros favoritos para aplicarlos automáticamente al explorar
                   </p>
                 </div>
@@ -185,17 +186,26 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
             </div>
 
             {/* Content */}
-            <div style={{ padding: '2rem', overflowY: 'auto', flex: 1 }}>
+            <div 
+              style={{ 
+                padding: '1.5rem', 
+                overflowY: 'auto', 
+                overflowX: 'hidden',
+                flex: 1,
+                minHeight: 0, // Importante para que el flex funcione correctamente
+                WebkitOverflowScrolling: 'touch', // Smooth scroll en iOS
+              }}
+            >
               {loading ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: '#fff' }}>
                   <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
                   <p>Cargando preferencias...</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gap: '2rem' }}>
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
                   {/* Ritmos favoritos */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
                       🎵 Ritmos Favoritos
                     </label>
                     <RitmosChips selected={ritmos} onChange={setRitmos} />
@@ -206,7 +216,7 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
 
                   {/* Zonas favoritas */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
                       🗺️ Zonas Favoritas
                     </label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -245,7 +255,7 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
 
                   {/* Rango de fecha favorito */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
                       📅 Rango de Fecha Favorito
                     </label>
                     <div style={{ display: 'grid', gap: '0.75rem' }}>
@@ -327,12 +337,13 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
             {/* Footer */}
             <div
               style={{
-                padding: '1.5rem 2rem',
+                padding: '1rem 1.5rem',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 background: 'rgba(0,0,0,0.2)',
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '1rem',
+                flexShrink: 0,
               }}
             >
               <button
