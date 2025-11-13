@@ -104,77 +104,202 @@ export default function ClasesLiveTabs({
     );
   }
 
+  // En móvil: mostrar lista vertical de días con sus clases
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          padding: "1rem",
+          borderRadius: 24,
+          border: "1px solid rgba(255,255,255,0.12)",
+          background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+          color: "#fff",
+        }}
+      >
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ fontWeight: 900, fontSize: "1.25rem", marginBottom: ".5rem" }}>{title}</div>
+          {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          {days.map((d) => (
+            <div key={d.key} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {/* Encabezado del día */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: ".8rem 1rem",
+                  borderRadius: 14,
+                  border: "1px solid rgba(30,136,229,.3)",
+                  background: "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))",
+                  fontWeight: 800,
+                  fontSize: "1.1rem",
+                }}
+              >
+                <span>🗓️ {d.label}</span>
+                <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length} {d.items.length === 1 ? 'clase' : 'clases'}</span>
+              </div>
+
+              {/* Clases del día */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: ".5rem" }}>
+                {d.items.map((c, idx) => {
+                  const titulo = c.titulo || c.nombre || 'Clase';
+                  const horaInicio = c.hora_inicio || c.inicio || '';
+                  const horaFin = c.hora_fin || c.fin || '';
+                  const ubicacion = c.ubicacion || (c.ubicacionJson?.nombre || c.ubicacionJson?.direccion || c.ubicacionJson?.lugar || '');
+                  const costo = c.costo;
+                  const moneda = c.moneda || 'MXN';
+                  const coverUrl = c.cover_url;
+                  const nivel = c.nivel;
+                  const ritmo = c.ritmo;
+                  const fecha = c.fecha;
+
+                  return (
+                    <motion.article
+                      key={c.id || idx}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: .25 }}
+                      onClick={() => handleClassClick(c, idx)}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: ".75rem",
+                        padding: "1rem",
+                        borderRadius: 16,
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        background: "rgba(255,255,255,0.06)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                        cursor: isClickable ? "pointer" : "default",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      {/* Cover - solo si existe */}
+                      {coverUrl && (
+                        <div
+                          style={{
+                            width: "100%",
+                            aspectRatio: "16/9",
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            background: "rgba(0,0,0,.2)",
+                          }}
+                        >
+                          <ImageWithFallback
+                            src={coverUrl}
+                            alt={titulo}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Info */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
+                          <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900, flex: 1 }}>{titulo}</h4>
+                          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+                            {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>}
+                            {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
+                          {fecha && <span>📅 {fecha}</span>}
+                          {(horaInicio || horaFin) && (
+                            <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
+                          )}
+                          {ubicacion && <span>📍 {ubicacion}</span>}
+                          {typeof costo === "number" && (
+                            <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
+                          )}
+                        </div>
+
+                        {c.descripcion && (
+                          <p style={{ margin: 0, opacity: .9, lineHeight: 1.5, fontSize: ".9rem" }}>
+                            {c.descripcion}
+                          </p>
+                        )}
+
+                        {/* CTA opcionales */}
+                        {isClickable && (
+                          <div style={{ display: "flex", gap: ".5rem", marginTop: ".25rem", flexWrap: "wrap" }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClassClick(c, idx);
+                              }}
+                              style={{
+                                padding: ".5rem .8rem",
+                                borderRadius: 999,
+                                border: "1px solid rgba(255,255,255,.2)",
+                                background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
+                                color: "#fff",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                fontSize: ".85rem",
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              Ver detalles
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </motion.article>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: diseño con tabs verticales
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "240px 1fr",
+        gridTemplateColumns: "240px 1fr",
         gap: "1.25rem",
         alignItems: "start",
-        padding: isMobile ? "1rem" : "1.25rem",
+        padding: "1.25rem",
         borderRadius: 24,
         border: "1px solid rgba(255,255,255,0.12)",
         background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
         color: "#fff",
       }}
     >
-      <style>{`
-        @media (max-width: 900px) {
-          .tabs-grid { grid-template-columns: 1fr !important; }
-          .tabs-nav { 
-            display: flex !important; 
-            flex-direction: row !important;
-            gap: .5rem; 
-            overflow-x: auto; 
-            padding-bottom: .25rem;
-            margin-bottom: 1rem;
-          }
-          .tabs-nav::-webkit-scrollbar { height: 6px; }
-          .tabs-nav::-webkit-scrollbar-track { background: transparent; }
-          .tabs-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 3px; }
-          .tab-content-mobile {
-            overflow: hidden;
-          }
-        }
-      `}</style>
-
-      <div className="tabs-grid" style={{ display: "contents" }}>
-        {/* Sidebar / Tabs verticales (desktop) o horizontales (móvil) */}
+      <div style={{ display: "contents" }}>
+        {/* Sidebar / Tabs verticales */}
         <nav
-          className="tabs-nav"
           aria-label="Días de la semana con clases"
           style={{
             display: "flex",
-            flexDirection: isMobile ? "row" : "column",
+            flexDirection: "column",
             gap: ".5rem",
             padding: ".25rem",
           }}
         >
-          {!isMobile && (
-            <div style={{ marginBottom: ".5rem" }}>
-              <div style={{ fontWeight: 900, fontSize: "1.25rem" }}>{title}</div>
-              {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
-            </div>
-          )}
-
-          {isMobile && (
-            <div style={{ marginBottom: ".5rem", minWidth: "100%" }}>
-              <div style={{ fontWeight: 900, fontSize: "1.25rem", marginBottom: ".5rem" }}>{title}</div>
-              {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem", marginBottom: ".5rem" }}>{subtitle}</div>}
-            </div>
-          )}
+          <div style={{ marginBottom: ".5rem" }}>
+            <div style={{ fontWeight: 900, fontSize: "1.25rem" }}>{title}</div>
+            {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
+          </div>
 
           {days.map((d, i) => {
             const isActive = i === activeIdx;
             return (
               <button
                 key={d.key}
-                onClick={() => handleTabClick(i)}
+                onClick={() => setActiveIdx(i)}
                 aria-pressed={isActive}
                 style={{
                   textAlign: "left",
-                  width: isMobile ? "auto" : "100%",
-                  minWidth: isMobile ? "140px" : "auto",
+                  width: "100%",
                   padding: ".8rem 1rem",
                   borderRadius: 14,
                   border: `1px solid ${isActive ? "rgba(30,136,229,.5)" : "rgba(255,255,255,.12)"}`,
@@ -187,41 +312,33 @@ export default function ClasesLiveTabs({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: ".5rem",
                   transition: "all 0.2s ease",
-                  whiteSpace: "nowrap",
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive && !isMobile) {
+                  if (!isActive) {
                     (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive && !isMobile) {
+                  if (!isActive) {
                     (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
                   }
                 }}
               >
                 <span>🗓️ {d.label}</span>
                 <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length}</span>
-                {isMobile && (
-                  <span style={{ fontSize: "1.2rem", transition: "transform 0.2s ease", transform: isActive ? "rotate(180deg)" : "rotate(0deg)" }}>
-                    ▼
-                  </span>
-                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Panel de contenido - Desktop: siempre visible, Móvil: solo si está activo */}
-        {!isMobile && (
-          <section
-            role="tabpanel"
-            aria-label={`Clases del día ${days[activeIdx]?.label}`}
-            style={{ display: "grid", gap: "1rem" }}
-          >
-            {days[activeIdx]?.items.map((c, idx) => {
+        {/* Panel de contenido */}
+        <section
+          role="tabpanel"
+          aria-label={`Clases del día ${days[activeIdx]?.label}`}
+          style={{ display: "grid", gap: "1rem" }}
+        >
+          {days[activeIdx]?.items.map((c, idx) => {
             const titulo = c.titulo || c.nombre || 'Clase';
             const horaInicio = c.hora_inicio || c.inicio || '';
             const horaFin = c.hora_fin || c.fin || '';
@@ -265,16 +382,12 @@ export default function ClasesLiveTabs({
                     background: "rgba(0,0,0,.2)",
                   }}
                 >
-                  {coverUrl ? (
+                  {coverUrl && (
                     <ImageWithFallback
                       src={coverUrl}
                       alt={titulo}
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", opacity: .8 }}>
-                      📚
-                    </div>
                   )}
                 </div>
 
@@ -338,150 +451,7 @@ export default function ClasesLiveTabs({
               </motion.article>
             );
           })}
-          </section>
-        )}
-
-        {/* Panel de contenido - Móvil: acordeón colapsable */}
-        {isMobile && days.map((d, dayIdx) => {
-          const isActive = dayIdx === activeIdx;
-          return (
-            <motion.section
-              key={d.key}
-              role="tabpanel"
-              aria-label={`Clases del día ${d.label}`}
-              className="tab-content-mobile"
-              initial={false}
-              animate={{
-                maxHeight: isActive ? "10000px" : 0,
-                opacity: isActive ? 1 : 0,
-                marginBottom: isActive ? "1rem" : 0,
-                paddingTop: isActive ? "0" : 0,
-                paddingBottom: isActive ? "0" : 0,
-              }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              style={{
-                overflow: "hidden",
-                display: "grid",
-                gap: "1rem",
-              }}
-            >
-              {d.items.map((c, idx) => {
-                const titulo = c.titulo || c.nombre || 'Clase';
-                const horaInicio = c.hora_inicio || c.inicio || '';
-                const horaFin = c.hora_fin || c.fin || '';
-                const ubicacion = c.ubicacion || (c.ubicacionJson?.nombre || c.ubicacionJson?.direccion || c.ubicacionJson?.lugar || '');
-                const costo = c.costo;
-                const moneda = c.moneda || 'MXN';
-                const coverUrl = c.cover_url;
-                const nivel = c.nivel;
-                const ritmo = c.ritmo;
-                const fecha = c.fecha;
-
-                return (
-                  <motion.article
-                    key={c.id || idx}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: .25 }}
-                    onClick={() => handleClassClick(c, idx)}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isMobile ? "1fr" : "140px 1fr",
-                      gap: "1rem",
-                      padding: "1rem",
-                      borderRadius: 16,
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      background: "rgba(255,255,255,0.06)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
-                      cursor: isClickable ? "pointer" : "default",
-                      transition: "all 0.2s ease",
-                    }}
-                    whileHover={isClickable && !isMobile ? { scale: 1.02, boxShadow: "0 12px 32px rgba(0,0,0,0.35)" } : {}}
-                  >
-                    {/* Cover */}
-                    {coverUrl && (
-                      <div
-                        style={{
-                          width: "100%",
-                          aspectRatio: "4/3",
-                          borderRadius: 14,
-                          overflow: "hidden",
-                          border: "1px solid rgba(255,255,255,0.12)",
-                          background: "rgba(0,0,0,.2)",
-                          marginBottom: isMobile ? ".5rem" : 0,
-                        }}
-                      >
-                        <ImageWithFallback
-                          src={coverUrl}
-                          alt={titulo}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Info */}
-                    <div style={{ display: "grid", gap: ".5rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
-                        <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
-                        <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                          {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>}
-                          {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
-                        {fecha && <span>📅 {fecha}</span>}
-                        {(horaInicio || horaFin) && (
-                          <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
-                        )}
-                        {ubicacion && <span>📍 {ubicacion}</span>}
-                        {typeof costo === "number" && (
-                          <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
-                        )}
-                      </div>
-
-                      {c.descripcion && (
-                        <p style={{ margin: 0, opacity: .9, lineHeight: 1.6 }}>
-                          {c.descripcion}
-                        </p>
-                      )}
-
-                      {/* CTA opcionales */}
-                      {isClickable && (
-                        <div style={{ display: "flex", gap: ".5rem", marginTop: ".35rem", flexWrap: "wrap" }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleClassClick(c, idx);
-                            }}
-                            style={{
-                              padding: ".6rem .9rem",
-                              borderRadius: 999,
-                              border: "1px solid rgba(255,255,255,.2)",
-                              background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
-                              color: "#fff",
-                              fontWeight: 800,
-                              cursor: "pointer",
-                              transition: "all 0.2s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
-                            }}
-                          >
-                            Ver detalles
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.article>
-                );
-              })}
-            </motion.section>
-          );
-        })}
+        </section>
       </div>
     </div>
   );
