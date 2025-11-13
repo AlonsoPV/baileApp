@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import type { Clase } from "@/types/classes";
 import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import AddToCalendarWithStats from "@/components/AddToCalendarWithStats";
+import ShareButton from "@/components/events/ShareButton";
 
 type Props = {
   classes: Clase[];
@@ -61,13 +63,6 @@ export default function ClasesLiveTabs({
     if (activeIdx >= days.length) setActiveIdx(0);
   }, [days.length, activeIdx]);
 
-  // Inicializar el primer día como expandido cuando hay días disponibles
-  React.useEffect(() => {
-    if (days.length > 0 && expandedDays.size === 0) {
-      setExpandedDays(new Set([days[0].key]));
-    }
-  }, [days, expandedDays.size]);
-
   const handleTabClick = (index: number) => {
     if (isMobile) {
       // En móvil: si ya está activa, colapsar; si no, expandir
@@ -94,6 +89,61 @@ export default function ClasesLiveTabs({
     if (isClickable && sourceType && sourceId) {
       navigate(`/clase/${sourceType}/${sourceId}?i=${index}`);
     }
+  };
+
+  // Formatear fecha: día número + mes abreviado (ej: "15 Nov")
+  const formatDateShort = (fecha?: string | null, diaSemana?: number | null): string | null => {
+    if (fecha) {
+      try {
+        const plain = String(fecha).split('T')[0];
+        const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+        if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+          const safe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+          return safe.toLocaleDateString('es-ES', { 
+            day: 'numeric', 
+            month: 'short',
+            timeZone: 'America/Mexico_City'
+          });
+        }
+      } catch (e) {
+        console.error('[ClasesLiveTabs] Error formatting date:', e);
+      }
+    }
+    // Si es clase recurrente (dia_semana), calcular próxima fecha
+    if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+      const today = new Date();
+      const currentDay = today.getDay();
+      let daysUntil = diaSemana - currentDay;
+      if (daysUntil < 0) daysUntil += 7; // Si ya pasó este día, ir a la próxima semana
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + daysUntil);
+      return nextDate.toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'short',
+        timeZone: 'America/Mexico_City'
+      });
+    }
+    return null;
+  };
+
+  // Calcular fecha completa para el calendario (necesita fecha completa, no solo día)
+  const getFullDateForCalendar = (fecha?: string | null, diaSemana?: number | null): string | null => {
+    if (fecha) {
+      return fecha;
+    }
+    if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+      const today = new Date();
+      const currentDay = today.getDay();
+      let daysUntil = diaSemana - currentDay;
+      if (daysUntil < 0) daysUntil += 7;
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + daysUntil);
+      const year = nextDate.getFullYear();
+      const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+      const day = String(nextDate.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return null;
   };
 
   if (!days.length) {
@@ -265,15 +315,26 @@ export default function ClasesLiveTabs({
                       {/* Info */}
                       <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
-                          <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900, flex: 1 }}>{titulo}</h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
+                            <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900 }}>{titulo}</h4>
+                            {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
+                              <span style={{ 
+                                fontSize: ".9rem", 
+                                opacity: 0.8, 
+                                fontWeight: 600,
+                                color: "rgba(255,255,255,0.9)"
+                              }}>
+                                {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                              </span>
+                            )}
+                          </div>
                           <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                            {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>}
+                            {/* {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>} */}
                             {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
                           </div>
                         </div>
 
                         <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
-                          {fecha && <span>📅 {fecha}</span>}
                           {(horaInicio || horaFin) && (
                             <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
                           )}
@@ -289,30 +350,94 @@ export default function ClasesLiveTabs({
                           </p>
                         )}
 
-                        {/* CTA opcionales */}
-                        {isClickable && (
-                          <div style={{ display: "flex", gap: ".5rem", marginTop: ".25rem", flexWrap: "wrap" }}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleClassClick(c, idx);
-                              }}
-                              style={{
-                                padding: ".5rem .8rem",
-                                borderRadius: 999,
-                                border: "1px solid rgba(255,255,255,.2)",
-                                background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
-                                color: "#fff",
-                                fontWeight: 800,
-                                cursor: "pointer",
-                                fontSize: ".85rem",
-                                transition: "all 0.2s ease",
-                              }}
-                            >
-                              Ver detalles
-                            </button>
-                          </div>
-                        )}
+                        {/* Botones de compartir, calendario y ver detalle */}
+                        <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
+                          {(() => {
+                            const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
+                            const startTime = horaInicio || '10:00';
+                            const endTime = horaFin || '12:00';
+                            
+                            // Construir fecha/hora completa para el calendario
+                            let calendarStart: string | null = null;
+                            let calendarEnd: string | null = null;
+                            
+                            if (fullDate) {
+                              const [year, month, day] = fullDate.split('-').map(Number);
+                              const [startHour, startMin] = startTime.split(':').map(Number);
+                              const [endHour, endMin] = endTime.split(':').map(Number);
+                              
+                              calendarStart = new Date(Date.UTC(year, month - 1, day, startHour || 10, startMin || 0, 0)).toISOString();
+                              calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
+                            }
+
+                            const shareUrl = isClickable && sourceType && sourceId 
+                              ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
+                              : window.location.href;
+
+                            return (
+                              <>
+                                {calendarStart && calendarEnd && (
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <AddToCalendarWithStats
+                                      eventId={c.id || idx}
+                                      title={titulo}
+                                      description={c.descripcion || undefined}
+                                      location={ubicacion || undefined}
+                                      start={calendarStart}
+                                      end={calendarEnd}
+                                      showAsIcon={true}
+                                    />
+                                  </div>
+                                )}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <ShareButton
+                                    url={shareUrl}
+                                    title={titulo}
+                                    text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
+                                    style={{ 
+                                      padding: ".5rem .8rem",
+                                      borderRadius: 999,
+                                      border: "1px solid rgba(255,255,255,.2)",
+                                      background: "rgba(255,255,255,0.08)",
+                                      color: "#fff",
+                                      fontWeight: 700,
+                                      fontSize: ".85rem",
+                                    }}
+                                  >
+                                    📤 Compartir
+                                  </ShareButton>
+                                </div>
+                                {isClickable && sourceType && sourceId && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClassClick(c, idx);
+                                    }}
+                                    style={{
+                                      padding: ".5rem .8rem",
+                                      borderRadius: 999,
+                                      border: "1px solid rgba(255,255,255,.2)",
+                                      background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
+                                      color: "#fff",
+                                      fontWeight: 700,
+                                      fontSize: ".85rem",
+                                      cursor: "pointer",
+                                      transition: "all 0.2s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
+                                    }}
+                                  >
+                                    👁️ Ver detalle
+                                  </button>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </motion.article>
                   );
@@ -426,7 +551,7 @@ export default function ClasesLiveTabs({
                 onClick={() => handleClassClick(c, idx)}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "140px 1fr",
+                  /* gridTemplateColumns: "140px 1fr", */
                   gap: "1rem",
                   padding: "1rem",
                   borderRadius: 16,
@@ -461,7 +586,19 @@ export default function ClasesLiveTabs({
                 {/* Info */}
                 <div style={{ display: "grid", gap: ".5rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem" }}>
-                    <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
+                    <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
+                      <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
+                      {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
+                        <span style={{ 
+                          fontSize: ".95rem", 
+                          opacity: 0.8, 
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.9)"
+                        }}>
+                          {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                       {ritmo && <span style={chipStyle}>🎶 {ritmo}</span>}
                       {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
@@ -469,7 +606,6 @@ export default function ClasesLiveTabs({
                   </div>
 
                   <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
-                    {fecha && <span>📅 {fecha}</span>}
                     {(horaInicio || horaFin) && (
                       <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
                     )}
@@ -485,35 +621,94 @@ export default function ClasesLiveTabs({
                     </p>
                   )}
 
-                  {/* CTA opcionales */}
-                  {isClickable && (
-                    <div style={{ display: "flex", gap: ".5rem", marginTop: ".35rem", flexWrap: "wrap" }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleClassClick(c, idx);
-                        }}
-                        style={{
-                          padding: ".6rem .9rem",
-                          borderRadius: 999,
-                          border: "1px solid rgba(255,255,255,.2)",
-                          background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
-                          color: "#fff",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
-                        }}
-                      >
-                        Ver detalles
-                      </button>
-                    </div>
-                  )}
+                  {/* Botones de compartir, calendario y ver detalle */}
+                  <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
+                    {(() => {
+                      const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
+                      const startTime = horaInicio || '10:00';
+                      const endTime = horaFin || '12:00';
+                      
+                      // Construir fecha/hora completa para el calendario
+                      let calendarStart: string | null = null;
+                      let calendarEnd: string | null = null;
+                      
+                      if (fullDate) {
+                        const [year, month, day] = fullDate.split('-').map(Number);
+                        const [startHour, startMin] = startTime.split(':').map(Number);
+                        const [endHour, endMin] = endTime.split(':').map(Number);
+                        
+                        calendarStart = new Date(Date.UTC(year, month - 1, day, startHour || 10, startMin || 0, 0)).toISOString();
+                        calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
+                      }
+
+                      const shareUrl = isClickable && sourceType && sourceId 
+                        ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
+                        : window.location.href;
+
+                      return (
+                        <>
+                          {calendarStart && calendarEnd && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <AddToCalendarWithStats
+                                eventId={c.id || idx}
+                                title={titulo}
+                                description={c.descripcion || undefined}
+                                location={ubicacion || undefined}
+                                start={calendarStart}
+                                end={calendarEnd}
+                                showAsIcon={true}
+                              />
+                            </div>
+                          )}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <ShareButton
+                              url={shareUrl}
+                              title={titulo}
+                              text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
+                              style={{ 
+                                padding: ".6rem .9rem",
+                                borderRadius: 999,
+                                border: "1px solid rgba(255,255,255,.2)",
+                                background: "rgba(255,255,255,0.08)",
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: ".9rem",
+                              }}
+                            >
+                              📤 Compartir
+                            </ShareButton>
+                          </div>
+                          {isClickable && sourceType && sourceId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClassClick(c, idx);
+                              }}
+                              style={{
+                                padding: ".6rem .9rem",
+                                borderRadius: 999,
+                                border: "1px solid rgba(255,255,255,.2)",
+                                background: "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))",
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: ".9rem",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.28))";
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.24), rgba(0,188,212,.18))";
+                              }}
+                            >
+                              👁️ Ver detalle
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </motion.article>
             );
