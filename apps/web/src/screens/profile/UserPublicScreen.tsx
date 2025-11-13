@@ -336,11 +336,11 @@ export const UserProfileLive: React.FC = () => {
     .map(item => item!.url);
 
   const profileUserId = profile?.user_id || profile?.id;
-  const { counts, setCounts } = useFollowerCounts(profileUserId);
+  const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
   const { isFollowing, toggleFollow, loading: followLoading } = useFollowStatus(profileUserId);
   const isOwnProfile = session?.user?.id && profileUserId === session.user.id;
   const showFollowButton = !!session && !isOwnProfile && !!profileUserId;
-  const { following, followers } = useFollowLists(profileUserId);
+  const { following, followers, refetch: refetchLists } = useFollowLists(profileUserId);
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("followers");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
@@ -421,7 +421,9 @@ export const UserProfileLive: React.FC = () => {
       return;
     }
 
+    // Refrescar contadores y listas después de seguir/dejar de seguir
     if (typeof result?.following === 'boolean') {
+      // Actualización optimista local
       setCounts((prev) => ({
         following: prev.following,
         followers: Math.max(
@@ -429,6 +431,12 @@ export const UserProfileLive: React.FC = () => {
           prev.followers + (result.following ? 1 : -1)
         ),
       }));
+      
+      // Refrescar datos desde el servidor después de un breve delay
+      setTimeout(() => {
+        refetchCounts();
+        refetchLists();
+      }, 500);
     }
   };
 

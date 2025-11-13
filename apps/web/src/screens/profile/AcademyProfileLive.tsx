@@ -15,6 +15,8 @@ import InvitedMastersSection from "../../components/profile/InvitedMastersSectio
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
+import ClasesLiveTabs from '../../components/classes/ClasesLiveTabs';
+import { useLiveClasses } from '../../hooks/useLiveClasses';
 import CrearClase from "../../components/events/CrearClase";
 import { useUpsertAcademy } from "../../hooks/useAcademy";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
@@ -356,6 +358,9 @@ export default function AcademyProfileLive() {
   const academyId = (academy as any)?.id;
   const { data: acceptedTeachers } = useAcceptedTeachers(academyId);
   const upsert = useUpsertAcademy();
+  
+  // Obtener clases desde las tablas academy_classes
+  const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses({ academyId });
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
   React.useEffect(() => {
@@ -1059,21 +1064,36 @@ export default function AcademyProfileLive() {
 
             {/* Contenido de clases */}
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <ClasesLive
-                title=""
-                cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
-                costos={(academy as any)?.costos || []}
-                ubicacion={{
-                  nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-                  direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-                  ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-                  referencias: (academy as any)?.ubicaciones?.[0]?.referencias
-                }}
-                showCalendarButton={true}
-                sourceType="academy"
-                sourceId={academy?.id}
-                isClickable={false}
-              />
+              {classesLoading ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+                  Cargando clases...
+                </div>
+              ) : classesFromTables && classesFromTables.length > 0 ? (
+                <ClasesLiveTabs
+                  classes={classesFromTables}
+                  title=""
+                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                  sourceType="academy"
+                  sourceId={academy?.id}
+                  isClickable={false}
+                />
+              ) : (
+                <ClasesLive
+                  title=""
+                  cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
+                  costos={(academy as any)?.costos || []}
+                  ubicacion={{
+                    nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                    direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                    ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                    referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+                  }}
+                  showCalendarButton={true}
+                  sourceType="academy"
+                  sourceId={academy?.id}
+                  isClickable={false}
+                />
+              )}
             </div>
           </motion.section>
 

@@ -13,6 +13,8 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import ClasesLive from "../../components/events/ClasesLive";
+import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
+import { useLiveClasses } from "../../hooks/useLiveClasses";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
@@ -211,6 +213,9 @@ export default function AcademyPublicScreen() {
   
   // Obtener maestros aceptados
   const { data: acceptedTeachers } = useAcceptedTeachers(id);
+  
+  // Obtener clases desde las tablas academy_classes
+  const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses({ academyId: id });
 
   const media = (academy as any)?.media || [];
   const carouselPhotos = PHOTO_SLOTS
@@ -623,21 +628,36 @@ export default function AcademyPublicScreen() {
             </div>
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <ClasesLive
-                title=""
-                cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
-                costos={(academy as any)?.costos || []}
-                ubicacion={{
-                  nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
-                  direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
-                  ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
-                  referencias: (academy as any)?.ubicaciones?.[0]?.referencias
-                }}
-                showCalendarButton={true}
-                sourceType="academy"
-                sourceId={(academy as any)?.id}
-                isClickable={true}
-              />
+              {classesLoading ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+                  Cargando clases...
+                </div>
+              ) : classesFromTables && classesFromTables.length > 0 ? (
+                <ClasesLiveTabs
+                  classes={classesFromTables}
+                  title=""
+                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                  sourceType="academy"
+                  sourceId={(academy as any)?.id}
+                  isClickable={true}
+                />
+              ) : (
+                <ClasesLive
+                  title=""
+                  cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
+                  costos={(academy as any)?.costos || []}
+                  ubicacion={{
+                    nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
+                    direccion: (academy as any)?.ubicaciones?.[0]?.direccion,
+                    ciudad: (academy as any)?.ubicaciones?.[0]?.ciudad,
+                    referencias: (academy as any)?.ubicaciones?.[0]?.referencias
+                  }}
+                  showCalendarButton={true}
+                  sourceType="academy"
+                  sourceId={(academy as any)?.id}
+                  isClickable={true}
+                />
+              )}
             </div>
           </motion.section>
 
