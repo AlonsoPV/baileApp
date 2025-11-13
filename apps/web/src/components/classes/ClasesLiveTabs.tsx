@@ -481,6 +481,7 @@ export default function ClasesLiveTabs({
                                         sourceType,
                                         sourceId,
                                         academyId: sourceType === 'academy' && sourceId ? Number(sourceId) : undefined,
+                                        teacherId: sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined,
                                         roleBaile: userProfile?.rol_baile || null,
                                       });
                                       return (
@@ -488,6 +489,7 @@ export default function ClasesLiveTabs({
                                           eventId={c.id || idx}
                                           classId={classIdForMetrics}
                                           academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                    teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
                                           roleBaile={userProfile?.rol_baile || null}
                                           zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
                                           title={titulo}
@@ -817,6 +819,7 @@ export default function ClasesLiveTabs({
                                     eventId={c.id || idx}
                                     classId={classIdForMetrics}
                                     academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                    teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
                                     roleBaile={userProfile?.rol_baile || null}
                                     zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
                                     title={titulo}

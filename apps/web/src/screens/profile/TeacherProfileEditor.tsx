@@ -29,6 +29,7 @@ import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
+import { TeacherMetricsPanel } from "../../components/profile/TeacherMetricsPanel";
 
 const colors = {
   primary: '#E53935',
@@ -81,6 +82,7 @@ export default function TeacherProfileEditor() {
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
+  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
 
   // Hooks para invitaciones
   const teacherId = (teacher as any)?.id;
@@ -407,6 +409,53 @@ export default function TeacherProfileEditor() {
             liveHref="/profile/teacher"
           />
         </div>
+
+        {/* Tabs Perfil / Métricas */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <button
+            onClick={() => setActiveTab("perfil")}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px 12px 0 0',
+              border: 'none',
+              background: activeTab === "perfil" 
+                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                : 'transparent',
+              color: '#fff',
+              fontWeight: activeTab === "perfil" ? 800 : 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              borderBottom: activeTab === "perfil" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
+            }}
+          >
+            📝 Perfil
+          </button>
+          <button
+            onClick={() => setActiveTab("metricas")}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px 12px 0 0',
+              border: 'none',
+              background: activeTab === "metricas" 
+                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                : 'transparent',
+              color: '#fff',
+              fontWeight: activeTab === "metricas" ? 800 : 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              borderBottom: activeTab === "metricas" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
+            }}
+          >
+            📊 Métricas clases
+          </button>
+        </div>
+
+        {activeTab === "metricas" && teacherId && (
+          <TeacherMetricsPanel teacherId={teacherId} />
+        )}
+
+        {activeTab === "perfil" && (
+          <>
 
         {/* Mensaje de estado global */}
         {statusMsg && (
@@ -1322,6 +1371,8 @@ export default function TeacherProfileEditor() {
           description="Videos promocionales, clases de muestra, testimonios"
           slots={[...VIDEO_SLOTS]}
         />
+          </>
+        )}
       </div>
     </div>
     </>

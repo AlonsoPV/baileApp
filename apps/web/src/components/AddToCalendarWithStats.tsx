@@ -17,6 +17,7 @@ type AddToCalendarProps = {
   showAsIcon?: boolean;
   classId?: number;      // ID de clase (si es diferente de eventId)
   academyId?: number;    // ID de academia dueña de la clase
+  teacherId?: number;    // ID de maestro dueño de la clase
   roleBaile?: 'lead' | 'follow' | 'ambos' | null; // Rol de baile del usuario
   zonaTagId?: number | null; // ID de tag de zona
   // Información de la clase para calcular fechas específicas
@@ -36,6 +37,7 @@ export default function AddToCalendarWithStats({
   showAsIcon = false,
   classId,
   academyId,
+  teacherId,
   roleBaile,
   zonaTagId,
   fecha,
@@ -134,6 +136,7 @@ export default function AddToCalendarWithStats({
         eventId,
         eventIdStr,
         academyId,
+        teacherId,
         roleBaile,
         zonaTagId,
         userId: user.id,
@@ -142,6 +145,7 @@ export default function AddToCalendarWithStats({
       console.log("[AddToCalendarWithStats] 🔍 Props recibidos:", {
         classId,
         academyId,
+        teacherId,
         roleBaile,
         zonaTagId,
         eventId,
@@ -185,6 +189,7 @@ export default function AddToCalendarWithStats({
             user_id: user.id,
             class_id: finalClassId,
             academy_id: academyId || null,
+            teacher_id: teacherId || null,
             role_baile: normalizedRoleBaile || null,
             zona_tag_id: zonaTagId || null,
             status: "tentative" as const,
@@ -231,11 +236,16 @@ export default function AddToCalendarWithStats({
             console.log("[AddToCalendarWithStats] ✅", insertData?.length || 0, "asistencias registradas exitosamente");
           }
           
-          // Invalidar y refetch queries de métricas si hay academyId
+          // Invalidar y refetch queries de métricas si hay academyId o teacherId
           if (academyId) {
             console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
             qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
             qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
+          }
+          if (teacherId) {
+            console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para teacherId:", teacherId);
+            qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+            qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
           }
         } catch (err) {
           console.error("[AddToCalendarWithStats] ❌ Error inesperado:", err);

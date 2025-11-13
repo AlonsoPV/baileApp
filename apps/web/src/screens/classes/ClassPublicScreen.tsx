@@ -464,6 +464,7 @@ export default function ClassPublicScreen() {
                       eventId={classUniqueId || idNum}
                       classId={classUniqueId || undefined}
                       academyId={!isTeacher ? profile?.id : undefined}
+                      teacherId={isTeacher ? profile?.id : undefined}
                       roleBaile={userProfile?.rol_baile || null}
                       zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
                       title={classTitle}
