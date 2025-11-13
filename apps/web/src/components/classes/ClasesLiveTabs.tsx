@@ -43,6 +43,7 @@ export default function ClasesLiveTabs({
     return grouped;
   }, [classes]);
   const [activeIdx, setActiveIdx] = React.useState(0);
+  const [expandedDays, setExpandedDays] = React.useState<Set<number>>(new Set());
   
   console.log("[ClasesLiveTabs] Days length:", days.length, "Active idx:", activeIdx);
 
@@ -60,6 +61,13 @@ export default function ClasesLiveTabs({
     if (activeIdx >= days.length) setActiveIdx(0);
   }, [days.length, activeIdx]);
 
+  // Inicializar el primer día como expandido cuando hay días disponibles
+  React.useEffect(() => {
+    if (days.length > 0 && expandedDays.size === 0) {
+      setExpandedDays(new Set([days[0].key]));
+    }
+  }, [days, expandedDays.size]);
+
   const handleTabClick = (index: number) => {
     if (isMobile) {
       // En móvil: si ya está activa, colapsar; si no, expandir
@@ -68,6 +76,18 @@ export default function ClasesLiveTabs({
       // En desktop: siempre mostrar el contenido
       setActiveIdx(index);
     }
+  };
+
+  const toggleDay = (dayKey: number) => {
+    setExpandedDays(prev => {
+      const next = new Set(prev);
+      if (next.has(dayKey)) {
+        next.delete(dayKey);
+      } else {
+        next.add(dayKey);
+      }
+      return next;
+    });
   };
 
   const handleClassClick = (clase: Clase, index: number) => {
@@ -122,29 +142,75 @@ export default function ClasesLiveTabs({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          {days.map((d) => (
-            <div key={d.key} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {/* Encabezado del día */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: ".8rem 1rem",
-                  borderRadius: 14,
-                  border: "1px solid rgba(30,136,229,.3)",
-                  background: "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))",
-                  fontWeight: 800,
-                  fontSize: "1.1rem",
-                }}
-              >
-                <span>🗓️ {d.label}</span>
-                <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length} {d.items.length === 1 ? 'clase' : 'clases'}</span>
-              </div>
+          {days.map((d) => {
+            const isExpanded = expandedDays.has(d.key);
+            return (
+              <div key={d.key} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {/* Encabezado del día - clickeable para colapsar/expandir */}
+                <button
+                  onClick={() => toggleDay(d.key)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: ".8rem 1rem",
+                    borderRadius: 14,
+                    border: `1px solid ${isExpanded ? "rgba(30,136,229,.5)" : "rgba(30,136,229,.3)"}`,
+                    background: isExpanded
+                      ? "linear-gradient(135deg, rgba(30,136,229,.25), rgba(0,188,212,.15))"
+                      : "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))",
+                    fontWeight: 800,
+                    fontSize: "1.1rem",
+                    cursor: "pointer",
+                    color: "#fff",
+                    transition: "all 0.2s ease",
+                    width: "100%",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.3), rgba(0,188,212,.2))";
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget as HTMLButtonElement;
+                    target.style.background = isExpanded
+                      ? "linear-gradient(135deg, rgba(30,136,229,.25), rgba(0,188,212,.15))"
+                      : "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))";
+                  }}
+                >
+                  <span>🗓️ {d.label}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
+                    <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length} {d.items.length === 1 ? 'clase' : 'clases'}</span>
+                    <span
+                      style={{
+                        fontSize: "1.2rem",
+                        transition: "transform 0.3s ease",
+                        transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                        display: "inline-block",
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </div>
+                </button>
 
-              {/* Clases del día */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: ".5rem" }}>
-                {d.items.map((c, idx) => {
+                {/* Clases del día - colapsable */}
+                <motion.div
+                  initial={false}
+                  animate={{
+                    height: isExpanded ? "auto" : 0,
+                    opacity: isExpanded ? 1 : 0,
+                    marginBottom: isExpanded ? "0" : 0,
+                  }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  style={{
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                    paddingLeft: ".5rem",
+                  }}
+                >
+                  {isExpanded && d.items.map((c, idx) => {
                   const titulo = c.titulo || c.nombre || 'Clase';
                   const horaInicio = c.hora_inicio || c.inicio || '';
                   const horaFin = c.hora_fin || c.fin || '';
@@ -250,10 +316,11 @@ export default function ClasesLiveTabs({
                       </div>
                     </motion.article>
                   );
-                })}
+                  })}
+                  </motion.div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -372,7 +439,7 @@ export default function ClasesLiveTabs({
                 whileHover={isClickable ? { scale: 1.02, boxShadow: "0 12px 32px rgba(0,0,0,0.35)" } : {}}
               >
                 {/* Cover */}
-                <div
+               {/*  <div
                   style={{
                     width: "100%",
                     aspectRatio: "4/3",
@@ -389,7 +456,7 @@ export default function ClasesLiveTabs({
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
                   )}
-                </div>
+                </div> */}
 
                 {/* Info */}
                 <div style={{ display: "grid", gap: ".5rem" }}>
