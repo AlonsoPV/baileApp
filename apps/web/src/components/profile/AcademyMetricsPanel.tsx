@@ -5,7 +5,14 @@ import { useAcademyClassMetrics } from "@/hooks/useAcademyClassMetrics";
 type PanelProps = { academyId: number };
 
 export function AcademyMetricsPanel({ academyId }: PanelProps) {
-  const { global, porClase, loading, error } = useAcademyClassMetrics(academyId);
+  const { global, porClase, loading, error, refetch } = useAcademyClassMetrics(academyId);
+  
+  // Refrescar métricas cada vez que se monta el componente
+  React.useEffect(() => {
+    if (academyId) {
+      refetch();
+    }
+  }, [academyId, refetch]);
 
   if (loading) {
     return (

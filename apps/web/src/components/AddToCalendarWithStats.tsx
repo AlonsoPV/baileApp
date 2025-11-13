@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
 
@@ -39,6 +40,7 @@ export default function AddToCalendarWithStats({
   const [user, setUser] = useState<any>(null);
   const [alreadyAdded, setAlreadyAdded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const qc = useQueryClient();
 
   const eventIdStr = String(eventId);
 
@@ -105,22 +107,52 @@ export default function AddToCalendarWithStats({
       // Registrar asistencia tentativa en clase_asistencias (si hay classId o academyId)
       const finalClassId = classId || (typeof eventId === 'number' ? eventId : Number(eventIdStr));
       if (finalClassId && !Number.isNaN(finalClassId)) {
-        const { error: errorAsistencia } = await supabase
-          .from("clase_asistencias")
-          .upsert({
-            user_id: user.id,
-            class_id: finalClassId,
-            academy_id: academyId || null,
-            role_baile: roleBaile || null,
-            zona_tag_id: zonaTagId || null,
-            status: "tentative",
-          }, {
-            onConflict: 'user_id,class_id'
-          });
-        
-        if (errorAsistencia) {
-          console.error("[AddToCalendarWithStats] Error registrando asistencia tentative:", errorAsistencia);
-          // No lanzar error aquí, solo loguear, para no interrumpir el flujo principal
+        try {
+          // Intentar insertar primero
+          const { error: insertError } = await supabase
+            .from("clase_asistencias")
+            .insert({
+              user_id: user.id,
+              class_id: finalClassId,
+              academy_id: academyId || null,
+              role_baile: roleBaile || null,
+              zona_tag_id: zonaTagId || null,
+              status: "tentative",
+            });
+          
+          // Si falla por conflicto (ya existe), actualizar
+          if (insertError && insertError.code === '23505') {
+            const { error: updateError } = await supabase
+              .from("clase_asistencias")
+              .update({
+                academy_id: academyId || null,
+                role_baile: roleBaile || null,
+                zona_tag_id: zonaTagId || null,
+                status: "tentative",
+              })
+              .eq("user_id", user.id)
+              .eq("class_id", finalClassId);
+            
+            if (updateError) {
+              console.error("[AddToCalendarWithStats] Error actualizando asistencia tentative:", updateError);
+            } else {
+              console.log("[AddToCalendarWithStats] ✅ Asistencia actualizada exitosamente");
+              // Invalidar queries de métricas si hay academyId
+              if (academyId) {
+                qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+              }
+            }
+          } else if (insertError) {
+            console.error("[AddToCalendarWithStats] Error insertando asistencia tentative:", insertError);
+          } else {
+            console.log("[AddToCalendarWithStats] ✅ Asistencia registrada exitosamente");
+            // Invalidar queries de métricas si hay academyId
+            if (academyId) {
+              qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+            }
+          }
+        } catch (err) {
+          console.error("[AddToCalendarWithStats] Error inesperado:", err);
         }
       }
 
