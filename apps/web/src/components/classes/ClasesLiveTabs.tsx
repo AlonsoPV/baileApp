@@ -8,6 +8,7 @@ import AddToCalendarWithStats from "@/components/AddToCalendarWithStats";
 import ShareButton from "@/components/events/ShareButton";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useTags } from "@/hooks/useTags";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 type Props = {
   classes: Clase[];
@@ -41,6 +42,7 @@ export default function ClasesLiveTabs({
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = React.useState(false);
   const { data: allTags } = useTags() as any;
+  const { profile: userProfile } = useUserProfile();
   console.log("[ClasesLiveTabs] Received classes:", classes);
   const days = React.useMemo(() => {
     const grouped = groupClassesByWeekday(classes || []);
@@ -425,6 +427,10 @@ export default function ClasesLiveTabs({
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <AddToCalendarWithStats
                                       eventId={c.id || idx}
+                                      classId={c.id || undefined}
+                                      academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                      roleBaile={userProfile?.rol_baile || null}
+                                      zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
                                       title={titulo}
                                       description={c.descripcion || undefined}
                                       location={ubicacion || undefined}
@@ -704,6 +710,10 @@ export default function ClasesLiveTabs({
                             <div onClick={(e) => e.stopPropagation()}>
                               <AddToCalendarWithStats
                                 eventId={c.id || idx}
+                                classId={c.id || undefined}
+                                academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                roleBaile={userProfile?.rol_baile || null}
+                                zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
                                 title={titulo}
                                 description={c.descripcion || undefined}
                                 location={ubicacion || undefined}

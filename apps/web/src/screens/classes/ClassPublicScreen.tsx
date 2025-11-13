@@ -7,6 +7,7 @@ import AcademyCard from '@/components/explore/cards/AcademyCard';
 import AddToCalendarWithStats from '@/components/AddToCalendarWithStats';
 import { useTeacherPublic } from '@/hooks/useTeacher';
 import { useAcademyPublic } from '@/hooks/useAcademy';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { urls } from '@/lib/urls';
 
 type SourceType = 'teacher' | 'academy';
@@ -26,6 +27,7 @@ export default function ClassPublicScreen() {
   const isTeacher = sourceType === 'teacher';
   const teacherQ = useTeacherPublic(isTeacher && !Number.isNaN(idNum) ? idNum : (undefined as any));
   const academyQ = useAcademyPublic(!isTeacher && !Number.isNaN(idNum) ? idNum : (undefined as any));
+  const { profile: userProfile } = useUserProfile();
 
   const loading = isTeacher ? teacherQ.isLoading : academyQ.isLoading;
   const profile: any = isTeacher ? teacherQ.data : academyQ.data;
@@ -443,6 +445,10 @@ export default function ClassPublicScreen() {
                   >
                     <AddToCalendarWithStats
                       eventId={idNum}
+                      classId={idNum}
+                      academyId={!isTeacher ? idNum : undefined}
+                      roleBaile={userProfile?.rol_baile || null}
+                      zonaTagId={profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
                       title={classTitle}
                       description={`Clase de ${classTitle} con ${creatorName}`}
                       location={locationLabel}
