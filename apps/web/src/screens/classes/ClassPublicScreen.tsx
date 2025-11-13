@@ -62,16 +62,33 @@ export default function ClassPublicScreen() {
   // Seleccionar SOLO una clase del cronograma (por id o índice). Fallback: primera.
   const classesArr = Array.isArray(cronograma) ? (cronograma as any[]) : [];
   let selectedClass: any | undefined = undefined;
+  let selectedClassIndex = 0;
+  
   if (classIdParam) {
-    selectedClass = classesArr.find((c: any) => String(c?.id) === String(classIdParam));
+    const foundIndex = classesArr.findIndex((c: any) => String(c?.id) === String(classIdParam));
+    if (foundIndex >= 0) {
+      selectedClass = classesArr[foundIndex];
+      selectedClassIndex = foundIndex;
+    }
   }
   if (!selectedClass && classIndexParam !== '') {
     const idx = Number(classIndexParam);
-    if (!Number.isNaN(idx)) selectedClass = classesArr[idx];
+    if (!Number.isNaN(idx) && idx >= 0 && idx < classesArr.length) {
+      selectedClass = classesArr[idx];
+      selectedClassIndex = idx;
+    }
   }
   if (!selectedClass) {
     selectedClass = classesArr[0];
+    selectedClassIndex = 0;
   }
+  
+  // Generar un ID único para la clase basado en el índice (similar a useLiveClasses)
+  // Si la clase tiene diasSemana, usar el primer día; si tiene fecha, usar 0
+  const classUniqueId = selectedClass 
+    ? (selectedClassIndex * 1000 + (selectedClass.diasSemana && Array.isArray(selectedClass.diasSemana) ? 0 : 0))
+    : undefined;
+  
   const cronogramaSelected = selectedClass ? [selectedClass] : [];
 
   // Ubicación: priorizar la de la clase si existe, si no usar base
@@ -444,11 +461,11 @@ export default function ClassPublicScreen() {
                     whileTap={{ scale: 0.97 }}
                   >
                     <AddToCalendarWithStats
-                      eventId={idNum}
-                      classId={idNum}
+                      eventId={classUniqueId || idNum}
+                      classId={classUniqueId || undefined}
                       academyId={!isTeacher ? profile?.id : undefined}
                       roleBaile={userProfile?.rol_baile || null}
-                      zonaTagId={profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
+                      zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
                       title={classTitle}
                       description={`Clase de ${classTitle} con ${creatorName}`}
                       location={locationLabel}
