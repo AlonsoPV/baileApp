@@ -123,22 +123,34 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              maxWidth: '600px',
-              maxHeight: '85vh',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              height: '100%',
               background: 'linear-gradient(135deg, rgba(19,21,27,0.95), rgba(16,18,24,0.95))',
-              borderRadius: '24px',
-              border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              borderRadius: 0,
+              border: 'none',
+              boxShadow: 'none',
               zIndex: 1001,
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
             }}
           >
+            {/* Contenedor interno responsivo */}
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '600px',
+                height: '100%',
+                margin: '0 auto',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
             {/* Header */}
             <div
               style={{
@@ -383,6 +395,7 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
               >
                 {saved ? '✅ Guardado' : isSaving ? 'Guardando...' : '💾 Guardar cambios'}
               </button>
+            </div>
             </div>
           </motion.div>
         </>
