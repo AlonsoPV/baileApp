@@ -175,10 +175,12 @@ export default function AddToCalendarWithStats({
               console.error("[AddToCalendarWithStats] ❌ Error actualizando asistencia tentative:", updateError);
             } else {
               console.log("[AddToCalendarWithStats] ✅ Asistencia actualizada exitosamente:", updateData);
-              // Invalidar queries de métricas si hay academyId
+              // Invalidar y refetch queries de métricas si hay academyId
               if (academyId) {
-                console.log("[AddToCalendarWithStats] 🔄 Invalidando queries para academyId:", academyId);
+                console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
                 qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+                // Forzar refetch inmediato
+                qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
               }
             }
           } else if (insertError) {
@@ -191,10 +193,12 @@ export default function AddToCalendarWithStats({
             });
           } else {
             console.log("[AddToCalendarWithStats] ✅ Asistencia registrada exitosamente:", insertData);
-            // Invalidar queries de métricas si hay academyId
+            // Invalidar y refetch queries de métricas si hay academyId
             if (academyId) {
-              console.log("[AddToCalendarWithStats] 🔄 Invalidando queries para academyId:", academyId);
+              console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
               qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+              // Forzar refetch inmediato
+              qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
             }
           }
         } catch (err) {

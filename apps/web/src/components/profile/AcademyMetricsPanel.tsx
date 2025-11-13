@@ -10,13 +10,20 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
   console.log("[AcademyMetricsPanel] 🔍 academyId recibido:", academyId);
   console.log("[AcademyMetricsPanel] 📊 Métricas:", { global, porClase, loading, error });
   
-  // Refrescar métricas cada vez que se monta el componente
+  // Refrescar métricas cada vez que se monta el componente y cuando cambian los datos
   React.useEffect(() => {
     if (academyId) {
       console.log("[AcademyMetricsPanel] 🔄 Refrescando métricas para academyId:", academyId);
       refetch();
     }
   }, [academyId, refetch]);
+  
+  // También refrescar cuando cambian las métricas (para detectar nuevos registros)
+  React.useEffect(() => {
+    if (academyId && !loading) {
+      console.log("[AcademyMetricsPanel] 📊 Métricas actualizadas, total tentativos:", global?.totalTentativos);
+    }
+  }, [global, porClase, academyId, loading]);
 
   if (loading) {
     return (

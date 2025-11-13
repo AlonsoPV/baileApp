@@ -174,7 +174,9 @@ export function useAcademyClassMetrics(academyId?: number) {
         porClase: Array.from(mapPorClase.values()).sort((a, b) => b.totalTentativos - a.totalTentativos),
       };
     },
-    refetchInterval: 10000, // Refrescar cada 10 segundos
+    refetchInterval: 3000, // Refrescar cada 3 segundos
+    staleTime: 0, // Los datos se consideran obsoletos inmediatamente
+    gcTime: 0, // No cachear los datos (gcTime reemplaza a cacheTime en React Query v5)
   });
 
   return {

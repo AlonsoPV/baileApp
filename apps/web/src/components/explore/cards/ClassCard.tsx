@@ -67,9 +67,14 @@ const fmtDate = (s?: string) => {
 
 export default function ClassCard({ item }: Props) {
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
-  const href = item.ownerType === 'academy'
-    ? (item.ownerId ? `/clase/academy/${item.ownerId}` : '/clase?type=academy')
-    : (item.ownerId ? `/clase/teacher/${item.ownerId}` : '/clase?type=teacher');
+  // Construir la ruta correcta: /clase/:type/:id
+  // Si hay ownerType y ownerId, usar la ruta con parámetros
+  // Si no, usar query params como fallback
+  const href = item.ownerType && item.ownerId
+    ? `/clase/${item.ownerType}/${item.ownerId}`
+    : (item.ownerId 
+      ? `/clase?type=${item.ownerType || 'teacher'}&id=${item.ownerId}`
+      : `/clase?type=${item.ownerType || 'teacher'}`);
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();

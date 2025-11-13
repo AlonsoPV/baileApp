@@ -419,7 +419,9 @@ export default function ClasesLiveTabs({
 
                             const shareUrl = isClickable && sourceType && sourceId 
                               ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
-                              : window.location.href;
+                              : (sourceType && sourceId 
+                                ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                                : window.location.href);
 
                             return (
                               <>
@@ -702,7 +704,9 @@ export default function ClasesLiveTabs({
 
                       const shareUrl = isClickable && sourceType && sourceId 
                         ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${idx}`
-                        : window.location.href;
+                        : (sourceType && sourceId 
+                          ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                          : window.location.href);
 
                       return (
                         <>
