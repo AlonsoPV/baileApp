@@ -531,8 +531,42 @@ export default function AcademyPublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="academy-banner glass-card-container"
-          style={{ position: 'relative', margin: '0 auto', overflow: 'hidden' }}
+          style={{ position: 'relative', margin: '0 auto', overflow: 'visible' }}
         >
+          {/* Badge de verificación abajo del banner */}
+          {((academy as any)?.estado_aprobacion === 'aprobado') && (
+            <div className="badge" style={{
+              position: 'absolute',
+              left: '8px',
+              bottom: '-10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '.45rem',
+              padding: '.35rem .6rem',
+              borderRadius: '999px',
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #106c37, #0b5)',
+              border: '1px solid #13a65a',
+              boxShadow: '0 8px 18px rgba(0,0,0,.35)',
+              fontSize: '.82rem',
+              color: '#fff',
+              zIndex: 10
+            }}>
+              <div className="dot" style={{
+                width: '16px',
+                height: '16px',
+                display: 'grid',
+                placeItems: 'center',
+                background: '#16c784',
+                borderRadius: '50%',
+                color: '#062d1f',
+                fontSize: '.75rem',
+                fontWeight: 900
+              }}>✓</div>
+              <span>Verificado</span>
+            </div>
+          )}
+          {/* Botón de compartir */}
           <button
             aria-label="Compartir perfil"
             title="Compartir"
@@ -549,9 +583,28 @@ export default function AcademyPublicScreen() {
                 }
               } catch {}
             }}
-            style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', borderRadius: 999, backdropFilter: 'blur(8px)', cursor: 'pointer', zIndex: 10 }}
-          >📤</button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 56, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'rgba(255,255,255,0.10)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff',
+              borderRadius: 999,
+              backdropFilter: 'blur(8px)',
+              cursor: 'pointer',
+              zIndex: 10,
+              fontSize: '0.9rem',
+              fontWeight: 700
+            }}
+          >
+            📤 Compartir
+          </button>
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 120, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="academy-banner-grid">
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
               <div className="academy-banner-avatar">
@@ -569,34 +622,6 @@ export default function AcademyPublicScreen() {
                     {(academy as any).nombre_publico?.[0]?.toUpperCase() || '🎓'}
                   </div>
                 )}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 9999,
-                    background: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? 'rgba(16,185,129,0.12)'
-                      : 'rgba(30,136,229,0.12)',
-                    border: (academy as any)?.estado_aprobacion === 'aprobado'
-                      ? '1px solid rgba(16,185,129,0.35)'
-                      : '1px solid rgba(30,136,229,0.35)',
-                    color: (academy as any)?.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    backdropFilter: 'none',
-                    boxShadow: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    textTransform: 'none',
-                    letterSpacing: 0
-                  }}
-                >
-                  {(academy as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(academy as any)?.estado_aprobacion || 'pendiente'}`}
-                </motion.span>
               </div>
             </div>
 
