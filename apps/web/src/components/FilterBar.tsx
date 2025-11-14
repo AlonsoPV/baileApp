@@ -4,6 +4,7 @@ import { useTags } from "../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
+import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 
 interface FilterBarProps {
   filters: ExploreFilters;
@@ -34,6 +35,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
     return window.innerWidth >= 768;
   });
   const { ritmos, zonas } = useTags();
+  const { groups: zonaGroups } = useZonaCatalogGroups(zonas);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
