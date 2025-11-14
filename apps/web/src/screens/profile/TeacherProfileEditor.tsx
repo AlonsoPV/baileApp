@@ -921,19 +921,20 @@ export default function TeacherProfileEditor() {
                             setEditingIndex(idx);
                             setEditInitial({
                               nombre: it.titulo || '',
-                                tipo: (costo?.tipo as any) || 'clases sueltas',
-                                precio: costo?.precio ?? null,
-                                regla: costo?.regla || '',
+                              tipo: (costo?.tipo as any) || 'clases sueltas',
+                              precio: costo?.precio ?? null,
+                              regla: costo?.regla || '',
+                              nivel: (it as any)?.nivel ?? null,
                               fechaModo: it.fecha ? 'especifica' : 'semanal',
                               fecha: it.fecha || '',
-                          diaSemana: (it as any)?.diaSemana ?? null,
+                              diaSemana: (it as any)?.diaSemana ?? null,
                               inicio: it.inicio || '',
                               fin: it.fin || '',
                               ritmoId: it.ritmoId ?? null,
                               ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
                               zonaId: it.zonaId ?? null,
-                          ubicacion: it.ubicacion || '',
-                          ubicacionId: (it as any)?.ubicacionId || null
+                              ubicacion: it.ubicacion || '',
+                              ubicacionId: (it as any)?.ubicacionId || null
                             });
                             setStatusMsg(null);
                           }}
