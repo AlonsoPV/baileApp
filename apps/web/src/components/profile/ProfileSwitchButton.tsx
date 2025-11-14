@@ -16,7 +16,7 @@ const colors = {
 };
 
 const profileTypes = [
-  { id: 'bailarin' as const, label: 'Bailarín', icon: '💃', color: colors.coral },
+  { id: 'bailarin' as const, label: 'Bailarín', icon: '🩰', color: colors.coral },
   { id: 'maestro' as const, label: 'Maestro', icon: '🎓', color: colors.blue },
   { id: 'organizador' as const, label: 'Organizador', icon: '🎤', color: colors.orange },
   { id: 'marca' as const, label: 'Marca', icon: '🏢', color: colors.yellow },

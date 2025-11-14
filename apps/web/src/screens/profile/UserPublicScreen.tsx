@@ -1268,7 +1268,7 @@ export const UserProfileLive: React.FC = () => {
             <div className="question-section">
               {/* Pregunta */}
               <div>
-              <h3 className="section-title">💃 ¿Qué es lo que más te gusta bailar?</h3>
+              <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
                 <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',

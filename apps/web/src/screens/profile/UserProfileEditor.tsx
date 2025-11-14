@@ -732,7 +732,7 @@ export default function UserProfileEditor() {
 
               <div>
                 <label className="editor-field">
-                  💃 ¿Qué te gusta más del baile?
+                  ¿Qué te gusta más del baile?
                 </label>
                 <textarea
                   value={form.respuestas?.gusta_bailar || ''}

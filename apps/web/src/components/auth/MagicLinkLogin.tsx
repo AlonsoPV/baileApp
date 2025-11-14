@@ -78,7 +78,7 @@ export function MagicLinkLogin() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
-            🎭 BaileApp
+            🎭 Dónde Bailar
           </h1>
           <p style={{ opacity: 0.8, fontSize: '1rem' }}>
             Accede con tu email - Sin contraseñas

@@ -144,7 +144,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             gap: '0.5rem',
           }}
         >
-          BaileApp 💃
+          Dónde Bailar
         </Link>
       </div>
 

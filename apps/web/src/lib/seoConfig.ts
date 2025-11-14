@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://baile-app-1lfl.vercel.app';
 
-const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icono.png';
+const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/LogoDondeBailar.png';
 const LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/logo.png';
 
 const DEFAULT_KEYWORDS = [
@@ -30,23 +30,23 @@ type SeoConfig = Record<string, Partial<SeoMeta>>;
 
 const SEO_CONFIG: SeoConfig = {
   default: {
-    title: 'BaileApp | Clases, sociales y academias de baile en México',
+    title: 'Dónde Bailar | Clases, sociales y academias de baile en México',
     description:
-      'Descubre clases, sociales, academias y maestros de baile en México. Encuentra tu próximo plan de salsa, bachata y más con BaileApp.',
+      'Descubre clases, sociales, academias y maestros de baile en México. Encuentra tu próximo plan de salsa, bachata y más con Dónde Bailar.',
     keywords: DEFAULT_KEYWORDS,
     image: LOGO_URL,
     icon: ICON_URL,
     url: BASE_URL,
-    siteName: 'BaileApp',
+    siteName: 'Dónde Bailar',
   },
   explore: {
-    title: 'Explorar BaileApp | Encuentra eventos y clases de baile',
+    title: 'Explorar Dónde Bailar | Encuentra eventos y clases de baile',
     description:
       'Filtra por ritmos, zonas y fechas para encontrar clases, sociales y eventos de baile en tu ciudad.',
     url: `${BASE_URL}/explore`,
   },
   'explore-list': {
-    title: 'Resultados de búsqueda de baile | BaileApp',
+    title: 'Resultados de búsqueda de baile | Dónde Bailar',
     description:
       'Explora resultados detallados de academias, maestros, sociales y eventos según tus filtros personalizados.',
     url: `${BASE_URL}/explore/list`,
@@ -78,7 +78,7 @@ export function getSeoMeta(section: string = 'default', overrides?: Partial<SeoM
     image: overrides?.image ?? base.image ?? LOGO_URL,
     icon: overrides?.icon ?? base.icon ?? ICON_URL,
     url: overrides?.url ?? base.url ?? BASE_URL,
-    siteName: overrides?.siteName ?? base.siteName ?? 'BaileApp',
+    siteName: overrides?.siteName ?? base.siteName ?? 'Dónde Bailar',
   };
 }
 

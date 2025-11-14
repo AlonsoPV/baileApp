@@ -43,15 +43,7 @@ export function ProfileScreen() {
           color: colors.light,
         }}
       >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          style={{
-            fontSize: '3rem',
-          }}
-        >
-          💃
-        </motion.div>
+        <p>Cargando perfil…</p>
       </div>
     );
   }

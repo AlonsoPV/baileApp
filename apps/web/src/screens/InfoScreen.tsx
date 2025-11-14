@@ -20,7 +20,7 @@ export default function InfoScreen() {
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent"
           }}>
-            BaileApp
+            Dónde Bailar
           </h1>
           <p style={{ fontSize: "1.125rem", color: "#A0AEC0", marginBottom: "2rem" }}>
             Tu plataforma para conectar con la comunidad de baile
@@ -98,7 +98,7 @@ export default function InfoScreen() {
               <span style={{ color: "#A0AEC0" }}>Descubre marcas y organizadores</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-              <span style={{ fontSize: "1.25rem" }}>💃</span>
+              <span style={{ fontSize: "1.25rem" }}>🩰</span>
               <span style={{ color: "#A0AEC0" }}>Aprende nuevos pasos (Próximamente)</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>

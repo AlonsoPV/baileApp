@@ -41,7 +41,7 @@ const typeIcons: Record<string, string> = {
   academias: '🏫',
   maestros: '🎓',
   marcas: '🏷️',
-  usuarios: '💃',
+  usuarios: '🧍',
 };
 
 export default function ExploreListScreen() {
@@ -49,8 +49,8 @@ export default function ExploreListScreen() {
   const [searchParams] = useSearchParams();
   const { filters, set } = useExploreFilters();
   const currentLabel = typeLabels[filters.type] || 'Resultados';
-  const seoTitle = `${currentLabel} | BaileApp`;
-  const seoDescription = `Explora ${currentLabel.toLowerCase()} de baile con filtros por ritmos, zonas y fechas en BaileApp.`;
+  const seoTitle = `${currentLabel} | Dónde Bailar`;
+  const seoDescription = `Explora ${currentLabel.toLowerCase()} de baile con filtros por ritmos, zonas y fechas en Dónde Bailar.`;
   
   // Update filters based on URL parameters
   React.useEffect(() => {

@@ -51,7 +51,7 @@ export function buildICS(event: CalendarEvent): string {
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//BaileApp//Calendar//EN',
+      'PRODID:-//Dónde Bailar//Calendar//EN',
       'CALSCALE:GREGORIAN',
       'BEGIN:VEVENT',
       `DTSTART:${start}`,

@@ -22,7 +22,7 @@ const PERFIL_OPTIONS = [
   { value: 'academias', label: 'Academias', icon: '🏫' },
   { value: 'maestros', label: 'Maestros', icon: '🎓' },
   { value: 'marcas', label: 'Marcas', icon: '🏷️' },
-  { value: 'usuarios', label: 'Bailarines', icon: '💃' },
+  { value: 'usuarios', label: 'Bailarines', icon: '🧍' },
 ];
 
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true }: FilterBarProps) {

@@ -132,7 +132,7 @@ export default function RolesInfoScreen() {
           margin: '0 auto',
           lineHeight: '1.6'
         }}>
-          Descubre los diferentes roles disponibles en BaileApp y encuentra el que mejor se adapte a ti
+          Descubre los diferentes roles disponibles en Dónde Bailar y encuentra el que mejor se adapte a ti
         </p>
       </motion.div>
 

@@ -448,7 +448,7 @@ export default function EventDatePublicScreen() {
           locationName,
           ritmosList,
           'evento de baile',
-          'BaileApp',
+          'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
       <div className="date-public-root" style={{

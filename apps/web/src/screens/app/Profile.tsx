@@ -1228,8 +1228,8 @@ export function Profile() {
               onClick={() => {
                 if (navigator.share) {
                   navigator.share({
-                    title: `Perfil de ${profile?.display_name} en BaileApp`,
-                    text: `Conoce el perfil de ${profile?.display_name} en BaileApp`,
+                    title: `Perfil de ${profile?.display_name} en Dónde Bailar`,
+                    text: `Conoce el perfil de ${profile?.display_name} en Dónde Bailar`,
                     url: window.location.href,
                   });
                 } else {
@@ -1258,7 +1258,7 @@ export function Profile() {
 
             {/* Información */}
             <button
-              onClick={() => showToast('BaileApp v1.0 - Conectando bailarines desde 2024 🎉', 'info')}
+              onClick={() => showToast('Dónde Bailar v1.0 - Conectando bailarines desde 2024 🎉', 'info')}
               style={{
                 display: 'flex',
                 flexDirection: 'column',

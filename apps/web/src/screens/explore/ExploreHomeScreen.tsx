@@ -146,7 +146,7 @@ export default function ExploreHomeScreen() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              🔍 Explora BaileApp
+              🔍 Explora Dónde Bailar
             </h1>
             <p style={{
               fontSize: '1.125rem',

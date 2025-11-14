@@ -420,7 +420,7 @@ export default function EventPublicScreen() {
                     color: 'white',
                     fontSize: '0.75rem'
                   }}>
-                    {s.tipo === "clase" ? "🎓" : s.tipo === "show" ? "🎭" : s.tipo === "social" ? "💃" : "•"}
+                    {s.tipo === "clase" ? "🎓" : s.tipo === "show" ? "🎭" : s.tipo === "social" ? "🎉" : "•"}
                   </span>
 
                   <div style={{

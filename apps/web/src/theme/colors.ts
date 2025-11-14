@@ -1,4 +1,4 @@
-// Sistema de colores moderno para BaileApp
+// Sistema de colores moderno para Dónde Bailar
 // Paleta inspirada en energía del baile con elegancia minimalista
 
 export const colors = {

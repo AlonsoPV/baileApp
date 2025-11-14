@@ -62,8 +62,8 @@ export function DateLiveScreen() {
   const handleShare = async () => {
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
     const shareData: ShareData = {
-      title: date?.nombre || social?.nombre || 'BaileApp',
-      text: date?.biografia || social?.biografia || 'Mira este evento en BaileApp',
+      title: date?.nombre || social?.nombre || 'Dónde Bailar',
+      text: date?.biografia || social?.biografia || 'Mira este evento en Dónde Bailar',
       url: shareUrl,
     };
 

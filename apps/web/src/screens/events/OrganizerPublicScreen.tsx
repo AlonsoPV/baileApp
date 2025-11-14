@@ -299,7 +299,7 @@ export function OrganizerPublicScreen() {
     <>
       <SeoHead
         section="organizer"
-        title={`${organizerName} | Organizador en BaileApp`}
+        title={`${organizerName} | Organizador en Dónde Bailar`}
         description={organizerDescription}
         image={organizerImage}
         url={organizerUrl}

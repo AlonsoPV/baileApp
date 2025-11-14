@@ -131,7 +131,7 @@ export function Login() {
       >
         <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: spacing[1] }}>
-            ¡Bienvenido! 💃
+            ¡Bienvenido!
           </h1>
           <p style={{ color: colors.gray[400] }}>
             Accede con tu email o contraseña

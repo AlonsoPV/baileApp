@@ -647,7 +647,7 @@ export default function EventParentPublicScreen() {
           'social de baile',
           parentCity,
           ritmosDescription,
-          'BaileApp',
+          'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
       <style>{`

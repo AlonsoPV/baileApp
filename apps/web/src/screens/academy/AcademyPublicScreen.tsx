@@ -315,7 +315,7 @@ export default function AcademyPublicScreen() {
     <>
       <SeoHead
         section="academy"
-        title={`${academyName} | Academia en BaileApp`}
+        title={`${academyName} | Academia en Dónde Bailar`}
         description={academyDescription}
         image={shareImage}
         url={academyUrl}
@@ -324,7 +324,7 @@ export default function AcademyPublicScreen() {
           'academia de baile',
           cityName,
           highlightedRitmos,
-          'BaileApp',
+          'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
       <style>{`

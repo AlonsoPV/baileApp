@@ -133,7 +133,7 @@ export default function EventScheduleEditor({ eventDateId }: EventScheduleEditor
           >
             <option value="clase">🎓 Clase</option>
             <option value="show">🎭 Show</option>
-            <option value="social">💃 Social</option>
+            <option value="social">🎉 Social</option>
             <option value="otro">📋 Otro</option>
           </select>
           

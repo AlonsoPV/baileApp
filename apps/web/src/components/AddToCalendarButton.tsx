@@ -50,7 +50,7 @@ export default function AddToCalendarButton({ event }: AddToCalendarButtonProps)
         location: event.lugar || "",
         status: "CONFIRMED" as const,
         busyStatus: "BUSY" as const,
-        organizer: { name: "BaileApp", email: "info@baileapp.com" },
+        organizer: { name: "Dónde Bailar", email: "info@baileapp.com" },
         url: window.location.href
       });
       

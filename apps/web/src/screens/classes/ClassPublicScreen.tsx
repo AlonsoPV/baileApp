@@ -183,7 +183,7 @@ export default function ClassPublicScreen() {
           locationName,
           ritmosLabel,
           'clases de baile',
-          'BaileApp',
+          'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
       <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
