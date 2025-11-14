@@ -48,17 +48,32 @@ export default function UserProfileEditor() {
   const zonaTagsBySlug = React.useMemo(() => {
     const map = new Map<string, any>();
     zonaTags.forEach(tag => {
-      if (tag?.slug) {
-        map.set(String(tag.slug), tag);
-      }
+      const rawSlug = String(tag?.slug ?? '').trim();
+      if (!rawSlug) return;
+      const normalized = rawSlug.toLowerCase();
+      map.set(normalized, tag);
+      map.set(normalized.replace(/_/g, '-'), tag);
+      map.set(normalized.replace(/-/g, '_'), tag);
     });
     return map;
   }, [zonaTags]);
+
+  const matchZonaTagBySlug = React.useCallback(
+    (slug: string) => {
+      const normalized = slug.trim().toLowerCase();
+      return (
+        zonaTagsBySlug.get(normalized) ||
+        zonaTagsBySlug.get(normalized.replace(/_/g, '-')) ||
+        zonaTagsBySlug.get(normalized.replace(/-/g, '_'))
+      );
+    },
+    [zonaTagsBySlug],
+  );
   const zonasCatalogData = React.useMemo(() => {
     const groups = ZONAS_CATALOG.map(group => {
       const items = group.items
         .map(item => {
-          const tag = zonaTagsBySlug.get(item.slug);
+          const tag = matchZonaTagBySlug(item.slug);
           if (!tag) return null;
           return { tag, label: item.label };
         })
@@ -74,7 +89,7 @@ export default function UserProfileEditor() {
       .map(tag => ({ tag, label: tag.nombre }));
 
     return { groups, others };
-  }, [zonaTagsBySlug, zonaTags]);
+  }, [matchZonaTagBySlug, zonaTags]);
 
   // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({

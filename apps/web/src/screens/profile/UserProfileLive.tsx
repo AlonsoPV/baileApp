@@ -306,11 +306,24 @@ export const UserProfileLive: React.FC = () => {
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
       .filter((tag): tag is typeof allTags[number] => Boolean(tag));
 
+    const normalizeSlug = (slug?: string | null) =>
+      String(slug ?? '')
+        .trim()
+        .toLowerCase();
+
     const usedIds = new Set<number>();
     const groups = ZONAS_CATALOG.map(group => {
       const chips = group.items
         .map(item => {
-          const tag = zonaTags.find(t => String(t.slug) === item.slug);
+          const catalogSlug = normalizeSlug(item.slug);
+          const tag = zonaTags.find(t => {
+            const tagSlug = normalizeSlug(t.slug);
+            return (
+              tagSlug === catalogSlug ||
+              tagSlug === catalogSlug.replace(/_/g, '-') ||
+              tagSlug === catalogSlug.replace(/-/g, '_')
+            );
+          });
           if (!tag) return null;
           usedIds.add(tag.id);
           return { id: tag.id, label: item.label };
