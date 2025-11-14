@@ -145,14 +145,6 @@ export default function AcademyProfileEditor() {
     }
   }, [form.redes_sociales, setField]);
 
-  // Debug: Log de maestros aceptados
-  React.useEffect(() => {
-    if (academyId) {
-      console.log('[AcademyProfileEditor] academyId:', academyId);
-      console.log('[AcademyProfileEditor] acceptedTeachers:', acceptedTeachers);
-    }
-  }, [academyId, acceptedTeachers]);
-
   // Asegurar que todas las clases tengan un ID único (solo una vez al cargar)
   const hasEnsuredIds = React.useRef(false);
   React.useEffect(() => {
@@ -181,12 +173,6 @@ export default function AcademyProfileEditor() {
 
   const handleSave = async () => {
     try {
-      console.log("🚀 [AcademyProfileEditor] ===== INICIANDO GUARDADO =====");
-      console.log("📤 [AcademyProfileEditor] Datos a enviar:", form);
-      console.log("📱 [AcademyProfileEditor] Redes sociales:", form.redes_sociales);
-      console.log("📝 [AcademyProfileEditor] Nombre público:", form.nombre_publico);
-      console.log("📄 [AcademyProfileEditor] Bio:", form.bio);
-
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
       // Crear payload limpio con SOLO los campos que existen en profiles_academy
@@ -216,9 +202,7 @@ export default function AcademyProfileEditor() {
         payload.id = (form as any).id;
       }
 
-      console.log("📦 [AcademyProfileEditor] Payload limpio:", payload);
       await upsert.mutateAsync(payload);
-      console.log("✅ [AcademyProfileEditor] Guardado exitoso");
       
       // Mostrar mensaje de éxito
       setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
@@ -767,16 +751,11 @@ export default function AcademyProfileEditor() {
                     const savedSelected: string[] = ((academy as any)?.ritmos_seleccionados || []) as string[];
                     const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
                     
-                    console.log('[AcademyProfileEditor] 🎵 Ritmos seleccionados (slugs):', combinedSelected);
-                    console.log('[AcademyProfileEditor] 🏷️  Tags disponibles:', ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre })));
-                    
                     if (combinedSelected.length > 0) {
                       // Mapear slugs → labels del catálogo
                       const selectedLabels = combinedSelected
                         .map(slug => labelByCatalogId.get(slug))
                         .filter(Boolean);
-                      
-                      console.log('[AcademyProfileEditor] 📋 Labels del catálogo:', selectedLabels);
                       
                       // Filtrar tags que coincidan con los labels (case-insensitive)
                       const filtered = ritmoTags.filter((t: any) => 
@@ -785,8 +764,6 @@ export default function AcademyProfileEditor() {
                           label.toLowerCase().trim() === t.nombre.toLowerCase().trim()
                         )
                       );
-                      
-                      console.log('[AcademyProfileEditor] ✅ Ritmos filtrados:', filtered.map((t: any) => ({ id: t.id, nombre: t.nombre })));
                       
                       // Mostrar labels que NO se encontraron
                       const foundLabels = new Set(filtered.map((t: any) => t.nombre.toLowerCase().trim()));
@@ -813,7 +790,6 @@ export default function AcademyProfileEditor() {
                     }
                     
                     // Fallback: todos los ritmos
-                    console.log('[AcademyProfileEditor] 🔄 Usando todos los ritmos como fallback');
                     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                   })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}

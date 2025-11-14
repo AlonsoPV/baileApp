@@ -167,7 +167,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
             }}
           />
-          <span>Dónde Bailar</span>
+          <span>DONDE BAILAR MX</span><br />
+          <span>Encuentra tu ritmo y tu espacio</span>
         </Link>
       </div>
 

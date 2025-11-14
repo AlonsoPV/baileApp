@@ -91,10 +91,6 @@ export function useUpsertTeacher() {
       // ✅ Payload primero, luego defaults (para que payload.estado_aprobacion tenga prioridad)
       const base = { user_id: user.id, ...payload, estado_aprobacion: payload.estado_aprobacion || 'borrador' } as any;
       
-      console.log('🔍 [useTeacher] Payload recibido:', payload);
-      console.log('📦 [useTeacher] Base con user_id:', base);
-      console.log('✅ [useTeacher] Estado de aprobación en base:', base.estado_aprobacion);
-      
       // Filtrar claves no existentes en la tabla (evita PGRST204 con columnas como "estilos")
       const allowed = new Set([
         'user_id','nombre_publico','bio','avatar_url','portada_url',
@@ -107,8 +103,6 @@ export function useUpsertTeacher() {
         if (allowed.has(k) && base[k] !== undefined) filtered[k] = base[k];
       }
       
-      console.log('🔄 [useTeacher] Filtered payload:', filtered);
-      
       // Intentar UPSERT por user_id; si falla por conflicto, hacer UPDATE
       let { data, error } = await supabase
         .from(TABLE)
@@ -116,7 +110,6 @@ export function useUpsertTeacher() {
         .select('*')
         .single();
       if (error) {
-        console.log('⚠️ [useTeacher] UPSERT falló, intentando UPDATE directo');
         // Fallback: update directo por user_id
         const { error: updError } = await supabase
           .from(TABLE)
@@ -132,14 +125,11 @@ export function useUpsertTeacher() {
           .eq('user_id', user.id)
           .maybeSingle();
         if (refErr) throw refErr;
-        console.log('✅ [useTeacher] UPDATE exitoso (fallback):', refetch);
         return refetch as TeacherProfile;
       }
-      console.log('✅ [useTeacher] UPSERT exitoso:', data);
       return normalizeTeacherProfile(data as TeacherProfile) as TeacherProfile;
     },
-    onSuccess: (data) => {
-      console.log('🎉 [useTeacher] onSuccess, invalidando queries. Data:', data);
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teacher','mine'] });
     }
   });

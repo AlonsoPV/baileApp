@@ -179,10 +179,6 @@ export default function UserProfileEditor() {
       // Normalizar redes sociales (convertir "" a null)
       const redes = normalizeSocialInput(form.respuestas?.redes || {});
 
-      console.log('[UserProfileEditor] Form data antes del guardado:', form);
-      console.log('[UserProfileEditor] Respuestas:', form.respuestas);
-      console.log('[UserProfileEditor] Redes normalizadas:', redes);
-
       // Fallback: si no hay ritmos_seleccionados pero sí hay ritmos numéricos, mapear a catálogo por etiqueta
       let outRitmosSeleccionados = ((form as any).ritmos_seleccionados || []) as string[];
       if ((!outRitmosSeleccionados || outRitmosSeleccionados.length === 0) && Array.isArray(form.ritmos) && form.ritmos.length > 0) {
@@ -211,15 +207,10 @@ export default function UserProfileEditor() {
         },
       };
 
-      console.log('[UserProfileEditor] Candidate construido:', candidate);
-
       // Crear patch inteligente
       const patch = buildSafePatch(profile || {}, candidate, {
         allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any
       });
-
-      console.log('[UserProfileEditor] Patch generado:', patch);
-      console.log('[UserProfileEditor] Candidate:', candidate);
 
       if (Object.keys(patch).length === 0) {
         showToast('No hay cambios de información por guardar. Tus fotos y videos se guardan automáticamente ✅', 'info');
@@ -721,7 +712,6 @@ export default function UserProfileEditor() {
                 <textarea
                   value={form.respuestas?.dato_curioso || ''}
                   onChange={(e) => {
-                    console.log('[UserProfileEditor] Cambiando dato_curioso:', e.target.value);
                     setNested('respuestas.dato_curioso', e.target.value);
                   }}
                   placeholder="Comparte algo interesante sobre ti..."
@@ -737,7 +727,6 @@ export default function UserProfileEditor() {
                 <textarea
                   value={form.respuestas?.gusta_bailar || ''}
                   onChange={(e) => {
-                    console.log('[UserProfileEditor] Cambiando gusta_bailar:', e.target.value);
                     setNested('respuestas.gusta_bailar', e.target.value);
                   }}
                   placeholder="Cuéntanos qué te apasiona del baile..."

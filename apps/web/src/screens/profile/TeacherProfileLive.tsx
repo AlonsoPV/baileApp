@@ -372,7 +372,6 @@ export default function TeacherProfileLive() {
   // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (DEBE estar ANTES de cualquier return)
   React.useEffect(() => {
     if (!isLoading && !teacher) {
-      console.log('[TeacherProfileLive] No profile found, redirecting to edit...');
       navigate('/profile/teacher/edit', { replace: true });
     }
   }, [isLoading, teacher, navigate]);
@@ -415,9 +414,6 @@ export default function TeacherProfileLive() {
   };
 
   const promotions = Array.isArray((teacher as any)?.promociones) ? (teacher as any).promociones : [];
-
-  console.log('[TeacherProfileLive] Teacher data:', teacher);
-  console.log('[TeacherProfileLive] Teacher redes_sociales:', (teacher as any)?.redes_sociales);
 
   if (isLoading) {
     return (

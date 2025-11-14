@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://baile-app-1lfl.vercel.app';
 
-const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/LogoDondeBailar.png';
+const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DondeBailarBlanco.png';
 const LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/logo.png';
 
 const DEFAULT_KEYWORDS = [

@@ -109,7 +109,6 @@ export function Profile() {
         avatarUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
         // Add timestamp to force cache refresh
         avatarUrl += `?t=${Date.now()}`;
-        console.log('Avatar uploaded, new URL:', avatarUrl); // Debug log
       }
 
       // Merge with existing profile

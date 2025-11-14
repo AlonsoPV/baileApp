@@ -28,23 +28,11 @@ export function DateLiveScreen() {
   const { user } = useAuth();
   const dateId = parseInt(id || '0');
   
-  // Debug logs
-  console.log('[DateLiveScreen] URL id:', id);
-  console.log('[DateLiveScreen] Parsed dateId:', dateId);
-  
   const { data: date, isLoading, error } = useEventDate(dateId);
   const { data: social } = useEventParent(date?.parent_id);
   const { data: allTags } = useTags();
   const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
   const { showToast } = useToast();
-  
-  // Debug logs
-  console.log('[DateLiveScreen] Date data:', date);
-  console.log('[DateLiveScreen] Is loading:', isLoading);
-  console.log('[DateLiveScreen] Error:', error);
-  console.log('[DateLiveScreen] User RSVP status:', userStatus);
-  console.log('[DateLiveScreen] RSVP stats:', stats);
-  console.log('[DateLiveScreen] Is updating:', isUpdating);
   
   // Verificar si el usuario puede editar esta fecha
   const canEdit = social?.organizer_id && user?.id && 
@@ -673,14 +661,6 @@ export function DateLiveScreen() {
         )}
 
         {/* Cronograma */}
-        {(() => {
-          console.log('[DateLiveScreen] Cronograma data:', date.cronograma);
-          console.log('[DateLiveScreen] Cronograma type:', typeof date.cronograma);
-          console.log('[DateLiveScreen] Cronograma isArray:', Array.isArray(date.cronograma));
-          console.log('[DateLiveScreen] Cronograma length:', date.cronograma?.length);
-          console.log('[DateLiveScreen] Cronograma stringified:', JSON.stringify(date.cronograma));
-          return null;
-        })()}
         {date.cronograma && Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}

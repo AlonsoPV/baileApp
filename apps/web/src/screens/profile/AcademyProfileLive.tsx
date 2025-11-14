@@ -376,7 +376,6 @@ export default function AcademyProfileLive() {
   // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
   React.useEffect(() => {
     if (!isLoading && !academy) {
-      console.log('[AcademyProfileLive] No profile found, redirecting to edit...');
       navigate('/profile/academy/edit', { replace: true });
     }
   }, [isLoading, academy, navigate]);
@@ -424,9 +423,6 @@ export default function AcademyProfileLive() {
   };
 
   const promotions = Array.isArray((academy as any)?.promociones) ? (academy as any).promociones : [];
-
-  console.log('[AcademyProfileLive] Academy data:', academy);
-  console.log('[AcademyProfileLive] Academy redes_sociales:', academy?.redes_sociales);
 
   if (isLoading) {
     return (

@@ -33,13 +33,6 @@ export default function OnboardingGate() {
         .limit(1);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      // Log de depuración para entender estados raros
-      console.log('[OnboardingGate] Fila profiles_user leída:', {
-        userId: user!.id,
-        onboarding_complete: row?.onboarding_complete,
-        hasPinHash: !!row?.pin_hash,
-        updated_at: row?.updated_at,
-      });
       return row ?? { onboarding_complete: false, pin_hash: null };
     },
     staleTime: 30000,

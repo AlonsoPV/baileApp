@@ -275,15 +275,6 @@ export const UserProfileLive: React.FC = () => {
 
   const safeMedia = profile?.media || [];
 
-  // Debug logs
-  React.useEffect(() => {
-    console.log('[UserPublicScreen] Profile data:', profile);
-    console.log('[UserPublicScreen] Redes Sociales:', profile?.redes_sociales);
-    console.log('[UserPublicScreen] Respuestas.redes:', (profile?.respuestas as any)?.redes);
-    console.log('[UserPublicScreen] Avatar URL:', profile?.avatar_url);
-    console.log('[UserPublicScreen] Media:', profile?.media);
-  }, [profile]);
-
   // Helper to convert Supabase storage paths to public URLs
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;

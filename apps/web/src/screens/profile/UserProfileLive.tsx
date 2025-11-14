@@ -270,34 +270,13 @@ export const UserProfileLive: React.FC = () => {
     return undefined;
   })();
 
-  // Debug logs
-  React.useEffect(() => {
-    console.log('[UserProfileLive] Profile data:', profile);
-    console.log('[UserProfileLive] Redes Sociales:', profile?.redes_sociales);
-    console.log('[UserProfileLive] Respuestas.redes:', profile?.respuestas?.redes);
-    console.log('[UserProfileLive] RSVP Events:', rsvpEvents);
-    console.log('[UserProfileLive] Media:', media);
-
-    // Log específico para redes sociales
-    if (profile?.redes_sociales) {
-      console.log('[UserProfileLive] Instagram:', profile.redes_sociales.instagram);
-      console.log('[UserProfileLive] TikTok:', profile.redes_sociales.tiktok);
-      console.log('[UserProfileLive] YouTube:', profile.redes_sociales.youtube);
-      console.log('[UserProfileLive] Facebook:', profile.redes_sociales.facebook);
-      console.log('[UserProfileLive] WhatsApp:', profile.redes_sociales.whatsapp);
-    }
-  }, [profile, rsvpEvents, media]);
-
   // Get tag names from IDs
   const getRitmoNombres = () => {
-    console.log('[UserProfileLive] getRitmoNombres - allTags:', allTags);
-    console.log('[UserProfileLive] getRitmoNombres - profile.ritmos:', profile?.ritmos);
     if (!allTags || !profile?.ritmos) return [];
     const ritmos = profile.ritmos
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
       .filter(Boolean)
       .map(tag => tag!.nombre);
-    console.log('[UserProfileLive] getRitmoNombres - resultado:', ritmos);
     return ritmos;
   };
 

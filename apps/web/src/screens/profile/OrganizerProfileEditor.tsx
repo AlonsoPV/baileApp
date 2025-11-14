@@ -86,11 +86,6 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
     }
   };
 
-  // Debug logs
-  console.log('[EventParentCard] Parent:', parent);
-  console.log('[EventParentCard] Dates:', dates);
-  console.log('[EventParentCard] Dates length:', dates?.length);
-
   const handleSocialClick = () => {
     navigate(`/social/${parent.id}`);
   };
@@ -366,11 +361,6 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                   borderRadius: '20px 20px 0 0',
                 }} /> */}
                 {dates.map((date: any, index: number) => {
-                  // Debug log para cada fecha
-                  console.log('[EventParentCard] Date item:', date);
-                  console.log('[EventParentCard] Date nombre:', date.nombre);
-                  console.log('[EventParentCard] Date fecha:', date.fecha);
-
                   return (
                     <motion.div
                       key={date.id}
@@ -894,16 +884,6 @@ export default function OrganizerProfileEditor() {
   // Función para guardar
   const handleSave = async () => {
     try {
-      console.log("🚀 [OrganizerProfileEditor] ===== INICIANDO GUARDADO =====");
-      console.log("📤 [OrganizerProfileEditor] Datos a enviar:", form);
-      console.log("📱 [OrganizerProfileEditor] Redes sociales:", form.redes_sociales);
-      console.log("📝 [OrganizerProfileEditor] Nombre público:", form.nombre_publico);
-      console.log("📄 [OrganizerProfileEditor] Bio:", form.bio);
-      console.log("🎵 [OrganizerProfileEditor] Ritmos:", form.ritmos);
-      console.log("🎵 [OrganizerProfileEditor] Ritmos Seleccionados:", (form as any).ritmos_seleccionados);
-      console.log("📍 [OrganizerProfileEditor] Zonas:", form.zonas);
-      console.log("💬 [OrganizerProfileEditor] Respuestas:", form.respuestas);
-
       // Asegurar que ritmos_seleccionados se guarde; si está vacío pero hay ritmos (numéricos), mapear por etiqueta
       let outSelected = ((((form as any)?.ritmos_seleccionados) || []) as string[]);
       if ((!outSelected || outSelected.length === 0) && Array.isArray(form.ritmos) && form.ritmos.length > 0) {
@@ -919,18 +899,11 @@ export default function OrganizerProfileEditor() {
       }
 
       const wasNewProfile = !org; // Detectar si es un perfil nuevo
-      console.log("📊 [OrganizerProfileEditor] wasNewProfile:", wasNewProfile);
 
       const profileId = await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
-      console.log("📊 [OrganizerProfileEditor] profileId retornado:", profileId);
-      console.log("✅ [OrganizerProfileEditor] Guardado exitoso");
 
       // Si es un perfil nuevo, crear evento y fecha por defecto
       if (wasNewProfile && profileId) {
-        console.log("🌱 [OrganizerProfileEditor] Creando evento y fecha por defecto para organizador ID:", profileId);
-        console.log("🌱 [OrganizerProfileEditor] Ritmos a usar:", outSelected);
-        console.log("🌱 [OrganizerProfileEditor] Zonas a usar:", form.zonas);
-
         try {
           // Crear evento padre por defecto
           const parentPayload: any = {
@@ -940,8 +913,6 @@ export default function OrganizerProfileEditor() {
             ritmos_seleccionados: outSelected || [],
             zonas: form.zonas || []
           };
-
-          console.log("📦 [OrganizerProfileEditor] Payload para evento padre:", parentPayload);
 
           const { data: newParent, error: parentErr } = await supabase
             .from('events_parent')
@@ -953,8 +924,6 @@ export default function OrganizerProfileEditor() {
             console.error('❌ [OrganizerProfileEditor] Error creando social por defecto:', parentErr);
             showToast('⚠️ Perfil creado, pero no se pudo crear el evento por defecto', 'info');
           } else if (newParent) {
-            console.log("✅ [OrganizerProfileEditor] Social por defecto creado:", newParent.id);
-
             // Crear fecha por defecto (para 7 días adelante)
             const fechaBase = new Date();
             fechaBase.setDate(fechaBase.getDate() + 7);
@@ -976,25 +945,17 @@ export default function OrganizerProfileEditor() {
               costos: []
             };
 
-            console.log("📦 [OrganizerProfileEditor] Payload para fecha:", datePayload);
-
             const { error: dateErr } = await supabase
               .from('events_date')
               .insert(datePayload);
 
             if (dateErr) {
               console.error('❌ [OrganizerProfileEditor] Error creando fecha por defecto:', dateErr);
-            } else {
-              console.log("✅ [OrganizerProfileEditor] Fecha por defecto creada");
             }
           }
         } catch (seedErr) {
           console.error('❌ [OrganizerProfileEditor] Error en semilla automática:', seedErr);
         }
-      } else {
-        console.log("ℹ️ [OrganizerProfileEditor] No es perfil nuevo o no hay profileId, saltando auto-seed");
-        console.log("   - wasNewProfile:", wasNewProfile);
-        console.log("   - profileId:", profileId);
       }
 
       // Toast final basado en si es nuevo o actualización
@@ -1853,19 +1814,15 @@ export default function OrganizerProfileEditor() {
             availableUserMasters={[]} // TODO: Obtener usuarios con perfil de maestro
             onAddMaster={() => {
               // TODO: Implementar modal para agregar maestro externo
-              console.log('Agregar maestro externo');
             }}
             onAssignUserMaster={() => {
               // TODO: Implementar modal para asignar usuario maestro
-              console.log('Asignar usuario maestro');
             }}
             onEditMaster={(master) => {
               // TODO: Implementar modal para editar maestro
-              console.log('Editar maestro:', master);
             }}
             onRemoveMaster={(masterId) => {
               // TODO: Implementar confirmación y eliminación
-              console.log('Eliminar maestro:', masterId);
             }}
           /> */}
 
@@ -2262,8 +2219,7 @@ export default function OrganizerProfileEditor() {
                       ritmos={ritmoTags}
                       zonas={zonaTags}
                       eventFecha={dateForm.fecha}
-                      onSaveCosto={(index) => {
-                        console.log('💾 Guardando costo individual:', dateForm.costos[index]);
+                      onSaveCosto={() => {
                         showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
                       }}
                     />

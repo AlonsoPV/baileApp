@@ -294,13 +294,6 @@ export default function EventDatePublicScreen() {
     const organizerUserId = (myOrganizer as any).user_id;
     const parentUserId = (parent as any).user_id;
     
-    console.log('🔐 [EventDatePublicScreen] Verificando propiedad:', {
-      currentUserId: user.id,
-      organizerUserId,
-      parentUserId,
-      isOwner: organizerUserId === parentUserId
-    });
-    
     return organizerUserId === parentUserId;
   }, [user, myOrganizer, parent]);
 

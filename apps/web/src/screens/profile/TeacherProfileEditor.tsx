@@ -94,12 +94,9 @@ export default function TeacherProfileEditor() {
   // Hook para cambio de rol
   useRoleChange();
 
-  // Debug: Log de academias
+  // Sin logs: solo dependencias para futuras extensiones
   React.useEffect(() => {
-    if (teacherId) {
-      console.log('[TeacherProfileEditor] teacherId:', teacherId);
-      console.log('[TeacherProfileEditor] academies:', academies);
-    }
+    if (!teacherId) return;
   }, [teacherId, academies]);
 
   const { form, setField, setNested, setAll } = useHydratedForm({
@@ -166,13 +163,6 @@ export default function TeacherProfileEditor() {
 
   const handleSave = async () => {
     try {
-      console.log("🚀 [teacherProfileEditor] ===== INICIANDO GUARDADO =====");
-      console.log("📤 [teacherProfileEditor] Datos a enviar:", form);
-      console.log("📱 [teacherProfileEditor] Redes sociales:", form.redes_sociales);
-      console.log("📝 [teacherProfileEditor] Nombre público:", form.nombre_publico);
-      console.log("📄 [teacherProfileEditor] Bio:", form.bio);
-      console.log("🎵 [TeacherProfileEditor] Ritmos:", (form as any).ritmos);
-
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
       // Crear payload limpio con SOLO los campos que existen en profiles_teacher
@@ -201,9 +191,7 @@ export default function TeacherProfileEditor() {
         payload.id = (form as any).id;
       }
 
-      console.log("📦 [TeacherProfileEditor] Payload limpio:", payload);
       await upsert.mutateAsync(payload);
-      console.log("✅ [teacherProfileEditor] Guardado exitoso");
       
       // Mostrar mensaje de éxito
       setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
@@ -819,8 +807,6 @@ export default function TeacherProfileEditor() {
                         setTimeout(() => setStatusMsg(null), 2400);
                         setEditingIndex(null);
                         setEditInitial(undefined);
-                        // eslint-disable-next-line no-console
-                        console.log('[teacherProfileEditor] Clase editada y guardada');
                       })
                       .catch((e) => {
                         setStatusMsg({ type: 'err', text: '❌ Error al actualizar clase' });
@@ -868,14 +854,12 @@ export default function TeacherProfileEditor() {
                     setField('cronograma' as any, nextCrono as any);
                     setField('costos' as any, nextCostos as any);
 
-                    const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
+                        const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
                     return upsert
                       .mutateAsync(payload)
                       .then(() => {
                         setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
                         setTimeout(() => setStatusMsg(null), 2400);
-                        // eslint-disable-next-line no-console
-                        console.log('[teacherProfileEditor] Clase creada y guardada');
                       })
                       .catch((e) => {
                         setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });

@@ -358,7 +358,6 @@ export function OrganizerProfileLive() {
   // Auto-redirigir a Edit si no tiene perfil de organizador
   React.useEffect(() => {
     if (!isLoading && !org) {
-      console.log('[OrganizerProfileLive] No profile found, redirecting to edit...');
       navigate('/profile/organizer/edit', { replace: true });
     }
   }, [isLoading, org, navigate]);
