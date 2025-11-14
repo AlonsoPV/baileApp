@@ -353,6 +353,7 @@ export function OrganizerProfileLive() {
   const { data: eventDates } = useEventDatesByOrganizer(org?.id);
   const { media } = useOrganizerMedia();
   const { data: allTags } = useTags();
+  const [copied, setCopied] = useState(false);
 
   // Auto-redirigir a Edit si no tiene perfil de organizador
   React.useEffect(() => {

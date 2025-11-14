@@ -4,9 +4,13 @@ import { useTags } from '../../hooks/useTags';
 type Ubicacion = {
   id?: string;
   nombre?: string;
+  sede?: string;
   direccion?: string;
+  ciudad?: string;
   referencias?: string;
-  zonaIds?: number[]; // múltiples zonas
+  zonaIds?: number[];
+  zona_id?: number | null;
+  zonas?: number[];
 };
 
 type Props = {
@@ -29,27 +33,63 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
   const zonas = (allTags || []).filter((t: any) => t.tipo === 'zona');
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
 
-  const ensureId = (u: Ubicacion): Ubicacion => ({ ...u, id: u.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` });
+const ensureId = (u: Ubicacion): Ubicacion => ({
+  ...u,
+  id: u.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+});
+
+const getZonaIds = (u?: Ubicacion) => {
+  if (!u) return [] as number[];
+  if (Array.isArray(u.zonaIds)) return u.zonaIds.filter((n): n is number => typeof n === 'number');
+  if (Array.isArray(u.zonas)) return u.zonas.filter((n): n is number => typeof n === 'number');
+  if (typeof u.zona_id === 'number') return [u.zona_id];
+  return [];
+};
+
+const syncZonaFields = (item: Ubicacion, ids: number[]) => ({
+  ...item,
+  zonaIds: ids,
+  zonas: ids,
+  zona_id: ids.length ? ids[0] : null,
+});
+
+const withName = (item: Ubicacion, value: string) => ({
+  ...item,
+  nombre: value,
+  sede: value,
+});
 
   const update = (items: Ubicacion[]) => onChange?.(items.map(ensureId));
 
   const addItem = () => {
-    const item = ensureId({ nombre: '', direccion: '', referencias: '', zonaIds: [] });
+    const item = ensureId({ nombre: '', sede: '', direccion: '', ciudad: '', referencias: '', zonaIds: [] });
     update([...(value || []), item]);
     if (item.id) setExpandedIds(new Set([...Array.from(expandedIds), item.id]));
   };
 
   const updateField = (idx: number, key: keyof Ubicacion, val: any) => {
     const next = [...(value || [])];
-    next[idx] = ensureId({ ...(next[idx] || {}), [key]: val });
+    const current = ensureId({ ...(next[idx] || {}) });
+    let updated: Ubicacion = current;
+
+    if (key === 'nombre' || key === 'sede') {
+      updated = withName(current, val);
+    } else if (key === 'ciudad') {
+      updated = { ...current, ciudad: val };
+    } else {
+      updated = { ...current, [key]: val };
+    }
+
+    next[idx] = updated;
     update(next);
   };
 
   const toggleZona = (idx: number, tagId: number) => {
     const current = [...(value || [])];
-    const zonasSel = new Set(current[idx]?.zonaIds || []);
+    const existing = ensureId({ ...(current[idx] || {}) });
+    const zonasSel = new Set(getZonaIds(existing));
     zonasSel.has(tagId) ? zonasSel.delete(tagId) : zonasSel.add(tagId);
-    current[idx] = ensureId({ ...(current[idx] || {}), zonaIds: Array.from(zonasSel) });
+    current[idx] = syncZonaFields(existing, Array.from(zonasSel));
     update(current);
   };
 
@@ -104,17 +144,25 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
       </div>
 
       <div style={{ display: 'grid', gap: 12 }}>
-        {(value || []).map((u, idx) => {
+        {(value || []).map((raw, idx) => {
+          const u = ensureId(raw);
           const id = u.id || String(idx);
           const isOpen = id ? expandedIds.has(id) : false;
-          const zonaNames = (u?.zonaIds || []).map(zid => zonas.find((z: any) => z.id === zid)?.nombre).filter(Boolean) as string[];
+          const zonaNames = getZonaIds(u).map(zid => zonas.find((z: any) => z.id === zid)?.nombre).filter(Boolean) as string[];
+          const displayName = (u.nombre || u.sede || '').trim();
 
           return (
             <div key={id} style={{ padding: 12, borderRadius: 12, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.04)', display: 'grid', gap: 10 }}>
               {!isOpen && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <strong style={{ color: '#fff' }}>{(u?.nombre || 'Ubicación')}</strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <strong style={{ color: '#fff' }}>{displayName || 'Ubicación'}</strong>
+                    {u.direccion && (
+                      <span style={{ fontSize: 12, opacity: 0.8 }}>{u.direccion}</span>
+                    )}
+                    {u.ciudad && (
+                      <span style={{ fontSize: 12, opacity: 0.7 }}>🏙️ {u.ciudad}</span>
+                    )}
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {zonaNames.map((name, i) => (
                         <span key={i} style={{ fontSize: 12, fontWeight: 600, color: '#fff', border: '1px solid rgba(25,118,210,0.4)', background: 'rgba(25,118,210,0.18)', padding: '2px 8px', borderRadius: 999 }}>{name}</span>
@@ -130,17 +178,38 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
 
               {isOpen && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                     <div>
                       <div style={label}>Nombre de la ubicación</div>
-                      <div style={shell(!(u?.nombre || '').trim())}>
-                        <input style={input} value={u?.nombre || ''} onChange={(e) => updateField(idx, 'nombre', e.target.value)} placeholder="Ej. Sede Centro / Salón" />
+                      <div style={shell(!displayName)}>
+                        <input
+                          style={input}
+                          value={displayName}
+                          onChange={(e) => updateField(idx, 'nombre', e.target.value)}
+                          placeholder="Ej. Sede Centro / Salón"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={label}>Ciudad</div>
+                      <div style={shell()}>
+                        <input
+                          style={input}
+                          value={u.ciudad || ''}
+                          onChange={(e) => updateField(idx, 'ciudad', e.target.value)}
+                          placeholder="CDMX, Puebla, etc."
+                        />
                       </div>
                     </div>
                     <div>
                       <div style={label}>Dirección</div>
                       <div style={shell()}>
-                        <input style={input} value={u?.direccion || ''} onChange={(e) => updateField(idx, 'direccion', e.target.value)} placeholder="Calle, número, colonia, ciudad" />
+                        <input
+                          style={input}
+                          value={u.direccion || ''}
+                          onChange={(e) => updateField(idx, 'direccion', e.target.value)}
+                          placeholder="Calle, número, colonia"
+                        />
                       </div>
                     </div>
                   </div>
@@ -156,7 +225,12 @@ export default function UbicacionesEditor({ value = [], onChange, title = 'Ubica
                     <div style={label}>Zonas</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {zonas.map((z: any) => (
-                        <button key={z.id} type="button" style={chip((u?.zonaIds || []).includes(z.id))} onClick={() => toggleZona(idx, z.id)}>
+                        <button
+                          key={z.id}
+                          type="button"
+                          style={chip(getZonaIds(u).includes(z.id))}
+                          onClick={() => toggleZona(idx, z.id)}
+                        >
                           {z.nombre}
                         </button>
                       ))}
