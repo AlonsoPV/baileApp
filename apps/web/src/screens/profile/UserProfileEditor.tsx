@@ -732,10 +732,13 @@ export default function UserProfileEditor() {
                         active={expanded}
                         onClick={() => toggleZonaGroup(group.id)}
                         style={{
-                          width: '100%',
-                          justifyContent: 'space-between',
-                          background: expanded ? 'rgba(76,173,255,0.2)' : 'rgba(255,255,255,0.05)',
-                          border: expanded ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.12)',
+                          alignSelf: 'flex-start',
+                          width: 'fit-content',
+                          minWidth: 'auto',
+                          justifyContent: 'center',
+                          paddingInline: '1rem',
+                          background: expanded ? 'rgba(76,173,255,0.18)' : 'rgba(255,255,255,0.06)',
+                          border: expanded ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.15)',
                           borderRadius: 999,
                         }}
                       />
