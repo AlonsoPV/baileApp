@@ -246,6 +246,12 @@ export default function AcademyProfileEditor() {
     setField('zonas' as any, newZonas as any);
   };
 
+  const primaryAvatarUrl = React.useMemo(() => {
+    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
+    const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
+    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+  }, [media, academy]);
+
   const uploadFile = async (file: File, slot: string) => {
     try {
       await add.mutateAsync({ file, slot });
@@ -412,6 +418,33 @@ export default function AcademyProfileEditor() {
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
           <h1 className="org-editor__title">✏️ Editar Academia</h1>
           <div style={{ width: 100 }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div style={{
+            width: 160,
+            height: 160,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '4px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+            background: 'linear-gradient(135deg, #1E88E5, #FF7043)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {primaryAvatarUrl ? (
+              <ImageWithFallback
+                src={primaryAvatarUrl}
+                alt="Avatar de la academia"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{ fontSize: '4rem', color: '#fff', fontWeight: 700 }}>
+                {(form as any)?.nombre_publico?.[0]?.toUpperCase() || '🎓'}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Toggle de navegación (arriba de las pestañas) */}

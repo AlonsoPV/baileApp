@@ -4,6 +4,8 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
+import { getMediaBySlot } from "../../../utils/mediaSlots";
+import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
 
 interface AcademyCardProps {
   item: any;
@@ -22,16 +24,16 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Academia";
   const bio = item.bio || "";
-  // Priorizar el avatar usado en el banner (equivalente a academy-banner-avatar): avatar_url -> portada_url -> media[0]
-  console.log('[AcademyCard] Item recibido:', item);
-  console.log('[AcademyCard] avatar_url:', item.avatar_url);
-  console.log('[AcademyCard] portada_url:', item.portada_url);
-  console.log('[AcademyCard] media:', item.media);
-  const avatar = normalizeUrl((item.avatar_url)
-    || (item.portada_url)
-    || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined))
-    || null;
-  console.log('[AcademyCard] URL final de avatar/banner:', avatar);
+  const mediaList = Array.isArray(item?.media) ? (item.media as MediaSlotItem[]) : [];
+  const primaryAvatar =
+    normalizeUrl(
+      getMediaBySlot(mediaList, 'p1')?.url ||
+      getMediaBySlot(mediaList, 'cover')?.url ||
+      item.avatar_url ||
+      item.portada_url ||
+      (mediaList[0] as any)?.url ||
+      (mediaList[0] as any)?.path
+    ) || null;
 
   // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
   const ritmoNombres: string[] = (() => {
@@ -64,8 +66,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
         style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: avatar
-            ? `url(${avatar})`
+          background: primaryAvatar
+            ? `url(${primaryAvatar})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -86,7 +88,7 @@ export default function AcademyCard({ item }: AcademyCardProps) {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
 
         {/* Overlay global solo si NO hay banner */}
-        {!avatar && (
+        {!primaryAvatar && (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
         )}
 

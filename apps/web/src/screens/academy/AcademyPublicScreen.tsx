@@ -1,5 +1,5 @@
 // Public Academy Screen (replica visual de AcademyProfileLi  ve)
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useParams } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
@@ -243,6 +243,12 @@ export default function AcademyPublicScreen() {
     .filter(Boolean) as string[];
 
   const promotions = Array.isArray((academy as any)?.promociones) ? (academy as any).promociones : [];
+
+  const primaryAvatarUrl = useMemo(() => {
+    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
+    const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
+    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+  }, [media, academy]);
 
   const getRitmoNombres = () => {
     const names: string[] = [];
@@ -553,9 +559,9 @@ export default function AcademyPublicScreen() {
           <div className="academy-banner-grid">
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
               <div className="academy-banner-avatar">
-                {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
+                {primaryAvatarUrl ? (
                   <img
-                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
+                    src={primaryAvatarUrl}
                     alt="Logo de la academia"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />

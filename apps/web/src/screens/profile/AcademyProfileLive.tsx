@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAcademyMy } from "../../hooks/useAcademy";
@@ -384,6 +384,12 @@ export default function AcademyProfileLive() {
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
+
+  const primaryAvatarUrl = useMemo(() => {
+    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
+    const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
+    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+  }, [media, academy]);
 
   // Obtener videos
   const videos = VIDEO_SLOTS
@@ -857,9 +863,9 @@ export default function AcademyProfileLive() {
               gap: '1rem'
             }}>
               <div className="academy-banner-avatar">
-                {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
+                {primaryAvatarUrl ? (
                   <img
-                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
+                    src={primaryAvatarUrl}
                     alt="Logo de la academia"
                     style={{
                       width: '100%',
