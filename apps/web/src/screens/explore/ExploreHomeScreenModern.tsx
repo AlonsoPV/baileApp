@@ -24,6 +24,22 @@ const addDays = (d: Date, n: number) => {
   return x;
 };
 
+/**
+ * Obtiene la fecha de hoy en zona horaria de CDMX (America/Mexico_City)
+ * Retorna en formato YYYY-MM-DD
+ */
+function getTodayCDMX(): string {
+  // Usar Intl.DateTimeFormat para obtener la fecha en zona horaria de CDMX
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  // Formato retorna YYYY-MM-DD
+  return formatter.format(new Date());
+}
+
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
   return (
     <motion.section 
@@ -133,21 +149,23 @@ export default function ExploreHomeScreen() {
   }, []);
 
   const computePresetRange = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    const base = new Date();
-    const ymd = base.toISOString().slice(0, 10);
+    // Usar fecha de hoy en zona horaria CDMX
+    const todayCDMX = getTodayCDMX();
+    const todayDate = new Date(todayCDMX + 'T12:00:00'); // Usar mediodía para evitar problemas de zona horaria
+    
     if (preset === 'todos') {
       return { from: undefined, to: undefined };
     }
     if (preset === 'hoy') {
-      return { from: ymd, to: ymd };
+      return { from: todayCDMX, to: todayCDMX };
     }
     if (preset === 'semana') {
-      const from = ymd;
-      const to = addDays(base, 6).toISOString().slice(0, 10);
+      const from = todayCDMX;
+      const to = addDays(todayDate, 6).toISOString().slice(0, 10);
       return { from, to };
     }
     if (preset === 'siguientes') {
-      const from = addDays(base, 7).toISOString().slice(0, 10);
+      const from = addDays(todayDate, 7).toISOString().slice(0, 10);
       return { from, to: undefined };
     }
     return { from: undefined, to: undefined };

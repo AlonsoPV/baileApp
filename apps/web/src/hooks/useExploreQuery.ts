@@ -8,6 +8,22 @@ const PAGE_LIMIT = 12;
 type QueryParams = ExploreFilters;
 
 /**
+ * Obtiene la fecha de hoy en zona horaria de CDMX (America/Mexico_City)
+ * Retorna en formato YYYY-MM-DD
+ */
+function getTodayCDMX(): string {
+  // Usar Intl.DateTimeFormat para obtener la fecha en zona horaria de CDMX
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  // Formato retorna YYYY-MM-DD
+  return formatter.format(new Date());
+}
+
+/**
  * Determina qué tabla o vista usar para cada tipo de exploración
  * Para eventos y organizadores, usamos las vistas LIVE que solo muestran contenido aprobado/publicado
  */
@@ -102,21 +118,28 @@ async function fetchPage(params: QueryParams, page: number) {
 
   // Filtros por tipo
   if (type === "fechas") {
-    // DEBUG: Log the current date filter
-    const today = new Date().toISOString().split('T')[0];
-    console.log('[useExploreQuery] Filtering fechas from date:', today);
+    // Obtener fecha de hoy en zona horaria CDMX
+    const todayCDMX = getTodayCDMX();
+    console.log('[useExploreQuery] Filtering fechas - Today (CDMX):', todayCDMX, 'dateFrom:', dateFrom, 'dateTo:', dateTo);
     
-    // TEMPORARY: Comment out future events filter to debug
-    // query = query.gte("fecha", today);
-
     // Mostrar solo fechas publicadas
     query = query.eq("estado_publicacion", "publicado");
     
     // Filtrar por organizadores aprobados (removido por ahora - el !inner falla si no hay relación)
     // query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
     
-    if (dateFrom) query = query.gte("fecha", dateFrom);
-    if (dateTo)   query = query.lte("fecha", dateTo);
+    // Si dateFrom y dateTo son undefined (preset "todos"), filtrar solo eventos futuros (>= hoy)
+    // Si dateFrom está definido, usarlo; si no, usar hoy como mínimo
+    if (dateFrom) {
+      query = query.gte("fecha", dateFrom);
+    } else {
+      // Para "todos", mostrar solo eventos futuros (>= hoy en CDMX)
+      query = query.gte("fecha", todayCDMX);
+    }
+    
+    if (dateTo) {
+      query = query.lte("fecha", dateTo);
+    }
     
     // filtrar por estilos/ritmos - a nivel de fecha y de parent
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
