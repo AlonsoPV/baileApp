@@ -98,18 +98,29 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
               type="button"
               onClick={() => setExpanded(prev => prev === group.id ? null : group.id)}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                transition: '0.3s',
+                backdropFilter: 'blur(10px)',
+                userSelect: 'none',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                padding: '10px 18px',
+                borderRadius: 999,
+                background: isOpen || active ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.04)',
+                border: isOpen || active ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.12)',
+                color: isOpen || active ? '#FFE4EE' : 'rgba(255,255,255,0.85)',
+                boxShadow: isOpen || active
+                  ? 'rgba(245,87,108,0.35) 0px 4px 14px, rgba(255,255,255,0.15) 0px 1px 0px inset'
+                  : 'rgba(0,0,0,0.35) 0px 3px 10px',
                 alignSelf: 'flex-start',
                 width: 'fit-content',
                 minWidth: 'auto',
-                padding: '0.45rem 1rem',
-                borderRadius: 999,
-                border: isOpen || active ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.15)',
-                background: isOpen || active ? 'rgba(76,173,255,0.18)' : 'rgba(255,255,255,0.05)',
-                color: isOpen || active ? '#E3F2FF' : 'rgba(255,255,255,0.8)',
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                justifyContent: 'center',
+                paddingInline: '1rem',
+                transform: 'none',
               }}
             >
               {group.label}
@@ -138,15 +149,26 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
                 onClick={() => toggleChild(r.id)}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: 999,
-                  border: isActive ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.15)',
-                  background: isActive ? 'rgba(76,173,255,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: isActive ? '#E3F2FF' : 'rgba(255,255,255,0.8)',
-                  fontSize: 13,
-                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: '0.3s',
+                  backdropFilter: 'blur(10px)',
+                  userSelect: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  padding: '8px 14px',
+                  borderRadius: 999,
+                  background: isActive ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.03)',
+                  border: isActive ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.1)',
+                  color: isActive ? '#FFE4EE' : 'rgba(255,255,255,0.72)',
+                  boxShadow: isActive
+                    ? 'rgba(245,87,108,0.3) 0px 3px 10px'
+                    : 'rgba(0,0,0,0.25) 0px 2px 8px',
+                  alignSelf: 'flex-start',
+                  minWidth: 'auto',
+                  justifyContent: 'center',
                 }}
               >
                 {r.label}
