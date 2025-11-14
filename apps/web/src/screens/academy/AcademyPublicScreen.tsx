@@ -20,6 +20,7 @@ import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
 import { useAcceptedTeachers } from "../../hooks/useAcademyTeacherInvitations";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -271,13 +272,6 @@ export default function AcademyPublicScreen() {
       names.push(...extra);
     }
     return names;
-  };
-
-  const getZonaNombres = () => {
-    if (!allTags || !academy?.zonas) return [];
-    return academy.zonas
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona')?.nombre)
-      .filter(Boolean);
   };
 
   if (isLoading) {
@@ -665,12 +659,11 @@ export default function AcademyPublicScreen() {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {getZonaNombres().map((zona, index) => (
-                  <Chip
-                    key={`zona-${index}`} label={zona} active variant="zona"
-                    style={{ background: 'rgba(25, 118, 210, 0.2)', border: '1px solid #1976D2', color: '#90CAF9', fontWeight: 600 }}
-                  />
-                ))}
+                <ZonaGroupedChips
+                  selectedIds={academy.zonas}
+                  allTags={allTags}
+                  mode="display"
+                />
               </div>
             </div>
           </div>

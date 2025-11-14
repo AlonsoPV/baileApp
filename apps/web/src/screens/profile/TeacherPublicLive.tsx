@@ -15,6 +15,7 @@ import RitmosChips from "../../components/RitmosChips";
 import { supabase } from "../../lib/supabase";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 
@@ -414,12 +415,6 @@ export default function TeacherProfileLive() {
       }
     }
     return names;
-  };
-
-  const getZonaNombres = () => {
-    const zonas = (teacher as any)?.zonas || [];
-    if (!allTags || !zonas) return [];
-    return zonas.map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'zona')?.nombre).filter(Boolean);
   };
 
   if (isLoading) {
@@ -984,20 +979,11 @@ export default function TeacherProfileLive() {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {getZonaNombres().map((zona, index) => (
-                  <Chip
-                    key={`zona-${index}`}
-                    label={zona}
-                    active={true}
-                    variant="zona"
-                    style={{
-                      background: 'rgba(25, 118, 210, 0.2)',
-                      border: '1px solid #1976D2',
-                      color: '#90CAF9',
-                      fontWeight: '600'
-                    }}
-                  />
-                ))}
+                <ZonaGroupedChips
+                  selectedIds={(teacher as any)?.zonas}
+                  allTags={allTags}
+                  mode="display"
+                />
               </div>
             </div>
           </div>

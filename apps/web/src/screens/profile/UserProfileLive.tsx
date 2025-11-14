@@ -306,8 +306,8 @@ export const UserProfileLive: React.FC = () => {
     if (!profile?.zonas) return [];
     return rawZonaGroups
       .map(group => {
-        const chips = group.items.filter(item => profile.zonas.includes(item.id));
-        return chips.length ? { ...group, chips } : null;
+        const items = group.items.filter(item => profile.zonas.includes(item.id));
+        return items.length ? { ...group, items } : null;
       })
       .filter(Boolean) as ZonaGroupInfo[];
   }, [rawZonaGroups, profile?.zonas]);
@@ -883,7 +883,7 @@ export const UserProfileLive: React.FC = () => {
                   <>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                       {zonaChipGroups.map((group) => {
-                        const hasSelection = group.chips.some(({ id }) => profile?.zonas?.includes(id));
+                        const hasSelection = group.items.some(({ id }) => profile?.zonas?.includes(id));
                         const expanded = expandedZonaGroups[group.id] ?? false;
                         return (
                           <Chip
@@ -919,7 +919,7 @@ export const UserProfileLive: React.FC = () => {
                           key={`zona-live-${group.id}`}
                           style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}
                         >
-                          {group.chips.map((chip) => (
+                          {group.items.map((chip) => (
                             <Chip
                               key={`z-${chip.id}`}
                               label={chip.label}

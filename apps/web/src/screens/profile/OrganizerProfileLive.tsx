@@ -20,6 +20,7 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -396,14 +397,6 @@ export function OrganizerProfileLive() {
       }
     }
     return names;
-  };
-
-  const getZonaNombres = () => {
-    if (!allTags || !(org as any)?.zonas) return [];
-    return (org as any).zonas
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
   };
 
   // Agregar agregación de ubicaciones desde los sociales (events_parent)
@@ -1095,14 +1088,11 @@ export function OrganizerProfileLive() {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {getZonaNombres().map((nombre) => (
-                  <Chip
-                    key={`z-${nombre}`}
-                    label={nombre}
-                    icon="📍"
-                    variant="zona"
-                  />
-                ))}
+                <ZonaGroupedChips
+                  selectedIds={(org as any)?.zonas || []}
+                  allTags={allTags}
+                  mode="display"
+                />
               </div>
 
             </motion.div>

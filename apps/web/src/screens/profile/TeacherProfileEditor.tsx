@@ -30,6 +30,7 @@ import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies } fr
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
 import { TeacherMetricsPanel } from "../../components/profile/TeacherMetricsPanel";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 
 const colors = {
   primary: '#E53935',
@@ -665,22 +666,13 @@ export default function TeacherProfileEditor() {
           </div>
 
           {/* Chips Zonas */}
-          <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1.25rem' }}>
-            {allTags?.filter(tag => tag.tipo === 'zona').map(tag => (
-              <Chip
-                key={tag.id}
-                label={tag.nombre}
-                active={(form as any).zonas?.includes(tag.id) || false}
-                onClick={() => toggleZona(tag.id)}
-                variant="zona"
-                style={{
-                  background: ((form as any).zonas?.includes(tag.id) ? 'rgba(25,118,210,0.2)' : 'rgba(255,255,255,0.04)'),
-                  border: ((form as any).zonas?.includes(tag.id) ? '1px solid #1976D2' : '1px solid rgba(255,255,255,0.15)'),
-                  color: ((form as any).zonas?.includes(tag.id) ? '#90CAF9' : 'rgba(255,255,255,0.9)'),
-                  fontWeight: 600
-                }}
-              />
-            ))}
+          <div className="academy-chips-container" style={{ padding: '0 1.25rem 1.25rem' }}>
+            <ZonaGroupedChips
+              selectedIds={(form as any).zonas}
+              allTags={allTags}
+              mode="edit"
+              onToggle={toggleZona}
+            />
           </div>
         </div>
 

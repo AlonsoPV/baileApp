@@ -14,6 +14,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { fmtDate, fmtTime } from "../../utils/format";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
@@ -137,11 +138,6 @@ export function OrganizerPublicScreen() {
       }
     }
     return names;
-  };
-
-  const getZonaNombres = () => {
-    if (!(org as any)?.zonas) return [];
-    return ((org as any).zonas as number[]).map(id => allZonas.find(t => t.id === id)?.nombre).filter(Boolean) as string[];
   };
 
   // Agregar agregación de ubicaciones desde los sociales (events_parent)
@@ -470,9 +466,11 @@ export function OrganizerPublicScreen() {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {getZonaNombres().map((nombre) => (
-                  <Chip key={`z-${nombre}`} label={nombre} icon="📍" variant="zona" />
-                ))}
+                <ZonaGroupedChips
+                  selectedIds={(org as any)?.zonas || []}
+                  allTags={allZonas}
+                  mode="display"
+                />
               </div>
             </motion.div>
           </div>

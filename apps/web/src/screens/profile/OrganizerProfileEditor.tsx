@@ -36,6 +36,7 @@ import OrganizerUbicacionesEditor from "../../components/organizer/UbicacionesEd
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import type { AcademyLocation } from "../../types/academy";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 
 const colors = {
   coral: '#FF3D57',
@@ -1774,20 +1775,12 @@ export default function OrganizerProfileEditor() {
               </div>
 
               <div>
-                {/*  <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
-                  📍 Zonas donde Organizas
-                </h3> */}
-                <div className="org-editor-chips">
-                  {zonaTags.map((tag) => (
-                    <Chip
-                      key={tag.id}
-                      label={tag.nombre}
-                      active={form.zonas.includes(tag.id)}
-                      onClick={() => toggleZona(tag.id)}
-                      variant="zona"
-                    />
-                  ))}
-                </div>
+                <ZonaGroupedChips
+                  selectedIds={form.zonas}
+                  allTags={allTags}
+                  mode="edit"
+                  onToggle={toggleZona}
+                />
               </div>
             </div>
           </div>
