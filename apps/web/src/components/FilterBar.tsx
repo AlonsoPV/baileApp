@@ -4,6 +4,7 @@ import { useTags } from "../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
+import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 
 interface FilterBarProps {
   filters: ExploreFilters;
@@ -28,11 +29,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
+  const [expandedZonaGroup, setExpandedZonaGroup] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
   });
   const { ritmos, zonas } = useTags();
+  const { groups: zonaGroups } = useZonaCatalogGroups(zonas);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -436,25 +439,59 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {/* Dropdown Zonas */}
             {openDropdown === 'zonas' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  padding: '4px'
-                }}>
-                  {zonas?.map((zona) => (
-                    <Chip
-                      key={zona.id}
-                      label={zona.nombre}
-                      icon="📍"
-                      variant="zona"
-                      active={filters.zonas.includes(zona.id)}
-                      onClick={() => handleZonaToggle(zona.id)}
-                    />
-                  ))}
-                </div>
+                {zonaGroups.length ? (
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {zonaGroups.map(group => {
+                        const activeInGroup = group.items.some(item => filters.zonas.includes(item.id));
+                        const isOpen = expandedZonaGroup === group.id;
+                        return (
+                          <Chip
+                            key={group.id}
+                            label={`${group.label} ${isOpen ? '▾' : '▸'}`}
+                            icon="📍"
+                            variant="custom"
+                            active={isOpen || activeInGroup}
+                            onClick={() => setExpandedZonaGroup(prev => (prev === group.id ? null : group.id))}
+                            style={{
+                              width: 'fit-content',
+                              minWidth: 'auto',
+                              paddingInline: '1rem',
+                              background: (isOpen || activeInGroup)
+                                ? 'rgba(76,173,255,0.18)'
+                                : 'rgba(255,255,255,0.05)',
+                              border: (isOpen || activeInGroup)
+                                ? '1px solid rgba(76,173,255,0.6)'
+                                : '1px solid rgba(255,255,255,0.12)',
+                              borderRadius: 999,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                    {expandedZonaGroup && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {zonaGroups.find(g => g.id === expandedZonaGroup)?.items.map(item => {
+                          const active = filters.zonas.includes(item.id);
+                          return (
+                            <Chip
+                              key={item.id}
+                              label={item.label}
+                              icon="📍"
+                              variant="zona"
+                              active={active}
+                              onClick={() => handleZonaToggle(item.id)}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+                    No hay zonas disponibles
+                  </div>
+                )}
               </DropdownPanel>
             )}
 

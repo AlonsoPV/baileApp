@@ -17,7 +17,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import { useFollowStatus } from "../../hooks/useFollowStatus";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
-import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
+import { useZonaCatalogGroups, ZonaGroupInfo } from '@/hooks/useZonaCatalogGroups';
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -322,63 +322,22 @@ export const UserProfileLive: React.FC = () => {
     return ritmos;
   };
 
-  const zonaChipGroups = React.useMemo(() => {
-    if (!allTags || !profile?.zonas) return [];
-    const zonaTags = profile.zonas
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
-      .filter((tag): tag is typeof allTags[number] => Boolean(tag));
-
-    const normalizeSlug = (slug?: string | null) =>
-      String(slug ?? '')
-        .trim()
-        .toLowerCase();
-
-    const usedIds = new Set<number>();
-    const groups = ZONAS_CATALOG.map(group => {
-      const chips = group.items
-        .map(item => {
-          const catalogSlug = normalizeSlug(item.slug);
-          const tag = zonaTags.find(t => {
-            const tagSlug = normalizeSlug(t.slug);
-            return (
-              tagSlug === catalogSlug ||
-              tagSlug === catalogSlug.replace(/_/g, '-') ||
-              tagSlug === catalogSlug.replace(/-/g, '_')
-            );
-          });
-          if (!tag) return null;
-          usedIds.add(tag.id);
-          return { id: tag.id, label: item.label };
-        })
-        .filter(Boolean) as { id: number; label: string }[];
-      if (!chips.length) return null;
-      return { id: group.id, label: group.label, chips };
-    }).filter(Boolean) as { id: string; label: string; chips: { id: number; label: string }[] }[];
-
-    const remaining = zonaTags
-      .filter(tag => !usedIds.has(tag.id))
-      .map(tag => ({ id: tag.id, label: tag.nombre }));
-
-    if (remaining.length) {
-      groups.push({
-        id: 'other-zones',
-        label: 'Otras zonas',
-        chips: remaining,
-      });
-    }
-
-    return groups;
-  }, [allTags, profile?.zonas]);
+  const { groups: rawZonaGroups } = useZonaCatalogGroups(allTags);
+  const zonaGroups = React.useMemo(() => {
+    if (!profile?.zonas || !rawZonaGroups.length) return [];
+    return rawZonaGroups
+      .map(group => {
+        const items = group.items.filter(item => profile.zonas.includes(item.id));
+        return items.length ? { ...group, items } : null;
+      })
+      .filter(Boolean) as ZonaGroupInfo[];
+  }, [rawZonaGroups, profile?.zonas]);
 
   const toggleZonaGroup = (groupId: string) => {
     setExpandedZonaGroups(prev => ({
       ...prev,
-      [groupId]: !(prev[groupId] ?? true),
+      [groupId]: !(prev[groupId] ?? false),
     }));
-  };
-
-  const isGroupExpanded = (groupId: string) => {
-    return expandedZonaGroups[groupId] ?? true;
   };
 
   // Get photos for carousel
@@ -969,48 +928,70 @@ export const UserProfileLive: React.FC = () => {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {zonaChipGroups.map((group) => {
-                  const expanded = isGroupExpanded(group.id);
-                  return (
-                    <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <Chip
-                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                        icon="📍"
-                        variant="custom"
-                        active={expanded}
-                        onClick={() => toggleZonaGroup(group.id)}
-                        style={{
-                          alignSelf: 'flex-start',
-                          width: 'fit-content',
-                          minWidth: 'auto',
-                          justifyContent: 'center',
-                          paddingInline: '1rem',
-                          background: expanded ? 'rgba(76,173,255,0.18)' : 'rgba(255,255,255,0.05)',
-                          border: expanded ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: 999,
-                        }}
-                      />
-                      {expanded && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}>
-                          {group.chips.map((chip) => (
+                {zonaGroups.length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {zonaGroups.map((group) => {
+                        const hasSelection = group.items.some(({ id }) => profile?.zonas?.includes(id));
+                        const expanded = expandedZonaGroups[group.id] ?? false;
+                        return (
+                          <Chip
+                            key={group.id}
+                            label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                            icon="📍"
+                            variant="custom"
+                            active={expanded || hasSelection}
+                            onClick={() => toggleZonaGroup(group.id)}
+                            style={{
+                              alignSelf: 'flex-start',
+                              width: 'fit-content',
+                              minWidth: 'auto',
+                              justifyContent: 'center',
+                              paddingInline: '1rem',
+                              background: (expanded || hasSelection)
+                                ? 'rgba(76,173,255,0.18)'
+                                : 'rgba(255,255,255,0.05)',
+                              border: (expanded || hasSelection)
+                                ? '1px solid rgba(76,173,255,0.6)'
+                                : '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: 999,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                    {zonaGroups.map((group) => {
+                      const expanded = expandedZonaGroups[group.id];
+                      if (!expanded) return null;
+                      return (
+                        <div
+                          key={`zona-readonly-${group.id}`}
+                          style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}
+                        >
+                          {group.items.map((chip) => (
                             <Chip
                               key={`z-${chip.id}`}
                               label={chip.label}
                               icon="📍"
                               variant="zona"
+                              active={profile?.zonas?.includes(chip.id)}
                               style={{
-                                background: 'rgba(255,255,255,0.06)',
-                                border: '1.5px solid rgba(255,255,255,0.25)',
+                                background: profile?.zonas?.includes(chip.id)
+                                  ? 'rgba(76,173,255,0.18)'
+                                  : 'rgba(255,255,255,0.06)',
+                                border: profile?.zonas?.includes(chip.id)
+                                  ? '1.5px solid rgba(76,173,255,0.6)'
+                                  : '1.5px solid rgba(255,255,255,0.25)',
                                 color: '#fff',
                                 fontWeight: 700,
                               }}
                             />
                           ))}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </>
+                )}
               </div>
             </div>
           </div>

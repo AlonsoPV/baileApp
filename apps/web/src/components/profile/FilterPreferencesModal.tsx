@@ -5,6 +5,7 @@ import { useTags } from "@/hooks/useTags";
 import RitmosChips from "@/components/RitmosChips";
 import { Chip } from "./Chip";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 
 type FilterPreferencesModalProps = {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
   const [dateRange, setDateRange] = useState<DateRange>('none');
   const [customDays, setCustomDays] = useState<number>(7);
   const [saved, setSaved] = useState(false);
+  const [expandedZonaGroups, setExpandedZonaGroups] = useState<Record<string, boolean>>({});
 
   // Cargar preferencias cuando se abre el modal
   useEffect(() => {
@@ -90,7 +92,13 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
     }
   };
 
-  const zonaTags = (allTags || []).filter((tag: any) => tag.tipo === 'zona');
+  const { groups: zonaGroups } = useZonaCatalogGroups(allTags || []);
+  const toggleZonaGroup = (groupId: string) => {
+    setExpandedZonaGroups((prev) => ({
+      ...prev,
+      [groupId]: !(prev[groupId] ?? false),
+    }));
+  };
 
   return (
     <AnimatePresence>
@@ -231,35 +239,73 @@ export function FilterPreferencesModal({ isOpen, onClose }: FilterPreferencesMod
                     <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
                       🗺️ Zonas Favoritas
                     </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      {zonaTags.map((tag: any) => (
-                        <Chip
-                          key={tag.id}
-                          label={tag.nombre}
-                          active={zonas.includes(tag.id)}
-                          onClick={() => {
-                            setZonas(prev =>
-                              prev.includes(tag.id)
-                                ? prev.filter(id => id !== tag.id)
-                                : [...prev, tag.id]
+                    {zonaGroups.length > 0 && (
+                      <>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                          {zonaGroups.map((group) => {
+                            const hasSelected = group.items.some(({ id }) => zonas.includes(id));
+                            const expanded = expandedZonaGroups[group.id] ?? false;
+                            return (
+                              <Chip
+                                key={group.id}
+                                label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                                icon="📍"
+                                variant="custom"
+                                active={expanded || hasSelected}
+                                onClick={() => toggleZonaGroup(group.id)}
+                                style={{
+                                  alignSelf: 'flex-start',
+                                  width: 'fit-content',
+                                  minWidth: 'auto',
+                                  justifyContent: 'center',
+                                  paddingInline: '1rem',
+                                  background: (expanded || hasSelected)
+                                    ? 'rgba(76,173,255,0.18)'
+                                    : 'rgba(255,255,255,0.05)',
+                                  border: (expanded || hasSelected)
+                                    ? '1px solid rgba(76,173,255,0.6)'
+                                    : '1px solid rgba(255,255,255,0.15)',
+                                  borderRadius: 999,
+                                }}
+                              />
                             );
-                          }}
-                          variant="zona"
-                          style={{
-                            background: zonas.includes(tag.id)
-                              ? 'rgba(25,118,210,0.2)'
-                              : 'rgba(255,255,255,0.04)',
-                            border: zonas.includes(tag.id)
-                              ? '1px solid #1976D2'
-                              : '1px solid rgba(255,255,255,0.15)',
-                            color: zonas.includes(tag.id)
-                              ? '#90CAF9'
-                              : 'rgba(255,255,255,0.9)',
-                            fontWeight: 600,
-                          }}
-                        />
-                      ))}
-                    </div>
+                          })}
+                        </div>
+                        {zonaGroups.map((group) => {
+                          const expanded = expandedZonaGroups[group.id];
+                          if (!expanded) return null;
+                          return (
+                            <div key={`pref-zonas-${group.id}`} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                              {group.items.map(({ id, label }) => (
+                                <Chip
+                                  key={id}
+                                  label={label}
+                                  active={zonas.includes(id)}
+                                  onClick={() => {
+                                    setZonas((prev) =>
+                                      prev.includes(id) ? prev.filter((z) => z !== id) : [...prev, id]
+                                    );
+                                  }}
+                                  variant="zona"
+                                  style={{
+                                    background: zonas.includes(id)
+                                      ? 'rgba(25,118,210,0.2)'
+                                      : 'rgba(255,255,255,0.04)',
+                                    border: zonas.includes(id)
+                                      ? '1px solid #1976D2'
+                                      : '1px solid rgba(255,255,255,0.15)',
+                                    color: zonas.includes(id)
+                                      ? '#90CAF9'
+                                      : 'rgba(255,255,255,0.9)',
+                                    fontWeight: 600,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
                     <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
                       Selecciona las zonas donde prefieres buscar eventos y clases
                     </p>
