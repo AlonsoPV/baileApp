@@ -717,6 +717,7 @@ export default function CrearClase({
                         selectedIds={zoneIdsToShow}
                         allTags={zonaTagSource}
                         mode="display"
+                        autoExpandSelectedParents={false}
                         style={{
                           gap: '4px',
                           fontSize: 12,

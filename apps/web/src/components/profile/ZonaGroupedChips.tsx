@@ -14,6 +14,7 @@ export interface ZonaGroupedChipsProps {
   icon?: string;
   className?: string;
   style?: React.CSSProperties;
+  autoExpandSelectedParents?: boolean;
 }
 
 function normalizeSelected(selected?: Array<number | null | undefined> | null) {
@@ -28,6 +29,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   icon = "📍",
   className,
   style,
+  autoExpandSelectedParents = true,
 }) => {
   const normalizedSelected = React.useMemo(
     () => normalizeSelected(selectedIds),
@@ -58,7 +60,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
       const next = { ...prev };
       relevantGroups.forEach((group) => {
         const hasSelected = group.items.some((item) => selectedSet.has(item.id));
-        if (hasSelected) {
+        if (autoExpandSelectedParents && hasSelected) {
           next[group.id] = true;
         } else if (next[group.id] === undefined) {
           next[group.id] = false;
@@ -66,7 +68,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
       });
       return next;
     });
-  }, [relevantGroups, selectedSet]);
+  }, [relevantGroups, selectedSet, autoExpandSelectedParents]);
 
   if (mode === "display" && relevantGroups.length === 0) {
     return null;
