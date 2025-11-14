@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getMediaBySlot } from '@/utils/mediaSlots';
 
 export type TeacherProfile = {
   id?: number;
@@ -15,7 +16,7 @@ export type TeacherProfile = {
   ubicaciones?: any[];
   cronograma?: any[];
   costos?: any[];
-  media: { type: 'image'|'video'; url: string }[];
+  media: { type: 'image'|'video'; url: string; slot?: string }[];
   faq?: { q: string; a: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
   created_at?: string;
@@ -23,6 +24,29 @@ export type TeacherProfile = {
 };
 
 const TABLE = 'profiles_teacher';
+
+function resolveTeacherAvatar(profile?: TeacherProfile | null): string | null {
+  if (!profile) return null;
+  const mediaList = Array.isArray(profile.media) ? profile.media : [];
+  const preferredSlots = ['p1','avatar','cover'] as const;
+  for (const slot of preferredSlots) {
+    const item = getMediaBySlot(mediaList as any, slot);
+    if (item?.url) return item.url;
+  }
+  const firstMedia = mediaList.find((m) => m?.url);
+  if (firstMedia?.url) return firstMedia.url;
+  return profile.avatar_url || profile.portada_url || null;
+}
+
+function normalizeTeacherProfile(profile: TeacherProfile | null): TeacherProfile | null {
+  if (!profile) return null;
+  const resolvedAvatar = resolveTeacherAvatar(profile);
+  return {
+    ...profile,
+    media: Array.isArray(profile.media) ? profile.media : [],
+    avatar_url: resolvedAvatar || profile.avatar_url || null,
+  };
+}
 
 export function useTeacherMy() {
   return useQuery({
@@ -37,7 +61,7 @@ export function useTeacherMy() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as TeacherProfile | null;
+      return normalizeTeacherProfile(data as TeacherProfile | null);
     }
   });
 }
@@ -53,7 +77,7 @@ export function useTeacherPublic(id: number) {
         .eq('id', id)
         .maybeSingle();
       if (error) throw error;
-      return data as TeacherProfile | null;
+      return normalizeTeacherProfile(data as TeacherProfile | null);
     }
   });
 }
@@ -112,7 +136,7 @@ export function useUpsertTeacher() {
         return refetch as TeacherProfile;
       }
       console.log('✅ [useTeacher] UPSERT exitoso:', data);
-      return data as TeacherProfile;
+      return normalizeTeacherProfile(data as TeacherProfile) as TeacherProfile;
     },
     onSuccess: (data) => {
       console.log('🎉 [useTeacher] onSuccess, invalidando queries. Data:', data);

@@ -25,11 +25,21 @@ export default function OnboardingGate() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('onboarding_complete, pin_hash')
+        .select('onboarding_complete, pin_hash, updated_at')
         .eq('user_id', user!.id)
+        // En caso de que existan filas duplicadas para el mismo user_id,
+        // tomar siempre la más reciente para reflejar el último estado real
+        .order('updated_at', { ascending: false })
         .limit(1);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
+      // Log de depuración para entender estados raros
+      console.log('[OnboardingGate] Fila profiles_user leída:', {
+        userId: user!.id,
+        onboarding_complete: row?.onboarding_complete,
+        hasPinHash: !!row?.pin_hash,
+        updated_at: row?.updated_at,
+      });
       return row ?? { onboarding_complete: false, pin_hash: null };
     },
     staleTime: 30000,
