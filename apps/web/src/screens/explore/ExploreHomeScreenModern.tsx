@@ -750,82 +750,84 @@ export default function ExploreHomeScreen() {
           )}
 
           <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
-          <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
-          {!isMobile && renderDatePresetButtons(false)}
+            <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
+            {!isMobile && renderDatePresetButtons(false)}
+
+            {zonaQuickGroups.length > 0 && (
+              <div
+                style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid rgba(255,255,255,0.12)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem' }}>📍 Filtros rápidos por zona</div>
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                    {filters.zonas.length > 0 ? `${filters.zonas.length} seleccionadas` : 'Selecciona una zona'}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {zonaQuickGroups.map((group) => {
+                    const hasSelection = group.items.some(({ id }) => filters.zonas.includes(id));
+                    const expanded = expandedZonaFilterGroups[group.id] ?? false;
+                    return (
+                      <Chip
+                        key={group.id}
+                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                        icon="📍"
+                        variant="custom"
+                        active={expanded || hasSelection}
+                        onClick={() => toggleZonaQuickGroup(group.id)}
+                        style={{
+                          alignSelf: 'flex-start',
+                          width: 'fit-content',
+                          minWidth: 'auto',
+                          justifyContent: 'center',
+                          paddingInline: '1rem',
+                          background: (expanded || hasSelection)
+                            ? 'rgba(76,173,255,0.18)'
+                            : 'rgba(255,255,255,0.05)',
+                          border: (expanded || hasSelection)
+                            ? '1px solid rgba(76,173,255,0.6)'
+                            : '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: 999,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {zonaQuickGroups.map((group) => {
+                  const expanded = expandedZonaFilterGroups[group.id];
+                  if (!expanded) return null;
+                  return (
+                    <div
+                      key={`explore-zonas-${group.id}`}
+                      style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+                    >
+                      {group.items.map(({ id, label }) => (
+                        <Chip
+                          key={id}
+                          label={label}
+                          icon="📍"
+                          variant="zona"
+                          active={filters.zonas.includes(id)}
+                          onClick={() => handleZonaQuickToggle(id)}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {isMobile && (
             <div style={{ margin: '0 0 1.5rem 0' }}>
               {renderDatePresetButtons(true)}
-            </div>
-          )}
-
-          {zonaQuickGroups.length > 0 && (
-            <div
-              className="panel"
-              style={{
-                marginTop: spacing[4],
-                padding: '1.5rem',
-                borderRadius: '18px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem' }}>📍 Filtros rápidos por zona</div>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                  {filters.zonas.length > 0 ? `${filters.zonas.length} seleccionadas` : 'Selecciona una zona'}
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                {zonaQuickGroups.map((group) => {
-                  const hasSelection = group.items.some(({ id }) => filters.zonas.includes(id));
-                  const expanded = expandedZonaFilterGroups[group.id] ?? false;
-                  return (
-                    <Chip
-                      key={group.id}
-                      label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                      icon="📍"
-                      variant="custom"
-                      active={expanded || hasSelection}
-                      onClick={() => toggleZonaQuickGroup(group.id)}
-                      style={{
-                        alignSelf: 'flex-start',
-                        width: 'fit-content',
-                        minWidth: 'auto',
-                        justifyContent: 'center',
-                        paddingInline: '1rem',
-                        background: (expanded || hasSelection)
-                          ? 'rgba(76,173,255,0.18)'
-                          : 'rgba(255,255,255,0.05)',
-                        border: (expanded || hasSelection)
-                          ? '1px solid rgba(76,173,255,0.6)'
-                          : '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: 999,
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              {zonaQuickGroups.map((group) => {
-                const expanded = expandedZonaFilterGroups[group.id];
-                if (!expanded) return null;
-                return (
-                  <div
-                    key={`explore-zonas-${group.id}`}
-                    style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}
-                  >
-                    {group.items.map(({ id, label }) => (
-                      <Chip
-                        key={id}
-                        label={label}
-                        icon="📍"
-                        variant="zona"
-                        active={filters.zonas.includes(id)}
-                        onClick={() => handleZonaQuickToggle(id)}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
             </div>
           )}
 
