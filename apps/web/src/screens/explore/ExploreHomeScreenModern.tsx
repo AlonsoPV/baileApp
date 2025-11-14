@@ -305,6 +305,15 @@ export default function ExploreHomeScreen() {
     set({ datePreset: preset, dateFrom: from, dateTo: to });
   };
 
+  const activeFiltersCount = React.useMemo(() => {
+    let count = 0;
+    if (filters.q) count += 1;
+    count += filters.ritmos.length;
+    count += filters.zonas.length;
+    if (filters.dateFrom || filters.dateTo) count += 1;
+    return count;
+  }, [filters.q, filters.ritmos.length, filters.zonas.length, filters.dateFrom, filters.dateTo]);
+
   const handlePreNavigate = React.useCallback(() => {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
@@ -733,9 +742,83 @@ export default function ExploreHomeScreen() {
           )}
 
           <div style={{ margin: `${spacing[6]} 0` }}>
-            <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
-            {!isMobile && renderDatePresetButtons(false)}
+            <div className="panel">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.24))',
+                      border: '1px solid rgba(240,147,251,0.4)',
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                      color: '#FFE4FF',
+                      fontSize: '1.1rem',
+                    }}
+                  >
+                    🎛️
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: '0.98rem',
+                        fontWeight: 700,
+                        letterSpacing: 0.25,
+                        textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.92)',
+                      }}
+                    >
+                      Filtros de búsqueda
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.82rem',
+                        color: 'rgba(255,255,255,0.7)',
+                      }}
+                    >
+                      Ajusta ritmos, zonas, fechas y palabras clave para encontrar dónde bailar.
+                    </div>
+                  </div>
+                </div>
 
+                <div
+                  style={{
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: 999,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'rgba(0,0,0,0.25)',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.8)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {activeFiltersCount > 0
+                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
+                    : 'Sin filtros activos'}
+                </div>
+              </div>
+
+              <FilterBar
+                filters={filters}
+                onFiltersChange={handleFilterChange}
+                showTypeFilter={false}
+              />
+              {!isMobile && renderDatePresetButtons(false)}
+            </div>
           </div>
 
           {isMobile && (
