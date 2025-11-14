@@ -30,6 +30,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
   const [expandedZonaGroup, setExpandedZonaGroup] = useState<string | null>(null);
+  const [expandedZonaQuickGroups, setExpandedZonaQuickGroups] = useState<Record<string, boolean>>({});
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
@@ -73,6 +74,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       ? filters.zonas.filter(z => z !== zonaId)
       : [...filters.zonas, zonaId];
     onFiltersChange({ ...filters, zonas: newZonas });
+  };
+
+  const toggleZonaQuickGroup = (groupId: string) => {
+    setExpandedZonaQuickGroups(prev => ({
+      ...prev,
+      [groupId]: !(prev[groupId] ?? false),
+    }));
   };
 
   const handleDateChange = (type: 'desde' | 'hasta', value: string) => {
@@ -324,6 +332,112 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               )}
             </div>
           </div>
+
+          {/* Zona quick filters */}
+          {zonaGroups.length > 0 && (
+            <div
+              style={{
+                marginTop: '1rem',
+                paddingTop: '0.75rem',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>📍 Filtros rápidos por zona</div>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                  {filters.zonas.length > 0 ? `${filters.zonas.length} seleccionadas` : 'Selecciona una zona'}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {zonaGroups.map(group => {
+                  const hasSelection = group.items.some(({ id }) => filters.zonas.includes(id));
+                  const expanded = expandedZonaQuickGroups[group.id] ?? false;
+                  return (
+                    <button
+                      key={`quick-zona-${group.id}`}
+                      type="button"
+                      onClick={() => toggleZonaQuickGroup(group.id)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: '0.3s',
+                        backdropFilter: 'blur(10px)',
+                        userSelect: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        padding: '9px 16px',
+                        borderRadius: 999,
+                        background: expanded || hasSelection ? 'rgba(76,173,255,0.18)' : 'rgba(255,255,255,0.04)',
+                        border: expanded || hasSelection ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.12)',
+                        color: '#F5F5F5',
+                        boxShadow: expanded || hasSelection
+                          ? 'rgba(76,173,255,0.3) 0px 4px 14px, rgba(255,255,255,0.15) 0px 1px 0px inset'
+                          : 'rgba(0,0,0,0.3) 0px 2px 10px',
+                        alignSelf: 'flex-start',
+                        width: 'fit-content',
+                        minWidth: 'auto',
+                        justifyContent: 'center',
+                        paddingInline: '1rem',
+                        transform: 'none',
+                      }}
+                    >
+                      {group.label} {expanded ? '▾' : '▸'}
+                    </button>
+                  );
+                })}
+              </div>
+              {zonaGroups.map(group => {
+                const expanded = expandedZonaQuickGroups[group.id];
+                if (!expanded) return null;
+                return (
+                  <div
+                    key={`quick-zona-items-${group.id}`}
+                    style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}
+                  >
+                    {group.items.map(({ id, label }) => {
+                      const active = filters.zonas.includes(id);
+                      return (
+                        <button
+                          key={`quick-zona-item-${id}`}
+                          type="button"
+                          onClick={() => handleZonaToggle(id)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            cursor: 'pointer',
+                            transition: '0.3s',
+                            backdropFilter: 'blur(8px)',
+                            userSelect: 'none',
+                            fontWeight: 600,
+                            fontSize: '0.78rem',
+                            padding: '6px 12px',
+                            borderRadius: 999,
+                            background: active ? 'rgba(76,173,255,0.18)' : 'rgba(255,255,255,0.03)',
+                            border: active ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                            color: active ? '#E3F2FF' : 'rgba(255,255,255,0.7)',
+                            boxShadow: active
+                              ? 'rgba(76,173,255,0.25) 0px 3px 10px'
+                              : 'rgba(0,0,0,0.2) 0px 2px 6px',
+                            alignSelf: 'flex-start',
+                            minWidth: 'auto',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Dropdowns */}
           <AnimatePresence>

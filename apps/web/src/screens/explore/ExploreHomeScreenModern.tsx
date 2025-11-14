@@ -18,8 +18,6 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
-import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
-import { Chip } from "@/components/profile/Chip";
 
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
@@ -131,10 +129,8 @@ export default function ExploreHomeScreen() {
   });
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
-  const [expandedZonaFilterGroups, setExpandedZonaFilterGroups] = React.useState<Record<string, boolean>>({});
 
   const { data: allTags } = useTags();
-  const { groups: zonaQuickGroups } = useZonaCatalogGroups(allTags);
 
   // Obtener preferencias de filtros del usuario
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
@@ -312,21 +308,6 @@ export default function ExploreHomeScreen() {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
-
-  const toggleZonaQuickGroup = React.useCallback((groupId: string) => {
-    setExpandedZonaFilterGroups(prev => ({
-      ...prev,
-      [groupId]: !(prev[groupId] ?? false),
-    }));
-  }, []);
-
-  const handleZonaQuickToggle = React.useCallback((zonaId: number) => {
-    const exists = filters.zonas.includes(zonaId);
-    const newZonas = exists
-      ? filters.zonas.filter(z => z !== zonaId)
-      : [...filters.zonas, zonaId];
-    set({ zonas: newZonas });
-  }, [filters.zonas, set]);
 
   const { data: fechas, isLoading: fechasLoading } = useExploreQuery({
     type: 'fechas',
@@ -753,76 +734,6 @@ export default function ExploreHomeScreen() {
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
             {!isMobile && renderDatePresetButtons(false)}
 
-            {zonaQuickGroups.length > 0 && (
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  paddingTop: '1rem',
-                  borderTop: '1px solid rgba(255,255,255,0.12)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem' }}>📍 Filtros rápidos por zona</div>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {filters.zonas.length > 0 ? `${filters.zonas.length} seleccionadas` : 'Selecciona una zona'}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {zonaQuickGroups.map((group) => {
-                    const hasSelection = group.items.some(({ id }) => filters.zonas.includes(id));
-                    const expanded = expandedZonaFilterGroups[group.id] ?? false;
-                    return (
-                      <Chip
-                        key={group.id}
-                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                        icon="📍"
-                        variant="custom"
-                        active={expanded || hasSelection}
-                        onClick={() => toggleZonaQuickGroup(group.id)}
-                        style={{
-                          alignSelf: 'flex-start',
-                          width: 'fit-content',
-                          minWidth: 'auto',
-                          justifyContent: 'center',
-                          paddingInline: '1rem',
-                          background: (expanded || hasSelection)
-                            ? 'rgba(76,173,255,0.18)'
-                            : 'rgba(255,255,255,0.05)',
-                          border: (expanded || hasSelection)
-                            ? '1px solid rgba(76,173,255,0.6)'
-                            : '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: 999,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-                {zonaQuickGroups.map((group) => {
-                  const expanded = expandedZonaFilterGroups[group.id];
-                  if (!expanded) return null;
-                  return (
-                    <div
-                      key={`explore-zonas-${group.id}`}
-                      style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
-                    >
-                      {group.items.map(({ id, label }) => (
-                        <Chip
-                          key={id}
-                          label={label}
-                          icon="📍"
-                          variant="zona"
-                          active={filters.zonas.includes(id)}
-                          onClick={() => handleZonaQuickToggle(id)}
-                        />
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           {isMobile && (
