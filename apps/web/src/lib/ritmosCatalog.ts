@@ -44,6 +44,7 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'breakdance', label: 'Break dance', parent: 'urbanos' },
       { id: 'reggaeton', label: 'Reggaetón', parent: 'urbanos' },
       { id: 'twerk', label: 'Twerk', parent: 'urbanos' },
+      { id: 'zumba', label: 'Zumba', parent: 'urbanos' },
     ],
   },
   {
