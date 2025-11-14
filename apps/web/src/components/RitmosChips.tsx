@@ -67,15 +67,27 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             style={{
-              padding: '6px 14px',
-              borderRadius: 18,
-              border: '1px solid rgba(240,147,251,0.25)',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.22), rgba(245,87,108,0.22))',
-              color: 'rgba(240,147,251,0.92)',
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 0.15,
-              boxShadow: '0 4px 12px rgba(240,147,251,0.18)'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: 'pointer',
+              transition: '0.3s',
+              backdropFilter: 'blur(10px)',
+              userSelect: 'none',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              padding: '10px 18px',
+              borderRadius: 999,
+              background: 'rgba(245, 87, 108, 0.2)',
+              border: '1px solid rgba(245, 87, 108, 0.65)',
+              color: '#FFE4EE',
+              boxShadow: 'rgba(245,87,108,0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset',
+              alignSelf: 'flex-start',
+              width: 'fit-content',
+              minWidth: 'auto',
+              justifyContent: 'center',
+              paddingInline: '1rem',
+              transform: 'none',
             }}
           >
             <span>{r.label}</span>
