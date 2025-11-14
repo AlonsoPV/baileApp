@@ -45,12 +45,12 @@ function getTodayCDMX(): string {
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
   return (
-    <motion.section 
+    <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="section-container"
-      style={{ 
+      style={{
         marginBottom: '4rem',
         position: 'relative'
       }}
@@ -63,17 +63,17 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
         padding: '0 0.5rem',
         position: 'relative'
       }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           gap: '1rem',
           position: 'relative'
         }}>
           {/* Icono circular destacado */}
-          <div style={{ 
-            width: 56, 
-            height: 56, 
-            borderRadius: '50%', 
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
             background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
             border: '2px solid rgba(240, 147, 251, 0.3)',
             display: 'flex',
@@ -83,16 +83,16 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
             boxShadow: '0 4px 16px rgba(240, 147, 251, 0.25)',
             backdropFilter: 'blur(10px)'
           }}>
-            {title.includes('Sociales') ? '📆' : 
-             title.includes('Clases') ? '🎓' : 
-             title.includes('Academias') ? '🏫' : 
-             title.includes('Organizadores') ? '👤' : 
-             title.includes('Maestros') ? '🎓' : 
-             title.includes('Marcas') ? '🏷️' : '✨'}
+            {title.includes('Sociales') ? '📆' :
+              title.includes('Clases') ? '🎓' :
+                title.includes('Academias') ? '🏫' :
+                  title.includes('Organizadores') ? '👤' :
+                    title.includes('Maestros') ? '🎓' :
+                      title.includes('Marcas') ? '🏷️' : '✨'}
           </div>
           <div>
-            <h2 style={{ 
-              fontSize: '1.875rem', 
+            <h2 style={{
+              fontSize: '1.875rem',
               fontWeight: 800,
               margin: 0,
               marginBottom: '0.25rem',
@@ -135,7 +135,7 @@ export default function ExploreHomeScreen() {
 
   const { data: allTags } = useTags();
   const { groups: zonaQuickGroups } = useZonaCatalogGroups(allTags);
-  
+
   // Obtener preferencias de filtros del usuario
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
 
@@ -159,7 +159,7 @@ export default function ExploreHomeScreen() {
     // Usar fecha de hoy en zona horaria CDMX
     const todayCDMX = getTodayCDMX();
     const todayDate = new Date(todayCDMX + 'T12:00:00'); // Usar mediodía para evitar problemas de zona horaria
-    
+
     if (preset === 'todos') {
       return { from: undefined, to: undefined };
     }
@@ -189,9 +189,9 @@ export default function ExploreHomeScreen() {
   // Aplicar filtros predeterminados si el usuario tiene preferencias y no hay filtros manuales
   React.useEffect(() => {
     if (!user || prefsLoading || hasAppliedDefaults) return;
-    
+
     // Verificar si los filtros están en su estado inicial (sin filtros manuales)
-    const isInitialState = 
+    const isInitialState =
       filters.ritmos.length === 0 &&
       filters.zonas.length === 0 &&
       (filters.datePreset === 'todos' || !filters.datePreset) &&
@@ -199,16 +199,16 @@ export default function ExploreHomeScreen() {
 
     if (isInitialState && preferences) {
       const defaultFilters = applyDefaultFilters();
-      
+
       // Solo aplicar si hay preferencias configuradas
-      const hasPreferences = 
+      const hasPreferences =
         (defaultFilters.ritmos.length > 0) ||
         (defaultFilters.zonas.length > 0) ||
         (defaultFilters.fechaDesde !== null || defaultFilters.fechaHasta !== null);
 
       if (hasPreferences) {
         const updates: any = {};
-        
+
         if (defaultFilters.ritmos.length > 0) {
           updates.ritmos = defaultFilters.ritmos;
         }
@@ -232,13 +232,13 @@ export default function ExploreHomeScreen() {
             updates.datePreset = undefined; // Custom o mes
           }
         }
-        
+
         if (Object.keys(updates).length > 0) {
           set(updates);
           setUsingFavoriteFilters(true);
         }
       }
-      
+
       setHasAppliedDefaults(true);
     }
   }, [user, prefsLoading, preferences, filters, applyDefaultFilters, hasAppliedDefaults, set]);
@@ -246,14 +246,14 @@ export default function ExploreHomeScreen() {
   // Detectar cuando el usuario cambia los filtros manualmente (ya no son favoritos)
   React.useEffect(() => {
     if (!hasAppliedDefaults) return;
-    
+
     // Comparar con las preferencias para ver si coinciden
     if (preferences) {
       const defaultFilters = applyDefaultFilters();
-      const matchesDefaults = 
+      const matchesDefaults =
         JSON.stringify(filters.ritmos.sort()) === JSON.stringify(defaultFilters.ritmos.sort()) &&
         JSON.stringify(filters.zonas.sort()) === JSON.stringify(defaultFilters.zonas.sort());
-      
+
       // Si no coinciden, ya no está usando favoritos
       if (!matchesDefaults) {
         setUsingFavoriteFilters(false);
@@ -266,7 +266,7 @@ export default function ExploreHomeScreen() {
     if (!preferences) return;
     const defaultFilters = applyDefaultFilters();
     const updates: any = {};
-    
+
     if (defaultFilters.ritmos.length > 0) {
       updates.ritmos = defaultFilters.ritmos;
     } else {
@@ -296,21 +296,21 @@ export default function ExploreHomeScreen() {
       updates.dateFrom = undefined;
       updates.dateTo = undefined;
     }
-    
+
     set(updates);
     setUsingFavoriteFilters(true);
   }, [preferences, applyDefaultFilters, set]);
 
   // Fecha presets: hoy / semana / siguientes
   const todayYmd = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const applyDatePreset = (preset: 'todos'|'hoy'|'semana'|'siguientes') => {
+  const applyDatePreset = (preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
     const { from, to } = computePresetRange(preset);
     set({ datePreset: preset, dateFrom: from, dateTo: to });
   };
 
   const handlePreNavigate = React.useCallback(() => {
-    try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch {}
-    try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch {}
+    try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
+    try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
 
   const toggleZonaQuickGroup = React.useCallback((groupId: string) => {
@@ -328,25 +328,25 @@ export default function ExploreHomeScreen() {
     set({ zonas: newZonas });
   }, [filters.zonas, set]);
 
-  const { data: fechas, isLoading: fechasLoading } = useExploreQuery({ 
-    type: 'fechas', 
-    q: filters.q, 
-    ritmos: filters.ritmos, 
-    zonas: filters.zonas, 
+  const { data: fechas, isLoading: fechasLoading } = useExploreQuery({
+    type: 'fechas',
+    q: filters.q,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
-    pageSize: 6 
+    pageSize: 6
   });
 
-  
-  const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery({ 
-    type: 'organizadores', 
-    q: filters.q, 
-    ritmos: filters.ritmos, 
-    zonas: filters.zonas, 
-    pageSize: 4 
+
+  const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery({
+    type: 'organizadores',
+    q: filters.q,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 4
   });
-  
+
   const { data: maestros, isLoading: maestrosLoading } = useExploreQuery({
     type: 'maestros',
     q: filters.q,
@@ -391,7 +391,7 @@ export default function ExploreHomeScreen() {
 
   // Construir clases desde academias y maestros (todas las páginas disponibles)
   const classesList = React.useMemo(() => {
-    const dayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const allA = (academias?.pages || []).flatMap(p => p?.data || []);
     const allM = (maestros?.pages || []).flatMap(p => p?.data || []);
 
@@ -429,7 +429,7 @@ export default function ExploreHomeScreen() {
       return undefined as unknown as string | undefined;
     };
 
-    const mapClase = (owner: any, c: any, ownerType: 'academy'|'teacher', cronogramaIndex: number) => ({
+    const mapClase = (owner: any, c: any, ownerType: 'academy' | 'teacher', cronogramaIndex: number) => ({
       titulo: c?.titulo,
       fecha: c?.fecha,
       diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
@@ -464,7 +464,7 @@ export default function ExploreHomeScreen() {
           if (idx < 0) continue;
           // Si el día ya pasó esta semana (idx < todayIdx), calcular para la próxima semana
           // Si el día es hoy o futuro (idx >= todayIdx), calcular para esta semana
-          const delta = idx >= todayIdx 
+          const delta = idx >= todayIdx
             ? idx - todayIdx  // Esta semana
             : (idx - todayIdx + 7) % 7; // Próxima semana (si ya pasó, sumar 7 días)
           if (minDelta === null || delta < minDelta) minDelta = delta;
@@ -518,7 +518,7 @@ export default function ExploreHomeScreen() {
     };
 
     const filtered = merged.filter(matchesPresetAndRange);
-    
+
     // Ordenar por fecha cronológica (próxima ocurrencia)
     const sorted = filtered.sort((a, b) => {
       const dateA = nextOccurrence(a);
@@ -528,7 +528,7 @@ export default function ExploreHomeScreen() {
       if (!dateB) return -1; // Sin fecha al final
       return dateA.getTime() - dateB.getTime();
     });
-    
+
     // Log para debug
     console.log("[ExploreHomeScreenModern] 🔍 Clases mapeadas con cronogramaIndex:", sorted.map((c: any) => ({
       titulo: c.titulo,
@@ -536,7 +536,7 @@ export default function ExploreHomeScreen() {
       ownerId: c.ownerId,
       cronogramaIndex: c.cronogramaIndex
     })));
-    
+
     return sorted.slice(0, 12);
   }, [academias, maestros, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
 
@@ -749,7 +749,7 @@ export default function ExploreHomeScreen() {
             </motion.div>
           )}
 
-          <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
+         {/*  <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
             {!isMobile && renderDatePresetButtons(false)}
 
@@ -823,7 +823,7 @@ export default function ExploreHomeScreen() {
                 })}
               </div>
             )}
-          </div>
+          </div> */}
 
           {isMobile && (
             <div style={{ margin: '0 0 1.5rem 0' }}>
@@ -832,128 +832,128 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'fechas') && (
-          <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
-            {fechasLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : (() => {
-              const parseYmdToDate = (value?: string | null) => {
-                if (!value) return null;
-                const plain = String(value).split('T')[0];
-                const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-                if (
-                  Number.isFinite(year) &&
-                  Number.isFinite(month) &&
-                  Number.isFinite(day)
-                ) {
-                  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-                }
-                const parsed = new Date(value);
-                return Number.isNaN(parsed.getTime()) ? null : parsed;
-              };
-              const todayBase = parseYmdToDate(todayYmd);
-              
-              // Filtrar fechas pasadas y ordenar cronológicamente
-              const allFechas = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
-              const filteredFechas = allFechas.filter((fecha: any) => {
-                const fechaDate = parseYmdToDate(fecha?.fecha);
-                if (!fechaDate || !todayBase) return true;
-                // Comparar solo la fecha (sin hora)
-                const fechaDateOnly = new Date(Date.UTC(
-                  fechaDate.getUTCFullYear(),
-                  fechaDate.getUTCMonth(),
-                  fechaDate.getUTCDate(),
-                  0, 0, 0
-                ));
-                const todayDateOnly = new Date(Date.UTC(
-                  todayBase.getUTCFullYear(),
-                  todayBase.getUTCMonth(),
-                  todayBase.getUTCDate(),
-                  0, 0, 0
-                ));
-                return fechaDateOnly >= todayDateOnly;
-              });
-              
-              // Ordenar por fecha cronológica
-              const sortedFechas = filteredFechas.sort((a: any, b: any) => {
-                const dateA = parseYmdToDate(a?.fecha);
-                const dateB = parseYmdToDate(b?.fecha);
-                if (!dateA && !dateB) return 0;
-                if (!dateA) return 1;
-                if (!dateB) return -1;
-                return dateA.getTime() - dateB.getTime();
-              });
-              
-              const list = sortedFechas;
-              return list.length ? (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={list}
-                  renderItem={(fechaEvento: any, idx: number) => (
-                    <motion.div 
-                      key={fechaEvento.id ?? idx} 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }} 
-                      onClickCapture={handlePreNavigate}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.04)', 
-                        border: '1px solid rgba(255,255,255,0.08)', 
-                        borderRadius: 16, 
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <EventCard item={fechaEvento} />
-                    </motion.div>
-                  )}
-                />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-              );
-            })()}
-          </Section>
-          )}
+            <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
+              {fechasLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (() => {
+                const parseYmdToDate = (value?: string | null) => {
+                  if (!value) return null;
+                  const plain = String(value).split('T')[0];
+                  const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+                  if (
+                    Number.isFinite(year) &&
+                    Number.isFinite(month) &&
+                    Number.isFinite(day)
+                  ) {
+                    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+                  }
+                  const parsed = new Date(value);
+                  return Number.isNaN(parsed.getTime()) ? null : parsed;
+                };
+                const todayBase = parseYmdToDate(todayYmd);
 
-          {(showAll || selectedType === 'clases') && (
-          <Section title="Encuentra tus clases" toAll="/explore/list?type=clases">
-            {(() => {
-              const loading = academiasLoading || maestrosLoading;
-              if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
-              if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
-              return (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={classesList}
-                  renderItem={(clase: any, idx: number) => {
-                    const stableKey =
-                      `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
-                    return (
-                      <motion.div 
-                        key={stableKey} 
+                // Filtrar fechas pasadas y ordenar cronológicamente
+                const allFechas = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
+                const filteredFechas = allFechas.filter((fecha: any) => {
+                  const fechaDate = parseYmdToDate(fecha?.fecha);
+                  if (!fechaDate || !todayBase) return true;
+                  // Comparar solo la fecha (sin hora)
+                  const fechaDateOnly = new Date(Date.UTC(
+                    fechaDate.getUTCFullYear(),
+                    fechaDate.getUTCMonth(),
+                    fechaDate.getUTCDate(),
+                    0, 0, 0
+                  ));
+                  const todayDateOnly = new Date(Date.UTC(
+                    todayBase.getUTCFullYear(),
+                    todayBase.getUTCMonth(),
+                    todayBase.getUTCDate(),
+                    0, 0, 0
+                  ));
+                  return fechaDateOnly >= todayDateOnly;
+                });
+
+                // Ordenar por fecha cronológica
+                const sortedFechas = filteredFechas.sort((a: any, b: any) => {
+                  const dateA = parseYmdToDate(a?.fecha);
+                  const dateB = parseYmdToDate(b?.fecha);
+                  if (!dateA && !dateB) return 0;
+                  if (!dateA) return 1;
+                  if (!dateB) return -1;
+                  return dateA.getTime() - dateB.getTime();
+                });
+
+                const list = sortedFechas;
+                return list.length ? (
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={list}
+                    renderItem={(fechaEvento: any, idx: number) => (
+                      <motion.div
+                        key={fechaEvento.id ?? idx}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        whileHover={{ y: -4, scale: 1.02 }} 
+                        whileHover={{ y: -4, scale: 1.02 }}
                         onClickCapture={handlePreNavigate}
-                        style={{ 
-                          background: 'rgba(255,255,255,0.04)', 
-                          border: '1px solid rgba(255,255,255,0.08)', 
-                          borderRadius: 16, 
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 16,
                           padding: 0,
                           overflow: 'hidden',
                           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                         }}
                       >
-                        <ClassCard item={clase} />
+                        <EventCard item={fechaEvento} />
                       </motion.div>
-                    );
-                  }}
-                />
-              );
-            })()}
-          </Section>
+                    )}
+                  />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+                );
+              })()}
+            </Section>
+          )}
+
+          {(showAll || selectedType === 'clases') && (
+            <Section title="Encuentra tus clases" toAll="/explore/list?type=clases">
+              {(() => {
+                const loading = academiasLoading || maestrosLoading;
+                if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
+                if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
+                return (
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={classesList}
+                    renderItem={(clase: any, idx: number) => {
+                      const stableKey =
+                        `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
+                      return (
+                        <motion.div
+                          key={stableKey}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <ClassCard item={clase} />
+                        </motion.div>
+                      );
+                    }}
+                  />
+                );
+              })()}
+            </Section>
           )}
 
           {/* {(showAll || selectedType === 'sociales') && (
@@ -992,38 +992,38 @@ export default function ExploreHomeScreen() {
           )} */}
 
           {(showAll || selectedType === 'academias') && (
-          <Section title="Academias" toAll="/explore/list?type=academias">
-            {academiasLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : academias && academias.pages?.[0]?.data?.length > 0 ? (
-              <HorizontalSlider
-                {...sliderProps}
-                items={academias.pages[0].data}
-                renderItem={(academia: any, idx: number) => (
-                  <motion.div 
-                    key={academia.id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <AcademyCard item={academia} />
-                  </motion.div>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-            )}
-          </Section>
+            <Section title="Academias" toAll="/explore/list?type=academias">
+              {academiasLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : academias && academias.pages?.[0]?.data?.length > 0 ? (
+                <HorizontalSlider
+                  {...sliderProps}
+                  items={academias.pages[0].data}
+                  renderItem={(academia: any, idx: number) => (
+                    <motion.div
+                      key={academia.id ?? idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, duration: 0.3 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      onClickCapture={handlePreNavigate}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
+                        padding: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <AcademyCard item={academia} />
+                    </motion.div>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+              )}
+            </Section>
           )}
 
           {/* {(showAll || selectedType === 'organizadores') && (
@@ -1061,121 +1061,121 @@ export default function ExploreHomeScreen() {
           )} */}
 
           {(showAll || selectedType === 'usuarios') && (
-          <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
-            {usuariosLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : (() => {
-              return validUsuarios.length > 0 ? (
-              <HorizontalSlider
-                {...sliderProps}
-                items={validUsuarios}
-                renderItem={(u: any, idx: number) => (
-                  <motion.div 
-                    key={u.user_id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <DancerCard item={{
-                      id: u.user_id,
-                      display_name: u.display_name,
-                      bio: u.bio,
-                      avatar_url: u.avatar_url,
-                      banner_url: u.banner_url,
-                      portada_url: u.portada_url,
-                      media: u.media,
-                      ritmos: u.ritmos,
-                      ritmosSeleccionados: u.ritmos_seleccionados,
-                      zonas: u.zonas
-                    }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                  </motion.div>
-                )}
-              />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles disponibles</div>
-              );
-            })()}
-          </Section>
+            <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
+              {usuariosLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (() => {
+                return validUsuarios.length > 0 ? (
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={validUsuarios}
+                    renderItem={(u: any, idx: number) => (
+                      <motion.div
+                        key={u.user_id ?? idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        onClickCapture={handlePreNavigate}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 16,
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <DancerCard item={{
+                          id: u.user_id,
+                          display_name: u.display_name,
+                          bio: u.bio,
+                          avatar_url: u.avatar_url,
+                          banner_url: u.banner_url,
+                          portada_url: u.portada_url,
+                          media: u.media,
+                          ritmos: u.ritmos,
+                          ritmosSeleccionados: u.ritmos_seleccionados,
+                          zonas: u.zonas
+                        }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                      </motion.div>
+                    )}
+                  />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles disponibles</div>
+                );
+              })()}
+            </Section>
           )}
 
           {(showAll || selectedType === 'maestros') && (
-          <Section title="Maestros" toAll="/explore/list?type=teacher">
-            {maestrosLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
-              <HorizontalSlider
-                {...sliderProps}
-                items={maestros.pages[0].data}
-                renderItem={(maestro: any, idx: number) => (
-                  <motion.div 
-                    key={maestro.id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <TeacherCard item={maestro} />
-                  </motion.div>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-            )}
-          </Section>
+            <Section title="Maestros" toAll="/explore/list?type=teacher">
+              {maestrosLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
+                <HorizontalSlider
+                  {...sliderProps}
+                  items={maestros.pages[0].data}
+                  renderItem={(maestro: any, idx: number) => (
+                    <motion.div
+                      key={maestro.id ?? idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, duration: 0.3 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      onClickCapture={handlePreNavigate}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
+                        padding: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <TeacherCard item={maestro} />
+                    </motion.div>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+              )}
+            </Section>
           )}
 
           {(showAll || selectedType === 'marcas') && (
-          <Section title="Marcas" toAll="/explore/list?type=marcas">
-            {marcasLoading ? (
-              <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-            ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
-              <HorizontalSlider
-                {...sliderProps}
-                items={marcas.pages[0].data}
-                renderItem={(brand: any, idx: number) => (
-                  <motion.div 
-                    key={brand.id ?? idx} 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    whileHover={{ y: -4, scale: 1.02 }} 
-                    onClickCapture={handlePreNavigate}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.04)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      padding: 0,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                    }}
-                  >
-                    <BrandCard item={brand} />
-                  </motion.div>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-            )}
-          </Section>
+            <Section title="Marcas" toAll="/explore/list?type=marcas">
+              {marcasLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
+                <HorizontalSlider
+                  {...sliderProps}
+                  items={marcas.pages[0].data}
+                  renderItem={(brand: any, idx: number) => (
+                    <motion.div
+                      key={brand.id ?? idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, duration: 0.3 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      onClickCapture={handlePreNavigate}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
+                        padding: 0,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <BrandCard item={brand} />
+                    </motion.div>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+              )}
+            </Section>
           )}
         </div>
       </div>
