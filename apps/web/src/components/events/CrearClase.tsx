@@ -579,7 +579,7 @@ export default function CrearClase({
                 )}
               </div>
 
-              <div>
+             {/*  <div>
                 <div style={label}>Zona</div>
                 <div style={chipWrap}>
                   {zonas.map(z => (
@@ -594,7 +594,7 @@ export default function CrearClase({
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* UBICACIÓN */}
@@ -641,29 +641,6 @@ export default function CrearClase({
                 </div>
               </div>
             )}
-            {(() => {
-              const zoneIdsToShow = selectedLocationZonaIds.length
-                ? selectedLocationZonaIds
-                : manualZonaIds;
-              if (!zoneIdsToShow || zoneIdsToShow.length === 0 || zonaTagSource.length === 0) {
-                return null;
-              }
-              return (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={label}>
-                    {selectedLocationZonaIds.length
-                      ? 'Zonas de la ubicación seleccionada'
-                      : 'Zonas del perfil'}
-                  </div>
-                  <ZonaGroupedChips
-                    selectedIds={zoneIdsToShow}
-                    allTags={zonaTagSource}
-                    mode="display"
-                    style={{ gap: '6px' }}
-                  />
-                </div>
-              );
-            })()}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
                 <div style={label}>Nombre de la ubicación</div>
@@ -702,6 +679,56 @@ export default function CrearClase({
                 />
               </div>
             </div>
+            {(() => {
+              const zoneIdsToShow = selectedLocationZonaIds.length
+                ? selectedLocationZonaIds
+                : manualZonaIds;
+              if (!zoneIdsToShow || zoneIdsToShow.length === 0 || zonaTagSource.length === 0) {
+                return null;
+              }
+              const isLocationDriven = selectedLocationZonaIds.length > 0;
+
+              return (
+                <div style={{ marginTop: 14 }}>
+                  <details
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      borderRadius: 10,
+                      border: `1px solid ${colors.line}`,
+                      padding: 12,
+                    }}
+                    open={false}
+                  >
+                    <summary
+                      style={{
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        color: colors.mut,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      {isLocationDriven
+                        ? 'Zonas de la ubicación seleccionada'
+                        : 'Zonas del perfil'}
+                    </summary>
+                    <div style={{ marginTop: 8 }}>
+                      <ZonaGroupedChips
+                        selectedIds={zoneIdsToShow}
+                        allTags={zonaTagSource}
+                        mode="display"
+                        style={{
+                          gap: '4px',
+                          fontSize: 12,
+                        }}
+                      />
+                    </div>
+                  </details>
+                </div>
+              );
+            })()}
 
             <div style={divider} />
           </>
