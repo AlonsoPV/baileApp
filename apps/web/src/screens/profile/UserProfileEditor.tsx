@@ -91,6 +91,36 @@ export default function UserProfileEditor() {
     return { groups, others };
   }, [matchZonaTagBySlug, zonaTags]);
 
+  const zonaGroupsForDisplay = React.useMemo(() => {
+    const base = zonasCatalogData.groups.map(group => ({
+      id: group.id,
+      label: group.label,
+      items: group.items,
+    }));
+    if (zonasCatalogData.others.length > 0) {
+      base.push({
+        id: 'other-zones',
+        label: 'Otras zonas',
+        items: zonasCatalogData.others,
+      });
+    }
+    return base;
+  }, [zonasCatalogData]);
+
+  const toggleZonaGroup = (groupId: string) => {
+    setExpandedZonaGroups(prev => ({
+      ...prev,
+      [groupId]: !(prev[groupId] ?? false),
+    }));
+  };
+
+  const isGroupExpanded = (groupId: string, hasSelectedChild: boolean) => {
+    if (expandedZonaGroups[groupId] === undefined) {
+      return hasSelectedChild;
+    }
+    return expandedZonaGroups[groupId];
+  };
+
   // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({
     draftKey: getDraftKey(user?.id, 'user'),
@@ -120,6 +150,7 @@ export default function UserProfileEditor() {
   // Estados para carga
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
+  const [expandedZonaGroups, setExpandedZonaGroups] = useState<Record<string, boolean>>({});
 
   // Helper to convert Supabase storage paths to public URLs
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
@@ -688,43 +719,42 @@ export default function UserProfileEditor() {
               <h3 className="editor-subsection-title">
                 📍 Zonas donde Bailas
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {zonasCatalogData.groups.map((group) => (
-                  <div key={group.id}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.5, marginBottom: '0.35rem', color: 'rgba(255,255,255,0.8)' }}>
-                      {group.label}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {zonaGroupsForDisplay.map((group) => {
+                  const hasSelectedChild = group.items.some(({ tag }) => form.zonas.includes(tag.id));
+                  const expanded = isGroupExpanded(group.id, hasSelectedChild);
+                  return (
+                    <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <Chip
+                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                        icon="📍"
+                        variant="custom"
+                        active={expanded}
+                        onClick={() => toggleZonaGroup(group.id)}
+                        style={{
+                          width: '100%',
+                          justifyContent: 'space-between',
+                          background: expanded ? 'rgba(76,173,255,0.2)' : 'rgba(255,255,255,0.05)',
+                          border: expanded ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: 999,
+                        }}
+                      />
+                      {expanded && (
+                        <div className="editor-chips" style={{ paddingLeft: '0.5rem' }}>
+                          {group.items.map(({ tag, label }) => (
+                            <Chip
+                              key={tag.id}
+                              label={label}
+                              active={form.zonas.includes(tag.id)}
+                              onClick={() => toggleZona(tag.id)}
+                              variant="zona"
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="editor-chips">
-                      {group.items.map(({ tag, label }) => (
-                        <Chip
-                          key={tag.id}
-                          label={label}
-                          active={form.zonas.includes(tag.id)}
-                          onClick={() => toggleZona(tag.id)}
-                          variant="zona"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {zonasCatalogData.others.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.5, marginBottom: '0.35rem', color: 'rgba(255,255,255,0.8)' }}>
-                      Otras zonas
-                    </div>
-                    <div className="editor-chips">
-                      {zonasCatalogData.others.map(({ tag, label }) => (
-                        <Chip
-                          key={tag.id}
-                          label={label}
-                          active={form.zonas.includes(tag.id)}
-                          onClick={() => toggleZona(tag.id)}
-                          variant="zona"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
           </div>

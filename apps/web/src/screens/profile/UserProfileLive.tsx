@@ -221,6 +221,7 @@ export const UserProfileLive: React.FC = () => {
   const { data: allTags } = useTags();
   const { media, addMedia, removeMedia } = useUserMedia();
   const [copied, setCopied] = useState(false);
+  const [expandedZonaGroups, setExpandedZonaGroups] = useState<Record<string, boolean>>({});
   const { counts } = useFollowerCounts(user?.id);
   const { following, followers } = useFollowLists(user?.id);
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("following");
@@ -347,6 +348,17 @@ export const UserProfileLive: React.FC = () => {
 
     return groups;
   }, [allTags, profile?.zonas]);
+
+  const toggleZonaGroup = (groupId: string) => {
+    setExpandedZonaGroups(prev => ({
+      ...prev,
+      [groupId]: !(prev[groupId] ?? true),
+    }));
+  };
+
+  const isGroupExpanded = (groupId: string) => {
+    return expandedZonaGroups[groupId] ?? true;
+  };
 
   // Upload cover photo
   const handleCoverUpload = async (file: File) => {
@@ -900,7 +912,7 @@ export const UserProfileLive: React.FC = () => {
                 id="user-profile-tags"
                 data-baile-id="user-profile-tags"
                 data-test-id="user-profile-tags"
-                style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
               >
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(profile, allTags);
@@ -908,23 +920,39 @@ export const UserProfileLive: React.FC = () => {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {zonaChipGroups.map((group) => (
-                  <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
-                      {group.label}
-                    </span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                      {group.chips.map((chip) => (
-                        <Chip
-                          key={`z-${chip.id}`}
-                          label={chip.label}
-                          icon="📍"
-                          variant="zona"
-                        />
-                      ))}
+                {zonaChipGroups.map((group) => {
+                  const expanded = isGroupExpanded(group.id);
+                  return (
+                    <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <Chip
+                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                        icon="📍"
+                        variant="custom"
+                        active={expanded}
+                        onClick={() => toggleZonaGroup(group.id)}
+                        style={{
+                          width: '100%',
+                          justifyContent: 'space-between',
+                          background: expanded ? 'rgba(76,173,255,0.2)' : 'rgba(255,255,255,0.05)',
+                          border: expanded ? '1px solid rgba(76,173,255,0.6)' : '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: 999,
+                        }}
+                      />
+                      {expanded && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}>
+                          {group.chips.map((chip) => (
+                            <Chip
+                              key={`z-${chip.id}`}
+                              label={chip.label}
+                              icon="📍"
+                              variant="zona"
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
