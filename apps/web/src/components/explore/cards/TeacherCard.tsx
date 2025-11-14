@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
+import { getMediaBySlot } from "../../../utils/mediaSlots";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
@@ -21,6 +22,13 @@ export default function TeacherCard({ item }: { item: any }) {
     console.log('[TeacherCard] portada_url:', item?.portada_url);
     console.log('[TeacherCard] banner_url:', item?.banner_url);
     console.log('[TeacherCard] media:', item?.media);
+    const mediaList = Array.isArray(item?.media) ? item.media : [];
+    const slotP1 = getMediaBySlot(mediaList as any, 'p1');
+    if (slotP1?.url) {
+      const normalizedP1 = normalizeUrl(slotP1.url as string) as string;
+      console.log('[TeacherCard] URL desde slot p1:', normalizedP1);
+      return normalizedP1;
+    }
     // Intentar múltiples claves comunes
     const direct = item?.avatar_url || item?.banner_url || item?.portada_url || item?.avatar || item?.portada || item?.banner;
     console.log('[TeacherCard] direct URL encontrada:', direct);
@@ -29,11 +37,10 @@ export default function TeacherCard({ item }: { item: any }) {
       console.log('[TeacherCard] URL normalizada:', normalized);
       return normalized;
     }
-    const media = Array.isArray(item?.media) ? item.media : [];
-    console.log('[TeacherCard] media array:', media);
-    if (media.length) {
+    console.log('[TeacherCard] media array:', mediaList);
+    if (mediaList.length) {
       // Buscar por slot común
-      const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
+      const bySlot = mediaList.find((m: any) => m?.slot === 'cover' || m?.slot === 'avatar');
       console.log('[TeacherCard] bySlot encontrado:', bySlot);
       if (bySlot?.url) {
         const normalized = normalizeUrl(bySlot.url as string) as string;
@@ -45,7 +52,7 @@ export default function TeacherCard({ item }: { item: any }) {
         console.log('[TeacherCard] path de bySlot normalizada:', normalized);
         return normalized;
       }
-      const first = media[0];
+      const first = mediaList[0];
       const firstUrl = normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
       console.log('[TeacherCard] URL del primer media:', firstUrl);
       return firstUrl;
@@ -72,7 +79,7 @@ export default function TeacherCard({ item }: { item: any }) {
           background: bannerUrl
             ? `url(${bannerUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: bannerUrl ? 'contain' : 'cover',
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           padding: '1.5rem',
