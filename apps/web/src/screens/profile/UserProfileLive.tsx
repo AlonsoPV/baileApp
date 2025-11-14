@@ -22,6 +22,7 @@ import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
+import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -299,17 +300,40 @@ export const UserProfileLive: React.FC = () => {
     return ritmos;
   };
 
-  const getZonaNombres = () => {
-    console.log('[UserProfileLive] getZonaNombres - allTags:', allTags);
-    console.log('[UserProfileLive] getZonaNombres - profile.zonas:', profile?.zonas);
+  const zonaChipGroups = React.useMemo(() => {
     if (!allTags || !profile?.zonas) return [];
-    const zonas = profile.zonas
+    const zonaTags = profile.zonas
       .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'zona'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
-    console.log('[UserProfileLive] getZonaNombres - resultado:', zonas);
-    return zonas;
-  };
+      .filter((tag): tag is typeof allTags[number] => Boolean(tag));
+
+    const usedIds = new Set<number>();
+    const groups = ZONAS_CATALOG.map(group => {
+      const chips = group.items
+        .map(item => {
+          const tag = zonaTags.find(t => String(t.slug) === item.slug);
+          if (!tag) return null;
+          usedIds.add(tag.id);
+          return { id: tag.id, label: item.label };
+        })
+        .filter(Boolean) as { id: number; label: string }[];
+      if (!chips.length) return null;
+      return { id: group.id, label: group.label, chips };
+    }).filter(Boolean) as { id: string; label: string; chips: { id: number; label: string }[] }[];
+
+    const remaining = zonaTags
+      .filter(tag => !usedIds.has(tag.id))
+      .map(tag => ({ id: tag.id, label: tag.nombre }));
+
+    if (remaining.length) {
+      groups.push({
+        id: 'other-zones',
+        label: 'Otras zonas',
+        chips: remaining,
+      });
+    }
+
+    return groups;
+  }, [allTags, profile?.zonas]);
 
   // Upload cover photo
   const handleCoverUpload = async (file: File) => {
@@ -871,13 +895,22 @@ export const UserProfileLive: React.FC = () => {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly />
                   ) : null;
                 })()}
-                {getZonaNombres().map((nombre) => (
-                  <Chip
-                    key={`z-${nombre}`}
-                    label={nombre}
-                    icon="📍"
-                    variant="zona"
-                  />
+                {zonaChipGroups.map((group) => (
+                  <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                      {group.label}
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {group.chips.map((chip) => (
+                        <Chip
+                          key={`z-${chip.id}`}
+                          label={chip.label}
+                          icon="📍"
+                          variant="zona"
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

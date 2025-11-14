@@ -22,6 +22,7 @@ import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
 import { ensureMaxVideoDuration } from '../../utils/videoValidation';
 import { FilterPreferencesModal } from '../../components/profile/FilterPreferencesModal';
+import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
 
 const colors = {
   dark: '#121212',
@@ -44,6 +45,36 @@ export default function UserProfileEditor() {
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
+  const zonaTagsBySlug = React.useMemo(() => {
+    const map = new Map<string, any>();
+    zonaTags.forEach(tag => {
+      if (tag?.slug) {
+        map.set(String(tag.slug), tag);
+      }
+    });
+    return map;
+  }, [zonaTags]);
+  const zonasCatalogData = React.useMemo(() => {
+    const groups = ZONAS_CATALOG.map(group => {
+      const items = group.items
+        .map(item => {
+          const tag = zonaTagsBySlug.get(item.slug);
+          if (!tag) return null;
+          return { tag, label: item.label };
+        })
+        .filter(Boolean) as { tag: any; label: string }[];
+      return { ...group, items };
+    }).filter(group => group.items.length > 0);
+
+    const usedIds = new Set<number>();
+    groups.forEach(group => group.items.forEach(item => usedIds.add(item.tag.id)));
+
+    const others = zonaTags
+      .filter(tag => !usedIds.has(tag.id))
+      .map(tag => ({ tag, label: tag.nombre }));
+
+    return { groups, others };
+  }, [zonaTagsBySlug, zonaTags]);
 
   // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({
@@ -642,16 +673,43 @@ export default function UserProfileEditor() {
               <h3 className="editor-subsection-title">
                 📍 Zonas donde Bailas
               </h3>
-              <div className="editor-chips">
-                {zonaTags.map((tag) => (
-                  <Chip
-                    key={tag.id}
-                    label={tag.nombre}
-                    active={form.zonas.includes(tag.id)}
-                    onClick={() => toggleZona(tag.id)}
-                    variant="zona"
-                  />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {zonasCatalogData.groups.map((group) => (
+                  <div key={group.id}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.5, marginBottom: '0.35rem', color: 'rgba(255,255,255,0.8)' }}>
+                      {group.label}
+                    </div>
+                    <div className="editor-chips">
+                      {group.items.map(({ tag, label }) => (
+                        <Chip
+                          key={tag.id}
+                          label={label}
+                          active={form.zonas.includes(tag.id)}
+                          onClick={() => toggleZona(tag.id)}
+                          variant="zona"
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
+                {zonasCatalogData.others.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.5, marginBottom: '0.35rem', color: 'rgba(255,255,255,0.8)' }}>
+                      Otras zonas
+                    </div>
+                    <div className="editor-chips">
+                      {zonasCatalogData.others.map(({ tag, label }) => (
+                        <Chip
+                          key={tag.id}
+                          label={label}
+                          active={form.zonas.includes(tag.id)}
+                          onClick={() => toggleZona(tag.id)}
+                          variant="zona"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
