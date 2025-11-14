@@ -741,76 +741,88 @@ export default function ExploreHomeScreen() {
             </motion.div>
           )}
 
-          <div style={{ margin: `${spacing[6]} 0` }}>
-            <div className="panel">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem',
-                  marginBottom: '1rem',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 999,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.24))',
-                      border: '1px solid rgba(240,147,251,0.4)',
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-                      color: '#FFE4FF',
-                      fontSize: '1.1rem',
-                    }}
-                  >
-                    🎛️
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.98rem',
-                        fontWeight: 700,
-                        letterSpacing: 0.25,
-                        textTransform: 'uppercase',
-                        color: 'rgba(255,255,255,0.92)',
-                      }}
-                    >
-                      Filtros de búsqueda
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.82rem',
-                        color: 'rgba(255,255,255,0.7)',
-                      }}
-                    >
-                      Ajusta ritmos, zonas, fechas y palabras clave para encontrar dónde bailar.
-                    </div>
-                  </div>
-                </div>
-
+          <div style={{ margin: `${spacing[4]} 0 ${spacing[6]} 0` }}>
+            <div
+              style={{
+                borderRadius: 18,
+                padding: isMobile ? '0.5rem 0.75rem' : '0.75rem 1rem',
+                background: 'rgba(9, 9, 11, 0.9)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
+                backdropFilter: 'blur(18px)',
+              }}
+            >
+              {!isMobile && (
                 <div
                   style={{
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: 999,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'rgba(0,0,0,0.25)',
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    color: 'rgba(255,255,255,0.8)',
-                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    marginBottom: '0.75rem',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  {activeFiltersCount > 0
-                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
-                    : 'Sin filtros activos'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background:
+                          'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(245,87,108,0.3))',
+                        border: '1px solid rgba(240,147,251,0.6)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        color: '#FFEAFE',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      🎛️
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: '0.9rem',
+                          fontWeight: 700,
+                          letterSpacing: 0.25,
+                          textTransform: 'uppercase',
+                          color: 'rgba(255,255,255,0.9)',
+                        }}
+                      >
+                        Filtros
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '0.8rem',
+                          color: 'rgba(255,255,255,0.65)',
+                        }}
+                      >
+                        Ritmos · Zonas · Fechas · Búsqueda
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: 999,
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      background: 'rgba(15,15,20,0.9)',
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
+                      color: 'rgba(255,255,255,0.82)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {activeFiltersCount > 0
+                      ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
+                      : 'Sin filtros activos'}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <FilterBar
                 filters={filters}
