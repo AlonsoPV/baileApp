@@ -47,6 +47,8 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'zumba', label: 'Zumba', parent: 'urbanos' },
       { id: 'heels', label: 'Heels', parent: 'urbanos' },
       { id: 'pole_dance', label: 'Pole Dance', parent: 'urbanos' },
+      { id: 'acrobacia', label: 'Acrobacia', parent: 'urbanos' },
+      { id: 'elasticidad', label: 'Elasticidad', parent: 'urbanos' },
     ],
   },
   {
