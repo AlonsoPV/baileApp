@@ -4,6 +4,7 @@ import { useIsAdmin } from '../hooks/useRoleRequests';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
+import { SEO_ICON_URL } from '@/lib/seoConfig';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -110,7 +111,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           }
         }
       `}</style>
-      <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
         {/* Hamburger Button (only when logged in) */}
         {user && onMenuToggle && (
           <button
@@ -131,25 +132,47 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           </button>
         )}
 
-        {/* Logo/Title */}
+      </div>
+
+      {/* Logo + Nombre centrado */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
         <Link
           to="/"
           style={{
             textDecoration: 'none',
             color: '#FFF',
-            fontSize: '1.5rem',
-            fontWeight: '700',
+            fontSize: '1.25rem',
+            fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
+            pointerEvents: 'auto',
           }}
         >
-          Dónde Bailar
+          <img
+            src={SEO_ICON_URL}
+            alt="Logo Dónde Bailar"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              objectFit: 'cover',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+            }}
+          />
+          <span>Dónde Bailar</span>
         </Link>
       </div>
 
       {/* Nav Icons - Solo Admin Trending para Superadmins */}
-      <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end', flex: 1 }}>
         <Link
           to="/explore"
           aria-label="Inicio"
