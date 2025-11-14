@@ -440,14 +440,29 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {openDropdown === 'zonas' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 {zonaGroups.length ? (
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {zonaGroups.map(group => {
-                        const activeInGroup = group.items.some(item => filters.zonas.includes(item.id));
-                        const isOpen = expandedZonaGroup === group.id;
-                        return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    {zonaGroups.map(group => {
+                      const activeInGroup = group.items.some(item => filters.zonas.includes(item.id));
+                      const isOpen = expandedZonaGroup === group.id;
+                      return (
+                        <div
+                          key={group.id}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.4rem',
+                            alignItems: 'flex-start',
+                            minWidth: 'fit-content',
+                          }}
+                        >
                           <Chip
-                            key={group.id}
                             label={`${group.label} ${isOpen ? '▾' : '▸'}`}
                             icon="📍"
                             variant="custom"
@@ -466,26 +481,36 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                               borderRadius: 999,
                             }}
                           />
-                        );
-                      })}
-                    </div>
-                    {expandedZonaGroup && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {zonaGroups.find(g => g.id === expandedZonaGroup)?.items.map(item => {
-                          const active = filters.zonas.includes(item.id);
-                          return (
-                            <Chip
-                              key={item.id}
-                              label={item.label}
-                              icon="📍"
-                              variant="zona"
-                              active={active}
-                              onClick={() => handleZonaToggle(item.id)}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
+
+                          {isOpen && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '0.5rem',
+                                borderTop: '1px solid rgba(255,255,255,0.08)',
+                                paddingTop: '0.35rem',
+                                width: '100%',
+                              }}
+                            >
+                              {group.items.map(item => {
+                                const active = filters.zonas.includes(item.id);
+                                return (
+                                  <Chip
+                                    key={item.id}
+                                    label={item.label}
+                                    icon="📍"
+                                    variant="zona"
+                                    active={active}
+                                    onClick={() => handleZonaToggle(item.id)}
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>

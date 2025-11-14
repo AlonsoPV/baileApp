@@ -93,8 +93,8 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "0.5rem",
-          marginBottom: "0.75rem",
+          gap: "0.75rem",
+          alignItems: "flex-start",
         }}
       >
         {relevantGroups.map((group) => {
@@ -102,67 +102,74 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
             selectedSet.has(item.id)
           );
           const isExpanded = expanded[group.id] ?? false;
+          const showChildren = isExpanded;
           return (
-            <Chip
+            <div
               key={group.id}
-              label={`${group.label} ${isExpanded ? "▾" : "▸"}`}
-              icon={icon}
-              variant="custom"
-              active={hasSelected || isExpanded}
-              onClick={() => toggleGroup(group.id)}
               style={{
-                alignSelf: "flex-start",
-                width: "fit-content",
-                minWidth: "auto",
-                justifyContent: "center",
-                paddingInline: "1rem",
-                background:
-                  hasSelected || isExpanded
-                    ? "rgba(76,173,255,0.18)"
-                    : "rgba(255,255,255,0.05)",
-                border:
-                  hasSelected || isExpanded
-                    ? "1px solid rgba(76,173,255,0.6)"
-                    : "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 999,
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.4rem",
+                alignItems: "flex-start",
+                minWidth: "fit-content",
               }}
-            />
+            >
+              <Chip
+                label={`${group.label} ${isExpanded ? "▾" : "▸"}`}
+                icon={icon}
+                variant="custom"
+                active={hasSelected || isExpanded}
+                onClick={() => toggleGroup(group.id)}
+                style={{
+                  alignSelf: "flex-start",
+                  width: "fit-content",
+                  minWidth: "auto",
+                  justifyContent: "center",
+                  paddingInline: "1rem",
+                  background:
+                    hasSelected || isExpanded
+                      ? "rgba(76,173,255,0.18)"
+                      : "rgba(255,255,255,0.05)",
+                  border:
+                    hasSelected || isExpanded
+                      ? "1px solid rgba(76,173,255,0.6)"
+                      : "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 999,
+                }}
+              />
+
+              {showChildren && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    paddingTop: "0.4rem",
+                    width: "100%",
+                  }}
+                >
+                  {group.items.map((item) => {
+                    const isActive = selectedSet.has(item.id);
+                    return (
+                      <Chip
+                        key={item.id}
+                        label={item.label}
+                        icon={icon}
+                        variant="zona"
+                        active={isActive}
+                        onClick={
+                          mode === "edit" ? () => handleChipClick(item.id) : undefined
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
-
-      {relevantGroups.map((group) => {
-        const isExpanded = expanded[group.id];
-        if (!isExpanded) return null;
-        return (
-          <div
-            key={`zona-group-${group.id}`}
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "8px",
-              paddingLeft: "0.5rem",
-              marginBottom: "0.75rem",
-            }}
-          >
-            {group.items.map((item) => {
-              const isActive = selectedSet.has(item.id);
-              return (
-                <Chip
-                  key={item.id}
-                  label={item.label}
-                  icon={icon}
-                  variant="zona"
-                  active={isActive}
-                  onClick={
-                    mode === "edit" ? () => handleChipClick(item.id) : undefined
-                  }
-                />
-              );
-            })}
-          </div>
-        );
-      })}
     </div>
   );
 };

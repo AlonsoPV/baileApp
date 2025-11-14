@@ -98,15 +98,29 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
   }
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      {/* Chips padre */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {filteredCatalog.map(group => {
-          const isOpen = expanded === group.id;
-          const active = groupHasActive(group.id);
-          return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.85rem',
+        alignItems: 'flex-start',
+      }}
+    >
+      {filteredCatalog.map(group => {
+        const isOpen = expanded === group.id;
+        const active = groupHasActive(group.id);
+        return (
+          <div
+            key={group.id}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+              alignItems: 'flex-start',
+              minWidth: 'fit-content',
+            }}
+          >
             <button
-              key={group.id}
               type="button"
               onClick={() => setExpanded(prev => prev === group.id ? null : group.id)}
               style={{
@@ -137,58 +151,58 @@ function RitrosChipsInternal({ selected, onChange, allowedIds, readOnly }: Props
             >
               {group.label}
             </button>
-          );
-        })}
-      </div>
 
-      {/* Chips hijas del grupo expandido */}
-      {expanded && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 6,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            paddingTop: 10,
-          }}
-        >
-          {filteredCatalog.find(g => g.id === expanded)?.items.map(r => {
-            const isActive = selected.includes(r.id);
-            return (
-              <motion.button
-                key={r.id}
-                type="button"
-                onClick={() => toggleChild(r.id)}
-                whileTap={{ scale: 0.95 }}
+            {isOpen && (
+              <div
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  display: 'flex',
+                  flexWrap: 'wrap',
                   gap: 6,
-                  cursor: 'pointer',
-                  transition: '0.3s',
-                  backdropFilter: 'blur(10px)',
-                  userSelect: 'none',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  padding: '8px 14px',
-                  borderRadius: 999,
-                  background: isActive ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.03)',
-                  border: isActive ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.1)',
-                  color: isActive ? '#FFE4EE' : 'rgba(255,255,255,0.72)',
-                  boxShadow: isActive
-                    ? 'rgba(245,87,108,0.3) 0px 3px 10px'
-                    : 'rgba(0,0,0,0.25) 0px 2px 8px',
-                  alignSelf: 'flex-start',
-                  minWidth: 'auto',
-                  justifyContent: 'center',
+                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                  paddingTop: 10,
+                  width: '100%',
                 }}
               >
-                {r.label}
-              </motion.button>
-            );
-          })}
-        </div>
-      )}
+                {group.items.map(r => {
+                  const isActive = selected.includes(r.id);
+                  return (
+                    <motion.button
+                      key={r.id}
+                      type="button"
+                      onClick={() => toggleChild(r.id)}
+                      whileTap={{ scale: 0.95 }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: '0.3s',
+                        backdropFilter: 'blur(10px)',
+                        userSelect: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        padding: '8px 14px',
+                        borderRadius: 999,
+                        background: isActive ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.03)',
+                        border: isActive ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.1)',
+                        color: isActive ? '#FFE4EE' : 'rgba(255,255,255,0.72)',
+                        boxShadow: isActive
+                          ? 'rgba(245,87,108,0.3) 0px 3px 10px'
+                          : 'rgba(0,0,0,0.25) 0px 2px 8px',
+                        alignSelf: 'flex-start',
+                        minWidth: 'auto',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {r.label}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
