@@ -38,10 +38,10 @@ export default function UserProfileEditor() {
   const { media, uploadToSlot, removeFromSlot } = useUserMediaSlots();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Manejar cambio de roles
   useRoleChange();
-  
+
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
@@ -137,9 +137,9 @@ export default function UserProfileEditor() {
         return;
       }
     }
-    
+
     setUploading(prev => ({ ...prev, [slot]: true }));
-    
+
     try {
       await uploadToSlot.mutateAsync({ file, slot, kind });
       showToast(`${kind === 'photo' ? 'Foto' : 'Video'} subido correctamente`, 'success');
@@ -165,8 +165,8 @@ export default function UserProfileEditor() {
   // Funciones para toggle de chips
 
   const toggleZona = (id: number) => {
-    const newZonas = form.zonas.includes(id) 
-      ? form.zonas.filter(z => z !== id) 
+    const newZonas = form.zonas.includes(id)
+      ? form.zonas.filter(z => z !== id)
       : [...form.zonas, id];
     setField('zonas', newZonas);
   };
@@ -178,11 +178,11 @@ export default function UserProfileEditor() {
     try {
       // Normalizar redes sociales (convertir "" a null)
       const redes = normalizeSocialInput(form.respuestas?.redes || {});
-      
+
       console.log('[UserProfileEditor] Form data antes del guardado:', form);
       console.log('[UserProfileEditor] Respuestas:', form.respuestas);
       console.log('[UserProfileEditor] Redes normalizadas:', redes);
-      
+
       // Fallback: si no hay ritmos_seleccionados pero sí hay ritmos numéricos, mapear a catálogo por etiqueta
       let outRitmosSeleccionados = ((form as any).ritmos_seleccionados || []) as string[];
       if ((!outRitmosSeleccionados || outRitmosSeleccionados.length === 0) && Array.isArray(form.ritmos) && form.ritmos.length > 0) {
@@ -204,18 +204,18 @@ export default function UserProfileEditor() {
         ritmos_seleccionados: outRitmosSeleccionados || [],
         ritmos: form.ritmos,
         zonas: form.zonas,
-        respuestas: { 
+        respuestas: {
           redes,
           dato_curioso: form.respuestas?.dato_curioso || null,
           gusta_bailar: form.respuestas?.gusta_bailar || null
         },
       };
-      
+
       console.log('[UserProfileEditor] Candidate construido:', candidate);
 
       // Crear patch inteligente
-      const patch = buildSafePatch(profile || {}, candidate, { 
-        allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any 
+      const patch = buildSafePatch(profile || {}, candidate, {
+        allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any
       });
 
       console.log('[UserProfileEditor] Patch generado:', patch);
@@ -227,13 +227,13 @@ export default function UserProfileEditor() {
       }
 
       await updateProfileFields(patch);
-      
+
       // Refetch y sincronizar draft con datos frescos del servidor
       const fresh = await refetchProfile();
       if (fresh) {
         setFromServer(fresh as any); // sincroniza draft y form con server
       }
-      
+
       showToast('Perfil actualizado ✅', 'success');
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -424,411 +424,411 @@ export default function UserProfileEditor() {
       `}</style>
       <div className="editor-container">
         <div className="editor-content">
-        {/* Header con botón Volver */}
-        <div className="editor-header">
-          <button
-            onClick={() => navigate(-1)}
-            className="editor-back-btn"
-          >
-            ← Volver
-          </button>
-          <h1 className="editor-title">
-            ✏️ Editar Perfil
-          </h1>
-          <div style={{ width: '100px' }}></div>
-        </div>
+          {/* Header con botón Volver */}
+          <div className="editor-header">
+            <button
+              onClick={() => navigate(-1)}
+              className="editor-back-btn"
+            >
+              ← Volver
+            </button>
+            <h1 className="editor-title">
+              ✏️ Editar Perfil
+            </h1>
+            <div style={{ width: '100px' }}></div>
+          </div>
 
-        {/* Componente de navegación flotante */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
-          <ProfileNavigationToggle
-            currentView="edit"
-            profileType="user"
-            onSave={handleSave}
-            isSaving={false}
-            saveDisabled={!form.display_name?.trim()}
-          />
-        </div>
+          {/* Componente de navegación flotante */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+            <ProfileNavigationToggle
+              currentView="edit"
+              profileType="user"
+              onSave={handleSave}
+              isSaving={false}
+              saveDisabled={!form.display_name?.trim()}
+            />
+          </div>
 
-        {/* Información Personal y Redes Sociales */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
-            👤 Información Personal y Redes Sociales
-          </h2>
-          
-          {/* Layout de 2 columnas: Info Personal | Redes Sociales */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '2rem',
-            alignItems: 'start'
-          }}
-          className="info-redes-grid">
-            {/* Columna 1: Información Básica */}
-            <div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label className="editor-field">
-                  Nombre de Usuario
-                </label>
-                <input
-                  type="text"
-                  value={form.display_name}
-                  onChange={(e) => setField('display_name', e.target.value)}
-                  placeholder="Tu nombre de usuario"
-                  className="editor-input"
-                />
+          {/* Información Personal y Redes Sociales */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">
+              👤 Información Personal y Redes Sociales
+            </h2>
+
+            {/* Layout de 2 columnas: Info Personal | Redes Sociales */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '2rem',
+              alignItems: 'start'
+            }}
+              className="info-redes-grid">
+              {/* Columna 1: Información Básica */}
+              <div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label className="editor-field">
+                    Nombre de Usuario
+                  </label>
+                  <input
+                    type="text"
+                    value={form.display_name}
+                    onChange={(e) => setField('display_name', e.target.value)}
+                    placeholder="Tu nombre de usuario"
+                    className="editor-input"
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label className="editor-field">
+                    Biografía
+                  </label>
+                  <textarea
+                    value={form.bio}
+                    onChange={(e) => setField('bio', e.target.value)}
+                    placeholder="Cuéntanos sobre ti..."
+                    rows={2}
+                    className="editor-textarea"
+                  />
+                </div>
+
+                {/* Como te identificas */}
+                <div>
+                  <label className="editor-field">
+                    ¿Cómo te identificas?
+                  </label>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem'
+                  }}>
+                    {(['lead', 'follow', 'ambos'] as const).map((rol) => (
+                      <label
+                        key={rol}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '0.75rem',
+                          background: (form as any).rol_baile === rol
+                            ? 'rgba(255, 255, 255, 0.15)'
+                            : 'rgba(255, 255, 255, 0.05)',
+                          border: `2px solid ${(form as any).rol_baile === rol
+                            ? 'rgba(255, 255, 255, 0.4)'
+                            : 'rgba(255, 255, 255, 0.1)'}`,
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="rolBaile"
+                          value={rol}
+                          checked={(form as any).rol_baile === rol}
+                          onChange={(e) => setField('rol_baile', e.target.value as 'lead' | 'follow' | 'ambos')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
+                          }}
+                        />
+                        <span style={{
+                          color: '#F5F5F5',
+                          fontSize: '0.95rem',
+                          fontWeight: (form as any).rol_baile === rol ? '600' : '400',
+                        }}>
+                          {rol === 'lead' && '👨‍💼 Lead (Guía)'}
+                          {rol === 'follow' && '👩‍💼 Follow (Seguidor/a)'}
+                          {rol === 'ambos' && '🔄 Ambos'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
-              
-              <div style={{ marginBottom: '1rem' }}>
+
+              {/* Columna 2: Redes Sociales */}
+              <div>
+                <h3 className="editor-subsection-title" style={{ marginBottom: '1rem', marginTop: 0 }}>
+                  📱 Redes Sociales
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                      📸 Instagram
+                    </label>
+                    <input
+                      type="text"
+                      value={form.respuestas?.redes?.instagram || ''}
+                      onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
+                      placeholder="@usuario"
+                      className="editor-input"
+                      style={{ padding: '0.6rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                      🎵 TikTok
+                    </label>
+                    <input
+                      type="text"
+                      value={form.respuestas?.redes?.tiktok || ''}
+                      onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
+                      placeholder="@usuario"
+                      className="editor-input"
+                      style={{ padding: '0.6rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                      📺 YouTube
+                    </label>
+                    <input
+                      type="text"
+                      value={form.respuestas?.redes?.youtube || ''}
+                      onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
+                      placeholder="@canal"
+                      className="editor-input"
+                      style={{ padding: '0.6rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                      👥 Facebook
+                    </label>
+                    <input
+                      type="text"
+                      value={form.respuestas?.redes?.facebook || ''}
+                      onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
+                      placeholder="perfil"
+                      className="editor-input"
+                      style={{ padding: '0.6rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
+                      💬 WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={form.respuestas?.redes?.whatsapp || ''}
+                      onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
+                      placeholder="+52..."
+                      className="editor-input"
+                      style={{ padding: '0.6rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ritmos y Zonas */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">
+              🎵 Ritmos y Zonas
+            </h2>
+
+            <div className="editor-grid">
+              <div>
+                <h3 className="editor-subsection-title">
+                  🎶 Ritmos que Bailas
+                </h3>
+                <div style={{ textAlign: 'left' }}>
+                  <RitmosSelectorEditor
+                    selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
+                    ritmoTags={ritmoTags}
+                    setField={setField as any}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="editor-subsection-title">
+                  📍 Zonas donde Bailas
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  {zonaGroups.map((group) => {
+                    const hasSelectedChild = group.items.some(({ id }) => form.zonas.includes(id));
+                    const expanded = expandedZonaGroups[group.id] ?? false;
+                    return (
+                      <Chip
+                        key={group.id}
+                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
+                        icon="📍"
+                        variant="custom"
+                        active={expanded || hasSelectedChild}
+                        onClick={() => toggleZonaGroup(group.id)}
+                        style={{
+                          alignSelf: 'flex-start',
+                          width: 'fit-content',
+                          minWidth: 'auto',
+                          justifyContent: 'center',
+                          paddingInline: '1rem',
+                          background: (expanded || hasSelectedChild)
+                            ? 'rgba(76,173,255,0.18)'
+                            : 'rgba(255,255,255,0.05)',
+                          border: (expanded || hasSelectedChild)
+                            ? '1px solid rgba(76,173,255,0.6)'
+                            : '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: 999,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {zonaGroups.map((group) => {
+                  const expanded = expandedZonaGroups[group.id];
+                  if (!expanded) return null;
+                  return (
+                    <div
+                      key={`zonas-${group.id}`}
+                      className="editor-chips"
+                      style={{ marginBottom: '0.75rem', paddingLeft: '0.25rem' }}
+                    >
+                      {group.items.map(({ id, label }) => (
+                        <Chip
+                          key={id}
+                          label={label}
+                          active={form.zonas.includes(id)}
+                          onClick={() => toggleZona(id)}
+                          variant="zona"
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Preguntas Personalizadas */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">
+              💬 Preguntas Personalizadas
+            </h2>
+
+            <div className="editor-grid">
+              <div>
                 <label className="editor-field">
-                  Biografía
+                  🎭 ¿Cuál es tu dato curioso favorito?
                 </label>
                 <textarea
-                  value={form.bio}
-                  onChange={(e) => setField('bio', e.target.value)}
-                  placeholder="Cuéntanos sobre ti..."
+                  value={form.respuestas?.dato_curioso || ''}
+                  onChange={(e) => {
+                    console.log('[UserProfileEditor] Cambiando dato_curioso:', e.target.value);
+                    setNested('respuestas.dato_curioso', e.target.value);
+                  }}
+                  placeholder="Comparte algo interesante sobre ti..."
                   rows={2}
                   className="editor-textarea"
                 />
               </div>
 
-              {/* Como te identificas */}
               <div>
                 <label className="editor-field">
-                  ¿Cómo te identificas?
+                  💃 ¿Qué te gusta más del baile?
                 </label>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem'
-                }}>
-                  {(['lead', 'follow', 'ambos'] as const).map((rol) => (
-                    <label
-                      key={rol}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.75rem',
-                        background: (form as any).rol_baile === rol 
-                          ? 'rgba(255, 255, 255, 0.15)' 
-                          : 'rgba(255, 255, 255, 0.05)',
-                        border: `2px solid ${(form as any).rol_baile === rol 
-                          ? 'rgba(255, 255, 255, 0.4)' 
-                          : 'rgba(255, 255, 255, 0.1)'}`,
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="rolBaile"
-                        value={rol}
-                        checked={(form as any).rol_baile === rol}
-                        onChange={(e) => setField('rol_baile', e.target.value as 'lead' | 'follow' | 'ambos')}
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          cursor: 'pointer',
-                        }}
-                      />
-                      <span style={{
-                        color: '#F5F5F5',
-                        fontSize: '0.95rem',
-                        fontWeight: (form as any).rol_baile === rol ? '600' : '400',
-                      }}>
-                        {rol === 'lead' && '👨‍💼 Lead (Guía)'}
-                        {rol === 'follow' && '👩‍💼 Follow (Seguidor/a)'}
-                        {rol === 'ambos' && '🔄 Ambos'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Columna 2: Redes Sociales */}
-            <div>
-              <h3 className="editor-subsection-title" style={{ marginBottom: '1rem', marginTop: 0 }}>
-                📱 Redes Sociales
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div>
-                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                    📸 Instagram
-                  </label>
-                  <input
-                    type="text"
-                    value={form.respuestas?.redes?.instagram || ''}
-                    onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
-                    placeholder="@usuario"
-                    className="editor-input"
-                    style={{ padding: '0.6rem' }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                    🎵 TikTok
-                  </label>
-                  <input
-                    type="text"
-                    value={form.respuestas?.redes?.tiktok || ''}
-                    onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
-                    placeholder="@usuario"
-                    className="editor-input"
-                    style={{ padding: '0.6rem' }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                    📺 YouTube
-                  </label>
-                  <input
-                    type="text"
-                    value={form.respuestas?.redes?.youtube || ''}
-                    onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
-                    placeholder="@canal"
-                    className="editor-input"
-                    style={{ padding: '0.6rem' }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                    👥 Facebook
-                  </label>
-                  <input
-                    type="text"
-                    value={form.respuestas?.redes?.facebook || ''}
-                    onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
-                    placeholder="perfil"
-                    className="editor-input"
-                    style={{ padding: '0.6rem' }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                    💬 WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={form.respuestas?.redes?.whatsapp || ''}
-                    onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
-                    placeholder="+52..."
-                    className="editor-input"
-                    style={{ padding: '0.6rem' }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Ritmos y Zonas */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
-            🎵 Ritmos y Zonas
-          </h2>
-          
-          <div className="editor-grid">
-            <div>
-              <h3 className="editor-subsection-title">
-                🎶 Ritmos que Bailas
-              </h3>
-              <div style={{ textAlign: 'left' }}>
-                <RitmosSelectorEditor
-                  selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
-                  ritmoTags={ritmoTags}
-                  setField={setField as any}
+                <textarea
+                  value={form.respuestas?.gusta_bailar || ''}
+                  onChange={(e) => {
+                    console.log('[UserProfileEditor] Cambiando gusta_bailar:', e.target.value);
+                    setNested('respuestas.gusta_bailar', e.target.value);
+                  }}
+                  placeholder="Cuéntanos qué te apasiona del baile..."
+                  rows={2}
+                  className="editor-textarea"
                 />
               </div>
             </div>
-            
-            <div>
-              <h3 className="editor-subsection-title">
-                📍 Zonas donde Bailas
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                {zonaGroups.map((group) => {
-                  const hasSelectedChild = group.items.some(({ id }) => form.zonas.includes(id));
-                  const expanded = expandedZonaGroups[group.id] ?? false;
-                  return (
-                    <Chip
-                      key={group.id}
-                      label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                      icon="📍"
-                      variant="custom"
-                      active={expanded || hasSelectedChild}
-                      onClick={() => toggleZonaGroup(group.id)}
-                      style={{
-                        alignSelf: 'flex-start',
-                        width: 'fit-content',
-                        minWidth: 'auto',
-                        justifyContent: 'center',
-                        paddingInline: '1rem',
-                        background: (expanded || hasSelectedChild)
-                          ? 'rgba(76,173,255,0.18)'
-                          : 'rgba(255,255,255,0.05)',
-                        border: (expanded || hasSelectedChild)
-                          ? '1px solid rgba(76,173,255,0.6)'
-                          : '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: 999,
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              {zonaGroups.map((group) => {
-                const expanded = expandedZonaGroups[group.id];
-                if (!expanded) return null;
-                return (
-                  <div
-                    key={`zonas-${group.id}`}
-                    className="editor-chips"
-                    style={{ marginBottom: '0.75rem', paddingLeft: '0.25rem' }}
-                  >
-                    {group.items.map(({ id, label }) => (
-                      <Chip
-                        key={id}
-                        label={label}
-                        active={form.zonas.includes(id)}
-                        onClick={() => toggleZona(id)}
-                        variant="zona"
-                      />
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
           </div>
-        </div>
 
-        {/* Preguntas Personalizadas */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
-            💬 Preguntas Personalizadas
-          </h2>
-          
-          <div className="editor-grid">
-            <div>
-              <label className="editor-field">
-                🎭 ¿Cuál es tu dato curioso favorito?
-              </label>
-              <textarea
-                value={form.respuestas?.dato_curioso || ''}
-                onChange={(e) => {
-                  console.log('[UserProfileEditor] Cambiando dato_curioso:', e.target.value);
-                  setNested('respuestas.dato_curioso', e.target.value);
-                }}
-                placeholder="Comparte algo interesante sobre ti..."
-                rows={2}
-                className="editor-textarea"
-              />
-            </div>
-            
-            <div>
-              <label className="editor-field">
-                💃 ¿Qué te gusta más del baile?
-              </label>
-              <textarea
-                value={form.respuestas?.gusta_bailar || ''}
-                onChange={(e) => {
-                  console.log('[UserProfileEditor] Cambiando gusta_bailar:', e.target.value);
-                  setNested('respuestas.gusta_bailar', e.target.value);
-                }}
-                placeholder="Cuéntanos qué te apasiona del baile..."
-                rows={2}
-                className="editor-textarea"
-              />
-            </div>
+          {/* Preferencias de Filtros */}
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">
+              ⭐ Preferencias de Filtros
+            </h2>
+            <p style={{ marginBottom: '1.5rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
+              Configura tus filtros favoritos (ritmos, zonas, fechas) para aplicarlos automáticamente al explorar eventos y clases
+            </p>
+            <button
+              onClick={() => setShowFilterPreferences(true)}
+              style={{
+                padding: '1rem 2rem',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, rgba(240,147,251,0.8), rgba(245,87,108,0.8))',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(240,147,251,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.3)';
+              }}
+            >
+              ⚙️ Configurar Preferencias de Filtros
+            </button>
           </div>
-        </div>
 
-        {/* Preferencias de Filtros */}
-        <div className="editor-section glass-card-container">
-          <h2 className="editor-section-title">
-            ⭐ Preferencias de Filtros
-          </h2>
-          <p style={{ marginBottom: '1.5rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
-            Configura tus filtros favoritos (ritmos, zonas, fechas) para aplicarlos automáticamente al explorar eventos y clases
-          </p>
-          <button
-            onClick={() => setShowFilterPreferences(true)}
-            style={{
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.8), rgba(245,87,108,0.8))',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '1rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(240,147,251,0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.3)';
-            }}
-          >
-            ⚙️ Configurar Preferencias de Filtros
-          </button>
-        </div>
+          {/* Sección de Fotos */}
+          <PhotoManagementSection
+            media={mediaWithAvatarFallback}
+            uploading={uploading}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Gestión de Fotos"
+            description="La foto P1 se mostrará como tu avatar principal en el banner del perfil"
+            slots={['p1']}
+            isMainPhoto={true}
+          />
 
-        {/* Sección de Fotos */}
-        <PhotoManagementSection
-          media={mediaWithAvatarFallback}
-          uploading={uploading}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Gestión de Fotos"
-          description="La foto P1 se mostrará como tu avatar principal en el banner del perfil"
-          slots={['p1']}
-          isMainPhoto={true}
-        />
+          {/* Secciones destacadas (p2 - p3) */}
+          <PhotoManagementSection
+            media={mediaWithAvatarFallback}
+            uploading={uploading}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Fotos Destacadas (p2 - p3)"
+            description="Estas fotos se usan en las secciones destacadas de tu perfil"
+            slots={['p2', 'p3']}
+            isMainPhoto={false}
+          />
 
-        {/* Secciones destacadas (p2 - p3) */}
-        <PhotoManagementSection
-          media={mediaWithAvatarFallback}
-          uploading={uploading}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Fotos Destacadas (p2 - p3)"
-          description="Estas fotos se usan en las secciones destacadas de tu perfil"
-          slots={['p2', 'p3']}
-          isMainPhoto={false}
-        />
+          {/* Sección de Fotos Adicionales */}
+          <PhotoManagementSection
+            media={mediaWithAvatarFallback}
+            uploading={uploading}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Fotos Adicionales (p4-p10)"
+            description="Estas fotos aparecerán en la galería de tu perfil"
+            slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
+            isMainPhoto={false}
+          />
 
-        {/* Sección de Fotos Adicionales */}
-        <PhotoManagementSection
-          media={mediaWithAvatarFallback}
-          uploading={uploading}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Fotos Adicionales (p4-p10)"
-          description="Estas fotos aparecerán en la galería de tu perfil"
-          slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
-          isMainPhoto={false}
-        />
-
-        {/* Sección de Videos */}
-        <VideoManagementSection
-          media={mediaWithAvatarFallback}
-          uploading={uploading}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="🎥 Gestión de Videos"
-          description="Los videos aparecerán en la sección de videos de tu perfil"
-          slots={['v1', 'v2', 'v3']}
-        />
+          {/* Sección de Videos */}
+          <VideoManagementSection
+            media={mediaWithAvatarFallback}
+            uploading={uploading}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="🎥 Gestión de Videos"
+            description="Los videos aparecerán en la sección de videos de tu perfil"
+            slots={['v1', 'v2', 'v3']}
+          />
         </div>
       </div>
 

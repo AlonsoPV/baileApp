@@ -715,6 +715,7 @@ export default function AcademyProfileEditor() {
               value={(form as any).ubicaciones || []}
               onChange={(v) => setField('ubicaciones' as any, v as any)}
               title="Ubicaciones"
+              allowedZoneIds={((form as any).zonas || []) as number[]}
             />
             {/* Crear Clase rápida  */}
             <div>

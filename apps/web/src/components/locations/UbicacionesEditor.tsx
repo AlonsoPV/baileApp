@@ -19,6 +19,7 @@ type Props = {
   title?: string;
   className?: string;
   style?: React.CSSProperties;
+  allowedZoneIds?: number[];
 };
 
 const colors = {
@@ -28,9 +29,25 @@ const colors = {
   mut: 'rgba(255,255,255,0.75)'
 };
 
-export default function UbicacionesEditor({ value = [], onChange, title = 'Ubicaciones', className, style }: Props) {
+export default function UbicacionesEditor({
+  value = [],
+  onChange,
+  title = 'Ubicaciones',
+  className,
+  style,
+  allowedZoneIds,
+}: Props) {
   const { data: allTags } = useTags();
-  const zonas = (allTags || []).filter((t: any) => t.tipo === 'zona');
+  const allZonas = React.useMemo(
+    () => (allTags || []).filter((t: any) => t.tipo === 'zona'),
+    [allTags]
+  );
+  const zonas = React.useMemo(() => {
+    if (!allowedZoneIds || allowedZoneIds.length === 0) return allZonas;
+    const allowed = new Set(allowedZoneIds);
+    const filtered = allZonas.filter((z: any) => allowed.has(z.id));
+    return filtered.length ? filtered : allZonas;
+  }, [allowedZoneIds, allZonas]);
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
 
 const ensureId = (u: Ubicacion): Ubicacion => ({
@@ -148,7 +165,9 @@ const withName = (item: Ubicacion, value: string) => ({
           const u = ensureId(raw);
           const id = u.id || String(idx);
           const isOpen = id ? expandedIds.has(id) : false;
-          const zonaNames = getZonaIds(u).map(zid => zonas.find((z: any) => z.id === zid)?.nombre).filter(Boolean) as string[];
+          const zonaNames = getZonaIds(u)
+            .map(zid => allZonas.find((z: any) => z.id === zid)?.nombre)
+            .filter(Boolean) as string[];
           const displayName = (u.nombre || u.sede || '').trim();
 
           return (
