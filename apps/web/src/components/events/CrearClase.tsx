@@ -529,21 +529,28 @@ export default function CrearClase({
             <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>
             <div style={row}>
           <div>
-            <div style={label}>Ritmo</div>
+            <div style={label}>Ritmos (puedes elegir varios)</div>
             <div style={chipWrap}>
-              {ritmos.map(r => (
-                <button
-                  type="button"
-                  key={r.id}
-                  style={chip(form.ritmoId === r.id)}
-                  onClick={()=>setField('ritmoId', r.id)}
-                  title={r.nombre}
-                >
-                  {r.nombre}
-                </button>
-              ))}
+              {ritmos.map(r => {
+                const isActive = (form.ritmoIds && form.ritmoIds.includes(r.id)) || form.ritmoId === r.id;
+                return (
+                  <button
+                    type="button"
+                    key={r.id}
+                    style={chip(isActive)}
+                    onClick={()=>toggleRitmoChip(r.id)}
+                    title={r.nombre}
+                  >
+                    {r.nombre}
+                  </button>
+                );
+              })}
             </div>
-            {!form.ritmoId && <div style={helpText()}>Sugerencia: elegir un ritmo mejora el descubrimiento</div>}
+            {(!form.ritmoIds || form.ritmoIds.length === 0) && (
+              <div style={helpText()}>
+                Opcional, pero sugerido: seleccionar ritmos ayuda a mejorar el descubrimiento
+              </div>
+            )}
           </div>
 
               <div>
