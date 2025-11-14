@@ -817,7 +817,15 @@ export default function AcademyProfileEditor() {
                     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                   })()}
                 zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-                locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({ id: u?.id || String(i), nombre: u?.nombre, direccion: u?.direccion, referencias: u?.referencias }))}
+                zonaTags={(allTags || []).filter((t: any) => t.tipo === 'zona')}
+                selectedZonaIds={((form as any).zonas || []) as number[]}
+                locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({
+                  id: u?.id || String(i),
+                  nombre: u?.nombre,
+                  direccion: u?.direccion,
+                  referencias: u?.referencias,
+                  zonas: u?.zonaIds || u?.zonas || (typeof u?.zona_id === 'number' ? [u.zona_id] : []),
+                }))}
                 editIndex={editingIndex}
                 editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}

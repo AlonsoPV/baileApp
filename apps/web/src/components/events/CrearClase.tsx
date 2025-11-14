@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import ZonaGroupedChips from '../profile/ZonaGroupedChips';
 
 const colors = {
   coral: '#FF3D57',
@@ -50,7 +51,9 @@ type Props = {
   onCancel?: () => void;
   ritmos: Tag[];
   zonas: Tag[];
-  locations?: Array<{ id?: string; nombre?: string; direccion?: string; referencias?: string }>; // para seleccionar
+  zonaTags?: Array<{ id: number; nombre: string; slug?: string; tipo?: string }>;
+  selectedZonaIds?: number[];
+  locations?: Array<{ id?: string; nombre?: string; direccion?: string; referencias?: string; zonas?: number[] | null }>; // para seleccionar
   title?: string;
   style?: React.CSSProperties;
   className?: string;
@@ -74,7 +77,7 @@ const label: React.CSSProperties = { fontSize: 12, color: colors.mut, marginBott
 const fieldShell = (invalid = false): React.CSSProperties => ({
   position: 'relative',
   borderRadius: 12,
-  border: `1px solid ${invalid ? colors.err+'66' : colors.line}`,
+  border: `1px solid ${invalid ? colors.err + '66' : colors.line}`,
   background: colors.panel,
   transition: 'all .2s ease',
   boxShadow: invalid ? '0 0 0 3px rgba(239,68,68,0.15)' : 'inset 0 0 0 1px rgba(255,255,255,0.02)',
@@ -140,11 +143,11 @@ const helpText = (warn = false): React.CSSProperties => ({
 const normalizeTime = (t?: string) => {
   if (!t) return '';
   const [hh = '', mm = ''] = t.split(':');
-  return `${hh.padStart(2,'0')}:${(mm||'00').padStart(2,'0')}`;
+  return `${hh.padStart(2, '0')}:${(mm || '00').padStart(2, '0')}`;
 };
 
 const tipos: Array<NonNullable<CrearClaseValue['tipo']>> = [
-  'clases sueltas','paquetes','coreografia','entrenamiento','otro'
+  'clases sueltas', 'paquetes', 'coreografia', 'entrenamiento', 'otro'
 ];
 
 const diasSemana = [
@@ -173,6 +176,8 @@ export default function CrearClase({
   onCancel,
   ritmos,
   zonas,
+  zonaTags = [],
+  selectedZonaIds = [],
   locations,
   title = 'Crear Clase',
   style,
@@ -180,7 +185,7 @@ export default function CrearClase({
   enableDate = true
 }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [submitState, setSubmitState] = useState<'idle'|'saving'|'success'|'error'>('idle');
+  const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [form, setForm] = useState<CrearClaseValue>({
     nombre: value?.nombre || '',
@@ -282,6 +287,27 @@ export default function CrearClase({
     });
   }, [updateForm]);
 
+  const zonaTagSource = useMemo(() => {
+    if (zonaTags && zonaTags.length) return zonaTags;
+    return zonas.map((z) => ({ ...z, tipo: 'zona' as const }));
+  }, [zonaTags, zonas]);
+
+  const selectedLocation = useMemo(() => {
+    if (!selectedLocationId || !locations) return null;
+    return locations.find((l) => (l.id || '') === selectedLocationId) || null;
+  }, [selectedLocationId, locations]);
+
+  const selectedLocationZonaIds = useMemo(() => {
+    if (!selectedLocation) return [];
+    const ids = (selectedLocation as any)?.zonas || [];
+    return Array.isArray(ids) ? ids.filter((id: any): id is number => typeof id === 'number') : [];
+  }, [selectedLocation]);
+
+  const manualZonaIds = useMemo(() => {
+    if (selectedLocationZonaIds.length > 0) return [];
+    return (selectedZonaIds || []).filter((id): id is number => typeof id === 'number');
+  }, [selectedLocationZonaIds, selectedZonaIds]);
+
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
     const horarioOk = Boolean(form.inicio && form.fin);
@@ -346,12 +372,12 @@ export default function CrearClase({
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...style }} className={className}>
       <div style={{ ...card }}>
         {/* Accent bar / progreso */}
-        <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background: `linear-gradient(90deg, ${colors.blue}, ${colors.purple})` }} />
-        <div style={{ position:'absolute', top:0, left:0, height:4, background: colors.ok, width: `${completion}%`, transition:'width .25s ease' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${colors.blue}, ${colors.purple})` }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, height: 4, background: colors.ok, width: `${completion}%`, transition: 'width .25s ease' }} />
 
         {/* Header */}
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
-          <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#1E88E5,#7C4DFF)', display:'grid', placeItems:'center', boxShadow:'0 10px 24px rgba(30,136,229,0.35)' }}>➕</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>➕</div>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: colors.text }}>{title}</h2>
             <div style={{ fontSize: 12, color: colors.mut }}>Completa los campos — {completion}%</div>
@@ -371,7 +397,7 @@ export default function CrearClase({
                     style={inputBase}
                     placeholder="Ej. Bachata Sensual"
                     value={form.nombre || ''}
-                    onChange={(e)=>setField('nombre', e.target.value)}
+                    onChange={(e) => setField('nombre', e.target.value)}
                   />
                 </div>
                 {invalid.nombre && <div style={helpText(true)}>Agrega un nombre</div>}
@@ -384,7 +410,7 @@ export default function CrearClase({
                     <button
                       key={t}
                       type="button"
-                      onClick={()=>setField('tipo', t)}
+                      onClick={() => setField('tipo', t)}
                       style={chip(form.tipo === t)}
                     >
                       {t}
@@ -408,7 +434,7 @@ export default function CrearClase({
                     step="1"
                     placeholder="Ej. 200"
                     value={form.precio ?? ''}
-                    onChange={(e)=>setField('precio', e.target.value === '' ? null : Number(e.target.value))}
+                    onChange={(e) => setField('precio', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
                 <div style={helpText()}>Déjalo vacío para marcar como <b>Gratis</b></div>
@@ -422,7 +448,7 @@ export default function CrearClase({
                     style={inputBase}
                     placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
                     value={form.regla || ''}
-                    onChange={(e)=>setField('regla', e.target.value)}
+                    onChange={(e) => setField('regla', e.target.value)}
                   />
                 </div>
               </div>
@@ -451,8 +477,8 @@ export default function CrearClase({
                   <div>
                     <div style={label}>Modo</div>
                     <div style={chipWrap}>
-                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={()=>setField('fechaModo','especifica')}>Específica</button>
-                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={()=>setField('fechaModo','semanal')}>Semanal</button>
+                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={() => setField('fechaModo', 'especifica')}>Específica</button>
+                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={() => setField('fechaModo', 'semanal')}>Semanal</button>
                     </div>
                   </div>
                   <div>
@@ -464,7 +490,7 @@ export default function CrearClase({
                             style={inputBase}
                             type="date"
                             value={form.fecha || ''}
-                            onChange={(e)=>setField('fecha', e.target.value)}
+                            onChange={(e) => setField('fecha', e.target.value)}
                           />
                         </div>
                         {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
@@ -477,7 +503,7 @@ export default function CrearClase({
                               type="button"
                               key={d.id}
                               style={chip(form.diaSemana === d.id)}
-                              onClick={()=>setField('diaSemana', d.id)}
+                              onClick={() => setField('diaSemana', d.id)}
                             >
                               {d.nombre}
                             </button>
@@ -503,7 +529,7 @@ export default function CrearClase({
                     step={60}
                     style={inputBase}
                     value={form.inicio || ''}
-                    onChange={(e)=>setField('inicio', normalizeTime(e.target.value))}
+                    onChange={(e) => setField('inicio', normalizeTime(e.target.value))}
                   />
                 </div>
                 {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
@@ -518,7 +544,7 @@ export default function CrearClase({
                     step={60}
                     style={inputBase}
                     value={form.fin || ''}
-                    onChange={(e)=>setField('fin', normalizeTime(e.target.value))}
+                    onChange={(e) => setField('fin', normalizeTime(e.target.value))}
                   />
                 </div>
                 {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
@@ -528,30 +554,30 @@ export default function CrearClase({
             {/* RITMO + ZONA */}
             <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>
             <div style={row}>
-          <div>
-            <div style={label}>Ritmos (puedes elegir varios)</div>
-            <div style={chipWrap}>
-              {ritmos.map(r => {
-                const isActive = (form.ritmoIds && form.ritmoIds.includes(r.id)) || form.ritmoId === r.id;
-                return (
-                  <button
-                    type="button"
-                    key={r.id}
-                    style={chip(isActive)}
-                    onClick={()=>toggleRitmoChip(r.id)}
-                    title={r.nombre}
-                  >
-                    {r.nombre}
-                  </button>
-                );
-              })}
-            </div>
-            {(!form.ritmoIds || form.ritmoIds.length === 0) && (
-              <div style={helpText()}>
-                Opcional, pero sugerido: seleccionar ritmos ayuda a mejorar el descubrimiento
+              <div>
+                <div style={label}>Ritmos (puedes elegir varios)</div>
+                <div style={chipWrap}>
+                  {ritmos.map(r => {
+                    const isActive = (form.ritmoIds && form.ritmoIds.includes(r.id)) || form.ritmoId === r.id;
+                    return (
+                      <button
+                        type="button"
+                        key={r.id}
+                        style={chip(isActive)}
+                        onClick={() => toggleRitmoChip(r.id)}
+                        title={r.nombre}
+                      >
+                        {r.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+                {(!form.ritmoIds || form.ritmoIds.length === 0) && (
+                  <div style={helpText()}>
+                    Opcional, pero sugerido: seleccionar ritmos ayuda a mejorar el descubrimiento
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
               <div>
                 <div style={label}>Zona</div>
@@ -561,7 +587,7 @@ export default function CrearClase({
                       type="button"
                       key={z.id}
                       style={chip(form.zonaId === z.id)}
-                      onClick={()=>setField('zonaId', z.id)}
+                      onClick={() => setField('zonaId', z.id)}
                       title={z.nombre}
                     >
                       {z.nombre}
@@ -615,6 +641,29 @@ export default function CrearClase({
                 </div>
               </div>
             )}
+            {(() => {
+              const zoneIdsToShow = selectedLocationZonaIds.length
+                ? selectedLocationZonaIds
+                : manualZonaIds;
+              if (!zoneIdsToShow || zoneIdsToShow.length === 0 || zonaTagSource.length === 0) {
+                return null;
+              }
+              return (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={label}>
+                    {selectedLocationZonaIds.length
+                      ? 'Zonas de la ubicación seleccionada'
+                      : 'Zonas del perfil'}
+                  </div>
+                  <ZonaGroupedChips
+                    selectedIds={zoneIdsToShow}
+                    allTags={zonaTagSource}
+                    mode="display"
+                    style={{ gap: '6px' }}
+                  />
+                </div>
+              );
+            })()}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
                 <div style={label}>Nombre de la ubicación</div>
@@ -624,7 +673,7 @@ export default function CrearClase({
                     style={inputBase}
                     placeholder="Ej. Sede Centro / Salón Principal"
                     value={form.ubicacionNombre || ''}
-                    onChange={(e)=>setField('ubicacionNombre', e.target.value)}
+                    onChange={(e) => setField('ubicacionNombre', e.target.value)}
                   />
                 </div>
               </div>
@@ -636,7 +685,7 @@ export default function CrearClase({
                     style={inputBase}
                     placeholder="Calle, número, colonia, ciudad"
                     value={form.ubicacionDireccion || ''}
-                    onChange={(e)=>setField('ubicacionDireccion', e.target.value)}
+                    onChange={(e) => setField('ubicacionDireccion', e.target.value)}
                   />
                 </div>
               </div>
@@ -649,7 +698,7 @@ export default function CrearClase({
                   style={inputBase}
                   placeholder="Ej. Entrada por la puerta lateral, 2do piso"
                   value={form.ubicacionNotas || ''}
-                  onChange={(e)=>setField('ubicacionNotas', e.target.value)}
+                  onChange={(e) => setField('ubicacionNotas', e.target.value)}
                 />
               </div>
             </div>
@@ -683,7 +732,7 @@ export default function CrearClase({
             whileHover={{ y: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? -1 : 0 }}
             whileTap={{ scale: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? 0.98 : 1 }}
             disabled={isOpen ? (submitState === 'saving' || !canSubmit) : false}
-            onClick={async ()=> {
+            onClick={async () => {
               if (!isOpen) { setIsOpen(true); return; }
               if (submitState === 'saving') return;
               try {
