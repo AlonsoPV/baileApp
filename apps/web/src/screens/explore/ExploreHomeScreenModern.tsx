@@ -749,7 +749,7 @@ export default function ExploreHomeScreen() {
             </motion.div>
           )}
 
-         {/*  <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
+          <div className="panel" style={{ margin: `${spacing[6]} 0` }}>
             <FilterBar filters={filters} onFiltersChange={handleFilterChange} showTypeFilter={false} />
             {!isMobile && renderDatePresetButtons(false)}
 
@@ -823,7 +823,7 @@ export default function ExploreHomeScreen() {
                 })}
               </div>
             )}
-          </div> */}
+          </div>
 
           {isMobile && (
             <div style={{ margin: '0 0 1.5rem 0' }}>
