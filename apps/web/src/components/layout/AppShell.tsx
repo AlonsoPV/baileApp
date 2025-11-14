@@ -9,6 +9,7 @@ import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 import { OffCanvasMenu } from '@ui/index';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
+import SeoHead from '@/components/SeoHead';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
@@ -51,6 +52,7 @@ export default function AppShell() {
 
   return (
     <>
+      <SeoHead section="default" />
       <style>{`
         .app-shell-root {
           min-height: 100vh;

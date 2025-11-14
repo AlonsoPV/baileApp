@@ -15,6 +15,8 @@ import RequireLogin from "@/components/auth/RequireLogin";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import EventCard from "../../components/explore/cards/EventCard";
+import SeoHead from "@/components/SeoHead";
+import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado
@@ -616,8 +618,38 @@ export default function EventParentPublicScreen() {
       .map(zona => zona!.nombre);
   };
 
+  const parentName = (parent as any)?.nombre || (parent as any)?.titulo || (parent as any)?.slug || 'Evento social';
+  const parentCity =
+    (parent as any)?.ciudad ||
+    (parent as any)?.zonas?.[0]?.nombre ||
+    (parent as any)?.zonas_nombres?.[0] ||
+    'México';
+  const ritmosDescription =
+    selectedCatalogIds.slice(0, 3).join(', ') ||
+    (((parent as any)?.ritmos || (parent as any)?.estilos || []).slice(0, 3).join(', '));
+  const parentDescription =
+    (parent as any)?.biografia ||
+    (parent as any)?.descripcion ||
+    `Descubre ${parentName}, social de baile en ${parentCity} con ritmos como ${ritmosDescription || 'salsa y bachata'}.`;
+  const parentImage = avatarUrl || carouselPhotos[0] || SEO_LOGO_URL;
+  const parentUrl = `${SEO_BASE_URL}/social/${parentIdParam ?? parent.id}`;
+
   return (
     <>
+      <SeoHead
+        section="event"
+        title={`${parentName} | Social de baile`}
+        description={parentDescription}
+        image={parentImage}
+        url={parentUrl}
+        keywords={[
+          parentName,
+          'social de baile',
+          parentCity,
+          ritmosDescription,
+          'BaileApp',
+        ].filter(Boolean) as string[]}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }

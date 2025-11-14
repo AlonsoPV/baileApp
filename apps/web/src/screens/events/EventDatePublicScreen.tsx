@@ -14,6 +14,8 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
+import SeoHead from "@/components/SeoHead";
+import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 
 const colors = {
   coral: '#FF3D57',
@@ -418,8 +420,38 @@ export default function EventDatePublicScreen() {
     return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   };
 
+  const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
+  const formattedDate = formatDate(date.fecha || date.fecha_inicio || '');
+  const locationName = date.lugar || date.ciudad || parent?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
+  const ritmosList = Array.isArray(date.ritmos)
+    ? date.ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
+    : '';
+  const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
+  const seoImage =
+    date.flyer_url ||
+    getMediaBySlot(date.media as any, 'p1')?.url ||
+    getMediaBySlot(parent?.media as any, 'p1')?.url ||
+    SEO_LOGO_URL;
+  const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
+
   return (
-    <div className="date-public-root" style={{
+    <>
+      <SeoHead
+        section="event"
+        title={`${dateName} | ${formattedDate}`}
+        description={seoDescription}
+        image={seoImage}
+        url={dateUrl}
+        keywords={[
+          dateName,
+          formattedDate,
+          locationName,
+          ritmosList,
+          'evento de baile',
+          'BaileApp',
+        ].filter(Boolean) as string[]}
+      />
+      <div className="date-public-root" style={{
       minHeight: '100vh',
       background: `linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)`,
       padding: '24px 0',
@@ -1446,5 +1478,6 @@ export default function EventDatePublicScreen() {
         })()}
       </div>
     </div>
+    </>
   );
 }

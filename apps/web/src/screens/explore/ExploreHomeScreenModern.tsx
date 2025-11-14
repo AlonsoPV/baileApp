@@ -18,6 +18,7 @@ import { colors, typography, spacing, borderRadius, transitions } from "../../th
 import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
+import SeoHead from "@/components/SeoHead";
 
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
@@ -582,6 +583,7 @@ export default function ExploreHomeScreen() {
 
   return (
     <>
+      <SeoHead section="explore" />
       <style>{`
         .explore-container { min-height: 100vh; background: #0b0d10; color: ${colors.gray[50]}; }
         .filters { padding: ${spacing[6]}; }

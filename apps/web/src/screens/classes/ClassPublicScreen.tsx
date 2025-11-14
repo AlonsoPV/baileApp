@@ -9,6 +9,9 @@ import { useTeacherPublic } from '@/hooks/useTeacher';
 import { useAcademyPublic } from '@/hooks/useAcademy';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { urls } from '@/lib/urls';
+import SeoHead from '@/components/SeoHead';
+import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
+import { getMediaBySlot } from '@/utils/mediaSlots';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -149,8 +152,41 @@ export default function ClassPublicScreen() {
     return parts.length ? parts.join(' · ') : undefined;
   })();
 
+  const ritmosRaw =
+    (selectedClass?.ritmos && Array.isArray(selectedClass.ritmos) && selectedClass.ritmos) ||
+    (selectedClass?.ritmoIds && Array.isArray(selectedClass.ritmoIds) && selectedClass.ritmoIds) ||
+    [];
+  const ritmosLabel = Array.isArray(ritmosRaw) ? ritmosRaw.slice(0, 3).join(', ') : '';
+  const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || 'México';
+  const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
+  const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
+  const mediaList = (profile as any)?.media || [];
+  const seoImage =
+    getMediaBySlot(mediaList, 'p1')?.url ||
+    getMediaBySlot(mediaList, 'cover')?.url ||
+    profile?.avatar_url ||
+    profile?.banner_url ||
+    SEO_LOGO_URL;
+  const classUrl = `${SEO_BASE_URL}/clase/${isTeacher ? 'teacher' : 'academy'}/${idNum}${classIndexParam ? `?i=${classIndexParam}` : classIdParam ? `?classId=${classIdParam}` : ''}`;
+
   return (
-    <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
+    <>
+      <SeoHead
+        section="class"
+        title={`${classTitle} | ${creatorName}`}
+        description={seoDescription}
+        image={seoImage}
+        url={classUrl}
+        keywords={[
+          classTitle,
+          creatorName,
+          locationName,
+          ritmosLabel,
+          'clases de baile',
+          'BaileApp',
+        ].filter(Boolean) as string[]}
+      />
+      <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
       <style>{`
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
@@ -598,7 +634,8 @@ export default function ClassPublicScreen() {
           />
         </motion.section> */}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

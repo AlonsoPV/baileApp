@@ -12,6 +12,7 @@ import TeacherCard from "../../components/explore/cards/TeacherCard";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
+import SeoHead from "@/components/SeoHead";
 
 type InfiniteData<T> = { pages: { data: T[]; count: number; nextPage?: number }[]; pageParams: number[] };
 
@@ -47,6 +48,9 @@ export default function ExploreListScreen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { filters, set } = useExploreFilters();
+  const currentLabel = typeLabels[filters.type] || 'Resultados';
+  const seoTitle = `${currentLabel} | BaileApp`;
+  const seoDescription = `Explora ${currentLabel.toLowerCase()} de baile con filtros por ritmos, zonas y fechas en BaileApp.`;
   
   // Update filters based on URL parameters
   React.useEffect(() => {
@@ -103,7 +107,9 @@ export default function ExploreListScreen() {
   };
 
   return (
-    <div style={{
+    <>
+      <SeoHead section="explore-list" title={seoTitle} description={seoDescription} />
+      <div style={{
       minHeight: '100vh',
       background: colors.dark,
       color: colors.light,
@@ -143,6 +149,7 @@ export default function ExploreListScreen() {
           </motion.div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

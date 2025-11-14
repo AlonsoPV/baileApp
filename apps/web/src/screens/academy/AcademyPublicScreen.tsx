@@ -10,6 +10,8 @@ import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 // ❌ Toggle removido para vista pública
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import SeoHead from "@/components/SeoHead";
+import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import ClasesLive from "../../components/events/ClasesLive";
@@ -292,8 +294,39 @@ export default function AcademyPublicScreen() {
     );
   }
 
+  const academyName =
+    (academy as any)?.display_name ||
+    (academy as any)?.nombre ||
+    (academy as any)?.nombre_academia ||
+    'Academia de baile';
+  const highlightedRitmos = getRitmoNombres().slice(0, 3).join(', ');
+  const cityName =
+    (academy as any)?.ciudad ||
+    (academy as any)?.zonas_nombres?.[0] ||
+    (academy as any)?.zonas?.[0] ||
+    'México';
+  const shareImage = primaryAvatarUrl || carouselPhotos[0] || SEO_LOGO_URL;
+  const academyUrl = `${SEO_BASE_URL}/academia/${academyId}`;
+  const academyDescription =
+    (academy as any)?.bio ||
+    `Conoce ${academyName}, academia de baile en ${cityName} con clases de ${highlightedRitmos || 'salsa, bachata y ritmos urbanos'}.`;
+
   return (
     <>
+      <SeoHead
+        section="academy"
+        title={`${academyName} | Academia en BaileApp`}
+        description={academyDescription}
+        image={shareImage}
+        url={academyUrl}
+        keywords={[
+          academyName,
+          'academia de baile',
+          cityName,
+          highlightedRitmos,
+          'BaileApp',
+        ].filter(Boolean) as string[]}
+      />
       <style>{`
         .academy-container { width: 100%; max-width: 900px; margin: 0 auto; }
         .academy-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }

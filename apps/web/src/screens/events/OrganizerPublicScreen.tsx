@@ -20,6 +20,8 @@ import { fmtDate, fmtTime } from "../../utils/format";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
+import SeoHead from "@/components/SeoHead";
+import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 
 const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
@@ -272,8 +274,43 @@ export function OrganizerPublicScreen() {
     return <NotFound />;
   }
 
+  const organizerName =
+    (org as any)?.nombre_publico ||
+    (org as any)?.nombre ||
+    (org as any)?.display_name ||
+    'Organizador de baile';
+  const organizerCity =
+    (org as any)?.ciudad ||
+    (org as any)?.zonas_nombres?.[0] ||
+    (org as any)?.zonas?.[0] ||
+    'México';
+  const organizerRitmos = getRitmoNombres().slice(0, 3).join(', ');
+  const organizerDescription =
+    (org as any)?.bio ||
+    `Conoce a ${organizerName}, organizador de sociales y eventos de baile en ${organizerCity} con ritmos como ${organizerRitmos || 'salsa y bachata'}.`;
+  const organizerImage =
+    getMediaBySlot(media as any, 'p1')?.url ||
+    getMediaBySlot(media as any, 'cover')?.url ||
+    carouselPhotos[0] ||
+    SEO_LOGO_URL;
+  const organizerUrl = `${SEO_BASE_URL}/organizer/${routeId}`;
+
   return (
     <>
+      <SeoHead
+        section="organizer"
+        title={`${organizerName} | Organizador en BaileApp`}
+        description={organizerDescription}
+        image={organizerImage}
+        url={organizerUrl}
+        keywords={[
+          organizerName,
+          'organizador de baile',
+          organizerCity,
+          organizerRitmos,
+          'eventos de baile',
+        ].filter(Boolean) as string[]}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }
