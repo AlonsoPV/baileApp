@@ -308,6 +308,12 @@ export default function CrearClase({
     return (selectedZonaIds || []).filter((id): id is number => typeof id === 'number');
   }, [selectedLocationZonaIds, selectedZonaIds]);
 
+  const [zonesExpanded, setZonesExpanded] = useState(false);
+
+  useEffect(() => {
+    setZonesExpanded(false);
+  }, [selectedLocationId, selectedZonaIds]);
+
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
     const horarioOk = Boolean(form.inicio && form.fin);
@@ -690,30 +696,22 @@ export default function CrearClase({
 
               return (
                 <div style={{ marginTop: 14 }}>
-                  <details
+                  <button
+                    type="button"
+                    onClick={() => setZonesExpanded(prev => !prev)}
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      borderRadius: 10,
-                      border: `1px solid ${colors.line}`,
-                      padding: 12,
+                      ...chip(zonesExpanded),
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
                     }}
-                    open={false}
                   >
-                    <summary
-                      style={{
-                        cursor: 'pointer',
-                        fontSize: 12,
-                        color: colors.mut,
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      {isLocationDriven
-                        ? 'Zonas de la ubicación seleccionada'
-                        : 'Zonas del perfil'}
-                    </summary>
+                    {isLocationDriven ? 'Zonas (ubicación)' : 'Zonas (perfil)'}
+                    <span style={{ fontSize: 12 }}>{zonesExpanded ? '▾' : '▸'}</span>
+                  </button>
+                  {zonesExpanded && (
                     <div style={{ marginTop: 8 }}>
                       <ZonaGroupedChips
                         selectedIds={zoneIdsToShow}
@@ -725,7 +723,7 @@ export default function CrearClase({
                         }}
                       />
                     </div>
-                  </details>
+                  )}
                 </div>
               );
             })()}
