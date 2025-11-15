@@ -333,19 +333,6 @@ export function EventParentEditScreen() {
 
       <div className="parent-edit-card">
         <label className="parent-edit-field">
-          Sede general
-        </label>
-        <input
-          type="text"
-          value={form.sede_general}
-          onChange={e => setForm({...form, sede_general: e.target.value})}
-          placeholder="Ej: Centro de Convenciones"
-          className="parent-edit-input"
-        />
-      </div>
-
-      <div className="parent-edit-card">
-        <label className="parent-edit-field">
           Estilos que bailarán
         </label>
         <div style={{ marginTop: 8 }}>
