@@ -148,11 +148,11 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           style={{
             textDecoration: 'none',
             color: '#FFF',
-            fontSize: '1.25rem',
-            fontWeight: 700,
+            fontSize: '1.1rem',
+            fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.6rem',
             pointerEvents: 'auto',
           }}
         >
@@ -160,15 +160,40 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             src={SEO_ICON_URL}
             alt="Logo Dónde Bailar"
             style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
+              width: 34,
+              height: 34,
+              borderRadius: '999px',
               objectFit: 'cover',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.45)',
+              border: '2px solid rgba(255,255,255,0.9)',
+              background: 'rgba(0,0,0,0.35)',
             }}
           />
-          <span>DONDE BAILAR MX</span><br />
-          <span>Encuentra tu ritmo y tu espacio</span>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              lineHeight: 1.1,
+            }}
+          >
+            <span
+              style={{
+                textTransform: 'uppercase',
+                letterSpacing: 1.4,
+                fontSize: '0.9rem',
+              }}
+            >
+              Dónde Bailar MX
+            </span>
+            <span
+              style={{
+                fontSize: '0.78rem',
+                opacity: 0.9,
+              }}
+            >
+              Encuentra tu ritmo y tu espacio
+            </span>
+          </div>
         </Link>
       </div>
 
