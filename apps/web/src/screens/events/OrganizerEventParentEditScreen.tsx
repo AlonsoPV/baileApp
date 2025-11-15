@@ -48,8 +48,12 @@ export default function OrganizerEventParentEditScreen() {
   };
 
   const handleSuccess = (eventId: number) => {
-    // Redirigir a la vista pública del social actualizado
-    navigate(`/social/${eventId}`);
+    const targetId = eventId || parentIdNum;
+    if (targetId) {
+      navigate(`/social/${targetId}`);
+    } else {
+      navigate('/profile/organizer');
+    }
   };
 
   const handleCancel = () => {

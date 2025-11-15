@@ -58,53 +58,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const { showToast } = useToast();
   const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
 
-  const mapOrganizerLocationToUbicacion = React.useCallback((loc?: OrganizerLocation | null) => {
-    if (!loc) return null;
-    const zonaIds = Array.isArray((loc as any)?.zona_ids)
-      ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
-      : typeof loc.zona_id === 'number'
-      ? [loc.zona_id]
-      : [];
-
-    return {
-      sede: loc.nombre || (loc as any)?.sede || '',
-      nombre: loc.nombre || (loc as any)?.sede || '',
-      direccion: loc.direccion || '',
-      ciudad: loc.ciudad || '',
-      referencias: loc.referencias || '',
-      zona_id: zonaIds.length ? zonaIds[0] : null,
-      zonas: zonaIds,
-      zonaIds,
-    } as AcademyLocation;
-  }, []);
-
-  const applyOrganizerLocationToForm = React.useCallback(
-    (loc?: OrganizerLocation | null) => {
-      if (!loc) return;
-      setSelectedLocationId(loc.id ? String(loc.id) : '');
-      setValue('lugar', loc.nombre || '');
-      setValue('direccion', loc.direccion || '');
-      setValue('ciudad', loc.ciudad || '');
-      setValue('referencias', loc.referencias || '');
-      if (typeof loc.zona_id === 'number') {
-        setValue('zona' as any, loc.zona_id as any);
-      }
-      const zonaIds = Array.isArray((loc as any)?.zona_ids)
-        ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
-        : typeof loc.zona_id === 'number'
-        ? [loc.zona_id]
-        : [];
-      if (zonaIds.length) {
-        setValue('zonas' as any, zonaIds as any);
-      }
-      const ubicacion = mapOrganizerLocationToUbicacion(loc);
-      if (ubicacion) {
-        setValue('ubicaciones' as any, [ubicacion] as any);
-      }
-    },
-    [mapOrganizerLocationToUbicacion, setValue]
-  );
-
   const clearLocationSelection = () => {
     setSelectedLocationId('');
     setValue('lugar', '');
@@ -163,9 +116,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       : undefined;
     setSelectedLocationId(match?.id ? String(match.id) : '');
   };
-
-  
-
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const hasPrefilledLocations = useRef(false);
 
@@ -233,6 +183,53 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ubicaciones: [] as any[],
     }
   });
+
+  const mapOrganizerLocationToUbicacion = React.useCallback((loc?: OrganizerLocation | null) => {
+    if (!loc) return null;
+    const zonaIds = Array.isArray((loc as any)?.zona_ids)
+      ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
+      : typeof loc.zona_id === 'number'
+      ? [loc.zona_id]
+      : [];
+
+    return {
+      sede: loc.nombre || (loc as any)?.sede || '',
+      nombre: loc.nombre || (loc as any)?.sede || '',
+      direccion: loc.direccion || '',
+      ciudad: loc.ciudad || '',
+      referencias: loc.referencias || '',
+      zona_id: zonaIds.length ? zonaIds[0] : null,
+      zonas: zonaIds,
+      zonaIds,
+    } as AcademyLocation;
+  }, []);
+
+  const applyOrganizerLocationToForm = React.useCallback(
+    (loc?: OrganizerLocation | null) => {
+      if (!loc) return;
+      setSelectedLocationId(loc.id ? String(loc.id) : '');
+      setValue('lugar', loc.nombre || '');
+      setValue('direccion', loc.direccion || '');
+      setValue('ciudad', loc.ciudad || '');
+      setValue('referencias', loc.referencias || '');
+      if (typeof loc.zona_id === 'number') {
+        setValue('zona' as any, loc.zona_id as any);
+      }
+      const zonaIds = Array.isArray((loc as any)?.zona_ids)
+        ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
+        : typeof loc.zona_id === 'number'
+        ? [loc.zona_id]
+        : [];
+      if (zonaIds.length) {
+        setValue('zonas' as any, zonaIds as any);
+      }
+      const ubicacion = mapOrganizerLocationToUbicacion(loc);
+      if (ubicacion) {
+        setValue('ubicaciones' as any, [ubicacion] as any);
+      }
+    },
+    [mapOrganizerLocationToUbicacion, setValue]
+  );
 
   useEffect(() => {
     if (!orgLocations.length) {
@@ -348,9 +345,15 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       );
 
       if (props.onSuccess) {
-        // Pasar el ID del evento creado
-        const eventId = (result as any)?.id || 0;
-        props.onSuccess(eventId);
+        const createdId =
+          (result as any)?.id ??
+          (result as any)?.parent_id ??
+          (result as any)?.parentId ??
+          initialData?.id ??
+          null;
+        if (createdId) {
+          props.onSuccess(createdId);
+        }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
