@@ -623,7 +623,7 @@ export function OrganizerPublicScreen() {
                     }}
                   >
                     {/* Barra decorativa superior */}
-                    <div style={{
+                  {/*   <div style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
@@ -631,7 +631,7 @@ export function OrganizerPublicScreen() {
                       height: '6px',
                       background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
                       borderRadius: '24px 24px 0 0',
-                    }} />
+                    }} /> */}
 
                     {/* FILA 1: Información del Social */}
                     <div style={{ 

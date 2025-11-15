@@ -298,8 +298,8 @@ export default function ExploreHomeScreen() {
     setUsingFavoriteFilters(true);
   }, [preferences, applyDefaultFilters, set]);
 
-  // Fecha presets: hoy / semana / siguientes
-  const todayYmd = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Fecha base (hoy) usando SIEMPRE zona horaria CDMX para evitar desfases
+  const todayYmd = React.useMemo(() => getTodayCDMX(), []);
   const applyDatePreset = (preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
     const { from, to } = computePresetRange(preset);
     set({ datePreset: preset, dateFrom: from, dateTo: to });
