@@ -19,6 +19,7 @@ import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
+import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
@@ -40,6 +41,20 @@ function getTodayCDMX(): string {
   });
   // Formato retorna YYYY-MM-DD
   return formatter.format(new Date());
+}
+
+function useAutoLoadAllPages(queryResult: UseInfiniteQueryResult<any, unknown>) {
+  React.useEffect(() => {
+    if (!queryResult) return;
+    if (queryResult.hasNextPage && !queryResult.isFetchingNextPage) {
+      queryResult.fetchNextPage();
+    }
+  }, [queryResult?.hasNextPage, queryResult?.isFetchingNextPage, queryResult?.fetchNextPage]);
+}
+
+function flattenQueryData(data?: { pages?: Array<{ data?: any[] }> }) {
+  if (!data?.pages?.length) return [];
+  return data.pages.flatMap((page) => (page?.data as any[]) || []);
 }
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
@@ -319,72 +334,68 @@ export default function ExploreHomeScreen() {
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
 
-  const { data: fechas, isLoading: fechasLoading } = useExploreQuery({
+  const fechasQuery = useExploreQuery({
     type: 'fechas',
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
-    pageSize: 6
+    pageSize: 500
   });
+  useAutoLoadAllPages(fechasQuery);
+  const fechasLoading = fechasQuery.isLoading;
+  const fechasData = React.useMemo(() => flattenQueryData(fechasQuery.data), [fechasQuery.data]);
 
-
-  const { data: organizadores, isLoading: organizadoresLoading } = useExploreQuery({
-    type: 'organizadores',
-    q: filters.q,
-    ritmos: filters.ritmos,
-    zonas: filters.zonas,
-    pageSize: 4
-  });
-
-  const { data: maestros, isLoading: maestrosLoading } = useExploreQuery({
+  const maestrosQuery = useExploreQuery({
     type: 'maestros',
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 4
+    pageSize: 500
   });
+  useAutoLoadAllPages(maestrosQuery);
+  const maestrosLoading = maestrosQuery.isLoading;
+  const maestrosData = React.useMemo(() => flattenQueryData(maestrosQuery.data), [maestrosQuery.data]);
 
-  const { data: academias, isLoading: academiasLoading } = useExploreQuery({
+  const academiasQuery = useExploreQuery({
     type: 'academias',
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 4
+    pageSize: 500
   });
+  useAutoLoadAllPages(academiasQuery);
+  const academiasLoading = academiasQuery.isLoading;
+  const academiasData = React.useMemo(() => flattenQueryData(academiasQuery.data), [academiasQuery.data]);
 
-  const { data: marcas, isLoading: marcasLoading } = useExploreQuery({
+  const marcasQuery = useExploreQuery({
     type: 'marcas',
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 4
+    pageSize: 500
   });
+  useAutoLoadAllPages(marcasQuery);
+  const marcasLoading = marcasQuery.isLoading;
+  const marcasData = React.useMemo(() => flattenQueryData(marcasQuery.data), [marcasQuery.data]);
 
-  // Usuarios (bailarines)
-  const { data: usuarios, isLoading: usuariosLoading } = useExploreQuery({
+  const usuariosQuery = useExploreQuery({
     type: 'usuarios' as any,
     q: filters.q,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 32
+    pageSize: 500
   });
-
-  // Sociales (event parents)
-  const { data: sociales, isLoading: socialesLoading } = useExploreQuery({
-    type: 'sociales' as any,
-    q: filters.q,
-    ritmos: filters.ritmos,
-    zonas: filters.zonas,
-    pageSize: 8
-  });
+  useAutoLoadAllPages(usuariosQuery);
+  const usuariosLoading = usuariosQuery.isLoading;
+  const usuariosData = React.useMemo(() => flattenQueryData(usuariosQuery.data), [usuariosQuery.data]);
 
   // Construir clases desde academias y maestros (todas las páginas disponibles)
   const classesList = React.useMemo(() => {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const allA = (academias?.pages || []).flatMap(p => p?.data || []);
-    const allM = (maestros?.pages || []).flatMap(p => p?.data || []);
+    const allA = academiasData;
+    const allM = maestrosData;
 
     const parseYmdToDate = (value?: string | null) => {
       if (!value) return null;
@@ -519,19 +530,14 @@ export default function ExploreHomeScreen() {
       if (!dateB) return -1; // Sin fecha al final
       return dateA.getTime() - dateB.getTime();
     });
-
-    return sorted.slice(0, 12);
-  }, [academias, maestros, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
-
-  const usuariosList = React.useMemo(
-    () => (usuarios?.pages || []).flatMap((page) => page?.data ?? []),
-    [usuarios]
-  );
+    // Sin límite: devolver todas las clases encontradas en orden cronológico
+    return sorted;
+  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
 
   const validUsuarios = React.useMemo(
     () =>
-      usuariosList.filter((u: any) => u && u.display_name && u.display_name.trim() !== ''),
-    [usuariosList]
+      usuariosData.filter((u: any) => u && u.display_name && u.display_name.trim() !== ''),
+    [usuariosData]
   );
 
   const handleFilterChange = (newFilters: typeof filters) => {
@@ -586,7 +592,13 @@ export default function ExploreHomeScreen() {
     <>
       <SeoHead section="explore" />
       <style>{`
-        .explore-container { min-height: 100vh; background: #0b0d10; color: ${colors.gray[50]}; }
+        .explore-container { 
+          min-height: 100vh; 
+          background: #0b0d10; 
+          color: ${colors.gray[50]}; 
+          width: 100%;
+          overflow-x: hidden;
+        }
         .filters { padding: ${spacing[6]}; }
         .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
         .cards-grid { 
@@ -602,7 +614,13 @@ export default function ExploreHomeScreen() {
             padding: 1.5rem 0;
           }
         }
-        .wrap { max-width: 1280px; margin: 0 auto; padding: 0 ${spacing[6]} ${spacing[10]}; }
+        .wrap { 
+          max-width: 1280px; 
+          margin: 0 auto; 
+          padding: 0 ${spacing[6]} ${spacing[10]};
+          width: 100%;
+          box-sizing: border-box;
+        }
         .panel { 
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
           border: 2px solid rgba(255, 255, 255, 0.15);
@@ -853,7 +871,7 @@ export default function ExploreHomeScreen() {
                 const todayBase = parseYmdToDate(todayYmd);
 
                 // Filtrar fechas pasadas y ordenar cronológicamente
-                const allFechas = (fechas?.pages?.[0]?.data || []).filter((d: any) => d?.estado_publicacion === 'publicado');
+                const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
                 const filteredFechas = allFechas.filter((fecha: any) => {
                   const fechaDate = parseYmdToDate(fecha?.fecha);
                   if (!fechaDate || !todayBase) return true;
@@ -995,10 +1013,10 @@ export default function ExploreHomeScreen() {
             <Section title="Academias" toAll="/explore/list?type=academias">
               {academiasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : academias && academias.pages?.[0]?.data?.length > 0 ? (
+              ) : academiasData.length > 0 ? (
                 <HorizontalSlider
                   {...sliderProps}
-                  items={academias.pages[0].data}
+                  items={academiasData}
                   renderItem={(academia: any, idx: number) => (
                     <motion.div
                       key={academia.id ?? idx}
@@ -1112,10 +1130,10 @@ export default function ExploreHomeScreen() {
             <Section title="Maestros" toAll="/explore/list?type=teacher">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : maestros && maestros.pages?.[0]?.data?.length > 0 ? (
+              ) : maestrosData.length > 0 ? (
                 <HorizontalSlider
                   {...sliderProps}
-                  items={maestros.pages[0].data}
+                  items={maestrosData}
                   renderItem={(maestro: any, idx: number) => (
                     <motion.div
                       key={maestro.id ?? idx}
@@ -1147,10 +1165,10 @@ export default function ExploreHomeScreen() {
             <Section title="Marcas" toAll="/explore/list?type=marcas">
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : marcas && marcas.pages?.[0]?.data?.length > 0 ? (
+              ) : marcasData.length > 0 ? (
                 <HorizontalSlider
                   {...sliderProps}
-                  items={marcas.pages[0].data}
+                  items={marcasData}
                   renderItem={(brand: any, idx: number) => (
                     <motion.div
                       key={brand.id ?? idx}

@@ -227,7 +227,7 @@ export const UserProfileLive: React.FC = () => {
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("following");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
-  const goToProfile = (_slug?: string | null, id?: string) => {
+  const goToProfile = (id?: string) => {
     if (id) {
       navigate(`/u/${id}`); // vista live pública por userId
     }
@@ -413,13 +413,17 @@ export const UserProfileLive: React.FC = () => {
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 1.5rem;
         }
+        .profile-banner h2,
+        .profile-banner h3,
+        .profile-container h2,
+        .profile-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .section-title {
           font-size: 1.5rem;
           font-weight: 800;
           margin: 0 0 1rem 0;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -802,8 +806,9 @@ export const UserProfileLive: React.FC = () => {
                   fontSize: '3rem',
                   fontWeight: '800',
                   margin: 0,
-                  color: colors.light,
-                  lineHeight: '1.2'
+                  color: '#fff',
+                  lineHeight: '1.2',
+                  textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
                 }}
               >
                 {profile?.display_name || 'Usuario'}
@@ -814,35 +819,48 @@ export const UserProfileLive: React.FC = () => {
                   display: 'flex',
                   flexWrap: 'wrap',
                   alignItems: 'center',
-                  gap: '0.75rem'
+                  gap: '0.8rem'
                 }}
               >
-                <span
-                  style={{
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Sigues {counts.following}
-                </span>
-                <span
-                  style={{
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Seguidores {counts.followers}
-                </span>
+                {[
+                  { label: 'Sigues', value: counts.following, icon: '➜', hue: 'rgba(59,130,246,0.2)' },
+                  { label: 'Seguidores', value: counts.followers, icon: '★', hue: 'rgba(236,72,153,0.2)' },
+                ].map((chip) => (
+                  <div
+                    key={chip.label}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.55rem',
+                      padding: '0.55rem 1.1rem',
+                      borderRadius: '18px',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'rgba(0,0,0,0.25)',
+                      color: '#fff',
+                      boxShadow: `0 12px 26px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem', opacity: 0.9 }}>{chip.icon}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: '0.75rem', letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>
+                        {chip.label}
+                      </span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{chip.value}</span>
+                    </div>
+                    <span
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: `radial-gradient(circle at top right, ${chip.hue}, transparent 60%)`,
+                        opacity: 0.9,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* Chips de usuario */}
@@ -855,7 +873,7 @@ export const UserProfileLive: React.FC = () => {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(profile, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
                 {zonaChipGroups.length > 0 && (
@@ -877,7 +895,8 @@ export const UserProfileLive: React.FC = () => {
                               width: 'fit-content',
                               minWidth: 'auto',
                               justifyContent: 'center',
-                              paddingInline: '1rem',
+                              padding: '0.45rem 0.9rem',
+                              fontSize: '0.78rem',
                               background: (expanded || hasSelection)
                                 ? 'rgba(76,173,255,0.18)'
                                 : 'rgba(255,255,255,0.05)',
@@ -896,7 +915,7 @@ export const UserProfileLive: React.FC = () => {
                       return (
                         <div
                           key={`zona-live-${group.id}`}
-                          style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}
+                          style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '0.5rem' }}
                         >
                           {group.items.map((chip) => (
                             <Chip
@@ -905,6 +924,11 @@ export const UserProfileLive: React.FC = () => {
                               icon="📍"
                               variant="zona"
                               active={profile?.zonas?.includes(chip.id)}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                borderRadius: 999,
+                              }}
                             />
                           ))}
                         </div>
@@ -1065,7 +1089,7 @@ export const UserProfileLive: React.FC = () => {
                   {networkList.map((person) => (
                     <button
                       key={person.id}
-                      onClick={() => goToProfile(person.slug, person.id)}
+                      onClick={() => goToProfile(person.id)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1101,11 +1125,9 @@ export const UserProfileLive: React.FC = () => {
                           <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
                             {person.display_name}
                           </div>
-                          {person.role && (
-                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                              {person.role}
-                            </div>
-                          )}
+                          <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                            {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
+                          </div>
                         </div>
                       </div>
                       <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>

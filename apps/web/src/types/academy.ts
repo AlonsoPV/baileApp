@@ -34,6 +34,7 @@ export type AcademyProfile = {
   respuestas?: any; // Columna existente en la BD
   cronograma?: any[]; // Horarios generalizados para UI
   costos?: any[];     // Costos/Promos generalizados para UI
+  promociones?: any[];
   faq?: { q: string; a: string }[];
   ubicaciones: AcademyLocation[];
   horarios: AcademyHorario[];

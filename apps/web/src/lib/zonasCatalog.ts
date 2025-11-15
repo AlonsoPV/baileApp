@@ -15,14 +15,20 @@ export interface ZonaGroup {
 export const ZONAS_CATALOG: ZonaGroup[] = [
   {
     id: 'cdmx',
-    label: 'CDMX y alrededores',
+    label: 'CDMX',
     items: [
       { id: 'cdmx_centro', label: 'CDMX Centro', slug: 'cdmx-centro', parent: 'cdmx' },
       { id: 'cdmx_norte', label: 'CDMX Norte', slug: 'cdmx-norte', parent: 'cdmx' },
       { id: 'cdmx_sur', label: 'CDMX Sur', slug: 'cdmx-sur', parent: 'cdmx' },
       { id: 'cdmx_oriente', label: 'CDMX Oriente', slug: 'cdmx-oriente', parent: 'cdmx' },
       { id: 'cdmx_poniente', label: 'CDMX Poniente', slug: 'cdmx-poniente', parent: 'cdmx' },
-      { id: 'edomex', label: 'Edo. de México', slug: 'edomex', parent: 'cdmx' },
+    ],
+  },
+  {
+    id: 'edomex',
+    label: 'Edo. de México',
+    items: [
+      { id: 'edomex_general', label: 'Edo. de México', slug: 'edomex', parent: 'edomex' },
     ],
   },
   {

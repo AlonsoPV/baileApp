@@ -489,13 +489,15 @@ export default function AcademyProfileLive() {
           backdrop-filter: blur(10px);
           transform: none;
         }
+        .academy-container h2,
+        .academy-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .section-title {
           font-size: 1.5rem;
           font-weight: 800;
           margin: 0 0 1rem 0;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -565,7 +567,7 @@ export default function AcademyProfileLive() {
         }
         .profile-promos-title {
           margin: 0;
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 900;
           color: #fff;
           letter-spacing: -0.02em;
@@ -992,7 +994,7 @@ export default function AcademyProfileLive() {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(academy, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
                 <ZonaGroupedChips
@@ -1122,15 +1124,7 @@ export default function AcademyProfileLive() {
                 🎓
               </div>
               <div>
-                <h2 style={{
-                  fontSize: '1.75rem',
-                  fontWeight: '800',
-                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  margin: 0,
-                  lineHeight: 1.2
-                }}>
+                <h2 className="section-title" style={{ margin: 0 }}>
                   Nuestras clases
                 </h2>
                 <p style={{
@@ -1153,11 +1147,6 @@ export default function AcademyProfileLive() {
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
                 <>
-                  {process.env.NODE_ENV === 'development' && (
-                    <div style={{ padding: '0.5rem', marginBottom: '1rem', background: 'rgba(0,255,0,0.1)', borderRadius: 8, fontSize: '0.75rem', color: '#fff' }}>
-                      Debug: Mostrando ClasesLiveTabs con {classesFromTables.length} clases
-                    </div>
-                  )}
                   <ClasesLiveTabs
                     classes={classesFromTables}
                     title=""
@@ -1306,7 +1295,10 @@ export default function AcademyProfileLive() {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
               }}
             >
-              <UbicacionesLive ubicaciones={(academy as any).ubicaciones} />
+              <UbicacionesLive
+                ubicaciones={(academy as any).ubicaciones}
+                headingSize="1.5rem"
+              />
             </motion.section>
           )}
 

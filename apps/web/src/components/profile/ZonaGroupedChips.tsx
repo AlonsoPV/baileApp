@@ -15,6 +15,7 @@ export interface ZonaGroupedChipsProps {
   className?: string;
   style?: React.CSSProperties;
   autoExpandSelectedParents?: boolean;
+  size?: "default" | "compact";
 }
 
 function normalizeSelected(selected?: Array<number | null | undefined> | null) {
@@ -30,6 +31,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   className,
   style,
   autoExpandSelectedParents = true,
+  size = "default",
 }) => {
   const normalizedSelected = React.useMemo(
     () => normalizeSelected(selectedIds),
@@ -87,13 +89,32 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
     }
   };
 
+  const metrics =
+    size === "compact"
+      ? {
+          wrapperGap: "0.5rem",
+          parentFont: "0.78rem",
+          parentPadding: "0.45rem 0.9rem",
+          childGap: "0.35rem",
+          childPadding: "0.35rem 0.75rem",
+          childFont: "0.72rem",
+        }
+      : {
+          wrapperGap: "0.75rem",
+          parentFont: "0.9rem",
+          parentPadding: "0.65rem 1.1rem",
+          childGap: "0.5rem",
+          childPadding: "0.45rem 0.9rem",
+          childFont: "0.82rem",
+        };
+
   return (
     <div className={className} style={style}>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "0.75rem",
+          gap: metrics.wrapperGap,
           alignItems: "flex-start",
         }}
       >
@@ -121,11 +142,12 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                 active={hasSelected || isExpanded}
                 onClick={() => toggleGroup(group.id)}
                 style={{
+                  fontSize: metrics.parentFont,
                   alignSelf: "flex-start",
                   width: "fit-content",
                   minWidth: "auto",
                   justifyContent: "center",
-                  paddingInline: "1rem",
+                  padding: metrics.parentPadding,
                   background:
                     hasSelected || isExpanded
                       ? "rgba(76,173,255,0.18)"
@@ -143,7 +165,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                   style={{
                     display: "flex",
                     flexWrap: "wrap",
-                    gap: "8px",
+                    gap: metrics.childGap,
                     borderTop: "1px solid rgba(255,255,255,0.08)",
                     paddingTop: "0.4rem",
                     width: "100%",
@@ -161,6 +183,19 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                         onClick={
                           mode === "edit" ? () => handleChipClick(item.id) : undefined
                         }
+                        style={{
+                          fontSize: metrics.childFont,
+                          padding: metrics.childPadding,
+                          background: isActive
+                            ? "rgba(76,173,255,0.18)"
+                            : "rgba(255,255,255,0.06)",
+                          border: isActive
+                            ? "1px solid rgba(76,173,255,0.6)"
+                            : "1px solid rgba(255,255,255,0.12)",
+                          borderRadius: 999,
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
                       />
                     );
                   })}

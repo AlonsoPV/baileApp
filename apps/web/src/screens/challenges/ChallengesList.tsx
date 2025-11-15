@@ -79,7 +79,6 @@ export default function ChallengesList() {
           font-weight: 900;
           background: linear-gradient(135deg, #f093fb 0%, #f5576c 40%, #FFD166 80%, #fff 100%);
           -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           margin: 0 0 1rem;
           letter-spacing: -0.04em;
           line-height: 1.05;

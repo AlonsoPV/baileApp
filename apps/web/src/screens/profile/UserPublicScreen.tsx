@@ -346,6 +346,26 @@ export const UserProfileLive: React.FC = () => {
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("followers");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
+
+  const communityCards: Array<{
+    id: "followers" | "following";
+    label: string;
+    value: number;
+    accent: string;
+  }> = [
+    {
+      id: "following",
+      label: "Siguiendo",
+      value: counts.following ?? 0,
+      accent: "linear-gradient(120deg, rgba(94,234,212,0.65), rgba(59,130,246,0.65))",
+    },
+    {
+      id: "followers",
+      label: "Seguidores",
+      value: counts.followers ?? 0,
+      accent: "linear-gradient(120deg, rgba(251,113,133,0.7), rgba(168,85,247,0.7))",
+    },
+  ];
   const goToProfile = (id?: string) => {
     if (id) navigate(`/u/${id}`);
   };
@@ -475,13 +495,17 @@ export const UserProfileLive: React.FC = () => {
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 1.5rem;
         }
+        .profile-banner h2,
+        .profile-banner h3,
+        .profile-container h2,
+        .profile-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .section-title {
           font-size: 1.5rem;
           font-weight: 800;
           margin: 0 0 1rem 0;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -828,7 +852,9 @@ export const UserProfileLive: React.FC = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1.5rem',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center'
               }}
             >
               <h1
@@ -839,8 +865,9 @@ export const UserProfileLive: React.FC = () => {
                   fontSize: '3rem',
                   fontWeight: '800',
                   margin: 0,
-                  color: colors.light,
-                  lineHeight: '1.2'
+                  color: '#fff',
+                  lineHeight: '1.2',
+                  textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
                 }}
               >
                 {profile?.display_name || 'Usuario'}
@@ -851,36 +878,49 @@ export const UserProfileLive: React.FC = () => {
                   display: 'flex',
                   flexWrap: 'wrap',
                   alignItems: 'center',
-                  gap: '0.75rem'
+                  justifyContent: 'center',
+                  gap: '0.8rem'
                 }}
               >
-                <span
-                  style={{
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Sigues {counts.following}
-                </span>
-                <span
-                  style={{
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Seguidores {counts.followers}
-                </span>
-
+                {[
+                  { label: 'Followers', value: counts.followers, icon: '★', hue: 'rgba(236,72,153,0.2)' },
+                  { label: 'Following', value: counts.following, icon: '➜', hue: 'rgba(59,130,246,0.2)' },
+                ].map((chip) => (
+                  <div
+                    key={chip.label}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.55rem',
+                      padding: '0.55rem 1.1rem',
+                      borderRadius: '18px',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'rgba(0,0,0,0.25)',
+                      color: '#fff',
+                      boxShadow: '0 12px 26px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem', opacity: 0.9 }}>{chip.icon}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: '0.75rem', letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>
+                        {chip.label}
+                      </span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{chip.value}</span>
+                    </div>
+                    <span
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: `radial-gradient(circle at top right, ${chip.hue}, transparent 60%)`,
+                        opacity: 0.9,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </div>
+                ))}
                 {showFollowButton && (
                   <button
                     onClick={handleToggleFollow}
@@ -916,7 +956,7 @@ export const UserProfileLive: React.FC = () => {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(profile, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
                 {zonaGroups.length > 0 && (
@@ -938,7 +978,8 @@ export const UserProfileLive: React.FC = () => {
                               width: 'fit-content',
                               minWidth: 'auto',
                               justifyContent: 'center',
-                              paddingInline: '1rem',
+                              padding: '0.45rem 0.9rem',
+                              fontSize: '0.78rem',
                               background: (expanded || hasSelection)
                                 ? 'rgba(76,173,255,0.18)'
                                 : 'rgba(255,255,255,0.05)',
@@ -957,7 +998,7 @@ export const UserProfileLive: React.FC = () => {
                       return (
                         <div
                           key={`zona-readonly-${group.id}`}
-                          style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '0.5rem' }}
+                          style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '0.5rem' }}
                         >
                           {group.items.map((chip) => (
                             <Chip
@@ -975,6 +1016,9 @@ export const UserProfileLive: React.FC = () => {
                                   : '1.5px solid rgba(255,255,255,0.25)',
                                 color: '#fff',
                                 fontWeight: 700,
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                borderRadius: 999,
                               }}
                             />
                           ))}
@@ -1029,62 +1073,55 @@ export const UserProfileLive: React.FC = () => {
               }}
             >
               <h3 className="section-title" style={{ marginBottom: 0 }}>Comunidad</h3>
-          <div
-            style={{
-              display: 'inline-flex',
-              gap: '12px',
-              background: 'rgba(30,30,35,0.6)',
-              padding: '10px 12px',
-              borderRadius: '28px',
-              border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 12px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(12px)'
-            }}
-          >
-                <button
-                  onClick={() => setNetworkTab('followers')}
-                  style={{
-                border: networkTab === 'followers' ? '1px solid rgba(255,255,255,0.35)' : '1px solid rgba(255,255,255,0.2)',
-                borderRadius: '22px',
-                padding: '0.65rem 1.35rem',
-                background: networkTab === 'followers'
-                  ? 'linear-gradient(135deg, rgba(82,144,250,0.95), rgba(174,94,255,0.95))'
-                  : 'linear-gradient(135deg, rgba(40,40,48,0.7), rgba(30,30,40,0.7))',
-                color: '#fff',
-                fontWeight: 800,
-                letterSpacing: 0.3,
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                boxShadow: networkTab === 'followers'
-                  ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
-                  : 'inset 0 1px 0 rgba(255,255,255,0.08)',
-                transform: networkTab === 'followers' ? 'translateY(-1px)' : 'translateY(0)'
-                  }}
-                >
-                  <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> Seguidores {counts.followers}
-                </button>
-                <button
-                  onClick={() => setNetworkTab('following')}
-                  style={{
-                border: networkTab === 'following' ? '1px solid rgba(255,255,255,0.35)' : '1px solid rgba(255,255,255,0.2)',
-                borderRadius: '22px',
-                padding: '0.65rem 1.35rem',
-                background: networkTab === 'following'
-                  ? 'linear-gradient(135deg, rgba(82,144,250,0.95), rgba(174,94,255,0.95))'
-                  : 'linear-gradient(135deg, rgba(40,40,48,0.7), rgba(30,30,40,0.7))',
-                color: '#fff',
-                fontWeight: 800,
-                letterSpacing: 0.3,
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                boxShadow: networkTab === 'following'
-                  ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
-                  : 'inset 0 1px 0 rgba(255,255,255,0.08)',
-                transform: networkTab === 'following' ? 'translateY(-1px)' : 'translateY(0)'
-                  }}
-                >
-                  <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> Sigues {counts.following}
-                </button>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}
+              >
+                {communityCards.map((card) => {
+                  const active = networkTab === card.id;
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => setNetworkTab(card.id)}
+                      style={{
+                        position: 'relative',
+                        border: active ? '1px solid transparent' : '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 999,
+                        padding: '0.6rem 1.5rem',
+                        background: active ? card.accent : 'rgba(255,255,255,0.04)',
+                        color: '#fff',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '0.6rem',
+                        cursor: 'pointer',
+                        boxShadow: active
+                          ? '0 14px 32px rgba(68,55,155,0.45)'
+                          : '0 10px 20px rgba(0,0,0,0.25)',
+                        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border 0.18s ease',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        letterSpacing: 0.2,
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: active ? 0.95 : 0.75 }}>
+                        {card.label}:
+                      </span>
+                      <span style={{ fontSize: '1.2rem' }}>
+                        {card.value.toLocaleString('es-MX')}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1127,7 +1164,7 @@ export const UserProfileLive: React.FC = () => {
                   className="community-scroll"
                   style={{
                     display: 'flex',
-                    gap: '1rem',
+                    gap: '0.9rem',
                     overflowX: 'auto',
                     paddingBottom: '0.5rem',
                     scrollSnapType: 'x mandatory',
@@ -1139,43 +1176,101 @@ export const UserProfileLive: React.FC = () => {
                       key={person.id}
                       onClick={() => goToProfile(person.id)}
                       style={{
+                        position: 'relative',
+                        overflow: 'hidden',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '0.9rem',
-                        padding: '0.9rem 1.1rem',
-                        minWidth: '220px',
-                        borderRadius: '18px',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
-                        backdropFilter: 'blur(8px)',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        padding: '1rem 1.25rem',
+                        minWidth: '230px',
+                        borderRadius: '22px',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'linear-gradient(135deg, rgba(18,18,28,0.95), rgba(8,8,16,0.92))',
                         cursor: 'pointer',
-                        boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
-                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        boxShadow: '0 18px 32px rgba(0,0,0,0.45)',
+                        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                         scrollSnapAlign: 'start'
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 28px rgba(0,0,0,0.28)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.22)'; }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 22px 36px rgba(0,0,0,0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 32px rgba(0,0,0,0.45)';
+                      }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                        <ImageWithFallback
-                          src={person.avatar_url || ''}
-                          alt={person.display_name || 'Perfil'}
+                      <span
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          inset: '-20% -30%',
+                          background: networkTab === 'followers'
+                            ? 'linear-gradient(140deg, rgba(252,165,165,0.2), rgba(196,181,253,0.12))'
+                            : 'linear-gradient(140deg, rgba(110,231,183,0.22), rgba(147,197,253,0.15))',
+                          opacity: 0.9,
+                          pointerEvents: 'none'
+                        }}
+                      />
+                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                        <div
                           style={{
-                            width: '52px',
-                            height: '52px',
+                            width: 54,
+                            height: 54,
                             borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '2px solid rgba(255,255,255,0.22)'
+                            padding: 2,
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
                           }}
-                        />
-                        <div style={{ textAlign: 'left' }}>
+                        >
+                          <ImageWithFallback
+                            src={person.avatar_url || ''}
+                            alt={person.display_name || 'Perfil'}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(0,0,0,0.4)'
+                            }}
+                          />
+                        </div>
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                           <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
-                            {person.display_name}
+                            {person.display_name || 'Bailarín'}
                           </div>
+                          <span
+                            style={{
+                              alignSelf: 'flex-start',
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: 999,
+                              fontSize: '0.72rem',
+                              letterSpacing: 0.3,
+                              textTransform: 'uppercase',
+                              background: 'rgba(0,0,0,0.35)',
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              color: 'rgba(255,255,255,0.8)'
+                            }}
+                          >
+                            {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
+                          </span>
                         </div>
                       </div>
-                      <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>
+                      <div
+                        style={{
+                          position: 'relative',
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingTop: '0.6rem',
+                          borderTop: '1px solid rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
+                          Ver perfil
+                        </span>
+                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
+                      </div>
                     </button>
                   ))}
                 </div>

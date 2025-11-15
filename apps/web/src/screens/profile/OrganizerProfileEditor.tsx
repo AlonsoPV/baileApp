@@ -37,6 +37,7 @@ import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import type { AcademyLocation } from "../../types/academy";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEventMetricsPanel";
 
 const colors = {
   coral: '#FF3D57',
@@ -131,7 +132,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
         borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
       }}>
         {/* Icono */}
-        <motion.div
+    {/*     <motion.div
           whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
           transition={{ duration: 0.5 }}
           style={{
@@ -150,7 +151,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
           }}
         >
           🎭
-        </motion.div>
+        </motion.div> */}
 
         {/* Contenido principal */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -162,7 +163,6 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
             marginBottom: '0.75rem',
             background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             letterSpacing: '-0.02em',
             lineHeight: 1.2
@@ -698,6 +698,7 @@ export default function OrganizerProfileEditor() {
   const deleteDate = useDeleteDate();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
+  const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -922,7 +923,7 @@ export default function OrganizerProfileEditor() {
 
           if (parentErr) {
             console.error('❌ [OrganizerProfileEditor] Error creando social por defecto:', parentErr);
-            showToast('⚠️ Perfil creado, pero no se pudo crear el evento por defecto', 'info');
+            showToast('⚠️ Perfil creado, pero no se pudo crear el social por defecto', 'info');
           } else if (newParent) {
             // Crear fecha por defecto (para 7 días adelante)
             const fechaBase = new Date();
@@ -1294,20 +1295,18 @@ export default function OrganizerProfileEditor() {
           color: #FFFFFF;
         }
         
+        .org-editor-container h2,
+        .org-editor-container h3 {
+          color: #FFFFFF;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        
         .org-editor-card {
           margin-bottom: 2rem;
           padding: 1.2rem;
           background: rgba(255, 255, 255, 0.08);
           border-radius: 16px;
           border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #FFFFFF;
-        }
-        
-        .org-editor-card h2 {
-          color: #FFFFFF;
-        }
-        
-        .org-editor-card h3 {
           color: #FFFFFF;
         }
         
@@ -1609,143 +1608,232 @@ export default function OrganizerProfileEditor() {
             />
           </div>
 
-          {/* Banner de Bienvenida (solo para perfiles nuevos) */}
-          {isNewProfile && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
+          {/* Tabs Perfil / Métricas eventos */}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              marginBottom: "2rem",
+              borderBottom: "2px solid rgba(255,255,255,0.1)",
+              paddingBottom: "0.5rem",
+            }}
+          >
+            <button
+              onClick={() => setActiveTab("perfil")}
               style={{
-                padding: '1.5rem',
-                marginBottom: '2rem',
-                background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)',
-                border: '2px solid rgba(229, 57, 53, 0.4)',
-                borderRadius: '16px',
-                textAlign: 'center'
+                padding: "0.75rem 1.5rem",
+                borderRadius: "12px 12px 0 0",
+                border: "none",
+                background:
+                  activeTab === "perfil"
+                    ? "linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))"
+                    : "transparent",
+                color: "#fff",
+                fontWeight: activeTab === "perfil" ? 800 : 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                borderBottom:
+                  activeTab === "perfil"
+                    ? "2px solid rgba(240,147,251,0.5)"
+                    : "2px solid transparent",
               }}
             >
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎤</div>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                ¡Bienvenido, Organizador!
-              </h3>
-              <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
-                Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
-              </p>
-              <div style={{
-                display: 'inline-block',
-                padding: '0.5rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600'
-              }}>
-                👆 Mínimo requerido: <strong>Nombre Público</strong>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Información del Organizador */}
-          <div
-            id="organizer-basic-info"
-            data-test-id="organizer-basic-info"
-            className="org-editor-card"
-          >
-            <h2 style={{ fontSize: '1rem', marginBottom: '1rem', color: colors.light }}>
-              🏢 Información del Organizador
-            </h2>
-
-            <div className="org-editor-grid">
-              <div>
-                <label className="org-editor-field">
-                  Nombre Público
-                </label>
-                <input
-                  id="organizer-name-input"
-                  data-test-id="organizer-name-input"
-                  type="text"
-                  value={form.nombre_publico}
-                  onChange={(e) => setField('nombre_publico', e.target.value)}
-                  placeholder="Nombre de tu organización"
-                  className="org-editor-input"
-                />
-              </div>
-
-              <div>
-                <label className="org-editor-field">
-                  Biografía
-                </label>
-                <textarea
-                  id="organizer-bio-input"
-                  data-test-id="organizer-bio-input"
-                  value={form.bio}
-                  onChange={(e) => setField('bio', e.target.value)}
-                  placeholder="Cuéntanos sobre tu organización..."
-                  rows={2}
-                  className="org-editor-textarea"
-                />
-              </div>
-            </div>
+              📝 Perfil
+            </button>
+            <button
+              onClick={() => setActiveTab("metricas")}
+              style={{
+                padding: "0.75rem 1.5rem",
+                borderRadius: "12px 12px 0 0",
+                border: "none",
+                background:
+                  activeTab === "metricas"
+                    ? "linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))"
+                    : "transparent",
+                color: "#fff",
+                fontWeight: activeTab === "metricas" ? 800 : 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                borderBottom:
+                  activeTab === "metricas"
+                    ? "2px solid rgba(240,147,251,0.5)"
+                    : "2px solid transparent",
+              }}
+            >
+              📊 Métricas eventos
+            </button>
           </div>
 
-          {/* Ritmos y Zonas */}
-          <div
-            id="organizer-rhythms-zones"
-            data-test-id="organizer-rhythms-zones"
-            className="org-editor-card"
-          >
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
-              🎵 Ritmos y Zonas
-            </h2>
+          {/* Vista de métricas de eventos */}
+          {activeTab === "metricas" && org?.id && (
+            <div className="org-editor-card" style={{ marginBottom: "2rem" }}>
+              <h2
+                style={{
+                  fontSize: "1.5rem",
+                  marginBottom: "1rem",
+                  color: colors.light,
+                }}
+              >
+                📊 Métricas de eventos
+              </h2>
+              <OrganizerEventMetricsPanel organizerId={org.id} />
+            </div>
+          )}
 
-            <div className="org-editor-grid">
-              <div>
-                {/*   <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
-                  🎶 Ritmos que Organizas
-                </h3>
-                <div className="org-editor-chips">
-                  {ritmoTags.map((tag) => (
-                    <Chip
-                      key={tag.id}
-                      label={tag.nombre}
-                      active={form.ritmos.includes(tag.id)}
-                      onClick={() => toggleRitmo(tag.id)}
-                      variant="ritmo"
-                    />
-                  ))}
-                </div> */}
+          {/* Vista de edición de perfil */}
+          {activeTab === "perfil" && (
+            <>
+              {/* Banner de Bienvenida (solo para perfiles nuevos) */}
+              {isNewProfile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    padding: "1.5rem",
+                    marginBottom: "2rem",
+                    background:
+                      "linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)",
+                    border: "2px solid rgba(229, 57, 53, 0.4)",
+                    borderRadius: "16px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}
+                  >
+                    🎤
+                  </div>
+                  <h3
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "700",
+                      marginBottom: "0.5rem",
+                      background:
+                        "linear-gradient(135deg, #E53935 0%, #FB8C00 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    ¡Bienvenido, Organizador!
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "1rem",
+                      opacity: 0.9,
+                      marginBottom: "1rem",
+                    }}
+                  >
+                    Completa tu información básica y haz clic en{" "}
+                    <strong>💾 Guardar</strong> arriba para crear tu perfil
+                  </p>
+                  <div
+                    style={{
+                      display: "inline-block",
+                      padding: "0.5rem 1rem",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      borderRadius: "20px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    👆 Mínimo requerido: <strong>Nombre Público</strong>
+                  </div>
+                </motion.div>
+              )}
 
-                {/* Catálogo agrupado (independiente de DB) */}
-                <div style={{ marginTop: 12 }}>
-                  {/* <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: colors.light }}>
-                  🎵 Ritmos de Baile
-                </h3> */}
-                  {(
-                    <RitmosSelectorEditor
-                      selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
-                      ritmoTags={ritmoTags as any}
-                      setField={setField as any}
+              {/* Información del Organizador */}
+              <div
+                id="organizer-basic-info"
+                data-test-id="organizer-basic-info"
+                className="org-editor-card"
+              >
+                <h2
+                  style={{
+                    fontSize: "1rem",
+                    marginBottom: "1rem",
+                    color: colors.light,
+                  }}
+                >
+                  🏢 Información del Organizador
+                </h2>
+
+                <div className="org-editor-grid">
+                  <div>
+                    <label className="org-editor-field">Nombre Público</label>
+                    <input
+                      id="organizer-name-input"
+                      data-test-id="organizer-name-input"
+                      type="text"
+                      value={form.nombre_publico}
+                      onChange={(e) =>
+                        setField("nombre_publico", e.target.value)
+                      }
+                      placeholder="Nombre de tu organización"
+                      className="org-editor-input"
                     />
-                  )}
+                  </div>
+
+                  <div>
+                    <label className="org-editor-field">Biografía</label>
+                    <textarea
+                      id="organizer-bio-input"
+                      data-test-id="organizer-bio-input"
+                      value={form.bio}
+                      onChange={(e) => setField("bio", e.target.value)}
+                      placeholder="Cuéntanos sobre tu organización..."
+                      rows={2}
+                      className="org-editor-textarea"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <ZonaGroupedChips
-                  selectedIds={form.zonas}
-                  allTags={allTags}
-                  mode="edit"
-                  onToggle={toggleZona}
-                />
-              </div>
-            </div>
-          </div>
+              {/* Ritmos y Zonas */}
+              <div
+                id="organizer-rhythms-zones"
+                data-test-id="organizer-rhythms-zones"
+                className="org-editor-card"
+              >
+                <h2
+                  style={{
+                    fontSize: "1.5rem",
+                    marginBottom: "1rem",
+                    color: colors.light,
+                  }}
+                >
+                  🎵 Ritmos y Zonas
+                </h2>
 
+                <div className="org-editor-grid">
+                  <div>
+                    {/* Catálogo agrupado (independiente de DB) */}
+                    <div style={{ marginTop: 12 }}>
+                      <RitmosSelectorEditor
+                        selected={
+                          (((form as any)?.ritmos_seleccionados) ||
+                            []) as string[]
+                        }
+                        ritmoTags={ritmoTags as any}
+                        setField={setField as any}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <ZonaGroupedChips
+                      selectedIds={form.zonas}
+                      allTags={allTags}
+                      mode="edit"
+                      onToggle={toggleZona}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "perfil" && (
+            <>
           {/* Redes Sociales */}
           <div
             id="organizer-social-networks"
@@ -1800,32 +1888,8 @@ export default function OrganizerProfileEditor() {
           </div>
           {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
           <div className="org-editor-card">
-            {/* <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-              📍 Mis ubicaciones
-            </h2> */}
             <OrganizerUbicacionesEditor organizerId={org?.id} />
           </div>
-          {/* Maestros Invitados */}
-          {/* <InvitedMastersSection
-            masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
-            title="🎭 Maestros Invitados"
-            showTitle={true}
-            isEditable={true}
-            availableUserMasters={[]} // TODO: Obtener usuarios con perfil de maestro
-            onAddMaster={() => {
-              // TODO: Implementar modal para agregar maestro externo
-            }}
-            onAssignUserMaster={() => {
-              // TODO: Implementar modal para asignar usuario maestro
-            }}
-            onEditMaster={(master) => {
-              // TODO: Implementar modal para editar maestro
-            }}
-            onRemoveMaster={(masterId) => {
-              // TODO: Implementar confirmación y eliminación
-            }}
-          /> */}
-
 
           {/* Mis Eventos */}
           <div
@@ -1930,7 +1994,7 @@ export default function OrganizerProfileEditor() {
                     }}
                   >
                     <span>🎉</span>
-                    <span>Crear Evento</span>
+                    <span>Crear Social</span>
                   </motion.button>
                 </div>
               </div>
@@ -1972,13 +2036,22 @@ export default function OrganizerProfileEditor() {
                         value={selectedParentId || ''}
                         onChange={(e) => setSelectedParentId(Number(e.target.value))}
                         className="org-editor-input"
-                        style={{ color: '#FFFFFF', cursor: 'pointer' }}
+                        style={{
+                          color: '#FFFFFF',
+                          cursor: 'pointer',
+                          background: '#2b2b2b',
+                          border: '1px solid rgba(255,255,255,0.25)',
+                        }}
                       >
-                        <option value="" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                        <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
                           Selecciona un evento
                         </option>
                         {parents.map((parent: any) => (
-                          <option key={parent.id} value={parent.id} style={{ background: '#1a1a1a', color: '#FFFFFF' }}>
+                          <option
+                            key={parent.id}
+                            value={parent.id}
+                            style={{ background: '#2b2b2b', color: '#FFFFFF' }}
+                          >
                             {parent.nombre}
                           </option>
                         ))}
@@ -2121,9 +2194,9 @@ export default function OrganizerProfileEditor() {
                               style={{
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                color: colors.light,
+                                background: '#2b2b2b',
+                                border: '1px solid rgba(255,255,255,0.25)',
+                                color: '#FFFFFF',
                                 outline: 'none',
                                 fontSize: 14,
                                 borderRadius: 12,
@@ -2131,12 +2204,14 @@ export default function OrganizerProfileEditor() {
                                 WebkitAppearance: 'none',
                               }}
                             >
-                              <option value="">— Escribir manualmente —</option>
+                              <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                                — Escribir manualmente —
+                              </option>
                               {orgLocations.map((loc) => (
                                 <option
                                   key={loc.id}
                                   value={String(loc.id)}
-                                  style={{ color: '#111' }}
+                                  style={{ color: '#FFFFFF', background: '#2b2b2b' }}
                                 >
                                   {loc.nombre || loc.direccion || 'Ubicación'}
                                 </option>
@@ -2595,6 +2670,9 @@ export default function OrganizerProfileEditor() {
                 </motion.button>
               )}
             </div>
+          )}
+
+            </>
           )}
 
         </div>

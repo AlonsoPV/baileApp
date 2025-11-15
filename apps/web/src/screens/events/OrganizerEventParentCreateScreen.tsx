@@ -48,7 +48,7 @@ export default function OrganizerEventParentCreateScreen() {
   };
 
   const handleCancel = () => {
-    navigate('/profile/organizer');
+    navigate('/profile/organizer/edit');
   };
 
   if (!organizer) {

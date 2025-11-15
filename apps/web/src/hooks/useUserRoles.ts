@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { UserRole } from '@/types/roles';
+import type { UserRole, RoleSlug } from '@/types/roles';
 
 export function useUserRoles(userId?: string) {
   return useQuery({
@@ -9,17 +9,19 @@ export function useUserRoles(userId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('*')
+        .select('user_id, role_slug, granted_at')
         .eq('user_id', userId!);
       if (error) throw error;
-      const rows = (data || []) as any[];
-      // Normalizar: soportar 'role_slug' o 'role'
-      return rows.map((r) => ({
-        id: r.id,
-        user_id: r.user_id,
-        role_slug: (r.role_slug ?? r.role) as any,
-        created_at: r.created_at,
-      })) as UserRole[];
+      const rows = (data || []) as Array<{ user_id: string; role_slug?: string | null; granted_at?: string | null }>;
+      return rows.map((r) => {
+        const roleSlug = (r.role_slug ?? 'usuario') as RoleSlug;
+        return {
+          id: `${r.user_id}-${roleSlug}`,
+          user_id: r.user_id,
+          role_slug: roleSlug,
+          created_at: r.granted_at ?? new Date().toISOString(),
+        } satisfies UserRole;
+      });
     },
     staleTime: 0,
     refetchOnMount: 'always',

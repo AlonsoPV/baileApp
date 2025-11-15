@@ -122,9 +122,14 @@ export default function AcademyProfileEditor() {
   });
 
   const supportsPromotions = React.useMemo(() => {
-    if (!academy) return false;
-    return Object.prototype.hasOwnProperty.call(academy, 'promociones');
-  }, [academy]);
+    if (typeof (form as any)?.promociones !== 'undefined') return true;
+    if (academy) {
+      return Object.prototype.hasOwnProperty.call(academy, 'promociones');
+    }
+    return false;
+  }, [academy, (form as any)?.promociones]);
+
+  const profileId = (form as any)?.id;
 
   // Hooks para invitaciones
   const academyId = (academy as any)?.id;
@@ -133,6 +138,7 @@ export default function AcademyProfileEditor() {
   const sendInvitation = useSendInvitation();
   const cancelInvitation = useCancelInvitation();
   const [showTeacherModal, setShowTeacherModal] = React.useState(false);
+  const classFormRef = React.useRef<HTMLDivElement | null>(null);
 
   // Asegurar que redes_sociales siempre sea un objeto, no null
   React.useEffect(() => {
@@ -198,8 +204,8 @@ export default function AcademyProfileEditor() {
       }
 
       // Solo incluir id si existe (para updates)
-      if ((form as any)?.id) {
-        payload.id = (form as any).id;
+      if (profileId) {
+        payload.id = profileId;
       }
 
       await upsert.mutateAsync(payload);
@@ -236,6 +242,50 @@ export default function AcademyProfileEditor() {
     const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
     return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
   }, [media, academy]);
+
+  const autoSavePromociones = React.useCallback(async (items: any[]) => {
+    setField('promociones' as any, items as any);
+    if (!profileId) {
+      setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar las promociones' });
+      setTimeout(() => setStatusMsg(null), 3200);
+      return;
+    }
+    try {
+      await upsert.mutateAsync({ id: profileId, promociones: items });
+      setStatusMsg({ type: 'ok', text: '✅ Promociones guardadas automáticamente' });
+      setTimeout(() => setStatusMsg(null), 2500);
+    } catch (error) {
+      console.error('[AcademyProfileEditor] Error al guardar promociones auto', error);
+      setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las promociones' });
+      setTimeout(() => setStatusMsg(null), 3200);
+    }
+  }, [profileId, setField, upsert]);
+
+  const autoSaveClasses = React.useCallback(
+    async (cronogramaItems: any[], costosItems: any[], successText: string) => {
+      if (!profileId) {
+        setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar el guardado de clases' });
+        setTimeout(() => setStatusMsg(null), 3200);
+        return;
+      }
+      try {
+        await upsert.mutateAsync({
+          id: profileId,
+          cronograma: cronogramaItems,
+          horarios: cronogramaItems,
+          costos: costosItems,
+        });
+        setStatusMsg({ type: 'ok', text: successText });
+        setTimeout(() => setStatusMsg(null), 2400);
+      } catch (error) {
+        console.error('[AcademyProfileEditor] Error guardando clases', error);
+        setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las clases' });
+        setTimeout(() => setStatusMsg(null), 3200);
+        throw error;
+      }
+    },
+    [profileId, setStatusMsg, upsert],
+  );
 
   const uploadFile = async (file: File, slot: string) => {
     try {
@@ -285,6 +335,11 @@ export default function AcademyProfileEditor() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 2rem;
+        }
+        .academy-editor-inner h2,
+        .academy-editor-inner h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
         .academy-editor-card {
           padding: 2rem;
@@ -702,7 +757,7 @@ export default function AcademyProfileEditor() {
               allowedZoneIds={((form as any).zonas || []) as number[]}
             />
             {/* Crear Clase rápida  */}
-            <div>
+            <div ref={classFormRef}>
               {statusMsg && (
                 <div style={{
                   marginBottom: 12,
@@ -771,22 +826,9 @@ export default function AcademyProfileEditor() {
                         !foundLabels.has(label.toLowerCase().trim())
                       );
                       
-                      if (notFound.length > 0) {
-                        console.warn('[AcademyProfileEditor] ⚠️  Labels NO encontrados en tags:', notFound);
-                        console.warn('[AcademyProfileEditor] 💡 Posibles coincidencias:', 
-                          ritmoTags
-                            .filter((t: any) => notFound.some(nf => 
-                              t.nombre.toLowerCase().includes(nf.toLowerCase().substring(0, 4))
-                            ))
-                            .map((t: any) => t.nombre)
-                        );
-                      }
-                      
                       if (filtered.length > 0) {
                         return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
                       }
-                      
-                      console.warn('[AcademyProfileEditor] ⚠️  No se encontraron coincidencias, usando todos los ritmos');
                     }
                     
                     // Fallback: todos los ritmos
@@ -860,21 +902,10 @@ export default function AcademyProfileEditor() {
                     setField('costos' as any, currentCostos as any);
 
                     const payload: any = { id: (form as any)?.id, cronograma: currentCrono, costos: currentCostos };
-                    return upsert
-                      .mutateAsync(payload)
+                    return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
                       .then(() => {
-                        setStatusMsg({ type: 'ok', text: '✅ Clase actualizada' });
-                        setTimeout(() => setStatusMsg(null), 2400);
                         setEditingIndex(null);
                         setEditInitial(undefined);
-                        // eslint-disable-next-line no-console
-                        console.log('[AcademyProfileEditor] Clase editada y guardada');
-                      })
-                      .catch((e) => {
-                        setStatusMsg({ type: 'err', text: '❌ Error al actualizar clase' });
-                        // eslint-disable-next-line no-console
-                        console.error('[AcademyProfileEditor] Error editando clase', e);
-                        throw e;
                       });
                   } else {
                     let ubicacionStr = (
@@ -917,20 +948,7 @@ export default function AcademyProfileEditor() {
                     setField('costos' as any, nextCostos as any);
 
                     const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                    return upsert
-                      .mutateAsync(payload)
-                      .then(() => {
-                        setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
-                        setTimeout(() => setStatusMsg(null), 2400);
-                        // eslint-disable-next-line no-console
-                        console.log('[AcademyProfileEditor] Clase creada y guardada');
-                      })
-                      .catch((e) => {
-                        setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });
-                        // eslint-disable-next-line no-console
-                        console.error('[AcademyProfileEditor] Error guardando clase', e);
-                        throw e;
-                      });
+                    return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
                   }
                 }}
               />
@@ -967,6 +985,7 @@ export default function AcademyProfileEditor() {
                         <button
                           type="button"
                           onClick={() => {
+                            classFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             setEditingIndex(idx);
                             setEditInitial({
                               nombre: it.titulo || '',
@@ -1016,20 +1035,12 @@ export default function AcademyProfileEditor() {
                             setField('cronograma' as any, nextCrono as any);
                             setField('costos' as any, nextCostos as any);
 
-                            const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                            upsert
-                              .mutateAsync(payload)
+                            autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
                               .then(() => {
-                                setStatusMsg({ type: 'ok', text: '✅ Clase eliminada' });
                                 if (editingIndex !== null && editingIndex === idx) {
                                   setEditingIndex(null);
                                   setEditInitial(undefined);
                                 }
-                              })
-                              .catch((e) => {
-                                setStatusMsg({ type: 'err', text: '❌ Error al eliminar clase' });
-                                // eslint-disable-next-line no-console
-                                console.error('[AcademyProfileEditor] Error eliminando clase', e);
                               });
                           }}
                           style={{
@@ -1461,7 +1472,7 @@ export default function AcademyProfileEditor() {
             </p>
             <CostsPromotionsEditor
               value={(form as any).promociones || []}
-              onChange={(items) => setField('promociones' as any, items as any)}
+              onChange={autoSavePromociones}
             />
           </div>
         )}

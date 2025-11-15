@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 import { SEO_ICON_URL } from '@/lib/seoConfig';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -15,8 +16,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const navigate = useNavigate();
   const { data: isAdmin } = useIsAdmin();
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
+  const { profile } = useUserProfile();
 
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
+  const avatarUrl = profile?.avatar_url;
 
   const handleLogout = async () => {
     await signOut();
@@ -273,7 +276,20 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             aria-label="Ir a mi perfil"
             onClick={async () => { await markAllAsRead(); navigate(routes.app.profile); }}
           >
-            <span>{profileInitial}</span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Avatar"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <span>{profileInitial}</span>
+            )}
             {hasUnread && <span className="badge-dot" />}
           </button>
         ) : (

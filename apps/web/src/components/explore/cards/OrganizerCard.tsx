@@ -3,34 +3,26 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
+import RitmosChips from "../../RitmosChips";
+import ZonaGroupedChips from "../../profile/ZonaGroupedChips";
+import { normalizeRitmosToSlugs } from "../../../utils/normalizeRitmos";
 
 interface OrganizerCardProps {
   item: any;
 }
 
 export default function OrganizerCard({ item }: OrganizerCardProps) {
-  const bannerUrl: string | undefined = (item.portada_url)
-    || (Array.isArray(item.media) ? (item.media[0]?.url || item.media[0]) : undefined)
-    || (item.avatar_url);
-  const { data: allTags } = useTags();
+  const bannerUrl: string | undefined =
+    item.portada_url ||
+    (Array.isArray(item.media) ? item.media[0]?.url || item.media[0] : undefined) ||
+    item.avatar_url;
 
-  const ritmoNames = React.useMemo(() => {
-    const ids: number[] = (item?.estilos || item?.ritmos || []) as number[];
-    if (!Array.isArray(allTags)) return [] as string[];
-    return ids
-      .map(id => allTags.find((t: any) => t.id === id && t.tipo === 'ritmo'))
-      .filter(Boolean)
-      .map((t: any) => t.nombre as string);
-  }, [allTags, item]);
+  const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
 
-  const zonaNames = React.useMemo(() => {
-    const ids: number[] = (item?.zonas || []) as number[];
-    if (!Array.isArray(allTags)) return [] as string[];
-    return ids
-      .map(id => allTags.find((t: any) => t.id === id && t.tipo === 'zona'))
-      .filter(Boolean)
-      .map((t: any) => t.nombre as string);
-  }, [allTags, item]);
+  const ritmoSlugs = React.useMemo(
+    () => normalizeRitmosToSlugs(item, allRitmos),
+    [item, allRitmos]
+  );
 
   return (
     <LiveLink to={`/organizer/${item.id}`} asCard={false}>
@@ -112,32 +104,31 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
             )} */}
           </div>
 
-          {(ritmoNames.length > 0 || zonaNames.length > 0) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-              {ritmoNames.slice(0, 3).map((name, i) => (
-                <span key={`r-${i}`} style={{
-                  border: '1px solid rgb(255 255 255 / 48%)',
-                  background: 'rgb(25 25 25 / 89%)',
-                  padding: 8,
-                  borderRadius: 999,
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.92)'
-                }}>
-                  🎵 {name}
-                </span>
-              ))}
-              {zonaNames.slice(0, 3).map((name, i) => (
-                <span key={`z-${i}`} style={{
-                  border: '1px solid rgb(255 255 255 / 48%)',
-                  background: 'rgb(25 25 25 / 89%)',
-                  padding: 8,
-                  borderRadius: 999,
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.92)'
-                }}>
-                  📍 {name}
-                </span>
-              ))}
+          {(ritmoSlugs.length > 0 || (Array.isArray(item?.zonas) && item.zonas.length > 0)) && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                alignItems: 'flex-start',
+                marginBottom: 8,
+              }}
+            >
+              {ritmoSlugs.length > 0 && (
+                <RitmosChips
+                  selected={ritmoSlugs}
+                  onChange={() => {}}
+                  readOnly
+                  size="compact"
+                />
+              )}
+              {Array.isArray(item?.zonas) && item.zonas.length > 0 && (
+                <ZonaGroupedChips
+                  selectedIds={item.zonas}
+                  allTags={allZonas}
+                  mode="display"
+                />
+              )}
             </div>
           )}
         </div>

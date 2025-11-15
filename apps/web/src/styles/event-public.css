@@ -80,14 +80,12 @@
 .cc-section__title--blue {
   background: linear-gradient(135deg, #1E88E5, #00BCD4);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .cc-section__title--orange {
   background: linear-gradient(135deg, #E53935, #FB8C00);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 

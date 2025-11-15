@@ -28,7 +28,6 @@ export default function ValidationInfoScreen() {
           margin-bottom: 1rem;
           background: linear-gradient(135deg, #f093fb, #f5576c, #FFD166, #1E88E5);
           -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .validation-hero p {

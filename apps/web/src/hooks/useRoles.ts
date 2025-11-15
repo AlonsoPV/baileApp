@@ -11,10 +11,19 @@ export function useMyRoles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('id,user_id,role_slug,created_at')
+        .select('user_id, role_slug, granted_at')
         .eq('user_id', user!.id);
       if (error) throw error;
-      return data || [];
+      const rows = (data || []) as Array<{ user_id: string; role_slug?: string | null; granted_at?: string | null }>;
+      return rows.map((row) => {
+        const slug = (row.role_slug ?? 'usuario') as UserRole['role_slug'];
+        return {
+          id: `${row.user_id}-${slug}`,
+          user_id: row.user_id,
+          role_slug: slug,
+          created_at: row.granted_at ?? new Date().toISOString(),
+        };
+      });
     },
     staleTime: 60_000,
   });

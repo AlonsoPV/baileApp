@@ -171,7 +171,6 @@ export function DateLiveScreen() {
         .gradient-text {
           background: ${colors.gradients.primary};
           -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         

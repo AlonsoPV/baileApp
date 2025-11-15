@@ -318,14 +318,21 @@ export function OrganizerPublicScreen() {
         .org-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; overflow: hidden; }
         .org-banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
         .glass-card { background: ${colors.glass.light}; backdrop-filter: blur(20px); border: 1px solid ${colors.glass.medium}; box-shadow: ${colors.shadows.glass}; }
-        .gradient-text { background: ${colors.gradients.primary}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-text { background: ${colors.gradients.primary}; -webkit-background-clip: text; background-clip: text; }
         .shimmer-effect { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .glass-card-container { opacity: 1; margin: 0 auto 2rem auto; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
         .org-social-card-row { display: flex; align-items: flex-start; gap: 1.5rem; padding-top: 0.5rem; }
         .org-social-card-row-icon { flex-shrink: 0; }
         .org-social-card-row-cta { flex-shrink: 0; }
-        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem; }
+        .org-banner h2,
+        .org-banner h3,
+        .org-container h2,
+        .org-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; display: flex; align-items: center; gap: .5rem; }
         @media (max-width: 768px) { .org-root { padding-top: 64px; } }
         @media (max-width: 768px) {
           .org-container { max-width: 100% !important; padding: 1rem !important; }
@@ -530,13 +537,14 @@ export function OrganizerPublicScreen() {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(org, allRitmos);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
                 <ZonaGroupedChips
                   selectedIds={(org as any)?.zonas || []}
                   allTags={allZonas}
                   mode="display"
+                  size="compact"
                 />
               </div>
             </motion.div>

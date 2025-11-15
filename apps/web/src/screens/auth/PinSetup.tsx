@@ -91,10 +91,31 @@ export default function PinSetup() {
           />
           
           {error && <div style={{ color: '#ef4444', marginBottom: 16, padding: 12, borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: '0.9rem' }}>{error}</div>}
-          
-          <button type="submit" disabled={disabled} style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: disabled ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #f093fb, #f5576c)', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: disabled ? 'none' : '0 4px 16px rgba(240, 147, 251, 0.4)' }}>
-            {saving ? '🔄 Guardando…' : '✅ Completar Onboarding'}
-          </button>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button
+              type="button"
+              onClick={() => navigate('/onboarding/zonas')}
+              disabled={disabled}
+              style={{
+                width: '100%',
+                padding: 14,
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'transparent',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.4 : 1,
+              }}
+            >
+              ← Volver a Zonas
+            </button>
+            <button type="submit" disabled={disabled} style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: disabled ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #f093fb, #f5576c)', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxShadow: disabled ? 'none' : '0 4px 16px rgba(240, 147, 251, 0.4)' }}>
+              {saving ? '🔄 Guardando…' : '✅ Completar Setup'}
+            </button>
+          </div>
           
           <div style={{ marginTop: 16, textAlign: 'center', fontSize: '0.85rem', opacity: 0.7 }}>
             Última configuración del perfil ✨

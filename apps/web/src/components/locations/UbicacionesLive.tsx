@@ -16,9 +16,16 @@ type Props = {
   title?: string;
   style?: React.CSSProperties;
   className?: string;
+  headingSize?: string;
 };
 
-export default function UbicacionesLive({ ubicaciones = [], title = 'Ubicaciones', style, className }: Props) {
+export default function UbicacionesLive({
+  ubicaciones = [],
+  title = 'Ubicaciones',
+  style,
+  className,
+  headingSize = '1.25rem',
+}: Props) {
   const { data: allTags } = useTags();
   const getZonaNombre = (id: number) => allTags?.find(t => t.id === id && t.tipo === 'zona')?.nombre;
 
@@ -28,7 +35,17 @@ export default function UbicacionesLive({ ubicaciones = [], title = 'Ubicaciones
     <section className={className} style={{ ...style }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📍</div>
-        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{title}</h3>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: headingSize,
+            fontWeight: 800,
+            color: '#fff',
+            textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',
+          }}
+        >
+          {title}
+        </h3>
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {ubicaciones.map((u, idx) => {

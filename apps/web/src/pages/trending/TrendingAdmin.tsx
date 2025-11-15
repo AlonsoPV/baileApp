@@ -57,7 +57,7 @@ export default function TrendingAdmin() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setCanAdmin(false); return; }
-        const { data: roles } = await supabase.from('user_roles').select('role_slug').eq('user_id', user.id);
+      const { data: roles } = await supabase.from('user_roles').select('role_slug').eq('user_id', user.id);
         const slugs = (roles || []).map((r: any) => r.role_slug);
         setCanAdmin(slugs.includes('superadmin'));
       } finally {

@@ -157,9 +157,14 @@ export default function TeacherProfileEditor() {
   }, [teacher, (form as any)?.cronograma, (form as any)?.id, setField, upsert]);
 
   const supportsPromotions = React.useMemo(() => {
-    if (!teacher) return false;
-    return Object.prototype.hasOwnProperty.call(teacher, 'promociones');
-  }, [teacher]);
+    if (typeof (form as any)?.promociones !== 'undefined') return true;
+    if (teacher) {
+      return Object.prototype.hasOwnProperty.call(teacher, 'promociones');
+    }
+    return false;
+  }, [teacher, (form as any)?.promociones]);
+
+  const profileId = (form as any)?.id;
 
   const handleSave = async () => {
     try {
@@ -187,8 +192,8 @@ export default function TeacherProfileEditor() {
       }
 
       // Solo incluir id si existe (para updates)
-      if ((form as any)?.id) {
-        payload.id = (form as any).id;
+      if (profileId) {
+        payload.id = profileId;
       }
 
       await upsert.mutateAsync(payload);
@@ -218,6 +223,49 @@ export default function TeacherProfileEditor() {
       : [...currentZonas, zonaId];
     setField('zonas' as any, newZonas as any);
   };
+
+  const autoSavePromociones = React.useCallback(async (items: any[]) => {
+    setField('promociones' as any, items as any);
+    if (!profileId) {
+      setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar las promociones' });
+      setTimeout(() => setStatusMsg(null), 3200);
+      return;
+    }
+    try {
+      await upsert.mutateAsync({ id: profileId, promociones: items });
+      setStatusMsg({ type: 'ok', text: '✅ Promociones guardadas automáticamente' });
+      setTimeout(() => setStatusMsg(null), 2500);
+    } catch (error) {
+      console.error('[TeacherProfileEditor] Error al guardar promociones auto', error);
+      setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las promociones' });
+      setTimeout(() => setStatusMsg(null), 3200);
+    }
+  }, [profileId, setField, upsert]);
+
+  const autoSaveClasses = React.useCallback(
+    async (cronogramaItems: any[], costosItems: any[], successText: string) => {
+      if (!profileId) {
+        setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar el guardado de clases' });
+        setTimeout(() => setStatusMsg(null), 3200);
+        return;
+      }
+      try {
+        await upsert.mutateAsync({
+          id: profileId,
+          cronograma: cronogramaItems,
+          costos: costosItems,
+        });
+        setStatusMsg({ type: 'ok', text: successText });
+        setTimeout(() => setStatusMsg(null), 2400);
+      } catch (error) {
+        console.error('[TeacherProfileEditor] Error guardando clases', error);
+        setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las clases' });
+        setTimeout(() => setStatusMsg(null), 3200);
+        throw error;
+      }
+    },
+    [profileId, setStatusMsg, upsert],
+  );
 
   const uploadFile = async (file: File, slot: string) => {
     try {
@@ -267,6 +315,11 @@ export default function TeacherProfileEditor() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 2rem;
+        }
+        .academy-editor-inner h2,
+        .academy-editor-inner h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
         .academy-editor-card {
           padding: 2rem;
@@ -799,20 +852,10 @@ export default function TeacherProfileEditor() {
                     setField('cronograma' as any, currentCrono as any);
                     setField('costos' as any, currentCostos as any);
 
-                    const payload: any = { id: (form as any)?.id, cronograma: currentCrono, costos: currentCostos };
-                    return upsert
-                      .mutateAsync(payload)
+                    return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
                       .then(() => {
-                        setStatusMsg({ type: 'ok', text: '✅ Clase actualizada' });
-                        setTimeout(() => setStatusMsg(null), 2400);
                         setEditingIndex(null);
                         setEditInitial(undefined);
-                      })
-                      .catch((e) => {
-                        setStatusMsg({ type: 'err', text: '❌ Error al actualizar clase' });
-                        // eslint-disable-next-line no-console
-                        console.error('[teacherProfileEditor] Error editando clase', e);
-                        throw e;
                       });
                   } else {
                     let ubicacionStr = (
@@ -854,19 +897,7 @@ export default function TeacherProfileEditor() {
                     setField('cronograma' as any, nextCrono as any);
                     setField('costos' as any, nextCostos as any);
 
-                        const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                    return upsert
-                      .mutateAsync(payload)
-                      .then(() => {
-                        setStatusMsg({ type: 'ok', text: '✅ Clase creada' });
-                        setTimeout(() => setStatusMsg(null), 2400);
-                      })
-                      .catch((e) => {
-                        setStatusMsg({ type: 'err', text: '❌ Error al crear clase' });
-                        // eslint-disable-next-line no-console
-                        console.error('[teacherProfileEditor] Error guardando clase', e);
-                        throw e;
-                      });
+                    return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
                   }
                 }}
               />
@@ -952,20 +983,12 @@ export default function TeacherProfileEditor() {
                             setField('cronograma' as any, nextCrono as any);
                             setField('costos' as any, nextCostos as any);
 
-                            const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                            upsert
-                              .mutateAsync(payload)
+                            autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
                               .then(() => {
-                                setStatusMsg({ type: 'ok', text: '✅ Clase eliminada' });
                                 if (editingIndex !== null && editingIndex === idx) {
                                   setEditingIndex(null);
                                   setEditInitial(undefined);
                                 }
-                              })
-                              .catch((e) => {
-                                setStatusMsg({ type: 'err', text: '❌ Error al eliminar clase' });
-                                // eslint-disable-next-line no-console
-                                console.error('[teacherProfileEditor] Error eliminando clase', e);
                               });
                           }}
                           style={{
@@ -1310,7 +1333,7 @@ export default function TeacherProfileEditor() {
             </p>
             <CostsPromotionsEditor
               value={(form as any).promociones || []}
-              onChange={(items) => setField('promociones' as any, items as any)}
+              onChange={autoSavePromociones}
             />
           </div>
         )}

@@ -249,6 +249,11 @@ export default function UserProfileEditor() {
           max-width: 1200px;
           margin: 0 auto;
         }
+        .editor-content h2,
+        .editor-content h3 {
+          color: ${colors.light};
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .editor-header {
           display: flex;
           justify-content: space-between;

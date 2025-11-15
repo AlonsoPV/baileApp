@@ -480,13 +480,15 @@ export default function TeacherProfileLive() {
           backdrop-filter: blur(10px);
           transform: none;
         }
+        .teacher-container h2,
+        .teacher-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .section-title {
           font-size: 1.5rem;
           font-weight: 800;
           margin: 0 0 1rem 0;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -986,7 +988,7 @@ export default function TeacherProfileLive() {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(teacher, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly />
+                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
                 <ZonaGroupedChips

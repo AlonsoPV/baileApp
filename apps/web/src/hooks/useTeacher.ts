@@ -16,6 +16,7 @@ export type TeacherProfile = {
   ubicaciones?: any[];
   cronograma?: any[];
   costos?: any[];
+  promociones?: any[];
   media: { type: 'image'|'video'; url: string; slot?: string }[];
   faq?: { q: string; a: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
@@ -95,7 +96,7 @@ export function useUpsertTeacher() {
       const allowed = new Set([
         'user_id','nombre_publico','bio','avatar_url','portada_url',
         'ritmos','ritmos_seleccionados','zonas',
-        'redes_sociales','ubicaciones','cronograma','costos','faq',
+        'redes_sociales','ubicaciones','cronograma','costos','promociones','faq',
         'estado_aprobacion','updated_at','created_at'
       ]);
       const filtered: any = {};

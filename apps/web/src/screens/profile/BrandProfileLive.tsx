@@ -36,6 +36,7 @@ function formatPrice(price: string | number | undefined): string {
 export default function BrandProfileLive() {
   const navigate = useNavigate();
   const { data: brand, isLoading } = useMyBrand();
+  const [copied, setCopied] = React.useState(false);
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de marca (DEBE estar ANTES de cualquier return)
   React.useEffect(() => {
@@ -108,10 +109,13 @@ export default function BrandProfileLive() {
   return (
     <>
       <style>{`
+        .profile-container h2,
+        .profile-container h3 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
         .section-title {
           font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           display: flex; align-items: center; gap: .5rem;
         }
         .profile-container { width: 100%; max-width: 900px; margin: 0 auto; }
@@ -183,32 +187,94 @@ export default function BrandProfileLive() {
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  style={{
-                    padding: `${spacing[1]} ${spacing[3]}`,
-                    borderRadius: borderRadius.full,
-                    background: (brand as any)?.estado_aprobacion === 'aprobado'
-                      ? 'rgba(16,185,129,0.12)'
-                      : 'rgba(30,136,229,0.12)',
-                    border: (brand as any)?.estado_aprobacion === 'aprobado'
-                      ? '1px solid rgba(16,185,129,0.35)'
-                      : '1px solid rgba(30,136,229,0.35)',
-                    color: (brand as any)?.estado_aprobacion === 'aprobado' ? '#9be7a1' : '#90caf9',
-                    fontSize: typography.fontSize.xs,
-                    fontWeight: typography.fontWeight.semibold,
-                    backdropFilter: 'none',
-                    boxShadow: 'none',
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                {(brand as any)?.estado_aprobacion === 'aprobado' && (
+                  <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: spacing[1],
-                    textTransform: 'none',
-                    letterSpacing: 0
+                    gap: '0.5rem',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: 999,
+                    background: 'rgba(16,185,129,0.12)',
+                    border: '1px solid rgba(16,185,129,0.45)',
+                    color: '#9be7a1',
+                    fontSize: '0.8rem',
+                    fontWeight: 700
+                  }}>
+                    <div
+                      style={{
+                        width: 16,
+                        height: 16,
+                        display: 'grid',
+                        placeItems: 'center',
+                        background: '#16c784',
+                        borderRadius: '50%',
+                        color: '#062d1f',
+                        fontSize: '0.75rem',
+                        fontWeight: 900
+                      }}
+                    >
+                      ✓
+                    </div>
+                    <span>Verificado</span>
+                  </div>
+                )}
+                <button
+                  aria-label="Compartir perfil"
+                  title="Compartir"
+                  onClick={() => {
+                    try {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const title = (brand as any)?.nombre_publico || 'Marca';
+                      const text = `Mira el perfil de ${title}`;
+                      const navAny = (navigator as any);
+                      if (navAny && typeof navAny.share === 'function') {
+                        navAny.share({ title, text, url }).catch(() => {});
+                      } else {
+                        navigator.clipboard
+                          ?.writeText(url)
+                          .then(() => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          })
+                          .catch(() => {});
+                      }
+                    } catch {}
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255,255,255,0.10)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    backdropFilter: 'blur(8px)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 700
                   }}
                 >
-                  {(brand as any)?.estado_aprobacion === 'aprobado' ? '✅' : `⏳ ${(brand as any)?.estado_aprobacion || 'pendiente'}`}
-                </motion.span>
+                  📤 Compartir
+                </button>
+                {copied && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: 8,
+                      background: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      fontSize: 12,
+                      fontWeight: 700
+                    }}
+                  >
+                    Copiado
+                  </div>
+                )}
               </div>
             </div>
 

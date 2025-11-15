@@ -152,14 +152,18 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
 
         .bio-title {
           margin: 0;
-          fontSize: 1.5rem;
+          font-size: 1.5rem;
           font-weight: 800;
-          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
           display: flex;
           align-items: center;
           gap: 0.5rem;
+        }
+
+        .bio-title span {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
 
         .bio-socials {

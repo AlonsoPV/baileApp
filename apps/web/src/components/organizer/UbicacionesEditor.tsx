@@ -290,19 +290,21 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
 
             <select
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
+                background: '#2b2b2b',
                 borderRadius: borderRadius.lg,
                 padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: colors.light,
+                border: '1px solid rgba(255,255,255,0.25)',
+                color: '#FFFFFF',
                 fontSize: typography.fontSize.sm,
               }}
               value={item.zona_id || ''}
               onChange={(e) => patch(index, { zona_id: e.target.value ? Number(e.target.value) : null })}
             >
-              <option value="">Seleccionar zona</option>
+              <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                Seleccionar zona
+              </option>
               {uniqueZones.map((z: any) => (
-                <option key={z.id} value={z.id}>
+                <option key={z.id} value={z.id} style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
                   {z.nombre}
                 </option>
               ))}
