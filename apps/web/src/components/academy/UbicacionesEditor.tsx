@@ -8,6 +8,16 @@ type UbicacionesEditorProps = {
   onChange: (v: AcademyLocation[]) => void;
   onSaveItem?: (index: number, item: AcademyLocation) => void;
   allowedZoneIds?: number[];
+  savedLocations?: Array<{
+    id?: string | number;
+    nombre?: string | null;
+    direccion?: string | null;
+    ciudad?: string | null;
+    referencias?: string | null;
+    zona_id?: number | null;
+    zona_ids?: number[] | null;
+    zonas?: number[] | null;
+  }>;
 };
 
 export default function UbicacionesEditor({
@@ -15,8 +25,16 @@ export default function UbicacionesEditor({
   onChange,
   onSaveItem,
   allowedZoneIds,
+  savedLocations,
 }: UbicacionesEditorProps) {
-  const [items, setItems] = useState<AcademyLocation[]>(value || []);
+  const ensureId = (loc: AcademyLocation): AcademyLocation & { id: string } => {
+    if (loc.id && typeof loc.id === 'string') return loc as AcademyLocation & { id: string };
+    if (loc.id && typeof loc.id === 'number') {
+      return { ...loc, id: String(loc.id) };
+    }
+    return { ...loc, id: `ubicacion_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` };
+  };
+  const [items, setItems] = useState<AcademyLocation[]>((value || []).map(ensureId));
   const { zonas } = useTags('zona');
   const zoneOptions = useMemo(() => {
     if (!Array.isArray(zonas)) return [];
@@ -25,20 +43,62 @@ export default function UbicacionesEditor({
     const filtered = zonas.filter((z: any) => allowed.has(z.id));
     return filtered.length ? filtered : zonas;
   }, [zonas, allowedZoneIds]);
+  const normalizedSaved = useMemo(() => {
+    if (!Array.isArray(savedLocations)) return [];
+    return savedLocations.map((loc) => {
+      const zonaIds = Array.isArray(loc.zona_ids)
+        ? loc.zona_ids.filter((id): id is number => typeof id === 'number')
+        : Array.isArray(loc.zonas)
+        ? loc.zonas.filter((id): id is number => typeof id === 'number')
+        : typeof loc.zona_id === 'number'
+        ? [loc.zona_id]
+        : [];
+      return {
+        id: String(loc.id ?? ''),
+        nombre: loc.nombre || '',
+        direccion: loc.direccion || '',
+        ciudad: loc.ciudad || '',
+        referencias: loc.referencias || '',
+        zona_id: zonaIds.length ? zonaIds[0] : null,
+        zonaIds,
+      };
+    });
+  }, [savedLocations]);
+  const [selectedSaved, setSelectedSaved] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    setItems(value || []);
+    setItems((value || []).map(ensureId));
   }, [value]);
 
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    (value || []).forEach((item) => {
+      const ensured = ensureId(item);
+      const itemId = ensured.id || '';
+      if (!itemId) return;
+      const match = normalizedSaved.find(
+        (loc) =>
+          loc.nombre === (ensured.sede || ensured.nombre || '') &&
+          loc.direccion === (ensured.direccion || '') &&
+          loc.ciudad === (ensured.ciudad || '') &&
+          loc.referencias === (ensured.referencias || '')
+      );
+      if (match?.id) {
+        initial[itemId] = match.id;
+      }
+    });
+    setSelectedSaved(initial);
+  }, [value, normalizedSaved]);
+
   const update = (next:AcademyLocation[]) => { 
-    setItems(next); 
-    onChange(next); 
+    const withIds = next.map(ensureId);
+    setItems(withIds); 
+    onChange(withIds); 
   };
 
   const add = () => {
-    const newId = `ubicacion_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     update([...(items||[]), { 
       sede: '', 
       direccion: '', 
@@ -48,7 +108,18 @@ export default function UbicacionesEditor({
     }]);
   };
 
-  const remove = (index: number) => update((items||[]).filter((_, i) => i !== index));
+  const remove = (index: number) => {
+    const removed = (items || [])[index];
+    const ensured = removed ? ensureId(removed) : null;
+    if (ensured?.id) {
+      setSelectedSaved((prev) => {
+        const copy = { ...prev };
+        delete copy[ensured.id!];
+        return copy;
+      });
+    }
+    update((items||[]).filter((_, i) => i !== index));
+  };
   
   const patch = (index: number, p: Partial<AcademyLocation>) =>
     update((items||[]).map((item, i) => i === index ? { ...item, ...p } : item));
@@ -115,6 +186,52 @@ export default function UbicacionesEditor({
           background: 'rgba(255, 255, 255, 0.05)',
           marginBottom: spacing[3]
         }}>
+          {normalizedSaved.length > 0 && (
+            <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: typography.fontSize.xs, color: colors.mut }}>Ubicación guardada</label>
+              <select
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  borderRadius: borderRadius.lg,
+                  padding: `${spacing[2]} ${spacing[3]}`,
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: colors.light,
+                  fontSize: typography.fontSize.sm,
+                }}
+                value={(() => {
+                  const ensured = ensureId(item);
+                  return selectedSaved[ensured.id || ''] || '';
+                })()}
+                onChange={(e) => {
+                  const savedId = e.target.value;
+                  const ensured = ensureId(item);
+                  const itemId = ensured.id || '';
+                  setSelectedSaved((prev) => ({ ...prev, [itemId]: savedId }));
+                  if (!savedId) return;
+                  const savedLoc = normalizedSaved.find((loc) => loc.id === savedId);
+                  if (savedLoc) {
+                    patch(index, {
+                      sede: savedLoc.nombre,
+                      direccion: savedLoc.direccion,
+                      ciudad: savedLoc.ciudad,
+                      referencias: savedLoc.referencias,
+                      zona_id: savedLoc.zona_id,
+                      zonaIds: savedLoc.zonaIds,
+                      zonas: savedLoc.zonaIds,
+                    });
+                  }
+                }}
+              >
+                <option value="">— Escribir manualmente —</option>
+                {normalizedSaved.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.nombre || loc.direccion || 'Ubicación'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <input 
             style={{
               background: 'rgba(255, 255, 255, 0.05)',

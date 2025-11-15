@@ -561,7 +561,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           {isParent && (
             <>
               {/* Sede General */}
-              <div style={{
+           {/*    <div style={{
                 padding: '24px',
                 background: `${colors.dark}66`,
                 borderRadius: '16px',
@@ -591,7 +591,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     fontSize: '1rem',
                   }}
                 />
-              </div>
+              </div> */}
 
               {/* Ubicaciones del Social */}
               <div style={{
@@ -615,6 +615,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
                   onChange={(ubicaciones) => handleUbicacionesChange(ubicaciones as AcademyLocation[])}
                   allowedZoneIds={Array.isArray((values as any)?.zonas) ? ((values as any)?.zonas as number[]).filter((n) => typeof n === 'number') : undefined}
+                  savedLocations={orgLocations as any}
                 />
               </div>
 
@@ -1015,6 +1016,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
                   onChange={(ubicaciones) => handleUbicacionesChange(ubicaciones as AcademyLocation[])}
                   allowedZoneIds={Array.isArray((values as any)?.zonas) ? ((values as any)?.zonas as number[]).filter((n) => typeof n === 'number') : undefined}
+                  savedLocations={orgLocations as any}
                 />
               </div>
 
