@@ -24,6 +24,30 @@ function getTodayCDMX(): string {
 }
 
 /**
+ * Obtiene la fecha y hora actuales en CDMX como Date normalizada a UTC
+ * Esto permite comparar contra fechas de eventos construidas también en CDMX.
+ */
+function getNowCDMX(): Date {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const y = Number(parts.find(p => p.type === 'year')?.value || '0');
+  const m = Number(parts.find(p => p.type === 'month')?.value || '1');
+  const d = Number(parts.find(p => p.type === 'day')?.value || '1');
+  const h = Number(parts.find(p => p.type === 'hour')?.value || '0');
+  const min = Number(parts.find(p => p.type === 'minute')?.value || '0');
+  return new Date(Date.UTC(y, m - 1, d, h, min, 0));
+}
+
+/**
  * Determina qué tabla o vista usar para cada tipo de exploración
  * Para eventos y organizadores, usamos las vistas LIVE que solo muestran contenido aprobado/publicado
  */
@@ -252,9 +276,43 @@ async function fetchPage(params: QueryParams, page: number) {
     console.error('[useExploreQuery] Error:', error);
     throw error;
   }
+
+  let finalData = data || [];
+
+  // Filtro adicional por hora para eventos de HOY (CDMX):
+  // - No se muestran eventos cuya fecha sea hoy y cuya hora de inicio ya haya pasado.
+  if (type === 'fechas' && finalData.length > 0) {
+    const todayStr = getTodayCDMX();
+    const nowCDMX = getNowCDMX();
+
+    finalData = finalData.filter((row: any) => {
+      if (!row?.fecha) return true;
+      const fechaStr = String(row.fecha).split('T')[0];
+      if (fechaStr !== todayStr) {
+        // Para fechas futuras o pasadas, confiar en el filtro por fecha del query
+        return true;
+      }
+
+      // Si no hay hora de inicio, mantener el comportamiento actual (mostrar todo el día)
+      const horaStr = row.hora_inicio as string | null | undefined;
+      if (!horaStr) return true;
+
+      const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
+      if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
+
+      const [hhRaw, minRaw] = String(horaStr).split(':');
+      const hh = parseInt(hhRaw ?? '0', 10);
+      const min = parseInt(minRaw ?? '0', 10);
+
+      const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
+
+      // Si la hora de inicio ya pasó en CDMX, ocultar el evento
+      return eventDateTime.getTime() >= nowCDMX.getTime();
+    });
+  }
   
   return { 
-    data, 
+    data: finalData, 
     nextPage: (to + 1 < (count || 0)) ? page + 1 : undefined, 
     count: count || 0 
   };
