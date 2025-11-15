@@ -855,32 +855,6 @@ export default function EventParentPublicScreen() {
                 </div>
               )}
 
-              {/* Descripción */}
-              {parent.descripcion && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25, duration: 0.4 }}
-                  style={{
-                    marginBottom: '1.25rem',
-                    padding: '1rem 1.25rem',
-                    borderRadius: 16,
-                    border: '1px solid rgba(255,255,255,.12)',
-                    background: 'rgba(255,255,255,.05)',
-                    backdropFilter: 'blur(10px)'
-                  }}
-                >
-                  <p style={{ 
-                    lineHeight: 1.7, 
-                    fontSize: '1rem', 
-                    color: 'rgba(255,255,255,.88)', 
-                    margin: 0 
-                  }}>
-                    {parent.descripcion}
-                  </p>
-                </motion.div>
-              )}
-
               {/* Ritmos y Zonas (zonas agrupadas en chips padres colapsables) */}
               {(selectedCatalogIds.length > 0 || (parent as any)?.zonas?.length > 0) && (
                 <motion.div

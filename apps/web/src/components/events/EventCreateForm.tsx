@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
@@ -135,6 +135,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   
 
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const hasPrefilledLocations = useRef(false);
 
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
@@ -220,6 +221,43 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       setSelectedLocationId('');
     }
   }, [orgLocations, (values as any)?.lugar, (values as any)?.direccion, (values as any)?.ciudad, (values as any)?.referencias, selectedLocationId]);
+
+  useEffect(() => {
+    if (!isParent || isActuallyEditing) return;
+    if (hasPrefilledLocations.current) return;
+    if (!orgLocations.length) return;
+    const currentUbicaciones = Array.isArray((values as any)?.ubicaciones)
+      ? ((values as any)?.ubicaciones as AcademyLocation[])
+      : [];
+    if (currentUbicaciones.length > 0) return;
+
+    const mapped = orgLocations.map((loc) => ({
+      sede: loc.nombre || (loc as any).sede || '',
+      direccion: loc.direccion || '',
+      ciudad: loc.ciudad || '',
+      referencias: loc.referencias || '',
+      zona_id: typeof loc.zona_id === 'number' ? loc.zona_id : null,
+    }));
+
+    if (mapped.length) {
+      setValue('ubicaciones' as any, mapped as any);
+      const first = orgLocations[0];
+      if (first) {
+        setSelectedLocationId(first.id ? String(first.id) : '');
+        setValue('lugar', first.nombre || '');
+        setValue('direccion', first.direccion || '');
+        setValue('ciudad', first.ciudad || '');
+        setValue('referencias', first.referencias || '');
+        if (typeof first.zona_id === 'number') {
+          setValue('zona' as any, first.zona_id as any);
+        }
+        if (Array.isArray(first.zona_ids) && first.zona_ids.length) {
+          setValue('zonas' as any, first.zona_ids as any);
+        }
+      }
+      hasPrefilledLocations.current = true;
+    }
+  }, [isParent, isActuallyEditing, orgLocations, values, setValue]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
