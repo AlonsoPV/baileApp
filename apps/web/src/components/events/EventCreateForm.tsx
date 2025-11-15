@@ -30,27 +30,27 @@ const colors = {
 };
 
 type EventCreateFormProps =
-  | { 
-      mode: 'parent'; 
-      parent?: any; 
-      onSubmit: (values: any) => Promise<void>;
-      onSuccess?: (eventId: number) => void;
-      onCancel?: () => void;
-      showHeader?: boolean;
-      style?: React.CSSProperties;
-      className?: string;
-    }
-  | { 
-      mode: 'date'; 
-      date?: any; 
-      parentId: number; 
-      onSubmit: (values: any) => Promise<void>;
-      onSuccess?: (eventId: number) => void;
-      onCancel?: () => void;
-      showHeader?: boolean;
-      style?: React.CSSProperties;
-      className?: string;
-    };
+  | {
+    mode: 'parent';
+    parent?: any;
+    onSubmit: (values: any) => Promise<void>;
+    onSuccess?: (eventId: number) => void;
+    onCancel?: () => void;
+    showHeader?: boolean;
+    style?: React.CSSProperties;
+    className?: string;
+  }
+  | {
+    mode: 'date';
+    date?: any;
+    parentId: number;
+    onSubmit: (values: any) => Promise<void>;
+    onSuccess?: (eventId: number) => void;
+    onCancel?: () => void;
+    showHeader?: boolean;
+    style?: React.CSSProperties;
+    className?: string;
+  };
 
 export default function EventCreateForm(props: EventCreateFormProps) {
   const navigate = useNavigate();
@@ -107,12 +107,12 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     }
     const match = primary
       ? orgLocations.find(
-          (loc) =>
-            (loc.nombre || '') === (primary.sede || '') &&
-            (loc.direccion || '') === (primary.direccion || '') &&
-            (loc.ciudad || '') === (primary.ciudad || '') &&
-            (loc.referencias || '') === (primary.referencias || '')
-        )
+        (loc) =>
+          (loc.nombre || '') === (primary.sede || '') &&
+          (loc.direccion || '') === (primary.direccion || '') &&
+          (loc.ciudad || '') === (primary.ciudad || '') &&
+          (loc.referencias || '') === (primary.referencias || '')
+      )
       : undefined;
     setSelectedLocationId(match?.id ? String(match.id) : '');
   };
@@ -122,7 +122,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
   const initialData = isParent ? props.parent : props.date;
-  
+
   // Mantener el estado de edición basado en si tenemos un ID
   const hasId = initialData?.id;
   const isActuallyEditing = isEditing && hasId;
@@ -150,7 +150,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
   const { form: values, setField: setValue, dirty: isDirty, setFromServer: reset } = useHydratedForm({
     // Configuración del formulario
-    draftKey: isParent 
+    draftKey: isParent
       ? `event-parent-${props.parent?.id || 'new'}-${isActuallyEditing ? 'edit' : 'create'}`
       : `event-date-${props.date?.id || 'new'}-${props.parentId}-${isActuallyEditing ? 'edit' : 'create'}`,
     serverData: initialData,
@@ -162,11 +162,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ritmos_seleccionados: [] as string[],
       zonas: [],
       media: [],
-      
+
       // Campos específicos de parent
       sede_general: '',
       faq: [],
-      
+
       // Campos específicos de date
       fecha: '',
       hora_inicio: '',
@@ -189,8 +189,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     const zonaIds = Array.isArray((loc as any)?.zona_ids)
       ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
       : typeof loc.zona_id === 'number'
-      ? [loc.zona_id]
-      : [];
+        ? [loc.zona_id]
+        : [];
 
     return {
       sede: loc.nombre || (loc as any)?.sede || '',
@@ -218,8 +218,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       const zonaIds = Array.isArray((loc as any)?.zona_ids)
         ? ((loc as any).zona_ids as number[]).filter((id) => typeof id === 'number')
         : typeof loc.zona_id === 'number'
-        ? [loc.zona_id]
-        : [];
+          ? [loc.zona_id]
+          : [];
       if (zonaIds.length) {
         setValue('zonas' as any, zonaIds as any);
       }
@@ -290,7 +290,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
-  
+
   // Obtener tags para mapear ritmos
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
@@ -326,21 +326,21 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const result = await props.onSubmit(values);
-      
+
       // Solo llamar reset si tenemos datos del servidor
       if (result !== undefined && result !== null && typeof result === 'object' && 'updated_at' in (result as any)) {
         reset(result as any);
       }
-      
+
       // Mostrar mensaje de éxito
       showToast(
-        isActuallyEditing 
-          ? `${isParent ? 'Social' : 'Fecha'} actualizado exitosamente` 
-          : `${isParent ? 'Social' : 'Fecha'} creado exitosamente`, 
+        isActuallyEditing
+          ? `${isParent ? 'Social' : 'Fecha'} actualizado exitosamente`
+          : `${isParent ? 'Social' : 'Fecha'} creado exitosamente`,
         'success'
       );
 
@@ -397,7 +397,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               color: colors.light,
               opacity: 0.8,
             }}>
-              {isParent 
+              {isParent
                 ? 'Información general del evento social'
                 : 'Detalles específicos de la fecha del evento'
               }
@@ -421,7 +421,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             }}>
               📝 Información Básica
             </h2>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{
@@ -464,7 +464,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   value={values?.biografia || ''}
                   onChange={(e) => setValue('biografia', e.target.value)}
                   placeholder="Describe el evento, su propósito, qué esperar..."
-                  rows={4}
+                  rows={3}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -496,7 +496,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             }}>
               🎵 Ritmos de Baile
             </h2>
-            
+
             <div style={{ marginTop: 8 }}>
               <RitmosChips
                 selected={(() => {
@@ -524,7 +524,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       .map((label: any) => nameToTagId.get(label as string))
                       .filter((n): n is number => typeof n === 'number');
                     setValue('estilos' as any, mappedTagIds as any);
-                  } catch {}
+                  } catch { }
                 }}
               />
             </div>
@@ -575,7 +575,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   📍 Sede General
                 </h2>
-                
+
                 <input
                   type="text"
                   value={values?.sede_general || ''}
@@ -593,8 +593,33 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 />
               </div>
 
-              {/* FAQ */}
+              {/* Ubicaciones del Social */}
               <div style={{
+                padding: '24px',
+                background: `${colors.dark}66`,
+                borderRadius: '16px',
+                border: `1px solid ${colors.light}22`,
+              }}>
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  color: colors.light,
+                  marginBottom: '12px',
+                }}>
+                  🗺️ Ubicaciones del Social
+                </h2>
+                <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '16px', color: colors.light }}>
+                  Agrega cada sede o punto de encuentro para este social. Puedes reutilizar ubicaciones guardadas o capturarlas manualmente.
+                </p>
+                <UbicacionesEditor
+                  value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
+                  onChange={(ubicaciones) => handleUbicacionesChange(ubicaciones as AcademyLocation[])}
+                  allowedZoneIds={Array.isArray((values as any)?.zonas) ? ((values as any)?.zonas as number[]).filter((n) => typeof n === 'number') : undefined}
+                />
+              </div>
+
+              {/* FAQ */}
+              {/* <div style={{
                 padding: '24px',
                 background: `${colors.dark}66`,
                 borderRadius: '16px',
@@ -610,7 +635,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 </h2>
                 <FAQEditor value={values?.faq || []} onChange={(faq) => setValue('faq', faq)} />
               </div>
-
+ */}
               {/* Galería de Medios (opcional) */}
               <div style={{
                 padding: '24px',
@@ -680,7 +705,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   📅 Fecha y Hora
                 </h2>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={{
@@ -707,7 +732,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-                  
+
                   <div>
                     <label style={{
                       display: 'block',
@@ -733,7 +758,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-                  
+
                   <div>
                     <label style={{
                       display: 'block',
@@ -837,7 +862,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     </div>
                   </>
                 )}
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div>
@@ -866,7 +891,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                         }}
                       />
                     </div>
-                    
+
                     <div>
                       <label style={{
                         display: 'block',
@@ -894,7 +919,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label style={{
                       display: 'block',
@@ -908,7 +933,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     <input
                       type="text"
                       value={values?.direccion || ''}
-                        onChange={(e) => updateManualLocationField('direccion', e.target.value)}
+                      onChange={(e) => updateManualLocationField('direccion', e.target.value)}
                       placeholder="Dirección completa"
                       style={{
                         width: '100%',
@@ -921,7 +946,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-                  
+
                   <div>
                     <label style={{
                       display: 'block',
@@ -948,7 +973,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-                  
+
                   <div>
                     <label style={{
                       display: 'block',
@@ -1058,7 +1083,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 }}>
                   🌐 Estado de Publicación
                 </h2>
-                
+
                 <div style={{ display: 'flex', gap: '16px' }}>
                   <label style={{
                     display: 'flex',
@@ -1078,7 +1103,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       📝 Borrador (solo tú puedes verlo)
                     </span>
                   </label>
-                  
+
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1143,7 +1168,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   💾 Cambios sin guardar
                 </span>
               )}
-              
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

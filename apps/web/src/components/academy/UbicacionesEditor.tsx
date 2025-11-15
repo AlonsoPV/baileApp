@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AcademyLocation } from '../../types/academy';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
 
+type UbicacionesEditorProps = {
+  value: AcademyLocation[];
+  onChange: (v: AcademyLocation[]) => void;
+  onSaveItem?: (index: number, item: AcademyLocation) => void;
+  allowedZoneIds?: number[];
+};
+
 export default function UbicacionesEditor({
-  value, onChange, onSaveItem
-}: { value: AcademyLocation[]; onChange:(v:AcademyLocation[])=>void; onSaveItem?:(index:number, item:AcademyLocation)=>void }) {
+  value,
+  onChange,
+  onSaveItem,
+  allowedZoneIds,
+}: UbicacionesEditorProps) {
   const [items, setItems] = useState<AcademyLocation[]>(value || []);
   const { zonas } = useTags('zona');
+  const zoneOptions = useMemo(() => {
+    if (!Array.isArray(zonas)) return [];
+    if (!allowedZoneIds || !allowedZoneIds.length) return zonas;
+    const allowed = new Set(allowedZoneIds);
+    const filtered = zonas.filter((z: any) => allowed.has(z.id));
+    return filtered.length ? filtered : zonas;
+  }, [zonas, allowedZoneIds]);
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<Record<number, boolean>>({});
 
@@ -153,7 +170,7 @@ export default function UbicacionesEditor({
             onChange={e=>patch(index, { zona_id: e.target.value ? Number(e.target.value) : null })}
           >
             <option value="">Seleccionar zona</option>
-            {(zonas || []).map((z:any) => (
+            {(zoneOptions || []).map((z:any) => (
               <option key={z.id} value={z.id}>{z.nombre}</option>
             ))}
           </select>
