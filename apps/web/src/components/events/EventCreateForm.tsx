@@ -119,7 +119,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
   const initialData = isParent ? props.parent : props.date;
-
+  
   // Mantener el estado de edición basado en si tenemos un ID
   const hasId = initialData?.id;
   const isActuallyEditing = isEditing && hasId;
@@ -180,6 +180,14 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ubicaciones: [] as any[],
     }
   });
+  const initialUbicaciones = React.useMemo(
+    () =>
+      Array.isArray((initialData as any)?.ubicaciones)
+        ? ((initialData as any)?.ubicaciones as AcademyLocation[])
+        : [],
+    [initialData]
+  );
+  const hasExistingUbicaciones = initialUbicaciones.length > 0;
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const hasPrefilledLocations = useRef(false);
   const selectedLocation = React.useMemo(() => {
@@ -282,7 +290,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     const currentUbicaciones = Array.isArray((values as any)?.ubicaciones)
       ? ((values as any)?.ubicaciones as AcademyLocation[])
       : [];
-    if (currentUbicaciones.length > 0) return;
+    if (isActuallyEditing && (hasExistingUbicaciones || currentUbicaciones.length > 0)) return;
+    if (!isActuallyEditing && currentUbicaciones.length > 0) return;
 
     const mapped = orgLocations.map((loc) => ({
       sede: loc.nombre || (loc as any).sede || '',
@@ -290,6 +299,12 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ciudad: loc.ciudad || '',
       referencias: loc.referencias || '',
       zona_id: typeof loc.zona_id === 'number' ? loc.zona_id : null,
+      zonaIds:
+        Array.isArray((loc as any)?.zona_ids) && (loc as any)?.zona_ids?.length
+          ? ((loc as any).zona_ids as number[]).filter((n) => typeof n === 'number')
+          : typeof loc.zona_id === 'number'
+          ? [loc.zona_id]
+          : [],
     }));
 
     if (mapped.length) {
@@ -310,7 +325,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       }
       hasPrefilledLocations.current = true;
     }
-  }, [isParent, isActuallyEditing, orgLocations, values, setValue]);
+  }, [isParent, isActuallyEditing, hasExistingUbicaciones, orgLocations, values, setValue]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
@@ -584,38 +599,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           {/* Campos específicos de parent */}
           {isParent && (
             <>
-              {/* Sede General */}
-           {/*    <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
-                  📍 Sede General
-                </h2>
-
-                <input
-                  type="text"
-                  value={values?.sede_general || ''}
-                  onChange={(e) => setValue('sede_general', e.target.value)}
-                  placeholder="Ubicación general del social (ej: Centro de Convenciones)"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    background: `${colors.dark}cc`,
-                    border: `2px solid ${colors.light}33`,
-                    color: colors.light,
-                    fontSize: '1rem',
-                  }}
-                />
-              </div> */}
 
               {/* Ubicaciones del Social */}
               <div style={{
