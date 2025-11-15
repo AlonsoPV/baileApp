@@ -32,7 +32,7 @@ export default function OrganizerEventParentEditScreen() {
       estilos: values.estilos || [],
       zonas: values.zonas || [],
       sede_general: values.sede_general || null,
-      faq: values.faq || [],
+      /* faq: values.faq || [], */
       media: values.media || [],
       ubicaciones: values.ubicaciones || [],
     };

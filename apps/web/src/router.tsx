@@ -15,7 +15,6 @@ import InfoScreen from './screens/InfoScreen';
 import { OrganizerEditScreen } from './screens/events/OrganizerEditScreen';
 import { OrganizerPublicScreen } from './screens/events/OrganizerPublicScreen';
 import { EventParentEditScreen } from './screens/events/EventParentEditScreen';
-import EventParentPublicScreen from './screens/events/EventParentPublicScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
@@ -51,8 +50,6 @@ import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventPar
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
 import OrganizerEventDateCreateScreen from './screens/events/OrganizerEventDateCreateScreen';
 import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEditScreen';
-import EventParentPublicScreenNew from './screens/events/EventParentPublicScreen';
-import EventDatePublicScreenNew from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
 import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
 import { DateLiveScreen } from './screens/events/DateLiveScreen';
@@ -160,7 +157,7 @@ export function AppRouter() {
         {/* New Social/Event Flow Routes */}
         {/* Social (Parent) Routes */}
         <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
-        <Route path="/social/:parentId" element={<EventParentPublicScreenNew />} />
+        <Route path="/social/:parentId" element={<EventParentPublicScreenModern />} />
         <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
         <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
         
@@ -205,7 +202,7 @@ export function AppRouter() {
       <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
       
       {/* Legacy event routes */}
-      <Route path="/events/parent/:id" element={<EventParentPublicScreen />} />
+      <Route path="/events/parent/:id" element={<EventParentPublicScreenModern />} />
       <Route path="/events/date/:id" element={<EventPublicScreen />} />
 
       {/* Default redirect */}

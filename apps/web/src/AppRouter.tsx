@@ -37,7 +37,6 @@ import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventPar
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEditScreen';
-import EventParentPublicScreen from './screens/events/EventParentPublicScreen';
 import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
