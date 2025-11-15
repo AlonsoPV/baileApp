@@ -599,7 +599,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           {/* Campos específicos de parent */}
           {isParent && (
             <>
-
               {/* Ubicaciones del Social */}
               <div style={{
                 padding: '24px',
@@ -616,7 +615,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   🗺️ Ubicaciones del Social
                 </h2>
                 <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '16px', color: colors.light }}>
-                  Agrega cada sede o punto de encuentro para este social. Puedes reutilizar ubicaciones guardadas o capturarlas manualmente. Podrás utilizarlas al momento de crear las fechas del social.
+                  Agrega cada sede o punto de encuentro para este social. Puedes reutilizar ubicaciones guardadas o capturarlas manualmente.
                 </p>
                 <UbicacionesEditor
                   value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
@@ -626,24 +625,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 />
               </div>
 
-              {/* FAQ */}
-              {/* <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
-                  ❓ Preguntas Frecuentes
-                </h2>
-                <FAQEditor value={values?.faq || []} onChange={(faq) => setValue('faq', faq)} />
-              </div>
- */}
               {/* Galería de Medios (opcional) */}
               <div style={{
                 padding: '24px',
