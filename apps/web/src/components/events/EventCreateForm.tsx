@@ -252,9 +252,9 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   }, [orgLocations, (values as any)?.lugar, (values as any)?.direccion, (values as any)?.ciudad, (values as any)?.referencias, selectedLocationId]);
 
   useEffect(() => {
-    if (!isParent || isActuallyEditing) return;
-    if (hasPrefilledLocations.current) return;
+    if (!isParent) return;
     if (!orgLocations.length) return;
+    if (hasPrefilledLocations.current) return;
     const currentUbicaciones = Array.isArray((values as any)?.ubicaciones)
       ? ((values as any)?.ubicaciones as AcademyLocation[])
       : [];
@@ -531,7 +531,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           </div>
 
           {/* Zonas */}
-          <div style={{
+        {/*   <div style={{
             padding: '24px',
             background: `${colors.dark}66`,
             borderRadius: '16px',
@@ -555,7 +555,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               onToggle={handleZonaToggle}
               autoExpandSelectedParents={false}
             />
-          </div>
+          </div> */}
 
           {/* Campos específicos de parent */}
           {isParent && (
