@@ -80,8 +80,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           <ImageWithFallback
             src={photos[currentIndex]}
             alt={`Imagen ${currentIndex + 1} de ${photos.length}`}
-            loading="lazy"
-            decoding="async"
             style={{
               width: '100%',
               height: '100%',
@@ -195,8 +193,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               <ImageWithFallback
                 src={photo}
                 alt={`Miniatura ${index + 1}`}
-                loading="lazy"
-                decoding="async"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </button>
@@ -232,8 +228,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             <ImageWithFallback
               src={photos[currentIndex]}
               alt={`Imagen ${currentIndex + 1} ampliada`}
-              loading="eager"
-              decoding="async"
+              priority
               style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
             />
 
@@ -1174,14 +1169,75 @@ export default function EventParentPublicScreen() {
                 }
               `}</style>
               
+              {/* Acciones del owner (crear fecha / editar social) */}
+              {isOwner && (
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate(`/social/${parent.id}/fecha/nueva`)}
+                    style={{
+                      padding: '0.75rem 1.4rem',
+                      borderRadius: 999,
+                      border: '2px solid rgba(30,136,229,0.4)',
+                      background: 'linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 22px rgba(30,136,229,.45)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <span>📅</span>
+                    <span>Crear nueva fecha</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate(`/social/${parent.id}/edit`)}
+                    style={{
+                      padding: '0.75rem 1.4rem',
+                      borderRadius: 999,
+                      border: '2px solid rgba(255,61,87,0.4)',
+                      background: 'linear-gradient(135deg, rgba(255,61,87,.95), rgba(255,140,66,.95))',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 22px rgba(255,61,87,.45)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <span>✏️</span>
+                    <span>Editar social</span>
+                  </motion.button>
+                </div>
+              )}
+
               {(() => {
-                // Filtrar solo fechas futuras
+                // Filtrar solo fechas futuras (incluyendo hoy) evitando problemas de zona horaria
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
+
+                const parseLocalYmd = (value: string) => {
+                  const plain = String(value).split('T')[0];
+                  const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+                  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+                    const fallback = new Date(value);
+                    return Number.isNaN(fallback.getTime()) ? null : fallback;
+                  }
+                  return new Date(y, m - 1, d);
+                };
                 
                 const futureDates = (dates || []).filter((d: any) => {
                   try {
-                    const dateObj = new Date(d.fecha);
+                    const dateObj = parseLocalYmd(d.fecha);
+                    if (!dateObj) return false;
                     dateObj.setHours(0, 0, 0, 0);
                     return dateObj >= today;
                   } catch {
@@ -1341,13 +1397,11 @@ export default function EventParentPublicScreen() {
                   boxShadow: '0 16px 40px rgba(0,0,0,.5)',
                   background: 'linear-gradient(135deg, rgba(229,57,53,.15), rgba(251,140,0,.15))'
                 }}>
-                  <ImageWithFallback
-                    src={avatarUrl}
-                    alt={`${parent.nombre} imagen principal`}
-                    loading="lazy"
-                    decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
+                <ImageWithFallback
+                  src={avatarUrl}
+                  alt={`${parent.nombre} imagen principal`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
                 </div>
               </div>
             </motion.div>

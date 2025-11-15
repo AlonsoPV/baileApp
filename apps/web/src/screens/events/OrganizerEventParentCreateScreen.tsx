@@ -33,6 +33,7 @@ export default function OrganizerEventParentCreateScreen() {
       sede_general: values.sede_general || null,
       faq: values.faq || [],
       media: values.media || [],
+      ubicaciones: values.ubicaciones || [],
     };
     
     console.log('[OrganizerEventParentCreateScreen] Payload:', payload);
