@@ -980,7 +980,7 @@ export function OrganizerProfileLive() {
                       fontSize: '.75rem',
                       fontWeight: 900
                     }}>✓</div>
-                    <span>✅</span>
+                    <span>Verificado</span>
                   </div>
                 )}
                 <button

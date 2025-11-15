@@ -6,7 +6,6 @@ import { useCreateParent } from "../../hooks/useEvents";
 import { useTags } from "../../hooks/useTags";
 import { useToast } from "../Toast";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
-import ChipPicker from "../common/ChipPicker";
 import FAQEditor from "../common/FAQEditor";
 import ScheduleEditor from "./ScheduleEditor";
 import DateFlyerUploader from "./DateFlyerUploader";
@@ -16,6 +15,7 @@ import { useEventParentMedia } from "../../hooks/useEventParentMedia";
 import RitmosChips from "../RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import UbicacionesEditor from "../academy/UbicacionesEditor";
+import ZonaGroupedChips from "../profile/ZonaGroupedChips";
 import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import type { AcademyLocation } from "../../types/academy";
 import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
@@ -228,6 +228,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   // Obtener tags para mapear ritmos
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
+  const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
   // Limitar ritmos permitidos según configuración del organizador
   const { data: myOrg } = useMyOrganizer();
   const allowedCatalogIds = ((myOrg as any)?.ritmos_seleccionados || []) as string[];
@@ -242,6 +243,20 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     }
   }, [allowedCatalogIds]);
   const editMode = isActuallyEditing;
+
+  const handleZonaToggle = (id: number) => {
+    const current = (((values as any)?.zonas || []) as number[]).filter(
+      (z) => typeof z === "number"
+    );
+    const exists = current.includes(id);
+    let next: number[];
+    if (exists) {
+      next = current.filter((z) => z !== id);
+    } else {
+      next = [...current, id];
+    }
+    setValue("zonas" as any, next as any);
+  };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -483,18 +498,19 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               fontSize: '1.5rem',
               fontWeight: '600',
               color: colors.light,
-              marginBottom: '20px',
+              marginBottom: '12px',
             }}>
               📍 Zonas de la Ciudad
             </h2>
-            
-            <ChipPicker
-              tipo="zona"
-              selected={values?.zonas || []}
-              onChange={(selected) => setValue('zonas', selected)}
-              label="Zonas de la Ciudad"
-              placeholder="Selecciona las zonas donde se realizará"
-              maxSelections={3}
+            <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '12px', color: colors.light }}>
+              Elige las zonas donde se realizará este social (puedes seleccionar varias).
+            </p>
+            <ZonaGroupedChips
+              mode="edit"
+              selectedIds={((values as any)?.zonas || []) as number[]}
+              allTags={zonaTags as any}
+              onToggle={handleZonaToggle}
+              autoExpandSelectedParents={false}
             />
           </div>
 

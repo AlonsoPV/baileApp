@@ -322,6 +322,9 @@ export function OrganizerPublicScreen() {
         .shimmer-effect { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .glass-card-container { opacity: 1; margin: 0 auto 2rem auto; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
+        .org-social-card-row { display: flex; align-items: flex-start; gap: 1.5rem; padding-top: 0.5rem; }
+        .org-social-card-row-icon { flex-shrink: 0; }
+        .org-social-card-row-cta { flex-shrink: 0; }
         .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: .5rem; }
         @media (max-width: 768px) { .org-root { padding-top: 64px; } }
         @media (max-width: 768px) {
@@ -336,6 +339,25 @@ export function OrganizerPublicScreen() {
           .glass-card h3 { font-size: 1.5rem !important; }
           .glass-card p { font-size: 1rem !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
+          .org-social-card-row { 
+            flex-direction: column !important; 
+            align-items: flex-start !important; 
+            gap: 1rem !important;
+          }
+          .org-social-card-row-icon {
+            width: 60px !important;
+            height: 60px !important;
+            font-size: 2.1rem !important;
+          }
+          .org-social-card-row-cta {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: flex-start !important;
+          }
+          .org-social-card-row-cta button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
         }
         @media (max-width: 480px) {
           .org-banner { padding: 1.5rem 1rem !important; }
@@ -345,6 +367,14 @@ export function OrganizerPublicScreen() {
           .glass-card { padding: 1rem !important; margin-bottom: 1rem !important; }
           .glass-card h3 { font-size: 1.25rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
+          .org-social-card-row {
+            gap: 0.85rem !important;
+          }
+          .org-social-card-row-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.9rem !important;
+          }
         }
       `}</style>
 
@@ -403,7 +433,7 @@ export function OrganizerPublicScreen() {
                       fontSize: '.75rem',
                       fontWeight: 900
                     }}>✓</div>
-                    <span>✅</span>
+                    <span>Verificado</span>
                   </div>
                 )}
                 <button
@@ -634,16 +664,20 @@ export function OrganizerPublicScreen() {
                     }} /> */}
 
                     {/* FILA 1: Información del Social */}
-                    <div style={{ 
-                      position: 'relative', 
-                      zIndex: 2,
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '1.5rem',
-                      paddingTop: '0.5rem'
-                    }}>
+                    <div
+                      className="org-social-card-row"
+                      style={{ 
+                        position: 'relative', 
+                        zIndex: 2,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '1.5rem',
+                        paddingTop: '0.5rem'
+                      }}
+                    >
                       {/* Icono */}
                       <motion.div
+                        className="org-social-card-row-icon"
                         whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
                         transition={{ duration: 0.5 }}
                         style={{
@@ -698,7 +732,7 @@ export function OrganizerPublicScreen() {
                       </div>
                       
                       {/* Botón de ver detalles */}
-                      <div style={{ flexShrink: 0 }}>
+                      <div className="org-social-card-row-cta" style={{ flexShrink: 0 }}>
                         <motion.button
                           whileHover={{ scale: 1.08, y: -2 }}
                           whileTap={{ scale: 0.95 }}
