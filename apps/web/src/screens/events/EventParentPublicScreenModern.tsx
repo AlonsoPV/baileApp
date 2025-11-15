@@ -1419,7 +1419,7 @@ export default function EventParentPublicScreen() {
           )}
 
           {/* FAQ */}
-          {parent.faq && Array.isArray(parent.faq) && parent.faq.length > 0 && (
+         {/*  {parent.faq && Array.isArray(parent.faq) && parent.faq.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1470,7 +1470,7 @@ export default function EventParentPublicScreen() {
                 ))}
               </div>
             </motion.div>
-          )}
+          )} */}
 
           {/* Galería  */}
           {carouselPhotos.length > 0 && (

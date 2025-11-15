@@ -116,9 +116,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       : undefined;
     setSelectedLocationId(match?.id ? String(match.id) : '');
   };
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
-  const hasPrefilledLocations = useRef(false);
-
   const isParent = props.mode === 'parent';
   const isEditing = isParent ? !!props.parent : !!props.date;
   const initialData = isParent ? props.parent : props.date;
@@ -183,6 +180,33 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       ubicaciones: [] as any[],
     }
   });
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const hasPrefilledLocations = useRef(false);
+  const selectedLocation = React.useMemo(() => {
+    if (!selectedLocationId) return null;
+    return orgLocations.find((loc) => String(loc.id ?? '') === selectedLocationId) || null;
+  }, [selectedLocationId, orgLocations]);
+  const selectedLocationZonaIds = React.useMemo(() => {
+    if (!selectedLocation) return [];
+    const ids = Array.isArray((selectedLocation as any)?.zona_ids)
+      ? ((selectedLocation as any).zona_ids as number[]).filter((id) => typeof id === 'number')
+      : Array.isArray((selectedLocation as any)?.zonas)
+      ? ((selectedLocation as any).zonas as number[]).filter((id) => typeof id === 'number')
+      : typeof selectedLocation.zona_id === 'number'
+      ? [selectedLocation.zona_id]
+      : [];
+    return ids;
+  }, [selectedLocation]);
+  const manualZonaIds = React.useMemo(() => {
+    if (selectedLocationZonaIds.length > 0) return [];
+    return Array.isArray((values as any)?.zonas)
+      ? ((values as any).zonas as number[]).filter((id) => typeof id === 'number')
+      : [];
+  }, [selectedLocationZonaIds, values]);
+  const [zonesExpanded, setZonesExpanded] = useState(false);
+  useEffect(() => {
+    setZonesExpanded(false);
+  }, [selectedLocationId, (values as any)?.zonas]);
 
   const mapOrganizerLocationToUbicacion = React.useCallback((loc?: OrganizerLocation | null) => {
     if (!loc) return null;
@@ -609,7 +633,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   🗺️ Ubicaciones del Social
                 </h2>
                 <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '16px', color: colors.light }}>
-                  Agrega cada sede o punto de encuentro para este social. Puedes reutilizar ubicaciones guardadas o capturarlas manualmente.
+                  Agrega cada sede o punto de encuentro para este social. Puedes reutilizar ubicaciones guardadas o capturarlas manualmente. Podrás utilizarlas al momento de crear las fechas del social.
                 </p>
                 <UbicacionesEditor
                   value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
@@ -1003,6 +1027,51 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     />
                   </div>
                 </div>
+            {(() => {
+              const zoneIdsToShow = selectedLocationZonaIds.length
+                ? selectedLocationZonaIds
+                : manualZonaIds;
+              if (!zoneIdsToShow || zoneIdsToShow.length === 0 || zonaTags.length === 0) {
+                return null;
+              }
+              const isLocationDriven = selectedLocationZonaIds.length > 0;
+              return (
+                <div style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    onClick={() => setZonesExpanded((prev) => !prev)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      border: `1px solid ${colors.light}33`,
+                      background: zonesExpanded
+                        ? 'linear-gradient(135deg, rgba(30,136,229,0.22), rgba(124,77,255,0.18))'
+                        : 'rgba(255,255,255,0.04)',
+                      color: colors.light,
+                      fontSize: '0.85rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {isLocationDriven ? 'Zonas (ubicación)' : 'Zonas (perfil)'}
+                    <span style={{ fontSize: 12 }}>{zonesExpanded ? '▾' : '▸'}</span>
+                  </button>
+                  {zonesExpanded && (
+                    <div style={{ marginTop: 8 }}>
+                      <ZonaGroupedChips
+                        selectedIds={zoneIdsToShow}
+                        allTags={zonaTags as any}
+                        mode="display"
+                        autoExpandSelectedParents={false}
+                        style={{ gap: '4px', fontSize: 12 }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
               </div>
 
               {/* Ubicaciones Múltiples */}
