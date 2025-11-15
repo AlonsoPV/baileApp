@@ -17,6 +17,7 @@ import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import EventCard from "../../components/explore/cards/EventCard";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { fmtDateTime } from "../../utils/format";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado
@@ -841,6 +842,22 @@ export default function EventParentPublicScreen() {
               >
                 {parent.biografia || 'Descubre más sobre este evento especial'}
               </motion.p>
+
+              {/* Info rápida de la próxima fecha (hijo) */}
+              {nextDate && (
+                <div className="info-strip" style={{ marginBottom: '1.25rem' }}>
+                  {nextDate.fecha && (
+                    <span className="info-chip">
+                      📅 {fmtDateTime(nextDate.fecha, nextDate.hora_inicio)}
+                    </span>
+                  )}
+                  {(nextDate.lugar || nextDate.ciudad || nextDate.direccion) && (
+                    <span className="info-chip">
+                      📍 {[nextDate.lugar, nextDate.ciudad].filter(Boolean).join(' • ') || nextDate.direccion}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Descripción */}
               {parent.descripcion && (
