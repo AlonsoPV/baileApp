@@ -14,6 +14,7 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 
@@ -586,8 +587,17 @@ export default function EventDatePublicScreen() {
       line-height: 1.1;
       font-weight: 900;
       letter-spacing: -0.01em;
-      color: #fff;
+      color: rgb(255, 255, 255);
       text-transform: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px,
+                   rgba(0, 0, 0, 0.6) 0px 0px 8px,
+                   rgba(0, 0, 0, 0.8) -1px -1px 0px,
+                   rgba(0, 0, 0, 0.8) 1px -1px 0px,
+                   rgba(0, 0, 0, 0.8) -1px 1px 0px,
+                   rgba(0, 0, 0, 0.8) 1px 1px 0px;
     }
     .chip {
       display:inline-flex;
@@ -684,6 +694,29 @@ export default function EventDatePublicScreen() {
                     </a>
                   )}
                 </div>
+
+                {/* Ritmos & Zonas (zonas agrupadas en chips padres colapsables) */}
+                {(Array.isArray(date.ritmos) && date.ritmos.length > 0) || (Array.isArray(date.zonas) && date.zonas.length > 0) ? (
+                  <div style={{ marginTop: '.75rem' }}>
+                    {Array.isArray(date.ritmos) && date.ritmos.length > 0 && (
+                      <div style={{ marginBottom: '.5rem' }}>
+                        <RitmosChips
+                          selected={date.ritmos.map((id: number) => String(id))}
+                          onChange={() => {}}
+                          readOnly
+                        />
+                      </div>
+                    )}
+                    {Array.isArray(date.zonas) && date.zonas.length > 0 && zonas && (
+                      <ZonaGroupedChips
+                        mode="display"
+                        selectedIds={date.zonas as number[]}
+                        allTags={zonas as any}
+                        autoExpandSelectedParents={false}
+                      />
+                    )}
+                  </div>
+                ) : null}
               </div>
 
               {/* Columna derecha */}

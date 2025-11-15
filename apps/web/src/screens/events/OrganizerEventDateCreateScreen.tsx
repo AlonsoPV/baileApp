@@ -44,6 +44,7 @@ export default function OrganizerEventDateCreateScreen() {
       cronograma: values.cronograma || [],
       costos: values.costos || [],
       media: values.media || [],
+      ubicaciones: values.ubicaciones || [],
       estado_publicacion: values.estado_publicacion || 'borrador',
     };
     

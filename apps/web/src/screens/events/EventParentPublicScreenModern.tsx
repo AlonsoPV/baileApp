@@ -15,6 +15,7 @@ import RequireLogin from "@/components/auth/RequireLogin";
 import RitmosChips from "../../components/RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import EventCard from "../../components/explore/cards/EventCard";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { fmtDateTime } from "../../utils/format";
@@ -707,19 +708,19 @@ export default function EventParentPublicScreen() {
         .social-hero-title {
           font-size: clamp(2.5rem, 5vw, 4.5rem);
           font-weight: 900;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 40%, #FFD166 80%, #fff 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
           margin-bottom: 1.25rem;
           letter-spacing: -0.04em;
           line-height: 1.05;
-          text-shadow: 
-            0 4px 30px rgba(240,147,251,.5),
-            0 2px 15px rgba(245,87,108,.4),
-            0 0 40px rgba(255,209,102,.3);
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
-          position: relative;
+          color: rgb(255, 255, 255);
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px,
+                       rgba(0, 0, 0, 0.6) 0px 0px 8px,
+                       rgba(0, 0, 0, 0.8) -1px -1px 0px,
+                       rgba(0, 0, 0, 0.8) 1px -1px 0px,
+                       rgba(0, 0, 0, 0.8) -1px 1px 0px,
+                       rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
         
         .social-hero-description {
@@ -880,8 +881,8 @@ export default function EventParentPublicScreen() {
                 </motion.div>
               )}
 
-              {/* Ritmos y Zonas sin títulos */}
-              {(selectedCatalogIds.length > 0 || getZonaNombres().length > 0) && (
+              {/* Ritmos y Zonas (zonas agrupadas en chips padres colapsables) */}
+              {(selectedCatalogIds.length > 0 || (parent as any)?.zonas?.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -932,25 +933,14 @@ export default function EventParentPublicScreen() {
                     </div>
                   )}
 
-                  {getZonaNombres().length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
-                      {getZonaNombres().map((zona) => (
-                        <span
-                          key={zona}
-                          style={{
-                            padding: '.5rem .85rem',
-                            borderRadius: 999,
-                            border: '1px solid rgba(255,255,255,.28)',
-                            background: 'rgba(255,255,255,.10)',
-                            fontWeight: 800,
-                            fontSize: '0.9rem',
-                            color: '#fff'
-                          }}
-                        >
-                          📍 {zona}
-                        </span>
-                      ))}
-                    </div>
+                  {(parent as any)?.zonas && Array.isArray((parent as any).zonas) && zonas && (
+                    <ZonaGroupedChips
+                      mode="display"
+                      selectedIds={(parent as any).zonas as number[]}
+                      allTags={zonas as any}
+                      autoExpandSelectedParents={false}
+                      style={{ marginTop: '0.25rem' }}
+                    />
                   )}
                 </motion.div>
               )}

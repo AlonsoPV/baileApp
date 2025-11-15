@@ -14,7 +14,7 @@ export function useEventParent(parentId?: number) {
       // Try to fetch with ubicaciones first, fallback if column doesn't exist
       let query = supabase
         .from("events_parent")
-        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, created_at, updated_at")
+        .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, ubicaciones, created_at, updated_at")
         .eq("id", parentId);
       
       const { data, error } = await query.maybeSingle();

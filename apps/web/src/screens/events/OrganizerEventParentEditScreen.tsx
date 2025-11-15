@@ -29,7 +29,6 @@ export default function OrganizerEventParentEditScreen() {
     const patch = {
       nombre: values.nombre,
       biografia: values.biografia || null,
-      descripcion: values.descripcion || null,
       estilos: values.estilos || [],
       zonas: values.zonas || [],
       sede_general: values.sede_general || null,

@@ -181,7 +181,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       media: [],
       
       // Campos específicos de parent
-      descripcion: '',
       sede_general: '',
       faq: [],
       
@@ -406,35 +405,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 />
               </div>
 
-              {isParent && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: colors.light,
-                  }}>
-                    Descripción (opcional)
-                  </label>
-                  <textarea
-                    value={values?.descripcion || ''}
-                    onChange={(e) => setValue('descripcion', e.target.value)}
-                    placeholder="Descripción adicional del social"
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      background: `${colors.dark}cc`,
-                      border: `2px solid ${colors.light}33`,
-                      color: colors.light,
-                      fontSize: '1rem',
-                      resize: 'vertical',
-                    }}
-                  />
-                </div>
-              )}
             </div>
           </div>
 
