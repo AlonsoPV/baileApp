@@ -366,15 +366,15 @@ export default function BrandProfileEditor() {
                     alignItems: 'center',
                     gap: '1rem'
                   }}>
-                    <div style={{ 
-                      width: '160px', 
-                      height: '160px', 
-                      borderRadius: '50%', 
-                      overflow: 'hidden',
-                      border: '3px solid rgba(255, 255, 255, 0.2)',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-                      background: 'linear-gradient(135deg, #E53935, #FB8C00)'
-                    }}>
+                  <div style={{ 
+                    width: '160px', 
+                    height: '160px', 
+                    borderRadius: '24px', 
+                    overflow: 'hidden',
+                    border: '3px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    background: 'linear-gradient(135deg, #E53935, #FB8C00)'
+                  }}>
                       {form.avatar_url ? (
                         <ImageWithFallback 
                           src={form.avatar_url} 

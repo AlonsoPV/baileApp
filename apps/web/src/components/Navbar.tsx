@@ -43,13 +43,48 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           .nav-root {
             position: sticky !important;
             top: 0 !important; bottom: auto; left: 0; right: 0;
-            padding: .6rem .9rem !important;
+            padding: .55rem .7rem !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
-            min-height: 56px;
+            min-height: 54px;
           }
-          .nav-left { display: flex !important; }
-          .nav-icons { gap: .35rem !important; }
-          .nav-icon { font-size: 1.25rem !important; padding: .55rem !important; }
+          .nav-left { 
+            display: flex !important; 
+            flex: 0 0 auto !important;
+          }
+          .nav-center {
+            flex: 1 1 auto !important;
+          }
+          .nav-center-brand {
+            gap: 0.45rem !important;
+          }
+          .nav-brand-title {
+            font-size: 0.8rem !important;
+            letter-spacing: 1.2px !important;
+          }
+          .nav-brand-tagline {
+            font-size: 0.7rem !important;
+          }
+          .nav-icons { 
+            gap: .3rem !important; 
+            flex: 0 0 auto !important;
+          }
+          .nav-icon { 
+            font-size: 1.1rem !important; 
+            padding: .4rem !important; 
+          }
+          .nav-logo-img {
+            width: 30px !important;
+            height: 30px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .nav-root {
+            padding: .5rem .6rem !important;
+          }
+          .nav-brand-tagline {
+            display: none !important;
+          }
         }
 
         .nav-profile-button {
@@ -136,6 +171,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
       {/* Logo + Nombre centrado */}
       <div
+        className="nav-center"
         style={{
           flex: 1,
           display: 'flex',
@@ -145,6 +181,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       >
         <Link
           to="/"
+          className="nav-center-brand"
           style={{
             textDecoration: 'none',
             color: '#FFF',
@@ -159,6 +196,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           <img
             src={SEO_ICON_URL}
             alt="Logo Dónde Bailar"
+            className="nav-logo-img"
             style={{
               width: 34,
               height: 34,
@@ -177,6 +215,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             }}
           >
             <span
+              className="nav-brand-title"
               style={{
                 textTransform: 'uppercase',
                 letterSpacing: 1.4,
@@ -186,6 +225,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               Dónde Bailar MX
             </span>
             <span
+              className="nav-brand-tagline"
               style={{
                 fontSize: '0.78rem',
                 opacity: 0.9,

@@ -196,7 +196,7 @@ export default function BrandProfileLive() {
                 width={1200}
                 height={500}
                 sizes="(max-width: 768px) 100vw, 1200px"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.35)' }}
               />
             </div>
           )}
@@ -204,7 +204,7 @@ export default function BrandProfileLive() {
           <div className="banner-grid" style={{ position: 'relative' }}>
             {/* Avatar */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
-              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '50%', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary }}>
+              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary }}>
                 {avatarUrl ? (
                   <ImageWithFallback
                     src={avatarUrl}
