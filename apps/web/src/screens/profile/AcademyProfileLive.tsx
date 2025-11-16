@@ -579,8 +579,8 @@ export default function AcademyProfileLive() {
           color: rgba(255,255,255,0.8);
         }
         .profile-promos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          display: flex;
+          flex-direction: column;
           gap: 1.5rem;
         }
         .profile-promo-card {

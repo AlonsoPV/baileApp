@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useTeacherMy } from "../../hooks/useTeacher";
+import { useLiveClasses } from "@/hooks/useLiveClasses";
+import ClasesLiveTabs from "@/components/classes/ClasesLiveTabs";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import { useTeacherMedia } from "../../hooks/useTeacherMedia";
@@ -376,6 +378,12 @@ export default function TeacherProfileLive() {
     }
   }, [isLoading, teacher, navigate]);
 
+  // Obtener clases desde las tablas / cronograma
+  const teacherNumericId = (teacher as any)?.id as number | undefined;
+  const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
+    teacherNumericId ? { teacherId: teacherNumericId } : undefined
+  );
+
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
@@ -570,8 +578,8 @@ export default function TeacherProfileLive() {
           color: rgba(255,255,255,0.8);
         }
         .profile-promos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          display: flex;
+          flex-direction: column;
           gap: 1.5rem;
         }
         .profile-promo-card {
@@ -1133,7 +1141,33 @@ export default function TeacherProfileLive() {
 
             {/* Contenido de clases */}
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <ClasesLive title="" cronograma={(teacher as any)?.cronograma || []} costos={(teacher as any)?.costos || []} ubicacion={{ nombre: (teacher as any)?.ubicaciones?.[0]?.nombre, direccion: (teacher as any)?.ubicaciones?.[0]?.direccion, ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad, referencias: (teacher as any)?.ubicaciones?.[0]?.referencias }} showCalendarButton={true} />
+              {classesLoading ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+                  Cargando clases...
+                </div>
+              ) : classesFromTables && classesFromTables.length > 0 ? (
+                <ClasesLiveTabs
+                  classes={classesFromTables}
+                  title=""
+                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                  sourceType="teacher"
+                  sourceId={teacherNumericId}
+                  isClickable={false}
+                />
+              ) : (
+                <ClasesLive
+                  title=""
+                  cronograma={(teacher as any)?.cronograma || []}
+                  costos={(teacher as any)?.costos || []}
+                  ubicacion={{
+                    nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
+                    direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
+                    ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
+                    referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
+                  }}
+                  showCalendarButton={true}
+                />
+              )}
             </div>
           </motion.section>
 
@@ -1413,7 +1447,7 @@ export default function TeacherProfileLive() {
                   fontWeight: '700',
                   background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
                   WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',

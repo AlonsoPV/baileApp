@@ -19,6 +19,8 @@ import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 // import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
+import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
+import { useLiveClasses } from "@/hooks/useLiveClasses";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
@@ -165,6 +167,12 @@ export default function TeacherProfileEditor() {
   }, [teacher, (form as any)?.promociones]);
 
   const profileId = (form as any)?.id;
+
+  // Clases desde useLiveClasses para tabs (solo si ya existe perfil)
+  const teacherNumericId = (teacher as any)?.id as number | undefined;
+  const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
+    teacherNumericId ? { teacherId: teacherNumericId } : undefined
+  );
 
   const handleSave = async () => {
     try {
