@@ -61,14 +61,24 @@ export function Login() {
         setIsSuccess(true);
         showToast(result.message, 'success');
       } else {
-        setError('Error al enviar el enlace mágico');
+        // Manejar mensaje de rate limit específicamente
+        const errorMessage = (result as any)?.message || 'Error al enviar el enlace mágico';
+        setError(errorMessage);
         setIsSuccess(false);
-        showToast('Error al enviar el enlace mágico', 'error');
+        showToast(errorMessage, 'error');
       }
-    } catch (error) {
-      setError('Error inesperado. Intenta de nuevo.');
+    } catch (error: any) {
+      // Verificar si es rate limit
+      if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para iniciar sesión, o contacta al administrador si el problema persiste.';
+        setError(rateLimitMessage);
+        showToast(rateLimitMessage, 'error');
+      } else {
+        console.error('[Login] Unexpected error:', error);
+        setError('Error inesperado. Intenta de nuevo.');
+        showToast('Error inesperado. Intenta de nuevo.', 'error');
+      }
       setIsSuccess(false);
-      showToast('Error inesperado. Intenta de nuevo.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -99,14 +109,24 @@ export function Login() {
         setIsSignUpSuccess(true);
         showToast(result.message, 'success');
       } else {
-        setSignUpError('Error al enviar el enlace mágico');
+        // Manejar mensaje de rate limit específicamente
+        const errorMessage = (result as any)?.message || 'Error al enviar el enlace mágico';
+        setSignUpError(errorMessage);
         setIsSignUpSuccess(false);
-        showToast('Error al enviar el enlace mágico', 'error');
+        showToast(errorMessage, 'error');
       }
-    } catch (error) {
-      setSignUpError('Error inesperado. Intenta de nuevo.');
+    } catch (error: any) {
+      // Verificar si es rate limit
+      if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para registrarte, o contacta al administrador si el problema persiste.';
+        setSignUpError(rateLimitMessage);
+        showToast(rateLimitMessage, 'error');
+      } else {
+        console.error('[Login] Unexpected error (signup):', error);
+        setSignUpError('Error inesperado. Intenta de nuevo.');
+        showToast('Error inesperado. Intenta de nuevo.', 'error');
+      }
       setIsSignUpSuccess(false);
-      showToast('Error inesperado. Intenta de nuevo.', 'error');
     } finally {
       setIsSignUpLoading(false);
     }
