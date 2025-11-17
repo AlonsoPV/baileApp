@@ -36,7 +36,15 @@ export function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
-  const handleMagicLink = async () => {
+  const handleMagicLink = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    // Protección contra doble submit
+    if (isLoading) {
+      console.warn('[Login] Intento de doble submit bloqueado');
+      return;
+    }
+
     if (!email.trim()) {
       setError('Por favor ingresa tu email');
       setIsSuccess(false);
@@ -84,7 +92,15 @@ export function Login() {
     }
   };
 
-  const handleSignUpMagicLink = async () => {
+  const handleSignUpMagicLink = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    // Protección contra doble submit
+    if (isSignUpLoading) {
+      console.warn('[Login] Intento de doble submit bloqueado (signup)');
+      return;
+    }
+
     if (!signUpEmail.trim()) {
       setSignUpError('Por favor ingresa tu email');
       setIsSignUpSuccess(false);
@@ -475,7 +491,7 @@ export function Login() {
               Únete a nuestra comunidad
             </p>
           </div>
-          <div>
+          <form onSubmit={(e) => { e.preventDefault(); handleSignUpMagicLink(e); }}>
             <div style={{ marginBottom: spacing[3] }}>
               <label
                 htmlFor="signup-email"
@@ -630,7 +646,7 @@ export function Login() {
                 💡 Te enviaremos un enlace mágico a tu email para crear tu cuenta.
               </p>
             </div>
-          </div>
+          </form>
         </motion.div>
         </div>
       </div>
