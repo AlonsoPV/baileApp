@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
 import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
@@ -51,8 +52,13 @@ export default function AddToCalendarWithStats({
   const [alreadyAdded, setAlreadyAdded] = useState(false);
   const [loading, setLoading] = useState(false);
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const routerLocation = useLocation();
 
   const eventIdStr = String(eventId);
+
+  // Determinar si es una clase (tiene classId, academyId o teacherId)
+  const isClass = !!(classId || academyId || teacherId);
 
   // Cargar usuario actual
   useEffect(() => {
@@ -60,6 +66,37 @@ export default function AddToCalendarWithStats({
       setUser(data.session?.user || null);
     });
   }, []);
+
+  // Si es una clase y no hay usuario, mostrar botón de login en lugar del botón de calendario
+  if (isClass && !user?.id) {
+    return (
+      <button
+        onClick={() => navigate("/auth/login", { state: { from: routerLocation.pathname + routerLocation.search } })}
+        style={{
+          padding: showAsIcon ? "0" : "12px 16px",
+          width: showAsIcon ? "40px" : "auto",
+          height: showAsIcon ? "40px" : "auto",
+          borderRadius: showAsIcon ? "50%" : 14,
+          border: "1px solid rgba(255,255,255,0.18)",
+          background: "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))",
+          color: "#fff",
+          fontWeight: 900,
+          letterSpacing: ".01em",
+          cursor: "pointer",
+          boxShadow: "0 10px 28px rgba(0,0,0,0.35)",
+          backdropFilter: "blur(8px)",
+          display: showAsIcon ? "flex" : "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: showAsIcon ? "20px" : "inherit",
+        }}
+        title="Inicia sesión para añadir al calendario"
+        aria-label="Inicia sesión para añadir al calendario"
+      >
+        {showAsIcon ? "🔒" : "🔒 Inicia sesión"}
+      </button>
+    );
+  }
 
   // Cargar número de interesados
   useEffect(() => {

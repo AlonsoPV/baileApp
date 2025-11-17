@@ -25,6 +25,7 @@ import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
 import { useAcceptedTeachers } from "../../hooks/useAcademyTeacherInvitations";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import HorizontalSlider from "../../components/explore/HorizontalSlider";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1362,11 +1363,9 @@ export default function AcademyProfileLive() {
                   <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Maestros que colaboran con la academia</p>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                {acceptedTeachers.map((t: any) => {
-                  console.log('[AcademyProfileLive] Teacher data:', t);
-                  console.log('[AcademyProfileLive] teacher_avatar:', t.teacher_avatar);
-                  console.log('[AcademyProfileLive] teacher_portada:', t.teacher_portada);
+              <HorizontalSlider
+                items={acceptedTeachers}
+                renderItem={(t: any) => {
                   const teacherData = {
                     id: t.teacher_id,
                     nombre_publico: t.teacher_name,
@@ -1382,10 +1381,11 @@ export default function AcademyProfileLive() {
                       ? [{ url: t.teacher_avatar, type: 'image', slot: 'avatar' }]
                       : (Array.isArray(t.teacher_media) ? t.teacher_media : [])
                   };
-                  console.log('[AcademyProfileLive] Mapped teacherData:', teacherData);
                   return <TeacherCard key={t.teacher_id} item={teacherData} />;
-                })}
-              </div>
+                }}
+                gap={24}
+                autoColumns="280px"
+              />
             </motion.section>
           )}
 

@@ -31,31 +31,115 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
   }
 
   return (
-    <div style={{ display: "grid", gap: "1.5rem", padding: "1.5rem 0" }}>
-      {/* Resumen global */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))",
-          border: "1px solid rgba(255,255,255,.15)",
-          borderRadius: 20,
-          padding: "1.5rem",
-          boxShadow: "0 8px 32px rgba(0,0,0,.3)",
-        }}
-      >
-        <h3
-          style={{
-            margin: "0 0 1rem 0",
-            fontSize: "1.5rem",
-            fontWeight: 800,
-            color: "#fff",
-          }}
+    <>
+      <style>{`
+        .metrics-container {
+          display: grid;
+          gap: 1.5rem;
+          padding: 1.5rem 0;
+        }
+        .metrics-section {
+          background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+          border: 1px solid rgba(255,255,255,.15);
+          border-radius: 20px;
+          padding: 1.5rem;
+          box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+        .metrics-section h3 {
+          margin: 0 0 1rem 0;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #fff;
+        }
+        .metrics-role-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+        .metrics-date-card {
+          padding: 1rem;
+          background: rgba(255,255,255,0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .metrics-date-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        .metrics-date-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .metrics-date-rsvp {
+          text-align: right;
+          min-width: 120px;
+        }
+        @media (max-width: 768px) {
+          .metrics-container {
+            gap: 1rem;
+            padding: 1rem 0;
+          }
+          .metrics-section {
+            padding: 1rem;
+            border-radius: 16px;
+          }
+          .metrics-section h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+          }
+          .metrics-role-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+          }
+          .metrics-date-card {
+            padding: 0.875rem;
+          }
+          .metrics-date-header {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .metrics-date-rsvp {
+            text-align: left;
+            min-width: auto;
+            width: 100%;
+          }
+        }
+        @media (max-width: 480px) {
+          .metrics-container {
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+          }
+          .metrics-section {
+            padding: 0.875rem;
+            border-radius: 12px;
+          }
+          .metrics-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+          }
+          .metrics-role-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+          .metrics-date-card {
+            padding: 0.75rem;
+          }
+        }
+      `}</style>
+      <div className="metrics-container">
+        {/* Resumen global */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="metrics-section"
         >
-          Métricas globales de fechas
-        </h3>
+          <h3>
+            Métricas globales de fechas
+          </h3>
 
         {global ? (
           <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -100,13 +184,7 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
               >
                 Por rol
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "0.75rem",
-                }}
-              >
+              <div className="metrics-role-grid">
                 <div
                   style={{
                     padding: "0.75rem",
@@ -314,23 +392,9 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.05 }}
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))",
-          border: "1px solid rgba(255,255,255,.15)",
-          borderRadius: 20,
-          padding: "1.5rem",
-          boxShadow: "0 8px 32px rgba(0,0,0,.3)",
-        }}
+        className="metrics-section"
       >
-        <h3
-          style={{
-            margin: "0 0 1rem 0",
-            fontSize: "1.5rem",
-            fontWeight: 800,
-            color: "#fff",
-          }}
-        >
+        <h3>
           Métricas por fecha
         </h3>
 
@@ -365,23 +429,10 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2 }}
-                  style={{
-                    padding: "1rem",
-                    background: "rgba(255,255,255,0.05)",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
+                  className="metrics-date-card"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: "1rem",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="metrics-date-header">
+                    <div className="metrics-date-info">
                       <div
                         style={{
                           fontSize: "1rem",
@@ -407,12 +458,7 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
                         </div>
                       )}
                     </div>
-                    <div
-                      style={{
-                        textAlign: "right",
-                        minWidth: "120px",
-                      }}
-                    >
+                    <div className="metrics-date-rsvp">
                       <div
                         style={{
                           fontSize: "0.75rem",
@@ -541,6 +587,7 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
         )}
       </motion.section>
     </div>
+    </>
   );
 }
 

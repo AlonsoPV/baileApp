@@ -7,44 +7,12 @@ type PanelProps = { teacherId: number };
 export function TeacherMetricsPanel({ teacherId }: PanelProps) {
   const { global, porClase, loading, error, refetch } = useTeacherClassMetrics(teacherId);
   
-  console.log("[TeacherMetricsPanel] 🔍 ========== DEBUG PANEL ==========");
-  console.log("[TeacherMetricsPanel] 🔍 teacherId recibido:", teacherId);
-  console.log("[TeacherMetricsPanel] 📊 Métricas completas:", { 
-    global, 
-    porClase, 
-    loading, 
-    error,
-    porClaseLength: porClase?.length || 0,
-  });
-  if (porClase && porClase.length > 0) {
-    console.log("[TeacherMetricsPanel] 🔍 Detalles de porClase:");
-    porClase.forEach((cl, idx) => {
-      console.log(`[TeacherMetricsPanel] 🔍 Clase ${idx}:`, {
-        class_id: cl.class_id,
-        nombre: cl.nombre,
-        fecha: cl.fecha,
-        precio: cl.precio,
-        totalTentativos: cl.totalTentativos,
-        porRol: cl.porRol,
-      });
-    });
-  }
-  console.log("[TeacherMetricsPanel] 🔍 ========== FIN DEBUG PANEL ==========");
-  
   // Refrescar métricas cada vez que se monta el componente y cuando cambian los datos
   React.useEffect(() => {
     if (teacherId) {
-      console.log("[TeacherMetricsPanel] 🔄 Refrescando métricas para teacherId:", teacherId);
       refetch();
     }
   }, [teacherId, refetch]);
-  
-  // También refrescar cuando cambian las métricas (para detectar nuevos registros)
-  React.useEffect(() => {
-    if (teacherId && !loading) {
-      console.log("[TeacherMetricsPanel] 📊 Métricas actualizadas, total tentativos:", global?.totalTentativos);
-    }
-  }, [global, porClase, teacherId, loading]);
 
   if (loading) {
     return (
@@ -66,23 +34,116 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
   }
 
   return (
-    <div style={{ display: "grid", gap: "1.5rem", padding: "1.5rem 0" }}>
-      {/* Resumen global */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          background: "linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))",
-          border: "1px solid rgba(255,255,255,.15)",
-          borderRadius: 20,
-          padding: "1.5rem",
-          boxShadow: "0 8px 32px rgba(0,0,0,.3)",
-        }}
-      >
-        <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.5rem", fontWeight: 800, color: "#fff" }}>
-          Métricas globales
-        </h3>
+    <>
+      <style>{`
+        .metrics-container {
+          display: grid;
+          gap: 1.5rem;
+          padding: 1.5rem 0;
+        }
+        .metrics-section {
+          background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+          border: 1px solid rgba(255,255,255,.15);
+          border-radius: 20px;
+          padding: 1.5rem;
+          box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+        .metrics-section h3 {
+          margin: 0 0 1rem 0;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #fff;
+        }
+        .metrics-role-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+        .metrics-class-card {
+          padding: 1rem;
+          background: rgba(255,255,255,0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .metrics-class-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        .metrics-class-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .metrics-class-total {
+          padding: 0.5rem 0.75rem;
+          background: rgba(240,147,251,0.15);
+          border-radius: 8px;
+          border: 1px solid rgba(240,147,251,0.3);
+        }
+        @media (max-width: 768px) {
+          .metrics-container {
+            gap: 1rem;
+            padding: 1rem 0;
+          }
+          .metrics-section {
+            padding: 1rem;
+            border-radius: 16px;
+          }
+          .metrics-section h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+          }
+          .metrics-role-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+          }
+          .metrics-class-card {
+            padding: 0.875rem;
+          }
+          .metrics-class-header {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .metrics-class-total {
+            width: 100%;
+            text-align: center;
+          }
+        }
+        @media (max-width: 480px) {
+          .metrics-container {
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+          }
+          .metrics-section {
+            padding: 0.875rem;
+            border-radius: 12px;
+          }
+          .metrics-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+          }
+          .metrics-role-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+          .metrics-class-card {
+            padding: 0.75rem;
+          }
+        }
+      `}</style>
+      <div className="metrics-container">
+        {/* Resumen global */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="metrics-section"
+        >
+          <h3>
+            Métricas globales
+          </h3>
         {global ? (
           <div style={{ display: "grid", gap: "1.5rem" }}>
             <div
@@ -105,7 +166,7 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
               <div style={{ fontSize: "0.875rem", opacity: 0.9, marginBottom: "0.75rem", color: "#fff" }}>
                 Por rol
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem" }}>
+              <div className="metrics-role-grid">
                 <div
                   style={{
                     padding: "0.75rem",
@@ -179,15 +240,9 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        style={{
-          background: "linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.03))",
-          border: "1px solid rgba(255,255,255,.15)",
-          borderRadius: 20,
-          padding: "1.5rem",
-          boxShadow: "0 8px 32px rgba(0,0,0,.3)",
-        }}
+        className="metrics-section"
       >
-        <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.5rem", fontWeight: 800, color: "#fff" }}>
+        <h3>
           Métricas por clase
         </h3>
         {porClase.length === 0 ? (
@@ -197,12 +252,6 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
             {porClase.map((cl) => {
-              console.log(`[TeacherMetricsPanel] 🔍 Renderizando clase ${cl.class_id}:`, {
-                nombre: cl.nombre,
-                fecha: cl.fecha,
-                precio: cl.precio,
-              });
-              
               // Formatear fecha si existe
               // cl.fecha puede ser una fecha (YYYY-MM-DD) o un día de la semana (ej: "Lunes")
               let fechaFormateada: string | null = null;
@@ -238,26 +287,16 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
                   }).format(cl.precio)
                 : null;
               
-              console.log(`[TeacherMetricsPanel] 🔍 Valores formateados:`, {
-                fechaFormateada,
-                precioFormateado,
-              });
-              
               return (
               <motion.div
                 key={cl.class_id}
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
-                style={{
-                  padding: "1rem",
-                  background: "rgba(255,255,255,0.05)",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
+                className="metrics-class-card"
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "1rem", flexWrap: "wrap" }}>
-                  <div style={{ flex: 1 }}>
+                <div className="metrics-class-header">
+                  <div className="metrics-class-info">
                     <div style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "0.5rem", color: "#fff" }}>
                       {cl.nombre}
                     </div>
@@ -274,14 +313,7 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
                       )}
                     </div>
                   </div>
-                  <div
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      background: "rgba(240,147,251,0.15)",
-                      borderRadius: 8,
-                      border: "1px solid rgba(240,147,251,0.3)",
-                    }}
-                  >
+                  <div className="metrics-class-total">
                     <div style={{ fontSize: "0.75rem", opacity: 0.9, marginBottom: "0.25rem", color: "#fff" }}>
                       Total
                     </div>
@@ -349,6 +381,7 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
         )}
       </motion.section>
     </div>
+    </>
   );
 }
 

@@ -20,6 +20,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
+import HorizontalSlider from "../../components/explore/HorizontalSlider";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1288,8 +1289,9 @@ export default function TeacherProfileLive() {
                   <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                {academies.map((academy: any) => {
+              <HorizontalSlider
+                items={academies}
+                renderItem={(academy: any) => {
                   const academyData = {
                     id: academy.academy_id,
                     nombre_publico: academy.academy_name,
@@ -1305,8 +1307,10 @@ export default function TeacherProfileLive() {
                       : []
                   };
                   return <AcademyCard key={academy.academy_id} item={academyData} />;
-                })}
-              </div>
+                }}
+                gap={24}
+                autoColumns="280px"
+              />
             </motion.section>
           )}
 

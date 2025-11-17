@@ -12,7 +12,7 @@ const DEFAULT_KEYWORDS = [
   'maestros de baile',
   'baile en México',
   'ritmos latinos',
-  'baile app',
+  'dónde bailar',
   'eventos de baile',
 ];
 
