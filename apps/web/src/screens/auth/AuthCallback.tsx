@@ -19,7 +19,13 @@ export default function AuthCallback() {
         }
         
         const user = data.session?.user;
-        console.log('[AuthCallback] Session user:', user?.email);
+        const provider = user?.app_metadata?.provider || user?.user_metadata?.provider || 'unknown';
+        console.log('[AuthCallback] Session user:', {
+          email: user?.email,
+          id: user?.id,
+          provider: provider,
+          created_at: user?.created_at,
+        });
         
         if (user) {
           // Verificar si el usuario tiene perfil y onboarding completo

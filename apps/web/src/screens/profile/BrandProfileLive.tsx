@@ -135,6 +135,7 @@ export default function BrandProfileLive() {
           .banner-avatar { width: 220px !important; height: 220px !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
           .section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
+          img, [style*="objectFit"] { max-width: 100% !important; height: auto !important; object-fit: contain !important; }
         }
         @media (max-width: 480px) {
           .banner-grid h1 { font-size: 2.2rem !important; }
@@ -855,15 +856,23 @@ function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
                 marginBottom: '0.75rem',
                 borderRadius: '12px',
                 overflow: 'hidden',
-                background: 'rgba(0,0,0,0.2)'
+                background: 'rgba(0,0,0,0.2)',
+                minHeight: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
                 <ImageWithFallback 
                   src={p.image} 
                   alt={p.name} 
+                  width={360}
+                  height={300}
+                  sizes="(max-width: 768px) 100vw, 360px"
                   style={{ 
                     width: '100%', 
                     height: 'auto', 
                     maxHeight: '300px',
+                    minHeight: '200px',
                     objectFit: 'contain',
                     borderRadius: 12 
                   }} 

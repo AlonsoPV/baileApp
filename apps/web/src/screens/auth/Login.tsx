@@ -194,22 +194,52 @@ export function Login() {
 
     try {
       const siteUrl = getSiteUrl();
+      console.log('[Login] Iniciando Facebook OAuth con redirectTo:', `${siteUrl}/auth/callback`);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
           redirectTo: `${siteUrl}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+          },
         },
       });
 
       if (error) {
+        console.error('[Login] Facebook OAuth error details:', {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+          name: error.name,
+        });
         throw error;
       }
 
+      console.log('[Login] Facebook OAuth iniciado correctamente, redirigiendo...');
       // El flujo de OAuth redirige automáticamente, así que no necesitamos hacer nada más
       // El callback manejará la redirección después de la autenticación
     } catch (err: any) {
-      console.error('[Login] Facebook OAuth error', err);
-      const msg = err?.message ?? 'Error al iniciar sesión con Facebook.';
+      console.error('[Login] Facebook OAuth error completo:', {
+        error: err,
+        message: err?.message,
+        status: err?.status,
+        code: err?.code,
+        name: err?.name,
+        stack: err?.stack,
+      });
+      
+      let msg = 'Error al iniciar sesión con Facebook.';
+      
+      // Mensajes de error más específicos
+      if (err?.message?.includes('provider') || err?.message?.includes('not enabled')) {
+        msg = 'Facebook OAuth no está configurado. Por favor contacta al administrador.';
+      } else if (err?.message?.includes('redirect') || err?.message?.includes('callback')) {
+        msg = 'Error en la configuración de redirección. Verifica la configuración de Facebook OAuth.';
+      } else if (err?.message) {
+        msg = `Error: ${err.message}`;
+      }
+      
       if (isSignUp) {
         setSignUpError(msg);
         showToast(msg, 'error');
