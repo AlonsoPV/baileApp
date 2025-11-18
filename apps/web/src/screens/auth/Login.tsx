@@ -694,8 +694,11 @@ export function Login() {
                 borderRadius: borderRadius.md,
               }}
             >
-              <p style={{ margin: 0, fontSize: '0.8rem' }}>
-                💡 Te enviaremos un enlace de registro a tu email para crear tu cuenta.
+              <p style={{ margin: 0, fontSize: '0.8rem', marginBottom: spacing[1] }}>
+                💡 <strong>Con Google o enlace mágico no necesitas contraseña.</strong>
+              </p>
+              <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.8 }}>
+                Si deseas iniciar sesión con email y contraseña después, podrás establecerla en tu perfil.
               </p>
             </div>
           </form>

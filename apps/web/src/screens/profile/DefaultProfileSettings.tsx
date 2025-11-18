@@ -10,6 +10,7 @@ import { Chip } from "../../components/profile/Chip";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "../../components/Toast";
 import { supabase } from "../../lib/supabase";
+import { updatePassword } from "../../utils/passwordReset";
 
 const colors = {
   primary: '#E53935',
@@ -33,8 +34,51 @@ export default function DefaultProfileSettings() {
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMethod, setDeleteMethod] = useState<'email' | 'direct'>('email');
+  
+  // Estados para establecer contraseña
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const profileOptions = getProfileOptions();
+  
+  const handleSetPassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Las contraseñas no coinciden');
+      return;
+    }
+    
+    setIsSettingPassword(true);
+    try {
+      const result = await updatePassword(newPassword);
+      if (result.success) {
+        setPasswordSuccess('Contraseña establecida correctamente. Ahora puedes iniciar sesión con email y contraseña.');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordSection(false);
+        showToast('Contraseña establecida correctamente', 'success');
+      } else {
+        setPasswordError(result.error?.message || 'Error al establecer la contraseña');
+        showToast('Error al establecer la contraseña', 'error');
+      }
+    } catch (error: any) {
+      setPasswordError(error?.message || 'Error inesperado');
+      showToast('Error al establecer la contraseña', 'error');
+    } finally {
+      setIsSettingPassword(false);
+    }
+  };
   
   const handleDeleteRequest = async () => {
     if (!user?.email) {
