@@ -46,6 +46,7 @@ export default function AppShell() {
     { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
     { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
     { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
+    { id: 'legal', label: 'Aviso de Privacidad', icon: '🔒', onClick: () => navigate('/aviso-de-privacidad') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
     { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: handleLogout },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;

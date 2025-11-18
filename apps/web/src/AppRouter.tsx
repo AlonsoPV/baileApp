@@ -113,6 +113,7 @@ export default function AppRouter() {
         <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
         <Route path="/about" element={<AboutScreen />} />
         <Route path="/legal" element={<LegalScreen />} />
+        <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
         <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
         <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
         <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
