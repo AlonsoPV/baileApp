@@ -26,11 +26,10 @@ export default function OrganizerEventDateCreateScreen() {
       throw new Error('ID del social no válido');
     }
 
-    const payload = {
+    const basePayload = {
       parent_id: parentIdNum,
       nombre: values.nombre || null,
       biografia: values.biografia || null,
-      fecha: values.fecha,
       hora_inicio: values.hora_inicio || null,
       hora_fin: values.hora_fin || null,
       lugar: values.lugar || null,
@@ -47,12 +46,42 @@ export default function OrganizerEventDateCreateScreen() {
       ubicaciones: values.ubicaciones || [],
       estado_publicacion: values.estado_publicacion || 'borrador',
     };
-    
-    console.log('[OrganizerEventDateCreateScreen] Payload:', payload);
-    console.log('[OrganizerEventDateCreateScreen] Values:', values);
 
-    const newDate = await createDate.mutateAsync(payload);
-    return newDate;
+    // Si hay repetición semanal, crear múltiples fechas
+    if (values.repetir_semanal && values.fecha) {
+      const semanas = values.semanas_repetir || 4;
+      const fechaInicio = new Date(values.fecha);
+      const fechas: any[] = [];
+      
+      for (let i = 0; i < semanas; i++) {
+        const fechaNueva = new Date(fechaInicio);
+        fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
+        fechas.push({
+          ...basePayload,
+          fecha: fechaNueva.toISOString().split('T')[0],
+        });
+      }
+
+      console.log('[OrganizerEventDateCreateScreen] Creando fechas recurrentes:', fechas.length);
+      
+      // Crear todas las fechas
+      const createdDates = await Promise.all(
+        fechas.map(payload => createDate.mutateAsync(payload))
+      );
+      
+      console.log('[OrganizerEventDateCreateScreen] Fechas creadas:', createdDates.length);
+      return createdDates[0]; // Retornar la primera fecha creada
+    } else {
+      // Crear una sola fecha
+      const payload = {
+        ...basePayload,
+        fecha: values.fecha,
+      };
+      
+      console.log('[OrganizerEventDateCreateScreen] Payload:', payload);
+      const newDate = await createDate.mutateAsync(payload);
+      return newDate;
+    }
   };
 
   const handleSuccess = (dateId: number) => {

@@ -458,7 +458,85 @@ export function OrganizerProfileLive() {
   const getUpcomingDates = () => {
     const upcomingItems: any[] = [];
 
-    eventDates?.forEach((date, index) => {
+    // Obtener fecha y hora actual en CDMX
+    const getTodayCDMX = () => {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      return formatter.format(new Date());
+    };
+
+    const getNowCDMX = () => {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(now);
+      const y = Number(parts.find(p => p.type === 'year')?.value || '0');
+      const m = Number(parts.find(p => p.type === 'month')?.value || '1');
+      const d = Number(parts.find(p => p.type === 'day')?.value || '1');
+      const h = Number(parts.find(p => p.type === 'hour')?.value || '0');
+      const min = Number(parts.find(p => p.type === 'minute')?.value || '0');
+      return new Date(Date.UTC(y, m - 1, d, h, min, 0));
+    };
+
+    const todayCDMX = getTodayCDMX();
+    const nowCDMX = getNowCDMX();
+
+    // Filtrar solo fechas futuras (incluyendo hoy si la hora no ha pasado)
+    const parseLocalYmd = (value: string) => {
+      const plain = String(value).split('T')[0];
+      const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+        const fallback = new Date(value);
+        return Number.isNaN(fallback.getTime()) ? null : fallback;
+      }
+      return new Date(y, m - 1, d);
+    };
+
+    const futureDates = (eventDates || []).filter((d: any) => {
+      try {
+        const fechaStr = String(d.fecha).split('T')[0];
+        const dateObj = parseLocalYmd(d.fecha);
+        if (!dateObj) return false;
+        
+        // Si la fecha es hoy, verificar la hora
+        if (fechaStr === todayCDMX) {
+          const horaStr = d.hora_inicio as string | null | undefined;
+          if (!horaStr) return true; // Si no hay hora, mostrar todo el día
+          
+          const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
+          if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
+          
+          const [hhRaw, minRaw] = String(horaStr).split(':');
+          const hh = parseInt(hhRaw ?? '0', 10);
+          const min = parseInt(minRaw ?? '0', 10);
+          
+          const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
+          return eventDateTime.getTime() >= nowCDMX.getTime();
+        }
+        
+        // Para fechas futuras, solo verificar que sea >= hoy
+        dateObj.setHours(0, 0, 0, 0);
+        const todayObj = parseLocalYmd(todayCDMX);
+        if (!todayObj) return false;
+        todayObj.setHours(0, 0, 0, 0);
+        return dateObj >= todayObj;
+      } catch {
+        return false;
+      }
+    });
+
+    futureDates.forEach((date, index) => {
       const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
 
       const horaFormateada = date.hora_inicio && date.hora_fin

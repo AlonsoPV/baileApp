@@ -56,7 +56,13 @@ export default function AuthCallback() {
             return;
           }
           
-          // Verificar PIN solo si tiene PIN configurado Y no está verificado en esta sesión
+          // Si no tiene onboarding completo, ir a onboarding (sin verificar PIN)
+          if (!profile?.onboarding_complete) {
+            navigate('/onboarding/basics', { replace: true });
+            return;
+          }
+          
+          // Verificar PIN solo si tiene PIN configurado Y onboarding completo Y no está verificado en esta sesión
           if (profile?.pin_hash) {
             const { isPinVerified } = await import('@/lib/pin');
             const alreadyVerified = isPinVerified(user.id);
@@ -67,12 +73,6 @@ export default function AuthCallback() {
               return;
             }
             // Si ya está verificado, continuar normalmente
-          }
-          
-          // Si no tiene onboarding completo, ir a onboarding
-          if (!profile?.onboarding_complete) {
-            navigate('/onboarding/basics', { replace: true });
-            return;
           }
           
           // Si todo está OK, ir a explore

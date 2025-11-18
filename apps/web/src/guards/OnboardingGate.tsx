@@ -74,12 +74,12 @@ export default function OnboardingGate() {
   const complete = data?.onboarding_complete === true;
   const hasPin = !!data?.pin_hash;
 
-  // 4) Si completo ⇒ libera la app
+  // 4) Si completo ⇒ libera la app (solo verificar PIN si no está en onboarding)
   if (complete) {
-    // Enforce PIN verification for protected areas
+    // Enforce PIN verification for protected areas (solo si no está en onboarding)
     const onPinRoutes = location.pathname.startsWith(routes.auth.pin) || location.pathname.startsWith(routes.auth.pinSetup);
-    if (!onPinRoutes && hasPin) {
-      // Solo exigir PIN si el usuario tiene PIN configurado
+    if (!onPinRoutes && hasPin && !isOnboardingRoute) {
+      // Solo exigir PIN si el usuario tiene PIN configurado y NO está en onboarding
       if (needsPinVerify(user.id) && !isPinVerified(user.id)) {
         return <Navigate to={routes.auth.pin} replace />;
       }
@@ -92,6 +92,6 @@ export default function OnboardingGate() {
     return <Navigate to={routes.onboarding.basics} replace />;
   }
 
-  // 6) Estás en onboarding ⇒ renderiza la ruta de onboarding
+  // 6) Estás en onboarding ⇒ renderiza la ruta de onboarding (sin verificar PIN)
   return <Outlet />;
 }

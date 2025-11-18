@@ -31,8 +31,8 @@ export default function PinSetup() {
       const { error } = await supabase
         .from('profiles_user')
         .update({ 
-          pin_hash: hash,
-          onboarding_complete: true // Marcar onboarding completo al configurar PIN
+          pin_hash: hash
+          // No marcar onboarding_complete aquí - el onboarding se completa en PickZonas
         })
         .eq('user_id', user.id);
       if (error) throw error;
@@ -42,7 +42,7 @@ export default function PinSetup() {
       const { setPinVerified } = await import('@/lib/pin');
       setPinVerified(user.id);
       
-      // Redirigir directo a explore (onboarding completo)
+      // Redirigir a explore (o donde estaba antes)
       navigate('/explore', { replace: true });
     } catch (e: any) {
       setError(e?.message || 'Error al guardar PIN');

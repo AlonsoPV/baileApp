@@ -178,6 +178,10 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       flyer_url: null,
       estado_publicacion: 'borrador',
       ubicaciones: [] as any[],
+      // Repetición semanal
+      repetir_semanal: false,
+      semanas_repetir: 4,
+      fecha_fin_repetir: '',
     }
   });
   const initialUbicaciones = React.useMemo(
@@ -774,9 +778,63 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     />
                   </div>
                 </div>
+
+                {/* Repetición Semanal */}
+                <div style={{ marginTop: '24px', padding: '20px', background: `${colors.dark}44`, borderRadius: '12px', border: `1px solid ${colors.light}22` }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: (values as any)?.repetir_semanal ? '16px' : '0' }}>
+                    <input
+                      type="checkbox"
+                      checked={(values as any)?.repetir_semanal || false}
+                      onChange={(e) => setValue('repetir_semanal', e.target.checked)}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <span style={{ fontSize: '1rem', fontWeight: '600', color: colors.light }}>
+                      🔁 Repetir semanalmente
+                    </span>
+                  </label>
+
+                  {(values as any)?.repetir_semanal && (
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          color: colors.light,
+                        }}>
+                          Número de semanas
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="52"
+                          value={(values as any)?.semanas_repetir || 4}
+                          onChange={(e) => setValue('semanas_repetir', parseInt(e.target.value) || 4)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            background: `${colors.dark}cc`,
+                            border: `2px solid ${colors.light}33`,
+                            color: colors.light,
+                            fontSize: '1rem',
+                          }}
+                        />
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: colors.light }}>
+                          Se crearán fechas cada semana durante {((values as any)?.semanas_repetir || 4)} semana{((values as any)?.semanas_repetir || 4) !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Ubicación Específica */}
+              {/* Ubicación del Evento */}
               <div style={{
                 padding: '24px',
                 background: `${colors.dark}66`,
@@ -789,20 +847,20 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   color: colors.light,
                   marginBottom: '20px',
                 }}>
-                  📍 Ubicación Específica
+                  📍 Ubicación del Evento
                 </h2>
-
                 {orgLocations.length > 0 && (
                   <>
-                    <div style={{ marginBottom: 12 }}>
-                      <OrganizerLocationPicker
-                        organizerId={organizer?.id}
-                        onPick={(u) => applyOrganizerLocationToForm(u as OrganizerLocation)}
-                        title="Buscar y usar ubicación guardada"
-                      />
-                    </div>
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontWeight: 600, marginBottom: 8 }}>Elegir ubicación existente o ingresa una nueva</div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        color: colors.light,
+                      }}>
+                        Elegir ubicación existente o ingresa una nueva
+                      </label>
                       <div style={{ position: 'relative' }}>
                         <select
                           value={selectedLocationId}
@@ -817,20 +875,26 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                           }}
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            background: 'rgba(255,255,255,0.08)',
-                            border: `1px solid ${colors.light}33`,
-                            color: colors.light,
-                            fontSize: '1rem',
+                            padding: '12px 14px',
+                            background: '#2b2b2b',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            color: '#FFFFFF',
                             outline: 'none',
+                            fontSize: 14,
+                            borderRadius: 12,
                             appearance: 'none',
                             WebkitAppearance: 'none',
                           }}
                         >
-                          <option value="">— Escribir manualmente —</option>
+                          <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                            — Escribir manualmente —
+                          </option>
                           {orgLocations.map((loc) => (
-                            <option key={loc.id} value={String(loc.id)} style={{ color: '#111' }}>
+                            <option
+                              key={loc.id}
+                              value={String(loc.id)}
+                              style={{ color: '#FFFFFF', background: '#2b2b2b' }}
+                            >
                               {loc.nombre || loc.direccion || 'Ubicación'}
                             </option>
                           ))}
@@ -838,7 +902,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                         <span
                           style={{
                             position: 'absolute',
-                            right: 18,
+                            right: 14,
                             top: '50%',
                             transform: 'translateY(-50%)',
                             pointerEvents: 'none',
@@ -851,64 +915,34 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     </div>
                   </>
                 )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontSize: '1rem',
-                        fontWeight: '600',
+                {/* Formulario de ubicación manual (como en OrganizerProfileEditor) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: colors.light,
+                    }}>
+                      Nombre de la ubicación
+                    </label>
+                    <input
+                      type="text"
+                      value={values?.lugar || ''}
+                      onChange={(e) => updateManualLocationField('lugar', e.target.value)}
+                      placeholder="Ej: Sede Central / Salón Principal"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        background: `${colors.dark}cc`,
+                        border: `2px solid ${colors.light}33`,
                         color: colors.light,
-                      }}>
-                        Lugar
-                      </label>
-                      <input
-                        type="text"
-                        value={values?.lugar || ''}
-                        onChange={(e) => updateManualLocationField('lugar', e.target.value)}
-                        placeholder="Nombre del lugar"
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: '1rem',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        marginBottom: '8px',
                         fontSize: '1rem',
-                        fontWeight: '600',
-                        color: colors.light,
-                      }}>
-                        Ciudad
-                      </label>
-                      <input
-                        type="text"
-                        value={values?.ciudad || ''}
-                        onChange={(e) => updateManualLocationField('ciudad', e.target.value)}
-                        placeholder="Ciudad"
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: '1rem',
-                        }}
-                      />
-                    </div>
+                      }}
+                    />
                   </div>
-
                   <div>
                     <label style={{
                       display: 'block',
@@ -923,7 +957,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       type="text"
                       value={values?.direccion || ''}
                       onChange={(e) => updateManualLocationField('direccion', e.target.value)}
-                      placeholder="Dirección completa"
+                      placeholder="Calle, número, colonia"
                       style={{
                         width: '100%',
                         padding: '12px 16px',
@@ -935,7 +969,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
                   <div>
                     <label style={{
                       display: 'block',
@@ -944,13 +979,39 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       fontWeight: '600',
                       color: colors.light,
                     }}>
-                      Referencias
+                      Ciudad
+                    </label>
+                    <input
+                      type="text"
+                      value={values?.ciudad || ''}
+                      onChange={(e) => updateManualLocationField('ciudad', e.target.value)}
+                      placeholder="Ciudad"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        background: `${colors.dark}cc`,
+                        border: `2px solid ${colors.light}33`,
+                        color: colors.light,
+                        fontSize: '1rem',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: colors.light,
+                    }}>
+                      Notas o referencias
                     </label>
                     <input
                       type="text"
                       value={values?.referencias || ''}
                       onChange={(e) => updateManualLocationField('referencias', e.target.value)}
-                      placeholder="Puntos de referencia, cómo llegar..."
+                      placeholder="Ej. Entrada lateral, 2do piso"
                       style={{
                         width: '100%',
                         padding: '12px 16px',
@@ -962,95 +1023,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       }}
                     />
                   </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: colors.light,
-                    }}>
-                      Requisitos
-                    </label>
-                    <textarea
-                      value={(values as any)?.requisitos || ''}
-                      onChange={(e) => setValue('requisitos' as any, e.target.value)}
-                      placeholder="Requisitos para participar (edad, nivel, vestimenta, etc.)"
-                      rows={3}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        background: `${colors.dark}cc`,
-                        border: `2px solid ${colors.light}33`,
-                        color: colors.light,
-                        fontSize: '1rem',
-                        resize: 'vertical',
-                      }}
-                    />
-                  </div>
                 </div>
-            {(() => {
-              const zoneIdsToShow = selectedLocationZonaIds.length
-                ? selectedLocationZonaIds
-                : manualZonaIds;
-              if (!zoneIdsToShow || zoneIdsToShow.length === 0 || zonaTags.length === 0) {
-                return null;
-              }
-              const isLocationDriven = selectedLocationZonaIds.length > 0;
-              return (
-                <div style={{ marginTop: 14 }}>
-                  <button
-                    type="button"
-                    onClick={() => setZonesExpanded((prev) => !prev)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 999,
-                      border: `1px solid ${colors.light}33`,
-                      background: zonesExpanded
-                        ? 'linear-gradient(135deg, rgba(30,136,229,0.22), rgba(124,77,255,0.18))'
-                        : 'rgba(255,255,255,0.04)',
-                      color: colors.light,
-                      fontSize: '0.85rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {isLocationDriven ? 'Zonas (ubicación)' : 'Zonas (perfil)'}
-                    <span style={{ fontSize: 12 }}>{zonesExpanded ? '▾' : '▸'}</span>
-                  </button>
-                  {zonesExpanded && (
-                    <div style={{ marginTop: 8 }}>
-                      <ZonaGroupedChips
-                        selectedIds={zoneIdsToShow}
-                        allTags={zonaTags as any}
-                        mode="display"
-                        autoExpandSelectedParents={false}
-                        style={{ gap: '4px', fontSize: 12 }}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-              </div>
-
-              {/* Ubicaciones Múltiples */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <UbicacionesEditor
-                  value={((values as any)?.ubicaciones || []) as AcademyLocation[]}
-                  onChange={(ubicaciones) => handleUbicacionesChange(ubicaciones as AcademyLocation[])}
-                  allowedZoneIds={Array.isArray((values as any)?.zonas) ? ((values as any)?.zonas as number[]).filter((n) => typeof n === 'number') : undefined}
-                  savedLocations={orgLocations as any}
-                />
               </div>
 
               {/* Cronograma */}
@@ -1074,7 +1047,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   costos={values?.costos || []}
                   onChangeCostos={(costos) => setValue('costos', costos)}
                   ritmos={ritmoTags}
+                  zonas={zonaTags}
                   eventFecha={values?.fecha || ''}
+                  onSaveCosto={() => {
+                    showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
+                  }}
                 />
               </div>
 

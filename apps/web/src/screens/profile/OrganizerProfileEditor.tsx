@@ -738,7 +738,9 @@ export default function OrganizerProfileEditor() {
     cronograma: [] as any[],
     costos: [] as any[],
     flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado'
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+    repetir_semanal: false,
+    semanas_repetir: 4
   });
 
   const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
@@ -937,8 +939,8 @@ export default function OrganizerProfileEditor() {
               fecha: fechaStr,
               hora_inicio: '20:00',
               hora_fin: '02:00',
-              lugar: 'Por definir',
-              ciudad: 'Tu ciudad',
+              lugar: null,
+              ciudad: null,
               estado_publicacion: 'borrador',
               ritmos_seleccionados: outSelected || [],
               zonas: form.zonas || [],
@@ -1065,11 +1067,10 @@ export default function OrganizerProfileEditor() {
       const resolvedZona = resolvedZonaFromLocation();
       const resolvedZonas = resolvedZonasFromLocations();
 
-      await createEventDate.mutateAsync({
+      const basePayload = {
         parent_id: Number(parentIdToUse),
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
-        fecha: dateForm.fecha,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: resolvedLugar,
@@ -1085,8 +1086,39 @@ export default function OrganizerProfileEditor() {
         costos: dateForm.costos || [],
         flyer_url: dateForm.flyer_url || null,
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
-      });
-      showToast('Fecha creada ✅', 'success');
+      };
+
+      // Si hay repetición semanal, crear múltiples fechas
+      if (dateForm.repetir_semanal && dateForm.fecha) {
+        const semanas = dateForm.semanas_repetir || 4;
+        const fechaInicio = new Date(dateForm.fecha);
+        const fechas: any[] = [];
+        
+        for (let i = 0; i < semanas; i++) {
+          const fechaNueva = new Date(fechaInicio);
+          fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
+          fechas.push({
+            ...basePayload,
+            fecha: fechaNueva.toISOString().split('T')[0],
+          });
+        }
+
+        console.log('[OrganizerProfileEditor] Creando fechas recurrentes:', fechas.length);
+        
+        // Crear todas las fechas
+        await Promise.all(
+          fechas.map(payload => createEventDate.mutateAsync(payload))
+        );
+        
+        showToast(`${fechas.length} fecha${fechas.length !== 1 ? 's' : ''} creada${fechas.length !== 1 ? 's' : ''} ✅`, 'success');
+      } else {
+        // Crear una sola fecha
+        await createEventDate.mutateAsync({
+          ...basePayload,
+          fecha: dateForm.fecha,
+        });
+        showToast('Fecha creada ✅', 'success');
+      }
       setShowDateForm(false);
       setDateForm({
         nombre: '',
@@ -1107,7 +1139,9 @@ export default function OrganizerProfileEditor() {
         cronograma: [],
         costos: [],
         flyer_url: null,
-        estado_publicacion: 'borrador'
+        estado_publicacion: 'borrador',
+        repetir_semanal: false,
+        semanas_repetir: 4
       });
       setSelectedDateLocationId('');
       setSelectedParentId(null);
@@ -2166,6 +2200,51 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     </div>
+
+                    {/* Repetición Semanal */}
+                    <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
+                        <input
+                          type="checkbox"
+                          checked={dateForm.repetir_semanal || false}
+                          onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            cursor: 'pointer',
+                          }}
+                        />
+                        <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
+                          🔁 Repetir semanalmente
+                        </span>
+                      </label>
+
+                      {dateForm.repetir_semanal && (
+                        <div style={{ marginTop: '16px' }}>
+                          <label style={{
+                            display: 'block',
+                            marginBottom: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                            color: '#FFFFFF',
+                          }}>
+                            Número de semanas
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="52"
+                            value={dateForm.semanas_repetir || 4}
+                            onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                            className="org-editor-input"
+                            style={{ color: '#FFFFFF' }}
+                          />
+                          <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
+                            Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Ubicaciones */}
@@ -2392,7 +2471,9 @@ export default function OrganizerProfileEditor() {
                           cronograma: [],
                           costos: [],
                           flyer_url: null,
-                          estado_publicacion: 'borrador'
+                          estado_publicacion: 'borrador',
+                          repetir_semanal: false,
+                          semanas_repetir: 4
                         });
                         setSelectedDateLocationId('');
                         setSelectedParentId(null);

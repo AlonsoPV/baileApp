@@ -69,8 +69,9 @@ export function PickZonas() {
       await updateProfileFields(updates);
       showToast('Zonas guardadas exitosamente 📍', 'success');
       
-      // Redirigir a configurar PIN (paso 4)
-      navigate('/auth/pin/setup', { replace: true });
+      // Marcar onboarding como completo y redirigir a explore
+      await updateProfileFields({ onboarding_complete: true });
+      navigate('/explore', { replace: true });
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');
