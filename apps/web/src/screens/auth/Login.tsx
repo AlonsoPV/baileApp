@@ -20,6 +20,7 @@ const getSiteUrl = () => {
 };
 
 export function Login() {
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
@@ -32,7 +33,6 @@ export function Login() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSignUpSuccess, setIsSignUpSuccess] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -79,7 +79,7 @@ export function Login() {
     } catch (error: any) {
       // Verificar si es rate limit
       if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
-        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" o "Continuar con Facebook" para iniciar sesión, o contacta al administrador si el problema persiste.';
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para iniciar sesión, o contacta al administrador si el problema persiste.';
         setError(rateLimitMessage);
         showToast(rateLimitMessage, 'error');
       } else {
@@ -187,69 +187,6 @@ export function Login() {
     }
   };
 
-  const handleFacebookAuth = async (isSignUp: boolean = false) => {
-    setIsFacebookLoading(true);
-    setError('');
-    setSignUpError('');
-
-    try {
-      const siteUrl = getSiteUrl();
-      console.log('[Login] Iniciando Facebook OAuth con redirectTo:', `${siteUrl}/auth/callback`);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${siteUrl}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-          },
-        },
-      });
-
-      if (error) {
-        console.error('[Login] Facebook OAuth error details:', {
-          message: error.message,
-          status: error.status,
-          code: error.code,
-          name: error.name,
-        });
-        throw error;
-      }
-
-      console.log('[Login] Facebook OAuth iniciado correctamente, redirigiendo...');
-      // El flujo de OAuth redirige automáticamente, así que no necesitamos hacer nada más
-      // El callback manejará la redirección después de la autenticación
-    } catch (err: any) {
-      console.error('[Login] Facebook OAuth error completo:', {
-        error: err,
-        message: err?.message,
-        status: err?.status,
-        code: err?.code,
-        name: err?.name,
-        stack: err?.stack,
-      });
-      
-      let msg = 'Error al iniciar sesión con Facebook.';
-      
-      // Mensajes de error más específicos
-      if (err?.message?.includes('provider') || err?.message?.includes('not enabled')) {
-        msg = 'Facebook OAuth no está configurado. Por favor contacta al administrador.';
-      } else if (err?.message?.includes('redirect') || err?.message?.includes('callback')) {
-        msg = 'Error en la configuración de redirección. Verifica la configuración de Facebook OAuth.';
-      } else if (err?.message) {
-        msg = `Error: ${err.message}`;
-      }
-      
-      if (isSignUp) {
-        setSignUpError(msg);
-        showToast(msg, 'error');
-      } else {
-        setError(msg);
-        showToast(msg, 'error');
-      }
-      setIsFacebookLoading(false);
-    }
-  };
 
   const handlePasswordLogin = async (e?: FormEvent) => {
     if (e) e.preventDefault();
@@ -303,11 +240,18 @@ export function Login() {
   return (
     <>
       <style>{`
-        @media (max-width: 768px) {
-          .login-grid {
-            grid-template-columns: 1fr !important;
+          @media (max-width: 768px) {
+            .login-grid {
+              grid-template-columns: 1fr !important;
+            }
           }
-        }
+          .tab-button {
+            transition: all 0.3s ease;
+          }
+          .tab-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+          }
       `}</style>
       <div
         style={{
@@ -320,35 +264,86 @@ export function Login() {
         }}
       >
         <div
-          className="login-grid"
           style={{
             width: '100%',
-            maxWidth: '900px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: spacing[4],
+            maxWidth: '500px',
           }}
         >
-        {/* Sección 1: Inicio de Sesión */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            background: colors.glass.light,
-            borderRadius: borderRadius['2xl'],
-            padding: spacing[4],
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: spacing[1], color: colors.gray[100] }}>
+          {/* Pestañas */}
+          <div style={{ 
+            display: 'flex', 
+            gap: spacing[2], 
+            marginBottom: spacing[4],
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: borderRadius.lg,
+            padding: spacing[1],
+          }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('login')}
+              style={{
+                flex: 1,
+                padding: spacing[3],
+                borderRadius: borderRadius.md,
+                border: 'none',
+                background: activeTab === 'login' 
+                  ? colors.gradients.primary 
+                  : 'transparent',
+                color: activeTab === 'login' ? '#fff' : colors.gray[400],
+                fontSize: '1rem',
+                fontWeight: activeTab === 'login' ? 700 : 600,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+            >
               🔓 Iniciar Sesión
-            </h2>
-            <p style={{ color: colors.gray[400], fontSize: '0.9rem' }}>
-              Accede a tu cuenta
-            </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('signup')}
+              style={{
+                flex: 1,
+                padding: spacing[3],
+                borderRadius: borderRadius.md,
+                border: 'none',
+                background: activeTab === 'signup' 
+                  ? colors.gradients.secondary 
+                  : 'transparent',
+                color: activeTab === 'signup' ? '#fff' : colors.gray[400],
+                fontSize: '1rem',
+                fontWeight: activeTab === 'signup' ? 700 : 600,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              ✨ Crear Cuenta
+            </button>
           </div>
+
+          {/* Contenido de las pestañas */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              background: colors.glass.light,
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+          {/* Pestaña: Inicio de Sesión */}
+          {activeTab === 'login' && (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: spacing[1], color: colors.gray[100] }}>
+                  🔓 Iniciar Sesión
+                </h2>
+                <p style={{ color: colors.gray[400], fontSize: '0.9rem' }}>
+                  Accede a tu cuenta
+                </p>
+              </div>
           <form onSubmit={handlePasswordLogin}>
             <div style={{ marginBottom: spacing[3] }}>
               <label
@@ -452,10 +447,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(false)}
-                disabled={isLoading || isGoogleLoading || isFacebookLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -493,38 +488,6 @@ export function Login() {
                 )}
               </Button>
 
-              <Button
-                type="button"
-                onClick={() => handleFacebookAuth(false)}
-                disabled={isLoading || isGoogleLoading || isFacebookLoading}
-                style={{
-                  width: '100%',
-                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
-                  background: '#1877F2',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing[2],
-                  fontWeight: 600,
-                }}
-              >
-                {isFacebookLoading ? (
-                  '⏳ Conectando...'
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Continuar con Facebook
-                  </>
-                )}
-              </Button>
-
               <div
                 style={{
                   display: 'flex',
@@ -542,10 +505,10 @@ export function Login() {
 
               <Button
                 type="submit"
-                disabled={isLoading || isGoogleLoading || isFacebookLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
                   background: colors.gradients.primary,
                 }}
               >
@@ -555,40 +518,32 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleMagicLink}
-                disabled={isLoading || isGoogleLoading || isFacebookLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
                   background: colors.gradients.secondary,
                 }}
               >
-                {isLoading ? '⏳ Enviando...' : '📬 Enlace mágico'}
+                {isLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}
               </Button>
             </div>
           </form>
-        </motion.div>
+          </>
+          )}
 
-        {/* Sección 2: Registro */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          style={{
-            background: colors.glass.light,
-            borderRadius: borderRadius['2xl'],
-            padding: spacing[4],
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: spacing[1], color: colors.gray[100] }}>
-              ✨ Crear Cuenta
-            </h2>
-            <p style={{ color: colors.gray[400], fontSize: '0.9rem' }}>
-              Únete a nuestra comunidad
-            </p>
-          </div>
-          <form onSubmit={(e) => { e.preventDefault(); handleSignUpMagicLink(e); }}>
+          {/* Pestaña: Crear Cuenta */}
+          {activeTab === 'signup' && (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: spacing[1], color: colors.gray[100] }}>
+                  ✨ Crear Cuenta
+                </h2>
+                <p style={{ color: colors.gray[400], fontSize: '0.9rem' }}>
+                  Únete a nuestra comunidad
+                </p>
+              </div>
+              <form onSubmit={(e) => { e.preventDefault(); handleSignUpMagicLink(e); }}>
             <div style={{ marginBottom: spacing[3] }}>
               <label
                 htmlFor="signup-email"
@@ -658,10 +613,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(true)}
-                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -699,38 +654,6 @@ export function Login() {
                 )}
               </Button>
 
-              <Button
-                type="button"
-                onClick={() => handleFacebookAuth(true)}
-                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
-                style={{
-                  width: '100%',
-                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
-                  background: '#1877F2',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing[2],
-                  fontWeight: 600,
-                }}
-              >
-                {isFacebookLoading ? (
-                  '⏳ Conectando...'
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Continuar con Facebook
-                  </>
-                )}
-              </Button>
-
               <div
                 style={{
                   display: 'flex',
@@ -749,14 +672,14 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleSignUpMagicLink}
-                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
                   background: colors.gradients.tertiary ?? colors.gradients.secondary,
                 }}
               >
-                {isSignUpLoading ? '⏳ Enviando...' : '✨ Registrarse con enlace mágico'}
+                {isSignUpLoading ? '⏳ Enviando...' : '✨ Enlace de registro'}
               </Button>
             </div>
 
@@ -772,11 +695,13 @@ export function Login() {
               }}
             >
               <p style={{ margin: 0, fontSize: '0.8rem' }}>
-                💡 Te enviaremos un enlace mágico a tu email para crear tu cuenta.
+                💡 Te enviaremos un enlace de registro a tu email para crear tu cuenta.
               </p>
             </div>
           </form>
-        </motion.div>
+          </>
+          )}
+          </motion.div>
         </div>
       </div>
     </>

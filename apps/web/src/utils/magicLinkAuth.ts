@@ -55,7 +55,7 @@ export async function signInWithMagicLink(email: string) {
           });
           
           // Mensaje más amigable para rate limit
-          const message = 'Ya se envió un correo hace poco. Revisa tu bandeja (y spam) o espera unos minutos antes de intentar de nuevo. Si el problema persiste, usa "Continuar con Google" o "Continuar con Facebook" para iniciar sesión.';
+          const message = 'Ya se envió un correo hace poco. Revisa tu bandeja (y spam) o espera unos minutos antes de intentar de nuevo. Si el problema persiste, usa "Continuar con Google" para iniciar sesión.';
           
           return {
             success: false,
@@ -77,7 +77,7 @@ export async function signInWithMagicLink(email: string) {
           return {
             success: false,
             error,
-            message: 'Error al enviar el email. Por favor verifica la configuración de SMTP en Supabase Dashboard → Settings → Authentication → SMTP Settings, o usa "Continuar con Google" o "Continuar con Facebook" para iniciar sesión.',
+            message: 'Error al enviar el email. Por favor verifica la configuración de SMTP en Supabase Dashboard → Settings → Authentication → SMTP Settings, o usa "Continuar con Google" para iniciar sesión.',
           };
         }
         
