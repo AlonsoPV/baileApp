@@ -13,6 +13,7 @@ import ScheduleEditor from "../../components/events/ScheduleEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import type { AcademyLocation } from "../../types/academy";
 import { supabase } from "../../lib/supabase";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 
 const colors = {
   coral: '#FF3D57',
@@ -95,11 +96,47 @@ export default function OrganizerEventDateCreateScreen() {
     }));
   };
 
+  // Obtener zonas de la ubicación seleccionada
+  const getZonasFromSelectedLocation = (): number[] => {
+    if (!selectedDateLocationId) return [];
+    const selectedLoc = orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId);
+    if (!selectedLoc) return [];
+    const zonas: number[] = [];
+    if (typeof selectedLoc.zona_id === 'number') zonas.push(selectedLoc.zona_id);
+    if (Array.isArray(selectedLoc.zona_ids)) {
+      selectedLoc.zona_ids.forEach((z) => {
+        if (typeof z === 'number') zonas.push(z);
+      });
+    }
+    return zonas;
+  };
+
+  const toggleZona = (id: number) => {
+    setDateForm((prev) => {
+      const newZonas = prev.zonas.includes(id)
+        ? prev.zonas.filter(z => z !== id)
+        : [...prev.zonas, id];
+      return { ...prev, zonas: newZonas };
+    });
+  };
+
   const applyOrganizerLocationToDateForm = (loc?: OrganizerLocation | null) => {
     const converted = toAcademyLocation(loc);
     if (!converted) return;
     setSelectedDateLocationId(loc?.id ? String(loc.id) : '');
     handleDateUbicacionesChange([converted]);
+    
+    // Actualizar zonas desde la ubicación del organizador
+    const zonasFromOrgLoc: number[] = [];
+    if (typeof loc?.zona_id === 'number') zonasFromOrgLoc.push(loc.zona_id);
+    if (Array.isArray(loc?.zona_ids)) {
+      loc.zona_ids.forEach((z) => {
+        if (typeof z === 'number') zonasFromOrgLoc.push(z);
+      });
+    }
+    if (zonasFromOrgLoc.length > 0) {
+      setDateForm((prev) => ({ ...prev, zonas: zonasFromOrgLoc }));
+    }
   };
 
   const updateManualDateLocationField = (
@@ -705,6 +742,50 @@ export default function OrganizerEventDateCreateScreen() {
                   />
                 </div>
               </div>
+
+              {/* Zonas - Visualización cuando hay ubicación seleccionada */}
+              {selectedDateLocationId && (() => {
+                const zonasFromLocation = getZonasFromSelectedLocation();
+                if (zonasFromLocation.length === 0) return null;
+                return (
+                  <div style={{ marginTop: '16px' }}>
+                    <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                      Zonas de la ubicación seleccionada
+                    </label>
+                    <ZonaGroupedChips
+                      selectedIds={zonasFromLocation}
+                      allTags={zonaTags}
+                      mode="display"
+                      autoExpandSelectedParents={true}
+                      size="compact"
+                      style={{
+                        gap: '4px',
+                        fontSize: 12,
+                      }}
+                    />
+                  </div>
+                );
+              })()}
+
+              {/* Zonas - Selección cuando se ingresa manualmente */}
+              {!selectedDateLocationId && (
+                <div style={{ marginTop: '16px' }}>
+                  <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                    Zonas de la Ciudad
+                  </label>
+                  <ZonaGroupedChips
+                    selectedIds={dateForm.zonas}
+                    allTags={zonaTags}
+                    mode="edit"
+                    onToggle={toggleZona}
+                    size="compact"
+                    style={{
+                      gap: '4px',
+                      fontSize: 12,
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Cronograma */}
