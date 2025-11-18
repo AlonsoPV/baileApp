@@ -45,6 +45,7 @@ import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 import QuienesSomosScreen from './screens/static/QuienesSomosScreen';
 import AboutScreen from './screens/static/AboutScreen';
 import LegalScreen from './screens/static/LegalScreen';
+import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
 
 // Academy Screens
 import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
@@ -143,7 +144,7 @@ export default function AppRouter() {
           <Route path={routes.app.profile} element={<ProfileScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/profile/edit" element={<ProfileScreen />} />
-          <Route path="/profile/settings" element={<ProfileScreen />} />
+          <Route path="/profile/settings" element={<DefaultProfileSettings />} />
           <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
           <Route path="/profile/brand" element={<BrandProfileLive />} />
           <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />

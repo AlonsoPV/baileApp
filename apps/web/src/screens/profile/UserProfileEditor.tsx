@@ -435,7 +435,7 @@ export default function UserProfileEditor() {
           </div>
 
           {/* Componente de navegación flotante */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
             <ProfileNavigationToggle
               currentView="edit"
               profileType="user"
@@ -443,6 +443,31 @@ export default function UserProfileEditor() {
               isSaving={false}
               saveDisabled={!form.display_name?.trim()}
             />
+            <button
+              onClick={() => navigate('/profile/settings')}
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '12px',
+                color: colors.light,
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              ⚙️ Configuración
+            </button>
           </div>
 
           {/* Información Personal y Redes Sociales */}
