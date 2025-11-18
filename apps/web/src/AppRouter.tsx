@@ -37,6 +37,7 @@ import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventPar
 import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
 import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEditScreen';
+import OrganizerEventDateCreateScreen from './screens/events/OrganizerEventDateCreateScreen';
 import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
@@ -156,7 +157,7 @@ export default function AppRouter() {
           <Route path="/events/date/:id/edit" element={<EventDateEditScreen />} />
           <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
           <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
-          <Route path="/social/:parentId/fecha/nueva" element={<EventDateEditScreen />} />
+          <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
           <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
           <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
           <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
