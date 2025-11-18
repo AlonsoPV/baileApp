@@ -32,6 +32,7 @@ export function Login() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSignUpSuccess, setIsSignUpSuccess] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -78,7 +79,7 @@ export function Login() {
     } catch (error: any) {
       // Verificar si es rate limit
       if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
-        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para iniciar sesión, o contacta al administrador si el problema persiste.';
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" o "Continuar con Facebook" para iniciar sesión, o contacta al administrador si el problema persiste.';
         setError(rateLimitMessage);
         showToast(rateLimitMessage, 'error');
       } else {
@@ -183,6 +184,40 @@ export function Login() {
         showToast(msg, 'error');
       }
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleFacebookAuth = async (isSignUp: boolean = false) => {
+    setIsFacebookLoading(true);
+    setError('');
+    setSignUpError('');
+
+    try {
+      const siteUrl = getSiteUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${siteUrl}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // El flujo de OAuth redirige automáticamente, así que no necesitamos hacer nada más
+      // El callback manejará la redirección después de la autenticación
+    } catch (err: any) {
+      console.error('[Login] Facebook OAuth error', err);
+      const msg = err?.message ?? 'Error al iniciar sesión con Facebook.';
+      if (isSignUp) {
+        setSignUpError(msg);
+        showToast(msg, 'error');
+      } else {
+        setError(msg);
+        showToast(msg, 'error');
+      }
+      setIsFacebookLoading(false);
     }
   };
 
@@ -387,10 +422,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(false)}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isFacebookLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading ? 0.5 : 1,
+                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -428,6 +463,38 @@ export function Login() {
                 )}
               </Button>
 
+              <Button
+                type="button"
+                onClick={() => handleFacebookAuth(false)}
+                disabled={isLoading || isGoogleLoading || isFacebookLoading}
+                style={{
+                  width: '100%',
+                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  background: '#1877F2',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
+                  fontWeight: 600,
+                }}
+              >
+                {isFacebookLoading ? (
+                  '⏳ Conectando...'
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Continuar con Facebook
+                  </>
+                )}
+              </Button>
+
               <div
                 style={{
                   display: 'flex',
@@ -445,10 +512,10 @@ export function Login() {
 
               <Button
                 type="submit"
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isFacebookLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading ? 0.5 : 1,
+                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
                   background: colors.gradients.primary,
                 }}
               >
@@ -458,10 +525,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleMagicLink}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isFacebookLoading}
                 style={{
                   width: '100%',
-                  opacity: isLoading || isGoogleLoading ? 0.5 : 1,
+                  opacity: isLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
                   background: colors.gradients.secondary,
                 }}
               >
@@ -561,10 +628,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(true)}
-                disabled={isSignUpLoading || isGoogleLoading}
+                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
                 style={{
                   width: '100%',
-                  opacity: isSignUpLoading || isGoogleLoading ? 0.5 : 1,
+                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -602,6 +669,38 @@ export function Login() {
                 )}
               </Button>
 
+              <Button
+                type="button"
+                onClick={() => handleFacebookAuth(true)}
+                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
+                style={{
+                  width: '100%',
+                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
+                  background: '#1877F2',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
+                  fontWeight: 600,
+                }}
+              >
+                {isFacebookLoading ? (
+                  '⏳ Conectando...'
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Continuar con Facebook
+                  </>
+                )}
+              </Button>
+
               <div
                 style={{
                   display: 'flex',
@@ -620,10 +719,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleSignUpMagicLink}
-                disabled={isSignUpLoading || isGoogleLoading}
+                disabled={isSignUpLoading || isGoogleLoading || isFacebookLoading}
                 style={{
                   width: '100%',
-                  opacity: isSignUpLoading || isGoogleLoading ? 0.5 : 1,
+                  opacity: isSignUpLoading || isGoogleLoading || isFacebookLoading ? 0.5 : 1,
                   background: colors.gradients.tertiary ?? colors.gradients.secondary,
                 }}
               >
