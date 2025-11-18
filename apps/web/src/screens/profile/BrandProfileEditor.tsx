@@ -379,7 +379,11 @@ export default function BrandProfileEditor() {
                     overflow: 'hidden',
                     border: '3px solid rgba(255, 255, 255, 0.2)',
                     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-                    background: 'linear-gradient(135deg, #E53935, #FB8C00)'
+                    background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '160px'
                   }}>
                       {form.avatar_url ? (
                         <ImageWithFallback 
@@ -392,7 +396,8 @@ export default function BrandProfileEditor() {
                             width: '100%', 
                             height: '100%', 
                             objectFit: 'contain',
-                            backgroundColor: 'rgba(0,0,0,0.35)'
+                            backgroundColor: 'rgba(0,0,0,0.35)',
+                            minHeight: '160px'
                           }} 
                         />
                       ) : (
