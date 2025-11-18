@@ -1091,46 +1091,101 @@ export const UserProfileLive: React.FC = () => {
                       key={person.id}
                       onClick={() => goToProfile(person.id)}
                       style={{
+                        position: 'relative',
+                        overflow: 'hidden',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '0.9rem',
-                        padding: '0.9rem 1.1rem',
-                        minWidth: '220px',
-                        borderRadius: '18px',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
-                        backdropFilter: 'blur(8px)',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        padding: '1rem 1.25rem',
+                        minWidth: '230px',
+                        borderRadius: '22px',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'linear-gradient(135deg, rgba(18,18,28,0.95), rgba(8,8,16,0.92))',
                         cursor: 'pointer',
-                        boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
-                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        boxShadow: '0 18px 32px rgba(0,0,0,0.45)',
+                        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                         scrollSnapAlign: 'start'
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 28px rgba(0,0,0,0.28)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.22)'; }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 22px 36px rgba(0,0,0,0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 32px rgba(0,0,0,0.45)';
+                      }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                        <ImageWithFallback
-                          src={person.avatar_url || ''}
-                          alt={person.display_name || 'Perfil'}
+                      <span
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          inset: '-20% -30%',
+                          background: networkTab === 'followers'
+                            ? 'linear-gradient(140deg, rgba(252,165,165,0.2), rgba(196,181,253,0.12))'
+                            : 'linear-gradient(140deg, rgba(110,231,183,0.22), rgba(147,197,253,0.15))',
+                          opacity: 0.9,
+                          pointerEvents: 'none'
+                        }}
+                      />
+                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                        <div
                           style={{
-                            width: '52px',
-                            height: '52px',
+                            width: 54,
+                            height: 54,
                             borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '2px solid rgba(255,255,255,0.22)'
+                            padding: 2,
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
                           }}
-                        />
-                        <div style={{ textAlign: 'left' }}>
+                        >
+                          <ImageWithFallback
+                            src={person.avatar_url || ''}
+                            alt={person.display_name || 'Perfil'}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(0,0,0,0.4)'
+                            }}
+                          />
+                        </div>
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                           <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
-                            {person.display_name}
+                            {person.display_name || 'Bailarín'}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                          <span
+                            style={{
+                              alignSelf: 'flex-start',
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: 999,
+                              fontSize: '0.72rem',
+                              letterSpacing: 0.3,
+                              textTransform: 'uppercase',
+                              background: 'rgba(0,0,0,0.35)',
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              color: 'rgba(255,255,255,0.8)'
+                            }}
+                          >
                             {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
-                          </div>
+                          </span>
                         </div>
                       </div>
-                      <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem' }}>›</span>
+                      <div
+                        style={{
+                          position: 'relative',
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingTop: '0.6rem',
+                          borderTop: '1px solid rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
+                          Ver perfil
+                        </span>
+                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
+                      </div>
                     </button>
                   ))}
                 </div>
