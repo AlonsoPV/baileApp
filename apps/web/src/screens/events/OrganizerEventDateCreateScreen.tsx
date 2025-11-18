@@ -1,8 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import EventCreateForm from "../../components/events/EventCreateForm";
 import { useCreateEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
+import { useMyOrganizer } from "../../hooks/useOrganizer";
+import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
+import { useTags } from "../../hooks/useTags";
+import { useToast } from "../../components/Toast";
+import RitmosChips from "../../components/RitmosChips";
+import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import ScheduleEditor from "../../components/events/ScheduleEditor";
+import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import type { AcademyLocation } from "../../types/academy";
+import { supabase } from "../../lib/supabase";
 
 const colors = {
   coral: '#FF3D57',
@@ -13,80 +23,242 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | null => {
+  if (!loc) return null;
+  return {
+    sede: loc.nombre || '',
+    direccion: loc.direccion || '',
+    ciudad: loc.ciudad || '',
+    referencias: loc.referencias || '',
+    zona_id: typeof loc.zona_id === 'number'
+      ? loc.zona_id
+      : Array.isArray(loc.zona_ids) && loc.zona_ids.length
+        ? loc.zona_ids[0] ?? null
+        : null,
+  };
+};
+
 export default function OrganizerEventDateCreateScreen() {
   const navigate = useNavigate();
   const { parentId } = useParams<{ parentId: string }>();
   const parentIdNum = parentId ? parseInt(parentId) : undefined;
   
   const { data: parent, isLoading } = useEventParent(parentIdNum);
+  const { data: org } = useMyOrganizer();
+  const { data: orgLocations = [] } = useOrganizerLocations(org?.id);
+  const { data: allTags } = useTags();
+  const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
+  const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
+  const { showToast } = useToast();
   const createDate = useCreateEventDate();
+  
+  const [selectedDateLocationId, setSelectedDateLocationId] = useState<string>('');
+  const [dateForm, setDateForm] = useState({
+    nombre: '',
+    biografia: '',
+    fecha: '',
+    hora_inicio: '',
+    hora_fin: '',
+    lugar: '',
+    ciudad: '',
+    direccion: '',
+    referencias: '',
+    requisitos: '',
+    ubicaciones: [] as AcademyLocation[],
+    zona: null as number | null,
+    estilos: [] as number[],
+    ritmos_seleccionados: [] as string[],
+    zonas: [] as number[],
+    cronograma: [] as any[],
+    costos: [] as any[],
+    flyer_url: null as string | null,
+    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+    repetir_semanal: false,
+    semanas_repetir: 4
+  });
 
-  const handleSubmit = async (values: any) => {
-    if (!parentIdNum) {
-      throw new Error('ID del social no válido');
-    }
-
-    const basePayload = {
-      parent_id: parentIdNum,
-      nombre: values.nombre || null,
-      biografia: values.biografia || null,
-      hora_inicio: values.hora_inicio || null,
-      hora_fin: values.hora_fin || null,
-      lugar: values.lugar || null,
-      direccion: values.direccion || null,
-      ciudad: values.ciudad || null,
-      zona: values.zona || null,
-      referencias: values.referencias || null,
-      requisitos: values.requisitos || null,
-      estilos: values.estilos || [],
-      zonas: values.zonas || [],
-      cronograma: values.cronograma || [],
-      costos: values.costos || [],
-      media: values.media || [],
-      ubicaciones: values.ubicaciones || [],
-      estado_publicacion: values.estado_publicacion || 'borrador',
-    };
-
-    // Si hay repetición semanal, crear múltiples fechas
-    if (values.repetir_semanal && values.fecha) {
-      const semanas = values.semanas_repetir || 4;
-      const fechaInicio = new Date(values.fecha);
-      const fechas: any[] = [];
-      
-      for (let i = 0; i < semanas; i++) {
-        const fechaNueva = new Date(fechaInicio);
-        fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
-        fechas.push({
-          ...basePayload,
-          fecha: fechaNueva.toISOString().split('T')[0],
-        });
-      }
-
-      console.log('[OrganizerEventDateCreateScreen] Creando fechas recurrentes:', fechas.length);
-      
-      // Crear todas las fechas
-      const createdDates = await Promise.all(
-        fechas.map(payload => createDate.mutateAsync(payload))
-      );
-      
-      console.log('[OrganizerEventDateCreateScreen] Fechas creadas:', createdDates.length);
-      return createdDates[0]; // Retornar la primera fecha creada
-    } else {
-      // Crear una sola fecha
-      const payload = {
-        ...basePayload,
-        fecha: values.fecha,
-      };
-      
-      console.log('[OrganizerEventDateCreateScreen] Payload:', payload);
-      const newDate = await createDate.mutateAsync(payload);
-      return newDate;
-    }
+  const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
+    const zonasSet = new Set<number>();
+    list.forEach((loc) => {
+      if (typeof loc?.zona_id === 'number') zonasSet.add(loc.zona_id);
+    });
+    const primary = list[0];
+    setDateForm((prev) => ({
+      ...prev,
+      ubicaciones: list,
+      lugar: primary?.sede || '',
+      direccion: primary?.direccion || '',
+      ciudad: primary?.ciudad || '',
+      referencias: primary?.referencias || '',
+      zona: typeof primary?.zona_id === 'number' ? primary.zona_id : null,
+      zonas: zonasSet.size ? Array.from(zonasSet) : prev.zonas,
+    }));
   };
 
-  const handleSuccess = (dateId: number) => {
-    // Redirigir a la vista pública de la fecha creada
-    navigate(`/social/fecha/${dateId}`);
+  const applyOrganizerLocationToDateForm = (loc?: OrganizerLocation | null) => {
+    const converted = toAcademyLocation(loc);
+    if (!converted) return;
+    setSelectedDateLocationId(loc?.id ? String(loc.id) : '');
+    handleDateUbicacionesChange([converted]);
+  };
+
+  const updateManualDateLocationField = (
+    key: 'lugar' | 'direccion' | 'ciudad' | 'referencias',
+    value: string
+  ) => {
+    setSelectedDateLocationId('');
+    setDateForm((prev) => ({
+      ...prev,
+      [key]: value,
+      ubicaciones: [],
+    }));
+  };
+
+  useEffect(() => {
+    if (!selectedDateLocationId) return;
+    const exists = orgLocations.some((loc) => String(loc.id ?? '') === selectedDateLocationId);
+    if (!exists) {
+      setSelectedDateLocationId('');
+    }
+  }, [orgLocations, selectedDateLocationId]);
+
+  const handleCreateDate = async () => {
+    if (!dateForm.fecha) {
+      showToast('La fecha es obligatoria', 'error');
+      return;
+    }
+
+    if (!parentIdNum) {
+      showToast('ID del social no válido', 'error');
+      return;
+    }
+
+    try {
+      const selectedOrganizerLocation = selectedDateLocationId
+        ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
+        : undefined;
+
+      const primaryLocation = (dateForm.ubicaciones && dateForm.ubicaciones[0]) || undefined;
+      const resolvedLugar = primaryLocation?.sede || dateForm.lugar || selectedOrganizerLocation?.nombre || null;
+      const resolvedDireccion = primaryLocation?.direccion || dateForm.direccion || selectedOrganizerLocation?.direccion || null;
+      const resolvedCiudad = primaryLocation?.ciudad || dateForm.ciudad || selectedOrganizerLocation?.ciudad || null;
+      const resolvedReferencias = primaryLocation?.referencias || dateForm.referencias || selectedOrganizerLocation?.referencias || null;
+
+      const resolvedZonaFromLocation = () => {
+        if (typeof dateForm.zona === 'number') return dateForm.zona;
+        if (typeof primaryLocation?.zona_id === 'number') return primaryLocation.zona_id;
+        if (typeof selectedOrganizerLocation?.zona_id === 'number') return selectedOrganizerLocation.zona_id;
+        if (Array.isArray(selectedOrganizerLocation?.zona_ids) && selectedOrganizerLocation.zona_ids.length) {
+          return selectedOrganizerLocation.zona_ids[0] ?? null;
+        }
+        return null;
+      };
+
+      const resolvedZonasFromLocations = () => {
+        if (dateForm.zonas && dateForm.zonas.length) return dateForm.zonas;
+        const set = new Set<number>();
+        (dateForm.ubicaciones || []).forEach((loc) => {
+          if (typeof loc?.zona_id === 'number') set.add(loc.zona_id);
+        });
+        if (Array.isArray(selectedOrganizerLocation?.zona_ids) && selectedOrganizerLocation.zona_ids.length) {
+          selectedOrganizerLocation.zona_ids.forEach((z) => {
+            if (typeof z === 'number') set.add(z);
+          });
+        }
+        return set.size ? Array.from(set) : [];
+      };
+
+      const resolvedZona = resolvedZonaFromLocation();
+      const resolvedZonas = resolvedZonasFromLocations();
+
+      const basePayload = {
+        parent_id: Number(parentIdNum),
+        nombre: dateForm.nombre || null,
+        biografia: dateForm.biografia || null,
+        hora_inicio: dateForm.hora_inicio || null,
+        hora_fin: dateForm.hora_fin || null,
+        lugar: resolvedLugar,
+        direccion: resolvedDireccion,
+        ciudad: resolvedCiudad,
+        zona: resolvedZona,
+        referencias: resolvedReferencias,
+        requisitos: dateForm.requisitos || null,
+        estilos: dateForm.estilos || [],
+        ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
+        zonas: resolvedZonas,
+        cronograma: dateForm.cronograma || [],
+        costos: dateForm.costos || [],
+        flyer_url: dateForm.flyer_url || null,
+        estado_publicacion: dateForm.estado_publicacion || 'borrador'
+      };
+
+      // Si hay repetición semanal, crear múltiples fechas
+      if (dateForm.repetir_semanal && dateForm.fecha) {
+        const semanas = dateForm.semanas_repetir || 4;
+        // Parsear la fecha inicial correctamente (YYYY-MM-DD)
+        const [year, month, day] = dateForm.fecha.split('-').map(Number);
+        const fechaInicio = new Date(year, month - 1, day);
+        const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
+        const fechas: any[] = [];
+        
+        for (let i = 0; i < semanas; i++) {
+          // Calcular la fecha de la semana i manteniendo el mismo día de la semana
+          const fechaNueva = new Date(fechaInicio);
+          fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
+          
+          // Asegurar que el día de la semana sea el mismo
+          const diaSemanaNueva = fechaNueva.getDay();
+          if (diaSemanaNueva !== diaSemanaInicial) {
+            // Ajustar para mantener el mismo día de la semana
+            const diferencia = diaSemanaInicial - diaSemanaNueva;
+            fechaNueva.setDate(fechaNueva.getDate() + diferencia);
+          }
+          
+          // Formatear como YYYY-MM-DD
+          const yearStr = fechaNueva.getFullYear();
+          const monthStr = String(fechaNueva.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(fechaNueva.getDate()).padStart(2, '0');
+          
+          fechas.push({
+            ...basePayload,
+            fecha: `${yearStr}-${monthStr}-${dayStr}`,
+          });
+        }
+
+        console.log('[OrganizerEventDateCreateScreen] Creando fechas recurrentes:', fechas.length);
+        
+        // Crear todas las fechas
+        const createdDates = await Promise.all(
+          fechas.map(payload => createDate.mutateAsync(payload))
+        );
+        
+        showToast(`${fechas.length} fecha${fechas.length !== 1 ? 's' : ''} creada${fechas.length !== 1 ? 's' : ''} ✅`, 'success');
+        
+        // Redirigir a la primera fecha creada
+        if (createdDates[0]?.id) {
+          navigate(`/social/fecha/${createdDates[0].id}`);
+        } else {
+          navigate(`/social/${parentIdNum}`);
+        }
+      } else {
+        // Crear una sola fecha
+        const newDate = await createDate.mutateAsync({
+          ...basePayload,
+          fecha: dateForm.fecha,
+        });
+        
+        showToast('Fecha creada ✅', 'success');
+        
+        if (newDate?.id) {
+          navigate(`/social/fecha/${newDate.id}`);
+        } else {
+          navigate(`/social/${parentIdNum}`);
+        }
+      }
+    } catch (err: any) {
+      console.error('Error creating date:', err);
+      showToast('Error al crear fecha', 'error');
+    }
   };
 
   const handleCancel = () => {
@@ -154,41 +326,506 @@ export default function OrganizerEventDateCreateScreen() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-      padding: '24px 0',
-    }}>
-      {/* Header con info del social */}
+    <>
+      <style>{`
+        .org-editor-card {
+          margin-bottom: 2rem;
+          padding: 1.2rem;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #FFFFFF;
+        }
+        
+        .org-editor-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 2rem;
+        }
+        
+        .org-editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #FFFFFF;
+          font-size: 0.95rem;
+        }
+        
+        .org-editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 8px;
+          color: #FFFFFF;
+          font-size: 1rem;
+        }
+        
+        .org-editor-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+        }
+        
+        .org-editor-input:focus {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+          outline: none;
+          color: #FFFFFF;
+        }
+        
+        .org-editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 8px;
+          color: #FFFFFF;
+          font-size: 1rem;
+          resize: vertical;
+        }
+        
+        .org-editor-textarea::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+        }
+        
+        .org-editor-textarea:focus {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+          outline: none;
+          color: #FFFFFF;
+        }
+        
+        @media (max-width: 768px) {
+          .org-editor-card {
+            padding: 1.5rem !important;
+            margin-bottom: 2rem !important;
+            border-radius: 12px !important;
+          }
+          
+          .org-editor-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+        }
+      `}</style>
       <div style={{
-        maxWidth: '800px',
-        margin: '0 auto 32px auto',
-        padding: '0 24px',
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        padding: '24px',
         color: colors.light,
       }}>
-        <div style={{
-          padding: '20px',
-          background: `${colors.dark}33`,
-          borderRadius: '12px',
-          marginBottom: '24px',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '8px' }}>
-            📅 Nueva Fecha para: {parent.nombre}
-          </h2>
-          <p style={{ opacity: 0.7, margin: 0 }}>
-            {parent.descripcion || 'Sin descripción'}
-          </p>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Header con info del social */}
+          <div style={{
+            marginBottom: '2rem',
+            padding: '20px',
+            background: `${colors.dark}33`,
+            borderRadius: '12px',
+            color: colors.light,
+          }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '8px' }}>
+              📅 Nueva Fecha para: {parent.nombre}
+            </h2>
+            <p style={{ opacity: 0.7, margin: 0 }}>
+              {parent.descripcion || 'Sin descripción'}
+            </p>
+          </div>
+
+          {/* Formulario completo */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}
+          >
+            {/* Información Básica */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                📝 Información Básica
+              </h3>
+              <div className="org-editor-grid">
+                <div>
+                  <label className="org-editor-field">
+                    Nombre del Evento *
+                  </label>
+                  <input
+                    type="text"
+                    value={dateForm.nombre}
+                    onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
+                    placeholder="Nombre del evento"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    Biografía
+                  </label>
+                  <textarea
+                    value={dateForm.biografia}
+                    onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
+                    placeholder="Describe el evento, su propósito, qué esperar..."
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Ritmos */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                🎵 Ritmos de Baile
+              </h3>
+              <div style={{ marginTop: 8 }}>
+                <RitmosChips
+                  selected={dateForm.ritmos_seleccionados || []}
+                  allowedIds={((parent as any)?.ritmos_seleccionados || []) as string[]}
+                  onChange={(ids) => {
+                    setDateForm({ ...dateForm, ritmos_seleccionados: ids });
+                    // Mapear también a estilos (tag IDs) si es posible
+                    try {
+                      const labelByCatalogId = new Map<string, string>();
+                      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                      const nameToTagId = new Map<string, number>(
+                        ritmoTags.map((t: any) => [t.nombre, t.id])
+                      );
+                      const mappedTagIds = ids
+                        .map(cid => labelByCatalogId.get(cid))
+                        .filter(Boolean)
+                        .map((label: any) => nameToTagId.get(label as string))
+                        .filter((n): n is number => typeof n === 'number');
+                      setDateForm(prev => ({ ...prev, estilos: mappedTagIds }));
+                    } catch { }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Fecha y Hora */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                📅 Fecha y Hora
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className="org-editor-field">
+                    Fecha *
+                  </label>
+                  <input
+                    type="date"
+                    value={dateForm.fecha}
+                    onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
+                    required
+                    className="org-editor-input"
+                    style={{ color: '#FFFFFF' }}
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">
+                    Hora Inicio
+                  </label>
+                  <input
+                    type="time"
+                    value={dateForm.hora_inicio}
+                    onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
+                    className="org-editor-input"
+                    style={{ color: '#FFFFFF' }}
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">
+                    Hora Fin
+                  </label>
+                  <input
+                    type="time"
+                    value={dateForm.hora_fin}
+                    onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
+                    className="org-editor-input"
+                    style={{ color: '#FFFFFF' }}
+                  />
+                </div>
+              </div>
+
+              {/* Repetición Semanal */}
+              <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
+                  <input
+                    type="checkbox"
+                    checked={dateForm.repetir_semanal || false}
+                    onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
+                    🔁 Repetir semanalmente
+                  </span>
+                </label>
+
+                {dateForm.repetir_semanal && (
+                  <div style={{ marginTop: '16px' }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      color: '#FFFFFF',
+                    }}>
+                      Número de semanas
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="52"
+                      value={dateForm.semanas_repetir || 4}
+                      onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                      className="org-editor-input"
+                      style={{ color: '#FFFFFF' }}
+                    />
+                    <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
+                      Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Ubicaciones */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                📍 Ubicación del Evento
+              </h3>
+              {orgLocations.length > 0 && (
+                <>
+                  <div style={{ marginBottom: 16 }}>
+                    <label className="org-editor-field">Elegir ubicación existente o ingresa una nueva</label>
+                    <div style={{ position: 'relative' }}>
+                      <select
+                        value={selectedDateLocationId}
+                        onChange={(e) => {
+                          const nextId = e.target.value;
+                          if (!nextId) {
+                            setSelectedDateLocationId('');
+                            handleDateUbicacionesChange([]);
+                            return;
+                          }
+                          const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
+                          applyOrganizerLocationToDateForm(found);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          background: '#2b2b2b',
+                          border: '1px solid rgba(255,255,255,0.25)',
+                          color: '#FFFFFF',
+                          outline: 'none',
+                          fontSize: 14,
+                          borderRadius: 12,
+                          appearance: 'none',
+                          WebkitAppearance: 'none',
+                        }}
+                      >
+                        <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                          — Escribir manualmente —
+                        </option>
+                        {orgLocations.map((loc) => (
+                          <option
+                            key={loc.id}
+                            value={String(loc.id)}
+                            style={{ color: '#FFFFFF', background: '#2b2b2b' }}
+                          >
+                            {loc.nombre || loc.direccion || 'Ubicación'}
+                          </option>
+                        ))}
+                      </select>
+                      <span
+                        style={{
+                          position: 'absolute',
+                          right: 14,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                          color: 'rgba(255,255,255,0.6)',
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {/* Formulario de ubicación manual */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className="org-editor-field">Nombre de la ubicación</label>
+                  <input
+                    type="text"
+                    value={dateForm.lugar || ''}
+                    onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
+                    placeholder="Ej: Sede Central / Salón Principal"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">Dirección</label>
+                  <input
+                    type="text"
+                    value={dateForm.direccion || ''}
+                    onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
+                    placeholder="Calle, número, colonia"
+                    className="org-editor-input"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                <div>
+                  <label className="org-editor-field">Ciudad</label>
+                  <input
+                    type="text"
+                    value={dateForm.ciudad || ''}
+                    onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
+                    placeholder="Ciudad"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">Notas o referencias</label>
+                  <input
+                    type="text"
+                    value={dateForm.referencias || ''}
+                    onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
+                    placeholder="Ej. Entrada lateral, 2do piso"
+                    className="org-editor-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cronograma */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                📅 Cronograma del Evento
+              </h3>
+              <ScheduleEditor
+                schedule={dateForm.cronograma || []}
+                onChangeSchedule={(cronograma) => setDateForm({ ...dateForm, cronograma })}
+                costos={dateForm.costos || []}
+                onChangeCostos={(costos) => setDateForm({ ...dateForm, costos })}
+                ritmos={ritmoTags}
+                zonas={zonaTags}
+                eventFecha={dateForm.fecha}
+                onSaveCosto={() => {
+                  showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
+                }}
+              />
+            </div>
+
+            {/* Flyer */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                🖼️ Flyer del Evento
+              </h3>
+              <DateFlyerUploader
+                value={dateForm.flyer_url || null}
+                onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
+                dateId={null}
+                parentId={parentIdNum || undefined}
+              />
+            </div>
+
+            {/* Estado de Publicación */}
+            <div className="org-editor-card">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                🌐 Estado de Publicación
+              </h3>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                }}>
+                  <input
+                    type="radio"
+                    name="estado_publicacion"
+                    value="borrador"
+                    checked={dateForm.estado_publicacion === 'borrador'}
+                    onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                    style={{ transform: 'scale(1.2)' }}
+                  />
+                  <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                    📝 Borrador (solo tú puedes verlo)
+                  </span>
+                </label>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                }}>
+                  <input
+                    type="radio"
+                    name="estado_publicacion"
+                    value="publicado"
+                    checked={dateForm.estado_publicacion === 'publicado'}
+                    onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                    style={{ transform: 'scale(1.2)' }}
+                  />
+                  <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                    🌐 Público (visible para todos)
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="org-editor-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancel}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  background: 'transparent',
+                  color: '#FFFFFF',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                ❌ Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCreateDate}
+                disabled={createDate.isPending || !dateForm.fecha}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: createDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                  opacity: createDate.isPending || !dateForm.fecha ? 0.6 : 1
+                }}
+              >
+                {createDate.isPending ? '⏳ Creando...' : '✨ Crear'}
+              </motion.button>
+            </div>
+          </motion.div>
         </div>
       </div>
-
-      <EventCreateForm
-        mode="date"
-        parentId={parentIdNum!}
-        onSubmit={handleSubmit}
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-        showHeader={false}
-      />
-    </div>
+    </>
   );
 }

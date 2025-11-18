@@ -1091,15 +1091,33 @@ export default function OrganizerProfileEditor() {
       // Si hay repetición semanal, crear múltiples fechas
       if (dateForm.repetir_semanal && dateForm.fecha) {
         const semanas = dateForm.semanas_repetir || 4;
-        const fechaInicio = new Date(dateForm.fecha);
+        // Parsear la fecha inicial correctamente (YYYY-MM-DD)
+        const [year, month, day] = dateForm.fecha.split('-').map(Number);
+        const fechaInicio = new Date(year, month - 1, day);
+        const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
         const fechas: any[] = [];
         
         for (let i = 0; i < semanas; i++) {
+          // Calcular la fecha de la semana i manteniendo el mismo día de la semana
           const fechaNueva = new Date(fechaInicio);
           fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
+          
+          // Asegurar que el día de la semana sea el mismo
+          const diaSemanaNueva = fechaNueva.getDay();
+          if (diaSemanaNueva !== diaSemanaInicial) {
+            // Ajustar para mantener el mismo día de la semana
+            const diferencia = diaSemanaInicial - diaSemanaNueva;
+            fechaNueva.setDate(fechaNueva.getDate() + diferencia);
+          }
+          
+          // Formatear como YYYY-MM-DD
+          const yearStr = fechaNueva.getFullYear();
+          const monthStr = String(fechaNueva.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(fechaNueva.getDate()).padStart(2, '0');
+          
           fechas.push({
             ...basePayload,
-            fecha: fechaNueva.toISOString().split('T')[0],
+            fecha: `${yearStr}-${monthStr}-${dayStr}`,
           });
         }
 
