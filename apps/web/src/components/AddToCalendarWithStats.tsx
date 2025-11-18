@@ -67,6 +67,35 @@ export default function AddToCalendarWithStats({
     });
   }, []);
 
+  // Cargar número de interesados
+  useEffect(() => {
+    const loadCount = async () => {
+      const { count, error } = await supabase
+        .from("eventos_interesados")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", eventIdStr);
+      if (!error && typeof count === "number") {
+        setCount(count);
+      }
+    };
+    loadCount();
+  }, [eventIdStr]);
+
+  // Verificar si el usuario ya dio clic
+  useEffect(() => {
+    const checkIfAdded = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("eventos_interesados")
+        .select("id")
+        .eq("event_id", eventIdStr)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setAlreadyAdded(!!data);
+    };
+    checkIfAdded();
+  }, [user, eventIdStr]);
+
   // Si es una clase y no hay usuario, mostrar botón de login en lugar del botón de calendario
   if (isClass && !user?.id) {
     return (
@@ -97,35 +126,6 @@ export default function AddToCalendarWithStats({
       </button>
     );
   }
-
-  // Cargar número de interesados
-  useEffect(() => {
-    const loadCount = async () => {
-      const { count, error } = await supabase
-        .from("eventos_interesados")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", eventIdStr);
-      if (!error && typeof count === "number") {
-        setCount(count);
-      }
-    };
-    loadCount();
-  }, [eventIdStr]);
-
-  // Verificar si el usuario ya dio clic
-  useEffect(() => {
-    const checkIfAdded = async () => {
-      if (!user?.id) return;
-      const { data } = await supabase
-        .from("eventos_interesados")
-        .select("id")
-        .eq("event_id", eventIdStr)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setAlreadyAdded(!!data);
-    };
-    checkIfAdded();
-  }, [user, eventIdStr]);
 
   const handleAdd = async (href: string) => {
     console.log("[AddToCalendarWithStats] 🎯 handleAdd llamado con:", {

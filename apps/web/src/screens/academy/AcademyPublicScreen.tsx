@@ -1,7 +1,7 @@
 // Public Academy Screen (replica visual de AcademyProfileLi  ve)
 import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
 import { Chip } from "../../components/profile/Chip";
@@ -225,6 +225,7 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
 };
 
 export default function AcademyPublicScreen() {
+  const navigate = useNavigate();
   const { academyId } = useParams();
   const id = Number(academyId);
   const { data: academy, isLoading } = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
@@ -935,48 +936,199 @@ export default function AcademyPublicScreen() {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              style={{
-                marginBottom: '2rem',
-                marginTop: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
+              transition={{ delay: 0.1 }}
+              className="glass-card-container"
+              style={{ textAlign: 'left', marginTop: '1.25rem' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #E53935, #FB8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)' }}>🎭</div>
-                <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Maestros Invitados</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Maestros que colaboran con la academia</p>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  marginBottom: '1.25rem'
+                }}
+              >
+                <h3 className="section-title" style={{ marginBottom: 0 }}>Maestros Invitados</h3>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem'
+                  }}
+                >
+                  <button
+                    style={{
+                      position: 'relative',
+                      border: '1px solid transparent',
+                      borderRadius: 999,
+                      padding: '0.6rem 1.5rem',
+                      background: 'linear-gradient(120deg, rgba(251,113,133,0.7), rgba(168,85,247,0.7))',
+                      color: '#fff',
+                      textAlign: 'center',
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: '0.6rem',
+                      cursor: 'default',
+                      boxShadow: '0 14px 32px rgba(68,55,155,0.45)',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: 0.95 }}>
+                      Maestros:
+                    </span>
+                    <span style={{ fontSize: '1.2rem' }}>
+                      {acceptedTeachers.length.toLocaleString('es-MX')}
+                    </span>
+                  </button>
                 </div>
               </div>
-              <HorizontalSlider
-                items={acceptedTeachers}
-                renderItem={(t: any) => {
-                  const teacherData = {
-                    id: t.teacher_id,
-                    nombre_publico: t.teacher_name,
-                    bio: t.teacher_bio || '',
-                    avatar_url: t.teacher_avatar || null,
-                    portada_url: t.teacher_portada || null,
-                    banner_url: t.teacher_portada || t.teacher_avatar || null,
-                    ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
-                    zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
-                    media: t.teacher_portada 
-                      ? [{ url: t.teacher_portada, type: 'image', slot: 'cover' }]
-                      : t.teacher_avatar 
-                      ? [{ url: t.teacher_avatar, type: 'image', slot: 'avatar' }]
-                      : []
-                  };
-                  return <TeacherCard key={t.teacher_id} item={teacherData} />;
-                }}
-                gap={24}
-                autoColumns="280px"
-              />
+
+              <div style={{ position: 'relative' }}>
+                {/* Custom scrollbar styles */}
+                <style>{`
+                  .community-scroll {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255,255,255,.25) transparent;
+                    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                  }
+                  .community-scroll::-webkit-scrollbar { height: 8px; }
+                  .community-scroll::-webkit-scrollbar-track { background: transparent; }
+                  .community-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,.22);
+                    border-radius: 999px;
+                  }
+                  .community-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255,255,255,.35);
+                  }
+                `}</style>
+                <div
+                  className="community-scroll"
+                  style={{
+                    display: 'flex',
+                    gap: '0.9rem',
+                    overflowX: 'auto',
+                    paddingBottom: '0.5rem',
+                    scrollSnapType: 'x mandatory',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  {acceptedTeachers.map((t: any) => {
+                    const teacherData = {
+                      id: t.teacher_id,
+                      display_name: t.teacher_name,
+                      avatar_url: t.teacher_avatar || null,
+                    };
+                    return (
+                      <button
+                        key={t.teacher_id}
+                        onClick={() => navigate(`/maestro/${t.teacher_id}`)}
+                        style={{
+                          position: 'relative',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          padding: '1rem 1.25rem',
+                          minWidth: '230px',
+                          borderRadius: '22px',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          background: 'linear-gradient(135deg, rgba(18,18,28,0.95), rgba(8,8,16,0.92))',
+                          cursor: 'pointer',
+                          boxShadow: '0 18px 32px rgba(0,0,0,0.45)',
+                          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                          scrollSnapAlign: 'start'
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
+                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 22px 36px rgba(0,0,0,0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 32px rgba(0,0,0,0.45)';
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          style={{
+                            position: 'absolute',
+                            inset: '-20% -30%',
+                            background: 'linear-gradient(140deg, rgba(252,165,165,0.2), rgba(196,181,253,0.12))',
+                            opacity: 0.9,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                          <div
+                            style={{
+                              width: 54,
+                              height: 54,
+                              borderRadius: '50%',
+                              padding: 2,
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
+                            }}
+                          >
+                            <ImageWithFallback
+                              src={teacherData.avatar_url || ''}
+                              alt={teacherData.display_name || 'Maestro'}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                border: '2px solid rgba(0,0,0,0.4)'
+                              }}
+                            />
+                          </div>
+                          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                              {teacherData.display_name || 'Maestro'}
+                            </div>
+                            <span
+                              style={{
+                                alignSelf: 'flex-start',
+                                padding: '0.2rem 0.65rem',
+                                borderRadius: 999,
+                                fontSize: '0.72rem',
+                                letterSpacing: 0.3,
+                                textTransform: 'uppercase',
+                                background: 'rgba(0,0,0,0.35)',
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                color: 'rgba(255,255,255,0.8)'
+                              }}
+                            >
+                              Maestro invitado
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            position: 'relative',
+                            zIndex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingTop: '0.6rem',
+                            borderTop: '1px solid rgba(255,255,255,0.08)'
+                          }}
+                        >
+                          <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
+                            Ver perfil
+                          </span>
+                          <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Edge fades */}
+                <div aria-hidden style={{ pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to right, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
+                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to left, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
+                </div>
+              </div>
             </motion.section>
           )}
 
