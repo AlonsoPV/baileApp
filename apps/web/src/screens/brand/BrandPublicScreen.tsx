@@ -219,13 +219,14 @@ export default function BrandProfileLive() {
         >
           {portadaUrl && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
+              {/* Banner: slot flexible — ideal subir imagen horizontal (ej. 1920×600px o 1600×500px) para que se vea completa */}
               <ImageWithFallback
                 src={portadaUrl}
                 alt="portada"
                 width={1200}
                 height={500}
                 sizes="(max-width: 768px) 100vw, 1200px"
-                style={{ width: '100%', height: '100%', maxWidth: '800px', maxHeight: '800px', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.35)' }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.35)' }}
               />
             </div>
           )}
@@ -233,7 +234,7 @@ export default function BrandProfileLive() {
           <div className="banner-grid" style={{ position: 'relative' }}>
             {/* Avatar (slot 250x250 — ideal subir imagen cuadrada, p.ej. 800x800px, con el logo centrado para que se vea completo) */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
-              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
                 {avatarUrl ? (
                   <ImageWithFallback
                     src={avatarUrl}
@@ -244,7 +245,10 @@ export default function BrandProfileLive() {
                     style={{
                       width: '100%',
                       height: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
                       objectFit: 'contain',
+                      objectPosition: 'center',
                       backgroundColor: 'rgba(0,0,0,0.25)'
                     }}
                   />

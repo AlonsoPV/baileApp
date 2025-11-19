@@ -497,7 +497,8 @@ export default function BrandProfileEditor() {
                     background: 'linear-gradient(135deg, #E53935, #FB8C00)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    padding: '6px'
                   }}>
                       {form.avatar_url ? (
                         <ImageWithFallback 
@@ -509,7 +510,10 @@ export default function BrandProfileEditor() {
                           style={{ 
                             width: '100%',
                             height: '100%',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
                             objectFit: 'contain',
+                            objectPosition: 'center',
                             backgroundColor: 'rgba(0,0,0,0.35)'
                           }} 
                         />
