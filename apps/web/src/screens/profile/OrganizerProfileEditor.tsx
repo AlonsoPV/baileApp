@@ -38,6 +38,7 @@ import type { AcademyLocation } from "../../types/academy";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEventMetricsPanel";
+import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 
 const colors = {
   coral: '#FF3D57',
@@ -864,7 +865,8 @@ export default function OrganizerProfileEditor() {
       respuestas: {
         musica_tocaran: "",
         hay_estacionamiento: ""
-      }
+      },
+      cuenta_bancaria: {} as BankAccountData
     },
     preferDraft: true
   });
@@ -903,7 +905,11 @@ export default function OrganizerProfileEditor() {
 
       const wasNewProfile = !org; // Detectar si es un perfil nuevo
 
-      const profileId = await upsert.mutateAsync({ ...(form as any), ritmos_seleccionados: outSelected } as any);
+      const profileId = await upsert.mutateAsync({ 
+        ...(form as any), 
+        ritmos_seleccionados: outSelected,
+        cuenta_bancaria: (form as any).cuenta_bancaria || {}
+      } as any);
 
       // Si es un perfil nuevo, crear evento y fecha por defecto
       if (wasNewProfile && profileId) {
@@ -2696,7 +2702,13 @@ export default function OrganizerProfileEditor() {
             </div>
           </div>
 
-
+          {/* Cuenta Bancaria */}
+          <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
+            <BankAccountEditor
+              value={(form as any).cuenta_bancaria || {}}
+              onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
+            />
+          </div>
 
           {/* Sección de Fotos */}
           <PhotoManagementSection

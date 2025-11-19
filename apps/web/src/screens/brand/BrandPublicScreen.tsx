@@ -170,8 +170,13 @@ export default function BrandProfileLive() {
         .brand-novedad-media {
           width: 100%;
           aspect-ratio: 16 / 9;
-          overflow: hidden;
+          overflow: visible;
           background: #020617;
+          padding: 12px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .brand-novedad-body {
           flex: 1;
@@ -234,24 +239,26 @@ export default function BrandProfileLive() {
           <div className="banner-grid" style={{ position: 'relative' }}>
             {/* Avatar (slot 250x250 — ideal subir imagen cuadrada, p.ej. 800x800px, con el logo centrado para que se vea completo) */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
-              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'visible', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', boxSizing: 'border-box' }}>
                 {avatarUrl ? (
-                  <ImageWithFallback
-                    src={avatarUrl}
-                    alt="avatar marca"
-                    width={300}
-                    height={300}
-                    sizes="(max-width: 768px) 50vw, 300px"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                      backgroundColor: 'rgba(0,0,0,0.25)'
-                    }}
-                  />
+                  <div style={{ width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                    <ImageWithFallback
+                      src={avatarUrl}
+                      alt="avatar marca"
+                      sizes="(max-width: 768px) 50vw, 300px"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        minWidth: 0,
+                        minHeight: 0,
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        display: 'block'
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
@@ -615,14 +622,24 @@ export default function BrandProfileLive() {
                   <article key={item.id} className="brand-novedad-card" style={{ maxWidth: 350, width: '100%' }}>
                     <div className="brand-novedad-media">
                       {item.image ? (
-                        <ImageWithFallback
-                          src={item.image}
-                          alt={item.name}
-                          width={400}
-                          height={320}
-                          sizes="(max-width: 768px) 100vw, 400px"
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
+                        <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                          <ImageWithFallback
+                            src={item.image}
+                            alt={item.name}
+                            sizes="(max-width: 768px) 100vw, 400px"
+                            style={{ 
+                              width: '100%',
+                              height: '100%',
+                              minWidth: 0,
+                              minHeight: 0,
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              objectFit: 'contain',
+                              objectPosition: 'center',
+                              display: 'block'
+                            }}
+                          />
+                        </div>
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '2rem', opacity: 0.4 }}>
                           🛍️
@@ -1167,6 +1184,8 @@ function CatalogTabs({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 210,
+    overflow: 'visible',
+    boxSizing: 'border-box',
   };
 
   const bodyShell: React.CSSProperties = {
@@ -1280,20 +1299,24 @@ function CatalogTabs({
               }}
             >
               <div style={imageShell}>
-                <ImageWithFallback
-                  src={p.image}
-                  alt={p.name}
-                  width={360}
-                  height={300}
-                  sizes="(max-width: 768px) 100vw, 360px"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: 210,
-                    objectFit: 'contain',
-                    borderRadius: 18,
-                  }}
-                />
+                <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)', minHeight: 210 }}>
+                  <ImageWithFallback
+                    src={p.image}
+                    alt={p.name}
+                    sizes="(max-width: 768px) 100vw, 360px"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      minWidth: 0,
+                      minHeight: 0,
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                      display: 'block'
+                    }}
+                  />
+                </div>
               </div>
               <div style={bodyShell}>
                 <div

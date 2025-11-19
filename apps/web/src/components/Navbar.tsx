@@ -128,7 +128,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           padding: 0.5rem 1rem;
           border-radius: 20px;
           border: 1px solid rgba(255,255,255,0.35);
-          background: rgba(255,255,255,0.15);
+          background: #9B3B15;
           color: #fff;
           font-weight: 600;
           font-size: 0.9rem;
@@ -138,7 +138,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         }
 
         .nav-login-button:hover {
-          background: rgba(255,255,255,0.25);
+          background: #B84A1A;
           border-color: rgba(255,255,255,0.5);
         }
 

@@ -8,6 +8,7 @@ export interface SocialMediaSectionProps {
       youtube?: string | null;
       facebook?: string | null;
       whatsapp?: string | null;
+      email?: string | null;
       web?: string | null;
     };
   };
@@ -17,12 +18,13 @@ export interface SocialMediaSectionProps {
     youtube?: string | null;
     facebook?: string | null;
     whatsapp?: string | null;
+    email?: string | null;
     web?: string | null;
   };
   title?: string;
   showTitle?: boolean;
   style?: React.CSSProperties;
-  availablePlatforms?: ('instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp' | 'web')[];
+  availablePlatforms?: ('instagram' | 'tiktok' | 'youtube' | 'facebook' | 'whatsapp' | 'email' | 'web')[];
 }
 
 function isNonEmpty(v?: string | null) {
@@ -50,7 +52,7 @@ export default function SocialMediaSection({
   title = "Redes Sociales",
   showTitle = true,
   style,
-  availablePlatforms = ['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp'],
+  availablePlatforms = ['instagram', 'tiktok', 'youtube', 'facebook', 'whatsapp', 'email'],
 }: SocialMediaSectionProps) {
   console.log('[SocialMediaSection] Props recibidas:', { respuestas, redes_sociales, title, showTitle, style, availablePlatforms });
   
@@ -73,6 +75,12 @@ export default function SocialMediaSection({
     if (platform === "whatsapp") {
       const link = buildWhatsAppLink(value as string);
       if (link) entries.push([platform, link]);
+    } else if (platform === "email") {
+      // Para email, usar mailto:
+      const email = (value as string).trim();
+      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        entries.push([platform, `mailto:${email}`]);
+      }
     } else {
       const clean = sanitizeUrl(value as string);
       // convierte @handle a URLs si quieres (opcional)
@@ -156,6 +164,12 @@ export default function SocialMediaSection({
         borderColor: 'rgba(37, 211, 102, 0.3)',
         boxShadow: '0 4px 15px rgba(37, 211, 102, 0.2)',
       },
+      email: {
+        background: 'linear-gradient(135deg, #ea4335 0%, #c5221f 100%)',
+        color: '#ffffff',
+        borderColor: 'rgba(234, 67, 53, 0.3)',
+        boxShadow: '0 4px 15px rgba(234, 67, 53, 0.2)',
+      },
     };
 
     return { ...baseStyle, ...platformStyles[platform as keyof typeof platformStyles] };
@@ -175,6 +189,7 @@ export default function SocialMediaSection({
       youtube: 'rgba(255, 0, 0, 0.3)',
       facebook: 'rgba(24, 119, 242, 0.3)',
       whatsapp: 'rgba(37, 211, 102, 0.3)',
+      email: 'rgba(234, 67, 53, 0.3)',
     };
     
     return {
@@ -245,7 +260,8 @@ export default function SocialMediaSection({
             youtube: '📺',
             facebook: '👥',
             whatsapp: '💬',
-        web: '🌐',
+            email: '📧',
+            web: '🌐',
           }[k] || '🔗';
 
           return (

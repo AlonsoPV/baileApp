@@ -600,189 +600,126 @@ export default function TeacherProfileLive() {
           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 1.5rem;
         }
-        .profile-promos-section {
-          margin-bottom: 2rem;
-          padding: 2.5rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          position: relative;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-          backdrop-filter: blur(10px);
+        .promo-section {
+          background: radial-gradient(circle at top, #161929, #05060c);
+          border-radius: 32px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          padding: 24px 24px 28px;
+          max-width: 1000px;
+          margin: 0 auto 2rem;
         }
-        .profile-promos-section::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166, #1E88E5);
-          border-radius: 24px 24px 0 0;
-          opacity: 0.8;
-        }
-        .profile-promos-header {
+        .promo-header {
           display: flex;
           align-items: center;
-          gap: 1.25rem;
-          margin-bottom: 2rem;
+          gap: 16px;
+          margin-bottom: 20px;
         }
-        .profile-promos-icon {
-          width: 56px;
-          height: 56px;
-          border-radius: 16px;
+        .promo-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 20px;
+          background: radial-gradient(circle at 20% 20%, #4ade80, #22c55e, #16a34a);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.75rem;
-          background: linear-gradient(135deg, rgba(240, 147, 251, 0.25), rgba(245, 87, 108, 0.2));
-          border: 2px solid rgba(240, 147, 251, 0.4);
-          box-shadow: 0 4px 16px rgba(240, 147, 251, 0.3);
+          font-size: 26px;
         }
-        .profile-promos-title { 
-          margin: 0;
-          font-size: 1.75rem;
-          font-weight: 900;
+        .promo-header h2, .promo-header h3 {
+          font-size: 1.7rem;
           color: #fff;
-          letter-spacing: -0.02em;
+          margin: 0;
+          font-weight: 900;
         }
-        .profile-promos-subtitle {
+        .promo-header p {
+          color: #a9b1c8;
           font-size: 0.95rem;
           margin: 0.5rem 0 0 0;
-          font-weight: 500;
-          color: rgba(255,255,255,0.8);
         }
-        .profile-promos-grid {
+        .promo-list {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 14px;
         }
-        .profile-promo-card {
-          padding: 1.75rem;
-          border-radius: 18px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-          border: 1.5px solid rgba(255, 255, 255, 0.18);
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-        .profile-promo-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(30, 136, 229, 0.6));
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .profile-promo-card:hover {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
-          border-color: rgba(240, 147, 251, 0.4);
-          transform: translateY(-4px);
-          box-shadow: 0 8px 32px rgba(240, 147, 251, 0.25);
-        }
-        .profile-promo-card:hover::before {
-          opacity: 1;
-        }
-        .profile-promo-header {
+        .promo-card {
+          background: linear-gradient(135deg, #111522, #101321);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 16px 18px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.75rem;
-          flex-wrap: wrap;
+          gap: 18px;
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+          transition: transform 0.16s ease-out, box-shadow 0.16s ease-out, border-color 0.16s ease-out, background 0.16s ease-out;
         }
-        .profile-promo-meta {
+        .promo-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 26px 55px rgba(0, 0, 0, 0.7);
+          border-color: rgba(148, 163, 255, 0.4);
+          background: linear-gradient(145deg, #14182a, #101320);
+        }
+        .promo-info {
           display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
+          flex-direction: column;
+          gap: 6px;
+          flex: 1;
         }
-        .profile-promo-type-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.9rem;
-          border-radius: 10px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        .promo-chip {
+          align-self: flex-start;
+          border-radius: 999px;
+          padding: 4px 10px;
+          font-size: 0.78rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          background: rgba(37, 99, 235, 0.15);
+          color: #bfdbfe;
+          border: 1px solid rgba(59, 130, 246, 0.5);
         }
-        .profile-promo-title {
-          margin: 0;
-          color: #fff;
-          font-size: 1.3rem;
-          font-weight: 800;
-          line-height: 1.3;
-          letter-spacing: -0.01em;
+        .promo-chip--destacado {
+          background: rgba(249, 115, 22, 0.18);
+          color: #fed7aa;
+          border-color: rgba(249, 115, 22, 0.7);
         }
-        .profile-promo-description {
-          margin: 0;
-          font-size: 0.95rem;
-          color: rgba(255,255,255,0.85);
-          line-height: 1.65;
-        }
-        .profile-promo-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-top: 0.5rem;
-          padding-top: 0.75rem;
-          border-top: 1px solid rgba(255,255,255,0.08);
-        }
-        .profile-promo-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          padding: 0.45rem 0.85rem;
-          border-radius: 8px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-        .profile-promo-chip:hover {
-          transform: translateY(-1px);
-        }
-        .profile-promo-chip--muted {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.6);
-        }
-        .profile-promo-chip--success {
-          background: rgba(16,185,129,0.15);
-          border: 1px solid rgba(16,185,129,0.25);
-          color: #81e6b3;
-        }
-        .profile-promo-chip--warning {
-          background: rgba(255,209,102,0.15);
-          border: 1px solid rgba(255,209,102,0.25);
-          color: #ffd98c;
-        }
-        .profile-promo-chip--meta {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.8);
-        }
-        .profile-promo-price {
-          padding: 0.65rem 1.1rem;
-          border-radius: 12px;
-          background: linear-gradient(135deg, rgba(30,136,229,0.25), rgba(0,188,212,0.2));
-          border: 1.5px solid rgba(30,136,229,0.4);
-          color: #90caf9;
-          font-weight: 800;
+        .promo-info h3 {
           font-size: 1.1rem;
-          white-space: nowrap;
-          box-shadow: 0 2px 12px rgba(30,136,229,0.2);
+          color: #fff;
+          margin: 0;
+          font-weight: 800;
         }
-        .profile-promo-price.is-placeholder {
-          background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-          border: 1.5px solid rgba(255,255,255,0.2);
-          color: rgba(255,255,255,0.8);
-          box-shadow: none;
+        .promo-desc {
+          color: #a9b1c8;
+          font-size: 0.9rem;
+          margin: 0;
+        }
+        .promo-price-box {
+          min-width: 120px;
+          padding: 10px 16px;
+          border-radius: 18px;
+          background: radial-gradient(circle at top, #0b3b74, #0b1220);
+          border: 1px solid rgba(56, 189, 248, 0.7);
+          box-shadow: 0 12px 35px rgba(56, 189, 248, 0.45);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .promo-price-box--destacado {
+          background: radial-gradient(circle at top, #f97316, #b45309);
+          border-color: rgba(251, 191, 36, 0.9);
+          box-shadow: 0 14px 40px rgba(251, 146, 60, 0.65);
+        }
+        .promo-price {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #fff;
+          margin: 0;
+        }
+        .promo-unit {
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          color: rgba(191, 219, 254, 0.85);
+          margin: 0;
         }
         @media (max-width: 768px) {
           .teacher-container {
@@ -800,9 +737,9 @@ export default function TeacherProfileLive() {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
           }
-          .profile-promos-section { padding: 1.5rem !important; }
-          .profile-promos-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
-          .profile-promo-card { padding: 1.25rem !important; }
+          .promo-section { padding: 18px 14px 22px !important; }
+          .promo-card { flex-direction: column; align-items: flex-start !important; }
+          .promo-price-box { align-self: stretch; text-align: right !important; }
         }
         @media (max-width: 480px) {
           .teacher-section {
@@ -817,8 +754,8 @@ export default function TeacherProfileLive() {
             grid-template-columns: 1fr !important;
             gap: 0.75rem !important;
           }
-          .profile-promos-section { padding: 1.25rem !important; }
-          .profile-promo-card { padding: 1rem !important; }
+          .promo-section { padding: 18px 14px 22px !important; }
+          .promo-card { padding: 14px 16px !important; }
         }
       `}</style>
 
@@ -1063,6 +1000,16 @@ export default function TeacherProfileLive() {
             </motion.section>
           )} */}
           {/* Clases & Tarifas (visualización) */}
+          {(() => {
+            // Verificar si hay clases para mostrar
+            const hasClassesFromTables = classesFromTables && classesFromTables.length > 0;
+            const hasCronograma = Array.isArray((teacher as any)?.cronograma) && (teacher as any).cronograma.length > 0;
+            const hasClasses = hasClassesFromTables || hasCronograma;
+            
+            // Solo mostrar la sección si hay clases o si está cargando
+            if (!classesLoading && !hasClasses) return null;
+            
+            return (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1158,87 +1105,64 @@ export default function TeacherProfileLive() {
               )}
             </div>
           </motion.section>
+            );
+          })()}
 
           {promotions.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.45 }}
-              className="profile-promos-section"
+              className="promo-section"
             >
-              <div className="profile-promos-header">
-                <div className="profile-promos-icon">💸</div>
+              <header className="promo-header">
+                <div className="promo-icon">💸</div>
                 <div>
-                  <h3 className="profile-promos-title">Promociones y Paquetes</h3>
-                  <p className="profile-promos-subtitle">
-                    Ofertas especiales y descuentos disponibles
-                  </p>
+                  <h3>Promociones y Paquetes</h3>
+                  <p>Ofertas especiales y descuentos disponibles</p>
                 </div>
-              </div>
+              </header>
 
-              <div className="profile-promos-grid">
+              <div className="promo-list">
                 {promotions.map((promo: any, index: number) => {
                   const typeKey = promo?.tipo && promotionTypeMeta[promo.tipo] ? promo.tipo : 'otro';
                   const typeMeta = promotionTypeMeta[typeKey];
-                  const typeStyle = promotionTypeStyles[typeKey];
-                  const validityParts: string[] = [];
-                  const desde = formatDateOrDay(promo?.validoDesde);
-                  const hasta = formatDateOrDay(promo?.validoHasta);
-                  if (desde) validityParts.push(`desde ${desde}`);
-                  if (hasta) validityParts.push(`hasta ${hasta}`);
                   const priceLabel = formatPriceLabel(promo?.precio);
-                  const priceIsPlaceholder = priceLabel === 'Gratis';
+                  const isDestacado = typeKey === 'promocion' || typeKey === 'descuento';
+                  
+                  // Formatear el precio: extraer número y formatear con comas
+                  let priceNumber: string | null = null;
+                  if (priceLabel && priceLabel !== 'Gratis') {
+                    const numeric = typeof promo?.precio === 'number' ? promo.precio : Number(promo?.precio);
+                    if (!Number.isNaN(numeric) && numeric > 0) {
+                      priceNumber = numeric.toLocaleString('en-US');
+                    }
+                  }
 
                   return (
-                    <motion.div
+                    <motion.article
                       key={`${promo?.nombre || 'promo'}-${index}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="profile-promo-card"
+                      className="promo-card"
                     >
-                      <div className="profile-promo-header">
-                        <span className="profile-promo-chip" style={typeStyle}>
+                      <div className="promo-info">
+                        <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        {priceLabel !== null && (
-                          <span className={`profile-promo-price${priceIsPlaceholder ? ' is-placeholder' : ''}`}>
-                            {priceLabel}
-                          </span>
+                        <h3>{promo?.nombre || 'Promoción'}</h3>
+                        {promo?.descripcion && (
+                          <p className="promo-desc">{promo.descripcion}</p>
                         )}
                       </div>
-
-                      <h4 className="profile-promo-title">{promo?.nombre || 'Promoción'}</h4>
-
-                      {promo?.descripcion && (
-                        <p className="profile-promo-description">{promo.descripcion}</p>
-                      )}
-
-                      {(promo?.codigo || promo?.activo === false || promo?.condicion || validityParts.length > 0) && (
-                        <div className="profile-promo-chips">
-                          {promo?.codigo && (
-                            <span className="profile-promo-chip profile-promo-chip--success">
-                              🎟️ {String(promo.codigo).toUpperCase()}
-                            </span>
-                          )}
-                          {promo?.activo === false && (
-                            <span className="profile-promo-chip profile-promo-chip--muted">
-                              Inactiva
-                            </span>
-                          )}
-                          {promo?.condicion && (
-                            <span className="profile-promo-chip profile-promo-chip--meta">
-                              {promo.condicion}
-                            </span>
-                          )}
-                          {validityParts.length > 0 && (
-                            <span className="profile-promo-chip profile-promo-chip--warning">
-                              ⏰ {validityParts.join(' · ')}
-                            </span>
-                          )}
+                      {priceLabel !== null && (
+                        <div className={`promo-price-box${isDestacado ? ' promo-price-box--destacado' : ''}`}>
+                          <span className="promo-price">{priceNumber || priceLabel}</span>
+                          <span className="promo-unit">MXN</span>
                         </div>
                       )}
-                    </motion.div>
+                    </motion.article>
                   );
                 })}
               </div>

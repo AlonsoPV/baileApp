@@ -29,6 +29,7 @@ export type AcademyProfile = {
     youtube?: string|null;
     facebook?: string|null;
     whatsapp?: string|null;
+    email?: string|null;
     web?: string|null;
   };
   respuestas?: any; // Columna existente en la BD

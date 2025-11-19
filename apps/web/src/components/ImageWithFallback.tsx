@@ -48,6 +48,10 @@ export default function ImageWithFallback({
   const optimizedWebp = buildSupabaseOptimizedUrl(finalSrc, "webp", width);
   const optimizedAvif = buildSupabaseOptimizedUrl(finalSrc, "avif", width);
 
+  // Si el estilo tiene width o height en porcentajes, no aplicar dimensiones fijas
+  const styleWidth = typeof style?.width === 'string' && style.width.includes('%') ? undefined : (width ? `${width}px` : undefined);
+  const styleHeight = typeof style?.height === 'string' && style.height.includes('%') ? undefined : (height ? `${height}px` : undefined);
+
   return (
     <picture>
       {optimizedAvif && <source srcSet={optimizedAvif} type="image/avif" sizes={sizes} />}
@@ -58,9 +62,9 @@ export default function ImageWithFallback({
         decoding="async"
         loading={resolvedLoading}
         sizes={sizes}
-        width={width}
-        height={height}
-        style={{ width: width ? `${width}px` : undefined, height: height ? `${height}px` : undefined, ...style }}
+        width={styleWidth ? width : undefined}
+        height={styleHeight ? height : undefined}
+        style={{ width: styleWidth, height: styleHeight, ...style }}
         {...rest}
       />
     </picture>

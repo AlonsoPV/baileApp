@@ -19,6 +19,7 @@ import FAQEditor from "../../components/common/FAQEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 // import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
+import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
@@ -117,18 +118,25 @@ export default function TeacherProfileEditor() {
       redes_sociales: {
         instagram: "",
         facebook: "",
-        whatsapp: ""
+        whatsapp: "",
+        tiktok: "",
+        youtube: "",
+        email: ""
       },
       respuestas: {
         redes: {
           instagram: "",
           facebook: "",
-          whatsapp: ""
+          whatsapp: "",
+          tiktok: "",
+          youtube: "",
+          email: ""
         },
         dato_curioso: "",
         gusta_bailar: ""
       },
-      faq: [] as any[]
+      faq: [] as any[],
+      cuenta_bancaria: {} as BankAccountData
     } as any
   });
 
@@ -187,6 +195,7 @@ export default function TeacherProfileEditor() {
         cronograma: (form as any).cronograma || [],
         costos: (form as any).costos || [],
         redes_sociales: form.redes_sociales,
+        cuenta_bancaria: (form as any).cuenta_bancaria || {},
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
 
@@ -1116,6 +1125,69 @@ export default function TeacherProfileEditor() {
                 }}
               />
             </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                🎵 TikTok
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.tiktok || ""}
+                onChange={(e) => setNested('redes_sociales.tiktok', e.target.value)}
+                placeholder="@tu_usuario o URL"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                📺 YouTube
+              </label>
+              <input
+                type="text"
+                value={form.redes_sociales.youtube || ""}
+                onChange={(e) => setNested('redes_sociales.youtube', e.target.value)}
+                placeholder="@tu_canal o URL"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                📧 Correo electrónico
+              </label>
+              <input
+                type="email"
+                value={form.redes_sociales.email || ""}
+                onChange={(e) => setNested('redes_sociales.email', e.target.value)}
+                placeholder="correo@ejemplo.com"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: colors.light,
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -1353,6 +1425,14 @@ export default function TeacherProfileEditor() {
           </h2>
 
           <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
+        </div>
+
+        {/* Cuenta Bancaria */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <BankAccountEditor
+            value={(form as any).cuenta_bancaria || {}}
+            onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
+          />
         </div>
 
         {/* Gestión de Fotos */}

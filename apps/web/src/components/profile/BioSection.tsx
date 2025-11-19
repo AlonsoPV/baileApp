@@ -8,7 +8,8 @@ import {
   FaLinkedinIn,
   FaSpotify,
   FaWhatsapp,
-  FaGlobe
+  FaGlobe,
+  FaEnvelope
 } from 'react-icons/fa';
 
 interface BioSectionProps {
@@ -18,6 +19,7 @@ interface BioSectionProps {
     facebook?: string;
     tiktok?: string;
     youtube?: string;
+    email?: string;
     twitter?: string;
     linkedin?: string;
     spotify?: string;
@@ -56,6 +58,8 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return <FaSpotify size={20} />;
       case 'whatsapp':
         return <FaWhatsapp size={20} />;
+      case 'email':
+        return <FaEnvelope size={20} />;
       case 'website':
         return <FaGlobe size={20} />;
       default:
@@ -81,6 +85,8 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return '#1DB954';
       case 'whatsapp':
         return '#25D366';
+      case 'email':
+        return '#EA4335';
       case 'website':
         return '#6C757D';
       default:
@@ -115,6 +121,14 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
       case 'whatsapp': {
         const digits = username.replace(/\D+/g, '');
         return digits ? `https://wa.me/${digits}` : username;
+      }
+      case 'email': {
+        // Validar que sea un email válido
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(username)) {
+          return `mailto:${username}`;
+        }
+        return '#';
       }
       case 'website':
         return username;

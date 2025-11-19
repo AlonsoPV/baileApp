@@ -491,32 +491,35 @@ export default function BrandProfileEditor() {
                     width: '160px', 
                     height: '160px', 
                     borderRadius: '24px', 
-                    overflow: 'hidden',
+                    overflow: 'visible',
                     border: '3px solid rgba(255, 255, 255, 0.2)',
                     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
                     background: 'linear-gradient(135deg, #E53935, #FB8C00)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '6px'
+                    padding: '8px',
+                    boxSizing: 'border-box'
                   }}>
                       {form.avatar_url ? (
-                        <ImageWithFallback 
-                          src={form.avatar_url} 
-                          alt="logo" 
-                          width={160}
-                          height={160}
-                          sizes="160px"
-                          style={{ 
-                            width: '100%',
-                            height: '100%',
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            objectFit: 'contain',
-                            objectPosition: 'center',
-                            backgroundColor: 'rgba(0,0,0,0.35)'
-                          }} 
-                        />
+                        <div style={{ width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
+                          <ImageWithFallback 
+                            src={form.avatar_url} 
+                            alt="logo" 
+                            sizes="160px"
+                            style={{ 
+                              width: '100%',
+                              height: '100%',
+                              minWidth: 0,
+                              minHeight: 0,
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              objectFit: 'contain',
+                              objectPosition: 'center',
+                              display: 'block'
+                            }} 
+                          />
+                        </div>
                       ) : (
                         <div style={{ 
                           width: '100%', 
@@ -1575,29 +1578,33 @@ export default function BrandProfileEditor() {
                         position: 'relative',
                         marginBottom: '1rem',
                         borderRadius: '12px',
-                        overflow: 'hidden',
+                        overflow: 'visible',
                         background: 'rgba(0,0,0,0.2)',
                         minHeight: '200px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        padding: '12px',
+                        boxSizing: 'border-box'
                       }}>
-                        <ImageWithFallback 
-                          src={p.imagen_url} 
-                          alt={p.titulo || 'Producto'} 
-                          width={400}
-                          height={320}
-                          sizes="(max-width: 768px) 100vw, 400px"
-                          style={{ 
-                            width: '100%', 
-                            height: 'auto', 
-                    maxWidth: '800px',
-                    maxHeight: '350px',
-                            minHeight: '200px',
-                            objectFit: 'contain',
-                            display:'block' 
-                          }} 
-                        />
+                        <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)', minHeight: '200px' }}>
+                          <ImageWithFallback 
+                            src={p.imagen_url} 
+                            alt={p.titulo || 'Producto'} 
+                            sizes="(max-width: 768px) 100vw, 400px"
+                            style={{ 
+                              width: '100%',
+                              height: '100%',
+                              minWidth: 0,
+                              minHeight: 0,
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              objectFit: 'contain',
+                              objectPosition: 'center',
+                              display: 'block'
+                            }} 
+                          />
+                        </div>
                         {/* Badges de categoría y género */}
                         <div style={{
                           position: 'absolute',
