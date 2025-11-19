@@ -25,7 +25,9 @@ export default function OnboardingGate() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles_user')
-        .select('onboarding_complete, pin_hash, updated_at')
+        .select(
+          'user_id, onboarding_complete, onboarding_completed, pin_hash, updated_at, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile'
+        )
         .eq('user_id', user!.id)
         // En caso de que existan filas duplicadas para el mismo user_id,
         // tomar siempre la más reciente para reflejar el último estado real
@@ -33,7 +35,37 @@ export default function OnboardingGate() {
         .limit(1);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      return row ?? { onboarding_complete: false, pin_hash: null };
+      if (!row) return { onboarding_complete: false, pin_hash: null };
+
+      // 🔍 Validación extra: si el usuario ya tiene datos completos de perfil,
+      // pero el flag no está marcado, lo corregimos automáticamente.
+      const hasName = !!row.display_name;
+      const ritmosCount =
+        (Array.isArray(row.ritmos) ? row.ritmos.length : 0) +
+        (Array.isArray(row.ritmos_seleccionados) ? row.ritmos_seleccionados.length : 0);
+      const hasRitmos = ritmosCount > 0;
+      const hasZonas = Array.isArray(row.zonas) && row.zonas.length > 0;
+      const hasRol = !!row.rol_baile;
+
+      let complete = row.onboarding_complete === true;
+
+      if (!complete && hasName && hasRitmos && hasZonas && hasRol) {
+        try {
+          const { error: updError } = await supabase
+            .from('profiles_user')
+            .update({ onboarding_complete: true, onboarding_completed: true })
+            .eq('user_id', user!.id);
+          if (updError) {
+            console.warn('[OnboardingGate] No se pudo actualizar onboarding_complete automáticamente:', updError.message);
+          } else {
+            complete = true;
+          }
+        } catch (e: any) {
+          console.warn('[OnboardingGate] Error inesperado al auto-corregir onboarding_complete:', e?.message || e);
+        }
+      }
+
+      return { ...row, onboarding_complete: complete };
     },
     staleTime: 30000,
   });

@@ -29,12 +29,12 @@ export default function AuthCallback() {
         
         if (user) {
           // Verificar si el usuario tiene perfil y onboarding completo
-          const { data: profile, error: profileError } = await supabase
+          const { data: profileRaw, error: profileError } = await supabase
             .from('profiles_user')
-            .select('user_id, onboarding_complete, pin_hash')
+            .select('user_id, onboarding_complete, onboarding_completed, pin_hash, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile')
             .eq('user_id', user.id)
             .maybeSingle();
-          
+
           if (profileError) {
             console.error('[AuthCallback] Error fetching profile:', profileError);
             // Si el perfil no existe, crear uno básico
@@ -55,7 +55,36 @@ export default function AuthCallback() {
             navigate('/onboarding/basics', { replace: true });
             return;
           }
-          
+
+          let profile = profileRaw as any;
+
+          // Validación extra: si tiene datos completos de perfil pero el flag no está marcado, corregirlo.
+          if (profile) {
+            const hasName = !!profile.display_name;
+            const ritmosCount =
+              (Array.isArray(profile.ritmos) ? profile.ritmos.length : 0) +
+              (Array.isArray(profile.ritmos_seleccionados) ? profile.ritmos_seleccionados.length : 0);
+            const hasRitmos = ritmosCount > 0;
+            const hasZonas = Array.isArray(profile.zonas) && profile.zonas.length > 0;
+            const hasRol = !!profile.rol_baile;
+
+            if (!profile.onboarding_complete && hasName && hasRitmos && hasZonas && hasRol) {
+              try {
+                const { error: updError } = await supabase
+                  .from('profiles_user')
+                  .update({ onboarding_complete: true, onboarding_completed: true })
+                  .eq('user_id', user.id);
+                if (!updError) {
+                  profile = { ...profile, onboarding_complete: true };
+                } else {
+                  console.warn('[AuthCallback] No se pudo auto-corregir onboarding_complete:', updError.message);
+                }
+              } catch (e: any) {
+                console.warn('[AuthCallback] Error inesperado auto-corregir onboarding_complete:', e?.message || e);
+              }
+            }
+          }
+
           // Si no tiene onboarding completo, ir a onboarding (sin verificar PIN)
           if (!profile?.onboarding_complete) {
             navigate('/onboarding/basics', { replace: true });

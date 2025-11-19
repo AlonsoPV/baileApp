@@ -26,21 +26,23 @@ export function PickZonas() {
   const qc = useQueryClient();
   const { groups: zonaGroups } = useZonaCatalogGroups(allTags);
 
-  // Mutación para marcar onboarding como completo
+  // Mutación para marcar onboarding como completo (validación directa en DB)
   const finishOnboarding = useMutation({
     mutationFn: async () => {
+      if (!user?.id) throw new Error("Usuario no autenticado");
       const { error } = await supabase
         .from("profiles_user")
-        .update({ onboarding_complete: true })
-        .eq("user_id", user!.id);
+        .update({ onboarding_complete: true, onboarding_completed: true })
+        .eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: async () => {
-      // 🔁 Asegura que el guard vea el cambio
+      // 🔁 Asegura que el guard y el perfil vean el cambio actualizado
       qc.setQueryData(["onboarding-status", user?.id], { onboarding_complete: true });
       await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      navigate(routes.app.profile, { replace: true });
+      // Después de completar onboarding, ir a Explorar (sin pedir PIN)
+      navigate(routes.app.explore, { replace: true });
     }
   });
 
@@ -65,13 +67,12 @@ export function PickZonas() {
       const updates = mergeProfile(profile as any, {
         zonas: selectedIds,
       });
-      
+
       await updateProfileFields(updates);
       showToast('Zonas guardadas exitosamente 📍', 'success');
-      
-      // Marcar onboarding como completo y redirigir a explore
-      await updateProfileFields({ onboarding_complete: true });
-      navigate('/explore', { replace: true });
+
+      // Validar y marcar onboarding como completo directamente en la tabla
+      await finishOnboarding.mutateAsync();
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');

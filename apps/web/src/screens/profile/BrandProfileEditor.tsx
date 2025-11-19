@@ -18,7 +18,35 @@ type BrandPolicies = { shipping?: string; returns?: string; warranty?: string };
 type FitTip = { style: string; tip: string };
 type SizeRow = { mx: string; us: string; eu: string };
 type ProductItem = { id: string; titulo: string; descripcion?: string; imagen_url: string; category: Category; gender?: Gender; price?: string; sizes?: string[] };
-type Conversion = { headline?: string; subtitle?: string; coupons?: string[] };
+type Conversion = {
+  headline?: string;
+  subtitle?: string;
+  coupons?: string[];
+  calzadoLabel?: string;
+  ropaLabel?: string;
+  accesoriosLabel?: string;
+};
+
+type BrandReview = {
+  id: string;
+  author: string;
+  location?: string;
+  rating: number;
+  text: string;
+};
+
+type BrandFaq = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+type BrandCommitmentItem = {
+  id: string;
+  title: string;
+  description: string;
+};
+
 type BrandForm = {
   nombre_publico: string;
   bio: string | null;
@@ -29,6 +57,9 @@ type BrandForm = {
   fit_tips: FitTip[];
   policies: BrandPolicies;
   conversion: Conversion;
+  reviews: BrandReview[];
+  faqs: BrandFaq[];
+  commitment: BrandCommitmentItem[];
 };
 
 const colors = { dark: '#121212', light: '#F5F5F5' };
@@ -48,7 +79,19 @@ type Action =
   | { type: 'SET_POLICIES'; value: Partial<BrandPolicies> }
   | { type: 'SET_PRODUCTS'; value: ProductItem[] }
   | { type: 'UPDATE_PRODUCT'; id: string; value: Partial<ProductItem> }
-  | { type: 'REMOVE_PRODUCT'; id: string };
+  | { type: 'REMOVE_PRODUCT'; id: string }
+  | { type: 'SET_REVIEWS'; value: BrandReview[] }
+  | { type: 'ADD_REVIEW' }
+  | { type: 'UPDATE_REVIEW'; index: number; value: Partial<BrandReview> }
+  | { type: 'REMOVE_REVIEW'; index: number }
+  | { type: 'SET_FAQS'; value: BrandFaq[] }
+  | { type: 'ADD_FAQ' }
+  | { type: 'UPDATE_FAQ'; index: number; value: Partial<BrandFaq> }
+  | { type: 'REMOVE_FAQ'; index: number }
+  | { type: 'SET_COMMITMENT'; value: BrandCommitmentItem[] }
+  | { type: 'ADD_COMMITMENT' }
+  | { type: 'UPDATE_COMMITMENT'; index: number; value: Partial<BrandCommitmentItem> }
+  | { type: 'REMOVE_COMMITMENT'; index: number };
 
 const initialForm: BrandForm = {
   nombre_publico: '',
@@ -60,6 +103,9 @@ const initialForm: BrandForm = {
   fit_tips: [],
   policies: {},
   conversion: {},
+  reviews: [],
+  faqs: [],
+  commitment: [],
 };
 
 function formReducer(state: BrandForm, action: Action): BrandForm {
@@ -81,6 +127,62 @@ function formReducer(state: BrandForm, action: Action): BrandForm {
     case 'SET_PRODUCTS': return { ...state, productos: action.value };
     case 'UPDATE_PRODUCT': return { ...state, productos: state.productos.map(p=> p.id===action.id ? { ...p, ...action.value } : p) };
     case 'REMOVE_PRODUCT': return { ...state, productos: state.productos.filter(p=> p.id!==action.id) };
+    case 'SET_REVIEWS': return { ...state, reviews: action.value };
+    case 'ADD_REVIEW': {
+      const next: BrandReview = {
+        id: crypto.randomUUID(),
+        author: '',
+        location: '',
+        rating: 5,
+        text: '',
+      };
+      return { ...state, reviews: [...(state.reviews || []), next] };
+    }
+    case 'UPDATE_REVIEW':
+      return {
+        ...state,
+        reviews: state.reviews.map((r, i) =>
+          i === action.index ? { ...r, ...action.value } : r
+        ),
+      };
+    case 'REMOVE_REVIEW':
+      return { ...state, reviews: state.reviews.filter((_, i) => i !== action.index) };
+    case 'SET_FAQS': return { ...state, faqs: action.value };
+    case 'ADD_FAQ': {
+      const next: BrandFaq = {
+        id: crypto.randomUUID(),
+        question: '',
+        answer: '',
+      };
+      return { ...state, faqs: [...(state.faqs || []), next] };
+    }
+    case 'UPDATE_FAQ':
+      return {
+        ...state,
+        faqs: state.faqs.map((f, i) =>
+          i === action.index ? { ...f, ...action.value } : f
+        ),
+      };
+    case 'REMOVE_FAQ':
+      return { ...state, faqs: state.faqs.filter((_, i) => i !== action.index) };
+    case 'SET_COMMITMENT': return { ...state, commitment: action.value };
+    case 'ADD_COMMITMENT': {
+      const next: BrandCommitmentItem = {
+        id: crypto.randomUUID(),
+        title: '',
+        description: '',
+      };
+      return { ...state, commitment: [...(state.commitment || []), next] };
+    }
+    case 'UPDATE_COMMITMENT':
+      return {
+        ...state,
+        commitment: state.commitment.map((c, i) =>
+          i === action.index ? { ...c, ...action.value } : c
+        ),
+      };
+    case 'REMOVE_COMMITMENT':
+      return { ...state, commitment: state.commitment.filter((_, i) => i !== action.index) };
     default: return state;
   }
 }
@@ -110,6 +212,9 @@ export default function BrandProfileEditor() {
           fit_tips: Array.isArray((brand as any).fit_tips) ? (brand as any).fit_tips : [],
           policies: (brand as any).policies || {},
           conversion: (brand as any).conversion || {},
+          reviews: Array.isArray((brand as any).reviews) ? (brand as any).reviews : [],
+          faqs: Array.isArray((brand as any).faqs) ? (brand as any).faqs : [],
+          commitment: Array.isArray((brand as any).commitment) ? (brand as any).commitment : [],
         }
       });
     }
@@ -154,6 +259,15 @@ export default function BrandProfileEditor() {
       }
       if (form.conversion && Object.keys(form.conversion).length > 0) {
         payload.conversion = form.conversion;
+      }
+      if (form.reviews && form.reviews.length > 0) {
+        payload.reviews = form.reviews;
+      }
+      if (form.faqs && form.faqs.length > 0) {
+        payload.faqs = form.faqs;
+      }
+      if (form.commitment && form.commitment.length > 0) {
+        payload.commitment = form.commitment;
       }
 
       console.log('📦 [BrandProfileEditor] Payload limpio:', payload);
@@ -372,6 +486,7 @@ export default function BrandProfileEditor() {
                     alignItems: 'center',
                     gap: '1rem'
                   }}>
+                  {/* Slot de logo 160x160 — recomendado subir imagen cuadrada (p.ej. 800x800px) con el logo centrado para que se vea completo */}
                   <div style={{ 
                     width: '160px', 
                     height: '160px', 
@@ -382,8 +497,7 @@ export default function BrandProfileEditor() {
                     background: 'linear-gradient(135deg, #E53935, #FB8C00)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '160px'
+                    justifyContent: 'center'
                   }}>
                       {form.avatar_url ? (
                         <ImageWithFallback 
@@ -393,11 +507,10 @@ export default function BrandProfileEditor() {
                           height={160}
                           sizes="160px"
                           style={{ 
-                            width: '100%', 
-                            height: '100%', 
+                            width: '100%',
+                            height: '100%',
                             objectFit: 'contain',
-                            backgroundColor: 'rgba(0,0,0,0.35)',
-                            minHeight: '160px'
+                            backgroundColor: 'rgba(0,0,0,0.35)'
                           }} 
                         />
                       ) : (
@@ -423,6 +536,14 @@ export default function BrandProfileEditor() {
                       <input type="file" accept="image/*" style={{ display:'none' }} onChange={(e)=> e.target.files?.[0] && onUploadLogo(e.target.files[0]) }/>
                       📸 Subir Logo
                     </label>
+                    <small
+                      style={{
+                        fontSize: '0.8rem',
+                        opacity: 0.75,
+                        marginTop: '0.35rem',
+                        textAlign: 'center',
+                      }}
+                    >Recomendado: imagen cuadrada (≈800×800 px) para que se vea completa en este espacio.</small>
                   </div>
 
                   {/* Columna 2: Nombre + Descripción */}
@@ -857,6 +978,296 @@ export default function BrandProfileEditor() {
                 )}
               </div>
 
+              {/* Reseñas de clientes */}
+              <div className="editor-section glass-card-container">
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(22, 163, 74, 0.4)'
+                  }}>
+                    💬
+                  </div>
+                  <div>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>Reseñas de la comunidad</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Añade testimonios cortos de personas que ya usan tus productos
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {(form.reviews || []).map((r, idx) => (
+                    <div
+                      key={r.id || idx}
+                      style={{
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        padding: '0.9rem',
+                        background: 'rgba(255,255,255,0.03)',
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0,1fr)',
+                        gap: '0.6rem'
+                      }}
+                    >
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: '0.6rem', alignItems: 'center' }}>
+                        <input
+                          className="editor-input"
+                          placeholder="Nombre"
+                          value={r.author || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_REVIEW', index: idx, value: { author: e.target.value } })}
+                          style={{ padding: '0.6rem', fontSize: '0.9rem' }}
+                        />
+                        <input
+                          className="editor-input"
+                          placeholder="Ciudad / zona (opcional)"
+                          value={r.location || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_REVIEW', index: idx, value: { location: e.target.value } })}
+                          style={{ padding: '0.6rem', fontSize: '0.9rem' }}
+                        />
+                        <select
+                          className="editor-input"
+                          value={r.rating || 5}
+                          onChange={(e) => dispatch({ type: 'UPDATE_REVIEW', index: idx, value: { rating: Number(e.target.value) } })}
+                          style={{ padding: '0.6rem', fontSize: '0.9rem' }}
+                        >
+                          {[5,4,3,2,1].map(stars => (
+                            <option key={stars} value={stars}>{'★'.repeat(stars)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <textarea
+                        className="editor-textarea"
+                        rows={2}
+                        placeholder="Comentario breve"
+                        value={r.text || ''}
+                        onChange={(e) => dispatch({ type: 'UPDATE_REVIEW', index: idx, value: { text: e.target.value } })}
+                        style={{ padding: '0.7rem', fontSize: '0.9rem', lineHeight: 1.5 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="editor-back-btn"
+                          onClick={() => dispatch({ type: 'REMOVE_REVIEW', index: idx })}
+                          style={{
+                            background: 'rgba(244, 67, 54, 0.2)',
+                            border: '1px solid rgba(244, 67, 54, 0.4)',
+                            color: '#F44336',
+                            padding: '0.5rem 0.9rem',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          🗑️ Quitar reseña
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="editor-back-btn"
+                  onClick={() => dispatch({ type: 'ADD_REVIEW' })}
+                  style={{
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    fontWeight: 700
+                  }}
+                >
+                  ➕ Agregar reseña
+                </button>
+              </div>
+
+              {/* Compromiso de la marca */}
+              <div className="editor-section glass-card-container">
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #0ea5e9, #22c55e)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(14, 165, 233, 0.4)'
+                  }}>
+                    🌿
+                  </div>
+                  <div>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>Compromiso con la calidad</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Describe cómo produces, qué materiales usas y qué te hace diferente
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {(form.commitment || []).map((c, idx) => (
+                    <div
+                      key={c.id || idx}
+                      style={{
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        padding: '0.9rem',
+                        background: 'rgba(255,255,255,0.03)',
+                        display: 'grid',
+                        gap: '0.6rem'
+                      }}
+                    >
+                      <input
+                        className="editor-input"
+                        placeholder="Título (ej. Materiales pensados para bailar)"
+                        value={c.title || ''}
+                        onChange={(e) => dispatch({ type: 'UPDATE_COMMITMENT', index: idx, value: { title: e.target.value } })}
+                        style={{ padding: '0.7rem', fontSize: '0.95rem', fontWeight: 600 }}
+                      />
+                      <textarea
+                        className="editor-textarea"
+                        rows={2}
+                        placeholder="Descripción breve"
+                        value={c.description || ''}
+                        onChange={(e) => dispatch({ type: 'UPDATE_COMMITMENT', index: idx, value: { description: e.target.value } })}
+                        style={{ padding: '0.7rem', fontSize: '0.9rem', lineHeight: 1.5 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="editor-back-btn"
+                          onClick={() => dispatch({ type: 'REMOVE_COMMITMENT', index: idx })}
+                          style={{
+                            background: 'rgba(244, 67, 54, 0.2)',
+                            border: '1px solid rgba(244, 67, 54, 0.4)',
+                            color: '#F44336',
+                            padding: '0.5rem 0.9rem',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          🗑️ Quitar bloque
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="editor-back-btn"
+                  onClick={() => dispatch({ type: 'ADD_COMMITMENT' })}
+                  style={{
+                    background: 'linear-gradient(135deg, #0ea5e9, #22c55e)',
+                    fontWeight: 700
+                  }}
+                >
+                  ➕ Agregar bloque de compromiso
+                </button>
+              </div>
+
+              {/* Preguntas frecuentes */}
+              <div className="editor-section glass-card-container">
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #f59e0b, #ef4444)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(248, 113, 113, 0.4)'
+                  }}>
+                    ❓
+                  </div>
+                  <div>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>Preguntas frecuentes</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Aclara dudas comunes sobre envíos, cambios, tiempos y cuidados
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {(form.faqs || []).map((f, idx) => (
+                    <div
+                      key={f.id || idx}
+                      style={{
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        padding: '0.9rem',
+                        background: 'rgba(255,255,255,0.03)',
+                        display: 'grid',
+                        gap: '0.6rem'
+                      }}
+                    >
+                      <input
+                        className="editor-input"
+                        placeholder="Pregunta"
+                        value={f.question || ''}
+                        onChange={(e) => dispatch({ type: 'UPDATE_FAQ', index: idx, value: { question: e.target.value } })}
+                        style={{ padding: '0.7rem', fontSize: '0.95rem', fontWeight: 600 }}
+                      />
+                      <textarea
+                        className="editor-textarea"
+                        rows={2}
+                        placeholder="Respuesta"
+                        value={f.answer || ''}
+                        onChange={(e) => dispatch({ type: 'UPDATE_FAQ', index: idx, value: { answer: e.target.value } })}
+                        style={{ padding: '0.7rem', fontSize: '0.9rem', lineHeight: 1.5 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="editor-back-btn"
+                          onClick={() => dispatch({ type: 'REMOVE_FAQ', index: idx })}
+                          style={{
+                            background: 'rgba(244, 67, 54, 0.2)',
+                            border: '1px solid rgba(244, 67, 54, 0.4)',
+                            color: '#F44336',
+                            padding: '0.5rem 0.9rem',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          🗑️ Quitar pregunta
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="editor-back-btn"
+                  onClick={() => dispatch({ type: 'ADD_FAQ' })}
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                    fontWeight: 700
+                  }}
+                >
+                  ➕ Agregar pregunta
+                </button>
+              </div>
+
               {/* Conversión - Diseño optimizado */}
               <div className="editor-section glass-card-container">
                 <div style={{ 
@@ -920,6 +1331,59 @@ export default function BrandProfileEditor() {
                       onChange={(e)=>dispatch({ type:'SET_CONVERSION', value:{ subtitle: e.target.value } })} 
                       placeholder="Ej: Usa el cupón BAILE10 al finalizar tu compra"
                       style={{ padding: '0.875rem', fontSize: '1rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Nombres personalizados de categorías (opcional) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
+                    gap: '1rem',
+                    margin: '1.25rem 0 1.75rem',
+                  }}
+                >
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                      👠 Nombre para categoría de calzado
+                    </label>
+                    <input
+                      className="editor-input"
+                      value={form.conversion?.calzadoLabel || ''}
+                      onChange={(e) =>
+                        dispatch({ type: 'SET_CONVERSION', value: { calzadoLabel: e.target.value } })
+                      }
+                      placeholder="Ej: Zapatos"
+                      style={{ padding: '0.75rem', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                      👕 Nombre para categoría de ropa
+                    </label>
+                    <input
+                      className="editor-input"
+                      value={form.conversion?.ropaLabel || ''}
+                      onChange={(e) =>
+                        dispatch({ type: 'SET_CONVERSION', value: { ropaLabel: e.target.value } })
+                      }
+                      placeholder="Ej: Ropa"
+                      style={{ padding: '0.75rem', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="editor-field" style={{ fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                      💍 Nombre para accesorios
+                    </label>
+                    <input
+                      className="editor-input"
+                      value={form.conversion?.accesoriosLabel || ''}
+                      onChange={(e) =>
+                        dispatch({ type: 'SET_CONVERSION', value: { accesoriosLabel: e.target.value } })
+                      }
+                      placeholder="Ej: Accesorios"
+                      style={{ padding: '0.75rem', fontSize: '0.9rem' }}
                     />
                   </div>
                 </div>
@@ -1123,7 +1587,8 @@ export default function BrandProfileEditor() {
                           style={{ 
                             width: '100%', 
                             height: 'auto', 
-                            maxHeight: '350px',
+                    maxWidth: '800px',
+                    maxHeight: '350px',
                             minHeight: '200px',
                             objectFit: 'contain',
                             display:'block' 
@@ -1363,16 +1828,23 @@ export default function BrandProfileEditor() {
                   }}>
                     👀 Vista Previa del Catálogo
                   </div>
-                  <CatalogTabs items={(form.productos || []).map((p: any) => ({ 
-                    id: p.id, 
-                    name: p.titulo || 'Producto', 
-                    description: p.descripcion || '',
-                    price: p.price || '', 
-                    image: p.imagen_url, 
-                    category: (p.category || 'ropa') as any,
-                    gender: (p.gender || 'unisex') as any,
-                    sizes: p.sizes || [] 
-                  }))} />
+                  <CatalogTabs
+                    items={(form.productos || []).map((p: any) => ({
+                      id: p.id,
+                      name: p.titulo || 'Producto',
+                      description: p.descripcion || '',
+                      price: p.price || '',
+                      image: p.imagen_url,
+                      category: (p.category || 'ropa') as any,
+                      gender: (p.gender || 'unisex') as any,
+                      sizes: p.sizes || [],
+                    }))}
+                    labels={{
+                      calzado: form.conversion?.calzadoLabel,
+                      ropa: form.conversion?.ropaLabel,
+                      accesorios: form.conversion?.accesoriosLabel,
+                    }}
+                  />
                 </div>
               )}
 
@@ -1600,105 +2072,290 @@ export default function BrandProfileEditor() {
 }
 
 // Subcomponentes
-function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
-  const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
+function CatalogTabs({
+  items = [] as any[],
+  labels,
+}: {
+  items?: any[];
+  labels?: { calzado?: string; ropa?: string; accesorios?: string };
+}) {
+  const [tab, setTab] = React.useState<'calzado' | 'ropa' | 'accesorios'>('calzado');
   const filtered = items.filter((i: any) => i.category === tab);
-  const tabs = ['calzado','ropa','accesorios'] as const;
-  const btnPrimary: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, #9C27B0, #E91E63)', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.95rem' };
-  const btnGhost: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '1rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column' };
-  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.25rem .6rem', fontSize: '.85rem', fontWeight: '600' };
-  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0, textAlign: 'center', padding: '2rem' };
+  const tabs = ['calzado', 'ropa', 'accesorios'] as const;
+
+  const textMuted = '#b4b8cc';
+  const accent = '#ff2fb3';
+  const accentAlt = '#24d68a';
+  const chipBg = '#1b1630';
+  const chipDama = '#f97316';
+  const chipCaballero = '#3b82f6';
+
+  const tabBase: React.CSSProperties = {
+    borderRadius: 999,
+    border: '1px solid rgba(255,255,255,0.08)',
+    padding: '8px 24px',
+    background: '#0b0c16',
+    color: textMuted,
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    cursor: 'pointer',
+    transition: 'all 0.18s ease-out',
+  };
+
+  const card: React.CSSProperties = {
+    borderRadius: 24,
+    overflow: 'hidden',
+    background: 'radial-gradient(circle at top, #151520, #070711)',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+    boxShadow: '0 18px 45px rgba(0,0,0,0.55)',
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: 350,
+    width: '100%',
+    margin: '0 auto',
+    transition: 'transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out',
+  };
+
+  const imageShell: React.CSSProperties = {
+    background: '#03030a',
+    padding: 12,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 210,
+  };
+
+  const bodyShell: React.CSSProperties = {
+    padding: '16px 18px 14px',
+    background: '#111321',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  };
+
+  const chipBase: React.CSSProperties = {
+    borderRadius: 999,
+    padding: '6px 12px',
+    fontSize: '0.8rem',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    background: chipBg,
+    color: textMuted,
+  };
+
+  const sizePill: React.CSSProperties = {
+    border: '1px solid rgba(148,163,184,0.7)',
+    borderRadius: 999,
+    padding: '.25rem .6rem',
+    fontSize: '.8rem',
+    fontWeight: '600',
+    width: 'fit-content',
+  };
+
+  const muted: React.CSSProperties = {
+    color: 'rgba(148,163,184,.9)',
+    margin: 0,
+    textAlign: 'center',
+    padding: '2rem',
+  };
+
+  const getTabLabel = (t: (typeof tabs)[number]) => {
+    if (t === 'calzado') return labels?.calzado || 'Calzado';
+    if (t === 'ropa') return labels?.ropa || 'Ropa';
+    return labels?.accesorios || 'Accesorios';
+  };
+
+  const getTabIcon = (t: (typeof tabs)[number]) =>
+    t === 'calzado' ? '👠' : t === 'ropa' ? '👕' : '💍';
+
   return (
     <div>
-      <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>
-            {t === 'calzado' ? '👟 Calzado' : t === 'ropa' ? '👕 Ropa' : '💍 Accesorios'}
-          </button>
-        ))}
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
+        {tabs.map((t) => {
+          const active = t === tab;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                ...tabBase,
+                ...(active
+                  ? {
+                      background:
+                        'radial-gradient(circle at top left, #ff2fb3, #ff5b79)',
+                      color: '#ffffff',
+                      boxShadow: '0 10px 30px rgba(255,47,179,0.55)',
+                      borderColor: 'transparent',
+                    }
+                  : {}),
+              }}
+            >
+              <span style={{ fontSize: '1rem' }}>{getTabIcon(t)}</span>
+              {getTabLabel(t)}
+            </button>
+          );
+        })}
       </div>
-      {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1.25rem' }}>
+      {filtered.length === 0 ? (
+        <p style={muted}>Sin productos en esta categoría.</p>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
+            gap: 18,
+          }}
+        >
           {filtered.map((p: any) => (
-            <article key={p.id} style={prodCard}>
-              <div style={{ 
-                position: 'relative',
-                marginBottom: '0.75rem',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                background: 'rgba(0,0,0,0.2)',
-                minHeight: '200px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <ImageWithFallback 
-                  src={p.image} 
-                  alt={p.name} 
+            <article
+              key={p.id}
+              style={card}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-6px)';
+                e.currentTarget.style.boxShadow =
+                  '0 26px 60px rgba(0,0,0,0.75)';
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  'rgba(255,255,255,0.16)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.boxShadow =
+                  '0 18px 45px rgba(0,0,0,0.55)';
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  'rgba(255,255,255,0.06)';
+              }}
+            >
+              <div style={imageShell}>
+                <ImageWithFallback
+                  src={p.image}
+                  alt={p.name}
                   width={360}
                   height={300}
                   sizes="(max-width: 768px) 100vw, 360px"
-                  style={{ 
-                    width: '100%', 
-                    height: 'auto', 
-                    maxHeight: '300px',
-                    minHeight: '200px',
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: 210,
                     objectFit: 'contain',
-                    borderRadius: 12 
-                  }} 
+                    borderRadius: 18,
+                  }}
                 />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  fontWeight: 800, 
-                  fontSize: '1.05rem', 
-                  marginBottom: '0.5rem',
-                  lineHeight: '1.3'
-                }}>
+              <div style={bodyShell}>
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                  }}
+                >
                   {p.name || 'Producto sin nombre'}
                 </div>
-                {/* Badge de género */}
-                {p.gender && (
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '0.25rem 0.75rem',
-                    background: 'rgba(156, 39, 176, 0.2)',
-                    border: '1px solid rgba(156, 39, 176, 0.4)',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    marginBottom: '0.5rem',
-                    textTransform: 'capitalize'
-                  }}>
-                    {p.gender === 'caballero' ? '👔' : p.gender === 'dama' ? '👗' : '👥'} {p.gender}
-                  </div>
-                )}
-                {p.description && (
-                  <div style={{ 
-                    fontSize: '0.9rem', 
-                    opacity: .8, 
-                    marginBottom: '0.75rem',
-                    lineHeight: '1.5'
-                  }}>
-                    {p.description}
-                  </div>
-                )}
-                {p.price && (
-                  <div style={{ 
-                    fontSize: '1.15rem',
-                    fontWeight: 900,
-                    color: '#fff',
-                    marginBottom: '0.5rem',
-                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
-                  }}>
-                    {p.price}
-                  </div>
-                )}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    marginTop: 6,
+                    gap: 10,
+                  }}
+                >
+                  {p.price && (
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        color: accentAlt,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {p.price}
+                    </span>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {p.gender && (
+                    <span
+                      style={{
+                        ...chipBase,
+                        ...(p.gender === 'caballero'
+                          ? {}
+                          : p.gender === 'dama'
+                          ? {}
+                          : {}),
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background:
+                            p.gender === 'caballero'
+                              ? chipCaballero
+                              : p.gender === 'dama'
+                              ? chipDama
+                              : accent,
+                        }}
+                      />
+                      {p.gender === 'caballero'
+                        ? 'Caballero'
+                        : p.gender === 'dama'
+                        ? 'Dama'
+                        : 'Unisex'}
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: accent,
+                      cursor: 'pointer',
+                      opacity: 0.9,
+                    }}
+                  >
+                    Ver detalles
+                  </span>
+                </div>
+
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
-                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
-                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '.4rem',
+                      flexWrap: 'wrap',
+                      marginTop: '.6rem',
+                    }}
+                  >
+                    {p.sizes.slice(0, 6).map((s: string) => (
+                      <span key={s} style={sizePill}>
+                        {s}
+                      </span>
+                    ))}
+                    {p.sizes.length > 6 && (
+                      <span style={sizePill}>+{p.sizes.length - 6}</span>
+                    )}
                   </div>
                 )}
               </div>

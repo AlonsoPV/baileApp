@@ -127,6 +127,49 @@ export default function BrandProfileLive() {
           border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15);
           box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px; backdrop-filter: blur(10px);
         }
+        /* Novedades - scroll-snap */
+        .brand-novedades-wrap {
+          overflow-x: auto;
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(260px, 350px);
+          gap: 1rem;
+          padding-bottom: .5rem;
+          scroll-snap-type: x mandatory;
+          justify-content: center;
+        }
+        .brand-novedad-card {
+          scroll-snap-align: start;
+          border-radius: 24px;
+          border: 1px solid rgba(148,163,184,0.35);
+          background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98));
+          box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .brand-novedad-media {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          overflow: hidden;
+          background: #020617;
+        }
+        .brand-novedad-body {
+          flex: 1;
+          text-align: left;
+          padding: 0.9rem 1rem 1rem;
+          background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .brand-novedad-price {
+          font-size: 1.05rem;
+          font-weight: 900;
+          margin-top: .25rem;
+          color: #e5e7eb;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
         @media (max-width: 768px) {
           .profile-container { max-width: 100% !important; padding: 1rem !important; }
           .profile-banner { border-radius: 0 !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
@@ -136,6 +179,7 @@ export default function BrandProfileLive() {
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
           .section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
           img, [style*="objectFit"] { max-width: 100% !important; height: auto !important; object-fit: contain !important; }
+          .brand-novedades-wrap { grid-auto-columns: 86%; }
         }
         @media (max-width: 480px) {
           .banner-grid h1 { font-size: 2.2rem !important; }
@@ -172,9 +216,9 @@ export default function BrandProfileLive() {
           )}
 
           <div className="banner-grid" style={{ position: 'relative' }}>
-            {/* Avatar */}
+            {/* Avatar (slot 250x250 — ideal subir imagen cuadrada, p.ej. 800x800px, con el logo centrado para que se vea completa) */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>
-              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '250px' }}>
+              <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'hidden', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {avatarUrl ? (
                   <ImageWithFallback
                     src={avatarUrl}
@@ -182,7 +226,12 @@ export default function BrandProfileLive() {
                     width={300}
                     height={300}
                     sizes="(max-width: 768px) 50vw, 300px"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.25)', minHeight: '250px' }}
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      backgroundColor: 'rgba(0,0,0,0.25)'
+                    }}
                   />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
@@ -281,7 +330,17 @@ export default function BrandProfileLive() {
 
             {/* Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
-              <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 900 }}>{(brand as any).nombre_publico || (brand as any).nombre || 'Marca'}</h1>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: '2.4rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
+                {(brand as any).nombre_publico || (brand as any).nombre || 'Marca'}
+              </h1>
               
               {/* Biografía integrada en el banner */}
               {(brand as any)?.bio && (
@@ -508,7 +567,65 @@ export default function BrandProfileLive() {
         {/* Contenido principal */}
         <div className="profile-container" style={{ padding: '2rem', margin: '0 auto' }}>
 
-          {/* Catálogo */}
+          {/* Novedades (scroll-snap) */}
+          {featured.length > 0 && (
+            <motion.section
+              className="glass-card-container"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, delay: 0.08 }}
+              style={{ textAlign: 'left' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: '1.3rem',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                }}>
+                  ✨
+                </div>
+                <h3 className="section-title" style={{ margin: 0 }}>Novedades</h3>
+              </div>
+              <div className="brand-novedades-wrap" aria-label="Carrusel de novedades de productos">
+                {featured.slice(0, 6).map((item) => (
+                  <article key={item.id} className="brand-novedad-card" style={{ maxWidth: 350, width: '100%' }}>
+                    <div className="brand-novedad-media">
+                      {item.image ? (
+                        <ImageWithFallback
+                          src={item.image}
+                          alt={item.name}
+                          width={400}
+                          height={320}
+                          sizes="(max-width: 768px) 100vw, 400px"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '2rem', opacity: 0.4 }}>
+                          🛍️
+                        </div>
+                      )}
+                    </div>
+                    <div className="brand-novedad-body">
+                      <h4 style={{ margin: '0.1rem 0' }}>{item.name}</h4>
+                      {item.description && (
+                        <p style={{ margin: '0.15rem 0', fontSize: '0.9rem', opacity: 0.8 }}>{item.description}</p>
+                      )}
+                      {item.price && (
+                        <div className="brand-novedad-price">{item.price}</div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Catálogo completo */}
           {featured.length > 0 && (
             <motion.section
               className="glass-card-container"
@@ -543,7 +660,14 @@ export default function BrandProfileLive() {
                   </p>
                 </div>
               </div>
-              <CatalogTabs items={featured} />
+              <CatalogTabs
+                items={featured}
+                labels={{
+                  calzado: conversion?.calzadoLabel,
+                  ropa: conversion?.ropaLabel,
+                  accesorios: conversion?.accesoriosLabel,
+                }}
+              />
             </motion.section>
           )}
 
@@ -588,6 +712,147 @@ export default function BrandProfileLive() {
               </div>
             </motion.section>
           )}
+
+          {/* Reseñas / Comunidad */}
+          <motion.section
+            className="glass-card-container"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, delay: 0.1 }}
+            style={{ textAlign: 'left' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: '1.3rem',
+                boxShadow: '0 8px 24px rgba(22,163,74,0.35)'
+              }}>
+                💬
+              </div>
+              <div>
+                <h3 className="section-title" style={{ margin: 0 }}>Qué dice la comunidad</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  Opiniones de personas que ya usan esta marca
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <div style={{ letterSpacing: '.15rem' }}>★★★★★</div>
+                <p style={{ margin: '.4rem 0' }}>“La calidad se siente premium y el ajuste es perfecto para bailar toda la noche.”</p>
+                <p style={{ fontSize: '0.85rem', opacity: 0.75 }}>— Andrea, CDMX</p>
+              </div>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <div style={{ letterSpacing: '.15rem' }}>★★★★☆</div>
+                <p style={{ margin: '.4rem 0' }}>“Entrega rápida y materiales muy cómodos para socials de varias horas.”</p>
+                <p style={{ fontSize: '0.85rem', opacity: 0.75 }}>— Luis, GDL</p>
+              </div>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <div style={{ letterSpacing: '.15rem' }}>★★★★★</div>
+                <p style={{ margin: '.4rem 0' }}>“Me encantó el fit y la variedad de modelos pensados para bailarines.”</p>
+                <p style={{ fontSize: '0.85rem', opacity: 0.75 }}>— Sofía, MTY</p>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* Compromiso de la marca (antes Sustentabilidad) */}
+          <motion.section
+            className="glass-card-container"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, delay: 0.12 }}
+            style={{ textAlign: 'left' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #0ea5e9, #22c55e)',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: '1.3rem',
+                boxShadow: '0 8px 24px rgba(14,165,233,0.35)'
+              }}>
+                🌿
+              </div>
+              <div>
+                <h3 className="section-title" style={{ margin: 0 }}>Compromiso con la calidad</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  Cómo se fabrican las piezas y qué las hace especiales
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <h4 style={{ margin: '.2rem 0 .4rem 0' }}>Materiales pensados para bailar</h4>
+                <p style={{ fontSize: '0.9rem', opacity: 0.78 }}>Tejidos con buena transpiración, suavidad al tacto y libertad de movimiento para socials y clases.</p>
+              </div>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <h4 style={{ margin: '.2rem 0 .4rem 0' }}>Producción responsable</h4>
+                <p style={{ fontSize: '0.9rem', opacity: 0.78 }}>Trabajamos con talleres locales y lotes pequeños para reducir desperdicio y priorizar el detalle.</p>
+              </div>
+              <div style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, background: 'rgba(255,255,255,.03)', padding: '1rem' }}>
+                <h4 style={{ margin: '.2rem 0 .4rem 0' }}>Envíos y empaques conscientes</h4>
+                <p style={{ fontSize: '0.9rem', opacity: 0.78 }}>Empaques compactos y reutilizables, pensados para cuidar tus prendas y el planeta.</p>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* FAQ */}
+          <motion.section
+            className="glass-card-container"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, delay: 0.14 }}
+            style={{ textAlign: 'left' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: '1.3rem',
+                boxShadow: '0 8px 24px rgba(248,113,113,0.35)'
+              }}>
+                ❓
+              </div>
+              <div>
+                <h3 className="section-title" style={{ margin: 0 }}>Preguntas frecuentes</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  Respuestas rápidas sobre envíos, cambios y cuidado de tus prendas
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gap: '.6rem' }}>
+              <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Cuánto tardan los envíos?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                  En promedio 2–5 días hábiles dentro de México. Algunos drops especiales pueden especificar tiempos distintos.
+                </div>
+              </details>
+              <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Puedo cambiar una talla?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                  Sí, contamos con ventana de cambios. Revisa las políticas de la marca más arriba para ver el detalle de días y condiciones.
+                </div>
+              </details>
+              <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Cómo cuido mis prendas?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                  Recomendamos lavar en frío, ciclo suave y secado a la sombra. Para prendas de baile, evita suavizantes fuertes para mantener la estructura.
+                </div>
+              </details>
+            </div>
+          </motion.section>
 
           {/* Beneficios / Políticas */}
           {(policies?.shipping || policies?.returns || policies?.warranty) && (
@@ -829,105 +1094,285 @@ export default function BrandProfileLive() {
 }
 
 // Subcomponentes para catálogo y guía de tallas
-function CatalogTabs({ items = [] as any[] }: { items?: any[] }){
-  const [tab, setTab] = React.useState<'calzado'|'ropa'|'accesorios'>('calzado');
+function CatalogTabs({
+  items = [] as any[],
+  labels,
+}: {
+  items?: any[];
+  labels?: { calzado?: string; ropa?: string; accesorios?: string };
+}) {
+  const [tab, setTab] = React.useState<'calzado' | 'ropa' | 'accesorios'>('calzado');
   const filtered = items.filter((i: any) => i.category === tab);
-  const tabs = ['calzado','ropa','accesorios'] as const;
-  const btnPrimary: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'linear-gradient(135deg, #9C27B0, #E91E63)', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.95rem' };
-  const btnGhost: React.CSSProperties = { padding: '.75rem 1.5rem', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem' };
-  const prodCard: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '1rem', background: 'rgba(255,255,255,0.05)', display:'flex', flexDirection:'column' };
-  const sizePill: React.CSSProperties = { border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, padding: '.25rem .6rem', fontSize: '.85rem', fontWeight: '600' };
-  const muted: React.CSSProperties = { color: 'rgba(255,255,255,.78)', margin: 0, textAlign: 'center', padding: '2rem' };
+  const tabs = ['calzado', 'ropa', 'accesorios'] as const;
+
+  const textMuted = '#b4b8cc';
+  const accent = '#ff2fb3';
+  const accentAlt = '#24d68a';
+  const chipBg = '#1b1630';
+  const chipDama = '#f97316';
+  const chipCaballero = '#3b82f6';
+
+  const tabBase: React.CSSProperties = {
+    borderRadius: 999,
+    border: '1px solid rgba(255,255,255,0.08)',
+    padding: '8px 24px',
+    background: '#0b0c16',
+    color: textMuted,
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    cursor: 'pointer',
+    transition: 'all 0.18s ease-out',
+  };
+
+  const card: React.CSSProperties = {
+    borderRadius: 24,
+    overflow: 'hidden',
+    background: 'radial-gradient(circle at top, #151520, #070711)',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+    boxShadow: '0 18px 45px rgba(0,0,0,0.55)',
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: 350,
+    width: '100%',
+    margin: '0 auto',
+    transition: 'transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out',
+  };
+
+  const imageShell: React.CSSProperties = {
+    background: '#03030a',
+    padding: 12,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 210,
+  };
+
+  const bodyShell: React.CSSProperties = {
+    padding: '16px 18px 14px',
+    background: '#111321',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  };
+
+  const chipBase: React.CSSProperties = {
+    borderRadius: 999,
+    padding: '6px 12px',
+    fontSize: '0.8rem',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    background: chipBg,
+    color: textMuted,
+  };
+
+  const sizePill: React.CSSProperties = {
+    border: '1px solid rgba(148,163,184,0.7)',
+    borderRadius: 999,
+    padding: '.25rem .6rem',
+    fontSize: '.8rem',
+    fontWeight: '600',
+    width: 'fit-content',
+  };
+
+  const muted: React.CSSProperties = {
+    color: 'rgba(148,163,184,.9)',
+    margin: 0,
+    textAlign: 'center',
+    padding: '2rem',
+  };
+
+  const getTabLabel = (t: (typeof tabs)[number]) => {
+    if (t === 'calzado') return labels?.calzado || 'Calzado';
+    if (t === 'ropa') return labels?.ropa || 'Ropa';
+    return labels?.accesorios || 'Accesorios';
+  };
+
+  const getTabIcon = (t: (typeof tabs)[number]) =>
+    t === 'calzado' ? '👠' : t === 'ropa' ? '👕' : '💍';
+
   return (
     <div>
-      <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={t === tab ? btnPrimary : btnGhost}>
-            {t === 'calzado' ? '👟 Calzado' : t === 'ropa' ? '👕 Ropa' : '💍 Accesorios'}
-          </button>
-        ))}
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
+        {tabs.map((t) => {
+          const active = t === tab;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                ...tabBase,
+                ...(active
+                  ? {
+                      background:
+                        'radial-gradient(circle at top left, #ff2fb3, #ff5b79)',
+                      color: '#ffffff',
+                      boxShadow: '0 10px 30px rgba(255,47,179,0.55)',
+                      borderColor: 'transparent',
+                    }
+                  : {}),
+              }}
+            >
+              <span style={{ fontSize: '1rem' }}>{getTabIcon(t)}</span>
+              {getTabLabel(t)}
+            </button>
+          );
+        })}
       </div>
-      {filtered.length === 0 ? <p style={muted}>Sin productos en esta categoría.</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1.25rem' }}>
+      {filtered.length === 0 ? (
+        <p style={muted}>Sin productos en esta categoría.</p>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
+            gap: 18,
+          }}
+        >
           {filtered.map((p: any) => (
-            <article key={p.id} style={prodCard}>
-              <div style={{ 
-                position: 'relative',
-                marginBottom: '0.75rem',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                background: 'rgba(0,0,0,0.2)',
-                minHeight: '200px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <ImageWithFallback 
-                  src={p.image} 
-                  alt={p.name} 
+            <article
+              key={p.id}
+              style={card}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-6px)';
+                e.currentTarget.style.boxShadow =
+                  '0 26px 60px rgba(0,0,0,0.75)';
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  'rgba(255,255,255,0.16)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.boxShadow =
+                  '0 18px 45px rgba(0,0,0,0.55)';
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  'rgba(255,255,255,0.06)';
+              }}
+            >
+              <div style={imageShell}>
+                <ImageWithFallback
+                  src={p.image}
+                  alt={p.name}
                   width={360}
                   height={300}
                   sizes="(max-width: 768px) 100vw, 360px"
-                  style={{ 
-                    width: '100%', 
-                    height: 'auto', 
-                    maxHeight: '300px',
-                    minHeight: '200px',
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: 210,
                     objectFit: 'contain',
-                    borderRadius: 12 
-                  }} 
+                    borderRadius: 18,
+                  }}
                 />
               </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ 
-                  fontWeight: 800, 
-                  fontSize: '1.05rem', 
-                  marginBottom: '0.5rem',
-                  lineHeight: '1.3'
-                }}>
+              <div style={bodyShell}>
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                  }}
+                >
                   {p.name || 'Producto sin nombre'}
                 </div>
-                {/* Badge de género */}
-                {p.gender && (
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '0.25rem 0.75rem',
-                    background: 'rgba(156, 39, 176, 0.2)',
-                    border: '1px solid rgba(156, 39, 176, 0.4)',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    marginBottom: '0.5rem',
-                    textTransform: 'capitalize'
-                  }}>
-                    {p.gender === 'caballero' ? '👔' : p.gender === 'dama' ? '👗' : '👥'} {p.gender}
-                  </div>
-                )}
-                {p.description && (
-                  <div style={{ 
-                    fontSize: '0.9rem', 
-                    opacity: .8, 
-                    marginBottom: '0.75rem',
-                    lineHeight: '1.5'
-                  }}>
-                    {p.description}
-                  </div>
-                )}
-                {p.price && (
-                  <div style={{ 
-                    fontSize: '1.15rem',
-                    fontWeight: 900,
-                    color: '#fff',
-                    marginBottom: '0.5rem',
-                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
-                  }}>
-                    {p.price}
-                  </div>
-                )}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    marginTop: 6,
+                    gap: 10,
+                  }}
+                >
+                  {p.price && (
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        color: accentAlt,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {p.price}
+                    </span>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {p.gender && (
+                    <span
+                      style={{
+                        ...chipBase,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background:
+                            p.gender === 'caballero'
+                              ? chipCaballero
+                              : p.gender === 'dama'
+                              ? chipDama
+                              : accent,
+                        }}
+                      />
+                      {p.gender === 'caballero'
+                        ? 'Caballero'
+                        : p.gender === 'dama'
+                        ? 'Dama'
+                        : 'Unisex'}
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: accent,
+                      cursor: 'pointer',
+                      opacity: 0.9,
+                    }}
+                  >
+                    Ver detalles
+                  </span>
+                </div>
+
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
-                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
-                    {p.sizes.slice(0,6).map((s: string) => (<span key={s} style={sizePill}>{s}</span>))}
-                    {p.sizes.length > 6 && <span style={sizePill}>+{p.sizes.length - 6}</span>}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '.4rem',
+                      flexWrap: 'wrap',
+                      marginTop: '.6rem',
+                    }}
+                  >
+                    {p.sizes.slice(0, 6).map((s: string) => (
+                      <span key={s} style={sizePill}>
+                        {s}
+                      </span>
+                    ))}
+                    {p.sizes.length > 6 && (
+                      <span style={sizePill}>+{p.sizes.length - 6}</span>
+                    )}
                   </div>
                 )}
               </div>
