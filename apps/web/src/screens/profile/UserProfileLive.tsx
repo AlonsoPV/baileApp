@@ -715,10 +715,6 @@ export const UserProfileLive: React.FC = () => {
                   <ImageWithFallback
                     src={avatarUrl}
                     alt="Avatar"
-                    priority={true}
-                    width={250}
-                    height={250}
-                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1132,20 +1128,38 @@ export const UserProfileLive: React.FC = () => {
                             height: 54,
                             borderRadius: '50%',
                             padding: 2,
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))',
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'visible'
                           }}
                         >
-                          <ImageWithFallback
-                            src={person.avatar_url || ''}
-                            alt={person.display_name || 'Perfil'}
+                          <div
                             style={{
                               width: '100%',
                               height: '100%',
                               borderRadius: '50%',
-                              objectFit: 'cover',
-                              border: '2px solid rgba(0,0,0,0.4)'
+                              overflow: 'hidden',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: 'rgba(0,0,0,0.4)'
                             }}
-                          />
+                          >
+                            <ImageWithFallback
+                              src={person.avatar_url || ''}
+                              alt={person.display_name || 'Perfil'}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                objectPosition: 'center',
+                                display: 'block'
+                              }}
+                            />
+                          </div>
                         </div>
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                           <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>

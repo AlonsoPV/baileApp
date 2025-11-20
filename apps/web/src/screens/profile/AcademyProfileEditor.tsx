@@ -1312,11 +1312,13 @@ export default function AcademyProfileEditor() {
 
                                 if (invitations) {
                                   await cancelInvitation.mutateAsync(invitations.id);
-                                  setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado. Puedes volver a invitarlo si lo deseas.' });
-                                  setTimeout(() => setStatusMsg(null), 4000);
+                                  // Esperar un momento para que la base de datos se actualice
+                                  await new Promise(resolve => setTimeout(resolve, 300));
                                   // Refetch para actualizar las listas
                                   await refetchAccepted();
                                   await refetchAvailable();
+                                  setStatusMsg({ type: 'ok', text: '✅ Maestro eliminado. Puedes volver a invitarlo si lo deseas.' });
+                                  setTimeout(() => setStatusMsg(null), 4000);
                                 }
                               } catch (error: any) {
                                 setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });

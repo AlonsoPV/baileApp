@@ -245,9 +245,6 @@ export default function BrandProfileLive() {
                     <ImageWithFallback
                       src={avatarUrl}
                       alt="avatar marca"
-                      priority={true}
-                      width={250}
-                      height={250}
                       sizes="(max-width: 768px) 50vw, 300px"
                       style={{
                         width: '100%',

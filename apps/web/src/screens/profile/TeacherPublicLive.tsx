@@ -783,13 +783,9 @@ export default function TeacherProfileLive() {
             }}>
               <div className="teacher-banner-avatar">
                 {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
-                  <ImageWithFallback
+                  <img
                     src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
                     alt="Foto del maestro"
-                    priority={true}
-                    width={250}
-                    height={250}
-                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',

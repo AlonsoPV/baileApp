@@ -994,13 +994,9 @@ export function OrganizerProfileLive() {
                 }}
               >
                 {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
-                  <ImageWithFallback
+                  <img
                     src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''}
                     alt="Logo del organizador"
-                    priority={true}
-                    width={250}
-                    height={250}
-                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',
