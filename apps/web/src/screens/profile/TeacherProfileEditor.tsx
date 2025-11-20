@@ -16,6 +16,7 @@ import { PhotoManagementSection } from "../../components/profile/PhotoManagement
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import FAQEditor from "../../components/common/FAQEditor";
+import ReviewsEditor from "../../components/common/ReviewsEditor";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 // import CostosyHorarios from './CostosyHorarios';
 import ClasesLive from '../../components/events/ClasesLive';
@@ -136,6 +137,7 @@ export default function TeacherProfileEditor() {
         gusta_bailar: ""
       },
       faq: [] as any[],
+      reseñas: [] as any[],
       cuenta_bancaria: {} as BankAccountData
     } as any
   });
@@ -195,6 +197,7 @@ export default function TeacherProfileEditor() {
         cronograma: (form as any).cronograma || [],
         costos: (form as any).costos || [],
         redes_sociales: form.redes_sociales,
+        reseñas: (form as any).reseñas || [],
         cuenta_bancaria: (form as any).cuenta_bancaria || {},
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
@@ -1425,6 +1428,20 @@ export default function TeacherProfileEditor() {
           </h2>
 
           <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
+        </div>
+
+        {/* Reseñas de Alumnos */}
+        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+            ⭐ Reseñas de Alumnos
+          </h2>
+          <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
+            Añade testimonios de alumnos que han tomado clases contigo
+          </p>
+          <ReviewsEditor 
+            value={(form as any).reseñas || []} 
+            onChange={(v: any) => setField('reseñas' as any, v as any)} 
+          />
         </div>
 
         {/* Cuenta Bancaria */}

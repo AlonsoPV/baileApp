@@ -994,9 +994,13 @@ export function OrganizerProfileLive() {
                 }}
               >
                 {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
-                  <img
+                  <ImageWithFallback
                     src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''}
                     alt="Logo del organizador"
+                    priority={true}
+                    width={250}
+                    height={250}
+                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1069,14 +1073,14 @@ export function OrganizerProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const publicUrl = org?.id ? `${window.location.origin}/organizer/${org.id}` : '';
                       const title = org.nombre_publico || 'Organizador';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url }).catch(() => {});
+                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
                       } else {
-                        navigator.clipboard?.writeText(url).then(() => { 
+                        navigator.clipboard?.writeText(publicUrl).then(() => { 
                           setCopied(true); 
                           setTimeout(() => setCopied(false), 1500); 
                         }).catch(() => {});

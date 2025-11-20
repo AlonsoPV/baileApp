@@ -2338,16 +2338,6 @@ function CatalogTabs({
                         : 'Unisex'}
                     </span>
                   )}
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: accent,
-                      cursor: 'pointer',
-                      opacity: 0.9,
-                    }}
-                  >
-                    Ver detalles
-                  </span>
                 </div>
 
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (

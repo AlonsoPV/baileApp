@@ -676,57 +676,7 @@ export const UserProfileLive: React.FC = () => {
             overflow: 'hidden'
           }}
         >
-          {/* Botón discreto para compartir */}
-          <button
-            aria-label="Compartir perfil"
-            title="Compartir"
-            onClick={() => {
-              try {
-                const url = typeof window !== 'undefined' ? window.location.href : '';
-                const title = profile?.display_name || 'Perfil';
-                const text = `Mira el perfil de ${profile?.display_name || 'usuario'}`;
-                const navAny = (navigator as any);
-                if (navAny && typeof navAny.share === 'function') {
-                  navAny.share({ title, text, url }).catch(() => {});
-                } else {
-                  navigator.clipboard?.writeText(url)
-                    .then(() => {
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 1500);
-                    })
-                    .catch(() => {});
-                }
-              } catch {}
-            }}
-            style={{
-              position: 'absolute', top: 12, right: 12,
-              width: 36, height: 36,
-              display: 'grid', placeItems: 'center',
-              background: 'rgba(255,255,255,0.10)',
-              border: '1px solid rgba(255,255,255,0.25)',
-              color: '#fff', borderRadius: 999,
-              backdropFilter: 'blur(8px)', cursor: 'pointer',
-              zIndex: 10
-            }}
-          >
-            📤
-          </button>
-          {copied && (
-            <div
-              role="status"
-              aria-live="polite"
-              style={{
-                position: 'absolute', top: 14, right: 56,
-                padding: '4px 8px', borderRadius: 8,
-                background: 'rgba(0,0,0,0.6)', color: '#fff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                fontSize: 12, fontWeight: 700,
-                zIndex: 10
-              }}
-            >
-              Copiado
-            </div>
-          )}
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div
             id="user-profile-banner-grid"
             data-baile-id="user-profile-banner-grid"
@@ -741,7 +691,9 @@ export const UserProfileLive: React.FC = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '1rem'
               }}
             >
               <div
@@ -763,6 +715,10 @@ export const UserProfileLive: React.FC = () => {
                   <ImageWithFallback
                     src={avatarUrl}
                     alt="Avatar"
+                    priority={true}
+                    width={250}
+                    height={250}
+                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -783,6 +739,48 @@ export const UserProfileLive: React.FC = () => {
                     {profile?.display_name?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
+              </div>
+              {/* Badge de verificación y botón de compartir inline */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  aria-label="Compartir perfil"
+                  title="Compartir"
+                  onClick={() => {
+                    try {
+                      const publicUrl = user?.id ? `${window.location.origin}/u/${user.id}` : '';
+                      const title = profile?.display_name || 'Perfil';
+                      const text = `Mira el perfil de ${title}`;
+                      const navAny = (navigator as any);
+                      if (navAny && typeof navAny.share === 'function') {
+                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
+                      } else {
+                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                      }
+                    } catch {}
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255,255,255,0.10)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    backdropFilter: 'blur(8px)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 700
+                  }}
+                >
+                  📤 Compartir
+                </button>
               </div>
             </div>
 

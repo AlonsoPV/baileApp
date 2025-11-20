@@ -245,6 +245,9 @@ export default function BrandProfileLive() {
                     <ImageWithFallback
                       src={avatarUrl}
                       alt="avatar marca"
+                      priority={true}
+                      width={250}
+                      height={250}
                       sizes="(max-width: 768px) 50vw, 300px"
                       style={{
                         width: '100%',
@@ -1386,16 +1389,6 @@ function CatalogTabs({
                         : 'Unisex'}
                     </span>
                   )}
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: accent,
-                      cursor: 'pointer',
-                      opacity: 0.9,
-                    }}
-                  >
-                    Ver detalles
-                  </span>
                 </div>
 
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (

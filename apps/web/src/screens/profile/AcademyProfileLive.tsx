@@ -778,9 +778,13 @@ export default function AcademyProfileLive() {
             }}>
               <div className="academy-banner-avatar">
                 {primaryAvatarUrl ? (
-                  <img
+                  <ImageWithFallback
                     src={primaryAvatarUrl}
                     alt="Logo de la academia"
+                    priority={true}
+                    width={250}
+                    height={250}
+                    sizes="(max-width: 768px) 50vw, 250px"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -843,14 +847,14 @@ export default function AcademyProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const publicUrl = academyId ? `${window.location.origin}/academia/${academyId}` : '';
                       const title = academy.nombre_publico || 'Academia';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url }).catch(() => {});
+                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
                       } else {
-                        navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
                       }
                     } catch {}
                   }}
@@ -1231,6 +1235,67 @@ export default function AcademyProfileLive() {
                   <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
                     <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Reseñas de Alumnos */}
+          {Array.isArray((academy as any)?.reseñas) && (academy as any).reseñas.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.75 }}
+              style={{
+                marginBottom: '2rem',
+                marginTop: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)' }}>⭐</div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Qué dicen nuestros alumnos</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Testimonios de estudiantes</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                {(academy as any).reseñas.map((review: any, index: number) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    style={{
+                      padding: '1rem 1.25rem',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem' }}>{review.author}</div>
+                        {review.location && (
+                          <div style={{ fontSize: '0.85rem', opacity: 0.75, color: 'rgba(255,255,255,0.8)' }}>{review.location}</div>
+                        )}
+                      </div>
+                      <div style={{ letterSpacing: '0.15rem', fontSize: '0.9rem', color: '#FFD166' }}>
+                        {'★'.repeat(review.rating || 5)}{'☆'.repeat(5 - (review.rating || 5))}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.85, margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
+                      "{review.text}"
+                    </p>
                   </motion.div>
                 ))}
               </div>

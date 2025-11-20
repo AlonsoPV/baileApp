@@ -230,6 +230,9 @@ export default function BrandProfileLive() {
                     <ImageWithFallback
                       src={avatarUrl}
                       alt="avatar marca"
+                      priority={true}
+                      width={250}
+                      height={250}
                       sizes="(max-width: 768px) 50vw, 300px"
                       style={{ 
                         width: '100%',
@@ -285,15 +288,16 @@ export default function BrandProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const brandId = (brand as any)?.id;
+                      const publicUrl = brandId ? `${window.location.origin}/marca/${brandId}` : '';
                       const title = (brand as any)?.nombre_publico || 'Marca';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url }).catch(() => {});
+                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
                       } else {
                         navigator.clipboard
-                          ?.writeText(url)
+                          ?.writeText(publicUrl)
                           .then(() => {
                             setCopied(true);
                             setTimeout(() => setCopied(false), 1500);
@@ -1371,16 +1375,6 @@ function CatalogTabs({
                         : 'Unisex'}
                     </span>
                   )}
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: accent,
-                      cursor: 'pointer',
-                      opacity: 0.9,
-                    }}
-                  >
-                    Ver detalles
-                  </span>
                 </div>
 
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
