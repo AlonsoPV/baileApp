@@ -82,11 +82,11 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             )}
             
             <div style={{
-              aspectRatio: isMainPhoto ? 'auto' : '4/3',
+              aspectRatio: isMainPhoto ? '1/1' : '4/3',
               width: isMainPhoto ? '450px' : '100%',
               maxWidth: '100%',
-              height: isMainPhoto ? 'auto' : undefined,
-              borderRadius: '8px',
+              height: isMainPhoto ? '450px' : undefined,
+              borderRadius: isMainPhoto ? '50%' : '8px',
               overflow: 'hidden',
               marginBottom: '1rem',
               border: '2px solid rgba(255, 255, 255, 0.1)',
@@ -98,8 +98,8 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center'
+                    objectFit: isMainPhoto ? 'cover' : 'contain',
+                    objectPosition: isMainPhoto ? 'center top' : 'center'
                   }}
                 />
               ) : (

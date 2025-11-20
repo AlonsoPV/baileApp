@@ -718,7 +718,8 @@ export const UserProfileLive: React.FC = () => {
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
+                      objectFit: 'cover',
+                      objectPosition: 'center top'
                     }}
                   />
                 ) : (
@@ -1155,7 +1156,7 @@ export const UserProfileLive: React.FC = () => {
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'contain',
-                                objectPosition: 'center',
+                                objectPosition: 'center top',
                                 display: 'block'
                               }}
                             />

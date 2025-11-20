@@ -13,18 +13,18 @@ export default function LegalScreen() {
         description="Aviso de Privacidad de Donde Bailar MX. Conoce cómo protegemos y utilizamos tus datos personales conforme a la LFPDPPP."
         keywords={['aviso de privacidad', 'protección de datos', 'privacidad', 'donde bailar']}
       />
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #0b1020 100%)',
-        color: '#e5e7eb',
-        padding: '32px 16px'
-      }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #0b1020 100%)',
+      color: '#e5e7eb',
+      padding: '32px 16px'
+    }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <h1 style={{
-              margin: 0,
-              fontSize: '2rem',
-              fontWeight: 800,
+          <h1 style={{
+            margin: 0,
+            fontSize: '2rem',
+            fontWeight: 800,
               color: '#fff',
               textShadow: '0 2px 8px rgba(0,0,0,0.3)',
               marginBottom: 8
@@ -45,13 +45,13 @@ export default function LegalScreen() {
             }}>
               Fecha de última actualización: {lastUpdateDate}
             </p>
-          </div>
+        </div>
 
-          <div style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 16,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+        <div style={{
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 16,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
             padding: '32px 24px',
             lineHeight: 1.8,
             fontSize: '0.95rem'
@@ -419,9 +419,9 @@ export default function LegalScreen() {
                 </a>
               </p>
             </div>
-          </div>
         </div>
       </div>
+    </div>
     </>
   );
 }

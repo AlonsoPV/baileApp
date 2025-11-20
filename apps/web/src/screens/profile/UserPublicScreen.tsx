@@ -823,7 +823,8 @@ export const UserProfileLive: React.FC = () => {
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
+                      objectFit: 'cover',
+                      objectPosition: 'center top'
                     }}
                   />
                 ) : (
@@ -1230,6 +1231,7 @@ export const UserProfileLive: React.FC = () => {
                               height: '100%',
                               borderRadius: '50%',
                               objectFit: 'cover',
+                              objectPosition: 'center top',
                               border: '2px solid rgba(0,0,0,0.4)'
                             }}
                           />
