@@ -415,31 +415,186 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-      padding: '24px 0',
-      ...props.style
-    }} className={props.className}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px' }}>
+    <React.Fragment>
+      <style>{`
+        .event-create-form-container {
+          min-height: 100vh;
+          background: linear-gradient(135deg, ${colors.dark}, #1a1a1a);
+          padding: 24px 0;
+        }
+        
+        .event-create-form-wrapper {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+        
+        .event-create-form-header {
+          margin-bottom: 32px;
+          text-align: center;
+        }
+        
+        .event-create-form-header h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          background: linear-gradient(135deg, ${colors.coral}, ${colors.blue});
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 8px;
+        }
+        
+        .event-create-form-header p {
+          font-size: 1.1rem;
+          color: ${colors.light};
+          opacity: 0.8;
+        }
+        
+        .event-create-form-section {
+          padding: 24px;
+          background: ${colors.dark}66;
+          border-radius: 16px;
+          border: 1px solid ${colors.light}22;
+        }
+        
+        .event-create-form-section h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: ${colors.light};
+          margin-bottom: 20px;
+        }
+        
+        .event-create-form-grid-3 {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 16px;
+        }
+        
+        .event-create-form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        
+        .event-create-form-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px;
+          background: ${colors.dark}66;
+          border-radius: 16px;
+          border: 1px solid ${colors.light}22;
+        }
+        
+        .event-create-form-actions-buttons {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        @media (max-width: 768px) {
+          .event-create-form-container {
+            padding: 16px 0;
+          }
+          
+          .event-create-form-wrapper {
+            padding: 0 16px;
+          }
+          
+          .event-create-form-header {
+            margin-bottom: 24px;
+          }
+          
+          .event-create-form-header h1 {
+            font-size: 2rem;
+            margin-bottom: 6px;
+          }
+          
+          .event-create-form-header p {
+            font-size: 1rem;
+          }
+          
+          .event-create-form-section {
+            padding: 18px;
+            border-radius: 12px;
+          }
+          
+          .event-create-form-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+          }
+          
+          .event-create-form-grid-3 {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          
+          .event-create-form-grid-2 {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          
+          .event-create-form-actions {
+            flex-direction: column;
+            gap: 16px;
+            padding: 18px;
+            align-items: stretch;
+          }
+          
+          .event-create-form-actions-buttons {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+          }
+          
+          .event-create-form-actions-buttons button {
+            width: 100%;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .event-create-form-container {
+            padding: 12px 0;
+          }
+          
+          .event-create-form-wrapper {
+            padding: 0 12px;
+          }
+          
+          .event-create-form-header h1 {
+            font-size: 1.75rem;
+          }
+          
+          .event-create-form-header p {
+            font-size: 0.95rem;
+          }
+          
+          .event-create-form-section {
+            padding: 14px;
+            border-radius: 10px;
+          }
+          
+          .event-create-form-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+          }
+          
+          .event-create-form-actions {
+            padding: 14px;
+          }
+        }
+      `}</style>
+      <div 
+        className="event-create-form-container"
+        style={props.style}
+      >
+        <div className="event-create-form-wrapper">
         {props.showHeader && (
-          <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-            <h1 style={{
-              fontSize: '2.5rem',
-              fontWeight: '700',
-              background: `linear-gradient(135deg, ${colors.coral}, ${colors.blue})`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '8px',
-            }}>
+          <div className="event-create-form-header">
+            <h1>
               {isParent ? (editMode ? '🎭 Editar Social' : '🎭 Crear Social') : (editMode ? '📅 Editar Fecha' : '📅 Crear Fecha')}
             </h1>
-            <p style={{
-              fontSize: '1.1rem',
-              color: colors.light,
-              opacity: 0.8,
-            }}>
+            <p>
               {isParent
                 ? 'Información general del evento social'
                 : 'Detalles específicos de la fecha del evento'
@@ -450,18 +605,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Información Básica */}
-          <div style={{
-            padding: '24px',
-            background: `${colors.dark}66`,
-            borderRadius: '16px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: colors.light,
-              marginBottom: '20px',
-            }}>
+          <div className="event-create-form-section">
+            <h2>
               📝 Información Básica
             </h2>
 
@@ -525,18 +670,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           </div>
 
           {/* Ritmos */}
-          <div style={{
-            padding: '24px',
-            background: `${colors.dark}66`,
-            borderRadius: '16px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: colors.light,
-              marginBottom: '20px',
-            }}>
+          <div className="event-create-form-section">
+            <h2>
               🎵 Ritmos de Baile
             </h2>
 
@@ -604,18 +739,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           {isParent && (
             <>
               {/* Ubicaciones del Social */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '12px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   🗺️ Ubicaciones del Social
                 </h2>
                 <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '16px', color: colors.light }}>
@@ -630,18 +755,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               </div>
 
               {/* Galería de Medios (opcional) */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   📷 Galería de Medios
                 </h2>
                 <MediaUploader onPick={(files) => {
@@ -684,22 +799,12 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           {!isParent && (
             <>
               {/* Fecha y Hora */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   📅 Fecha y Hora
                 </h2>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                <div className="event-create-form-grid-3">
                   <div>
                     <label style={{
                       display: 'block',
@@ -835,18 +940,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               </div>
 
               {/* Ubicación del Evento */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   📍 Ubicación del Evento
                 </h2>
                 {orgLocations.length > 0 && (
@@ -916,7 +1011,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   </>
                 )}
                 {/* Formulario de ubicación manual (como en OrganizerProfileEditor) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="event-create-form-grid-2">
                   <div>
                     <label style={{
                       display: 'block',
@@ -970,7 +1065,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     />
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                <div className="event-create-form-grid-2" style={{ marginTop: '16px' }}>
                   <div>
                     <label style={{
                       display: 'block',
@@ -1027,18 +1122,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               </div>
 
               {/* Cronograma */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   📅 Cronograma del Evento
                 </h2>
                 <ScheduleEditor
@@ -1057,18 +1142,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
               {/* Flyer - Solo para fechas */}
               {!isParent && (
-                <div style={{
-                  padding: '24px',
-                  background: `${colors.dark}66`,
-                  borderRadius: '16px',
-                  border: `1px solid ${colors.light}22`,
-                }}>
-                  <h2 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: '600',
-                    color: colors.light,
-                    marginBottom: '20px',
-                  }}>
+                <div className="event-create-form-section">
+                  <h2>
                     🖼️ Flyer del Evento
                   </h2>
                   <DateFlyerUploader
@@ -1081,22 +1156,12 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               )}
 
               {/* Estado de Publicación */}
-              <div style={{
-                padding: '24px',
-                background: `${colors.dark}66`,
-                borderRadius: '16px',
-                border: `1px solid ${colors.light}22`,
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  marginBottom: '20px',
-                }}>
+              <div className="event-create-form-section">
+                <h2>
                   🌐 Estado de Publicación
                 </h2>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1143,15 +1208,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
           )}
 
           {/* Botones de Acción */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '24px',
-            background: `${colors.dark}66`,
-            borderRadius: '16px',
-            border: `1px solid ${colors.light}22`,
-          }}>
+          <div className="event-create-form-actions">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -1170,12 +1227,13 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               ❌ Cancelar
             </motion.button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="event-create-form-actions-buttons">
               {isDirty && (
                 <span style={{
                   fontSize: '0.9rem',
                   color: colors.orange,
                   fontWeight: '600',
+                  textAlign: 'center',
                 }}>
                   💾 Cambios sin guardar
                 </span>
@@ -1205,7 +1263,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 }

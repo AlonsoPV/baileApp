@@ -388,6 +388,14 @@ export default function BrandProfileEditor() {
         .glass-card-container { opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
         .brand-info-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; }
         .brand-social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .size-guide-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: center; }
+        .fit-tip-grid { display: grid; grid-template-columns: 200px 1fr auto; gap: 0.75rem; align-items: start; }
+        .review-grid { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 0.6rem; align-items: center; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .category-names-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .product-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .brand-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; justify-content: center; }
+        
         @media (max-width: 768px) {
           .brand-info-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; justify-items: center !important; }
           .brand-social-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
@@ -395,18 +403,42 @@ export default function BrandProfileEditor() {
           .editor-content { max-width: 100% !important; }
           .editor-header { flex-direction: column !important; gap: 1rem !important; text-align: center !important; }
           .editor-title { font-size: 1.5rem !important; order: 2 !important; }
-          .editor-back-btn { order: 1 !important; align-self: flex-start !important; }
+          .editor-back-btn { order: 1 !important; align-self: flex-start !important; width: 100% !important; }
           .editor-section { padding: 1rem !important; margin-bottom: 2rem !important; }
           .editor-section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
           .editor-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
           .editor-grid-small { grid-template-columns: 1fr !important; gap: 1rem !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
           img, [style*="objectFit"] { max-width: 100% !important; height: auto !important; object-fit: contain !important; }
+          .size-guide-grid { grid-template-columns: 1fr 1fr 1fr auto !important; gap: 0.5rem !important; font-size: 0.85rem !important; }
+          .fit-tip-grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+          .review-grid { grid-template-columns: 1fr !important; gap: 0.5rem !important; }
+          .product-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+          .category-names-grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+          .product-form-grid { grid-template-columns: 1fr !important; gap: 0.5rem !important; }
+          .brand-tabs { gap: 0.4rem !important; }
+          .brand-tabs button { flex: 1 1 auto !important; min-width: 120px !important; }
+          .editor-input, .editor-textarea { font-size: 0.95rem !important; padding: 0.7rem !important; }
+          button.editor-back-btn { font-size: 0.85rem !important; padding: 0.6rem 1rem !important; }
         }
         @media (max-width: 480px) {
+          .editor-container { padding: 0.75rem !important; }
           .editor-title { font-size: 1.25rem !important; }
           .editor-section-title { font-size: 1.1rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
+          .editor-section { padding: 0.75rem !important; margin-bottom: 1.5rem !important; }
+          .editor-input, .editor-textarea { font-size: 0.9rem !important; padding: 0.6rem !important; }
+          .size-guide-grid { grid-template-columns: 1fr 1fr 1fr auto !important; gap: 0.4rem !important; font-size: 0.8rem !important; }
+          .fit-tip-grid { gap: 0.5rem !important; }
+          .review-grid { gap: 0.4rem !important; }
+          .product-grid { gap: 0.75rem !important; }
+          .category-names-grid { gap: 0.5rem !important; }
+          .product-form-grid { gap: 0.4rem !important; }
+          .brand-tabs { gap: 0.3rem !important; }
+          .brand-tabs button { flex: 1 1 100% !important; min-width: 100% !important; }
+          button.editor-back-btn { font-size: 0.8rem !important; padding: 0.5rem 0.75rem !important; }
+          .brand-info-grid { gap: 1rem !important; }
+          .brand-social-grid { gap: 0.75rem !important; }
         }
       `}</style>
 
@@ -772,13 +804,7 @@ export default function BrandProfileEditor() {
                   
                   {/* Tabla de tallas */}
                   {(form.size_guide || []).length > 0 && (
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '1fr 1fr 1fr auto', 
-                      gap: '0.75rem', 
-                      alignItems: 'center',
-                      marginBottom: '1rem'
-                    }}>
+                    <div className="size-guide-grid" style={{ marginBottom: '1rem' }}>
                       <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>MX</div>
                       <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>US</div>
                       <div style={{ fontWeight: '700', fontSize: '0.9rem', opacity: 0.8 }}>EU</div>
@@ -880,11 +906,7 @@ export default function BrandProfileEditor() {
                   </h3>
                   
                   {(form.fit_tips || []).map((it, idx) => (
-                    <div key={idx} style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '200px 1fr auto', 
-                      gap: '0.75rem', 
-                      alignItems: 'start', 
+                    <div key={idx} className="fit-tip-grid" style={{ 
                       marginBottom: '0.75rem',
                       padding: '1rem',
                       background: 'rgba(255, 255, 255, 0.02)',
@@ -1028,7 +1050,7 @@ export default function BrandProfileEditor() {
                         gap: '0.6rem'
                       }}
                     >
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: '0.6rem', alignItems: 'center' }}>
+                      <div className="review-grid">
                         <input
                           className="editor-input"
                           placeholder="Nombre"
@@ -1343,14 +1365,7 @@ export default function BrandProfileEditor() {
                 </div>
 
                 {/* Nombres personalizados de categorías (opcional) */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
-                    gap: '1rem',
-                    margin: '1.25rem 0 1.75rem',
-                  }}
-                >
+                <div className="category-names-grid" style={{ margin: '1.25rem 0 1.75rem' }}>
                   <div>
                     <label className="editor-field" style={{ fontSize: '0.9rem', marginBottom: '0.35rem' }}>
                       👠 Nombre para categoría de calzado
@@ -1562,7 +1577,7 @@ export default function BrandProfileEditor() {
 
               {/* Grid de productos */}
               {Array.isArray(form.productos) && form.productos.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <div className="product-grid" style={{ marginBottom: '1.5rem' }}>
                   {form.productos
                     .filter(p => catFilter==='all' ? true : p.category===catFilter)
                     .map((p: any) => (
@@ -1722,7 +1737,7 @@ export default function BrandProfileEditor() {
                         </div>
 
                         {/* Categoría y Género en grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div className="product-form-grid">
                           {/* Categoría */}
                           <div>
                             <label style={{ 

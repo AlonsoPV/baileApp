@@ -522,7 +522,7 @@ export const UserProfileLive: React.FC = () => {
         @media (max-width: 768px) {
           .profile-container {
             max-width: 100% !important;
-            padding: 1rem !important;
+            padding: 0rem !important;
           }
           .profile-banner {
             border-radius: 0 !important;
@@ -755,11 +755,11 @@ export const UserProfileLive: React.FC = () => {
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
+                        navAny.share({ title, text, url: publicUrl }).catch(() => { });
                       } else {
-                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
+                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => { });
                       }
-                    } catch {}
+                    } catch { }
                   }}
                   style={{
                     display: 'inline-flex',
@@ -868,7 +868,7 @@ export const UserProfileLive: React.FC = () => {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(profile, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+                    <RitmosChips selected={slugs} onChange={() => { }} readOnly size="compact" />
                   ) : null;
                 })()}
                 {zonaChipGroups.length > 0 && (
@@ -954,7 +954,7 @@ export const UserProfileLive: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <BioSection 
+            <BioSection
               bio={profile?.bio}
               redes={profile?.redes_sociales || (profile?.respuestas as any)?.redes}
             />
@@ -1255,7 +1255,7 @@ export const UserProfileLive: React.FC = () => {
 
               {/* Pregunta */}
               <div>
-              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
+                <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
                 <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -1282,7 +1282,7 @@ export const UserProfileLive: React.FC = () => {
             <div className="question-section">
               {/* Pregunta */}
               <div>
-              <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
+                <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
                 <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -1489,7 +1489,7 @@ export const UserProfileLive: React.FC = () => {
                 overflow: 'hidden',
                 border: '2px solid rgba(255, 255, 255, 0.1)',
 
-              }}>   
+              }}>
                 <video
                   src={getMediaBySlot(safeMedia as any, 'v1')!.url}
                   controls

@@ -96,191 +96,59 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{
-        padding: isMobile ? '1.5rem' : 'clamp(1.5rem, 2.5vw, 2.5rem)',
-        borderRadius: isMobile ? '18px' : 'clamp(16px, 2.5vw, 28px)',
-        border: '2px solid rgba(255, 255, 255, 0.2)',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'rgba(30, 30, 30, 0.6)',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem'
-      }}
+      className="org-event-card"
     >
-      {/* Barra decorativa superior */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '6px',
-        background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
-        borderRadius: '24px 24px 0 0',
-      }} />
-
       {/* FILA 1: Información del Social */}
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        display: 'flex',
-        alignItems: isMobile ? 'stretch' : 'flex-start',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: '1.5rem',
-        paddingBottom: '1.5rem',
-        borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
-      }}>
-        {/* Icono */}
-    {/*     <motion.div
-          whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            width: '72px',
-            height: '72px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '2.5rem',
-            background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
-            border: '3px solid rgba(255, 61, 87, 0.4)',
-            boxShadow: '0 6px 20px rgba(255, 61, 87, 0.4)',
-            filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))',
-            flexShrink: 0
-          }}
-        >
-          🎭
-        </motion.div> */}
-
+      <div className="org-event-card-header">
         {/* Contenido principal */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="org-event-card-content">
           {/* Nombre del social */}
-          <h3 style={{
-            fontSize: 'clamp(1.5rem, 2vw, 2rem)',
-            fontWeight: '800',
-            margin: 0,
-            marginBottom: '0.75rem',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.2
-          }}>
+          <h3 className="org-event-card-title">
             {parent.nombre}
           </h3>
 
           {/* Descripción */}
           {parent.descripcion && (
-            <p style={{
-              fontSize: '1rem',
-              opacity: 0.9,
-              margin: 0,
-              fontWeight: '400',
-              lineHeight: 1.6,
-              color: "rgba(255, 255, 255, 0.9)"
-            }}>
+            <p className="org-event-card-description">
               {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
             </p>
           )}
         </div>
 
         {/* Botones de acción */}
-        <div style={{
-          display: 'flex',
-          gap: '0.75rem',
-          flexShrink: 0,
-          alignItems: isMobile ? 'stretch' : 'flex-start',
-          flexDirection: isMobile ? 'column' : 'row',
-          width: isMobile ? '100%' : 'auto'
-        }}>
+        <div className="org-event-card-actions">
           <motion.button
-            whileHover={{ scale: 1.08, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleSocialClick}
-            style={{
-              padding: '0.75rem 1.25rem',
-              background: 'rgba(30, 136, 229, 0.15)',
-              color: colors.blue,
-              border: '2px solid rgba(30, 136, 229, 0.3)',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-              width: isMobile ? '100%' : 'auto',
-              justifyContent: 'center'
-            }}
+            className="org-event-card-button org-event-card-button--view"
           >
             <span>👁️</span>
             <span>Ver</span>
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.08, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/social/${parent.id}/edit`);
             }}
-            style={{
-              padding: '0.75rem 1.25rem',
-              background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 16px rgba(30, 136, 229, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-              width: isMobile ? '100%' : 'auto',
-              justifyContent: 'center'
-            }}
+            className="org-event-card-button org-event-card-button--edit"
           >
             <span>✏️</span>
             <span>Editar</span>
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.08, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(parent.id);
             }}
             disabled={isDeleting}
-            style={{
-              padding: '0.75rem 1.25rem',
-              background: isDeleting
-                ? 'rgba(255, 255, 255, 0.1)'
-                : `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-              color: colors.light,
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: isDeleting ? 'not-allowed' : 'pointer',
-              opacity: isDeleting ? 0.5 : 1,
-              transition: 'all 0.3s ease',
-              boxShadow: isDeleting ? 'none' : '0 4px 16px rgba(255, 61, 87, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-              width: isMobile ? '100%' : 'auto',
-              justifyContent: 'center'
-            }}
+            className="org-event-card-button org-event-card-button--delete"
           >
             <span>{isDeleting ? '⏳' : '🗑️'}</span>
             <span>{isDeleting ? 'Eliminando...' : 'Eliminar'}</span>
@@ -1314,6 +1182,10 @@ export default function OrganizerProfileEditor() {
   return (
     <>
       <style>{`
+        .org-editor-wrapper {
+          padding: 2rem;
+        }
+        
         .org-editor-container {
           width: 100%;
           max-width: 1200px;
@@ -1445,15 +1317,15 @@ export default function OrganizerProfileEditor() {
         
         .org-events-section {
           margin-bottom: 3rem;
-          padding: clamp(1rem, 3vw, 2.25rem);
-          border-radius: clamp(16px, 3vw, 28px);
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
+          padding: clamp(1.5rem, 3vw, 2.5rem);
+          border-radius: clamp(20px, 3vw, 32px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.05) inset;
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
           color: #FFFFFF;
         }
 
@@ -1463,25 +1335,521 @@ export default function OrganizerProfileEditor() {
           top: 0;
           left: 0;
           right: 0;
-          height: 8px;
-          background: linear-gradient(90deg, #1E88E5, #00BCD4, #FF3D57);
-          opacity: 0.9;
+          height: 6px;
+          background: linear-gradient(90deg, #1E88E5, #00BCD4, #FF3D57, #FF8C42);
+          opacity: 0.95;
+          border-radius: clamp(20px, 3vw, 32px) clamp(20px, 3vw, 32px) 0 0;
         }
         
         .org-events-section h2,
         .org-events-section h3,
         .org-events-section h4 {
           color: #FFFFFF;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
         }
         
         .org-events-section p {
-          color: rgba(255, 255, 255, 0.9);
+          color: rgba(255, 255, 255, 0.85);
+        }
+
+        .org-events-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
+          flex-wrap: wrap;
+          position: relative;
+          z-index: 2;
+        }
+        
+        .org-events-header-left {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+        
+        .org-events-header-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.75rem;
+          background: linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(0, 188, 212, 0.2));
+          border: 2px solid rgba(30, 136, 229, 0.3);
+          box-shadow: 0 6px 20px rgba(30, 136, 229, 0.25);
+          flex-shrink: 0;
+        }
+        
+        .org-events-header-text {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .org-events-header-text h2 {
+          font-size: clamp(1.5rem, 2.5vw, 2rem);
+          font-weight: 800;
+          margin: 0 0 0.5rem 0;
+          line-height: 1.2;
+        }
+        
+        .org-events-header-text p {
+          font-size: clamp(0.9rem, 1.2vw, 1rem);
+          margin: 0;
+          opacity: 0.85;
+        }
+        
+        .org-events-header-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        
+        .org-events-action-button {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.9rem 1.6rem;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          font-size: 0.95rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+        
+        .org-events-action-button--primary {
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          color: #FFFFFF;
+          box-shadow: 0 8px 24px rgba(30, 136, 229, 0.4);
+        }
+        
+        .org-events-action-button--primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(30, 136, 229, 0.5);
+        }
+        
+        .org-events-action-button--active {
+          background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12));
+          color: #FFFFFF;
+          box-shadow: 0 8px 24px rgba(255,255,255,0.08);
+        }
+        
+        .org-events-action-button--secondary {
+          background: linear-gradient(135deg, #FF3D57, #FF8C42);
+          color: #FFFFFF;
+          box-shadow: 0 8px 24px rgba(255, 61, 87, 0.4);
+        }
+        
+        .org-events-action-button--secondary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(255, 61, 87, 0.5);
+        }
+        
+        .org-events-header-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.3);
+          flex-shrink: 0;
+        }
+        
+        .org-events-header-text h2 {
+          font-size: 1.75rem;
+          fontWeight: 800;
+          margin: 0;
+          color: #FFFFFF;
+        }
+        
+        .org-events-header-text p {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0;
+          fontWeight: 500;
+        }
+        
+        .org-events-header-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          flex-shrink: 0;
+        }
+        
+        .org-events-action-button {
+          padding: 0.9rem 1.6rem;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          color: #FFFFFF;
+          font-size: 0.95rem;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          position: relative;
+          overflow: hidden;
+          letter-spacing: 0.2px;
+          transition: all 0.3s ease;
+        }
+        
+        .org-events-action-button--primary {
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          box-shadow: 0 8px 24px rgba(30,136,229,0.45);
+        }
+        
+        .org-events-action-button--primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(30,136,229,0.55);
+        }
+        
+        .org-events-action-button--secondary {
+          background: linear-gradient(135deg, #FF3D57, #FF8C42);
+          box-shadow: 0 8px 24px rgba(255,61,87,0.4);
+        }
+        
+        .org-events-action-button--secondary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(255,61,87,0.5);
+        }
+        
+        .org-events-action-button--active {
+          background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12));
+          box-shadow: 0 8px 24px rgba(255,255,255,0.08);
         }
 
         .org-events-grid {
           display: flex;
           flex-direction: column;
+          gap: 2rem;
+          position: relative;
+          z-index: 2;
+        }
+        
+        .org-event-card {
+          padding: clamp(1.5rem, 2.5vw, 2.5rem);
+          border-radius: clamp(18px, 2.5vw, 28px);
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: rgba(30, 30, 30, 0.6);
+          position: relative;
+          overflow: hidden;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          flex-direction: column;
           gap: 1.5rem;
+        }
+        
+        .org-event-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 6px;
+          background: linear-gradient(90deg, #1E88E5, #00BCD4, #FF3D57);
+          border-radius: clamp(18px, 2.5vw, 28px) clamp(18px, 2.5vw, 28px) 0 0;
+        }
+        
+        .org-event-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(30, 136, 229, 0.4);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .org-event-card-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+          position: relative;
+          z-index: 2;
+        }
+        
+        .org-event-card-content {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .org-event-card-title {
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          font-weight: 800;
+          margin: 0 0 0.75rem 0;
+          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          line-height: 1.2;
+          letter-spacing: -0.02em;
+        }
+        
+        .org-event-card-description {
+          font-size: 1rem;
+          opacity: 0.9;
+          margin: 0;
+          font-weight: 400;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .org-event-card-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-shrink: 0;
+          align-items: flex-start;
+        }
+        
+        .org-event-card-button {
+          padding: 0.75rem 1.25rem;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+          border: none;
+        }
+        
+        .org-event-card-button--view {
+          background: rgba(30, 136, 229, 0.15);
+          color: #1E88E5;
+          border: 2px solid rgba(30, 136, 229, 0.3);
+          box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
+        }
+        
+        .org-event-card-button--view:hover {
+          background: rgba(30, 136, 229, 0.25);
+          border-color: rgba(30, 136, 229, 0.5);
+        }
+        
+        .org-event-card-button--edit {
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          color: #FFFFFF;
+          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
+        }
+        
+        .org-event-card-button--edit:hover {
+          box-shadow: 0 6px 20px rgba(30, 136, 229, 0.5);
+        }
+        
+        .org-event-card-button--delete {
+          background: linear-gradient(135deg, #FF3D57, #FF8C42);
+          color: #FFFFFF;
+          box-shadow: 0 4px 16px rgba(255, 61, 87, 0.4);
+        }
+        
+        .org-event-card-button--delete:hover:not(:disabled) {
+          box-shadow: 0 6px 20px rgba(255, 61, 87, 0.5);
+        }
+        
+        .org-event-card-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .org-events-empty {
+          text-align: center;
+          padding: 4rem 2rem;
+          border-radius: 24px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          position: relative;
+          overflow: hidden;
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .org-events-empty-icon {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 3rem;
+          margin: 0 auto 1.5rem;
+          box-shadow: 0 8px 32px rgba(255, 61, 87, 0.4);
+          border: 2px solid rgba(255, 61, 87, 0.3);
+        }
+        
+        .org-events-empty h3 {
+          font-size: 1.6rem;
+          font-weight: 800;
+          margin-bottom: 0.75rem;
+          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        
+        .org-events-empty p {
+          opacity: 0.9;
+          font-size: 1.1rem;
+          font-weight: 500;
+          margin: 0 0 2rem 0;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .org-events-empty-button {
+          padding: 1rem 2rem;
+          border-radius: 14px;
+          border: none;
+          background: linear-gradient(135deg, #FF3D57, #FF8C42);
+          color: #FFFFFF;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 8px 24px rgba(255, 61, 87, 0.4);
+          transition: all 0.3s ease;
+        }
+        
+        .org-events-empty-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(255, 61, 87, 0.5);
+        }
+        
+        .org-event-card {
+          padding: clamp(1.5rem, 2.5vw, 2.5rem);
+          border-radius: clamp(16px, 2.5vw, 28px);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          background: rgba(30, 30, 30, 0.6);
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        .org-event-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 6px;
+          background: linear-gradient(90deg, #FF3D57, #FF8C42, #FFD166);
+          border-radius: 24px 24px 0 0;
+        }
+        
+        .org-event-card-header {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: flex-start;
+          gap: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .org-event-card-content {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .org-event-card-title {
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          font-weight: 800;
+          margin: 0;
+          margin-bottom: 0.75rem;
+          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: #FFFFFF;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+        }
+        
+        .org-event-card-description {
+          font-size: 1rem;
+          opacity: 0.9;
+          margin: 0;
+          font-weight: 400;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .org-event-card-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-shrink: 0;
+          align-items: flex-start;
+        }
+        
+        .org-event-card-button {
+          padding: 0.75rem 1.25rem;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+          justify-content: center;
+        }
+        
+        .org-event-card-button--view {
+          background: rgba(30, 136, 229, 0.15);
+          color: #1E88E5;
+          border: 2px solid rgba(30, 136, 229, 0.3);
+          box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
+        }
+        
+        .org-event-card-button--edit {
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          color: #FFFFFF;
+          border: none;
+          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
+        }
+        
+        .org-event-card-button--delete {
+          background: linear-gradient(135deg, #FF3D57, #FF8C42);
+          color: #FFFFFF;
+          border: none;
+          box-shadow: 0 4px 16px rgba(255, 61, 87, 0.4);
+        }
+        
+        .org-event-card-button--delete:disabled {
+          background: rgba(255, 255, 255, 0.1);
+          opacity: 0.5;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+        
+        .org-event-empty-state {
+          text-align: center;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .org-event-empty-state-icon {
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .org-event-empty-state-text {
+          font-size: 0.9rem;
+          opacity: 0.7;
+          margin: 0;
         }
         
         .org-create-button {
@@ -1493,10 +1861,120 @@ export default function OrganizerProfileEditor() {
           pointer-events: auto;
         }
         
+        .org-editor-tabs {
+          display: flex;
+          gap: 0.5rem;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        .org-editor-tabs button {
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        
+        .org-date-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 16px;
+        }
+        
+        .org-date-form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        
+        .org-date-form-buttons {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        
+        .org-date-form-buttons button {
+          flex: 1 1 auto;
+          min-width: 120px;
+        }
+        
+        .org-date-form-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          margin-bottom: 16px;
+        }
+        
+        .org-date-form-radio-group {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+        
+        .org-date-form-radio-group .org-date-form-checkbox {
+          margin-bottom: 0;
+        }
+        
+        .org-date-form-select-wrapper {
+          position: relative;
+        }
+        
+        .org-date-form-select {
+          width: 100%;
+          padding: 12px 14px;
+          padding-right: 40px;
+          background: #2b2b2b;
+          border: 1px solid rgba(255,255,255,0.25);
+          color: #FFFFFF;
+          outline: none;
+          font-size: 14px;
+          border-radius: 12px;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+        
+        .org-date-form-select-arrow {
+          position: absolute;
+          right: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          color: rgba(255,255,255,0.6);
+        }
+        
+        .org-date-form-repetition {
+          margin-top: 20px;
+          padding: 16px;
+          background: rgba(255,255,255,0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .org-date-form-repetition input[type="number"] {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 8px;
+          color: #FFFFFF;
+          font-size: 1rem;
+        }
+        
+        .org-date-form-repetition input[type="number"]:focus {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+          outline: none;
+        }
+        
         @media (max-width: 768px) {
+          .org-editor-wrapper {
+            padding: 1rem !important;
+          }
+          
           .org-editor-container {
             max-width: 100% !important;
-            padding: 1rem !important;
+            padding: 0 !important;
           }
           
           .org-editor-header {
@@ -1508,22 +1986,40 @@ export default function OrganizerProfileEditor() {
           .org-editor-back {
             padding: 0.5rem 1rem !important;
             font-size: 0.8rem !important;
+            align-self: flex-start !important;
           }
           
           .org-editor-title {
             font-size: 1.5rem !important;
             margin-bottom: 0.5rem !important;
+            order: 2 !important;
+          }
+          
+          .org-editor-tabs {
+            gap: 0.4rem !important;
+            margin-bottom: 1.5rem !important;
+            padding-bottom: 0.4rem !important;
+          }
+          
+          .org-editor-tabs button {
+            padding: 0.6rem 1rem !important;
+            font-size: 0.85rem !important;
           }
           
           .org-editor-card {
-            padding: 1.5rem !important;
-            margin-bottom: 2rem !important;
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
             border-radius: 12px !important;
+          }
+          
+          .org-editor-card h3 {
+            font-size: 1.1rem !important;
+            margin-bottom: 1rem !important;
           }
           
           .org-editor-grid {
             grid-template-columns: 1fr !important;
-            gap: 1.5rem !important;
+            gap: 1rem !important;
           }
           
           .org-editor-grid-small {
@@ -1531,9 +2027,67 @@ export default function OrganizerProfileEditor() {
             gap: 1rem !important;
           }
           
+          .org-date-form-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .org-date-form-grid-2 {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
+          .org-date-form-buttons {
+            flex-direction: column !important;
+          }
+          
+          .org-date-form-buttons button {
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+          
+          .org-date-form-checkbox {
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+          }
+          
+          .org-date-form-radio-group {
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          
+          .org-date-form-radio-group .org-date-form-checkbox {
+            margin-bottom: 0 !important;
+          }
+          
+          .org-date-form-radio-group span {
+            font-size: 0.9rem !important;
+          }
+          
+          .org-date-form-select {
+            padding: 10px 12px !important;
+            padding-right: 36px !important;
+            font-size: 13px !important;
+          }
+          
+          .org-date-form-select-arrow {
+            right: 12px !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .org-date-form-repetition {
+            padding: 12px !important;
+            margin-top: 16px !important;
+          }
+          
+          .org-date-form-repetition input[type="number"] {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          
           .org-editor-field {
             font-size: 0.9rem !important;
-            margin-bottom: 0.75rem !important;
+            margin-bottom: 0.5rem !important;
           }
           
           .org-editor-input {
@@ -1544,7 +2098,6 @@ export default function OrganizerProfileEditor() {
           .org-editor-textarea {
             padding: 0.6rem !important;
             font-size: 0.9rem !important;
-            rows: 3 !important;
           }
           
           .org-editor-chips {
@@ -1553,13 +2106,102 @@ export default function OrganizerProfileEditor() {
           }
           
           .org-events-section {
-            padding: 1.5rem !important;
-            margin-bottom: 2rem !important;
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
             border-radius: 16px !important;
           }
           
+          .org-events-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .org-events-header-left {
+            flex-direction: column !important;
+            text-align: center !important;
+            width: 100% !important;
+          }
+          
+          .org-events-header-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.25rem !important;
+            margin: 0 auto !important;
+          }
+          
+          .org-events-header-text h2 {
+            font-size: 1.5rem !important;
+            text-align: center !important;
+          }
+          
+          .org-events-header-text p {
+            text-align: center !important;
+          }
+          
+          .org-events-header-actions {
+            width: 100% !important;
+            justify-content: stretch !important;
+          }
+          
+          .org-events-action-button {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.9rem !important;
+          }
+          
+          .org-events-section h2 {
+            font-size: 1.4rem !important;
+          }
+          
           .org-events-grid {
+            gap: 1rem !important;
+          }
+          
+          .org-event-card {
+            padding: 1.5rem !important;
+            border-radius: 18px !important;
             gap: 1.25rem !important;
+          }
+          
+          .org-event-card-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 1rem !important;
+            padding-bottom: 1rem !important;
+          }
+          
+          .org-event-card-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          
+          .org-event-card-button {
+            width: 100% !important;
+            padding: 0.7rem 1rem !important;
+            font-size: 0.85rem !important;
+          }
+          
+          .org-event-card-title {
+            font-size: 1.4rem !important;
+          }
+          
+          .org-event-card-description {
+            font-size: 0.9rem !important;
+          }
+          
+          .org-event-empty-state {
+            padding: 1.5rem !important;
+          }
+          
+          .org-event-empty-state-icon {
+            font-size: 1.75rem !important;
+          }
+          
+          .org-event-empty-state-text {
+            font-size: 0.85rem !important;
           }
           
           .org-create-button {
@@ -1570,12 +2212,17 @@ export default function OrganizerProfileEditor() {
         }
         
         @media (max-width: 480px) {
-          .org-editor-container {
+          .org-editor-wrapper {
             padding: 0.75rem !important;
+          }
+          
+          .org-editor-container {
+            padding: 0 !important;
           }
           
           .org-editor-header {
             margin-bottom: 1rem !important;
+            gap: 0.75rem !important;
           }
           
           .org-editor-back {
@@ -1587,33 +2234,112 @@ export default function OrganizerProfileEditor() {
             font-size: 1.25rem !important;
           }
           
+          .org-editor-tabs {
+            gap: 0.3rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .org-editor-tabs button {
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.8rem !important;
+          }
+          
           .org-editor-card {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
             border-radius: 10px !important;
           }
           
+          .org-editor-card h2 {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .org-editor-card h3 {
+            font-size: 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
           .org-editor-grid {
-            gap: 1rem !important;
+            gap: 0.75rem !important;
           }
           
           .org-editor-grid-small {
             gap: 0.75rem !important;
           }
           
+          .org-date-form-grid {
+            gap: 0.75rem !important;
+          }
+          
+          .org-date-form-grid-2 {
+            gap: 0.75rem !important;
+          }
+          
+          .org-date-form-buttons {
+            gap: 0.75rem !important;
+          }
+          
+          .org-date-form-buttons button {
+            padding: 10px 16px !important;
+            font-size: 0.8rem !important;
+          }
+          
+          .org-date-form-checkbox {
+            gap: 6px !important;
+            margin-bottom: 10px !important;
+          }
+          
+          .org-date-form-checkbox span {
+            font-size: 0.85rem !important;
+          }
+          
+          .org-date-form-radio-group {
+            gap: 10px !important;
+          }
+          
+          .org-date-form-radio-group span {
+            font-size: 0.85rem !important;
+          }
+          
+          .org-date-form-select {
+            padding: 8px 10px !important;
+            padding-right: 32px !important;
+            font-size: 12px !important;
+          }
+          
+          .org-date-form-select-arrow {
+            right: 10px !important;
+            font-size: 0.75rem !important;
+          }
+          
+          .org-date-form-repetition {
+            padding: 10px !important;
+            margin-top: 12px !important;
+          }
+          
+          .org-date-form-repetition input[type="number"] {
+            padding: 0.5rem !important;
+            font-size: 0.85rem !important;
+          }
+          
+          .org-date-form-repetition p {
+            font-size: 0.8rem !important;
+          }
+          
           .org-editor-field {
             font-size: 0.8rem !important;
-            margin-bottom: 0.5rem !important;
+            margin-bottom: 0.4rem !important;
           }
           
           .org-editor-input {
             padding: 0.5rem !important;
-            font-size: 0.8rem !important;
+            font-size: 0.85rem !important;
           }
           
           .org-editor-textarea {
             padding: 0.5rem !important;
-            font-size: 0.8rem !important;
+            font-size: 0.85rem !important;
           }
           
           .org-editor-chips {
@@ -1622,15 +2348,96 @@ export default function OrganizerProfileEditor() {
           
           .org-events-section {
             padding: 1rem !important;
-            border-radius: 12px !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .org-events-header {
+            gap: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .org-events-header-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.3rem !important;
+          }
+          
+          .org-events-header-text h2 {
+            font-size: 1.3rem !important;
+            margin-bottom: 0.4rem !important;
+          }
+          
+          .org-events-header-text p {
+            font-size: 0.9rem !important;
+          }
+          
+          .org-events-action-button {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.85rem !important;
+            gap: 0.5rem !important;
+          }
+          
+          .org-events-section h2 {
+            font-size: 1.2rem !important;
           }
           
           .org-events-grid {
+            gap: 1.25rem !important;
+          }
+          
+          .org-event-card {
+            padding: 1.25rem !important;
+            border-radius: 16px !important;
             gap: 1rem !important;
+          }
+          
+          .org-event-card-header {
+            gap: 0.75rem !important;
+            padding-bottom: 1rem !important;
+          }
+          
+          .org-event-card-title {
+            font-size: 1.3rem !important;
+            margin-bottom: 0.6rem !important;
+          }
+          
+          .org-event-card-description {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .org-event-card-button {
+            padding: 0.65rem 1rem !important;
+            font-size: 0.8rem !important;
+            gap: 4px !important;
+          }
+          
+          .org-event-card-title {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .org-event-card-description {
+            font-size: 0.85rem !important;
+          }
+          
+          .org-event-empty-state {
+            padding: 1.25rem !important;
+          }
+          
+          .org-event-empty-state-icon {
+            font-size: 1.5rem !important;
+          }
+          
+          .org-event-empty-state-text {
+            font-size: 0.8rem !important;
           }
           
           .org-create-button {
             bottom: 16px !important;
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.85rem !important;
           }
         }
       `}</style>
@@ -1639,7 +2446,7 @@ export default function OrganizerProfileEditor() {
         background: '#000000',
         color: colors.light,
         padding: '2rem',
-      }}>
+      }} className="org-editor-wrapper">
         <div className="org-editor-container">
           {/* Header con botón Volver */}
           <div className="org-editor-header">
@@ -1668,6 +2475,7 @@ export default function OrganizerProfileEditor() {
 
           {/* Tabs Perfil / Métricas eventos */}
           <div
+            className="org-editor-tabs"
             style={{
               display: "flex",
               gap: "0.5rem",
@@ -1769,7 +2577,7 @@ export default function OrganizerProfileEditor() {
                       background:
                         "linear-gradient(135deg, #E53935 0%, #FB8C00 100%)",
                       WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
+                      color: "#FFFFFF",
                     }}
                   >
                     ¡Bienvenido, Organizador!
@@ -1956,100 +2764,37 @@ export default function OrganizerProfileEditor() {
             className="org-events-section"
           >
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexDirection: isMobile ? 'column' : 'row', width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
-                  <div style={{
-                    width: isMobile ? '52px' : '60px',
-                    height: isMobile ? '52px' : '60px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '1.25rem' : '1.5rem',
-                    boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                  }}>
+              <div className="org-events-header">
+                <div className="org-events-header-left">
+                  <div className="org-events-header-icon">
                     🎭
                   </div>
-                  <div>
-                    <h2 style={{
-                      fontSize: isMobile ? '1.5rem' : '1.75rem',
-                      fontWeight: '800',
-                      margin: 0,
-                      color: '#FFFFFF',
-                    }}>
-                      Mis Sociales
-                    </h2>
-                    <p style={{
-                      fontSize: '0.9rem',
-                      opacity: 0.8,
-                      margin: 0,
-                      fontWeight: '500'
-                    }}>
-                      Gestiona tus eventos sociales
-                    </p>
+                  <div className="org-events-header-text">
+                    <h2>Mis Sociales</h2>
+                    <p>Gestiona tus eventos sociales</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+                <div className="org-events-header-actions">
                   <motion.button
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setShowDateForm(!showDateForm);
                       if (!showDateForm && parents && parents.length === 1) {
                         setSelectedParentId(parents[0].id);
                       }
                     }}
-                    style={{
-                      padding: '0.9rem 1.6rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255, 255, 255, 0.28)',
-                      background: showDateForm
-                        ? 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.12))'
-                        : 'linear-gradient(135deg, #1E88E5, #00BCD4)',
-                      color: '#FFFFFF',
-                      fontSize: '0.95rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: showDateForm
-                        ? '0 8px 24px rgba(255,255,255,0.08)'
-                        : '0 8px 24px rgba(30,136,229,0.45)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      letterSpacing: '0.2px',
-                      width: isMobile ? '100%' : 'auto',
-                      justifyContent: 'center'
-                    }}
+                    className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}
                   >
                     <span>{showDateForm ? '✖️' : '📅'}</span>
                     <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
                   </motion.button>
 
                   <motion.button
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/social/new')}
-                    style={{
-                      padding: '0.9rem 1.6rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255, 255, 255, 0.28)',
-                      background: 'linear-gradient(135deg, #FF3D57, #FF8C42)',
-                      color: '#FFFFFF',
-                      fontSize: '0.95rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 8px 24px rgba(255,61,87,0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      letterSpacing: '0.2px',
-                      width: isMobile ? '100%' : 'auto',
-                      justifyContent: 'center'
-                    }}
+                    className="org-events-action-button org-events-action-button--secondary"
                   >
                     <span>🎉</span>
                     <span>Crear Social</span>
@@ -2091,15 +2836,9 @@ export default function OrganizerProfileEditor() {
                         Evento Social *
                       </label>
                       <select
+                        className="org-date-form-select"
                         value={selectedParentId || ''}
                         onChange={(e) => setSelectedParentId(Number(e.target.value))}
-                        className="org-editor-input"
-                        style={{
-                          color: '#FFFFFF',
-                          cursor: 'pointer',
-                          background: '#2b2b2b',
-                          border: '1px solid rgba(255,255,255,0.25)',
-                        }}
                       >
                         <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
                           Selecciona un evento
@@ -2185,7 +2924,7 @@ export default function OrganizerProfileEditor() {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
                       📅 Fecha y Hora
                     </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                    <div className="org-date-form-grid">
                       <div>
                         <label className="org-editor-field">
                           Fecha *
@@ -2226,8 +2965,8 @@ export default function OrganizerProfileEditor() {
                     </div>
 
                     {/* Repetición Semanal */}
-                    <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
+                    <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
                         <input
                           type="checkbox"
                           checked={dateForm.repetir_semanal || false}
@@ -2281,8 +3020,9 @@ export default function OrganizerProfileEditor() {
 
                         <div style={{ marginBottom: 16 }}>
                           <label className="org-editor-field">Elegir ubicación existente o ingresa una nueva</label>
-                          <div style={{ position: 'relative' }}>
+                          <div className="org-date-form-select-wrapper" style={{ position: 'relative' }}>
                             <select
+                              className="org-date-form-select"
                               value={selectedDateLocationId}
                               onChange={(e) => {
                                 const nextId = e.target.value;
@@ -2293,18 +3033,6 @@ export default function OrganizerProfileEditor() {
                                 }
                                 const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
                                 applyOrganizerLocationToDateForm(found);
-                              }}
-                              style={{
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: '#2b2b2b',
-                                border: '1px solid rgba(255,255,255,0.25)',
-                                color: '#FFFFFF',
-                                outline: 'none',
-                                fontSize: 14,
-                                borderRadius: 12,
-                                appearance: 'none',
-                                WebkitAppearance: 'none',
                               }}
                             >
                               <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
@@ -2320,16 +3048,7 @@ export default function OrganizerProfileEditor() {
                                 </option>
                               ))}
                             </select>
-                            <span
-                              style={{
-                                position: 'absolute',
-                                right: 14,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                pointerEvents: 'none',
-                                color: 'rgba(255,255,255,0.6)',
-                              }}
-                            >
+                            <span className="org-date-form-select-arrow">
                               ▼
                             </span>
                           </div>
@@ -2337,7 +3056,7 @@ export default function OrganizerProfileEditor() {
                       </>
                     )}
                     {/* Formulario de ubicación manual (como en CrearClase) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="org-date-form-grid-2">
                       <div>
                         <label className="org-editor-field">Nombre de la ubicación</label>
                         <input
@@ -2359,7 +3078,7 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    <div className="org-date-form-grid-2" style={{ marginTop: '16px' }}>
                       <div>
                         <label className="org-editor-field">Ciudad</label>
                         <input
@@ -2429,13 +3148,8 @@ export default function OrganizerProfileEditor() {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
                       🌐 Estado de Publicación
                     </h3>
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        cursor: 'pointer',
-                      }}>
+                    <div className="org-date-form-radio-group">
+                      <label className="org-date-form-checkbox">
                         <input
                           type="radio"
                           name="estado_publicacion"
@@ -2448,12 +3162,7 @@ export default function OrganizerProfileEditor() {
                           📝 Borrador (solo tú puedes verlo)
                         </span>
                       </label>
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        cursor: 'pointer',
-                      }}>
+                      <label className="org-date-form-checkbox">
                         <input
                           type="radio"
                           name="estado_publicacion"
@@ -2470,7 +3179,7 @@ export default function OrganizerProfileEditor() {
                   </div>
 
                   {/* Botones */}
-                  <div className="org-editor-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="org-editor-card org-date-form-buttons">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -2572,93 +3281,27 @@ export default function OrganizerProfileEditor() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4 }}
-                  style={{
-                    textAlign: 'center',
-                    padding: '4rem 2rem',
-                    borderRadius: '24px',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
-                  }}
+                  className="org-events-empty"
                 >
-                  {/* Efecto decorativo de fondo */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-50%',
-                    right: '-50%',
-                    width: '200%',
-                    height: '200%',
-                    background: 'radial-gradient(circle, rgba(255, 61, 87, 0.1) 0%, transparent 70%)',
-                    pointerEvents: 'none'
-                  }} />
-
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '3rem',
-                      margin: '0 auto 1.5rem',
-                      boxShadow: '0 8px 32px rgba(255, 61, 87, 0.4)',
-                      border: '2px solid rgba(255, 61, 87, 0.3)',
-                      position: 'relative',
-                      zIndex: 1
-                    }}
+                    className="org-events-empty-icon"
                   >
                     🎭
                   </motion.div>
-                  <h3 style={{
-                    fontSize: '1.6rem',
-                    fontWeight: '800',
-                    marginBottom: '0.75rem',
-                    background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    position: 'relative',
-                    zIndex: 1
-                  }}>
+                  <h3>
                     No tienes sociales creados
                   </h3>
-                  <p style={{
-                    opacity: 0.9,
-                    fontSize: '1.1rem',
-                    fontWeight: '500',
-                    margin: '0 0 2rem 0',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    position: 'relative',
-                    zIndex: 1
-                  }}>
+                  <p>
                     Crea tu primer social para comenzar a organizar eventos
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate('/social/new')}
-                    style={{
-                      padding: '1rem 2rem',
-                      borderRadius: '14px',
-                      border: 'none',
-                      background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                      color: '#FFFFFF',
-                      fontSize: '1rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      boxShadow: '0 8px 24px rgba(255, 61, 87, 0.4)',
-                      position: 'relative',
-                      zIndex: 1,
-                      transition: 'all 0.3s ease'
-                    }}
+                    className="org-events-empty-button"
                   >
                     🎉 Crear mi Primer Social
                   </motion.button>

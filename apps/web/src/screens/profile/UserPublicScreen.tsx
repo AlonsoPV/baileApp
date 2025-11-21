@@ -604,7 +604,7 @@ export const UserProfileLive: React.FC = () => {
         @media (max-width: 768px) {
           .profile-container {
             max-width: 100% !important;
-            padding: 1rem !important;
+            padding: 0rem !important;
           }
           .profile-banner {
             border-radius: 0 !important;

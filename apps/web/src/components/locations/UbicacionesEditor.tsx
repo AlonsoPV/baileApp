@@ -169,6 +169,7 @@ const withName = (item: Ubicacion, value: string) => ({
             .map(zid => allZonas.find((z: any) => z.id === zid)?.nombre)
             .filter(Boolean) as string[];
           const displayName = (u.nombre || u.sede || '').trim();
+          const inputValue = u.nombre || u.sede || '';
 
           return (
             <div key={id} style={{ padding: 12, borderRadius: 12, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.04)', display: 'grid', gap: 10 }}>
@@ -203,7 +204,7 @@ const withName = (item: Ubicacion, value: string) => ({
                       <div style={shell(!displayName)}>
                         <input
                           style={input}
-                          value={displayName}
+                          value={inputValue}
                           onChange={(e) => updateField(idx, 'nombre', e.target.value)}
                           placeholder="Ej. Sede Centro / Salón"
                         />

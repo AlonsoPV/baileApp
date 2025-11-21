@@ -36,41 +36,12 @@ export default function HorizontalSlider<T>({
     <div
       className={className}
       style={{
-        display: "grid",
-        gridTemplateColumns: "auto 1fr auto",
-        alignItems: "center",
-        gap: 12,
-        // Asegura que las flechas estén FUERA visualmente
-        // y no se encimen a las cards
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
         ...style
       }}
     >
-      {/* Flecha izquierda (fuera del contenedor) */}
-      <motion.button
-        type="button"
-        aria-label="Anterior"
-        whileTap={{ scale: 0.96 }}
-        onClick={() => scrollByAmount(-1)}
-        disabled={!canScroll}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          display: "grid",
-          placeItems: "center",
-          cursor: canScroll ? "pointer" : "not-allowed",
-          opacity: canScroll ? 1 : 0.4,
-          // separa visualmente la flecha del carrusel
-          marginRight: 6,
-          backdropFilter: "blur(6px)"
-        }}
-      >
-        ◀
-      </motion.button>
-
       {/* Viewport central */}
       <div
         ref={viewportRef}
@@ -80,15 +51,13 @@ export default function HorizontalSlider<T>({
           overflowY: "visible",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
-          paddingBottom: 4
+          width: "100%",
+          padding: "0.5rem 0"
         }}
       >
         {/* Oculta scrollbar nativo en webkit */}
         <style>{`
           div::-webkit-scrollbar { display: none; }
-          @media (max-width: 768px) {
-            .hs-hide-arrows-on-mobile { display: none !important; }
-          }
         `}</style>
 
         <div
@@ -123,30 +92,94 @@ export default function HorizontalSlider<T>({
         </div>
       </div>
 
-      {/* Flecha derecha (fuera del contenedor) */}
-      <motion.button
-        type="button"
-        aria-label="Siguiente"
-        whileTap={{ scale: 0.96 }}
-        onClick={() => scrollByAmount(1)}
-        disabled={!canScroll}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(255,255,255,0.06)",
-          color: "#fff",
-          display: "grid",
-          placeItems: "center",
-          cursor: canScroll ? "pointer" : "not-allowed",
-          opacity: canScroll ? 1 : 0.4,
-          marginLeft: 6,
-          backdropFilter: "blur(6px)"
-        }}
-      >
-        ▶
-      </motion.button>
+      {/* Botones de navegación debajo del viewport */}
+      {canScroll && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 12,
+            width: "100%"
+          }}
+        >
+          <motion.button
+            type="button"
+            aria-label="Anterior"
+            whileTap={{ scale: 0.96 }}
+            onClick={() => scrollByAmount(-1)}
+            disabled={!canScroll}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.1)",
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              cursor: canScroll ? "pointer" : "not-allowed",
+              opacity: canScroll ? 1 : 0.4,
+              backdropFilter: "blur(8px)",
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              if (canScroll) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canScroll) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+              }
+            }}
+          >
+            ◀
+          </motion.button>
+
+          <motion.button
+            type="button"
+            aria-label="Siguiente"
+            whileTap={{ scale: 0.96 }}
+            onClick={() => scrollByAmount(1)}
+            disabled={!canScroll}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.1)",
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              cursor: canScroll ? "pointer" : "not-allowed",
+              opacity: canScroll ? 1 : 0.4,
+              backdropFilter: "blur(8px)",
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              if (canScroll) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canScroll) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+              }
+            }}
+          >
+            ▶
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

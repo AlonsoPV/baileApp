@@ -145,6 +145,7 @@ export default function ExploreHomeScreen() {
   });
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
+  const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
 
   const { data: allTags } = useTags();
 
@@ -545,16 +546,7 @@ export default function ExploreHomeScreen() {
   };
 
   const renderDatePresetButtons = (mobile = false) => (
-    <div
-      style={{
-        display: 'flex',
-        gap: mobile ? 6 : 8,
-        flexWrap: mobile ? 'nowrap' : 'wrap',
-        overflowX: mobile ? 'auto' : 'visible',
-        marginTop: mobile ? 8 : 12,
-        padding: mobile ? '0 4px' : 0,
-      }}
-    >
+    <>
       {([
         { id: 'todos', label: 'Todos' },
         { id: 'hoy', label: 'Hoy' },
@@ -566,26 +558,13 @@ export default function ExploreHomeScreen() {
           <button
             key={p.id}
             onClick={() => applyDatePreset(p.id)}
-            style={{
-              padding: mobile ? '8px 12px' : '8px 14px',
-              borderRadius: 999,
-              border: active ? '1px solid rgba(240,147,251,0.55)' : '1px solid rgba(255,255,255,0.12)',
-              background: active
-                ? 'linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18))'
-                : 'rgba(30,30,35,0.45)',
-              color: active ? 'rgba(240,147,251,0.95)' : 'rgba(255,255,255,0.8)',
-              fontWeight: 700,
-              letterSpacing: 0.2,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              minWidth: mobile ? 105 : undefined,
-            }}
+            className={active ? 'tab tab--active' : 'tab'}
           >
             {p.label}
           </button>
         );
       })}
-    </div>
+    </>
   );
 
   return (
@@ -657,7 +636,254 @@ export default function ExploreHomeScreen() {
             display: none !important;
           }
         }
+        /* Nuevo diseño de filtros */
+        :root {
+          --fp-bg: #15181f;
+          --fp-bg-soft: #101119;
+          --fp-border: #262a36;
+          --fp-border-soft: #343947;
+          --fp-text: #f5f5ff;
+          --fp-muted: #a4a9bd;
+          --fp-radius-lg: 22px;
+          --fp-radius: 16px;
+          --fp-pill: 999px;
+          --fp-speed: 0.16s;
+          --fp-shadow: 0 14px 40px rgba(0,0,0,.55);
+          --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
+        }
+        /* CONTENEDOR GENERAL */
+        .filters-panel {
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 16px 18px 18px;
+          border-radius: var(--fp-radius-lg);
+          border: 1px solid #20232e;
+          background: radial-gradient(circle at top left,#262a34 0,#14171f 45%,#090b10 100%);
+          box-shadow: var(--fp-shadow);
+          font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
+          color: var(--fp-text);
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        @media (min-width: 769px) {
+          .filters-panel {
+            max-width: 100%;
+            width: 100%;
+          }
+        }
+        /* BANNER FAVORITOS */
+        .filters-fav {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 12px;
+          border-radius: var(--fp-radius);
+          background: rgba(0,0,0,.25);
+          border: 1px solid var(--fp-border);
+        }
+        .filters-fav__left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .filters-fav__icon {
+          font-size: 20px;
+        }
+        .filters-fav__title {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        .filters-fav__btn {
+          border-radius: var(--fp-pill);
+          border: 1px solid var(--fp-border-soft);
+          background: #1b1f2a;
+          color: var(--fp-text);
+          font-size: 12px;
+          padding: 6px 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed);
+        }
+        .filters-fav__btn:hover {
+          background: #222735;
+          border-color: #4b5568;
+          transform: translateY(-0.5px);
+        }
+        /* BOX FILTROS */
+        .filters-box {
+          border-radius: var(--fp-radius);
+          background: var(--fp-bg-soft);
+          border: 1px solid var(--fp-border);
+          padding: 10px 10px 12px;
+        }
+        .filters-box__header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .filters-box__title {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .filters-box__icon {
+          font-size: 16px;
+        }
+        .filters-box__badge {
+          font-size: 11px;
+          color: var(--fp-muted);
+          border-radius: var(--fp-pill);
+          border: 1px solid var(--fp-border-soft);
+          padding: 3px 8px;
+          background: #141722;
+        }
+        /* CHIPS SCROLLABLES */
+        .filters-chips {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding: 4px 2px 2px;
+          scrollbar-width: thin;
+          scrollbar-color: #4b5563 transparent;
+        }
+        .filters-chips::-webkit-scrollbar {
+          height: 6px;
+        }
+        .filters-chips::-webkit-scrollbar-thumb {
+          background: #4b5563;
+          border-radius: 10px;
+        }
+        .chip {
+          position: relative;
+          flex: 0 0 auto;
+          border-radius: var(--fp-pill);
+          border: 1px solid var(--fp-border-soft);
+          background: #181b26;
+          color: var(--fp-text);
+          font-size: 12px;
+          padding: 8px 14px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
+          font-weight: 600;
+        }
+        .chip__icon {
+          font-size: 14px;
+        }
+        .chip__badge {
+          min-width: 18px;
+          height: 18px;
+          border-radius: 999px;
+          background: #ec4899;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 0 5px;
+        }
+        .chip__label {
+          white-space: nowrap;
+        }
+        .chip--filter:hover {
+          background: #1f2330;
+          border-color: #4b5563;
+          transform: translateY(-1px);
+        }
+        .chip--filter.chip--active {
+          background: #1f2330;
+          border-color: #4b5563;
+          box-shadow: 0 0 0 1px rgba(255,75,139,0.4);
+        }
+        .chip--danger {
+          background: rgba(239,68,68,.14);
+          border-color: #f97373;
+          color: #fecaca;
+        }
+        .chip--danger:hover {
+          background: rgba(239,68,68,.22);
+          box-shadow: 0 0 0 1px rgba(248,113,113,.6);
+        }
+        /* TABS */
+        .filters-tabs {
+          display: flex;
+          justify-content: space-between;
+          gap: 8px;
+          margin-top: 4px;
+        }
+        .tab {
+          flex: 1;
+          border-radius: var(--fp-pill);
+          border: 1px solid var(--fp-border-soft);
+          background: #141722;
+          color: var(--fp-text);
+          font-size: 13px;
+          padding: 9px 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
+        }
+        .tab:hover {
+          background: #1b2130;
+          transform: translateY(-0.5px);
+        }
+        .tab--active {
+          background: var(--fp-grad);
+          border-color: transparent;
+          box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+        }
         @media (max-width: 768px) {
+          .filters-panel {
+            max-width: 100% !important;
+            padding: 14px 12px 16px !important;
+          }
+          .filters-fav {
+            padding: 8px 10px !important;
+            flex-wrap: wrap !important;
+          }
+          .filters-fav__title {
+            font-size: 13px !important;
+          }
+          .filters-fav__btn {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
+          }
+          .filters-box {
+            padding: 8px 8px 10px !important;
+          }
+          .filters-box__title {
+            font-size: 12px !important;
+          }
+          .filters-box__badge {
+            font-size: 10px !important;
+            padding: 2px 6px !important;
+          }
+          .chip {
+            font-size: 10px !important;
+            padding: 4px 8px !important;
+          }
+          .chip__icon {
+            font-size: 12px !important;
+          }
+          .chip__badge {
+            min-width: 14px !important;
+            height: 14px !important;
+            font-size: 9px !important;
+          }
+          .tab {
+            font-size: 11px !important;
+            padding: 6px 4px !important;
+          }
           .cards-grid {
             gap: 1.25rem !important;
             padding: 0.75rem 0 !important;
@@ -675,6 +901,53 @@ export default function ExploreHomeScreen() {
           }
         }
         @media (max-width: 480px) {
+          .filters-panel {
+            padding: 12px 10px 14px !important;
+            border-radius: 18px !important;
+          }
+          .filters-fav {
+            padding: 7px 9px !important;
+          }
+          .filters-fav__icon {
+            font-size: 18px !important;
+          }
+          .filters-fav__title {
+            font-size: 12px !important;
+          }
+          .filters-fav__btn {
+            font-size: 10px !important;
+            padding: 4px 8px !important;
+          }
+          .filters-box {
+            padding: 7px 7px 9px !important;
+          }
+          .filters-box__title {
+            font-size: 11px !important;
+          }
+          .filters-box__icon {
+            font-size: 14px !important;
+          }
+          .filters-box__badge {
+            font-size: 9px !important;
+            padding: 2px 5px !important;
+          }
+          .chip {
+            font-size: 9px !important;
+            padding: 3px 7px !important;
+            gap: 3px !important;
+          }
+          .chip__icon {
+            font-size: 11px !important;
+          }
+          .chip__badge {
+            min-width: 13px !important;
+            height: 13px !important;
+            font-size: 8px !important;
+          }
+          .tab {
+            font-size: 10px !important;
+            padding: 5px 3px !important;
+          }
           .cards-grid {
             gap: 1rem !important;
             padding: 0.5rem 0 !important;
@@ -702,152 +975,111 @@ export default function ExploreHomeScreen() {
         {/* Hero removido para una vista más directa al contenido */}
 
         <div className="wrap">
-          {/* Indicador de filtros favoritos */}
-          {usingFavoriteFilters && user && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                marginBottom: '1rem',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.15))',
-                border: '1px solid rgba(240,147,251,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1rem',
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff' }}>
-                <span style={{ fontSize: '1.25rem' }}>⭐</span>
-                <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                  Usando tus filtros favoritos
-                </span>
-              </div>
-              <button
-                onClick={resetToFavoriteFilters}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.1)',
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                }}
+
+          <section className="filters-panel" style={{ margin: `${spacing[4]} 0 ${spacing[6]} 0` }}>
+            {/* BANNER FAVORITOS */}
+            {usingFavoriteFilters && user && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="filters-fav"
               >
-                🔄 Restablecer favoritos
-              </button>
-            </motion.div>
-          )}
-
-          <div style={{ margin: `${spacing[4]} 0 ${spacing[6]} 0` }}>
-            <div
-              style={{
-                borderRadius: 18,
-                padding: isMobile ? '0.5rem 0.75rem' : '0.75rem 1rem',
-                background: 'rgba(9, 9, 11, 0.9)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
-                backdropFilter: 'blur(18px)',
-              }}
-            >
-              {!isMobile && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.75rem',
-                    marginBottom: '0.75rem',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background:
-                          'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(245,87,108,0.3))',
-                        border: '1px solid rgba(240,147,251,0.6)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                        color: '#FFEAFE',
-                        fontSize: '1rem',
-                      }}
-                    >
-                      🎛️
-                    </div>
-                    <div>
-                      <div
-                        style={{
-                          fontSize: '0.9rem',
-                          fontWeight: 700,
-                          letterSpacing: 0.25,
-                          textTransform: 'uppercase',
-                          color: 'rgba(255,255,255,0.9)',
-                        }}
-                      >
-                        Filtros
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.8rem',
-                          color: 'rgba(255,255,255,0.65)',
-                        }}
-                      >
-                        Ritmos · Zonas · Fechas · Búsqueda
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: 999,
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      background: 'rgba(15,15,20,0.9)',
-                      fontSize: '0.76rem',
-                      fontWeight: 600,
-                      color: 'rgba(255,255,255,0.82)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {activeFiltersCount > 0
-                      ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
-                      : 'Sin filtros activos'}
+                <div className="filters-fav__left">
+                  <span className="filters-fav__icon">⭐</span>
+                  <div>
+                    <p className="filters-fav__title">Usando tus filtros favoritos</p>
                   </div>
                 </div>
-              )}
+                <button className="filters-fav__btn" type="button" onClick={resetToFavoriteFilters}>
+                  <span>🔁 Restablecer favoritos</span>
+                </button>
+              </motion.div>
+            )}
 
-              <FilterBar
-                filters={filters}
-                onFiltersChange={handleFilterChange}
-                showTypeFilter={false}
-              />
-              {!isMobile && renderDatePresetButtons(false)}
-            </div>
-          </div>
+            {/* BLOQUE FILTROS */}
+            <div className="filters-box">
+              <header className="filters-box__header">
+                <div className="filters-box__title">
+                  <span className="filters-box__icon">🎛️</span>
+                  <span>Filtros</span>
+                </div>
+                <span className="filters-box__badge">
+                  {activeFiltersCount > 0
+                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
+                    : 'Sin filtros activos'}
+                </span>
+              </header>
 
-          {isMobile && (
-            <div style={{ margin: '0 0 1.5rem 0' }}>
-              {renderDatePresetButtons(true)}
+              {/* CHIPS SCROLLEABLES */}
+              <div className="filters-chips">
+                <button
+                  className={`chip chip--filter ${openFilterDropdown === 'ritmos' ? 'chip--active' : ''}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'ritmos' ? null : 'ritmos')}
+                >
+                  <span className="chip__icon">🎵</span>
+                  {filters.ritmos.length > 0 && (
+                    <span className="chip__badge">{filters.ritmos.length}</span>
+                  )}
+                  <span className="chip__label">Ritmos</span>
+                </button>
+                <button
+                  className={`chip chip--filter ${openFilterDropdown === 'zonas' ? 'chip--active' : ''}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'zonas' ? null : 'zonas')}
+                >
+                  <span className="chip__icon">📍</span>
+                  {filters.zonas.length > 0 && (
+                    <span className="chip__badge">{filters.zonas.length}</span>
+                  )}
+                  <span className="chip__label">Zona</span>
+                </button>
+                <button
+                  className={`chip chip--filter ${openFilterDropdown === 'fechas' ? 'chip--active' : ''}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'fechas' ? null : 'fechas')}
+                >
+                  <span className="chip__icon">📅</span>
+                  {(filters.dateFrom || filters.dateTo) && (
+                    <span className="chip__badge">1</span>
+                  )}
+                  <span className="chip__label">Fechas</span>
+                </button>
+                {activeFiltersCount > 0 && (
+                  <button className="chip chip--danger" onClick={() => {
+                    handleFilterChange({
+                      ...filters,
+                      q: '',
+                      ritmos: [],
+                      zonas: [],
+                      datePreset: 'todos',
+                      dateFrom: undefined,
+                      dateTo: undefined
+                    });
+                    setOpenFilterDropdown(null);
+                  }}>
+                    <span className="chip__icon">🗑️</span>
+                    <span className="chip__label">Limpiar ({activeFiltersCount})</span>
+                  </button>
+                )}
+              </div>
+
+              {/* FilterBar integrado - solo dropdowns */}
+              <div style={{ marginTop: '8px', position: 'relative' }}>
+                <FilterBar
+                  filters={filters}
+                  onFiltersChange={(newFilters) => {
+                    handleFilterChange(newFilters);
+                  }}
+                  showTypeFilter={false}
+                  initialOpenDropdown={openFilterDropdown}
+                  hideButtons={true}
+                />
+              </div>
             </div>
-          )}
+
+            {/* TABS DE RANGO DE FECHA */}
+            <div className="filters-tabs">
+              {renderDatePresetButtons(false)}
+            </div>
+          </section>
 
           {(showAll || selectedType === 'fechas') && (
             <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">

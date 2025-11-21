@@ -372,6 +372,103 @@ export default function AcademyProfileEditor() {
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
           gap: 1.5rem;
         }
+        .academy-tabs {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+          border-bottom: 2px solid rgba(255,255,255,0.1);
+          padding-bottom: 0.5rem;
+        }
+        .academy-tab-button {
+          padding: 0.75rem 1.5rem;
+          border-radius: 12px 12px 0 0;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .academy-avatar-container {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+        }
+        .academy-avatar {
+          width: 160px;
+          height: 160px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 4px solid rgba(255,255,255,0.2);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+          background: linear-gradient(135deg, #1E88E5, #FF7043);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .teachers-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .teacher-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 1rem;
+        }
+        .teacher-modal-content {
+          background: ${colors.dark};
+          border-radius: 20px;
+          padding: 2rem;
+          max-width: 600px;
+          width: 100%;
+          max-height: 80vh;
+          overflow: auto;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .teacher-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .teacher-list-item {
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        .teacher-invite-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .teacher-card-wrapper {
+          position: relative;
+        }
+        .teacher-delete-button {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          padding: 0.5rem;
+          background: rgba(239, 68, 68, 0.9);
+          border: 1px solid #EF4444;
+          border-radius: 8px;
+          color: white;
+          cursor: pointer;
+          font-size: 0.875rem;
+          z-index: 10;
+        }
         
         @media (max-width: 768px) {
           .academy-editor-container {
@@ -412,6 +509,50 @@ export default function AcademyProfileEditor() {
           }
           .org-editor__title {
             font-size: 1.5rem !important;
+          }
+          .academy-tabs {
+            flex-wrap: wrap !important;
+            gap: 0.4rem !important;
+          }
+          .academy-tab-button {
+            flex: 1 1 auto !important;
+            min-width: 120px !important;
+            padding: 0.6rem 1rem !important;
+            font-size: 0.9rem !important;
+          }
+          .academy-avatar {
+            width: 120px !important;
+            height: 120px !important;
+          }
+          .teachers-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .teacher-modal {
+            padding: 0.5rem !important;
+          }
+          .teacher-modal-content {
+            padding: 1.5rem !important;
+            border-radius: 16px !important;
+            max-height: 90vh !important;
+          }
+          .teacher-modal-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .teacher-list-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .teacher-invite-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+          }
+          .teacher-invite-header button {
+            width: 100% !important;
           }
         }
         
@@ -464,6 +605,37 @@ export default function AcademyProfileEditor() {
             padding: 0.5rem !important;
             font-size: 0.875rem !important;
           }
+          .academy-tabs {
+            gap: 0.3rem !important;
+          }
+          .academy-tab-button {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+          }
+          .academy-avatar {
+            width: 100px !important;
+            height: 100px !important;
+          }
+          .teachers-grid {
+            gap: 0.75rem !important;
+          }
+          .teacher-modal-content {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .teacher-list-item {
+            gap: 0.5rem !important;
+            padding: 0.75rem !important;
+          }
+          .teacher-list-item button {
+            width: 100% !important;
+          }
+          .org-editor__card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
         }
       `}</style>
       <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
@@ -475,19 +647,8 @@ export default function AcademyProfileEditor() {
           <div style={{ width: 100 }} />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <div style={{
-            width: 160,
-            height: 160,
-            borderRadius: '50%',
-            overflow: 'hidden',
-            border: '4px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
-            background: 'linear-gradient(135deg, #1E88E5, #FF7043)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <div className="academy-avatar-container">
+          <div className="academy-avatar">
             {primaryAvatarUrl ? (
               <ImageWithFallback
                 src={primaryAvatarUrl}
@@ -516,44 +677,28 @@ export default function AcademyProfileEditor() {
         </div>
 
         {/* Tabs */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          marginBottom: '2rem',
-          borderBottom: '2px solid rgba(255,255,255,0.1)',
-          paddingBottom: '0.5rem'
-        }}>
+        <div className="academy-tabs">
           <button
+            className="academy-tab-button"
             onClick={() => setActiveTab("perfil")}
             style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px 12px 0 0',
-              border: 'none',
               background: activeTab === "perfil" 
                 ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
                 : 'transparent',
-              color: '#fff',
               fontWeight: activeTab === "perfil" ? 800 : 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
               borderBottom: activeTab === "perfil" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
             }}
           >
             📝 Perfil
           </button>
           <button
+            className="academy-tab-button"
             onClick={() => setActiveTab("metricas")}
             style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px 12px 0 0',
-              border: 'none',
               background: activeTab === "metricas" 
                 ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
                 : 'transparent',
-              color: '#fff',
               fontWeight: activeTab === "metricas" ? 800 : 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
               borderBottom: activeTab === "metricas" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
             }}
           >
@@ -1245,7 +1390,7 @@ export default function AcademyProfileEditor() {
         {academyId && (
           <>
             <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="teacher-invite-header">
                 <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
                   🎭 Maestros Invitados
                 </h2>
@@ -1270,7 +1415,7 @@ export default function AcademyProfileEditor() {
               </div>
 
               {acceptedTeachers && acceptedTeachers.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                <div className="teachers-grid">
                   {acceptedTeachers.map((t: any) => {
                     // Mapear datos de la vista a formato de TeacherCard
                     const teacherData = {
@@ -1289,9 +1434,10 @@ export default function AcademyProfileEditor() {
                         : []
                     };
                     return (
-                      <div key={t.teacher_id} style={{ position: 'relative' }}>
+                      <div key={t.teacher_id} className="teacher-card-wrapper">
                         <TeacherCard item={teacherData} />
                         <button
+                            className="teacher-delete-button"
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1325,19 +1471,6 @@ export default function AcademyProfileEditor() {
                                 setTimeout(() => setStatusMsg(null), 3000);
                               }
                             }}
-                            style={{
-                              position: 'absolute',
-                              top: '0.5rem',
-                              right: '0.5rem',
-                              padding: '0.5rem',
-                              background: 'rgba(239, 68, 68, 0.9)',
-                              border: '1px solid #EF4444',
-                              borderRadius: '8px',
-                              color: 'white',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem',
-                              zIndex: 10
-                            }}
                           >
                             🗑️
                           </button>
@@ -1358,34 +1491,13 @@ export default function AcademyProfileEditor() {
 
             {/* Modal para seleccionar maestro */}
             {showTeacherModal && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-                padding: '1rem'
-              }}>
+              <div className="teacher-modal">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  style={{
-                    background: colors.dark,
-                    borderRadius: '20px',
-                    padding: '2rem',
-                    maxWidth: '600px',
-                    width: '100%',
-                    maxHeight: '80vh',
-                    overflow: 'auto',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
+                  className="teacher-modal-content"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <div className="teacher-modal-header">
                     <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
                       👥 Seleccionar Maestro
                     </h2>
@@ -1446,15 +1558,7 @@ export default function AcademyProfileEditor() {
                       {availableTeachers.map((teacher: any) => (
                         <div
                           key={teacher.id}
-                          style={{
-                            padding: '1rem',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem'
-                          }}
+                          className="teacher-list-item"
                         >
                           <div style={{
                             width: '50px',

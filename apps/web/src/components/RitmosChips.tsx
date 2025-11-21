@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
+import { Chip } from './profile/Chip';
 
 interface Props {
   selected: string[];
@@ -28,22 +29,24 @@ function RitrosChipsInternal({
   const metrics =
     size === 'compact'
       ? {
-          gap: '0.55rem',
+          wrapperGap: '0.5rem',
           groupFont: '0.78rem',
-          groupPadding: '8px 14px',
+          groupPadding: '5px 10px',
+          childGap: '0.35rem',
           childFont: '0.72rem',
-          childPadding: '6px 12px',
+          childPadding: '5px 10px',
           readOnlyFont: '0.78rem',
-          readOnlyPadding: '8px 14px',
+          readOnlyPadding: '5px 10px',
         }
       : {
-          gap: '0.85rem',
-          groupFont: '0.875rem',
-          groupPadding: '10px 18px',
-          childFont: '0.8rem',
-          childPadding: '8px 14px',
-          readOnlyFont: '0.875rem',
-          readOnlyPadding: '10px 18px',
+          wrapperGap: '0.75rem',
+          groupFont: '0.9rem',
+          groupPadding: '5px 10px',
+          childGap: '0.5rem',
+          childFont: '0.82rem',
+          childPadding: '5px 10px',
+          readOnlyFont: '0.9rem',
+          readOnlyPadding: '5px 10px',
         };
 
   const filteredCatalog = React.useMemo(() => {
@@ -85,7 +88,7 @@ function RitrosChipsInternal({
     if (allSelectedItems.length === 0) return null;
 
     return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: metrics.gap }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: metrics.wrapperGap }}>
         {allSelectedItems.map((r) => (
           <motion.div
             key={r.id}
@@ -106,16 +109,15 @@ function RitrosChipsInternal({
               background: 'rgba(245, 87, 108, 0.2)',
               border: '1px solid rgba(245, 87, 108, 0.65)',
               color: '#FFE4EE',
-              boxShadow: 'rgba(245,87,108,0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset',
+              boxShadow: 'rgba(245, 87, 108, 0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset',
               alignSelf: 'flex-start',
               width: 'fit-content',
               minWidth: 'auto',
               justifyContent: 'center',
-              paddingInline: '1rem',
               transform: 'none',
             }}
           >
-            <span>{r.label}</span>
+            <span>🎵 {r.label}</span>
           </motion.div>
         ))}
       </div>
@@ -123,71 +125,102 @@ function RitrosChipsInternal({
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: metrics.gap,
-        alignItems: 'flex-start',
-      }}
-    >
+    <>
+      <style>{`
+        .ritmos-chips-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: ${metrics.wrapperGap};
+          align-items: flex-start;
+        }
+        .ritmos-chips-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          align-items: flex-start;
+          min-width: fit-content;
+          flex: 0 0 auto;
+        }
+        .ritmos-chips-children {
+          display: flex;
+          flex-wrap: wrap;
+          gap: ${metrics.childGap};
+          border-top: 1px solid rgba(255,255,255,0.08);
+          padding-top: 0.4rem;
+          width: 100%;
+        }
+        .ritmos-chips-children button {
+          font-size: ${metrics.childFont};
+          padding: ${metrics.childPadding};
+        }
+        @media (max-width: 768px) {
+          .ritmos-chips-container {
+            gap: 0.5rem;
+          }
+          .ritmos-chips-group {
+            gap: 0.3rem;
+            width: 100%;
+          }
+          .ritmos-chips-children {
+            gap: 0.4rem;
+            padding-top: 0.3rem;
+          }
+          .ritmos-chips-children button {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+          }
+        }
+        @media (max-width: 480px) {
+          .ritmos-chips-container {
+            gap: 0.4rem;
+          }
+          .ritmos-chips-group {
+            gap: 0.25rem;
+          }
+          .ritmos-chips-children {
+            gap: 0.35rem;
+            padding-top: 0.25rem;
+          }
+          .ritmos-chips-children button {
+            font-size: 0.65rem;
+            padding: 3px 7px;
+          }
+        }
+      `}</style>
+      <div className="ritmos-chips-container">
       {filteredCatalog.map((group) => {
         const isOpen = expanded === group.id;
         const active = groupHasActive(group.id);
         return (
           <div
             key={group.id}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-              alignItems: 'flex-start',
-              minWidth: 'fit-content',
-            }}
+            className="ritmos-chips-group"
           >
-            <button
-              type="button"
+            <Chip
+              label={`${group.label} ${isOpen ? '▾' : '▸'}`}
+              icon="🎵"
+              variant="custom"
+              active={active || isOpen}
               onClick={() => setExpanded((prev) => (prev === group.id ? null : group.id))}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: 'pointer',
-                transition: '0.3s',
-                backdropFilter: 'blur(10px)',
-                userSelect: 'none',
-                fontWeight: 700,
                 fontSize: metrics.groupFont,
-                padding: metrics.groupPadding,
-                borderRadius: 999,
-                background: isOpen || active ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.04)',
-                border: isOpen || active ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.12)',
-                color: isOpen || active ? '#FFE4EE' : 'rgba(255,255,255,0.85)',
-                boxShadow: isOpen || active
-                  ? 'rgba(245,87,108,0.35) 0px 4px 14px, rgba(255,255,255,0.15) 0px 1px 0px inset'
-                  : 'rgba(0,0,0,0.35) 0px 3px 10px',
                 alignSelf: 'flex-start',
                 width: 'fit-content',
                 minWidth: 'auto',
                 justifyContent: 'center',
-                paddingInline: '1rem',
-                transform: 'none',
+                padding: metrics.groupPadding,
+                background: active || isOpen
+                  ? 'rgba(245, 87, 108, 0.2)'
+                  : 'rgba(255,255,255,0.05)',
+                border: active || isOpen
+                  ? '1px solid rgba(245, 87, 108, 0.65)'
+                  : '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 999,
               }}
-            >
-              {group.label}
-            </button>
+            />
 
             {isOpen && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 6,
-                  borderTop: '1px solid rgba(255,255,255,0.08)',
-                  paddingTop: 10,
-                  width: '100%',
-                }}
-              >
+              <div className="ritmos-chips-children">
                 {group.items.map((r) => {
                   const isActive = selected.includes(r.id);
                   return (
@@ -208,11 +241,15 @@ function RitrosChipsInternal({
                         fontSize: metrics.childFont,
                         padding: metrics.childPadding,
                         borderRadius: 999,
-                        background: isActive ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.03)',
-                        border: isActive ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.1)',
-                        color: isActive ? '#FFE4EE' : 'rgba(255,255,255,0.72)',
+                        background: isActive
+                          ? 'rgba(245, 87, 108, 0.2)'
+                          : 'rgba(255,255,255,0.06)',
+                        border: isActive
+                          ? '1px solid rgba(245, 87, 108, 0.65)'
+                          : '1px solid rgba(255,255,255,0.12)',
+                        color: isActive ? '#FFE4EE' : '#fff',
                         boxShadow: isActive
-                          ? 'rgba(245,87,108,0.3) 0px 3px 10px'
+                          ? 'rgba(245, 87, 108, 0.3) 0px 3px 10px'
                           : 'rgba(0,0,0,0.25) 0px 2px 8px',
                         alignSelf: 'flex-start',
                         minWidth: 'auto',
@@ -228,7 +265,8 @@ function RitrosChipsInternal({
           </div>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 }
 

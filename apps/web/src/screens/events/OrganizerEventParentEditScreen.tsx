@@ -121,19 +121,13 @@ export default function OrganizerEventParentEditScreen() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-      padding: '24px 0',
-    }}>
-      <EventCreateForm
-        mode="parent"
-        parent={parent}
-        onSubmit={handleSubmit}
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-        showHeader={true}
-      />
-    </div>
+    <EventCreateForm
+      mode="parent"
+      parent={parent}
+      onSubmit={handleSubmit}
+      onSuccess={handleSuccess}
+      onCancel={handleCancel}
+      showHeader={true}
+    />
   );
 }

@@ -25,114 +25,216 @@ export const VideoManagementSection: React.FC<VideoManagementSectionProps> = ({
   slots
 }) => {
   return (
-    <div style={{
-      marginBottom: '3rem',
-      padding: '2rem',
-      background: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-    }}>
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-        {title}
-      </h2>
-      
-      <p style={{ 
-        fontSize: '0.9rem', 
-        color: 'rgba(255, 255, 255, 0.6)', 
-        marginBottom: '1.5rem',
-        fontStyle: 'italic'
-      }}>
-        💡 <strong>Tip:</strong> {description}
-      </p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {slots.map((slot) => (
-          <div key={slot} style={{
-            padding: '1rem',
-            background: 'rgba(255, 255, 255, 0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-          }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: colors.light }}>
-              🎥 Video {slot.toUpperCase()}
-            </h3>
-            
-            <div style={{
-              aspectRatio: '16/9',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              marginBottom: '1rem',
-              border: '2px solid rgba(255, 255, 255, 0.1)',
-            }}>
-              {getMediaBySlot(media, slot) ? (
-                <video
-                  src={getMediaBySlot(media, slot)!.url}
-                  controls
-                  style={{
+    <>
+      <style>{`
+        .video-section-container {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .video-section-title {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+          color: ${colors.light};
+        }
+        .video-section-description {
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 1.5rem;
+          font-style: italic;
+        }
+        .video-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .video-item {
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .video-item-title {
+          font-size: 1rem;
+          margin-bottom: 1rem;
+          color: ${colors.light};
+        }
+        .video-container {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16/9;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 1rem;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .video-container video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          display: block;
+        }
+        .video-buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .video-button {
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-weight: 600;
+          flex: 1 1 auto;
+          min-width: 120px;
+          text-align: center;
+          border: none;
+        }
+        .video-button-upload {
+          background: #2196F3;
+          color: white;
+        }
+        .video-button-delete {
+          background: #f44336;
+          color: white;
+        }
+        @media (max-width: 768px) {
+          .video-section-container {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .video-section-title {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .video-section-description {
+            font-size: 0.85rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .video-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .video-item {
+            padding: 0.75rem !important;
+            max-width: 100% !important;
+          }
+          .video-item-title {
+            font-size: 0.95rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .video-container {
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .video-section-container {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .video-section-title {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .video-section-description {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .video-item {
+            padding: 0.5rem !important;
+          }
+          .video-item-title {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .video-container {
+            aspect-ratio: 16/9 !important;
+          }
+          .video-button {
+            min-width: 100px !important;
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.8rem !important;
+          }
+        }
+      `}</style>
+      <div className="video-section-container">
+        <h2 className="video-section-title">
+          {title}
+        </h2>
+        
+        <p className="video-section-description">
+          💡 <strong>Tip:</strong> {description}
+        </p>
+        
+        <div className="video-grid">
+          {slots.map((slot) => (
+            <div key={slot} className="video-item">
+              <h3 className="video-item-title">
+                🎥 Video {slot.toUpperCase()}
+              </h3>
+              
+              <div className="video-container">
+                {getMediaBySlot(media, slot) ? (
+                  <video
+                    src={getMediaBySlot(media, slot)!.url}
+                    controls
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                ) : (
+                  <div style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontSize: '0.875rem'
-                }}>
-                  🎥 Sin video
-                </div>
-              )}
-            </div>
-            
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <label style={{
-                padding: '0.5rem 1rem',
-                background: '#2196F3',
-                color: 'white',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '600'
-              }}>
-                {uploading[slot] ? '⏳ Subiendo...' : '📤 Subir Video'}
-                <input
-                  type="file"
-                  accept="video/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadFile(file, slot, 'video');
-                  }}
-                />
-              </label>
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '0.875rem'
+                  }}>
+                    🎥 Sin video
+                  </div>
+                )}
+              </div>
               
-              {getMediaBySlot(media, slot) && (
-                <button
-                  onClick={() => removeFile(slot)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  🗑️
-                </button>
-              )}
+              <div className="video-buttons">
+                <label className="video-button video-button-upload">
+                  {uploading[slot] ? '⏳ Subiendo...' : '📤 Subir Video'}
+                  <input
+                    type="file"
+                    accept="video/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadFile(file, slot, 'video');
+                    }}
+                  />
+                </label>
+                
+                {getMediaBySlot(media, slot) && (
+                  <button
+                    onClick={() => removeFile(slot)}
+                    className="video-button video-button-delete"
+                  >
+                    🗑️ Eliminar
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

@@ -94,30 +94,85 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
       ? {
           wrapperGap: "0.5rem",
           parentFont: "0.78rem",
-          parentPadding: "0.45rem 0.9rem",
+          parentPadding: "5px 10px",
           childGap: "0.35rem",
-          childPadding: "0.35rem 0.75rem",
+          childPadding: "5px 10px",
           childFont: "0.72rem",
         }
       : {
           wrapperGap: "0.75rem",
           parentFont: "0.9rem",
-          parentPadding: "0.65rem 1.1rem",
+          parentPadding: "5px 10px",
           childGap: "0.5rem",
-          childPadding: "0.45rem 0.9rem",
+          childPadding: "5px 10px",
           childFont: "0.82rem",
         };
 
   return (
-    <div className={className} style={style}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: metrics.wrapperGap,
-          alignItems: "flex-start",
-        }}
-      >
+    <>
+      <style>{`
+        .zona-chips-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: ${metrics.wrapperGap};
+          align-items: flex-start;
+        }
+        .zona-chips-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          align-items: flex-start;
+          min-width: fit-content;
+          flex: 0 0 auto;
+        }
+        .zona-chips-children {
+          display: flex;
+          flex-wrap: wrap;
+          gap: ${metrics.childGap};
+          border-top: 1px solid rgba(255,255,255,0.08);
+          padding-top: 0.4rem;
+          width: 100%;
+        }
+        .zona-chips-children .chip {
+          font-size: ${metrics.childFont};
+          padding: ${metrics.childPadding};
+        }
+        @media (max-width: 768px) {
+          .zona-chips-container {
+            gap: 0.5rem;
+          }
+          .zona-chips-group {
+            gap: 0.3rem;
+            width: 100%;
+          }
+          .zona-chips-children {
+            gap: 0.4rem;
+            padding-top: 0.3rem;
+          }
+          .zona-chips-children .chip {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+          }
+        }
+        @media (max-width: 480px) {
+          .zona-chips-container {
+            gap: 0.4rem;
+          }
+          .zona-chips-group {
+            gap: 0.25rem;
+          }
+          .zona-chips-children {
+            gap: 0.35rem;
+            padding-top: 0.25rem;
+          }
+          .zona-chips-children .chip {
+            font-size: 0.65rem;
+            padding: 3px 7px;
+          }
+        }
+      `}</style>
+      <div className={className} style={style}>
+        <div className="zona-chips-container">
         {relevantGroups.map((group) => {
           const hasSelected = group.items.some((item) =>
             selectedSet.has(item.id)
@@ -127,13 +182,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           return (
             <div
               key={group.id}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.4rem",
-                alignItems: "flex-start",
-                minWidth: "fit-content",
-              }}
+              className="zona-chips-group"
             >
               <Chip
                 label={`${group.label} ${isExpanded ? "▾" : "▸"}`}
@@ -161,16 +210,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
               />
 
               {showChildren && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: metrics.childGap,
-                    borderTop: "1px solid rgba(255,255,255,0.08)",
-                    paddingTop: "0.4rem",
-                    width: "100%",
-                  }}
-                >
+                <div className="zona-chips-children">
                   {group.items.map((item) => {
                     const isActive = selectedSet.has(item.id);
                     return (
@@ -204,8 +244,9 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
             </div>
           );
         })}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -11,6 +11,8 @@ interface FilterBarProps {
   onFiltersChange: (filters: ExploreFilters) => void;
   className?: string;
   showTypeFilter?: boolean;
+  initialOpenDropdown?: string | null;
+  hideButtons?: boolean;
 }
 
 const PERFIL_OPTIONS = [
@@ -25,8 +27,18 @@ const PERFIL_OPTIONS = [
   { value: 'usuarios', label: 'Bailarines', icon: '🧍' },
 ];
 
-export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true }: FilterBarProps) {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true, initialOpenDropdown = null, hideButtons = false }: FilterBarProps) {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(initialOpenDropdown || null);
+  
+  // Sincronizar con prop externo cuando cambia
+  React.useEffect(() => {
+    if (initialOpenDropdown !== null && initialOpenDropdown !== openDropdown) {
+      setOpenDropdown(initialOpenDropdown);
+    } else if (initialOpenDropdown === null && openDropdown !== null && hideButtons) {
+      // Si se cierra desde fuera, cerrar también internamente
+      setOpenDropdown(null);
+    }
+  }, [initialOpenDropdown, hideButtons]);
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
   const [expandedZonaGroup, setExpandedZonaGroup] = useState<string | null>(null);
@@ -51,6 +63,11 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
   const toggleDropdown = (dropdown: string) => {
     setOpenDropdown(openDropdown === dropdown ? null : dropdown);
+  };
+  
+  // Cerrar dropdown cuando se hace clic fuera o se selecciona algo
+  const handleCloseDropdown = () => {
+    setOpenDropdown(null);
   };
 
   const handleSearchChange = (value: string) => {
@@ -119,6 +136,24 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   return (
     <div className={`sticky top-16 z-40 ${className}`}>
       <style>{`
+        ${hideButtons ? `
+          .filters-row {
+            display: none !important;
+          }
+          .filters-wrap {
+            padding: 0 !important;
+            max-width: 100% !important;
+          }
+          .dropdown-panel {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            border-radius: 12px !important;
+            background: #101119 !important;
+            border: 1px solid #262a36 !important;
+            padding: 1rem 1.25rem !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+          }
+        ` : ''}
         @media (max-width: 768px) {
           .filters-wrap { padding: 0 !important; }
           .filters-row { 
@@ -152,10 +187,10 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       `}</style>
       <div 
         style={{
-          background: 'linear-gradient(135deg, rgba(18, 18, 18, 0.98), rgba(20, 20, 25, 0.98))',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          background: hideButtons ? 'transparent' : 'linear-gradient(135deg, rgba(18, 18, 18, 0.98), rgba(20, 20, 25, 0.98))',
+          backdropFilter: hideButtons ? 'none' : 'blur(20px)',
+          borderBottom: hideButtons ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: hideButtons ? 'none' : '0 8px 32px rgba(0, 0, 0, 0.4)',
           position: 'relative'
         }}
       >
@@ -166,6 +201,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           position: 'relative'
         }} className="filters-wrap">
           {/* Barra Principal de Filtros */}
+          {!hideButtons && (
           <div style={{
             display: 'flex',
             gap: '0.75rem',
@@ -249,6 +285,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             )}
 
             {/* Búsqueda por palabra clave al final */}
+            {!hideButtons && (
             <div style={{ flex: '0 0 auto', position: 'relative' }} className="filters-search">
               {isSearchExpanded ? (
                 <div style={{
@@ -323,7 +360,9 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                 </motion.button>
               )}
             </div>
+            )}
           </div>
+          )}
 
           {/* Dropdowns */}
           <AnimatePresence>
@@ -387,13 +426,15 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                               key={group.id}
                               onClick={() => toggleGroup(group.id)}
                               style={{
-                                padding: '10px 14px',
+                                padding: '12px 18px',
                                 borderRadius: 999,
                                 border: isOpen || activeInGroup ? '2px solid rgba(240,147,251,0.6)' : '1px solid rgba(255,255,255,0.15)',
                                 background: isOpen || activeInGroup ? 'rgba(240,147,251,0.15)' : 'rgba(255,255,255,0.06)',
                                 color: 'white',
                                 fontWeight: 700,
-                                cursor: 'pointer'
+                                fontSize: '0.95rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
                               }}
                             >
                               {group.label}
@@ -415,13 +456,15 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                 key={child.id}
                                 onClick={() => toggleChild(child.label)}
                                 style={{
-                                  padding: '6px 12px',
+                                  padding: '7px 13px',
                                   borderRadius: 999,
                                   border: active ? '1px solid #f093fb' : '1px solid rgba(255,255,255,0.15)',
                                   background: active ? 'rgba(240,147,251,0.15)' : 'transparent',
                                   color: active ? '#f093fb' : 'rgba(255,255,255,0.9)',
-                                  fontSize: 13,
-                                  cursor: 'pointer'
+                                  fontSize: '0.85rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
                                 }}
                               >
                                 {child.label}
@@ -471,7 +514,9 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                             style={{
                               width: 'fit-content',
                               minWidth: 'auto',
-                              paddingInline: '1rem',
+                              padding: '12px 18px',
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
                               background: (isOpen || activeInGroup)
                                 ? 'rgba(76,173,255,0.18)'
                                 : 'rgba(255,255,255,0.05)',
@@ -503,6 +548,11 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                     variant="zona"
                                     active={active}
                                     onClick={() => handleZonaToggle(item.id)}
+                                    style={{
+                                      fontSize: '0.85rem',
+                                      padding: '7px 13px',
+                                      fontWeight: 500,
+                                    }}
                                   />
                                 );
                               })}

@@ -167,6 +167,100 @@ export function DateLiveScreen() {
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
         }
+        
+        /* Estilos para chips de ubicación */
+        .loc-inline {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          align-items: center;
+        }
+        .loc-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 0.9rem;
+          border-radius: 999px;
+          font-weight: 700;
+          background: linear-gradient(135deg, rgba(240,147,251,0.12), rgba(245,87,108,0.08));
+          border: 1px solid rgba(240,147,251,0.3);
+          color: #fff;
+          font-size: 0.875rem;
+          box-shadow: 0 4px 12px rgba(240,147,251,0.15);
+          transition: all 0.2s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .loc-chip::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transition: left 0.5s ease;
+        }
+        .loc-chip:hover::before {
+          left: 100%;
+        }
+        .loc-chip:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(240,147,251,0.25);
+          border-color: rgba(240,147,251,0.5);
+          background: linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.12));
+        }
+        .loc-chip b {
+          color: #f7d9ff;
+          font-weight: 800;
+        }
+        .loc-chip .muted {
+          color: rgba(255,255,255,0.85);
+          font-weight: 500;
+        }
+        
+        /* Responsive para chips */
+        @media (max-width: 768px) {
+          .loc-inline {
+            gap: 0.4rem;
+          }
+          .loc-chip {
+            padding: 0.45rem 0.75rem;
+            font-size: 0.8rem;
+            gap: 0.4rem;
+            box-shadow: 0 3px 10px rgba(240,147,251,0.12);
+          }
+          .loc-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 14px rgba(240,147,251,0.2);
+          }
+          .loc-chip b {
+            font-size: 0.8rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .loc-inline {
+            gap: 0.35rem;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .loc-chip {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.75rem;
+            gap: 0.35rem;
+            width: 100%;
+            justify-content: flex-start;
+            box-shadow: 0 2px 8px rgba(240,147,251,0.1);
+          }
+          .loc-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(240,147,251,0.18);
+          }
+          .loc-chip b {
+            font-size: 0.75rem;
+          }
+        }
       `}</style>
       
       <div style={{
@@ -525,70 +619,26 @@ export function DateLiveScreen() {
                   </h3>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="loc-inline" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
                   {date.lugar && (
-                    <div style={{
-                      padding: '1rem',
-                      background: 'linear-gradient(135deg, rgba(30, 136, 229, 0.1), rgba(0, 188, 212, 0.1))',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(30, 136, 229, 0.2)'
-                    }}>
-                      <p style={{ 
-                        fontSize: '1.2rem', 
-                        fontWeight: '700',
-                        margin: 0,
-                        color: colors.light,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        🏢 {date.lugar}
-                      </p>
-                    </div>
+                    <span className="loc-chip">
+                      🏷️ <b>Lugar:</b> <span className="muted">{date.lugar}</span>
+                    </span>
                   )}
-                  
                   {date.direccion && (
-                    <div style={{
-                      padding: '0.75rem',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
-                    }}>
-                      <p style={{ 
-                        fontSize: '1rem', 
-                        fontWeight: '500',
-                        margin: 0,
-                        color: colors.light,
-                        opacity: 0.9,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        📍 {date.direccion}
-                      </p>
-                    </div>
+                    <span className="loc-chip">
+                      🧭 <b>Dirección:</b> <span className="muted">{date.direccion}</span>
+                    </span>
                   )}
-                  
                   {date.ciudad && (
-                    <div style={{
-                      padding: '0.75rem',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
-                    }}>
-                      <p style={{ 
-                        fontSize: '1rem', 
-                        fontWeight: '500',
-                        margin: 0,
-                        color: colors.light,
-                        opacity: 0.9,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        🏙️ {date.ciudad}
-                      </p>
-                    </div>
+                    <span className="loc-chip">
+                      🏙️ <b>Ciudad:</b> <span className="muted">{date.ciudad}</span>
+                    </span>
+                  )}
+                  {date.referencias && (
+                    <span className="loc-chip">
+                      📌 <b>Referencias:</b> <span className="muted">{date.referencias}</span>
+                    </span>
                   )}
                 </div>
               </div>

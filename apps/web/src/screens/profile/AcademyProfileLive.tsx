@@ -85,7 +85,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   );
 };
 {/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */ }
-// Componente Carousel para fotos
+// Componente Carousel para fotos mejorado
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -106,169 +106,283 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 
   return (
     <>
-      <div style={{
-        position: 'relative',
-        maxWidth: '1000px',
-        margin: '0 auto'
-      }}>
+      <style>{`
+        .photo-gallery-main {
+          position: relative;
+          aspect-ratio: 16/9;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .photo-gallery-main:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+        .photo-gallery-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+        .photo-gallery-image:hover {
+          transform: scale(1.02);
+        }
+        .photo-gallery-counter {
+          position: absolute;
+          top: 1.25rem;
+          right: 1.25rem;
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+          backdrop-filter: blur(10px);
+          color: white;
+          padding: 0.6rem 1.2rem;
+          border-radius: 24px;
+          fontSize: 0.875rem;
+          fontWeight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        .photo-gallery-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(10px);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 50%;
+          width: 52px;
+          height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1.5rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        .photo-gallery-nav-btn:hover {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .photo-gallery-nav-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+        .photo-gallery-nav-btn--prev {
+          left: 1.25rem;
+        }
+        .photo-gallery-nav-btn--next {
+          right: 1.25rem;
+        }
+        .photo-gallery-thumbnails {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+          max-width: 100%;
+        }
+        .photo-gallery-thumb {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 3px solid transparent;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .photo-gallery-thumb:hover {
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .photo-gallery-thumb.active {
+          border-color: #E53935;
+          box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
+        }
+        .photo-gallery-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .photo-gallery-fullscreen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.95);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          cursor: pointer;
+          backdrop-filter: blur(10px);
+        }
+        .photo-gallery-fullscreen-content {
+          max-width: 95vw;
+          max-height: 95vh;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .photo-gallery-fullscreen-close {
+          position: absolute;
+          top: 1.5rem;
+          right: 1.5rem;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(10px);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1.5rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          z-index: 1001;
+        }
+        .photo-gallery-fullscreen-close:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: scale(1.1);
+        }
+        @media (max-width: 768px) {
+          .photo-gallery-main {
+            border-radius: 16px;
+          }
+          .photo-gallery-counter {
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+          }
+          .photo-gallery-nav-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.25rem;
+          }
+          .photo-gallery-nav-btn--prev {
+            left: 1rem;
+          }
+          .photo-gallery-nav-btn--next {
+            right: 1rem;
+          }
+          .photo-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .photo-gallery-main {
+            border-radius: 12px;
+          }
+          .photo-gallery-counter {
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+          }
+          .photo-gallery-nav-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+          }
+          .photo-gallery-nav-btn--prev {
+            left: 0.75rem;
+          }
+          .photo-gallery-nav-btn--next {
+            right: 0.75rem;
+          }
+          .photo-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+          }
+        }
+      `}</style>
+      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
         {/* Imagen principal */}
-        <div style={{
-          position: 'relative',
-          aspectRatio: '16/9',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          border: '2px solid rgba(255, 255, 255, 0.2)',
-          background: 'rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            opacity: 1,
-            transform: 'none'
-          }}>
-            <ImageWithFallback
-              src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1}`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => setIsFullscreen(true)}
-            />
-          </div>
+        <div className="photo-gallery-main">
+          <ImageWithFallback
+            src={photos[currentIndex]}
+            alt={`Foto ${currentIndex + 1}`}
+            className="photo-gallery-image"
+            onClick={() => setIsFullscreen(true)}
+          />
 
           {/* Contador */}
-          <div style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'rgba(0, 0, 0, 0.7)',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            borderRadius: '20px',
-            fontSize: '0.875rem',
-            fontWeight: '600'
-          }}>
+          <div className="photo-gallery-counter">
             {currentIndex + 1} / {photos.length}
           </div>
 
           {/* Botones de navegación */}
-          <button
-            onClick={prevPhoto}
-            style={{
-              position: 'absolute',
-              left: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={nextPhoto}
-            style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ›
-          </button>
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                className="photo-gallery-nav-btn photo-gallery-nav-btn--prev"
+                aria-label="Foto anterior"
+              >
+                ‹
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                className="photo-gallery-nav-btn photo-gallery-nav-btn--next"
+                aria-label="Foto siguiente"
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
 
         {/* Miniaturas */}
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginTop: '1rem',
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
-          {photos.map((photo, index) => (
-            <button
-              key={index}
-              onClick={() => goToPhoto(index)}
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                border: index === currentIndex ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
-                cursor: 'pointer',
-                background: 'transparent',
-                padding: 0,
-                transition: '0.2s'
-              }}
-            >
-              <ImageWithFallback
-                src={photo}
-                alt={`Miniatura ${index + 1}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </button>
-          ))}
-        </div>
+        {photos.length > 1 && (
+          <div className="photo-gallery-thumbnails">
+            {photos.map((photo, index) => (
+              <button
+                key={index}
+                onClick={() => goToPhoto(index)}
+                className={`photo-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
+                aria-label={`Ver foto ${index + 1}`}
+              >
+                <ImageWithFallback
+                  src={photo}
+                  alt={`Miniatura ${index + 1}`}
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Pantalla completa */}
       {isFullscreen && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            cursor: 'pointer'
-          }}
+          className="photo-gallery-fullscreen"
           onClick={() => setIsFullscreen(false)}
         >
-          <div style={{
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }}>
+          <button
+            className="photo-gallery-fullscreen-close"
+            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+          <div className="photo-gallery-fullscreen-content" onClick={(e) => e.stopPropagation()}>
             <ImageWithFallback
               src={photos[currentIndex]}
               alt={`Foto ${currentIndex + 1} - Pantalla completa`}
@@ -701,6 +815,348 @@ export default function AcademyProfileLive() {
           }
           .promo-section { padding: 18px 14px 22px !important; }
           .promo-card { padding: 14px 16px !important; }
+        }
+        /* Maestros Invitados Section */
+        /* Maestros Invitados Section - Diseño mejorado y responsive */
+        .teachers-invited-section {
+          position: relative;
+          margin-bottom: 3rem;
+          margin-top: 3rem;
+          padding: 3rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          overflow: visible;
+        }
+        .teachers-invited-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166);
+          opacity: 0.9;
+          border-radius: 28px 28px 0 0;
+        }
+        .teachers-invited-header {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
+          position: relative;
+          z-index: 1;
+        }
+        .teachers-invited-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #E53935, #FB8C00);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2rem;
+          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+          flex-shrink: 0;
+        }
+        .teachers-invited-title {
+          font-size: 1.75rem;
+          font-weight: 900;
+          margin: 0 0 0.25rem 0;
+          color: #fff;
+          text-shadow: 0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2);
+        }
+        .teachers-invited-subtitle {
+          font-size: 0.95rem;
+          opacity: 0.85;
+          margin: 0;
+          color: rgba(255, 255, 255, 0.9);
+          font-weight: 500;
+        }
+        /* Espacio visual mejorado para las tarjetas */
+        .teachers-invited-section .horizontal-slider-grid {
+          display: grid !important;
+          grid-auto-flow: column !important;
+          gap: 1.5rem !important;
+          padding: 0.75rem 0 !important;
+          margin: 0 !important;
+        }
+        .teachers-invited-section .horizontal-slider-grid > * {
+          min-width: 0 !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          width: auto !important;
+          flex-shrink: 0 !important;
+        }
+        /* Asegurar que las TeacherCard tengan espacio suficiente y se vean completas */
+        .teachers-invited-section .horizontal-slider-grid > div {
+          width: 320px !important;
+          min-width: 320px !important;
+          max-width: 320px !important;
+          height: auto !important;
+        }
+        /* Asegurar que el viewport no corte las tarjetas */
+        .teachers-invited-section > div > div {
+          overflow-x: auto !important;
+          overflow-y: visible !important;
+        }
+        /* Asegurar que las tarjetas no se compriman */
+        .teachers-invited-section .horizontal-slider-grid > div > div {
+          width: 100% !important;
+          height: 100% !important;
+        }
+        @media (max-width: 768px) {
+          .teachers-invited-section {
+            padding: 2rem !important;
+            margin-bottom: 2rem !important;
+            margin-top: 2rem !important;
+            border-radius: 24px !important;
+          }
+          .teachers-invited-header {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            margin-bottom: 2rem !important;
+          }
+          .teachers-invited-icon {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 1.75rem !important;
+            border-radius: 16px !important;
+          }
+          .teachers-invited-title {
+            font-size: 1.5rem !important;
+          }
+          .teachers-invited-subtitle {
+            font-size: 0.875rem !important;
+          }
+          .teachers-invited-section .horizontal-slider-grid {
+            gap: 1.25rem !important;
+            padding: 0.75rem 0 !important;
+          }
+          .teachers-invited-section .horizontal-slider-grid > div {
+            width: 300px !important;
+            min-width: 300px !important;
+            max-width: 300px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .teachers-invited-section {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            margin-top: 1.5rem !important;
+            border-radius: 20px !important;
+          }
+          .teachers-invited-header {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.875rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .teachers-invited-icon {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.5rem !important;
+            border-radius: 14px !important;
+          }
+          .teachers-invited-title {
+            font-size: 1.25rem !important;
+          }
+          .teachers-invited-subtitle {
+            font-size: 0.8rem !important;
+          }
+          .teachers-invited-section .horizontal-slider-grid {
+            gap: 1rem !important;
+            padding: 0.75rem 0 !important;
+          }
+          .teachers-invited-section .horizontal-slider-grid > div {
+            width: 280px !important;
+            min-width: 280px !important;
+            max-width: 280px !important;
+          }
+        }
+        /* Galería de Fotos Section - Diseño mejorado */
+        .photo-gallery-section {
+          position: relative;
+          margin-bottom: 2rem;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          overflow: hidden;
+        }
+        .photo-gallery-section-top-bar {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166, #4CAF50);
+          opacity: 0.9;
+        }
+        .photo-gallery-section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 2rem;
+          position: relative;
+          z-index: 1;
+        }
+        .photo-gallery-section-header-left {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+        }
+        .photo-gallery-section-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #E53935, #FB8C00);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2rem;
+          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+          flex-shrink: 0;
+        }
+        .photo-gallery-section-title {
+          font-size: 1.75rem;
+          font-weight: 900;
+          margin: 0 0 0.25rem 0;
+          background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+          -webkit-background-clip: text;
+         
+          background-clip: text;
+        }
+        .photo-gallery-section-subtitle {
+          font-size: 0.95rem;
+          opacity: 0.8;
+          margin: 0;
+          color: rgba(255, 255, 255, 0.9);
+          font-weight: 500;
+        }
+        .photo-gallery-section-count {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 1.25rem;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2));
+          border-radius: 16px;
+          border: 1px solid rgba(229, 57, 53, 0.3);
+          box-shadow: 0 4px 16px rgba(229, 57, 53, 0.2);
+          min-width: 80px;
+        }
+        .photo-gallery-section-count-number {
+          font-size: 1.75rem;
+          font-weight: 900;
+          color: #fff;
+          line-height: 1;
+          margin-bottom: 0.125rem;
+        }
+        .photo-gallery-section-count-label {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: rgba(255, 255, 255, 0.9);
+          font-weight: 600;
+        }
+        @media (max-width: 768px) {
+          .photo-gallery-section {
+            padding: 1.5rem !important;
+            border-radius: 20px !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .photo-gallery-section-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .photo-gallery-section-header-left {
+            width: 100% !important;
+            gap: 1rem !important;
+          }
+          .photo-gallery-section-icon {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 1.75rem !important;
+            border-radius: 16px !important;
+          }
+          .photo-gallery-section-title {
+            font-size: 1.5rem !important;
+          }
+          .photo-gallery-section-subtitle {
+            font-size: 0.875rem !important;
+          }
+          .photo-gallery-section-count {
+            align-self: flex-end !important;
+            padding: 0.625rem 1rem !important;
+            min-width: 70px !important;
+          }
+          .photo-gallery-section-count-number {
+            font-size: 1.5rem !important;
+          }
+          .photo-gallery-section-count-label {
+            font-size: 0.7rem !important;
+          }
+          /* Ajustes para el carousel en tablet */
+          .photo-gallery-main {
+            border-radius: 16px !important;
+          }
+          .photo-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+            gap: 0.6rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .photo-gallery-section {
+            padding: 1.25rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+          }
+          .photo-gallery-section-header {
+            margin-bottom: 1.25rem !important;
+          }
+          .photo-gallery-section-header-left {
+            gap: 0.875rem !important;
+          }
+          .photo-gallery-section-icon {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.5rem !important;
+            border-radius: 14px !important;
+          }
+          .photo-gallery-section-title {
+            font-size: 1.25rem !important;
+          }
+          .photo-gallery-section-subtitle {
+            font-size: 0.8rem !important;
+          }
+          .photo-gallery-section-count {
+            padding: 0.5rem 0.875rem !important;
+            min-width: 60px !important;
+            border-radius: 12px !important;
+          }
+          .photo-gallery-section-count-number {
+            font-size: 1.25rem !important;
+          }
+          .photo-gallery-section-count-label {
+            font-size: 0.65rem !important;
+          }
+          /* Ajustes para el carousel en móvil */
+          .photo-gallery-main {
+            border-radius: 12px !important;
+          }
+          .photo-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important;
+            gap: 0.5rem !important;
+            margin-top: 1rem !important;
+          }
         }
         
         /* Responsive styles for sections */
@@ -1304,22 +1760,13 @@ export default function AcademyProfileLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              style={{
-                marginBottom: '2rem',
-                marginTop: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
+              className="teachers-invited-section"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #E53935, #FB8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)' }}>🎭</div>
+              <div className="teachers-invited-header">
+                <div className="teachers-invited-icon">🎭</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Maestros Invitados</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Maestros que colaboran con la academia</p>
+                  <h3 className="teachers-invited-title">Maestros Invitados</h3>
+                  <p className="teachers-invited-subtitle">Maestros que colaboran con la academia</p>
                 </div>
               </div>
               <HorizontalSlider
@@ -1400,35 +1847,28 @@ export default function AcademyProfileLive() {
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"
               data-test-id="user-profile-photo-gallery"
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                opacity: 1,
-                transform: 'none'
-              }}
+              className="photo-gallery-section"
             >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 className="section-title" style={{ margin: 0 }}>📷 Galería de Fotos</h3>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: 'rgba(245, 245, 245, 0.9)'
-                }}>
-                  {carouselPhotos.length} fotos
+              {/* Top gradient bar */}
+              <div className="photo-gallery-section-top-bar" />
+              
+              {/* Header destacado */}
+              <div className="photo-gallery-section-header">
+                <div className="photo-gallery-section-header-left">
+                  <div className="photo-gallery-section-icon">
+                    📷
+                  </div>
+                  <div>
+                    <h3 className="photo-gallery-section-title">Galería de Fotos</h3>
+                    <p className="photo-gallery-section-subtitle">Momentos y recuerdos de la academia</p>
+                  </div>
+                </div>
+                <div className="photo-gallery-section-count">
+                  <span className="photo-gallery-section-count-number">{carouselPhotos.length}</span>
+                  <span className="photo-gallery-section-count-label">fotos</span>
                 </div>
               </div>
+              
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
           )}

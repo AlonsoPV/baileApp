@@ -24,6 +24,7 @@ import { ensureMaxVideoDuration } from '../../utils/videoValidation';
 import { FilterPreferencesModal } from '../../components/profile/FilterPreferencesModal';
 import { useZonaCatalogGroups } from '@/hooks/useZonaCatalogGroups';
 import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 
 const colors = {
   dark: '#121212',
@@ -348,73 +349,374 @@ export default function UserProfileEditor() {
           transform: none;
         }
         
+        /* PROFILE SECTION COMPACT */
+        .profile-section-compact {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 1.5rem;
+          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        /* ARRIBA: IDENTIDAD */
+        .row-top {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .row-top .title {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+          color: ${colors.light};
+        }
+        .identity-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          justify-content: center;
+          align-items: center;
+        }
+        .pill {
+          position: relative;
+          border-radius: 12px;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          padding: 0.6rem 1rem;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          color: ${colors.light};
+          background: rgba(255, 255, 255, 0.05);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 90px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .pill input {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .pill-content {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .pill-icon {
+          font-size: 1rem;
+          line-height: 1;
+        }
+        .pill-text {
+          font-weight: inherit;
+        }
+        .pill:hover {
+          transform: translateY(-3px) scale(1.02);
+          border-color: rgba(76, 173, 255, 0.4);
+          background: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 6px 20px rgba(76, 173, 255, 0.2);
+        }
+        .pill-checked,
+        .pill:has(input:checked) {
+          background: linear-gradient(135deg, rgba(76, 173, 255, 0.3), rgba(76, 173, 255, 0.2));
+          border-color: rgba(76, 173, 255, 0.8);
+          color: ${colors.light};
+          box-shadow: 0 6px 24px rgba(76, 173, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          font-weight: 600;
+          transform: translateY(-2px);
+        }
+        .pill-checked .pill-text,
+        .pill:has(input:checked) .pill-text {
+          font-weight: 600;
+        }
+        .pill-checked .pill-icon,
+        .pill:has(input:checked) .pill-icon {
+          transform: scale(1.1);
+        }
+        
+        /* ABAJO: REDES */
+        .row-bottom {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .row-bottom-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .subtitle {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+          color: ${colors.light};
+        }
+        .tag {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        
+        /* LISTA DE REDES */
+        .social-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .field {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1rem;
+        }
+        .field-icon {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.9;
+          color: ${colors.light};
+        }
+        
+        /* INPUTS COMPACTOS */
+        .input-group {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+        .input-group:focus-within {
+          border-color: rgba(76, 173, 255, 0.6);
+          background: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
+        }
+        .prefix {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
+          border-right: 1px solid rgba(255, 255, 255, 0.15);
+          white-space: nowrap;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .input-group input {
+          border: none;
+          outline: none;
+          background: transparent;
+          color: ${colors.light};
+          font-size: 1rem;
+          padding: 0.75rem;
+          flex: 1;
+          min-width: 0;
+        }
+        .input-group input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+        
         @media (max-width: 768px) {
           .editor-container {
-            padding: 1rem !important;
+            padding: 0.75rem !important;
           }
           .editor-content {
             max-width: 100% !important;
           }
           .editor-header {
             flex-direction: column !important;
-            gap: 1rem !important;
+            gap: 0.75rem !important;
             text-align: center !important;
+            margin-bottom: 1rem !important;
           }
           .editor-title {
-            font-size: 1.5rem !important;
+            font-size: 1.4rem !important;
             order: 2 !important;
           }
           .editor-back-btn {
             order: 1 !important;
             align-self: flex-start !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.85rem !important;
           }
           .editor-section {
             padding: 1rem !important;
-            margin-bottom: 2rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
           }
           .editor-section-title {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
           }
           .editor-grid {
             grid-template-columns: 1fr !important;
-            gap: 1rem !important;
+            gap: 0.75rem !important;
           }
           .editor-grid-small {
             grid-template-columns: 1fr !important;
-            gap: 1rem !important;
+            gap: 0.75rem !important;
           }
           .info-redes-grid {
             grid-template-columns: 1fr !important;
-            gap: 1.5rem !important;
+            gap: 1rem !important;
           }
           .editor-subsection-title {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.75rem !important;
+            font-size: 1.05rem !important;
+            margin-bottom: 0.5rem !important;
           }
           .editor-chips {
             justify-content: center !important;
+            gap: 0.4rem !important;
           }
           .glass-card-container {
-            padding: 1rem !important;
+            padding: 0.75rem !important;
             margin-bottom: 1rem !important;
-            border-radius: 16px !important;
+            border-radius: 12px !important;
+          }
+          .profile-section-compact {
+            padding: 1rem !important;
+            gap: 1rem !important;
+          }
+          .row-top .title {
+            font-size: 0.95rem !important;
+          }
+          .subtitle {
+            font-size: 0.95rem !important;
+          }
+          .identity-pills {
+            justify-content: center !important;
+          }
+          .pill {
+            font-size: 0.8rem !important;
+            padding: 0.6rem 0.9rem !important;
+            min-width: 85px !important;
+          }
+          .pill-icon {
+            font-size: 0.95rem !important;
+          }
+          .pill-content {
+            gap: 0.35rem !important;
+          }
+          .field-icon {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          .field {
+            font-size: 0.9rem !important;
+            gap: 0.5rem !important;
+          }
+          .field-icon {
+            width: 24px !important;
+            font-size: 1.1rem !important;
+          }
+          .input-group input {
+            font-size: 0.9rem !important;
+            padding: 0.6rem !important;
+          }
+          .prefix {
+            font-size: 0.85rem !important;
+            padding: 0.6rem 0.4rem !important;
           }
         }
         
         @media (max-width: 480px) {
+          .editor-container {
+            padding: 0.5rem !important;
+          }
+          .editor-header {
+            gap: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+          }
           .editor-title {
-            font-size: 1.25rem !important;
+            font-size: 1.2rem !important;
+          }
+          .editor-back-btn {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.8rem !important;
+          }
+          .editor-section {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
           }
           .editor-section-title {
             font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
           }
           .editor-subsection-title {
-            font-size: 1rem !important;
+            font-size: 0.95rem !important;
+            margin-bottom: 0.4rem !important;
+          }
+          .editor-input,
+          .editor-textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
           }
           .glass-card-container {
+            padding: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-radius: 10px !important;
+          }
+          .profile-section-compact {
             padding: 0.75rem !important;
-            border-radius: 12px !important;
+            gap: 1rem !important;
+          }
+          .row-top {
+            gap: 0.5rem !important;
+          }
+          .row-top .title {
+            font-size: 0.9rem !important;
+          }
+          .subtitle {
+            font-size: 0.9rem !important;
+          }
+          .tag {
+            font-size: 0.7rem !important;
+          }
+          .identity-pills {
+            gap: 0.5rem !important;
+            justify-content: center !important;
+          }
+          .pill {
+            font-size: 0.75rem !important;
+            padding: 0.5rem 0.8rem !important;
+            min-width: 75px !important;
+          }
+          .pill-icon {
+            font-size: 0.9rem !important;
+          }
+          .pill-content {
+            gap: 0.3rem !important;
+          }
+          .field-icon {
+            width: 22px !important;
+            height: 22px !important;
+          }
+          .social-list {
+            gap: 0.5rem !important;
+          }
+          .field {
+            font-size: 0.85rem !important;
+            gap: 0.5rem !important;
+          }
+          .field-icon {
+            width: 22px !important;
+            font-size: 1rem !important;
+          }
+          .input-group input {
+            font-size: 0.85rem !important;
+            padding: 0.5rem !important;
+          }
+          .prefix {
+            font-size: 0.8rem !important;
+            padding: 0.5rem 0.4rem !important;
           }
         }
       `}</style>
@@ -470,13 +772,12 @@ export default function UserProfileEditor() {
             </button>
           </div>
 
-          {/* Información Personal y Redes Sociales */}
+          {/* Información Personal */}
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">
-              👤 Información Personal y Redes Sociales
+              👤 Información Personal
             </h2>
 
-            {/* Layout de 2 columnas: Info Personal | Redes Sociales */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -507,142 +808,139 @@ export default function UserProfileEditor() {
                     value={form.bio}
                     onChange={(e) => setField('bio', e.target.value)}
                     placeholder="Cuéntanos sobre ti..."
-                    rows={2}
+                    rows={3}
                     className="editor-textarea"
                   />
                 </div>
+              </div>
 
-                {/* Como te identificas */}
-                <div>
-                  <label className="editor-field">
-                    ¿Cómo te identificas?
-                  </label>
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem'
-                  }}>
+              {/* Columna 2: Identidad y Redes Sociales Compactas */}
+              <div className="profile-section-compact">
+                {/* IDENTIDAD */}
+                <div className="row-top">
+                  <h3 className="title">¿Cómo te identificas?</h3>
+                  <div className="identity-pills">
                     {(['lead', 'follow', 'ambos'] as const).map((rol) => (
                       <label
                         key={rol}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          padding: '0.75rem',
-                          background: (form as any).rol_baile === rol
-                            ? 'rgba(255, 255, 255, 0.15)'
-                            : 'rgba(255, 255, 255, 0.05)',
-                          border: `2px solid ${(form as any).rol_baile === rol
-                            ? 'rgba(255, 255, 255, 0.4)'
-                            : 'rgba(255, 255, 255, 0.1)'}`,
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
+                        className={`pill ${(form as any).rol_baile === rol ? 'pill-checked' : ''}`}
                       >
                         <input
                           type="radio"
-                          name="rolBaile"
+                          name="identidad"
                           value={rol}
                           checked={(form as any).rol_baile === rol}
                           onChange={(e) => setField('rol_baile', e.target.value as 'lead' | 'follow' | 'ambos')}
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            cursor: 'pointer',
-                          }}
                         />
-                        <span style={{
-                          color: '#F5F5F5',
-                          fontSize: '0.95rem',
-                          fontWeight: (form as any).rol_baile === rol ? '600' : '400',
-                        }}>
-                          {rol === 'lead' && '👨‍💼 Lead (Guía)'}
-                          {rol === 'follow' && '👩‍💼 Follow (Seguidor/a)'}
-                          {rol === 'ambos' && '🔄 Ambos'}
+                        <span className="pill-content">
+                          <span className="pill-icon">
+                            {rol === 'lead' && '🕺'}
+                            {rol === 'follow' && '💃'}
+                            {rol === 'ambos' && '💃🕺'}
+                          </span>
+                          <span className="pill-text">
+                            {rol === 'lead' && 'Lead'}
+                            {rol === 'follow' && 'Follow'}
+                            {rol === 'ambos' && 'Ambos'}
+                          </span>
                         </span>
                       </label>
                     ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Columna 2: Redes Sociales */}
-              <div>
-                <h3 className="editor-subsection-title" style={{ marginBottom: '1rem', marginTop: 0 }}>
-                  📱 Redes Sociales
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div>
-                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                      📸 Instagram
-                    </label>
-                    <input
-                      type="text"
-                      value={form.respuestas?.redes?.instagram || ''}
-                      onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
-                      placeholder="@usuario"
-                      className="editor-input"
-                      style={{ padding: '0.6rem' }}
-                    />
+                {/* REDES SOCIALES */}
+                <div className="row-bottom">
+                  <div className="row-bottom-header">
+                    <h4 className="subtitle">Redes Sociales</h4>
+                    <span className="tag">Opcional</span>
                   </div>
 
-                  <div>
-                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                      🎵 TikTok
+                  <div className="social-list">
+                    {/* Instagram */}
+                    <label className="field">
+                      <span className="field-icon">
+                        <FaInstagram size={18} />
+                      </span>
+                      <div className="input-group">
+                        <span className="prefix">ig/</span>
+                        <input
+                          type="text"
+                          name="instagram"
+                          value={form.respuestas?.redes?.instagram || ''}
+                          onChange={(e) => setNested('respuestas.redes.instagram', e.target.value)}
+                          placeholder="usuario"
+                        />
+                      </div>
                     </label>
-                    <input
-                      type="text"
-                      value={form.respuestas?.redes?.tiktok || ''}
-                      onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
-                      placeholder="@usuario"
-                      className="editor-input"
-                      style={{ padding: '0.6rem' }}
-                    />
-                  </div>
 
-                  <div>
-                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                      📺 YouTube
+                    {/* TikTok */}
+                    <label className="field">
+                      <span className="field-icon">
+                        <FaTiktok size={18} />
+                      </span>
+                      <div className="input-group">
+                        <span className="prefix">@</span>
+                        <input
+                          type="text"
+                          name="tiktok"
+                          value={form.respuestas?.redes?.tiktok || ''}
+                          onChange={(e) => setNested('respuestas.redes.tiktok', e.target.value)}
+                          placeholder="usuario"
+                        />
+                      </div>
                     </label>
-                    <input
-                      type="text"
-                      value={form.respuestas?.redes?.youtube || ''}
-                      onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
-                      placeholder="@canal"
-                      className="editor-input"
-                      style={{ padding: '0.6rem' }}
-                    />
-                  </div>
 
-                  <div>
-                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                      👥 Facebook
+                    {/* YouTube */}
+                    <label className="field">
+                      <span className="field-icon">
+                        <FaYoutube size={18} />
+                      </span>
+                      <div className="input-group">
+                        <span className="prefix">yt/</span>
+                        <input
+                          type="text"
+                          name="youtube"
+                          value={form.respuestas?.redes?.youtube || ''}
+                          onChange={(e) => setNested('respuestas.redes.youtube', e.target.value)}
+                          placeholder="canal o handle"
+                        />
+                      </div>
                     </label>
-                    <input
-                      type="text"
-                      value={form.respuestas?.redes?.facebook || ''}
-                      onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
-                      placeholder="perfil"
-                      className="editor-input"
-                      style={{ padding: '0.6rem' }}
-                    />
-                  </div>
 
-                  <div>
-                    <label className="editor-field" style={{ fontSize: '0.85rem' }}>
-                      💬 WhatsApp
+                    {/* Facebook */}
+                    <label className="field">
+                      <span className="field-icon">
+                        <FaFacebookF size={18} />
+                      </span>
+                      <div className="input-group">
+                        <span className="prefix">fb/</span>
+                        <input
+                          type="text"
+                          name="facebook"
+                          value={form.respuestas?.redes?.facebook || ''}
+                          onChange={(e) => setNested('respuestas.redes.facebook', e.target.value)}
+                          placeholder="usuario o página"
+                        />
+                      </div>
                     </label>
-                    <input
-                      type="text"
-                      value={form.respuestas?.redes?.whatsapp || ''}
-                      onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
-                      placeholder="+52..."
-                      className="editor-input"
-                      style={{ padding: '0.6rem' }}
-                    />
+
+                    {/* WhatsApp */}
+                    <label className="field">
+                      <span className="field-icon">
+                        <FaWhatsapp size={18} />
+                      </span>
+                      <div className="input-group">
+                        <span className="prefix">+52</span>
+                        <input
+                          type="tel"
+                          name="whatsapp"
+                          value={form.respuestas?.redes?.whatsapp || ''}
+                          onChange={(e) => setNested('respuestas.redes.whatsapp', e.target.value)}
+                          placeholder="55 1234 5678"
+                        />
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>

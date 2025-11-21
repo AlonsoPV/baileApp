@@ -401,9 +401,117 @@ export function OrganizerPublicScreen() {
         .shimmer-effect { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .glass-card-container { opacity: 1; margin: 0 auto 2rem auto; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
-        .org-social-card-row { display: flex; align-items: flex-start; gap: 1.5rem; padding-top: 0.5rem; }
-        .org-social-card-row-icon { flex-shrink: 0; }
-        .org-social-card-row-cta { flex-shrink: 0; }
+        .org-social-events-section {
+          margin-bottom: 2rem;
+        }
+        
+        .org-social-events-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        
+        .org-social-events-header-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          flex-shrink: 0;
+        }
+        
+        .org-social-events-header-text {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .org-social-events-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        .org-social-card {
+          padding: clamp(1.5rem, 2.5vw, 2.5rem);
+          border-radius: clamp(16px, 2.5vw, 28px);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          background: rgba(30, 30, 30, 0.6);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        .org-social-card-row { 
+          display: flex; 
+          align-items: flex-start; 
+          gap: 1.5rem; 
+          padding-top: 0.5rem;
+          position: relative;
+          z-index: 2;
+        }
+        
+        .org-social-card-row-icon { 
+          flex-shrink: 0;
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.5rem;
+        }
+        
+        .org-social-card-content {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .org-social-card-title {
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          font-weight: 800;
+          margin: 0 0 0.75rem 0;
+          background: linear-gradient(135deg, #1E88E5, #FF3D57);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: #FFFFFF;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+        }
+        
+        .org-social-card-description {
+          font-size: 1rem;
+          opacity: 0.9;
+          margin: 0;
+          font-weight: 400;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .org-social-card-row-cta { 
+          flex-shrink: 0;
+        }
+        
+        .org-social-card-row-cta button {
+          padding: 0.75rem 1.5rem;
+          background: linear-gradient(135deg, #1E88E5, #00BCD4);
+          color: #FFFFFF;
+          border: none;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+        }
         .org-banner h2,
         .org-banner h3,
         .org-container h2,
@@ -425,24 +533,88 @@ export function OrganizerPublicScreen() {
           .glass-card h3 { font-size: 1.5rem !important; }
           .glass-card p { font-size: 1rem !important; }
           .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
+          .org-social-events-section {
+            margin-bottom: 1.5rem !important;
+          }
+          
+          .org-social-events-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 1rem !important;
+            margin-bottom: 1.25rem !important;
+          }
+          
+          .org-social-events-header-icon {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 1.4rem !important;
+          }
+          
+          .org-social-events-header-text {
+            width: 100% !important;
+          }
+          
+          .org-social-events-header-text h3 {
+            font-size: 1.4rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .org-social-events-header-text p {
+            font-size: 0.9rem !important;
+          }
+          
+          .org-social-events-list {
+            gap: 1.25rem !important;
+          }
+          
+          .org-social-card {
+            padding: 1.25rem !important;
+            border-radius: 18px !important;
+            gap: 1.25rem !important;
+          }
+          
           .org-social-card-row { 
             flex-direction: column !important; 
-            align-items: flex-start !important; 
+            align-items: stretch !important; 
             gap: 1rem !important;
+            padding-top: 0.75rem !important;
           }
+          
           .org-social-card-row-icon {
             width: 60px !important;
             height: 60px !important;
             font-size: 2.1rem !important;
+            align-self: center !important;
           }
+          
+          .org-social-card-content {
+            text-align: center !important;
+          }
+          
+          .org-social-card-title {
+            font-size: 1.4rem !important;
+            margin-bottom: 0.75rem !important;
+            text-align: center !important;
+          }
+          
+          .org-social-card-description {
+            font-size: 0.95rem !important;
+            text-align: center !important;
+            margin-bottom: 1rem !important;
+          }
+          
           .org-social-card-row-cta {
             width: 100% !important;
             display: flex !important;
-            justify-content: flex-start !important;
+            justify-content: center !important;
           }
+          
           .org-social-card-row-cta button {
             width: 100% !important;
             justify-content: center !important;
+            padding: 0.7rem 1.25rem !important;
+            font-size: 0.85rem !important;
           }
         }
         @media (max-width: 480px) {
@@ -453,13 +625,63 @@ export function OrganizerPublicScreen() {
           .glass-card { padding: 1rem !important; margin-bottom: 1rem !important; }
           .glass-card h3 { font-size: 1.25rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
+          .org-social-events-section {
+            margin-bottom: 1rem !important;
+          }
+          
+          .org-social-events-header {
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .org-social-events-header-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.3rem !important;
+          }
+          
+          .org-social-events-header-text h3 {
+            font-size: 1.25rem !important;
+          }
+          
+          .org-social-events-header-text p {
+            font-size: 0.85rem !important;
+          }
+          
+          .org-social-events-list {
+            gap: 1rem !important;
+          }
+          
+          .org-social-card {
+            padding: 1rem !important;
+            border-radius: 16px !important;
+            gap: 1rem !important;
+          }
+          
           .org-social-card-row {
             gap: 0.85rem !important;
+            padding-top: 0.5rem !important;
           }
+          
           .org-social-card-row-icon {
             width: 52px !important;
             height: 52px !important;
             font-size: 1.9rem !important;
+          }
+          
+          .org-social-card-title {
+            font-size: 1.3rem !important;
+            margin-bottom: 0.6rem !important;
+          }
+          
+          .org-social-card-description {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .org-social-card-row-cta button {
+            padding: 0.65rem 1.1rem !important;
+            font-size: 0.8rem !important;
           }
         }
       `}</style>
@@ -707,15 +929,17 @@ export function OrganizerPublicScreen() {
 
           {/* Sociales del Organizador */}
           {parents && parents.length > 0 && (
-            <motion.section id="organizer-social-events" data-test-id="organizer-social-events" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: colors.gradients.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'], boxShadow: `0 8px 24px ${colors.secondary[500]}40` }}>🎭</div>
-                <div>
+            <motion.section id="organizer-social-events" data-test-id="organizer-social-events" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card org-social-events-section" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+              <div className="org-social-events-header">
+                <div className="org-social-events-header-icon" style={{ background: colors.gradients.secondary, boxShadow: `0 8px 24px ${colors.secondary[500]}40` }}>
+                  🎭
+                </div>
+                <div className="org-social-events-header-text">
                   <h3 className="section-title">Sociales que organizamos</h3>
                   <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
+              <div className="org-social-events-list">
                 {parents.map((parent: any) => (
                   <motion.div
                     key={parent.id}
@@ -725,121 +949,46 @@ export function OrganizerPublicScreen() {
                       y: -4,
                       borderColor: 'rgba(255, 61, 87, 0.4)'
                     }}
-                    style={{
-                      padding: 'clamp(1.5rem, 2.5vw, 2.5rem)',
-                      borderRadius: 'clamp(16px, 2.5vw, 28px)',
-                      border: '2px solid rgba(255, 255, 255, 0.2)',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      background: 'rgba(30, 30, 30, 0.6)',
-                      width: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '1.5rem'
-                    }}
+                    className="org-social-card"
                   >
-                    {/* Barra decorativa superior */}
-                  {/*   <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '6px',
-                      background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
-                      borderRadius: '24px 24px 0 0',
-                    }} /> */}
-
                     {/* FILA 1: Información del Social */}
-                    <div
-                      className="org-social-card-row"
-                      style={{ 
-                        position: 'relative', 
-                        zIndex: 2,
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '1.5rem',
-                        paddingTop: '0.5rem'
-                      }}
-                    >
+                    <div className="org-social-card-row">
                       {/* Icono */}
                       <motion.div
                         className="org-social-card-row-icon"
                         whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
                         transition={{ duration: 0.5 }}
                         style={{
-                          width: '72px',
-                          height: '72px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '2.5rem',
                           background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
                           border: '3px solid rgba(255, 61, 87, 0.4)',
                           boxShadow: '0 6px 20px rgba(255, 61, 87, 0.4)',
-                          filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))',
-                          flexShrink: 0
+                          filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))'
                         }}
                       >
                         🎭
                       </motion.div>
                       
                       {/* Contenido principal */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="org-social-card-content">
                         {/* Nombre del social */}
-                        <h4 style={{
-                          fontSize: 'clamp(1.5rem, 2vw, 2rem)',
-                          fontWeight: '800',
-                          margin: 0,
-                          marginBottom: '0.75rem',
-                          background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                          letterSpacing: '-0.02em',
-                          lineHeight: 1.2
-                        }}>
+                        <h4 className="org-social-card-title">
                           {parent.nombre}
                         </h4>
                         
                         {/* Descripción */}
                         {parent.descripcion && (
-                          <p style={{
-                            fontSize: '1rem',
-                            opacity: 0.9,
-                            margin: 0,
-                            fontWeight: '400',
-                            lineHeight: 1.6,
-                            color: "rgba(255, 255, 255, 0.9)"
-                          }}>
+                          <p className="org-social-card-description">
                             {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
                           </p>
                         )}
                       </div>
                       
                       {/* Botón de ver detalles */}
-                      <div className="org-social-card-row-cta" style={{ flexShrink: 0 }}>
+                      <div className="org-social-card-row-cta">
                         <motion.button
                           whileHover={{ scale: 1.08, y: -2 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => navigate(`/social/${parent.id}`)}
-                          style={{
-                            padding: '0.75rem 1.5rem',
-                            background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontSize: '0.875rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 16px rgba(30, 136, 229, 0.4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            whiteSpace: 'nowrap'
-                          }}
                         >
                           <span>📅</span>
                           <span>Ver Fechas</span>

@@ -357,6 +357,34 @@ export default function TeacherProfileEditor() {
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
           gap: 1.5rem;
         }
+        .teacher-tabs {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .teacher-tab-button {
+          padding: 0.75rem 1.5rem;
+          border-radius: 12px 12px 0 0;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .academies-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .invitation-card {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        .invitation-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
         
         @media (max-width: 768px) {
           .academy-editor-container {
@@ -397,6 +425,32 @@ export default function TeacherProfileEditor() {
           }
           .org-editor__title {
             font-size: 1.5rem !important;
+          }
+          .teacher-tabs {
+            flex-wrap: wrap !important;
+            gap: 0.4rem !important;
+          }
+          .teacher-tab-button {
+            flex: 1 1 auto !important;
+            min-width: 120px !important;
+            padding: 0.6rem 1rem !important;
+            font-size: 0.9rem !important;
+          }
+          .academies-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .invitation-card {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .invitation-actions {
+            width: 100% !important;
+            flex-direction: column !important;
+          }
+          .invitation-actions button {
+            width: 100% !important;
           }
         }
         
@@ -449,6 +503,25 @@ export default function TeacherProfileEditor() {
             padding: 0.5rem !important;
             font-size: 0.875rem !important;
           }
+          .teacher-tabs {
+            gap: 0.3rem !important;
+          }
+          .teacher-tab-button {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+          }
+          .academies-grid {
+            gap: 0.75rem !important;
+          }
+          .invitation-card {
+            gap: 0.5rem !important;
+          }
+          .org-editor__card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
         }
       `}</style>
       <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
@@ -473,38 +546,28 @@ export default function TeacherProfileEditor() {
         </div>
 
         {/* Tabs Perfil / Métricas */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="teacher-tabs">
           <button
+            className="teacher-tab-button"
             onClick={() => setActiveTab("perfil")}
             style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px 12px 0 0',
-              border: 'none',
               background: activeTab === "perfil" 
                 ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
                 : 'transparent',
-              color: '#fff',
               fontWeight: activeTab === "perfil" ? 800 : 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
               borderBottom: activeTab === "perfil" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
             }}
           >
             📝 Perfil
           </button>
           <button
+            className="teacher-tab-button"
             onClick={() => setActiveTab("metricas")}
             style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px 12px 0 0',
-              border: 'none',
               background: activeTab === "metricas" 
                 ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
                 : 'transparent',
-              color: '#fff',
               fontWeight: activeTab === "metricas" ? 800 : 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
               borderBottom: activeTab === "metricas" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
             }}
           >
@@ -1200,7 +1263,7 @@ export default function TeacherProfileEditor() {
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               🎓 Doy clases en
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            <div className="academies-grid">
               {academies.map((academy: any) => {
                 // Mapear datos de la vista a formato de AcademyCard
                 const academyData = {
@@ -1250,6 +1313,7 @@ export default function TeacherProfileEditor() {
                   return (
                     <div
                       key={inv.id}
+                      className="invitation-card"
                       style={{
                         padding: '1.5rem',
                         background: inv.status === 'pending' 
@@ -1264,10 +1328,7 @@ export default function TeacherProfileEditor() {
                             : inv.status === 'accepted'
                             ? 'rgba(16, 185, 129, 0.3)'
                             : 'rgba(239, 68, 68, 0.3)'
-                        }`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem'
+                        }`
                       }}
                     >
                       <div style={{
@@ -1333,7 +1394,7 @@ export default function TeacherProfileEditor() {
                         </div>
                       </div>
                       {inv.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div className="invitation-actions">
                           <button
                             onClick={async () => {
                               try {
