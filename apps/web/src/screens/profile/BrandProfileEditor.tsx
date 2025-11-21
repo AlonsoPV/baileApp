@@ -198,6 +198,11 @@ export default function BrandProfileEditor() {
   const [tab, setTab] = React.useState<'info'|'products'|'policies'>('info');
   const [catFilter, setCatFilter] = React.useState<Category | 'all'>('all');
 
+  // Scroll al top cuando cambia la pestaña
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [tab]);
+
   React.useEffect(() => {
     if (brand) {
       dispatch({

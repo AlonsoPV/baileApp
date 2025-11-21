@@ -577,6 +577,11 @@ export default function OrganizerProfileEditor() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  // Scroll al top cuando cambia la pestaña
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   // Estado local para edición de ubicaciones por social (no se guarda en profiles_organizer)

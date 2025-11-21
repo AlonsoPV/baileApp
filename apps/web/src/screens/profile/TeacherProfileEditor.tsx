@@ -89,6 +89,11 @@ export default function TeacherProfileEditor() {
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
 
+  // Scroll al top cuando cambia la pestaña
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   // Hooks para invitaciones
   const teacherId = (teacher as any)?.id;
   const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useTeacherInvitations(teacherId);

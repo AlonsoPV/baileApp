@@ -146,6 +146,7 @@ export default function ExploreHomeScreen() {
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
+  const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
 
   const { data: allTags } = useTags();
 
@@ -1042,6 +1043,103 @@ export default function ExploreHomeScreen() {
                   )}
                   <span className="chip__label">Fechas</span>
                 </button>
+                {/* Barra de búsqueda colapsada */}
+                {isSearchExpanded ? (
+                  <div style={{ 
+                    position: 'relative', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    flex: '1 1 auto',
+                    minWidth: '200px',
+                    maxWidth: '400px'
+                  }}>
+                    <span style={{
+                      position: 'absolute',
+                      left: '12px',
+                      fontSize: '14px',
+                      pointerEvents: 'none',
+                      zIndex: 1
+                    }}>
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Buscar..."
+                      value={filters.q || ''}
+                      onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px 8px 36px',
+                        borderRadius: '999px',
+                        border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid var(--fp-border-soft)',
+                        background: filters.q ? 'rgba(240, 147, 251, 0.12)' : '#181b26',
+                        color: 'var(--fp-text)',
+                        fontSize: '12px',
+                        outline: 'none',
+                        transition: 'all 0.3s ease',
+                        boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                      }}
+                      autoFocus
+                    />
+                    {filters.q && (
+                      <button
+                        onClick={() => handleFilterChange({ ...filters, q: '' })}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          fontSize: '12px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'rgba(255,255,255,0.7)',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        aria-label="Limpiar búsqueda"
+                      >
+                        ✖
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setIsSearchExpanded(false)}
+                      style={{
+                        marginLeft: '6px',
+                        padding: '8px 12px',
+                        borderRadius: '999px',
+                        border: '1px solid var(--fp-border-soft)',
+                        background: '#181b26',
+                        color: 'var(--fp-text)',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        whiteSpace: 'nowrap'
+                      }}
+                      aria-label="Colapsar búsqueda"
+                    >
+                      ✖
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="chip chip--filter"
+                    onClick={() => setIsSearchExpanded(true)}
+                    style={{
+                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : undefined,
+                      background: filters.q ? 'rgba(240, 147, 251, 0.12)' : undefined
+                    }}
+                  >
+                    <span className="chip__icon">🔍</span>
+                    {filters.q && (
+                      <span className="chip__badge" style={{ background: '#f093fb' }}>1</span>
+                    )}
+                    <span className="chip__label">{filters.q || 'Buscar'}</span>
+                  </button>
+                )}
                 {activeFiltersCount > 0 && (
                   <button className="chip chip--danger" onClick={() => {
                     handleFilterChange({
@@ -1054,6 +1152,7 @@ export default function ExploreHomeScreen() {
                       dateTo: undefined
                     });
                     setOpenFilterDropdown(null);
+                    setIsSearchExpanded(false);
                   }}>
                     <span className="chip__icon">🗑️</span>
                     <span className="chip__label">Limpiar ({activeFiltersCount})</span>

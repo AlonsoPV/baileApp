@@ -1510,32 +1510,134 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              className="glass-card-container"
               style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                display: 'flex',
-                justifyContent: 'center'
+                marginBottom: '1.5rem',
+                padding: '1.25rem',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
+              {/* Header con gradiente superior */}
               <div style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain', // 🔹 se ve completa
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(255, 209, 102, 0.6), rgba(240, 147, 251, 0.6))',
+                borderRadius: '20px 20px 0 0'
+              }} />
+              
+              {/* Header compacto */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                marginBottom: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
-                <ImageWithFallback
-                  src={getMediaBySlot(safeMedia as any, 'p1')!.url}
-                  alt="Foto principal"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  flexShrink: 0
+                }}>
+                  📷
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                    Foto Principal
+                  </h3>
+                  <p style={{
+                    margin: '0.15rem 0 0 0',
+                    fontSize: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontWeight: 400,
+                    lineHeight: 1.2
+                  }}>
+                    Imagen destacada de tu perfil
+                  </p>
+                </div>
+              </div>
+
+              {/* Contenedor de foto compacto */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '480px',
+                margin: '0 auto',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                border: '2px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                padding: '3px'
+              }}>
+                {/* Borde interno con gradiente */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '3px',
+                  borderRadius: '13px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }} />
+                
+                {/* Imagen */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  borderRadius: '13px',
+                  overflow: 'hidden',
+                  background: '#000',
+                  zIndex: 2
+                }}>
+                  <ImageWithFallback
+                    src={getMediaBySlot(safeMedia as any, 'p1')!.url}
+                    alt="Foto principal"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '4 / 5',
+                      display: 'block',
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }}
+                  />
+                </div>
+
+                {/* Efecto de brillo en las esquinas */}
+                <div style={{
+                  position: 'absolute',
+                  top: '5px',
+                  left: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '5px',
+                  right: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
               </div>
             </motion.section>
           )}
@@ -1546,36 +1648,134 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
+              className="glass-card-container"
               style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                display: 'flex',
-                justifyContent: 'center'
+                marginBottom: '1.5rem',
+                padding: '1.25rem',
+                position: 'relative',
+                overflow: 'hidden'
               }}
-            ><h3 className="section-title">🎥 Video Principal</h3>
+            >
+              {/* Header con gradiente superior */}
               <div style={{
-                width: '100%',
-                maxWidth: '600px',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(255, 209, 102, 0.6), rgba(240, 147, 251, 0.6))',
+                borderRadius: '20px 20px 0 0'
+              }} />
+              
+              {/* Header compacto */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                marginBottom: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  flexShrink: 0
+                }}>
+                  🎥
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                    Video Principal
+                  </h3>
+                  <p style={{
+                    margin: '0.15rem 0 0 0',
+                    fontSize: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontWeight: 400,
+                    lineHeight: 1.2
+                  }}>
+                    Contenido multimedia destacado
+                  </p>
+                </div>
+              </div>
 
-              }}>   
-                <video
-                  src={getMediaBySlot(safeMedia as any, 'v1')!.url}
-                  controls
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    aspectRatio: '4 / 5',
-                    display: 'block',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                  }}
-                />
+              {/* Contenedor del video compacto */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '480px',
+                margin: '0 auto',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                border: '2px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                padding: '3px'
+              }}>
+                {/* Borde interno con gradiente */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '3px',
+                  borderRadius: '13px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }} />
+                
+                {/* Video */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  borderRadius: '13px',
+                  overflow: 'hidden',
+                  background: '#000',
+                  zIndex: 2
+                }}>
+                  <video
+                    src={getMediaBySlot(safeMedia as any, 'v1')!.url}
+                    controls
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '4 / 5',
+                      display: 'block',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                    }}
+                  />
+                </div>
+
+                {/* Efecto de brillo en las esquinas */}
+                <div style={{
+                  position: 'absolute',
+                  top: '5px',
+                  left: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '5px',
+                  right: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
               </div>
             </motion.section>
           )}

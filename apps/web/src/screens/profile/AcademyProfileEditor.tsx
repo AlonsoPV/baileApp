@@ -90,6 +90,11 @@ export default function AcademyProfileEditor() {
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
 
+  // Scroll al top cuando cambia la pestaña
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   // Hook para cambio de rol
   useRoleChange();
 

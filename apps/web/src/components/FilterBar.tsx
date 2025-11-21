@@ -42,6 +42,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
   const [expandedZonaGroup, setExpandedZonaGroup] = useState<string | null>(null);
+  
+  // Cuando hideButtons es true, la búsqueda siempre empieza colapsada
+  React.useEffect(() => {
+    if (hideButtons) {
+      setIsSearchExpanded(false);
+    }
+  }, [hideButtons]);
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
@@ -363,6 +370,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             )}
           </div>
           )}
+
 
           {/* Dropdowns */}
           <AnimatePresence>
