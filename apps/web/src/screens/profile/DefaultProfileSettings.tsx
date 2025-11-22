@@ -5,6 +5,7 @@ import { routes } from '@/routes/registry';
 import { useDefaultProfile } from "../../hooks/useDefaultProfile";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useAcademyMy } from "../../hooks/useAcademyMy";
+import { useTeacherMy } from "../../hooks/useTeacher";
 import DefaultProfileSelector from "../../components/profile/DefaultProfileSelector";
 import { Chip } from "../../components/profile/Chip";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -27,6 +28,7 @@ export default function DefaultProfileSettings() {
   const { getProfileOptions, defaultProfile } = useDefaultProfile();
   const { data: organizerProfile } = useMyOrganizer();
   const { data: academyProfile } = useAcademyMy();
+  const { data: teacherProfile } = useTeacherMy();
   const { user, signOut } = useAuth();
   const { showToast } = useToast();
   
@@ -352,16 +354,20 @@ export default function DefaultProfileSettings() {
                     />
                   )}
                   
-                  {/* Estado de aprobación para organizador y academia */}
-                  {option.hasProfile && (option.id === 'organizer' || option.id === 'academy') && (
+                  {/* Estado de aprobación para organizador, academia y maestro */}
+                  {option.hasProfile && (option.id === 'organizer' || option.id === 'academy' || option.id === 'teacher') && (
                     <Chip
                       label={option.id === 'organizer' ? 
-                        (organizerProfile?.estado_aprobacion === 'aprobado' ? '✅' :
+                        (organizerProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
                          organizerProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
                          organizerProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador') :
-                        (academyProfile?.estado_aprobacion === 'aprobado' ? '✅' :
+                        option.id === 'academy' ?
+                        (academyProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
                          academyProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
-                         academyProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador')
+                         academyProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador') :
+                        (teacherProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
+                         teacherProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
+                         teacherProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador')
                       }
                       active={false}
                     />

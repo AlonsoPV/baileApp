@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from './useUserProfile';
 import { useMyOrganizer } from './useOrganizer';
 import { useAcademyMy } from './useAcademyMy';
+import { useTeacherMy } from './useTeacher';
 
 export type ProfileType = 'user' | 'organizer' | 'academy' | 'teacher' | 'brand';
 
@@ -20,6 +21,7 @@ export function useDefaultProfile() {
   const { data: userProfile } = useUserProfile();
   const { data: organizerProfile } = useMyOrganizer();
   const { data: academyProfile } = useAcademyMy();
+  const { data: teacherProfile } = useTeacherMy();
   
   const [defaultProfile, setDefaultProfile] = useState<ProfileType>('user');
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +61,11 @@ export function useDefaultProfile() {
     return !!(profile.nombre_publico && profile.nombre_publico.trim().length > 0);
   };
 
+  const isTeacherProfileConfigured = (profile: any): boolean => {
+    if (!profile) return false;
+    return !!(profile.nombre_publico && profile.nombre_publico.trim().length > 0);
+  };
+
   // Obtener opciones de perfiles disponibles
   const getProfileOptions = (): ProfileOption[] => {
     return [
@@ -91,8 +98,8 @@ export function useDefaultProfile() {
         name: 'Maestro',
         icon: '👨‍🏫',
         route: '/profile/teacher',
-        available: false, // TODO: Implementar cuando esté listo
-        hasProfile: false
+        available: true,
+        hasProfile: isTeacherProfileConfigured(teacherProfile)
       },
       {
         id: 'brand',
