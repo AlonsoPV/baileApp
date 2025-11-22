@@ -989,6 +989,25 @@ export default function ExploreHomeScreen() {
                   <span className="filters-fav__icon">⭐</span>
                   <div>
                     <p className="filters-fav__title">Usando tus filtros favoritos</p>
+                    <p style={{
+                      margin: '0.25rem 0 0 0',
+                      fontSize: '0.75rem',
+                      color: 'rgba(255, 255, 255, 0.65)',
+                      fontWeight: 400
+                    }}>
+                      Configúralos en tu{' '}
+                      <Link
+                        to="/profile"
+                        style={{
+                          color: 'rgba(147, 197, 253, 0.9)',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '2px',
+                          fontWeight: 500
+                        }}
+                      >
+                        perfil
+                      </Link>
+                    </p>
                   </div>
                 </div>
                 <button className="filters-fav__btn" type="button" onClick={resetToFavoriteFilters}>
@@ -1004,11 +1023,52 @@ export default function ExploreHomeScreen() {
                   <span className="filters-box__icon">🎛️</span>
                   <span>Filtros</span>
                 </div>
-                <span className="filters-box__badge">
-                  {activeFiltersCount > 0
-                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
-                    : 'Sin filtros activos'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Botón discreto para activar filtros favoritos */}
+                  {!usingFavoriteFilters && user && preferences && (
+                    (preferences.ritmos && preferences.ritmos.length > 0) ||
+                    (preferences.zonas && preferences.zonas.length > 0) ||
+                    (preferences.date_range && preferences.date_range !== 'none')
+                  ) && (
+                    <button
+                      type="button"
+                      onClick={resetToFavoriteFilters}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.35rem 0.7rem',
+                        borderRadius: '999px',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.75)',
+                        fontSize: '0.7rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.1)';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.05)';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.75)';
+                      }}
+                    >
+                      <span style={{ fontSize: '0.75rem' }}>⭐</span>
+                      <span>Activar favoritos</span>
+                    </button>
+                  )}
+                  <span className="filters-box__badge">
+                    {activeFiltersCount > 0
+                      ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
+                      : 'Sin filtros activos'}
+                  </span>
+                </div>
               </header>
 
               {/* CHIPS SCROLLEABLES */}
