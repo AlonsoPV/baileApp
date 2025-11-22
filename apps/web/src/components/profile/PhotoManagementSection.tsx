@@ -11,6 +11,7 @@ interface PhotoManagementSectionProps {
   description: string;
   slots: string[];
   isMainPhoto?: boolean;
+  verticalLayout?: boolean;
 }
 
 const colors = {
@@ -25,7 +26,8 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
   title,
   description,
   slots,
-  isMainPhoto = false
+  isMainPhoto = false,
+  verticalLayout = false
 }) => {
   return (
     <>
@@ -36,6 +38,9 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           background: rgba(255, 255, 255, 0.05);
           border-radius: 16px;
           border: 1px solid rgba(255, 255, 255, 0.1);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
         .photo-section-title {
           font-size: 1.35rem;
@@ -61,11 +66,24 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
           gap: 1.25rem;
         }
+        .photo-grid-vertical {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          flex: 1;
+          height: 100%;
+        }
         .photo-item {
           padding: 0.875rem;
           background: rgba(255, 255, 255, 0.08);
           border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.15);
+          display: flex;
+          flex-direction: column;
+        }
+        .photo-item-vertical {
+          flex: 1;
+          min-height: 0;
         }
         .photo-item-main {
           padding: 1.25rem;
@@ -91,6 +109,13 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           overflow: hidden;
           margin-bottom: 0.875rem;
           border: 2px solid rgba(255, 255, 255, 0.1);
+          flex-shrink: 0;
+        }
+        .photo-container-vertical {
+          flex: 1;
+          min-height: 0;
+          aspect-ratio: auto;
+          height: auto;
         }
         .photo-container-main {
           aspect-ratio: 1/1;
@@ -121,6 +146,13 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           .photo-grid-regular {
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
+          }
+          .photo-grid-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            flex: 1;
+            height: 100%;
           }
           .photo-item {
             padding: 1rem;
@@ -155,6 +187,13 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           .photo-grid-regular {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
+          }
+          .photo-grid-vertical {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+            flex: 1 !important;
+            height: 100% !important;
           }
           .photo-item {
             padding: 0.75rem !important;
@@ -227,9 +266,9 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           💡 <strong>Tip:</strong> {description}
         </p>
         
-        <div className={`photo-grid ${isMainPhoto ? 'photo-grid-main' : 'photo-grid-regular'}`}>
+        <div className={`photo-grid ${isMainPhoto ? 'photo-grid-main' : (verticalLayout ? 'photo-grid-vertical' : 'photo-grid-regular')}`}>
           {slots.map((slot) => (
-            <div key={slot} className={`photo-item ${isMainPhoto ? 'photo-item-main' : ''}`}>
+            <div key={slot} className={`photo-item ${isMainPhoto ? 'photo-item-main' : ''} ${verticalLayout ? 'photo-item-vertical' : ''}`}>
               <h3 className={`photo-item-title ${isMainPhoto ? 'photo-item-title-main' : ''}`}>
                 {isMainPhoto ? '👤 Avatar / Foto Principal (p1)' : `📷 Foto ${slot.toUpperCase()}`}
               </h3>
@@ -240,7 +279,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                 </p>
               )}
               
-              <div className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''}`}>
+              <div className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''} ${verticalLayout ? 'photo-container-vertical' : ''}`}>
               {getMediaBySlot(media, slot) ? (
                 <ImageWithFallback
                   src={getMediaBySlot(media, slot)!.url}

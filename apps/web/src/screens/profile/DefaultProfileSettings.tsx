@@ -158,20 +158,69 @@ export default function DefaultProfileSettings() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.dark} 0%, #2C2C2C 100%)`,
-      color: colors.light,
-      padding: '2rem 1rem'
-    }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '3rem',
-          padding: '2rem 0',
-          borderBottom: '2px solid rgba(255, 255, 255, 0.1)'
-        }}>
+    <>
+      <style>{`
+        .settings-back-button {
+          position: absolute;
+          left: 0;
+          top: 2rem;
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: ${colors.light};
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .settings-back-button:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+        @media (max-width: 768px) {
+          .settings-back-button {
+            position: relative;
+            top: 0;
+            left: 0;
+            margin-bottom: 1rem;
+            width: 100%;
+            justify-content: center;
+          }
+        }
+        @media (max-width: 480px) {
+          .settings-back-button {
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+          }
+        }
+      `}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark} 0%, #2C2C2C 100%)`,
+        color: colors.light,
+        padding: '2rem 1rem'
+      }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          {/* Header */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '3rem',
+            padding: '2rem 0',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
+            position: 'relative'
+          }}>
+            {/* Botón de volver */}
+            <button
+              onClick={() => navigate('/profile/edit')}
+              className="settings-back-button"
+            >
+              <span>←</span>
+              <span>Volver al Editor</span>
+            </button>
           <h1 style={{
             fontSize: '2.5rem',
             fontWeight: '800',
@@ -686,7 +735,8 @@ export default function DefaultProfileSettings() {
             </motion.button>
           </div>
         </motion.div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

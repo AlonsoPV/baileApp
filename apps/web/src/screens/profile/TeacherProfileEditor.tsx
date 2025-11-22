@@ -342,9 +342,21 @@ export default function TeacherProfileEditor() {
           margin-bottom: 2rem;
         }
         .academy-editor-inner h2,
-        .academy-editor-inner h3 {
+        .academy-editor-inner h3,
+        .academy-editor-card h2,
+        .org-editor__card h2 {
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
         }
         .academy-editor-card {
           padding: 2rem;
@@ -392,6 +404,15 @@ export default function TeacherProfileEditor() {
         }
         
         @media (max-width: 768px) {
+          .photos-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rhythms-zones-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
           .academy-editor-container {
             padding: 1rem 0.75rem !important;
           }
@@ -709,99 +730,85 @@ export default function TeacherProfileEditor() {
         <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-          {/* Header Estilos */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '1.25rem 1.25rem 0.75rem' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+          {/* Contenedor de dos columnas: Ritmos y Zonas */}
+          <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
+            {/* Columna 1: Ritmos */}
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Estilos que Enseñamos</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseñas</div>
-            </div>
-          </div>
+              {/* Header Estilos */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Estilos que Enseñamos</h2>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseñas</div>
+                </div>
+              </div>
 
-          {/* Chips Estilos */}
-          {/* <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
-            {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
-              <Chip
-                key={tag.id}
-                label={tag.nombre}
-                active={(form as any).ritmos?.includes(tag.id) || false}
-                onClick={() => toggleRitmo(tag.id)}
-                variant="ritmo"
-                style={{
-                  background: ((form as any).ritmos?.includes(tag.id) ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255,255,255,0.04)'),
-                  border: ((form as any).ritmos?.includes(tag.id) ? '1px solid #E53935' : '1px solid rgba(255,255,255,0.15)'),
-                  color: ((form as any).ritmos?.includes(tag.id) ? '#E53935' : 'rgba(255,255,255,0.9)'),
-                  fontWeight: 600
-                }}
-              />
-            ))}
-          </div> */}
+              {/* Catálogo agrupado */}
+              <div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+                {(() => {
+                  let selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+                  if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((form as any)?.ritmos)) {
+                    const labelToItemId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.id, i.label)));
+                    const names = ((form as any).ritmos as number[])
+                      .map(id => (allTags || []).find((t: any) => t.id === id && t.tipo === 'ritmo')?.nombre)
+                      .filter(Boolean) as string[];
+                    const mapped = names
+                      .map(n => {
+                        for (const [itemId, label] of Array.from(labelToItemId.entries())) {
+                          if (label === n) return itemId;
+                        }
+                        return undefined;
+                      })
+                      .filter(Boolean) as string[];
+                    if (mapped.length > 0) selectedCatalogIds = mapped;
+                  }
+                  const onChangeCatalog = (ids: string[]) => {
+                    setField('ritmos_seleccionados' as any, ids as any);
+                    try {
+                      const labelByCatalogId = new Map<string, string>();
+                      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+                      const nameToTagId = new Map<string, number>(
+                        (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
+                      );
+                      const mappedTagIds = ids
+                        .map(cid => labelByCatalogId.get(cid))
+                        .filter(Boolean)
+                        .map((label: any) => nameToTagId.get(label as string))
+                        .filter((n): n is number => typeof n === 'number');
+                      setField('ritmos', mappedTagIds as any);
+                    } catch {}
+                  };
 
-          {/* Catálogo agrupado (independiente de DB) */}
-          <div style={{ padding: '0 1.25rem 1.25rem' }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
-            {(() => {
-              // Derivar selección inicial: usar ritmos_seleccionados si existe; si no, mapear desde ritmos numéricos
-              let selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
-              if ((!selectedCatalogIds || selectedCatalogIds.length === 0) && Array.isArray((form as any)?.ritmos)) {
-                const labelToItemId = new Map<string, string>();
-                RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToItemId.set(i.id, i.label)));
-                const names = ((form as any).ritmos as number[])
-                  .map(id => (allTags || []).find((t: any) => t.id === id && t.tipo === 'ritmo')?.nombre)
-                  .filter(Boolean) as string[];
-                const mapped = names
-                  .map(n => {
-                    // invertir labelToItemId: label -> id
-                    for (const [itemId, label] of Array.from(labelToItemId.entries())) {
-                      if (label === n) return itemId;
-                    }
-                    return undefined;
-                  })
-                  .filter(Boolean) as string[];
-                if (mapped.length > 0) selectedCatalogIds = mapped;
-              }
-              const onChangeCatalog = (ids: string[]) => {
-                // Guardar selección de catálogo directamente
-                setField('ritmos_seleccionados' as any, ids as any);
-                // Intentar mapear también a ids de tags si existen (no bloqueante)
-                try {
-                  const labelByCatalogId = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                  const nameToTagId = new Map<string, number>(
-                    (allTags || []).filter((t: any) => t.tipo === 'ritmo').map((t: any) => [t.nombre, t.id])
+                  return (
+                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
                   );
-                  const mappedTagIds = ids
-                    .map(cid => labelByCatalogId.get(cid))
-                    .filter(Boolean)
-                    .map((label: any) => nameToTagId.get(label as string))
-                    .filter((n): n is number => typeof n === 'number');
-                  setField('ritmos', mappedTagIds as any);
-                } catch {}
-              };
-
-              return (
-                <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
-              );
-            })()}
-          </div>
-
-          {/* Header Zonas */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.5rem 1.25rem 0.75rem' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #90CAF9 0%, #BBDEFB 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Zonas</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la Maestro</div>
+                })()}
+              </div>
             </div>
-          </div>
 
-          {/* Chips Zonas */}
-          <div className="academy-chips-container" style={{ padding: '0 1.25rem 1.25rem' }}>
-            <ZonaGroupedChips
-              selectedIds={(form as any).zonas}
-              allTags={allTags}
-              mode="edit"
-              onToggle={toggleZona}
-            />
+            {/* Columna 2: Zonas */}
+            <div>
+              {/* Header Zonas */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas</h2>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la Maestro</div>
+                </div>
+              </div>
+
+              {/* Chips Zonas */}
+              <div className="academy-chips-container">
+                <ZonaGroupedChips
+                  selectedIds={(form as any).zonas}
+                  allTags={allTags}
+                  mode="edit"
+                  onToggle={toggleZona}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1518,17 +1525,33 @@ export default function TeacherProfileEditor() {
           />
         </div>
 
-        {/* Gestión de Fotos */}
-        <PhotoManagementSection
-          media={media}
-          uploading={{ p1: add.isPending }}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Gestión de Fotos"
-          description="Sube fotos de tus clases y eventos"
-          slots={['p1']}
-          isMainPhoto={true}
-        />
+        {/* Gestión de Fotos - Dos Columnas */}
+        <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
+          {/* Columna 1: Avatar / Foto Principal */}
+          <PhotoManagementSection
+            media={media}
+            uploading={{ p1: add.isPending }}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Gestión de Fotos"
+            description="👤 Avatar / Foto Principal (p1)"
+            slots={['p1']}
+            isMainPhoto={true}
+          />
+
+          {/* Columna 2: Fotos Destacadas */}
+          <PhotoManagementSection
+            media={media}
+            uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Fotos Destacadas (p2 - p3)"
+            description="Estas fotos se usan en las secciones destacadas de tu perfil"
+            slots={['p2', 'p3']}
+            isMainPhoto={false}
+            verticalLayout={true}
+          />
+        </div>
 
         {/* Fotos Adicionales */}
         <PhotoManagementSection

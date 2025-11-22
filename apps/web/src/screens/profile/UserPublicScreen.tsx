@@ -17,7 +17,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import { useFollowStatus } from "../../hooks/useFollowStatus";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
-import { useZonaCatalogGroups, ZonaGroupInfo } from '@/hooks/useZonaCatalogGroups';
+import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 
 // Componente de Carrusel
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -214,7 +214,6 @@ export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
-  const [expandedZonaGroups, setExpandedZonaGroups] = useState<Record<string, boolean>>({});
 
   // Fetch public user profile
   const { data: profile, isLoading } = useQuery({
@@ -313,23 +312,6 @@ export const UserProfileLive: React.FC = () => {
     return ritmos;
   };
 
-  const { groups: rawZonaGroups } = useZonaCatalogGroups(allTags);
-  const zonaGroups = React.useMemo(() => {
-    if (!profile?.zonas || !rawZonaGroups.length) return [];
-    return rawZonaGroups
-      .map(group => {
-        const items = group.items.filter(item => profile.zonas.includes(item.id));
-        return items.length ? { ...group, items } : null;
-      })
-      .filter(Boolean) as ZonaGroupInfo[];
-  }, [rawZonaGroups, profile?.zonas]);
-
-  const toggleZonaGroup = (groupId: string) => {
-    setExpandedZonaGroups(prev => ({
-      ...prev,
-      [groupId]: !(prev[groupId] ?? false),
-    }));
-  };
 
   // Get photos for carousel
   const carouselPhotos = PHOTO_SLOTS
@@ -960,74 +942,13 @@ export const UserProfileLive: React.FC = () => {
                     <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
                   ) : null;
                 })()}
-                {zonaGroups.length > 0 && (
-                  <>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      {zonaGroups.map((group) => {
-                        const hasSelection = group.items.some(({ id }) => profile?.zonas?.includes(id));
-                        const expanded = expandedZonaGroups[group.id] ?? false;
-                        return (
-                          <Chip
-                            key={group.id}
-                            label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                            icon="📍"
-                            variant="custom"
-                            active={expanded || hasSelection}
-                            onClick={() => toggleZonaGroup(group.id)}
-                            style={{
-                              alignSelf: 'flex-start',
-                              width: 'fit-content',
-                              minWidth: 'auto',
-                              justifyContent: 'center',
-                              padding: '0.45rem 0.9rem',
-                              fontSize: '0.78rem',
-                              background: (expanded || hasSelection)
-                                ? 'rgba(76,173,255,0.18)'
-                                : 'rgba(255,255,255,0.05)',
-                              border: (expanded || hasSelection)
-                                ? '1px solid rgba(76,173,255,0.6)'
-                                : '1px solid rgba(255,255,255,0.15)',
-                              borderRadius: 999,
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                    {zonaGroups.map((group) => {
-                      const expanded = expandedZonaGroups[group.id];
-                      if (!expanded) return null;
-                      return (
-                        <div
-                          key={`zona-readonly-${group.id}`}
-                          style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '0.5rem' }}
-                        >
-                          {group.items.map((chip) => (
-                            <Chip
-                              key={`z-${chip.id}`}
-                              label={chip.label}
-                              icon="📍"
-                              variant="zona"
-                              active={profile?.zonas?.includes(chip.id)}
-                              style={{
-                                background: profile?.zonas?.includes(chip.id)
-                                  ? 'rgba(76,173,255,0.18)'
-                                  : 'rgba(255,255,255,0.06)',
-                                border: profile?.zonas?.includes(chip.id)
-                                  ? '1.5px solid rgba(76,173,255,0.6)'
-                                  : '1.5px solid rgba(255,255,255,0.25)',
-                                color: '#fff',
-                                fontWeight: 700,
-                                padding: '6px 12px',
-                                fontSize: '0.78rem',
-                                borderRadius: 999,
-                              }}
-                            />
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
+                <ZonaGroupedChips
+                  selectedIds={profile?.zonas}
+                  allTags={allTags}
+                  mode="display"
+                  icon="📍"
+                  size="compact"
+                />
               </div>
             </div>
           </div>

@@ -1137,9 +1137,24 @@ function CatalogTabs({
   items?: any[];
   labels?: { calzado?: string; ropa?: string; accesorios?: string };
 }) {
-  const [tab, setTab] = React.useState<'calzado' | 'ropa' | 'accesorios'>('calzado');
+  const allTabs = ['calzado', 'ropa', 'accesorios'] as const;
+  type Tab = (typeof allTabs)[number];
+
+  const availableTabs: Tab[] = allTabs.filter((t) =>
+    (items || []).some((i: any) => i && i.category === t)
+  );
+
+  const [tab, setTab] = React.useState<Tab>(() => availableTabs[0] ?? 'calzado');
+
+  // Si cambian los items y la pestaña actual ya no tiene elementos, mover a la primera disponible
+  React.useEffect(() => {
+    if (availableTabs.length === 0) return;
+    if (!availableTabs.includes(tab)) {
+      setTab(availableTabs[0]);
+    }
+  }, [availableTabs.join(','), tab]);
+
   const filtered = items.filter((i: any) => i.category === tab);
-  const tabs = ['calzado', 'ropa', 'accesorios'] as const;
 
   const textMuted = '#b4b8cc';
   const accent = '#ff2fb3';
@@ -1224,13 +1239,13 @@ function CatalogTabs({
     padding: '2rem',
   };
 
-  const getTabLabel = (t: (typeof tabs)[number]) => {
+  const getTabLabel = (t: Tab) => {
     if (t === 'calzado') return labels?.calzado || 'Calzado';
     if (t === 'ropa') return labels?.ropa || 'Ropa';
     return labels?.accesorios || 'Accesorios';
   };
 
-  const getTabIcon = (t: (typeof tabs)[number]) =>
+  const getTabIcon = (t: Tab) =>
     t === 'calzado' ? '👠' : t === 'ropa' ? '👕' : '💍';
 
   return (
@@ -1244,7 +1259,7 @@ function CatalogTabs({
           justifyContent: 'center',
         }}
       >
-        {tabs.map((t) => {
+        {availableTabs.map((t) => {
           const active = t === tab;
           return (
             <button

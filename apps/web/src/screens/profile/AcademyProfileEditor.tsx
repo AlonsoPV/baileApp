@@ -357,9 +357,21 @@ export default function AcademyProfileEditor() {
           margin-bottom: 2rem;
         }
         .academy-editor-inner h2,
-        .academy-editor-inner h3 {
+        .academy-editor-inner h3,
+        .academy-editor-card h2,
+        .org-editor__card h2 {
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
         }
         .academy-editor-card {
           padding: 2rem;
@@ -476,6 +488,15 @@ export default function AcademyProfileEditor() {
         }
         
         @media (max-width: 768px) {
+          .photos-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rhythms-zones-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
           .academy-editor-container {
             padding: 1rem 0.75rem !important;
           }
@@ -840,68 +861,56 @@ export default function AcademyProfileEditor() {
         <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-          {/* Header Estilos */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '1.25rem 1.25rem 0.75rem' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+          {/* Contenedor de dos columnas: Ritmos y Zonas */}
+          <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
+            {/* Columna 1: Ritmos */}
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Estilos que Enseñamos</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la academia</div>
+              {/* Header Estilos */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Estilos que Enseñamos</h2>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la academia</div>
+                </div>
+              </div>
+
+              {/* Catálogo agrupado */}
+              <div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+                {(() => {
+                  const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
+                  const onChangeCatalog = (ids: string[]) => {
+                    setField('ritmos_seleccionados' as any, ids as any);
+                  };
+
+                  return (
+                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                  );
+                })()}
+              </div>
             </div>
-          </div>
 
-          {/* Chips Estilos */}
-          {  /* <div className="academy-chips-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', padding: '0 1.25rem 1rem' }}>
-            {allTags?.filter(tag => tag.tipo === 'ritmo').map(tag => (
-              <Chip
-                key={tag.id}
-                label={tag.nombre}
-                active={form.estilos?.includes(tag.id) || false}
-                onClick={() => toggleEstilo(tag.id)}
-                variant="ritmo"
-                style={{
-                  background: (form.estilos?.includes(tag.id) ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255,255,255,0.04)'),
-                  border: (form.estilos?.includes(tag.id) ? '1px solid #E53935' : '1px solid rgba(255,255,255,0.15)'),
-                  color: (form.estilos?.includes(tag.id) ? '#E53935' : 'rgba(255,255,255,0.9)'),
-                  fontWeight: 600
-                }}
-              />
-            ))}
-          </div>*/}
-
-          {/* Catálogo agrupado (independiente de DB) */}
-          <div style={{ padding: '0 1.25rem 1.25rem' }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
-            {(() => {
-              const selectedCatalogIds = (((form as any)?.ritmos_seleccionados) || []) as string[];
-              const onChangeCatalog = (ids: string[]) => {
-                // Guardar selección de catálogo directamente
-                setField('ritmos_seleccionados' as any, ids as any);
-                // Ya no necesitamos mapear a 'estilos' porque ese campo no existe en la tabla
-              };
-
-              return (
-                <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
-              );
-            })()}
-          </div>
-
-          {/* Header Zonas */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.5rem 1.25rem 0.75rem' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+            {/* Columna 2: Zonas */}
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, background: 'linear-gradient(135deg, #90CAF9 0%, #BBDEFB 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Zonas</h2>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la academia</div>
-            </div>
-          </div>
+              {/* Header Zonas */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas</h2>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la academia</div>
+                </div>
+              </div>
 
-          {/* Chips Zonas */}
-          <div className="academy-chips-container" style={{ padding: '0 1.25rem 1.25rem' }}>
-            <ZonaGroupedChips
-              selectedIds={(form as any).zonas}
-              allTags={allTags}
-              mode="edit"
-              onToggle={toggleZona}
-            />
+              {/* Chips Zonas */}
+              <div className="academy-chips-container">
+                <ZonaGroupedChips
+                  selectedIds={(form as any).zonas}
+                  allTags={allTags}
+                  mode="edit"
+                  onToggle={toggleZona}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1697,17 +1706,33 @@ export default function AcademyProfileEditor() {
           />
         </div>
 
-        {/* Gestión de Fotos */}
-        <PhotoManagementSection
-          media={media}
-          uploading={{ p1: add.isPending }}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Gestión de Fotos"
-          description="Sube fotos de tu academia, instalaciones, clases y eventos"
-          slots={['p1']}
-          isMainPhoto={true}
-        />
+        {/* Gestión de Fotos - Dos Columnas */}
+        <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
+          {/* Columna 1: Avatar / Foto Principal */}
+          <PhotoManagementSection
+            media={media}
+            uploading={{ p1: add.isPending }}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Gestión de Fotos"
+            description="👤 Avatar / Foto Principal (p1)"
+            slots={['p1']}
+            isMainPhoto={true}
+          />
+
+          {/* Columna 2: Fotos Destacadas */}
+          <PhotoManagementSection
+            media={media}
+            uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Fotos Destacadas (p2 - p3)"
+            description="Estas fotos se usan en las secciones destacadas de tu perfil"
+            slots={['p2', 'p3']}
+            isMainPhoto={false}
+            verticalLayout={true}
+          />
+        </div>
 
         {/* Fotos Adicionales */}
         <PhotoManagementSection

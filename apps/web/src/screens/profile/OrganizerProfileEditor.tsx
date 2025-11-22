@@ -1231,8 +1231,10 @@ export default function OrganizerProfileEditor() {
         }
         
         .org-editor-container h2,
-        .org-editor-container h3 {
-          color: #FFFFFF;
+        .org-editor-container h3,
+        .org-editor-card h2,
+        .org-events-section h2 {
+          color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
         
@@ -1972,7 +1974,27 @@ export default function OrganizerProfileEditor() {
           outline: none;
         }
         
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        
         @media (max-width: 768px) {
+          .photos-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rhythms-zones-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          
           .org-editor-wrapper {
             padding: 1rem !important;
           }
@@ -2663,22 +2685,27 @@ export default function OrganizerProfileEditor() {
               <div
                 id="organizer-rhythms-zones"
                 data-test-id="organizer-rhythms-zones"
-                className="org-editor-card"
+                className="org-editor-card academy-editor-card"
+                style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}
               >
-                <h2
-                  style={{
-                    fontSize: "1.5rem",
-                    marginBottom: "1rem",
-                    color: colors.light,
-                  }}
-                >
-                  🎵 Ritmos y Zonas
-                </h2>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-                <div className="org-editor-grid">
+                {/* Contenedor de dos columnas: Ritmos y Zonas */}
+                <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
+                  {/* Columna 1: Ritmos */}
                   <div>
-                    {/* Catálogo agrupado (independiente de DB) */}
-                    <div style={{ marginTop: 12 }}>
+                    {/* Header Ritmos */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Ritmos que Organizas</h2>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que organizas</div>
+                      </div>
+                    </div>
+
+                    {/* Catálogo agrupado */}
+                    <div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
                       <RitmosSelectorEditor
                         selected={
                           (((form as any)?.ritmos_seleccionados) ||
@@ -2690,13 +2717,26 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
+                  {/* Columna 2: Zonas */}
                   <div>
-                    <ZonaGroupedChips
-                      selectedIds={form.zonas}
-                      allTags={allTags}
-                      mode="edit"
-                      onToggle={toggleZona}
-                    />
+                    {/* Header Zonas */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas</h2>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde operas</div>
+                      </div>
+                    </div>
+
+                    {/* Chips Zonas */}
+                    <div className="academy-chips-container">
+                      <ZonaGroupedChips
+                        selectedIds={form.zonas}
+                        allTags={allTags}
+                        mode="edit"
+                        onToggle={toggleZona}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3358,17 +3398,33 @@ export default function OrganizerProfileEditor() {
             />
           </div>
 
-          {/* Sección de Fotos */}
-          <PhotoManagementSection
-            media={media}
-            uploading={uploading}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Gestión de Fotos"
-            description="La foto P1 se mostrará como tu avatar principal en el banner del perfil"
-            slots={['p1']}
-            isMainPhoto={true}
-          />
+          {/* Sección de Fotos - Dos Columnas */}
+          <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
+            {/* Columna 1: Avatar / Foto Principal */}
+            <PhotoManagementSection
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Gestión de Fotos"
+              description="👤 Avatar / Foto Principal (p1)"
+              slots={['p1']}
+              isMainPhoto={true}
+            />
+
+            {/* Columna 2: Fotos Destacadas */}
+            <PhotoManagementSection
+              media={media}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Fotos Destacadas (p2 - p3)"
+              description="Estas fotos se usan en las secciones destacadas de tu perfil"
+              slots={['p2', 'p3']}
+              isMainPhoto={false}
+              verticalLayout={true}
+            />
+          </div>
 
           {/* Sección de Fotos Adicionales */}
           <PhotoManagementSection

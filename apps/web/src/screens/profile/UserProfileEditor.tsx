@@ -22,9 +22,9 @@ import { getDraftKey } from '../../utils/draftKeys';
 import { useRoleChange } from '../../hooks/useRoleChange';
 import { ensureMaxVideoDuration } from '../../utils/videoValidation';
 import { FilterPreferencesModal } from '../../components/profile/FilterPreferencesModal';
-import { useZonaCatalogGroups } from '@/hooks/useZonaCatalogGroups';
 import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
+import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 
 const colors = {
   dark: '#121212',
@@ -46,14 +46,6 @@ export default function UserProfileEditor() {
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
-  const { groups: zonaGroups } = useZonaCatalogGroups(allTags);
-
-  const toggleZonaGroup = (groupId: string) => {
-    setExpandedZonaGroups(prev => ({
-      ...prev,
-      [groupId]: !(prev[groupId] ?? false),
-    }));
-  };
 
   // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
   const { form, setField, setNested, setAll, setFromServer, hydrated, dirty } = useHydratedForm({
@@ -84,7 +76,6 @@ export default function UserProfileEditor() {
   // Estados para carga
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
-  const [expandedZonaGroups, setExpandedZonaGroups] = useState<Record<string, boolean>>({});
 
   // Helper to convert Supabase storage paths to public URLs
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
@@ -522,8 +513,26 @@ export default function UserProfileEditor() {
         .input-group input::placeholder {
           color: rgba(255, 255, 255, 0.5);
         }
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
         
         @media (max-width: 768px) {
+          .photos-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rhythms-zones-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
           .editor-container {
             padding: 0.75rem !important;
           }
@@ -948,17 +957,25 @@ export default function UserProfileEditor() {
           </div>
 
           {/* Ritmos y Zonas */}
-          <div className="editor-section glass-card-container">
-            <h2 className="editor-section-title">
-              🎵 Ritmos y Zonas
-            </h2>
+          <div className="editor-section glass-card-container academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
 
-            <div className="editor-grid">
+            {/* Contenedor de dos columnas: Ritmos y Zonas */}
+            <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
+              {/* Columna 1: Ritmos */}
               <div>
-                <h3 className="editor-subsection-title">
-                  🎶 Ritmos que Bailas
-                </h3>
-                <div style={{ textAlign: 'left' }}>
+                {/* Header Ritmos */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Ritmos que Bailas</h2>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que bailas</div>
+                  </div>
+                </div>
+
+                {/* Catálogo agrupado */}
+                <div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
                   <RitmosSelectorEditor
                     selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
                     ritmoTags={ritmoTags}
@@ -967,61 +984,27 @@ export default function UserProfileEditor() {
                 </div>
               </div>
 
+              {/* Columna 2: Zonas */}
               <div>
-                <h3 className="editor-subsection-title">
-                  📍 Zonas donde Bailas
-                </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  {zonaGroups.map((group) => {
-                    const hasSelectedChild = group.items.some(({ id }) => form.zonas.includes(id));
-                    const expanded = expandedZonaGroups[group.id] ?? false;
-                    return (
-                      <Chip
-                        key={group.id}
-                        label={`${group.label} ${expanded ? '▾' : '▸'}`}
-                        icon="📍"
-                        variant="custom"
-                        active={expanded || hasSelectedChild}
-                        onClick={() => toggleZonaGroup(group.id)}
-                        style={{
-                          alignSelf: 'flex-start',
-                          width: 'fit-content',
-                          minWidth: 'auto',
-                          justifyContent: 'center',
-                          paddingInline: '1rem',
-                          background: (expanded || hasSelectedChild)
-                            ? 'rgba(76,173,255,0.18)'
-                            : 'rgba(255,255,255,0.05)',
-                          border: (expanded || hasSelectedChild)
-                            ? '1px solid rgba(76,173,255,0.6)'
-                            : '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: 999,
-                        }}
-                      />
-                    );
-                  })}
+                {/* Header Zonas */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas donde Bailas</h2>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde bailas</div>
+                  </div>
                 </div>
-                {zonaGroups.map((group) => {
-                  const expanded = expandedZonaGroups[group.id];
-                  if (!expanded) return null;
-                  return (
-                    <div
-                      key={`zonas-${group.id}`}
-                      className="editor-chips"
-                      style={{ marginBottom: '0.75rem', paddingLeft: '0.25rem' }}
-                    >
-                      {group.items.map(({ id, label }) => (
-                        <Chip
-                          key={id}
-                          label={label}
-                          active={form.zonas.includes(id)}
-                          onClick={() => toggleZona(id)}
-                          variant="zona"
-                        />
-                      ))}
-                    </div>
-                  );
-                })}
+
+                {/* Chips Zonas */}
+                <div className="academy-chips-container">
+                  <ZonaGroupedChips
+                    selectedIds={form.zonas}
+                    allTags={allTags}
+                    mode="edit"
+                    onToggle={toggleZona}
+                    icon="📍"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -1100,29 +1083,33 @@ export default function UserProfileEditor() {
             </button>
           </div>
 
-          {/* Sección de Fotos */}
-          <PhotoManagementSection
-            media={mediaWithAvatarFallback}
-            uploading={uploading}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Gestión de Fotos"
-            description="La foto P1 se mostrará como tu avatar principal en el banner del perfil"
-            slots={['p1']}
-            isMainPhoto={true}
-          />
+          {/* Sección de Fotos - Dos Columnas */}
+          <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
+            {/* Columna 1: Avatar / Foto Principal */}
+            <PhotoManagementSection
+              media={mediaWithAvatarFallback}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Gestión de Fotos"
+              description="👤 Avatar / Foto Principal (p1)"
+              slots={['p1']}
+              isMainPhoto={true}
+            />
 
-          {/* Secciones destacadas (p2 - p3) */}
-          <PhotoManagementSection
-            media={mediaWithAvatarFallback}
-            uploading={uploading}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Fotos Destacadas (p2 - p3)"
-            description="Estas fotos se usan en las secciones destacadas de tu perfil"
-            slots={['p2', 'p3']}
-            isMainPhoto={false}
-          />
+            {/* Columna 2: Fotos Destacadas */}
+            <PhotoManagementSection
+              media={mediaWithAvatarFallback}
+              uploading={uploading}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Fotos Destacadas (p2 - p3)"
+              description="Estas fotos se usan en las secciones destacadas de tu perfil"
+              slots={['p2', 'p3']}
+              isMainPhoto={false}
+              verticalLayout={true}
+            />
+          </div>
 
           {/* Sección de Fotos Adicionales */}
           <PhotoManagementSection

@@ -200,79 +200,45 @@ export default function ExploreHomeScreen() {
     }
   }, [filters.datePreset, computePresetRange, set, filters.dateFrom, filters.dateTo]);
 
-  // Aplicar filtros predeterminados si el usuario tiene preferencias y no hay filtros manuales
+  // Marcar que ya se verificaron los defaults (sin aplicar automáticamente)
   React.useEffect(() => {
     if (!user || prefsLoading || hasAppliedDefaults) return;
-
-    // Verificar si los filtros están en su estado inicial (sin filtros manuales)
-    const isInitialState =
-      filters.ritmos.length === 0 &&
-      filters.zonas.length === 0 &&
-      (filters.datePreset === 'todos' || !filters.datePreset) &&
-      !filters.q;
-
-    if (isInitialState && preferences) {
-      const defaultFilters = applyDefaultFilters();
-
-      // Solo aplicar si hay preferencias configuradas
-      const hasPreferences =
-        (defaultFilters.ritmos.length > 0) ||
-        (defaultFilters.zonas.length > 0) ||
-        (defaultFilters.fechaDesde !== null || defaultFilters.fechaHasta !== null);
-
-      if (hasPreferences) {
-        const updates: any = {};
-
-        if (defaultFilters.ritmos.length > 0) {
-          updates.ritmos = defaultFilters.ritmos;
-        }
-        if (defaultFilters.zonas.length > 0) {
-          updates.zonas = defaultFilters.zonas;
-        }
-        if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
-          // Convertir fechas a formato YYYY-MM-DD
-          if (defaultFilters.fechaDesde) {
-            updates.dateFrom = defaultFilters.fechaDesde.toISOString().slice(0, 10);
-          }
-          if (defaultFilters.fechaHasta) {
-            updates.dateTo = defaultFilters.fechaHasta.toISOString().slice(0, 10);
-          }
-          // Determinar el preset más cercano
-          if (preferences.date_range === 'hoy') {
-            updates.datePreset = 'hoy';
-          } else if (preferences.date_range === 'semana') {
-            updates.datePreset = 'semana';
-          } else {
-            updates.datePreset = undefined; // Custom o mes
-          }
-        }
-
-        if (Object.keys(updates).length > 0) {
-          set(updates);
-          setUsingFavoriteFilters(true);
-        }
-      }
-
-      setHasAppliedDefaults(true);
-    }
-  }, [user, prefsLoading, preferences, filters, applyDefaultFilters, hasAppliedDefaults, set]);
+    // Por defecto, todos los filtros están desactivados
+    // El usuario puede activar sus filtros favoritos manualmente con el botón
+    setHasAppliedDefaults(true);
+  }, [user, prefsLoading, hasAppliedDefaults]);
 
   // Detectar cuando el usuario cambia los filtros manualmente (ya no son favoritos)
   React.useEffect(() => {
     if (!hasAppliedDefaults) return;
 
-    // Comparar con las preferencias para ver si coinciden
-    if (preferences) {
-      const defaultFilters = applyDefaultFilters();
-      const matchesDefaults =
-        JSON.stringify(filters.ritmos.sort()) === JSON.stringify(defaultFilters.ritmos.sort()) &&
-        JSON.stringify(filters.zonas.sort()) === JSON.stringify(defaultFilters.zonas.sort());
-
-      // Si no coinciden, ya no está usando favoritos
-      if (!matchesDefaults) {
-        setUsingFavoriteFilters(false);
-      }
+    // Si no hay preferencias, los filtros favoritos no pueden estar activos
+    if (!preferences) {
+      setUsingFavoriteFilters(false);
+      return;
     }
+
+    const defaultFilters = applyDefaultFilters();
+    
+    // Comparar ritmos y zonas
+    const ritmosMatch = JSON.stringify(filters.ritmos.sort()) === JSON.stringify(defaultFilters.ritmos.sort());
+    const zonasMatch = JSON.stringify(filters.zonas.sort()) === JSON.stringify(defaultFilters.zonas.sort());
+    
+    // Comparar fechas
+    let fechasMatch = true;
+    if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
+      const defaultFrom = defaultFilters.fechaDesde ? defaultFilters.fechaDesde.toISOString().slice(0, 10) : null;
+      const defaultTo = defaultFilters.fechaHasta ? defaultFilters.fechaHasta.toISOString().slice(0, 10) : null;
+      fechasMatch = filters.dateFrom === defaultFrom && filters.dateTo === defaultTo;
+    } else {
+      // Si no hay fechas en favoritos, verificar que tampoco haya fechas activas (excepto si es un preset)
+      fechasMatch = !filters.dateFrom && !filters.dateTo;
+    }
+    
+    const matchesDefaults = ritmosMatch && zonasMatch && fechasMatch;
+
+    // Actualizar el estado según si coinciden o no
+    setUsingFavoriteFilters(matchesDefaults);
   }, [filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults]);
 
   // Función para restablecer a los filtros favoritos
@@ -348,6 +314,58 @@ export default function ExploreHomeScreen() {
   useAutoLoadAllPages(fechasQuery);
   const fechasLoading = fechasQuery.isLoading;
   const fechasData = React.useMemo(() => flattenQueryData(fechasQuery.data), [fechasQuery.data]);
+
+  // Fechas filtradas (solo futuras y ordenadas cronológicamente)
+  const filteredFechas = React.useMemo(() => {
+    const parseYmdToDate = (value?: string | null) => {
+      if (!value) return null;
+      const plain = String(value).split('T')[0];
+      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+      if (
+        Number.isFinite(year) &&
+        Number.isFinite(month) &&
+        Number.isFinite(day)
+      ) {
+        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      }
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const todayBase = parseYmdToDate(todayYmd);
+    const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
+
+    const upcoming = allFechas.filter((fecha: any) => {
+      const fechaDate = parseYmdToDate(fecha?.fecha);
+      if (!fechaDate || !todayBase) return true;
+      const fechaDateOnly = new Date(Date.UTC(
+        fechaDate.getUTCFullYear(),
+        fechaDate.getUTCMonth(),
+        fechaDate.getUTCDate(),
+        0, 0, 0
+      ));
+      const todayDateOnly = new Date(Date.UTC(
+        todayBase.getUTCFullYear(),
+        todayBase.getUTCMonth(),
+        todayBase.getUTCDate(),
+        0, 0, 0
+      ));
+      return fechaDateOnly >= todayDateOnly;
+    });
+
+    // Ordenar por fecha cronológica
+    const sorted = upcoming.sort((a: any, b: any) => {
+      const parseYmd = (value?: string | null) => parseYmdToDate(value);
+      const dateA = parseYmd(a?.fecha);
+      const dateB = parseYmd(b?.fecha);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    return sorted;
+  }, [fechasData, todayYmd]);
 
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
@@ -541,6 +559,32 @@ export default function ExploreHomeScreen() {
       usuariosData.filter((u: any) => u && u.display_name && u.display_name.trim() !== ''),
     [usuariosData]
   );
+
+  // Flags de resultados por sección
+  const hasFechas = filteredFechas.length > 0;
+  const hasClases = classesList.length > 0;
+  const hasAcademias = academiasData.length > 0;
+  const hasUsuarios = validUsuarios.length > 0;
+  const hasMaestros = maestrosData.length > 0;
+  const hasMarcas = marcasData.length > 0;
+
+  const anyLoading =
+    fechasLoading ||
+    academiasLoading ||
+    maestrosLoading ||
+    usuariosLoading ||
+    marcasLoading;
+
+  // Estado global sin resultados (solo cuando estamos mostrando todo)
+  const noResultsAllTypes =
+    showAll &&
+    !anyLoading &&
+    !hasFechas &&
+    !hasClases &&
+    !hasAcademias &&
+    !hasUsuarios &&
+    !hasMaestros &&
+    !hasMarcas;
 
   const handleFilterChange = (newFilters: typeof filters) => {
     set(newFilters);
@@ -1201,9 +1245,10 @@ export default function ExploreHomeScreen() {
                   </button>
                 )}
                 {activeFiltersCount > 0 && (
-                  <button className="chip chip--danger" onClick={() => {
+                  <button className="chip chip--danger"                   onClick={() => {
                     handleFilterChange({
                       ...filters,
+                      type: 'all',
                       q: '',
                       ritmos: [],
                       zonas: [],
@@ -1211,6 +1256,7 @@ export default function ExploreHomeScreen() {
                       dateFrom: undefined,
                       dateTo: undefined
                     });
+                    setUsingFavoriteFilters(false);
                     setOpenFilterDropdown(null);
                     setIsSearchExpanded(false);
                   }}>
@@ -1240,59 +1286,12 @@ export default function ExploreHomeScreen() {
             </div>
           </section>
 
-          {(showAll || selectedType === 'fechas') && (
+          {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
             <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (() => {
-                const parseYmdToDate = (value?: string | null) => {
-                  if (!value) return null;
-                  const plain = String(value).split('T')[0];
-                  const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-                  if (
-                    Number.isFinite(year) &&
-                    Number.isFinite(month) &&
-                    Number.isFinite(day)
-                  ) {
-                    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-                  }
-                  const parsed = new Date(value);
-                  return Number.isNaN(parsed.getTime()) ? null : parsed;
-                };
-                const todayBase = parseYmdToDate(todayYmd);
-
-                // Filtrar fechas pasadas y ordenar cronológicamente
-                const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
-                const filteredFechas = allFechas.filter((fecha: any) => {
-                  const fechaDate = parseYmdToDate(fecha?.fecha);
-                  if (!fechaDate || !todayBase) return true;
-                  // Comparar solo la fecha (sin hora)
-                  const fechaDateOnly = new Date(Date.UTC(
-                    fechaDate.getUTCFullYear(),
-                    fechaDate.getUTCMonth(),
-                    fechaDate.getUTCDate(),
-                    0, 0, 0
-                  ));
-                  const todayDateOnly = new Date(Date.UTC(
-                    todayBase.getUTCFullYear(),
-                    todayBase.getUTCMonth(),
-                    todayBase.getUTCDate(),
-                    0, 0, 0
-                  ));
-                  return fechaDateOnly >= todayDateOnly;
-                });
-
-                // Ordenar por fecha cronológica
-                const sortedFechas = filteredFechas.sort((a: any, b: any) => {
-                  const dateA = parseYmdToDate(a?.fecha);
-                  const dateB = parseYmdToDate(b?.fecha);
-                  if (!dateA && !dateB) return 0;
-                  if (!dateA) return 1;
-                  if (!dateB) return -1;
-                  return dateA.getTime() - dateB.getTime();
-                });
-
-                const list = sortedFechas;
+                const list = filteredFechas;
                 return list.length ? (
                   <HorizontalSlider
                     {...sliderProps}
@@ -1325,12 +1324,11 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'clases') && (
+          {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
             <Section title="Encuentra tus clases" toAll="/explore/list?type=clases">
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
-                if (!classesList.length) return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay clases</div>;
                 return (
                   <HorizontalSlider
                     {...sliderProps}
@@ -1400,11 +1398,11 @@ export default function ExploreHomeScreen() {
             </Section>
           )} */}
 
-          {(showAll || selectedType === 'academias') && (
+          {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
             <Section title="Academias" toAll="/explore/list?type=academias">
               {academiasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : academiasData.length > 0 ? (
+              ) : (
                 <HorizontalSlider
                   {...sliderProps}
                   items={academiasData}
@@ -1429,8 +1427,6 @@ export default function ExploreHomeScreen() {
                     </motion.div>
                   )}
                 />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
           )}
@@ -1469,7 +1465,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )} */}
 
-          {(showAll || selectedType === 'usuarios') && (
+          {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
             <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -1510,18 +1506,16 @@ export default function ExploreHomeScreen() {
                       </motion.div>
                     )}
                   />
-                ) : (
-                  <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Aún no hay perfiles disponibles</div>
-                );
+                ) : null;
               })()}
             </Section>
           )}
 
-          {(showAll || selectedType === 'maestros') && (
+          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
             <Section title="Maestros" toAll="/explore/list?type=teacher">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : maestrosData.length > 0 ? (
+              ) : (
                 <HorizontalSlider
                   {...sliderProps}
                   items={maestrosData}
@@ -1546,17 +1540,15 @@ export default function ExploreHomeScreen() {
                     </motion.div>
                   )}
                 />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
           )}
 
-          {(showAll || selectedType === 'marcas') && (
+          {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
             <Section title="Marcas" toAll="/explore/list?type=marcas">
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : marcasData.length > 0 ? (
+              ) : (
                 <HorizontalSlider
                   {...sliderProps}
                   items={marcasData}
@@ -1581,10 +1573,32 @@ export default function ExploreHomeScreen() {
                     </motion.div>
                   )}
                 />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
+          )}
+
+          {noResultsAllTypes && (
+            <div
+              style={{
+                marginTop: spacing[10],
+                marginBottom: spacing[10],
+                padding: spacing[8],
+                textAlign: 'center',
+                borderRadius: 16,
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'radial-gradient(circle at top, rgba(148,163,255,0.12), rgba(15,23,42,0.95))',
+                color: colors.gray[200],
+                maxWidth: 640,
+                marginInline: 'auto',
+              }}
+            >
+              <h3 style={{ margin: 0, marginBottom: spacing[3], fontSize: '1.1rem', fontWeight: 700 }}>
+                No encontramos resultados con estos filtros
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.85 }}>
+                Intenta ajustar los filtros o cambiar de zona/ritmo.
+              </p>
+            </div>
           )}
         </div>
       </div>

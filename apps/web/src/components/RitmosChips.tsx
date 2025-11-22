@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { Chip } from './profile/Chip';
 
@@ -63,6 +64,10 @@ function RitrosChipsInternal({
   }, [isReadOnly, selected, filteredCatalog]);
 
   const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (isReadOnly && autoExpanded) {
@@ -81,6 +86,57 @@ function RitrosChipsInternal({
     if (!g) return false;
     return g.items.some((i) => selected.includes(i.id));
   };
+
+  const selectedCategoryGroup = React.useMemo(() => {
+    if (!selectedCategory) return null;
+    return filteredCatalog.find((g) => g.id === selectedCategory) || null;
+  }, [selectedCategory, filteredCatalog]);
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    // No cerrar el dropdown, solo cambiar a la vista de ritmos anidados
+  };
+
+  // Calcular posición del dropdown cuando se abre
+  React.useEffect(() => {
+    if (isDropdownOpen && triggerRef.current) {
+      const updatePosition = () => {
+        if (triggerRef.current) {
+          const rect = triggerRef.current.getBoundingClientRect();
+          setDropdownPosition({
+            top: rect.bottom + 8,
+            left: rect.left,
+            width: rect.width,
+          });
+        }
+      };
+      
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [isDropdownOpen]);
+
+  // Cerrar dropdown al hacer clic fuera
+  React.useEffect(() => {
+    if (!isDropdownOpen) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.ritmos-dropdown-container') && !target.closest('.ritmos-dropdown-menu')) {
+        setIsDropdownOpen(false);
+        setSelectedCategory(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
 
   if (isReadOnly) {
     const baseItems = filteredCatalog.flatMap((g) => g.items);
@@ -127,144 +183,287 @@ function RitrosChipsInternal({
   return (
     <>
       <style>{`
-        .ritmos-chips-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: ${metrics.wrapperGap};
-          align-items: flex-start;
-        }
-        .ritmos-chips-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-          align-items: flex-start;
-          min-width: fit-content;
-          flex: 0 0 auto;
-        }
-        .ritmos-chips-children {
-          display: flex;
-          flex-wrap: wrap;
-          gap: ${metrics.childGap};
-          border-top: 1px solid rgba(255,255,255,0.08);
-          padding-top: 0.4rem;
+        .ritmos-dropdown-container {
+          position: relative;
           width: 100%;
+          max-width: 500px;
         }
-        .ritmos-chips-children button {
-          font-size: ${metrics.childFont};
-          padding: ${metrics.childPadding};
+        .ritmos-dropdown-trigger {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 12px;
+          color: #fff;
+          font-size: ${metrics.groupFont};
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          transition: all 0.2s ease;
+        }
+        .ritmos-dropdown-trigger:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+        .ritmos-dropdown-trigger.open {
+          border-color: rgba(245, 87, 108, 0.65);
+          background: rgba(245, 87, 108, 0.1);
+        }
+        .ritmos-dropdown-menu {
+          position: fixed;
+          background: rgba(15, 23, 42, 1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(20px);
+          z-index: 999999;
+          max-height: 400px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          color: #fff;
+        }
+        .ritmos-dropdown-menu::-webkit-scrollbar {
+          width: 6px;
+        }
+        .ritmos-dropdown-menu::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 3px;
+        }
+        .ritmos-dropdown-menu::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+        .ritmos-dropdown-menu::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        .ritmos-category-item {
+          padding: 0.75rem 1rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          color: #fff;
+        }
+        .ritmos-category-item:last-child {
+          border-bottom: none;
+        }
+        .ritmos-category-item:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .ritmos-category-item.selected {
+          background: rgba(245, 87, 108, 0.15);
+          border-left: 3px solid rgba(245, 87, 108, 0.65);
+        }
+        .ritmos-ritmos-list {
+          padding: 0.5rem;
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .ritmos-ritmo-item {
+          padding: 0.6rem 0.75rem;
+          margin: 0.25rem 0;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #fff;
+        }
+        .ritmos-ritmo-item:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.15);
+        }
+        .ritmos-ritmo-item.selected {
+          background: rgba(245, 87, 108, 0.2);
+          border-color: rgba(245, 87, 108, 0.65);
+        }
+        .ritmos-checkbox {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.2s ease;
+        }
+        .ritmos-ritmo-item.selected .ritmos-checkbox {
+          background: rgba(245, 87, 108, 0.8);
+          border-color: rgba(245, 87, 108, 1);
+        }
+        .ritmos-checkbox::after {
+          content: '✓';
+          color: #fff;
+          font-size: 12px;
+          font-weight: 900;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .ritmos-ritmo-item.selected .ritmos-checkbox::after {
+          opacity: 1;
         }
         @media (max-width: 768px) {
-          .ritmos-chips-container {
-            gap: 0.5rem;
+          .ritmos-dropdown-container {
+            max-width: 100%;
           }
-          .ritmos-chips-group {
-            gap: 0.3rem;
-            width: 100%;
+          .ritmos-dropdown-trigger {
+            padding: 0.65rem 0.9rem;
+            font-size: 0.85rem;
           }
-          .ritmos-chips-children {
-            gap: 0.4rem;
-            padding-top: 0.3rem;
+          .ritmos-category-item {
+            padding: 0.65rem 0.9rem;
+            font-size: 0.85rem;
           }
-          .ritmos-chips-children button {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-          }
-        }
-        @media (max-width: 480px) {
-          .ritmos-chips-container {
-            gap: 0.4rem;
-          }
-          .ritmos-chips-group {
-            gap: 0.25rem;
-          }
-          .ritmos-chips-children {
-            gap: 0.35rem;
-            padding-top: 0.25rem;
-          }
-          .ritmos-chips-children button {
-            font-size: 0.65rem;
-            padding: 3px 7px;
+          .ritmos-ritmo-item {
+            padding: 0.5rem 0.65rem;
+            font-size: 0.8rem;
           }
         }
       `}</style>
-      <div className="ritmos-chips-container">
-      {filteredCatalog.map((group) => {
-        const isOpen = expanded === group.id;
-        const active = groupHasActive(group.id);
-        return (
-          <div
-            key={group.id}
-            className="ritmos-chips-group"
-          >
-            <Chip
-              label={`${group.label} ${isOpen ? '▾' : '▸'}`}
-              icon="🎵"
-              variant="custom"
-              active={active || isOpen}
-              onClick={() => setExpanded((prev) => (prev === group.id ? null : group.id))}
-              style={{
-                fontSize: metrics.groupFont,
-                alignSelf: 'flex-start',
-                width: 'fit-content',
-                minWidth: 'auto',
-                justifyContent: 'center',
-                padding: metrics.groupPadding,
-                background: active || isOpen
-                  ? 'rgba(245, 87, 108, 0.2)'
-                  : 'rgba(255,255,255,0.05)',
-                border: active || isOpen
-                  ? '1px solid rgba(245, 87, 108, 0.65)'
-                  : '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 999,
-              }}
-            />
+      <div className="ritmos-dropdown-container">
+        <button
+          ref={triggerRef}
+          type="button"
+          className={`ritmos-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        >
+          <span>
+            {selectedCategoryGroup
+              ? `🎵 ${selectedCategoryGroup.label}`
+              : 'Selecciona una categoría de ritmos'}
+          </span>
+          <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+            {isDropdownOpen ? '▾' : '▸'}
+          </span>
+        </button>
 
-            {isOpen && (
-              <div className="ritmos-chips-children">
-                {group.items.map((r) => {
-                  const isActive = selected.includes(r.id);
-                  return (
-                    <motion.button
-                      key={r.id}
-                      type="button"
-                      onClick={() => toggleChild(r.id)}
-                      whileTap={{ scale: 0.95 }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        cursor: 'pointer',
-                        transition: '0.3s',
-                        backdropFilter: 'blur(10px)',
-                        userSelect: 'none',
-                        fontWeight: 700,
-                        fontSize: metrics.childFont,
-                        padding: metrics.childPadding,
-                        borderRadius: 999,
-                        background: isActive
-                          ? 'rgba(245, 87, 108, 0.2)'
-                          : 'rgba(255,255,255,0.06)',
-                        border: isActive
-                          ? '1px solid rgba(245, 87, 108, 0.65)'
-                          : '1px solid rgba(255,255,255,0.12)',
-                        color: isActive ? '#FFE4EE' : '#fff',
-                        boxShadow: isActive
-                          ? 'rgba(245, 87, 108, 0.3) 0px 3px 10px'
-                          : 'rgba(0,0,0,0.25) 0px 2px 8px',
-                        alignSelf: 'flex-start',
-                        minWidth: 'auto',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {r.label}
-                    </motion.button>
-                  );
-                })}
-              </div>
+        {typeof document !== 'undefined' && document.body && createPortal(
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                className="ritmos-dropdown-menu"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  top: `${dropdownPosition.top}px`,
+                  left: `${dropdownPosition.left}px`,
+                  width: `${dropdownPosition.width}px`,
+                }}
+              >
+            {!selectedCategory ? (
+              // Mostrar categorías primero
+              filteredCatalog.map((group) => {
+                const hasActive = groupHasActive(group.id);
+                return (
+                  <div
+                    key={group.id}
+                    className={`ritmos-category-item ${hasActive ? 'selected' : ''}`}
+                    onClick={() => handleCategorySelect(group.id)}
+                  >
+                    <span>
+                      🎵 {group.label}
+                      {hasActive && (
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                          ({group.items.filter((i) => selected.includes(i.id)).length} seleccionados)
+                        </span>
+                      )}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▸</span>
+                  </div>
+                );
+              })
+            ) : (
+              // Mostrar ritmos de la categoría seleccionada
+              selectedCategoryGroup && (
+                <div>
+                  <div
+                    className="ritmos-category-item"
+                    onClick={() => setSelectedCategory(null)}
+                    style={{
+                      background: 'rgba(245, 87, 108, 0.1)',
+                      borderLeft: '3px solid rgba(245, 87, 108, 0.65)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span>← Volver a categorías</span>
+                  </div>
+                  <div className="ritmos-ritmos-list">
+                    {selectedCategoryGroup.items.map((ritmo) => {
+                      const isSelected = selected.includes(ritmo.id);
+                      return (
+                        <div
+                          key={ritmo.id}
+                          className={`ritmos-ritmo-item ${isSelected ? 'selected' : ''}`}
+                          onClick={() => toggleChild(ritmo.id)}
+                        >
+                          <div className="ritmos-checkbox" />
+                          <span>{ritmo.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )
             )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+
+        {/* Mostrar ritmos seleccionados como chips debajo del dropdown */}
+        {selected.length > 0 && (
+          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {filteredCatalog.flatMap((g) => g.items)
+              .filter((r) => selected.includes(r.id))
+              .map((r) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '12px 18px',
+                    borderRadius: 999,
+                    background: 'rgba(245, 87, 108, 0.18)',
+                    border: '1px solid rgba(245, 87, 108, 0.6)',
+                    color: 'rgba(255,255,255,0.9)',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 16px rgba(245,87,108,0.25)',
+                  }}
+                >
+                  <span>🎵 {r.label}</span>
+                    <button
+                    type="button"
+                    onClick={() => toggleChild(r.id)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.9)',
+                      cursor: 'pointer',
+                      padding: '0 0.25rem',
+                      fontSize: '0.9rem',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </motion.div>
+              ))}
           </div>
-        );
-      })}
+        )}
       </div>
     </>
   );
