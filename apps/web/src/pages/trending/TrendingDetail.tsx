@@ -6,6 +6,10 @@ import {
   getTrendingCandidates,
   leaderboard,
   voteTrending,
+  voteTrendingRound,
+  getRoundCandidates,
+  getTrendingRounds,
+  adminCloseRound,
 } from "@/lib/trending";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/lib/supabase";
@@ -39,22 +43,37 @@ export default function TrendingDetail() {
   const [isSA, setIsSA] = React.useState(false);
   const [myVotes, setMyVotes] = React.useState<Map<number, boolean>>(new Map());
   const [userMeta, setUserMeta] = React.useState<Record<string, { name?: string; avatar?: string }>>({});
+  // Estado para rondas
+  const [rounds, setRounds] = React.useState<any[]>([]);
+  const [currentRoundCandidates, setCurrentRoundCandidates] = React.useState<any[]>([]);
+  const [useRoundsMode, setUseRoundsMode] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
       try {
-        const [tr, rs, cs, lb] = await Promise.all([
+        const [tr, rs, cs, lb, roundsData] = await Promise.all([
           getTrending(trendingId),
           getTrendingRitmos(trendingId),
           getTrendingCandidates(trendingId),
           leaderboard(trendingId),
+          getTrendingRounds(trendingId).catch(() => []),
         ]);
         setT(tr);
         setRitmos(rs);
         setCandidatos(cs);
         setBoard(lb);
+        setRounds(roundsData);
         setActiveRitmo(rs?.[0]?.ritmo_slug ?? null);
-        // precompute myVotes map from current leaderboard if needed (not exact, but UI toggle will update)
+        
+        // Verificar si usa sistema de rondas
+        const hasRounds = tr?.rounds_config && tr?.current_round_number > 0;
+        setUseRoundsMode(hasRounds);
+        
+        // Si usa rondas, cargar candidatos de la ronda actual
+        if (hasRounds && tr.current_round_number) {
+          const roundCandidates = await getRoundCandidates(trendingId, tr.current_round_number);
+          setCurrentRoundCandidates(roundCandidates);
+        }
       } finally {
         setLoading(false);
       }
@@ -134,11 +153,18 @@ export default function TrendingDetail() {
     }
     if (!canVote) return;
     try {
-      // Toggle vote
-      await voteTrending(trendingId, candidateId);
-      // Refetch leaderboard to get updated counts
-      const lb = await leaderboard(trendingId);
-      setBoard(lb);
+      if (useRoundsMode && t?.current_round_number) {
+        // Votar en ronda específica
+        await voteTrendingRound(trendingId, candidateId, t.current_round_number);
+        // Refetch round candidates
+        const roundCandidates = await getRoundCandidates(trendingId, t.current_round_number);
+        setCurrentRoundCandidates(roundCandidates);
+      } else {
+        // Votar modo tradicional
+        await voteTrending(trendingId, candidateId);
+        const lb = await leaderboard(trendingId);
+        setBoard(lb);
+      }
       // Update local myVotes state for UI toggle
       setMyVotes(prev => {
         const next = new Map(prev);
@@ -153,6 +179,28 @@ export default function TrendingDetail() {
       } else {
         alert(errorMsg || 'No se pudo votar');
       }
+    }
+  };
+
+  const doCloseRound = async (roundNumber: number) => {
+    if (!isSA) return;
+    if (!confirm(`¿Cerrar ronda ${roundNumber}? Los ganadores avanzarán automáticamente.`)) return;
+    try {
+      await adminCloseRound(trendingId, roundNumber);
+      // Recargar datos
+      const [tr, roundsData] = await Promise.all([
+        getTrending(trendingId),
+        getTrendingRounds(trendingId),
+      ]);
+      setT(tr);
+      setRounds(roundsData);
+      if (tr.current_round_number) {
+        const roundCandidates = await getRoundCandidates(trendingId, tr.current_round_number);
+        setCurrentRoundCandidates(roundCandidates);
+      }
+      alert('Ronda cerrada exitosamente');
+    } catch (e: any) {
+      alert(e?.message || 'No se pudo cerrar la ronda');
     }
   };
 
@@ -189,33 +237,164 @@ export default function TrendingDetail() {
         </div>
       </header>
 
-      {/* Tabs de ritmos */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        {ritmos.map((r) => {
-          const active = activeRitmo === r.ritmo_slug;
-          return (
-            <button
-              key={r.id}
-              onClick={() => setActiveRitmo(r.ritmo_slug)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: 999,
-                border: `1px solid ${active ? "rgba(0,188,212,0.8)" : "rgba(255,255,255,0.2)"}`,
-                background: active ? "rgba(0,188,212,0.15)" : "transparent",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 800,
-              }}
-            >
-              {labelFromSlug(r.ritmo_slug)}
-            </button>
-          );
-        })}
-      </div>
+      {/* Información de rondas */}
+      {useRoundsMode && t.current_round_number > 0 && (
+        <div style={{ 
+          padding: 16, 
+          borderRadius: 12, 
+          background: 'rgba(0,188,212,0.1)', 
+          border: '1px solid rgba(0,188,212,0.3)',
+          marginBottom: 16 
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900 }}>
+                Ronda {t.current_round_number} de {t.total_rounds || rounds.length}
+              </h2>
+              {rounds.find(r => r.round_number === t.current_round_number) && (
+                <div style={{ marginTop: 8, opacity: 0.9 }}>
+                  {(() => {
+                    const currentRound = rounds.find(r => r.round_number === t.current_round_number);
+                    if (!currentRound) return null;
+                    if (currentRound.status === 'active') {
+                      if (currentRound.ends_at) {
+                        const endsAt = new Date(currentRound.ends_at);
+                        const now = new Date();
+                        const diff = endsAt.getTime() - now.getTime();
+                        if (diff > 0) {
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                          return <span>⏰ Termina en: {hours}h {minutes}m</span>;
+                        }
+                      }
+                      return <span>🟢 Ronda activa</span>;
+                    }
+                    return <span>🔴 Ronda cerrada</span>;
+                  })()}
+                </div>
+              )}
+            </div>
+            {isSA && rounds.find(r => r.round_number === t.current_round_number)?.status === 'active' && (
+              <button 
+                className="cc-btn" 
+                onClick={() => doCloseRound(t.current_round_number)}
+                style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}
+              >
+                Cerrar Ronda
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* Listas de candidatos (agrupadas por list_name) */}
+      {/* Tabs de ritmos (solo si no usa rondas) */}
+      {!useRoundsMode && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          {ritmos.map((r) => {
+            const active = activeRitmo === r.ritmo_slug;
+            return (
+              <button
+                key={r.id}
+                onClick={() => setActiveRitmo(r.ritmo_slug)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  border: `1px solid ${active ? "rgba(0,188,212,0.8)" : "rgba(255,255,255,0.2)"}`,
+                  background: active ? "rgba(0,188,212,0.15)" : "transparent",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: 800,
+                }}
+              >
+                {labelFromSlug(r.ritmo_slug)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Listas de candidatos */}
       <div style={{ display: 'grid', gap: 16 }}>
-        {groupByList.map(([listName, items]) => (
+        {useRoundsMode && currentRoundCandidates.length > 0 ? (
+          // Modo rondas: mostrar candidatos de la ronda actual agrupados por lista
+          (() => {
+            const byList = new Map<string, any[]>();
+            currentRoundCandidates.forEach((c: any) => {
+              const key = c.list_name || 'General';
+              if (!byList.has(key)) byList.set(key, []);
+              byList.get(key)!.push(c);
+            });
+            return Array.from(byList.entries()).map(([listName, items]) => (
+              <section key={listName} style={{ display: 'grid', gap: 10 }}>
+                <h3 style={{ margin: 0, fontWeight: 900 }}>
+                  {listName} <span style={{ opacity: .75, fontSize: 12 }}>({items.length})</span>
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,450px))", gap: 12, justifyContent:'center' }}>
+                  {items.map((c: any) => {
+                    const m = userMeta[c.user_id] || {};
+                    const avatarSrc = c.avatar_url || m.avatar || "https://placehold.co/96x96?text=User";
+                    const displayName = c.display_name || m.name || "Sin nombre";
+                    const userHref = urls.userLive(c.user_id);
+                    const currentRound = rounds.find(r => r.round_number === t.current_round_number);
+                    const canVoteRound = currentRound?.status === 'active' && (!currentRound.ends_at || new Date(currentRound.ends_at) > new Date());
+                    return (
+                      <div key={c.candidate_id} style={{
+                        position: 'relative',
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        borderRadius: 16,
+                        padding: 12,
+                        background: "linear-gradient(135deg, rgba(0,188,212,.10), rgba(30,136,229,.06))",
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                        maxWidth: 450
+                      }}>
+                        <div style={{ position:'absolute', top:8, right:8, padding:'6px 10px', borderRadius:999, background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.2)', fontWeight:900 }}>
+                          {isSA ? <>❤️ {c.votes}</> : (myVotes.get(c.candidate_id) ? 'Mi voto' : '')}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 10, alignItems: "center" }}>
+                          <a href={userHref} title={displayName} style={{ display:'inline-block' }}>
+                            <img
+                              src={avatarSrc}
+                              alt={displayName}
+                              style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover", border:'1px solid rgba(255,255,255,0.2)' }}
+                            />
+                          </a>
+                          <div style={{ minWidth: 0 }}>
+                            <a href={userHref} title={displayName} style={{ color:'#fff', textDecoration:'none', fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                              {displayName}
+                            </a>
+                            <div style={{ opacity: 0.85, fontSize: 12 }}>{c.list_name || 'General'}</div>
+                          </div>
+                        </div>
+                        {c.bio_short && <p style={{ opacity: 0.92, marginTop: 10, lineHeight: 1.35 }}>{c.bio_short}</p>}
+                        <div style={{ marginTop: 10 }}>
+                          <button
+                            disabled={!canVoteRound}
+                            onClick={() => doVote(c.candidate_id)}
+                            style={{
+                              width: '100%',
+                              padding: "10px 14px",
+                              borderRadius: 10,
+                              border: "1px solid rgba(255,255,255,0.25)",
+                              background: canVoteRound ? "linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))" : "rgba(255,255,255,0.08)",
+                              color: "#fff",
+                              fontWeight: 900,
+                              cursor: canVoteRound ? "pointer" : "not-allowed",
+                              boxShadow: canVoteRound ? '0 6px 18px rgba(0,188,212,0.35)' : 'none'
+                            }}
+                          >
+                            {!canVoteRound ? "Ronda cerrada" : (myVotes.get(c.candidate_id) ? "Quitar voto" : "❤️ Votar")}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ));
+          })()
+        ) : (
+          // Modo tradicional: mostrar candidatos agrupados por lista y ritmo
+          groupByList.map(([listName, items]) => (
           <section key={listName} style={{ display: 'grid', gap: 10 }}>
             <h3 style={{ margin: 0, fontWeight: 900 }}>
               {listName} <span style={{ opacity: .75, fontSize: 12 }}>({items.length})</span>
@@ -280,7 +459,8 @@ export default function TrendingDetail() {
               })}
             </div>
           </section>
-        ))}
+        ))
+        )}
       </div>
 
       {isSA ? (

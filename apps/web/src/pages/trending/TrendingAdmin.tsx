@@ -4,13 +4,19 @@ import {
   adminCreateTrending,
   adminPublishTrending,
   adminCloseTrending,
+  adminDeleteTrending,
   adminAddRitmo,
   adminAddCandidate,
   adminUpdateTrending,
+  adminSetRoundsConfig,
+  adminStartFirstRound,
+  adminCloseRound,
+  getTrendingRounds,
+  type RoundConfig,
+  type ListConfig,
 } from "@/lib/trending";
 import { supabase } from "@/lib/supabase";
 import "@/styles/event-public.css";
-import RitmosChips from "@/components/RitmosChips";
 import { useToast } from "@/components/Toast";
 
 type Mode = "per_candidate" | "per_ritmo";
@@ -38,6 +44,10 @@ export default function TrendingAdmin() {
     { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
     { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
   ]);
+  // Configuración de rondas
+  const [roundsConfig, setRoundsConfig] = React.useState<RoundConfig[]>([]);
+  const [listsConfig, setListsConfig] = React.useState<ListConfig[]>([]);
+  const [useRounds, setUseRounds] = React.useState(false);
 
   const [allUsers, setAllUsers] = React.useState<{id:string; name:string; avatar?:string}[]>([]);
   React.useEffect(() => {
@@ -122,11 +132,19 @@ export default function TrendingAdmin() {
         }
       }
 
+      // Configurar rondas si está habilitado
+      if (useRounds && roundsConfig.length > 0 && listsConfig.length > 0) {
+        await adminSetRoundsConfig(id, { rounds: roundsConfig }, { lists: listsConfig }, roundsConfig.length);
+      }
+
       setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
       setLists([
         { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
         { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
       ]);
+      setRoundsConfig([]);
+      setListsConfig([]);
+      setUseRounds(false);
       await reload(statusFilter || undefined);
       showToast(`Trending creado (#${id})`, "success");
     } catch (err: any) {
@@ -154,6 +172,40 @@ export default function TrendingAdmin() {
       showToast('Trending cerrado', 'success');
     } catch (e: any) {
       showToast(e?.message || 'No se pudo cerrar el trending', 'error');
+    }
+  };
+
+  const doStartFirstRound = async (id: number) => {
+    if (!canAdmin) return;
+    try {
+      await adminStartFirstRound(id);
+      await reload(statusFilter || undefined);
+      showToast('Primera ronda iniciada', 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo iniciar la ronda', 'error');
+    }
+  };
+
+  const doCloseRound = async (id: number, roundNumber: number) => {
+    if (!canAdmin) return;
+    if (!confirm(`¿Cerrar ronda ${roundNumber}? Los ganadores avanzarán automáticamente.`)) return;
+    try {
+      await adminCloseRound(id, roundNumber);
+      await reload(statusFilter || undefined);
+      showToast(`Ronda ${roundNumber} cerrada`, 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo cerrar la ronda', 'error');
+    }
+  };
+
+  const doDelete = async (id: number, title: string) => {
+    if (!confirm(`¿Estás seguro de eliminar "${title}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await adminDeleteTrending(id);
+      await reload(statusFilter || undefined);
+      showToast('Trending eliminado', 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'No se pudo eliminar el trending', 'error');
     }
   };
 
@@ -240,8 +292,13 @@ export default function TrendingAdmin() {
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Descripción" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos</label>
-                <RitmosChips selected={ritmosSel} onChange={(val: string[]) => setRitmosSel(val)} />
+                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (slugs separados por comas)</label>
+                <input 
+                  value={ritmosSel.join(', ')} 
+                  onChange={(e) => setRitmosSel(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} 
+                  placeholder="Ej: salsa, bachata, kizomba"
+                  style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
@@ -276,8 +333,13 @@ export default function TrendingAdmin() {
                         <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, multi)</label>
-                        <RitmosChips selected={L.ritmos} onChange={(vals: string[]) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmos: vals } : x))} />
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, slugs separados por comas)</label>
+                        <input 
+                          placeholder="Ej: salsa, bachata, kizomba"
+                          value={L.ritmos.join(', ')} 
+                          onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmos: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : x))} 
+                          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                        />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
@@ -314,6 +376,143 @@ export default function TrendingAdmin() {
                   <button type="button" className="cc-btn" onClick={() => setLists([...lists, { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" }])}>Añadir lista</button>
                 </div>
               </div>
+              
+              {/* Configuración de rondas */}
+              <div className="cc-glass" style={{ padding: 12, borderRadius: 12, border: '2px solid rgba(0,188,212,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={useRounds} 
+                    onChange={(e) => {
+                      setUseRounds(e.target.checked);
+                      if (e.target.checked && roundsConfig.length === 0) {
+                        // Inicializar con una ronda por defecto
+                        setRoundsConfig([{ round_number: 1, advances_per_list: 10, duration_type: 'days', duration_value: 1 }]);
+                        // Inicializar listas config desde las listas de usuarios
+                        const listConfigs: ListConfig[] = lists
+                          .filter(L => L.name.trim())
+                          .map(L => ({ name: L.name, size: L.selected.length }));
+                        if (listConfigs.length > 0) {
+                          setListsConfig(listConfigs);
+                        }
+                      }
+                    }}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  <label style={{ fontSize: '1rem', fontWeight: 700 }}>Usar sistema de rondas</label>
+                </div>
+                
+                {useRounds && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    {/* Configuración de listas para rondas */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 8 }}>Configuración de listas</label>
+                      {listsConfig.map((listCfg, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            placeholder="Nombre de lista"
+                            value={listCfg.name}
+                            onChange={(e) => setListsConfig(listsConfig.map((l, i) => i === idx ? { ...l, name: e.target.value } : l))}
+                            style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                          />
+                          <input 
+                            type="number" 
+                            placeholder="Tamaño"
+                            value={listCfg.size}
+                            onChange={(e) => setListsConfig(listsConfig.map((l, i) => i === idx ? { ...l, size: parseInt(e.target.value) || 0 } : l))}
+                            style={{ width: 100, padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                          />
+                          <button 
+                            type="button" 
+                            className="cc-btn" 
+                            onClick={() => setListsConfig(listsConfig.filter((_, i) => i !== idx))}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button" 
+                        className="cc-btn" 
+                        onClick={() => setListsConfig([...listsConfig, { name: '', size: 0 }])}
+                      >
+                        + Añadir lista
+                      </button>
+                    </div>
+
+                    {/* Configuración de rondas */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 8 }}>Rondas</label>
+                      {roundsConfig.map((round, idx) => (
+                        <div key={idx} className="cc-glass" style={{ padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Ronda {round.round_number}</h4>
+                            {roundsConfig.length > 1 && (
+                              <button 
+                                type="button" 
+                                className="cc-btn" 
+                                onClick={() => setRoundsConfig(roundsConfig.filter((_, i) => i !== idx).map((r, i) => ({ ...r, round_number: i + 1 })))}
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>Avances por lista</label>
+                              <input 
+                                type="number" 
+                                value={round.advances_per_list}
+                                onChange={(e) => setRoundsConfig(roundsConfig.map((r, i) => i === idx ? { ...r, advances_per_list: parseInt(e.target.value) || 0 } : r))}
+                                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>Tipo de duración</label>
+                              <select 
+                                value={round.duration_type}
+                                onChange={(e) => setRoundsConfig(roundsConfig.map((r, i) => i === idx ? { ...r, duration_type: e.target.value as any, duration_value: e.target.value === 'unlimited' ? undefined : r.duration_value } : r))}
+                                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                              >
+                                <option value="days">Días</option>
+                                <option value="hours">Horas</option>
+                                <option value="unlimited">Sin límite</option>
+                              </select>
+                            </div>
+                            {round.duration_type !== 'unlimited' && (
+                              <div>
+                                <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>
+                                  Duración ({round.duration_type === 'days' ? 'días' : 'horas'})
+                                </label>
+                                <input 
+                                  type="number" 
+                                  value={round.duration_value || ''}
+                                  onChange={(e) => setRoundsConfig(roundsConfig.map((r, i) => i === idx ? { ...r, duration_value: parseInt(e.target.value) || undefined } : r))}
+                                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <button 
+                        type="button" 
+                        className="cc-btn" 
+                        onClick={() => setRoundsConfig([...roundsConfig, { 
+                          round_number: roundsConfig.length + 1, 
+                          advances_per_list: Math.max(1, Math.floor((roundsConfig[roundsConfig.length - 1]?.advances_per_list || 10) / 2)), 
+                          duration_type: 'days', 
+                          duration_value: 1 
+                        }])}
+                      >
+                        + Añadir ronda
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <button type="submit" disabled={creating} className="cc-btn cc-btn--primary">{creating ? 'Creando…' : 'Crear'}</button>
               </div>
@@ -357,9 +556,24 @@ export default function TrendingAdmin() {
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {r.status === 'draft' && <button className="cc-btn" onClick={() => doPublish(r.id)}>Publicar</button>}
                       {r.status === 'open' && <button className="cc-btn" onClick={() => doClose(r.id)}>Cerrar</button>}
+                      {r.rounds_config && r.current_round_number === 0 && r.status === 'open' && (
+                        <button className="cc-btn" onClick={() => doStartFirstRound(r.id)} style={{ background: 'rgba(0,188,212,0.3)' }}>Iniciar Ronda 1</button>
+                      )}
                       <a href={`/trending/${r.id}`} className="cc-btn cc-btn--primary">Abrir</a>
                       <button className="cc-btn" onClick={() => beginEdit(r)}>{editId === r.id ? 'Editando…' : 'Editar'}</button>
+                      <button 
+                        className="cc-btn" 
+                        onClick={() => doDelete(r.id, r.title)}
+                        style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#ff6b6b' }}
+                      >
+                        🗑️ Eliminar
+                      </button>
                     </div>
+                    {r.rounds_config && r.current_round_number > 0 && (
+                      <div style={{ fontSize: 12, opacity: .8, marginTop: 4 }}>
+                        Ronda {r.current_round_number} de {r.total_rounds || '?'}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -12,6 +12,32 @@ export type Trending = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  rounds_config?: any;
+  lists_config?: any;
+  current_round_number?: number;
+  total_rounds?: number;
+};
+
+export type RoundConfig = {
+  round_number: number;
+  advances_per_list: number;
+  duration_type: "days" | "hours" | "unlimited";
+  duration_value?: number;
+};
+
+export type ListConfig = {
+  name: string;
+  size: number;
+};
+
+export type Round = {
+  round_number: number;
+  advances_per_list: number;
+  duration_type: "days" | "hours" | "unlimited";
+  duration_value: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  status: "pending" | "active" | "closed" | "completed";
 };
 
 export async function listTrendings(status?: Trending["status"]) {
@@ -69,6 +95,15 @@ export async function voteTrending(trendingId: number, candidateId: number) {
   if (error) throw error;
 }
 
+export async function voteTrendingRound(trendingId: number, candidateId: number, roundNumber: number) {
+  const { error } = await supabase.rpc("rpc_trending_vote_round", {
+    p_trending_id: trendingId,
+    p_candidate_id: candidateId,
+    p_round_number: roundNumber,
+  });
+  if (error) throw error;
+}
+
 export async function adminCreateTrending(payload: {
   title: string;
   description?: string;
@@ -96,6 +131,11 @@ export async function adminPublishTrending(trendingId: number) {
 
 export async function adminCloseTrending(trendingId: number) {
   const { error } = await supabase.rpc("rpc_trending_close", { p_trending_id: trendingId });
+  if (error) throw error;
+}
+
+export async function adminDeleteTrending(trendingId: number) {
+  const { error } = await supabase.rpc("rpc_trending_delete", { p_trending_id: trendingId });
   if (error) throw error;
 }
 
@@ -147,6 +187,65 @@ export async function adminUpdateTrending(args: {
     p_cover_url: args.cover_url ?? null,
   });
   if (error) throw error;
+}
+
+// ================================================
+// FUNCIONES DE RONDAS
+// ================================================
+
+export async function adminSetRoundsConfig(
+  trendingId: number,
+  roundsConfig: { rounds: RoundConfig[] },
+  listsConfig: { lists: ListConfig[] },
+  totalRounds: number
+) {
+  const { error } = await supabase.rpc("rpc_trending_set_rounds_config", {
+    p_trending_id: trendingId,
+    p_rounds_config: roundsConfig,
+    p_lists_config: listsConfig,
+    p_total_rounds: totalRounds,
+  });
+  if (error) throw error;
+}
+
+export async function adminStartFirstRound(trendingId: number) {
+  const { error } = await supabase.rpc("rpc_trending_start_first_round", {
+    p_trending_id: trendingId,
+  });
+  if (error) throw error;
+}
+
+export async function adminCloseRound(trendingId: number, roundNumber: number) {
+  const { error } = await supabase.rpc("rpc_trending_close_round", {
+    p_trending_id: trendingId,
+    p_round_number: roundNumber,
+  });
+  if (error) throw error;
+}
+
+export async function getRoundCandidates(trendingId: number, roundNumber: number) {
+  const { data, error } = await supabase.rpc("rpc_trending_get_round_candidates", {
+    p_trending_id: trendingId,
+    p_round_number: roundNumber,
+  });
+  if (error) throw error;
+  return (data ?? []) as {
+    candidate_id: number;
+    user_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    bio_short: string | null;
+    list_name: string | null;
+    votes: number;
+  }[];
+}
+
+export async function getTrendingRounds(trendingId: number) {
+  const { data, error } = await supabase.rpc("rpc_trending_get_rounds", {
+    p_trending_id: trendingId,
+  });
+  if (error) throw error;
+  return (data ?? []) as Round[];
 }
 
 
