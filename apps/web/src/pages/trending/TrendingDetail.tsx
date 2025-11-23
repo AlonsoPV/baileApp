@@ -283,6 +283,63 @@ export default function TrendingDetail() {
         </div>
       </header>
 
+      {/* Mostrar participantes desde participants_lists si existe */}
+      {t.participants_lists && (() => {
+        let participantsData: any = null;
+        try {
+          if (typeof t.participants_lists === 'string') {
+            participantsData = JSON.parse(t.participants_lists);
+          } else {
+            participantsData = t.participants_lists;
+          }
+        } catch (e) {
+          console.error('Error parsing participants_lists', e);
+        }
+        
+        if (participantsData && participantsData.lists && participantsData.lists.length > 0) {
+          return (
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ marginBottom: 16, fontSize: '1.5rem', fontWeight: 900 }}>Participantes</h2>
+              <div style={{ display: 'grid', gap: 20 }}>
+                {participantsData.lists.map((list: any) => (
+                  <div key={list.name} style={{
+                    padding: 16,
+                    borderRadius: 12,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.15)'
+                  }}>
+                    <h3 style={{ margin: '0 0 12px 0', fontWeight: 900, fontSize: '1.1rem' }}>
+                      {list.name} <span style={{ opacity: 0.7, fontSize: '0.9rem', fontWeight: 400 }}>({list.participants?.length || 0})</span>
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                      {list.participants?.map((p: any) => (
+                        <div key={p.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 8,
+                          borderRadius: 8,
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          <img
+                            src={p.avatar || 'https://placehold.co/40x40?text=User'}
+                            alt={p.name}
+                            style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
+                          />
+                          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {/* Información de rondas */}
       {useRoundsMode && t.current_round_number > 0 && (
         <div style={{ 

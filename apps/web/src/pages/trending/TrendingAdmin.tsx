@@ -136,11 +136,6 @@ export default function TrendingAdmin() {
         }
       }
 
-      // Configurar rondas si está habilitado
-      if (useRounds && roundsConfig.length > 0 && listsConfig.length > 0) {
-        await adminSetRoundsConfig(id, { rounds: roundsConfig }, { lists: listsConfig }, roundsConfig.length);
-      }
-
       // Guardar participantes y listas
       console.log('[TrendingAdmin] lists antes de procesar:', lists);
       const participantsLists = {
@@ -167,6 +162,19 @@ export default function TrendingAdmin() {
       } catch (e: any) {
         console.error('[TrendingAdmin] Error al guardar participants_lists:', e);
         showToast(`Error al guardar participantes: ${e?.message}`, 'error');
+      }
+
+      // Actualizar lists_config con el tamaño real de participantes si está habilitado el sistema de rondas
+      if (useRounds && roundsConfig.length > 0) {
+        const updatedListsConfig = participantsLists.lists.map(list => ({
+          name: list.name,
+          size: list.participants.length
+        }));
+        console.log('[TrendingAdmin] Actualizando lists_config con tamaños reales:', updatedListsConfig);
+        await adminSetRoundsConfig(id, { rounds: roundsConfig }, { lists: updatedListsConfig }, roundsConfig.length);
+      } else if (useRounds && roundsConfig.length > 0 && listsConfig.length > 0) {
+        // Si no hay participantes aún, usar la configuración original
+        await adminSetRoundsConfig(id, { rounds: roundsConfig }, { lists: listsConfig }, roundsConfig.length);
       }
 
       setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
@@ -512,21 +520,6 @@ export default function TrendingAdmin() {
         }
       }
       
-      // Actualizar configuración de rondas si está habilitada
-      if (editUseRounds && editRoundsConfig.length > 0 && editListsConfig.length > 0) {
-        await adminSetRoundsConfig(editId, { rounds: editRoundsConfig }, { lists: editListsConfig }, editRoundsConfig.length);
-      }
-      
-      // Si hay una ronda activa, activar todos los candidatos pendientes
-      const trending = rows.find(r => r.id === editId);
-      if (trending?.current_round_number && trending.current_round_number > 0) {
-        try {
-          await adminActivatePendingCandidates(editId);
-        } catch (e) {
-          console.error('Error activando candidatos pendientes', e);
-        }
-      }
-
       // Guardar participantes y listas
       console.log('[TrendingAdmin] editLists antes de procesar:', editLists);
       const participantsLists = {
@@ -553,6 +546,29 @@ export default function TrendingAdmin() {
       } catch (e: any) {
         console.error('[TrendingAdmin] Error al guardar participants_lists (edit):', e);
         showToast(`Error al guardar participantes: ${e?.message}`, 'error');
+      }
+
+      // Actualizar lists_config con el tamaño real de participantes si está habilitado el sistema de rondas
+      if (editUseRounds && editRoundsConfig.length > 0) {
+        const updatedListsConfig = participantsLists.lists.map(list => ({
+          name: list.name,
+          size: list.participants.length
+        }));
+        console.log('[TrendingAdmin] Actualizando lists_config con tamaños reales (edit):', updatedListsConfig);
+        await adminSetRoundsConfig(editId, { rounds: editRoundsConfig }, { lists: updatedListsConfig }, editRoundsConfig.length);
+      } else if (editUseRounds && editRoundsConfig.length > 0 && editListsConfig.length > 0) {
+        // Si no hay participantes aún, usar la configuración original
+        await adminSetRoundsConfig(editId, { rounds: editRoundsConfig }, { lists: editListsConfig }, editRoundsConfig.length);
+      }
+      
+      // Si hay una ronda activa, activar todos los candidatos pendientes
+      const trending = rows.find(r => r.id === editId);
+      if (trending?.current_round_number && trending.current_round_number > 0) {
+        try {
+          await adminActivatePendingCandidates(editId);
+        } catch (e) {
+          console.error('Error activando candidatos pendientes', e);
+        }
       }
       
       setEditId(null);
