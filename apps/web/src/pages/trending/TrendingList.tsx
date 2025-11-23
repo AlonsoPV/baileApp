@@ -90,8 +90,8 @@ export default function TrendingList() {
         .trending-card {
           position: relative;
           aspect-ratio: 1 / 1;
+          width: 450px;
           max-width: 450px;
-          width: 100%;
           margin: 0 auto;
           border-radius: 24px;
           overflow: hidden;
@@ -219,7 +219,7 @@ export default function TrendingList() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, 450px)', gap: '1.5rem', justifyContent: 'center' }}>
             {rows.map((r) => (
               <article
                 key={r.id}

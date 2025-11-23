@@ -527,10 +527,13 @@ export default function TrendingAdmin() {
           ) : rows.length === 0 ? (
             <div style={{ opacity: .85 }}>Sin elementos</div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 450px)', gap: 12, justifyContent: 'center' }}>
               {rows.map((r) => (
                 <div key={r.id} style={{
                   position: 'relative',
+                  width: '450px',
+                  maxWidth: '450px',
+                  minWidth: '450px',
                   borderRadius: 16,
                   overflow: 'hidden',
                   border: '1px solid rgba(255,255,255,0.18)'
