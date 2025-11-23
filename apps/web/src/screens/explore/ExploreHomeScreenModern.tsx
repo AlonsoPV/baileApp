@@ -471,8 +471,15 @@ export default function ExploreHomeScreen() {
       cronogramaIndex // Índice original en el cronograma
     });
 
-    const fromAcademies = allA.flatMap((ac: any) => (Array.isArray(ac?.cronograma) ? ac.cronograma.map((c: any, idx: number) => mapClase(ac, c, 'academy', idx)) : []));
-    const fromTeachers = allM.flatMap((tc: any) => (Array.isArray(tc?.cronograma) ? tc.cronograma.map((c: any, idx: number) => mapClase(tc, c, 'teacher', idx)) : []));
+    // Usar cronograma como fuente principal, con horarios como fallback
+    const fromAcademies = allA.flatMap((ac: any) => {
+      const cronogramaData = ac?.cronograma || ac?.horarios || [];
+      return Array.isArray(cronogramaData) ? cronogramaData.map((c: any, idx: number) => mapClase(ac, c, 'academy', idx)) : [];
+    });
+    const fromTeachers = allM.flatMap((tc: any) => {
+      const cronogramaData = tc?.cronograma || tc?.horarios || [];
+      return Array.isArray(cronogramaData) ? cronogramaData.map((c: any, idx: number) => mapClase(tc, c, 'teacher', idx)) : [];
+    });
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
     // Filtro por preset de fechas

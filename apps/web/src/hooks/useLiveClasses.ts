@@ -41,17 +41,66 @@ function cronoItemToClases(
   const fecha = item.fecha || null;
   const descripcion = item.descripcion || null;
   
-  // Buscar costo en el array de costos usando referenciaCosto o titulo
-  let costo: number | null = item.costo || item.precio || null;
+  // PRIORIDAD 1: Buscar costo directamente en el item del cronograma (más rápido y confiable)
+  let costo: number | null = null;
+  if (item.costo && typeof item.costo === 'object') {
+    // Si el costo está embebido en el item, usarlo directamente
+    const costoEmbebido = item.costo;
+    if (typeof costoEmbebido.precio === 'number') {
+      costo = Number(costoEmbebido.precio);
+    }
+  }
+  
+  // PRIORIDAD 2: Buscar en campos directos del item (compatibilidad)
+  if (!costo) {
+    costo = item.costo || item.precio || null;
+    if (typeof costo === 'object' && costo !== null) {
+      costo = (costo as any).precio || null;
+    }
+    if (typeof costo === 'number') {
+      costo = Number(costo);
+    } else {
+      costo = null;
+    }
+  }
+  
+  // PRIORIDAD 3: Buscar en el array de costos (fallback para datos antiguos)
   if (!costo && costos && Array.isArray(costos)) {
-    const referencia = item.referenciaCosto || item.titulo || item.nombre;
-    if (referencia) {
-      const costoItem = costos.find((c: any) => 
-        (c.nombre || '').trim().toLowerCase() === referencia.trim().toLowerCase()
-      );
-      if (costoItem && costoItem.precio !== null && costoItem.precio !== undefined) {
-        costo = Number(costoItem.precio);
+    let costoItem: any = null;
+    
+    // 1. Buscar por ID de clase (más confiable - no cambia aunque cambie el nombre)
+    if (item.id) {
+      const classId = String(item.id);
+      costoItem = costos.find((c: any) => {
+        // Buscar por classId (campo dedicado)
+        if (c?.classId && String(c.classId) === classId) return true;
+        // Buscar por referenciaCosto que sea el ID (para compatibilidad)
+        if (c?.referenciaCosto && String(c.referenciaCosto) === classId) return true;
+        // También buscar si el nombre del costo es el ID (para compatibilidad con costos muy antiguos)
+        return String(c?.nombre || '').trim() === classId;
+      });
+    }
+    
+    // 2. Buscar por índice del cronograma
+    if (!costoItem && index !== null && index !== undefined) {
+      costoItem = costos.find((c: any) => c?.cronogramaIndex === index);
+    }
+    
+    // 3. Buscar por referenciaCosto o título (case-insensitive)
+    if (!costoItem) {
+      const referencia = item.referenciaCosto || item.titulo || item.nombre;
+      if (referencia) {
+        const refLower = String(referencia).trim().toLowerCase();
+        costoItem = costos.find((c: any) => {
+          const nombre = String(c?.nombre || '').trim().toLowerCase();
+          const titulo = String(c?.titulo || '').trim().toLowerCase();
+          return nombre === refLower || titulo === refLower;
+        });
       }
+    }
+    
+    if (costoItem && costoItem.precio !== null && costoItem.precio !== undefined) {
+      costo = Number(costoItem.precio);
     }
   }
   

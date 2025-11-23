@@ -1047,9 +1047,38 @@ export default function AcademyProfileEditor() {
                     const ritmoIds = c.ritmoIds && c.ritmoIds.length
                       ? c.ritmoIds
                       : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
+                    const classId = ensureClassId(prev); // Obtener ID de la clase (preservar existente o generar nuevo)
+                    
+                    // Buscar el costo por ID de clase (más confiable que por nombre)
+                    const costoIdx = currentCostos.findIndex((x: any) => {
+                      // Buscar por ID de clase (más confiable - no cambia aunque cambie el nombre)
+                      if (x?.classId && classId && String(x.classId) === String(classId)) return true;
+                      // Buscar por referenciaCosto que sea el ID (para compatibilidad)
+                      if (x?.referenciaCosto && String(x.referenciaCosto) === String(classId)) return true;
+                      // Buscar por índice del cronograma (fallback)
+                      if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
+                      // Buscar por nombre anterior (último fallback para costos antiguos)
+                      return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
+                    });
+                    
+                    const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id 
+                      ? currentCostos[costoIdx].id 
+                      : Date.now(); // Generar ID único si no existe
+                    const updatedCosto = {
+                      id: costoId, // ID único del costo
+                      nombre: c.nombre, // Mantener nombre para visualización
+                      tipo: c.tipo,
+                      precio: c.precio ?? null,
+                      regla: c.regla || '',
+                      classId: classId, // ID de la clase (referencia principal)
+                      referenciaCosto: String(classId), // También guardar como referenciaCosto para compatibilidad
+                      cronogramaIndex: editingIndex // Guardar índice para búsqueda futura
+                    } as any;
+                    if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
+                    
                     const updatedItem = {
                       ...prev,
-                      id: ensureClassId(prev), // Preservar ID existente o generar uno nuevo si no existe
+                      id: classId,
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
@@ -1058,7 +1087,8 @@ export default function AcademyProfileEditor() {
                       inicio: c.inicio,
                       fin: c.fin,
                       nivel: c.nivel || undefined,
-                      referenciaCosto: c.nombre,
+                      referenciaCosto: String(classId), // Usar ID de clase en lugar del nombre
+                      costo: updatedCosto, // Incluir costo directamente en el item del cronograma
                       ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
                       ritmoIds,
                       zonaId: c.zonaId,
@@ -1066,15 +1096,6 @@ export default function AcademyProfileEditor() {
                       ubicacionId: c.ubicacionId || (match?.id || null)
                     };
                     currentCrono[editingIndex] = updatedItem;
-
-                    const costoIdx = currentCostos.findIndex((x: any) => (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase());
-                    const updatedCosto = {
-                      nombre: c.nombre,
-                      tipo: c.tipo,
-                      precio: c.precio ?? null,
-                      regla: c.regla || ''
-                    } as any;
-                    if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
 
                     setField('cronograma' as any, currentCrono as any);
                     setField('costos' as any, currentCostos as any);
@@ -1099,8 +1120,22 @@ export default function AcademyProfileEditor() {
                     const ritmoIds = c.ritmoIds && c.ritmoIds.length
                       ? c.ritmoIds
                       : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
+                    const newClassId = generateClassId(); // Generar ID único para la nueva clase
+                    const newClassIndex = currentCrono.length; // Índice de la nueva clase en el cronograma
+                    
+                    const newCosto = {
+                      id: Date.now(), // ID único del costo
+                      nombre: c.nombre, // Mantener nombre para visualización
+                      tipo: c.tipo,
+                      precio: c.precio ?? null,
+                      regla: c.regla || '',
+                      classId: newClassId, // ID de la clase (referencia principal)
+                      referenciaCosto: String(newClassId), // También guardar como referenciaCosto para compatibilidad
+                      cronogramaIndex: newClassIndex // Guardar índice para búsqueda futura
+                    } as any;
+                    
                     const nextCrono = ([...currentCrono, {
-                      id: generateClassId(), // Generar ID único para la nueva clase
+                      id: newClassId,
                       tipo: 'clase',
                       titulo: c.nombre,
                       fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
@@ -1109,19 +1144,15 @@ export default function AcademyProfileEditor() {
                       inicio: c.inicio,
                       fin: c.fin,
                       nivel: c.nivel || undefined,
-                      referenciaCosto: c.nombre,
+                      referenciaCosto: String(newClassId), // Usar ID de clase en lugar del nombre
+                      costo: newCosto, // Incluir costo directamente en el item del cronograma
                       ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
                       ritmoIds,
                       zonaId: c.zonaId,
                       ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
                       ubicacionId: c.ubicacionId || (match?.id || null)
                     }] as any);
-                    const nextCostos = ([...currentCostos, {
-                      nombre: c.nombre,
-                      tipo: c.tipo,
-                      precio: c.precio ?? null,
-                      regla: c.regla || ''
-                    }] as any);
+                    const nextCostos = ([...currentCostos, newCosto] as any);
                     setField('cronograma' as any, nextCrono as any);
                     setField('costos' as any, nextCostos as any);
 

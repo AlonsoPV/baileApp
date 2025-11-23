@@ -51,7 +51,8 @@ export default function ClassPublicScreen() {
   const creatorLink = isTeacher ? urls.teacherLive(profile?.id) : urls.academyLive(profile?.id);
   const creatorTypeLabel = isTeacher ? 'Maestro' : 'Academia';
 
-  const cronograma = profile?.horarios || profile?.cronograma || [];
+  // Usar cronograma como fuente principal, con horarios como fallback para compatibilidad
+  const cronograma = profile?.cronograma || profile?.horarios || [];
   const costos = profile?.costos || [];
   const ubicacionBase = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
     ? {
@@ -67,11 +68,14 @@ export default function ClassPublicScreen() {
   let selectedClass: any | undefined = undefined;
   let selectedClassIndex = 0;
   
+  console.log('[ClassPublicScreen] 🔍 Buscando clase:', { classIdParam, classIndexParam, classesArrLength: classesArr.length });
+  
   if (classIdParam) {
     const foundIndex = classesArr.findIndex((c: any) => String(c?.id) === String(classIdParam));
     if (foundIndex >= 0) {
       selectedClass = classesArr[foundIndex];
       selectedClassIndex = foundIndex;
+      console.log('[ClassPublicScreen] ✅ Clase encontrada por ID:', { foundIndex, class: selectedClass });
     }
   }
   if (!selectedClass && classIndexParam !== '') {
@@ -79,12 +83,24 @@ export default function ClassPublicScreen() {
     if (!Number.isNaN(idx) && idx >= 0 && idx < classesArr.length) {
       selectedClass = classesArr[idx];
       selectedClassIndex = idx;
+      console.log('[ClassPublicScreen] ✅ Clase encontrada por índice:', { idx, class: selectedClass });
+    } else {
+      console.warn('[ClassPublicScreen] ⚠️ Índice inválido:', { idx, classesArrLength: classesArr.length });
     }
   }
   if (!selectedClass) {
     selectedClass = classesArr[0];
     selectedClassIndex = 0;
+    console.log('[ClassPublicScreen] ⚠️ Usando primera clase como fallback:', selectedClass);
   }
+  
+  console.log('[ClassPublicScreen] 📋 Clase seleccionada:', {
+    index: selectedClassIndex,
+    id: selectedClass?.id,
+    titulo: selectedClass?.titulo,
+    nombre: selectedClass?.nombre,
+    referenciaCosto: selectedClass?.referenciaCosto
+  });
   
   // Generar un ID único para la clase basado en el índice (similar a useLiveClasses)
   // Si la clase tiene diasSemana, usar el primer día; si tiene fecha, usar 0
@@ -117,23 +133,168 @@ export default function ClassPublicScreen() {
 
   const costLabel = (() => {
     try {
+      console.log('[ClassPublicScreen] 💰 Buscando costo:', {
+        costosLength: costos?.length || 0,
+        selectedClassIndex,
+        classId: selectedClass?.id,
+        referenciaCosto: selectedClass?.referenciaCosto,
+        titulo: selectedClass?.titulo,
+        nombre: selectedClass?.nombre,
+        tieneCostoEnClase: !!(selectedClass as any)?.costo,
+        costos: costos
+      });
+      
+      // PRIORIDAD 1: Buscar costo directamente en el item del cronograma (más rápido y confiable)
+      if ((selectedClass as any)?.costo) {
+        const costoEnClase = (selectedClass as any).costo;
+        const precio = costoEnClase?.precio;
+        if (typeof precio === 'number') {
+          console.log('[ClassPublicScreen] ✅ Costo encontrado directamente en el item del cronograma:', { costoEnClase });
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(precio);
+        }
+      }
+      
+      // PRIORIDAD 2: Buscar en el array de costos (fallback para datos antiguos)
       if (Array.isArray(costos) && costos.length) {
-        if ((selectedClass as any)?.referenciaCosto) {
-          const ref = (selectedClass as any).referenciaCosto;
-          const match = (costos as any[]).find((c: any) => (c?.nombre || c?.titulo || c?.tipo) === ref);
-          const precio = match?.precio;
-          if (typeof precio === 'number') {
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }).format(precio);
+        // Buscar costo por múltiples criterios (más robusto)
+        // PRIORIDAD: ID de clase > Índice cronograma > Nombre (para evitar problemas al cambiar nombre)
+        let match: any = null;
+        let matchMethod = '';
+        
+        // 1. Buscar por ID de clase (MÁS CONFIABLE - no cambia aunque cambie el nombre)
+        if ((selectedClass as any)?.id) {
+          const classId = String((selectedClass as any).id);
+          // Buscar por classId exacto
+          match = (costos as any[]).find((c: any) => {
+            // Buscar por classId (campo dedicado)
+            if (c?.classId && String(c.classId) === classId) return true;
+            // Buscar por referenciaCosto que sea el ID (para compatibilidad)
+            if (c?.referenciaCosto && String(c.referenciaCosto) === classId) return true;
+            // También buscar si el nombre del costo es el ID (para compatibilidad con costos muy antiguos)
+            return String(c?.nombre || '').trim() === classId;
+          });
+          if (match) {
+            matchMethod = 'classId';
+            console.log('[ClassPublicScreen] ✅ Costo encontrado por ID de clase:', { classId, match });
           }
         }
+        
+        // 2. Buscar por índice del cronograma (segunda opción más confiable)
+        if (!match && selectedClassIndex !== null && selectedClassIndex !== undefined) {
+          match = (costos as any[]).find((c: any) => c?.cronogramaIndex === selectedClassIndex);
+          if (match) {
+            matchMethod = 'cronogramaIndex';
+            console.log('[ClassPublicScreen] ✅ Costo encontrado por índice:', { selectedClassIndex, match });
+          }
+        }
+        
+        // 3. Buscar por referenciaCosto (nombre de la clase) - case-insensitive
+        // Si hay múltiples matches, priorizar el que tenga precio > 0 y que coincida exactamente
+        if (!match && (selectedClass as any)?.referenciaCosto) {
+          const ref = String((selectedClass as any).referenciaCosto).trim().toLowerCase();
+          
+          // Primero buscar match exacto por nombre (más confiable)
+          const exactMatches = (costos as any[]).filter((c: any) => {
+            const nombre = String(c?.nombre || '').trim().toLowerCase();
+            return nombre === ref;
+          });
+          
+          if (exactMatches.length > 0) {
+            // Priorizar: 1) que tenga classId/cronogramaIndex, 2) precio > 0
+            match = exactMatches.find((c: any) => 
+              (c?.classId || c?.cronogramaIndex !== undefined) && 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || exactMatches.find((c: any) => 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || exactMatches[0]; // Último fallback: cualquier match exacto
+            if (match) matchMethod = 'referenciaCosto (exacto)';
+          }
+          
+          // Si no hay match exacto, buscar por título o tipo (menos confiable)
+          if (!match) {
+            const otherMatches = (costos as any[]).filter((c: any) => {
+              const titulo = String(c?.titulo || '').trim().toLowerCase();
+              const tipo = String(c?.tipo || '').trim().toLowerCase();
+              return titulo === ref || tipo === ref;
+            });
+            
+            if (otherMatches.length > 0) {
+              match = otherMatches.find((c: any) => 
+                (c?.classId || c?.cronogramaIndex !== undefined) && 
+                typeof c?.precio === 'number' && c.precio > 0
+              ) || otherMatches.find((c: any) => 
+                typeof c?.precio === 'number' && c.precio > 0
+              ) || otherMatches[0];
+              if (match) matchMethod = 'referenciaCosto (título/tipo)';
+            }
+          }
+        }
+        
+        // 4. Buscar por título de la clase (fallback)
+        if (!match && (selectedClass as any)?.titulo) {
+          const ref = String((selectedClass as any).titulo).trim().toLowerCase();
+          const allMatches = (costos as any[]).filter((c: any) => {
+            const nombre = String(c?.nombre || '').trim().toLowerCase();
+            return nombre === ref;
+          });
+          
+          if (allMatches.length > 0) {
+            // Priorizar: 1) que tenga classId/cronogramaIndex, 2) precio > 0
+            match = allMatches.find((c: any) => 
+              (c?.classId || c?.cronogramaIndex !== undefined) && 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || allMatches.find((c: any) => 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || allMatches[0];
+            if (match) matchMethod = 'titulo';
+          }
+        }
+        
+        // 5. Buscar por nombre de la clase (último fallback)
+        if (!match && (selectedClass as any)?.nombre) {
+          const ref = String((selectedClass as any).nombre).trim().toLowerCase();
+          const allMatches = (costos as any[]).filter((c: any) => {
+            const nombre = String(c?.nombre || '').trim().toLowerCase();
+            return nombre === ref;
+          });
+          
+          if (allMatches.length > 0) {
+            // Priorizar: 1) que tenga classId/cronogramaIndex, 2) precio > 0
+            match = allMatches.find((c: any) => 
+              (c?.classId || c?.cronogramaIndex !== undefined) && 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || allMatches.find((c: any) => 
+              typeof c?.precio === 'number' && c.precio > 0
+            ) || allMatches[0];
+            if (match) matchMethod = 'nombre';
+          }
+        }
+        
+        console.log('[ClassPublicScreen] 💰 Resultado de búsqueda de costo:', {
+          matchFound: !!match,
+          matchMethod,
+          match: match ? { nombre: match.nombre, precio: match.precio, classId: match.classId, cronogramaIndex: match.cronogramaIndex } : null
+        });
+        
+        const precio = match?.precio;
+        if (typeof precio === 'number') {
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(precio);
+        }
+        // Si no se encontró un costo específico, buscar el mínimo de todos los costos
         const nums = (costos as any[]).map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
         if (nums.length) {
           const min = Math.min(...(nums as number[]));
+          console.log('[ClassPublicScreen] 💰 Usando precio mínimo:', min);
           return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -143,7 +304,10 @@ export default function ClassPublicScreen() {
         }
       }
       return undefined;
-    } catch { return undefined; }
+    } catch (error) {
+      console.error('[ClassPublicScreen] ❌ Error buscando costo:', error);
+      return undefined;
+    }
   })();
 
   const locationLabel = (() => {

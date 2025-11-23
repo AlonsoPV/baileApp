@@ -1455,9 +1455,10 @@ export default function AcademyProfileLive() {
           {(() => {
             // Verificar si hay clases para mostrar
             const hasClassesFromTables = classesFromTables && classesFromTables.length > 0;
-            const hasCronograma = Array.isArray((academy as any)?.horarios) && (academy as any).horarios.length > 0;
-            const hasCronogramaAlt = Array.isArray((academy as any)?.cronograma) && (academy as any).cronograma.length > 0;
-            const hasClasses = hasClassesFromTables || hasCronograma || hasCronogramaAlt;
+            // Usar cronograma como fuente principal, con horarios como fallback
+            const cronogramaData = (academy as any)?.cronograma || (academy as any)?.horarios || [];
+            const hasCronograma = Array.isArray(cronogramaData) && cronogramaData.length > 0;
+            const hasClasses = hasClassesFromTables || hasCronograma;
             
             // Solo mostrar la sección si hay clases o si está cargando
             if (!classesLoading && !hasClasses) return null;
@@ -1555,7 +1556,7 @@ export default function AcademyProfileLive() {
                   )}
                   <ClasesLive
                     title=""
-                    cronograma={(academy as any)?.horarios || (academy as any)?.cronograma || []}
+                    cronograma={(academy as any)?.cronograma || (academy as any)?.horarios || []}
                     costos={(academy as any)?.costos || []}
                     ubicacion={{
                       nombre: (academy as any)?.ubicaciones?.[0]?.nombre,
