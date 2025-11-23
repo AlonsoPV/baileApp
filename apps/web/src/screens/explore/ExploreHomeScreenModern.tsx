@@ -335,7 +335,13 @@ export default function ExploreHomeScreen() {
     const todayBase = parseYmdToDate(todayYmd);
     const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
 
+    // Si hay búsqueda activa, incluir eventos pasados también
+    const includePastEvents = !!filters.q && filters.q.trim().length > 0;
+
     const upcoming = allFechas.filter((fecha: any) => {
+      // Si hay búsqueda activa, incluir todos los eventos (pasados y futuros)
+      if (includePastEvents) return true;
+      
       const fechaDate = parseYmdToDate(fecha?.fecha);
       if (!fechaDate || !todayBase) return true;
       const fechaDateOnly = new Date(Date.UTC(
@@ -365,7 +371,7 @@ export default function ExploreHomeScreen() {
     });
 
     return sorted;
-  }, [fechasData, todayYmd]);
+  }, [fechasData, todayYmd, filters.q]);
 
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
@@ -503,10 +509,14 @@ export default function ExploreHomeScreen() {
     };
     const preset = filters.datePreset || 'todos';
 
+    // Si hay búsqueda activa, incluir clases pasadas también
+    const includePastClasses = !!filters.q && filters.q.trim().length > 0;
+
     const matchesPresetAndRange = (item: any) => {
       const occurrence = nextOccurrence(item);
       // Filtrar fechas pasadas: si la ocurrencia es anterior a hoy (sin hora), eliminar
-      if (occurrence && todayBase) {
+      // EXCEPTO si hay búsqueda activa, en cuyo caso incluir también clases pasadas
+      if (occurrence && todayBase && !includePastClasses) {
         const occurrenceDate = new Date(Date.UTC(
           occurrence.getUTCFullYear(),
           occurrence.getUTCMonth(),
@@ -552,7 +562,7 @@ export default function ExploreHomeScreen() {
     });
     // Sin límite: devolver todas las clases encontradas en orden cronológico
     return sorted;
-  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, todayYmd]);
+  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, filters.q, todayYmd]);
 
   const validUsuarios = React.useMemo(
     () =>

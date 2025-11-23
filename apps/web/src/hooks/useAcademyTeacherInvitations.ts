@@ -544,3 +544,64 @@ export function useCancelInvitation() {
   });
 }
 
+// Hook para que los maestros quiten/eliminen una invitación aceptada
+export function useRemoveInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (invitationId: number): Promise<{ invitation: AcademyTeacherInvitation; academyId: number }> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
+      // Verificar que el usuario es dueño del perfil de maestro
+      const { data: invitation, error: invError } = await supabase
+        .from('academy_teacher_invitations')
+        .select(`
+          *,
+          teacher:profiles_teacher!teacher_id (user_id)
+        `)
+        .eq('id', invitationId)
+        .single();
+
+      if (invError || !invitation) throw new Error('Invitación no encontrada');
+
+      const teacherUserId = (invitation as any).teacher?.user_id;
+      if (teacherUserId !== user.id) {
+        throw new Error('No tienes permiso para quitar esta invitación');
+      }
+
+      // Solo permitir quitar invitaciones aceptadas
+      if (invitation.status !== 'accepted') {
+        throw new Error('Solo puedes quitar invitaciones que ya fueron aceptadas');
+      }
+
+      const academyId = invitation.academy_id;
+
+      // Cambiar el status a 'rejected' para indicar que el maestro ya no quiere aparecer en esa academia
+      const { data, error } = await supabase
+        .from('academy_teacher_invitations')
+        .update({ 
+          status: 'rejected',
+          responded_at: new Date().toISOString()
+        })
+        .eq('id', invitationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { invitation: data as AcademyTeacherInvitation, academyId };
+    },
+    onSuccess: (result) => {
+      const academyId = result.academyId;
+      // Invalidar todas las queries relacionadas
+      qc.invalidateQueries({ queryKey: ['teacher-invitations'] });
+      qc.invalidateQueries({ queryKey: ['teacher-academies'] });
+      qc.invalidateQueries({ queryKey: ['accepted-teachers', academyId] });
+      qc.invalidateQueries({ queryKey: ['available-teachers', academyId] });
+      // Refetch inmediato para actualizar la UI
+      qc.refetchQueries({ queryKey: ['teacher-invitations'] });
+      qc.refetchQueries({ queryKey: ['teacher-academies'] });
+      qc.refetchQueries({ queryKey: ['accepted-teachers', academyId] });
+    },
+  });
+}
+

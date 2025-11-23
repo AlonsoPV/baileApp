@@ -31,7 +31,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
-import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
+import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies, useRemoveInvitation } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
 import { TeacherMetricsPanel } from "../../components/profile/TeacherMetricsPanel";
@@ -100,6 +100,7 @@ export default function TeacherProfileEditor() {
   const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useTeacherInvitations(teacherId);
   const { data: academies, refetch: refetchAcademies } = useTeacherAcademies(teacherId);
   const respondToInvitation = useRespondToInvitation();
+  const removeInvitation = useRemoveInvitation();
 
   // Hook para cambio de rol
   useRoleChange();
@@ -1471,6 +1472,43 @@ export default function TeacherProfileEditor() {
                             }}
                           >
                             ❌ Rechazar
+                          </button>
+                        </div>
+                      )}
+                      {inv.status === 'accepted' && (
+                        <div className="invitation-actions">
+                          <button
+                            onClick={async () => {
+                              if (!confirm('¿Estás seguro de que quieres dejar de aparecer en esta academia?')) {
+                                return;
+                              }
+                              try {
+                                await removeInvitation.mutateAsync(inv.id);
+                                setStatusMsg({ type: 'ok', text: '✅ Ya no apareces en esta academia' });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                                // Forzar refetch de las queries
+                                setTimeout(async () => {
+                                  await refetchInvitations();
+                                  await refetchAcademies();
+                                }, 500);
+                              } catch (error: any) {
+                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+                                setTimeout(() => setStatusMsg(null), 3000);
+                              }
+                            }}
+                            disabled={removeInvitation.isPending}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid #EF4444',
+                              borderRadius: '8px',
+                              color: '#EF4444',
+                              fontWeight: '600',
+                              cursor: removeInvitation.isPending ? 'not-allowed' : 'pointer',
+                              opacity: removeInvitation.isPending ? 0.6 : 1
+                            }}
+                          >
+                            🚫 Quitar
                           </button>
                         </div>
                       )}
