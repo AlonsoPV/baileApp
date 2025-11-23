@@ -12,6 +12,8 @@ import {
   adminCloseRound,
   adminActivatePendingCandidates,
   debugTrendingCandidates,
+  getRoundResults,
+  getFinalWinners,
 } from "@/lib/trending";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/lib/supabase";
@@ -49,6 +51,8 @@ export default function TrendingDetail() {
   const [rounds, setRounds] = React.useState<any[]>([]);
   const [currentRoundCandidates, setCurrentRoundCandidates] = React.useState<any[]>([]);
   const [useRoundsMode, setUseRoundsMode] = React.useState(false);
+  const [roundResults, setRoundResults] = React.useState<Map<number, any[]>>(new Map());
+  const [finalWinners, setFinalWinners] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     (async () => {
@@ -90,6 +94,35 @@ export default function TrendingDetail() {
               setCurrentRoundCandidates([]);
             }
           }
+          
+          // Cargar resultados de rondas cerradas
+          const closedRounds = roundsData.filter(r => r.status === 'closed' || r.status === 'completed');
+          const resultsMap = new Map<number, any[]>();
+          for (const round of closedRounds) {
+            try {
+              const results = await getRoundResults(trendingId, round.round_number);
+              resultsMap.set(round.round_number, results);
+            } catch (e) {
+              console.error(`[TrendingDetail] Error cargando resultados de ronda ${round.round_number}`, e);
+            }
+          }
+          setRoundResults(resultsMap);
+        }
+        
+        // Si el trending está cerrado, cargar ganadores finales (independientemente de si usa rondas)
+        if (tr.status === 'closed') {
+          try {
+            const winners = await getFinalWinners(trendingId);
+            console.log('[TrendingDetail] Ganadores finales cargados:', winners);
+            setFinalWinners(winners);
+          } catch (e) {
+            console.error('[TrendingDetail] Error cargando ganadores finales', e);
+            // Si hay error, intentar con el leaderboard tradicional como fallback
+            setFinalWinners([]);
+          }
+        } else {
+          // Limpiar ganadores si el trending no está cerrado
+          setFinalWinners([]);
         }
       } finally {
         setLoading(false);
@@ -191,23 +224,37 @@ export default function TrendingDetail() {
     return Array.from(best.values());
   }, [board]);
 
-  const canVoteByTime = isWithinWindow(t?.starts_at, t?.ends_at);
-  const canVote = t?.status === "open" && canVoteByTime;
-
   const doVote = async (candidateId: number) => {
     if (!user) {
       alert("Inicia sesión para votar");
       return;
     }
-    if (!canVote) return;
     try {
       if (useRoundsMode && t?.current_round_number) {
+        // Validar que la ronda actual esté activa y dentro de su ventana de tiempo
+        const currentRound = rounds.find(r => r.round_number === t.current_round_number);
+        const canVoteRound =
+          currentRound?.status === 'active' &&
+          (!currentRound.ends_at || new Date(currentRound.ends_at) > new Date());
+        if (!canVoteRound) {
+          alert('La ronda no está activa para votar.');
+          return;
+        }
+
         // Votar en ronda específica
         await voteTrendingRound(trendingId, candidateId, t.current_round_number);
         // Refetch round candidates
         const roundCandidates = await getRoundCandidates(trendingId, t.current_round_number);
         setCurrentRoundCandidates(roundCandidates);
       } else {
+        // Modo tradicional: validar ventana de tiempo global del trending
+        const canVoteByTime = isWithinWindow(t?.starts_at, t?.ends_at);
+        const canVote = t?.status === "open" && canVoteByTime;
+        if (!canVote) {
+          alert('El trending no está abierto para votación.');
+          return;
+        }
+
         // Votar modo tradicional
         await voteTrending(trendingId, candidateId);
         const lb = await leaderboard(trendingId);
@@ -246,6 +293,30 @@ export default function TrendingDetail() {
         const roundCandidates = await getRoundCandidates(trendingId, tr.current_round_number);
         setCurrentRoundCandidates(roundCandidates);
       }
+      
+      // Recargar resultados de rondas cerradas (incluyendo la que acabamos de cerrar)
+      const closedRounds = roundsData.filter(r => r.status === 'closed' || r.status === 'completed');
+      const resultsMap = new Map(roundResults);
+      for (const round of closedRounds) {
+        try {
+          const results = await getRoundResults(trendingId, round.round_number);
+          resultsMap.set(round.round_number, results);
+        } catch (e) {
+          console.error(`[TrendingDetail] Error cargando resultados de ronda ${round.round_number}`, e);
+        }
+      }
+      setRoundResults(resultsMap);
+      
+      // Si el trending está cerrado, cargar ganadores finales
+      if (tr.status === 'closed') {
+        try {
+          const winners = await getFinalWinners(trendingId);
+          setFinalWinners(winners);
+        } catch (e) {
+          console.error('[TrendingDetail] Error cargando ganadores finales', e);
+        }
+      }
+      
       alert('Ronda cerrada exitosamente');
     } catch (e: any) {
       alert(e?.message || 'No se pudo cerrar la ronda');
@@ -424,15 +495,706 @@ export default function TrendingDetail() {
         </div>
       )}
 
-      {/* Tabs de ritmos (solo si no usa rondas) */}
-      {!useRoundsMode && (
+      {/* Resultados finales de rondas cerradas */}
+      {useRoundsMode && roundResults.size > 0 && (() => {
+        const closedRounds = rounds.filter(r => r.status === 'closed' || r.status === 'completed').sort((a, b) => a.round_number - b.round_number);
+        if (closedRounds.length === 0) return null;
+        
+        return (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ marginBottom: 16, fontSize: '1.5rem', fontWeight: 900 }}>Resultados Finales por Ronda</h2>
+            {closedRounds.map((round) => {
+              const results = roundResults.get(round.round_number) || [];
+              if (results.length === 0) return null;
+              
+              // Agrupar resultados por lista
+              const byList = new Map<string, any[]>();
+              results.forEach((r: any) => {
+                const key = r.list_name || 'General';
+                if (!byList.has(key)) byList.set(key, []);
+                byList.get(key)!.push(r);
+              });
+              
+              return (
+                <div key={round.round_number} style={{
+                  marginBottom: 24,
+                  padding: 20,
+                  borderRadius: 16,
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '2px solid rgba(255,255,255,0.15)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900 }}>
+                      Ronda {round.round_number} - Finalizada
+                    </h3>
+                    <span style={{
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      background: 'rgba(239,68,68,0.2)',
+                      border: '1px solid rgba(239,68,68,0.4)',
+                      fontSize: '0.85rem',
+                      fontWeight: 700
+                    }}>
+                      {round.status === 'completed' ? '✅ Completada' : '🔴 Cerrada'}
+                    </span>
+                  </div>
+                  
+                  {Array.from(byList.entries()).map(([listName, items]) => (
+                    <div key={listName} style={{ marginBottom: 20 }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 800, opacity: 0.9 }}>
+                        {listName} <span style={{ opacity: 0.7, fontSize: '0.9rem', fontWeight: 400 }}>({items.length} participantes)</span>
+                      </h4>
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        {items
+                          .sort((a, b) => b.votes - a.votes) // Ordenar por votos descendente
+                          .map((r: any, idx: number) => {
+                            const m = userMeta[r.user_id] || {};
+                            const avatarSrc = r.avatar_url || m.avatar || "https://placehold.co/48x48?text=User";
+                            const displayName = r.display_name || m.name || "Sin nombre";
+                            const userHref = urls.userLive(r.user_id);
+                            const isTop3 = idx < 3;
+                            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
+                            
+                            return (
+                              <div
+                                key={r.candidate_id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 12,
+                                  padding: isTop3 ? 16 : 12,
+                                  borderRadius: 12,
+                                  background: isTop3
+                                    ? 'linear-gradient(135deg, rgba(255,215,0,0.16), rgba(255,255,255,0.04))'
+                                    : r.advanced
+                                    ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.1))'
+                                    : 'rgba(255,255,255,0.05)',
+                                  border: isTop3
+                                    ? '2px solid rgba(255,215,0,0.6)'
+                                    : r.advanced
+                                    ? '2px solid rgba(34,197,94,0.4)'
+                                    : '1px solid rgba(255,255,255,0.1)',
+                                  boxShadow: isTop3
+                                    ? '0 8px 24px rgba(255,215,0,0.28)'
+                                    : 'none',
+                                  position: 'relative'
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    padding: '4px 10px',
+                                    borderRadius: 999,
+                                    background: isTop3
+                                      ? 'rgba(0,0,0,0.55)'
+                                      : r.advanced
+                                      ? 'rgba(34,197,94,0.3)'
+                                      : 'rgba(0,0,0,0.4)',
+                                    border: `1px solid ${
+                                      isTop3
+                                        ? 'rgba(255,215,0,0.7)'
+                                        : r.advanced
+                                        ? 'rgba(34,197,94,0.5)'
+                                        : 'rgba(255,255,255,0.2)'
+                                    }`,
+                                    fontSize: '0.8rem',
+                                    fontWeight: 900,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6
+                                  }}
+                                >
+                                  {medal && <span>{medal}</span>}
+                                  <span>{idx + 1}° Lugar</span>
+                                </div>
+                                <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
+                                  <img
+                                    src={avatarSrc}
+                                    alt={displayName}
+                                    style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }}
+                                  />
+                                </a>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <a href={userHref} title={displayName} style={{ color: '#fff', textDecoration: 'none', fontWeight: 800, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {displayName}
+                                  </a>
+                                  {r.bio_short && (
+                                    <div style={{ opacity: 0.8, fontSize: '0.85rem', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {r.bio_short}
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Votos ocultos para público */}
+                                {r.advanced && (
+                                  <div style={{
+                                    padding: '6px 10px',
+                                    borderRadius: 8,
+                                    background: 'rgba(34,197,94,0.2)',
+                                    border: '1px solid rgba(34,197,94,0.4)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    ✅ Avanzó
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Ganadores Finales - Solo cuando el trending está cerrado */}
+      {t && t.status === 'closed' && (
+        <div style={{ 
+          marginBottom: 48,
+          position: 'relative',
+          padding: '40px 20px',
+          background: 'linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,193,7,0.05))',
+          borderRadius: 24,
+          border: '4px solid rgba(255,215,0,0.3)',
+          boxShadow: '0 12px 48px rgba(255,215,0,0.25)'
+        }}>
+          {/* Título Principal con Efecto */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: 40,
+            position: 'relative'
+          }}>
+            <div style={{
+              fontSize: '3.5rem',
+              lineHeight: 1,
+              marginBottom: 12,
+              filter: 'drop-shadow(0 4px 8px rgba(255,215,0,0.5))'
+            }}>
+              🏆
+            </div>
+            <h1 style={{
+              margin: 0,
+              fontSize: '2.5rem',
+              fontWeight: 900,
+              background: 'linear-gradient(135deg, #FFD700, #FFA500, #FFD700)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              textShadow: '0 0 30px rgba(255,215,0,0.5)',
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
+            }}>
+              🎉 Ganadores Finales 🎉
+            </h1>
+            <div style={{
+              marginTop: 8,
+              fontSize: '1.1rem',
+              opacity: 0.9,
+              fontWeight: 600,
+              color: '#FFD700'
+            }}>
+              ¡Felicitaciones a todos los participantes!
+            </div>
+          </div>
+
+          {finalWinners.length > 0 ? (() => {
+            // Agrupar ganadores por lista
+            const byList = new Map<string, any[]>();
+            finalWinners.forEach((w: any) => {
+              const key = w.list_name || 'General';
+              if (!byList.has(key)) byList.set(key, []);
+              byList.get(key)!.push(w);
+            });
+            
+            return Array.from(byList.entries()).map(([listName, winners]) => {
+              // Ordenar por posición y tomar solo los primeros 3
+              const sortedWinners = winners.sort((a, b) => a.position - b.position).slice(0, 3);
+              
+              return (
+                <div key={listName} style={{
+                  marginBottom: 48,
+                  padding: 32,
+                  borderRadius: 24,
+                  background: 'linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,193,7,0.08))',
+                  border: '3px solid rgba(255,215,0,0.5)',
+                  boxShadow: '0 8px 32px rgba(255,215,0,0.3)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  {/* Efecto de fondo decorativo */}
+                  <div style={{
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 200,
+                    height: 200,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(255,215,0,0.15), transparent)',
+                    pointerEvents: 'none'
+                  }} />
+                  
+                  <h2 style={{ 
+                    margin: '0 0 32px 0', 
+                    fontSize: '2rem', 
+                    fontWeight: 900,
+                    textAlign: 'center',
+                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: '0 2px 10px rgba(255,215,0,0.3)',
+                    letterSpacing: '1px'
+                  }}>
+                    {listName}
+                  </h2>
+                  
+                  <div style={{ display: 'grid', gap: 20, position: 'relative', zIndex: 1 }}>
+                    {sortedWinners.map((w: any) => {
+                      const m = userMeta[w.user_id] || {};
+                      const avatarSrc = w.avatar_url || m.avatar || "https://placehold.co/80x80?text=User";
+                      const displayName = w.display_name || m.name || "Sin nombre";
+                      const userHref = urls.userLive(w.user_id);
+                      
+                      // Colores y estilos según posición
+                      let medal = '🏅';
+                      let medalSize = '4rem';
+                      let positionColor = '#FFD700';
+                      let positionBg = 'linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,193,7,0.15))';
+                      let positionBorder = '3px solid rgba(255,215,0,0.6)';
+                      let positionText = '';
+                      let glowEffect = '0 0 20px rgba(255,215,0,0.4)';
+                      
+                      if (w.position === 1) {
+                        medal = '🥇';
+                        medalSize = '5rem';
+                        positionColor = '#FFD700';
+                        positionBg = 'linear-gradient(135deg, rgba(255,215,0,0.3), rgba(255,193,7,0.2))';
+                        positionBorder = '4px solid #FFD700';
+                        positionText = 'CAMPEÓN';
+                        glowEffect = '0 0 30px rgba(255,215,0,0.6)';
+                      } else if (w.position === 2) {
+                        medal = '🥈';
+                        medalSize = '4.5rem';
+                        positionColor = '#C0C0C0';
+                        positionBg = 'linear-gradient(135deg, rgba(192,192,192,0.25), rgba(169,169,169,0.15))';
+                        positionBorder = '3px solid #C0C0C0';
+                        positionText = 'SUBCAMPEÓN';
+                        glowEffect = '0 0 25px rgba(192,192,192,0.5)';
+                      } else if (w.position === 3) {
+                        medal = '🥉';
+                        medalSize = '4.5rem';
+                        positionColor = '#CD7F32';
+                        positionBg = 'linear-gradient(135deg, rgba(205,127,50,0.25), rgba(184,115,51,0.15))';
+                        positionBorder = '3px solid #CD7F32';
+                        positionText = 'TERCER LUGAR';
+                        glowEffect = '0 0 25px rgba(205,127,50,0.5)';
+                      }
+                      
+                      return (
+                        <div key={w.candidate_id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 24,
+                          padding: 28,
+                          borderRadius: 20,
+                          background: positionBg,
+                          border: positionBorder,
+                          position: 'relative',
+                          boxShadow: glowEffect,
+                          transform: w.position === 1 ? 'scale(1.02)' : 'scale(1)',
+                          transition: 'transform 0.3s ease'
+                        }}>
+                          {/* Medalla Grande */}
+                          <div style={{
+                            fontSize: medalSize,
+                            lineHeight: 1,
+                            minWidth: 80,
+                            textAlign: 'center',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                            animation: w.position === 1 ? 'pulse 2s infinite' : 'none'
+                          }}>
+                            {medal}
+                          </div>
+                          
+                          {/* Avatar con borde especial */}
+                          <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
+                            <div style={{
+                              width: 80,
+                              height: 80,
+                              borderRadius: 16,
+                              padding: 3,
+                              background: positionBg,
+                              border: `3px solid ${positionColor}`,
+                              boxShadow: `0 0 15px ${positionColor}40`
+                            }}>
+                              <img
+                                src={avatarSrc}
+                                alt={displayName}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  borderRadius: 12, 
+                                  objectFit: 'cover',
+                                  display: 'block'
+                                }}
+                              />
+                            </div>
+                          </a>
+                          
+                          {/* Información del ganador */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {positionText && (
+                              <div style={{
+                                fontSize: '0.9rem',
+                                fontWeight: 800,
+                                color: positionColor,
+                                marginBottom: 6,
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                textShadow: `0 0 10px ${positionColor}60`
+                              }}>
+                                {positionText}
+                              </div>
+                            )}
+                            <div style={{
+                              fontSize: '1rem',
+                              opacity: 0.9,
+                              marginBottom: 8,
+                              fontWeight: 700,
+                              color: positionColor
+                            }}>
+                              {w.position}° Lugar
+                            </div>
+                            <a href={userHref} title={displayName} style={{ 
+                              color: '#fff', 
+                              textDecoration: 'none', 
+                              fontWeight: 900, 
+                              fontSize: '1.5rem',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                            }}>
+                              {displayName}
+                            </a>
+                            {w.bio_short && (
+                              <div style={{ 
+                                opacity: 0.9, 
+                                fontSize: '1rem', 
+                                marginTop: 8,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontStyle: 'italic'
+                              }}>
+                                {w.bio_short}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Contador de votos destacado */}
+                          {/* Votos ocultos para público */}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            });
+          })() : (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              opacity: 0.8
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: 16 }}>🏆</div>
+              <p style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>
+                Los ganadores se mostrarán aquí una vez que el trending finalice.
+              </p>
+              <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: 8 }}>
+                Asegúrate de que todas las rondas estén cerradas y que el trending tenga el estado "closed".
+              </p>
+            </div>
+          )}
+          
+          {/* Estilos de animación */}
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Todos los Participantes - Solo cuando el trending está cerrado */}
+      {t && t.status === 'closed' && finalWinners.length > 0 && (() => {
+        // Agrupar todos los participantes por lista
+        const allParticipantsByList = new Map<string, any[]>();
+        finalWinners.forEach((w: any) => {
+          const key = w.list_name || 'General';
+          if (!allParticipantsByList.has(key)) allParticipantsByList.set(key, []);
+          allParticipantsByList.get(key)!.push(w);
+        });
+        
+        return (
+          <div style={{ marginBottom: 48 }}>
+            <h2 style={{ 
+              marginBottom: 24, 
+              fontSize: '2rem', 
+              fontWeight: 900, 
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #fff, rgba(255,255,255,0.8))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              👥 Todos los Participantes
+            </h2>
+            
+            {Array.from(allParticipantsByList.entries()).map(([listName, participants]) => {
+              const sortedParticipants = participants.sort((a, b) => a.position - b.position);
+              
+              return (
+                <div key={listName} style={{
+                  marginBottom: 32,
+                  padding: 24,
+                  borderRadius: 20,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '2px solid rgba(255,255,255,0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+                }}>
+                  <h3 style={{ 
+                    margin: '0 0 20px 0', 
+                    fontSize: '1.5rem', 
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    color: '#fff'
+                  }}>
+                    {listName} <span style={{ opacity: 0.7, fontSize: '1rem', fontWeight: 400 }}>({sortedParticipants.length} participantes)</span>
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                    {sortedParticipants.map((p: any) => {
+                      const m = userMeta[p.user_id] || {};
+                      const avatarSrc = p.avatar_url || m.avatar || "https://placehold.co/60x60?text=User";
+                      const displayName = p.display_name || m.name || "Sin nombre";
+                      const userHref = urls.userLive(p.user_id);
+                      
+                      return (
+                        <div key={p.candidate_id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: 16,
+                          borderRadius: 12,
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
+                            <img
+                              src={avatarSrc}
+                              alt={displayName}
+                              style={{ 
+                                width: 50, 
+                                height: 50, 
+                                borderRadius: 10, 
+                                objectFit: 'cover',
+                                border: '2px solid rgba(255,255,255,0.2)'
+                              }}
+                            />
+                          </a>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '0.75rem',
+                              opacity: 0.7,
+                              marginBottom: 4,
+                              fontWeight: 600
+                            }}>
+                              {p.position}° Lugar
+                            </div>
+                            <a href={userHref} title={displayName} style={{ 
+                              color: '#fff', 
+                              textDecoration: 'none', 
+                              fontWeight: 700, 
+                              fontSize: '1rem',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {displayName}
+                            </a>
+                          </div>
+                          {/* Votos ocultos para público */}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Leaderboard - Solo cuando el trending está cerrado y es admin */}
+      {t && t.status === 'closed' && board.length > 0 && isSA && (
+        <div style={{ marginBottom: 48 }}>
+          <h2 style={{ 
+            marginBottom: 24, 
+            fontSize: '2rem', 
+            fontWeight: 900, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #fff, rgba(255,255,255,0.8))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            📊 Leaderboard General
+          </h2>
+          
+          <div style={{
+            padding: 24,
+            borderRadius: 20,
+            background: 'rgba(255,255,255,0.05)',
+            border: '2px solid rgba(255,255,255,0.15)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+          }}>
+            {(() => {
+              // Agrupar por lista
+              const boardByList = new Map<string, any[]>();
+              board.forEach((b: any) => {
+                const key = b.list_name || 'General';
+                if (!boardByList.has(key)) boardByList.set(key, []);
+                boardByList.get(key)!.push(b);
+              });
+              
+              return Array.from(boardByList.entries()).map(([listName, items]) => {
+                const sortedItems = items.sort((a: any, b: any) => (b.votes || 0) - (a.votes || 0));
+                
+                return (
+                  <div key={listName} style={{ marginBottom: 32 }}>
+                    <h3 style={{ 
+                      margin: '0 0 20px 0', 
+                      fontSize: '1.3rem', 
+                      fontWeight: 800,
+                      color: '#fff'
+                    }}>
+                      {listName}
+                    </h3>
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {sortedItems.map((item: any, idx: number) => {
+                        const m = userMeta[item.user_id] || {};
+                        const avatarSrc = item.avatar_url || m.avatar || "https://placehold.co/48x48?text=User";
+                        const displayName = item.display_name || m.name || "Sin nombre";
+                        const userHref = urls.userLive(item.user_id);
+                        const votes = item.votes || 0;
+                        
+                        return (
+                          <div key={item.id || item.candidate_id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 16,
+                            padding: 16,
+                            borderRadius: 12,
+                            background: idx < 3 
+                              ? 'linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,193,7,0.05))'
+                              : 'rgba(255,255,255,0.03)',
+                            border: idx < 3 
+                              ? '2px solid rgba(255,215,0,0.3)'
+                              : '1px solid rgba(255,255,255,0.1)'
+                          }}>
+                            <div style={{
+                              fontSize: '1.2rem',
+                              fontWeight: 900,
+                              minWidth: 40,
+                              textAlign: 'center',
+                              color: idx === 0 ? '#FFD700' : idx === 1 ? '#C0C0C0' : idx === 2 ? '#CD7F32' : 'rgba(255,255,255,0.6)'
+                            }}>
+                              {idx + 1}°
+                            </div>
+                            <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
+                              <img
+                                src={avatarSrc}
+                                alt={displayName}
+                                style={{ 
+                                  width: 48, 
+                                  height: 48, 
+                                  borderRadius: 10, 
+                                  objectFit: 'cover',
+                                  border: '2px solid rgba(255,255,255,0.2)'
+                                }}
+                              />
+                            </a>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <a href={userHref} title={displayName} style={{ 
+                                color: '#fff', 
+                                textDecoration: 'none', 
+                                fontWeight: 700, 
+                                fontSize: '1.1rem',
+                                display: 'block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {displayName}
+                              </a>
+                              {item.bio_short && (
+                                <div style={{ 
+                                  opacity: 0.8, 
+                                  fontSize: '0.85rem', 
+                                  marginTop: 4,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {item.bio_short}
+                                </div>
+                              )}
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              padding: '10px 16px',
+                              borderRadius: 10,
+                              background: 'rgba(0,0,0,0.3)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              minWidth: 100
+                            }}>
+                              <span style={{ fontSize: '1.5rem' }}>❤️</span>
+                              <span style={{ fontSize: '1.3rem', fontWeight: 800 }}>{votes}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Tabs de ritmos (para filtrar candidatos) */}
+      {ritmos.length > 0 && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           {ritmos.map((r) => {
             const active = activeRitmo === r.ritmo_slug;
             return (
               <button
                 key={r.id}
-                onClick={() => setActiveRitmo(r.ritmo_slug)}
+                onClick={() => setActiveRitmo(active ? null : r.ritmo_slug)}
                 style={{
                   padding: "8px 12px",
                   borderRadius: 999,
@@ -454,10 +1216,14 @@ export default function TrendingDetail() {
       <div style={{ display: 'grid', gap: 16 }}>
         {useRoundsMode ? (
           currentRoundCandidates.length > 0 ? (
-          // Modo rondas: mostrar candidatos de la ronda actual agrupados por lista
+          // Modo rondas: mostrar candidatos de la ronda actual agrupados por lista,
+          // filtrando por ritmo si hay uno activo
           (() => {
+            const filtered = activeRitmo
+              ? currentRoundCandidates.filter((c: any) => c.ritmo_slug === activeRitmo)
+              : currentRoundCandidates;
             const byList = new Map<string, any[]>();
-            currentRoundCandidates.forEach((c: any) => {
+            filtered.forEach((c: any) => {
               const key = c.list_name || 'General';
               if (!byList.has(key)) byList.set(key, []);
               byList.get(key)!.push(c);
@@ -591,21 +1357,20 @@ export default function TrendingDetail() {
                     {c.bio_short && <p style={{ opacity: 0.92, marginTop: 10, lineHeight: 1.35 }}>{c.bio_short}</p>}
                     <div style={{ marginTop: 10 }}>
                       <button
-                        disabled={!canVote}
                         onClick={() => doVote(c.id)}
                         style={{
                           width: '100%',
                           padding: "10px 14px",
                           borderRadius: 10,
                           border: "1px solid rgba(255,255,255,0.25)",
-                          background: canVote ? "linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))" : "rgba(255,255,255,0.08)",
+                          background: "linear-gradient(135deg, rgba(30,136,229,.95), rgba(0,188,212,.95))",
                           color: "#fff",
                           fontWeight: 900,
-                          cursor: canVote ? "pointer" : "not-allowed",
-                          boxShadow: canVote ? '0 6px 18px rgba(0,188,212,0.35)' : 'none'
+                          cursor: "pointer",
+                          boxShadow: '0 6px 18px rgba(0,188,212,0.35)'
                         }}
                       >
-                        {t.status !== "open" ? "Cerrado" : (canVoteByTime ? (myVotes.get(c.id) ? "Quitar voto" : "❤️ Votar") : "Fuera de ventana")}
+                        {myVotes.get(c.id) ? "Quitar voto" : "❤️ Votar"}
                       </button>
                     </div>
                   </div>
@@ -647,7 +1412,7 @@ export default function TrendingDetail() {
                               <a href={urls.userLive(x.user_id)} style={{ color:'#fff', textDecoration:'none', fontWeight: 800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>{x.display_name || 'Usuario'}</a>
                               <div style={{ fontSize: 12, opacity: .8 }}>{labelFromSlug(x.ritmo_slug)}{x.list_name ? ` • ${x.list_name}` : ''}</div>
                             </div>
-                            <span style={{ fontWeight: 900 }}>❤️ {x.votes}</span>
+                            {/* Votos ocultos para público */}
                           </div>
                         ))}
                       </div>
@@ -672,7 +1437,7 @@ export default function TrendingDetail() {
                       <div style={{ fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                         {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({labelFromSlug(w.ritmo_slug)}{w.list_name ? ` • ${w.list_name}` : ''})</span>
                       </div>
-                      <span style={{ fontWeight: 900 }}>❤️ {w.votes}</span>
+                      {/* Votos ocultos para público */}
                     </div>
                   </div>
                 ))}

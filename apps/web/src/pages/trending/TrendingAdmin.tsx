@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import "@/styles/event-public.css";
 import { useToast } from "@/components/Toast";
+import RitmosChips from "@/components/RitmosChips";
 
 type Mode = "per_candidate" | "per_ritmo";
 
@@ -120,9 +121,11 @@ export default function TrendingAdmin() {
         await adminAddRitmo(id, slug);
       }
       // Crear candidatos desde listas dinámicas
+      // Si una lista no tiene ritmos propios, usar los ritmos seleccionados globalmente
       for (const L of lists) {
-        if (!L.ritmos || L.ritmos.length === 0) continue; // opcional
-        for (const rs of L.ritmos) {
+        const listRitmos = (L.ritmos && L.ritmos.length > 0) ? L.ritmos : ritmosSel;
+        if (!listRitmos || listRitmos.length === 0) continue; // Si no hay ritmos en ningún lado, saltar
+        for (const rs of listRitmos) {
           for (const u of L.selected) {
             await adminAddCandidate({
               trendingId: id,
@@ -488,8 +491,9 @@ export default function TrendingAdmin() {
       // Crear set de candidatos que deberían existir (de las listas de edición)
       const expectedCandidateKeys = new Set<string>();
       editLists.forEach(L => {
-        L.selected.forEach(u => {
-          L.ritmos.forEach(rs => {
+        const listRitmos = (L.ritmos && L.ritmos.length > 0) ? L.ritmos : editRitmosSel;
+        listRitmos.forEach(rs => {
+          L.selected.forEach(u => {
             expectedCandidateKeys.add(`${u.id}-${rs}-${L.name}`);
           });
         });
@@ -506,8 +510,9 @@ export default function TrendingAdmin() {
       // Agregar nuevos candidatos
       let newCandidatesAdded = false;
       for (const L of editLists) {
-        if (!L.ritmos || L.ritmos.length === 0) continue;
-        for (const rs of L.ritmos) {
+        const listRitmos = (L.ritmos && L.ritmos.length > 0) ? L.ritmos : editRitmosSel;
+        if (!listRitmos || listRitmos.length === 0) continue;
+        for (const rs of listRitmos) {
           for (const u of L.selected) {
             // Verificar si ya existe
             const exists = currentCandidates.some((c: any) => 
@@ -645,12 +650,11 @@ export default function TrendingAdmin() {
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Descripción" style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (slugs separados por comas)</label>
-                <input 
-                  value={ritmosSel.join(', ')} 
-                  onChange={(e) => setRitmosSel(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} 
-                  placeholder="Ej: salsa, bachata, kizomba"
-                  style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 6 }}>Ritmos del trending</label>
+                <RitmosChips
+                  selected={ritmosSel}
+                  onChange={setRitmosSel}
+                  size="compact"
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -686,12 +690,11 @@ export default function TrendingAdmin() {
                         <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, slugs separados por comas)</label>
-                        <input 
-                          placeholder="Ej: salsa, bachata, kizomba"
-                          value={L.ritmos.join(', ')} 
-                          onChange={(e) => setLists(lists.map(x => x.key===L.key ? { ...x, ritmos: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : x))} 
-                          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 6 }}>Ritmos de esta lista (opcional)</label>
+                        <RitmosChips
+                          selected={L.ritmos}
+                          onChange={(ritmos) => setLists(lists.map(x => x.key === L.key ? { ...x, ritmos } : x))}
+                          size="compact"
                         />
                       </div>
                       <div>
@@ -952,12 +955,11 @@ export default function TrendingAdmin() {
                   <textarea value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} rows={3} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (slugs separados por comas)</label>
-                  <input 
-                    value={editRitmosSel.join(', ')} 
-                    onChange={(e) => setEditRitmosSel(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} 
-                    placeholder="Ej: salsa, bachata, kizomba"
-                    style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                  <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 6 }}>Ritmos del trending</label>
+                  <RitmosChips
+                    selected={editRitmosSel}
+                    onChange={setEditRitmosSel}
+                    size="compact"
                   />
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
@@ -996,12 +998,11 @@ export default function TrendingAdmin() {
                             <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setEditLists(editLists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                           </div>
                           <div>
-                            <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, slugs separados por comas)</label>
-                            <input 
-                              placeholder="Ej: salsa, bachata, kizomba"
-                              value={L.ritmos.join(', ')} 
-                              onChange={(e) => setEditLists(editLists.map(x => x.key===L.key ? { ...x, ritmos: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : x))} 
-                              style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                            <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 6 }}>Ritmos de esta lista (opcional)</label>
+                            <RitmosChips
+                              selected={L.ritmos}
+                              onChange={(ritmos) => setEditLists(editLists.map(x => x.key === L.key ? { ...x, ritmos } : x))}
+                              size="compact"
                             />
                           </div>
                           <div>

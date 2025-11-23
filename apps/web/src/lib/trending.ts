@@ -276,6 +276,7 @@ export async function getRoundCandidates(trendingId: number, roundNumber: number
     avatar_url: string | null;
     bio_short: string | null;
     list_name: string | null;
+    ritmo_slug: string | null;
     votes: number;
   }[];
 }
@@ -303,6 +304,44 @@ export async function debugTrendingCandidates(trendingId: number) {
   });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getRoundResults(trendingId: number, roundNumber: number) {
+  const { data, error } = await supabase.rpc("rpc_trending_get_round_results", {
+    p_trending_id: trendingId,
+    p_round_number: roundNumber,
+  });
+  if (error) throw error;
+  return (data ?? []) as {
+    candidate_id: number;
+    user_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    bio_short: string | null;
+    list_name: string | null;
+    ritmo_slug: string | null;
+    votes: number;
+    advanced: boolean;
+  }[];
+}
+
+export async function getFinalWinners(trendingId: number) {
+  const { data, error } = await supabase.rpc("rpc_trending_get_final_winners", {
+    p_trending_id: trendingId,
+  });
+  if (error) throw error;
+  return (data ?? []) as {
+    candidate_id: number;
+    user_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    bio_short: string | null;
+    list_name: string | null;
+    ritmo_slug: string | null;
+    final_round_number: number;
+    final_votes: number;
+    position: number;
+  }[];
 }
 
 
