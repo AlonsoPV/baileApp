@@ -312,7 +312,22 @@ export default function TrendingAdmin() {
         setEditListsConfig([]);
       }
       
-      // Agrupar candidatos por lista para poblar las listas
+      // Cargar participants_lists si existe
+      let participantsListsData: any = null;
+      if (r.participants_lists) {
+        try {
+          if (typeof r.participants_lists === 'string') {
+            participantsListsData = JSON.parse(r.participants_lists);
+          } else {
+            participantsListsData = r.participants_lists;
+          }
+          console.log('[TrendingAdmin] participants_lists cargado:', participantsListsData);
+        } catch (e) {
+          console.error('Error parsing participants_lists', e);
+        }
+      }
+      
+      // Agrupar candidatos por lista para poblar las listas (para obtener ritmos)
       const candidatesByList = new Map<string, any[]>();
       candidates.forEach((c: any) => {
         const listName = c.list_name || 'General';
@@ -325,8 +340,33 @@ export default function TrendingAdmin() {
       // Crear listas de edición
       const editListsData: UserList[] = [];
       
-      // Si hay lists_config, crear las listas desde ahí
-      if (parsedListsConfig.length > 0) {
+      // Prioridad 1: Si hay participants_lists, usar esa información
+      if (participantsListsData && participantsListsData.lists && Array.isArray(participantsListsData.lists) && participantsListsData.lists.length > 0) {
+        console.log('[TrendingAdmin] Cargando desde participants_lists');
+        participantsListsData.lists.forEach((listData: any) => {
+          const listName = listData.name || '';
+          const participants = listData.participants || [];
+          
+          // Obtener candidatos de esta lista para obtener ritmos
+          const candidatesInList = candidatesByList.get(listName) || [];
+          const ritmosFromCandidates = Array.from(new Set(candidatesInList.map((c: any) => c.ritmo_slug).filter(Boolean)));
+          
+          editListsData.push({
+            key: Math.random().toString(36).slice(2),
+            name: listName,
+            ritmos: ritmosFromCandidates,
+            selected: participants.map((p: any) => ({
+              id: p.id,
+              name: p.name || p.id,
+              avatar: p.avatar || null
+            })),
+            search: ""
+          });
+        });
+      }
+      // Prioridad 2: Si hay lists_config, crear las listas desde ahí
+      else if (parsedListsConfig.length > 0) {
+        console.log('[TrendingAdmin] Cargando desde lists_config');
         parsedListsConfig.forEach((listCfg) => {
           const listName = listCfg.name || '';
           const candidatesInList = candidatesByList.get(listName) || [];
@@ -346,8 +386,10 @@ export default function TrendingAdmin() {
             search: ""
           });
         });
-      } else {
-        // Si no hay lists_config, crear desde candidatos existentes (comportamiento anterior)
+      } 
+      // Prioridad 3: Si no hay lists_config, crear desde candidatos existentes (comportamiento anterior)
+      else {
+        console.log('[TrendingAdmin] Cargando desde candidatos');
         candidatesByList.forEach((candidatesList, listName) => {
           editListsData.push({
             key: Math.random().toString(36).slice(2),
@@ -374,6 +416,7 @@ export default function TrendingAdmin() {
         });
       }
       
+      console.log('[TrendingAdmin] editListsData final:', editListsData);
       setEditLists(editListsData);
     } catch (e) {
       console.error('Error loading edit data', e);
