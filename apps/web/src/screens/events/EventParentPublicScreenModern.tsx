@@ -19,6 +19,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { fmtDateTime } from "../../utils/format";
+import EventParentRatingComponent from "../../components/events/EventParentRatingComponent";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado
@@ -1505,6 +1506,12 @@ export default function EventParentPublicScreen() {
               <CarouselComponent photos={carouselPhotos} />
             </motion.div>
           )}
+
+          {/* Componente de Calificaciones */}
+          {parentIdNum && (
+            <EventParentRatingComponent eventParentId={parentIdNum} />
+          )}
+
         </div>
       </div>
     </>

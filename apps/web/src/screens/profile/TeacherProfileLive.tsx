@@ -26,6 +26,7 @@ import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1483,6 +1484,10 @@ export default function TeacherProfileLive() {
             </motion.section>
           )}
 
+          {/* Componente de Calificaciones */}
+          {teacherNumericId && (
+            <TeacherRatingComponent teacherId={teacherNumericId} />
+          )}
 
         </div>
       </div>

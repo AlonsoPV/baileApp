@@ -21,6 +21,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1637,6 +1638,10 @@ export default function TeacherProfileLive() {
             </motion.section>
           )}
 
+          {/* Componente de Calificaciones */}
+          {teacherIdNum && (
+            <TeacherRatingComponent teacherId={teacherIdNum} />
+          )}
 
         </div>
       </div>

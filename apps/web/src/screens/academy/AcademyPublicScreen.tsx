@@ -24,6 +24,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import { useAcceptedTeachers } from "../../hooks/useAcademyTeacherInvitations";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import AcademyRatingComponent from "../../components/academy/AcademyRatingComponent";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1442,6 +1443,11 @@ export default function AcademyPublicScreen() {
                 ))}
               </div>
             </motion.section>
+          )}
+
+          {/* Componente de Calificaciones */}
+          {id && (
+            <AcademyRatingComponent academyId={id} />
           )}
 
           {/* Maestros Invitados */}
