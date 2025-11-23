@@ -81,19 +81,27 @@ export default function DefaultProfileSettings() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMethod, setDeleteMethod] = useState<'email' | 'direct'>('email');
   
-  // Estados para establecer contraseña
+  // Estados para cambiar contraseña
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSettingPassword, setIsSettingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [hasPassword, setHasPassword] = useState(false);
 
   const profileOptions = getProfileOptions();
   
-  const handleSetPassword = async () => {
+  const handleChangePassword = async () => {
     setPasswordError('');
     setPasswordSuccess('');
+    
+    // Validar campos
+    if (hasPassword && !currentPassword) {
+      setPasswordError('Por favor ingresa tu contraseña actual');
+      return;
+    }
     
     if (!newPassword || newPassword.length < 6) {
       setPasswordError('La contraseña debe tener al menos 6 caracteres');
@@ -104,23 +112,32 @@ export default function DefaultProfileSettings() {
       setPasswordError('Las contraseñas no coinciden');
       return;
     }
+
+    if (hasPassword && currentPassword === newPassword) {
+      setPasswordError('La nueva contraseña debe ser diferente a la actual');
+      return;
+    }
     
     setIsSettingPassword(true);
     try {
-      const result = await updatePassword(newPassword);
+      const result = await updatePassword(newPassword, hasPassword ? currentPassword : undefined);
       if (result.success) {
-        setPasswordSuccess('Contraseña establecida correctamente. Ahora puedes iniciar sesión con email y contraseña.');
+        setPasswordSuccess(hasPassword 
+          ? 'Contraseña actualizada correctamente' 
+          : 'Contraseña establecida correctamente. Ahora puedes iniciar sesión con email y contraseña.');
+        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setShowPasswordSection(false);
-        showToast('Contraseña establecida correctamente', 'success');
+        setHasPassword(true); // Ahora tiene contraseña
+        showToast(hasPassword ? 'Contraseña actualizada correctamente' : 'Contraseña establecida correctamente', 'success');
       } else {
-        setPasswordError(result.error?.message || 'Error al establecer la contraseña');
-        showToast('Error al establecer la contraseña', 'error');
+        setPasswordError(result.error?.message || (hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña'));
+        showToast(hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña', 'error');
       }
     } catch (error: any) {
       setPasswordError(error?.message || 'Error inesperado');
-      showToast('Error al establecer la contraseña', 'error');
+      showToast(hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña', 'error');
     } finally {
       setIsSettingPassword(false);
     }
@@ -485,6 +502,201 @@ export default function DefaultProfileSettings() {
               </motion.div>
             ))}
           </div>
+        </motion.div>
+
+        {/* Sección de Cambio de Contraseña */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+          style={{
+            marginBottom: '3rem',
+            padding: '2rem',
+            background: 'rgba(59, 130, 246, 0.1)',
+            borderRadius: '16px',
+            border: '1px solid rgba(59, 130, 246, 0.2)'
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem'
+          }}>
+            <h2 style={{
+              fontSize: '1.5rem',
+              color: colors.light,
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              🔐 {hasPassword ? 'Cambiar Contraseña' : 'Establecer Contraseña'}
+            </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setShowPasswordSection(!showPasswordSection);
+                setPasswordError('');
+                setPasswordSuccess('');
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+              }}
+              style={{
+                padding: '0.5rem 1rem',
+                background: showPasswordSection ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                border: `1px solid ${showPasswordSection ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'}`,
+                borderRadius: '8px',
+                color: colors.light,
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {showPasswordSection ? '✕ Cancelar' : '✏️ ' + (hasPassword ? 'Cambiar' : 'Establecer')}
+            </motion.button>
+          </div>
+
+          {showPasswordSection && (
+            <div>
+              {passwordSuccess && (
+                <div style={{
+                  padding: '1rem',
+                  marginBottom: '1rem',
+                  borderRadius: '8px',
+                  background: 'rgba(34, 197, 94, 0.2)',
+                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  color: '#4ade80'
+                }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              {passwordError && (
+                <div style={{
+                  padding: '1rem',
+                  marginBottom: '1rem',
+                  borderRadius: '8px',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#ff6b6b'
+                }}>
+                  {passwordError}
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {hasPassword && (
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.9rem',
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 600
+                    }}>
+                      Contraseña Actual
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Ingresa tu contraseña actual"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.9rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600
+                  }}>
+                    {hasPassword ? 'Nueva Contraseña' : 'Contraseña'}
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '1rem'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.9rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600
+                  }}>
+                    Confirmar {hasPassword ? 'Nueva ' : ''}Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repite la contraseña"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '1rem'
+                    }}
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleChangePassword}
+                  disabled={isSettingPassword}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: isSettingPassword 
+                      ? 'rgba(59, 130, 246, 0.5)' 
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(30, 136, 229, 0.95))',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: '700',
+                    cursor: isSettingPassword ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    opacity: isSettingPassword ? 0.6 : 1
+                  }}
+                >
+                  {isSettingPassword ? '⏳ Actualizando...' : (hasPassword ? '✅ Actualizar Contraseña' : '✅ Establecer Contraseña')}
+                </motion.button>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Sección de Eliminación de Datos */}

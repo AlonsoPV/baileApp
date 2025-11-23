@@ -19,8 +19,27 @@ export async function resetPassword(email: string) {
   }
 }
 
-export async function updatePassword(newPassword: string) {
+export async function updatePassword(newPassword: string, currentPassword?: string) {
   try {
+    // Si se proporciona contraseña actual, reautenticar primero
+    if (currentPassword) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user?.email) {
+        throw new Error('No se pudo obtener la información del usuario');
+      }
+
+      // Reautenticar con la contraseña actual
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (reauthError) {
+        throw new Error('Contraseña actual incorrecta');
+      }
+    }
+
+    // Actualizar la contraseña
     const { error } = await supabase.auth.updateUser({
       password: newPassword
     });
@@ -31,7 +50,7 @@ export async function updatePassword(newPassword: string) {
     }
     
     return { success: true, message: 'Contraseña actualizada' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error en updatePassword:', error);
     return { success: false, error };
   }
