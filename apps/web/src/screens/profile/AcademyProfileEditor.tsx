@@ -28,6 +28,7 @@ import { useAllowedRitmos } from "@/hooks/useAllowedRitmos";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
@@ -199,11 +200,14 @@ export default function AcademyProfileEditor() {
     try {
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
+      // Validar zonas contra el catálogo
+      const validatedZonas = validateZonasAgainstCatalog((form as any).zonas || [], allTags);
+
       // Crear payload limpio con SOLO los campos que existen en profiles_academy
       const payload: any = {
         nombre_publico: form.nombre_publico,
         bio: form.bio,
-        zonas: (form as any).zonas || [],
+        zonas: validatedZonas,
         ubicaciones: (form as any).ubicaciones || [],
         horarios: (form as any).cronograma || [],     // Guardar en horarios
         cronograma: (form as any).cronograma || [],   // También en cronograma para compatibilidad

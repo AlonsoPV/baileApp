@@ -429,23 +429,26 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                         {RITMOS_CATALOG.map(group => {
                           const activeInGroup = group.items.some(i => isTagActive(i.label));
                           const isOpen = expandedGroup === group.id;
+                          const isActive = isOpen || activeInGroup;
                           return (
                             <button
                               key={group.id}
                               onClick={() => toggleGroup(group.id)}
                               style={{
-                                padding: '12px 18px',
+                                padding: isActive ? '5px 10px' : '12px 18px',
                                 borderRadius: 999,
-                                border: isOpen || activeInGroup ? '2px solid rgba(240,147,251,0.6)' : '1px solid rgba(255,255,255,0.15)',
-                                background: isOpen || activeInGroup ? 'rgba(240,147,251,0.15)' : 'rgba(255,255,255,0.06)',
-                                color: 'white',
-                                fontWeight: 700,
-                                fontSize: '0.95rem',
+                                border: isActive ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.15)',
+                                background: isActive ? 'rgba(245, 87, 108, 0.2)' : 'rgba(255,255,255,0.06)',
+                                color: isActive ? '#FFE4EE' : 'rgba(255,255,255,0.9)',
+                                fontWeight: isActive ? 700 : 700,
+                                fontSize: isActive ? '0.78rem' : '0.95rem',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                backdropFilter: isActive ? 'blur(10px)' : 'none',
+                                boxShadow: isActive ? 'rgba(245, 87, 108, 0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset' : 'none',
                               }}
                             >
-                              {group.label}
+                              🎵 {group.label}
                             </button>
                           );
                         })}
@@ -464,18 +467,20 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                 key={child.id}
                                 onClick={() => toggleChild(child.label)}
                                 style={{
-                                  padding: '7px 13px',
+                                  padding: active ? '5px 10px' : '7px 13px',
                                   borderRadius: 999,
-                                  border: active ? '1px solid #f093fb' : '1px solid rgba(255,255,255,0.15)',
-                                  background: active ? 'rgba(240,147,251,0.15)' : 'transparent',
-                                  color: active ? '#f093fb' : 'rgba(255,255,255,0.9)',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 500,
+                                  border: active ? '1px solid rgba(245, 87, 108, 0.65)' : '1px solid rgba(255,255,255,0.15)',
+                                  background: active ? 'rgba(245, 87, 108, 0.2)' : 'transparent',
+                                  color: active ? '#FFE4EE' : 'rgba(255,255,255,0.9)',
+                                  fontSize: active ? '0.78rem' : '0.85rem',
+                                  fontWeight: active ? 700 : 500,
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s ease'
+                                  transition: 'all 0.2s ease',
+                                  backdropFilter: active ? 'blur(10px)' : 'none',
+                                  boxShadow: active ? 'rgba(245, 87, 108, 0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset' : 'none',
                                 }}
                               >
-                                {child.label}
+                                🎵 {child.label}
                               </button>
                             );
                           })}

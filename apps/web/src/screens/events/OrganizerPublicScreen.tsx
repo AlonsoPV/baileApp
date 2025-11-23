@@ -400,7 +400,7 @@ export function OrganizerPublicScreen() {
         .gradient-text { background: ${colors.gradients.primary}; -webkit-background-clip: text; background-clip: text; }
         .shimmer-effect { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        .glass-card-container { opacity: 1; margin: 0 auto 2rem auto; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
+        .glass-card-container { opacity: 1; margin: 0 auto 2rem auto; margin-top: 0; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: rgba(0,0,0,0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none; }
         .org-social-events-section {
           margin-bottom: 2rem;
         }
@@ -693,7 +693,7 @@ export function OrganizerPublicScreen() {
         <div style={{ position: 'absolute', bottom: '20%', left: '15%', width: 80, height: 80, background: colors.gradients.deep, borderRadius: '50%', opacity: 0.1, animation: 'float 7s ease-in-out infinite', zIndex: 0 }} />
 
         {/* Banner */}
-        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
+        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `0 auto`, marginTop: 0, maxWidth: '900px', width: '100%', zIndex: 1 }}>
           <div className="org-banner-grid">
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>

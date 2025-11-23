@@ -28,6 +28,7 @@ import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
@@ -193,11 +194,14 @@ export default function TeacherProfileEditor() {
     try {
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
+      // Validar zonas contra el catálogo
+      const validatedZonas = validateZonasAgainstCatalog((form as any).zonas || [], allTags);
+
       // Crear payload limpio con SOLO los campos que existen en profiles_teacher
       const payload: any = {
         nombre_publico: form.nombre_publico,
         bio: form.bio,
-        zonas: (form as any).zonas || [],
+        zonas: validatedZonas,
         ubicaciones: (form as any).ubicaciones || [],
         cronograma: (form as any).cronograma || [],
         costos: (form as any).costos || [],

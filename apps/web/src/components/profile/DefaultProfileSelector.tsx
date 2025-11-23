@@ -25,9 +25,11 @@ export default function DefaultProfileSelector({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleProfileSelect = (profileType: string) => {
+  const handleProfileSelect = async (profileType: string) => {
     updateDefaultProfile(profileType as any);
     setIsOpen(false);
+    // Esperar un momento para que el estado se actualice
+    await new Promise(resolve => setTimeout(resolve, 100));
     onProfileChange?.(profileType);
   };
 

@@ -752,6 +752,7 @@ export function OrganizerProfileLive() {
         .glass-card-container {
           opacity: 1;
           margin: 0 auto 2rem auto;
+          margin-top: 0;
           padding: 2rem;
           text-align: center;
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
@@ -1212,6 +1213,7 @@ export function OrganizerProfileLive() {
             position: 'relative',
             overflow: 'visible',
             margin: `0 auto`,
+            marginTop: 0,
             maxWidth: '900px',
             width: '100%',
             zIndex: 1

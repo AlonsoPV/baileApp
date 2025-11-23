@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Chip } from "./Chip";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
+import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 
 type TagLike = { id: number; nombre?: string; slug?: string; tipo?: string };
 
@@ -64,6 +65,12 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
 
+  // Este useMemo debe estar ANTES del return temprano para cumplir con las reglas de hooks
+  const selectedCategoryGroup = React.useMemo(() => {
+    if (!selectedCategory) return null;
+    return relevantGroups.find((g) => g.id === selectedCategory) || null;
+  }, [selectedCategory, relevantGroups]);
+
   React.useEffect(() => {
     if (mode === "display") {
       setExpanded((prev) => {
@@ -80,33 +87,6 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
       });
     }
   }, [relevantGroups, selectedSet, autoExpandSelectedParents, mode]);
-
-  if (mode === "display" && relevantGroups.length === 0) {
-    return null;
-  }
-
-  const toggleGroup = (groupId: string) => {
-    setExpanded((prev) => ({
-      ...prev,
-      [groupId]: !(prev[groupId] ?? false),
-    }));
-  };
-
-  const handleChipClick = (id: number) => {
-    if (mode === "edit" && onToggle) {
-      onToggle(id);
-    }
-  };
-
-  const selectedCategoryGroup = React.useMemo(() => {
-    if (!selectedCategory) return null;
-    return relevantGroups.find((g) => g.id === selectedCategory) || null;
-  }, [selectedCategory, relevantGroups]);
-
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    // No cerrar el dropdown, solo cambiar a la vista de zonas anidadas
-  };
 
   // Calcular posición del dropdown cuando se abre
   React.useEffect(() => {
@@ -148,6 +128,35 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
+
+  // Return temprano DESPUÉS de todos los hooks
+  if (mode === "display" && relevantGroups.length === 0) {
+    return null;
+  }
+
+  const toggleGroup = (groupId: string) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [groupId]: !(prev[groupId] ?? false),
+    }));
+  };
+
+  const handleChipClick = (id: number) => {
+    if (mode === "edit" && onToggle) {
+      // Validar que la zona esté en el catálogo antes de permitir la selección
+      const validatedZonas = validateZonasAgainstCatalog([id], allTags);
+      if (validatedZonas.includes(id)) {
+        onToggle(id);
+      } else {
+        console.warn(`[ZonaGroupedChips] Zona con ID ${id} no está en el catálogo y no se puede seleccionar`);
+      }
+    }
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    // No cerrar el dropdown, solo cambiar a la vista de zonas anidadas
+  };
 
   const groupHasActive = (groupId: string) => {
     const g = relevantGroups.find((x) => x.id === groupId);

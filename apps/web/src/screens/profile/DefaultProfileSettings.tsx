@@ -6,6 +6,7 @@ import { useDefaultProfile } from "../../hooks/useDefaultProfile";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useAcademyMy } from "../../hooks/useAcademyMy";
 import { useTeacherMy } from "../../hooks/useTeacher";
+import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 import DefaultProfileSelector from "../../components/profile/DefaultProfileSelector";
 import { Chip } from "../../components/profile/Chip";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -26,9 +27,52 @@ const colors = {
 export default function DefaultProfileSettings() {
   const navigate = useNavigate();
   const { getProfileOptions, defaultProfile } = useDefaultProfile();
-  const { data: organizerProfile } = useMyOrganizer();
-  const { data: academyProfile } = useAcademyMy();
-  const { data: teacherProfile } = useTeacherMy();
+  const { data: organizerProfile, refetch: refetchOrganizer } = useMyOrganizer();
+  const { data: academyProfile, refetch: refetchAcademy } = useAcademyMy();
+  const { data: teacherProfile, refetch: refetchTeacher } = useTeacherMy();
+  const { data: approvedRoles } = useMyApprovedRoles();
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  
+  // Forzar refetch al montar el componente para obtener datos actualizados
+  React.useEffect(() => {
+    refetchOrganizer();
+    refetchAcademy();
+    refetchTeacher();
+  }, [refetchOrganizer, refetchAcademy, refetchTeacher]);
+  
+  // Escuchar cambios en el perfil por defecto desde localStorage
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    // Escuchar cambios en localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Función helper para obtener el estado de aprobación considerando role_requests
+  const getApprovalStatus = (profileType: 'organizer' | 'academy' | 'teacher', profile: any) => {
+    const roleSlug = profileType === 'organizer' ? 'organizador' : profileType === 'academy' ? 'academia' : 'maestro';
+    const isRoleApproved = approvedRoles?.approved?.includes(roleSlug as any) || false;
+    const profileStatus = profile?.estado_aprobacion;
+    
+    console.log(`[getApprovalStatus] ${profileType}:`, { isRoleApproved, profileStatus, approvedRoles: approvedRoles?.approved });
+    
+    // Si el rol no está aprobado, no mostrar estado de perfil
+    if (!isRoleApproved) {
+      return null;
+    }
+    
+    // Si el rol está aprobado, mostrar el estado del perfil
+    if (profileStatus === 'aprobado') return '✅ Verificado';
+    if (profileStatus === 'en_revision') return '⏳ En revisión';
+    if (profileStatus === 'rechazado') return '❌ Rechazado';
+    return '📝 Borrador';
+  };
   const { user, signOut } = useAuth();
   const { showToast } = useToast();
   
@@ -165,7 +209,7 @@ export default function DefaultProfileSettings() {
         .settings-back-button {
           position: absolute;
           left: 0;
-          top: 2rem;
+          top: 0;
           padding: 0.75rem 1.5rem;
           background: rgba(255, 255, 255, 0.1);
           color: ${colors.light};
@@ -229,7 +273,7 @@ export default function DefaultProfileSettings() {
             background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            margin: '0 0 1rem 0'
+            margin: '4rem 0 1rem 0'
           }}>
             🎯 Configurar Perfil por Defecto
           </h1>
@@ -256,9 +300,13 @@ export default function DefaultProfileSettings() {
           }}
         >
           <DefaultProfileSelector 
+            key={refreshKey}
             showTitle={true}
             onProfileChange={(profileType) => {
               console.log('Perfil por defecto cambiado a:', profileType);
+              showToast(`Perfil por defecto cambiado a: ${profileType}`, 'success');
+              // Forzar actualización del componente
+              setRefreshKey(prev => prev + 1);
             }}
           />
         </motion.div>
@@ -355,23 +403,20 @@ export default function DefaultProfileSettings() {
                   )}
                   
                   {/* Estado de aprobación para organizador, academia y maestro */}
-                  {option.hasProfile && (option.id === 'organizer' || option.id === 'academy' || option.id === 'teacher') && (
-                    <Chip
-                      label={option.id === 'organizer' ? 
-                        (organizerProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
-                         organizerProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
-                         organizerProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador') :
-                        option.id === 'academy' ?
-                        (academyProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
-                         academyProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
-                         academyProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador') :
-                        (teacherProfile?.estado_aprobacion === 'aprobado' ? '✅ Verificado' :
-                         teacherProfile?.estado_aprobacion === 'en_revision' ? '⏳ En revisión' :
-                         teacherProfile?.estado_aprobacion === 'rechazado' ? '❌ Rechazado' : '📝 Borrador')
-                      }
-                      active={false}
-                    />
-                  )}
+                  {option.hasProfile && (option.id === 'organizer' || option.id === 'academy' || option.id === 'teacher') && (() => {
+                    const status = option.id === 'organizer' 
+                      ? getApprovalStatus('organizer', organizerProfile)
+                      : option.id === 'academy'
+                      ? getApprovalStatus('academy', academyProfile)
+                      : getApprovalStatus('teacher', teacherProfile);
+                    
+                    return status ? (
+                      <Chip
+                        label={status}
+                        active={false}
+                      />
+                    ) : null;
+                  })()}
                   
                   {!option.available && (
                     <Chip

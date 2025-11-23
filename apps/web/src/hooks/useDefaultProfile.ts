@@ -18,7 +18,7 @@ export interface ProfileOption {
 
 export function useDefaultProfile() {
   const { user } = useAuth();
-  const { data: userProfile } = useUserProfile();
+  const { profile: userProfile } = useUserProfile();
   const { data: organizerProfile } = useMyOrganizer();
   const { data: academyProfile } = useAcademyMy();
   const { data: teacherProfile } = useTeacherMy();
@@ -28,13 +28,49 @@ export function useDefaultProfile() {
 
   // Cargar perfil por defecto desde localStorage
   useEffect(() => {
-    if (user?.id) {
-      const saved = localStorage.getItem(`default_profile_${user.id}`);
-      if (saved && ['user', 'organizer', 'academy', 'teacher', 'brand'].includes(saved)) {
-        setDefaultProfile(saved as ProfileType);
+    const loadDefaultProfile = () => {
+      if (user?.id) {
+        const saved = localStorage.getItem(`default_profile_${user.id}`);
+        if (saved && ['user', 'organizer', 'academy', 'teacher', 'brand'].includes(saved)) {
+          setDefaultProfile(saved as ProfileType);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }
+    };
+
+    // Cargar inicialmente
+    loadDefaultProfile();
+
+    // Escuchar cambios en localStorage (para cambios en la misma pestaña)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (user?.id && e.key === `default_profile_${user.id}` && e.newValue) {
+        if (['user', 'organizer', 'academy', 'teacher', 'brand'].includes(e.newValue)) {
+          setDefaultProfile(e.newValue as ProfileType);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // También verificar periódicamente (por si el cambio fue en la misma pestaña)
+    const interval = setInterval(() => {
+      if (user?.id) {
+        const saved = localStorage.getItem(`default_profile_${user.id}`);
+        if (saved && ['user', 'organizer', 'academy', 'teacher', 'brand'].includes(saved)) {
+          setDefaultProfile(prev => {
+            if (prev !== saved) {
+              return saved as ProfileType;
+            }
+            return prev;
+          });
+        }
+      }
+    }, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, [user?.id]);
 
   // Guardar perfil por defecto en localStorage
@@ -47,8 +83,9 @@ export function useDefaultProfile() {
 
   // Función para verificar si un perfil está realmente configurado
   const isUserProfileConfigured = (profile: any): boolean => {
-    if (!profile) return false;
-    return !!(profile.display_name || profile.bio || profile.avatar_url);
+    // El perfil de usuario siempre está configurado si existe el registro
+    // (todos los usuarios tienen un perfil por defecto)
+    return !!profile;
   };
 
   const isOrganizerProfileConfigured = (profile: any): boolean => {

@@ -39,6 +39,7 @@ import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEventMetricsPanel";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
+import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 
 const colors = {
   coral: '#FF3D57',
@@ -778,9 +779,13 @@ export default function OrganizerProfileEditor() {
 
       const wasNewProfile = !org; // Detectar si es un perfil nuevo
 
+      // Validar zonas contra el catálogo
+      const validatedZonas = validateZonasAgainstCatalog(form.zonas || [], allTags);
+
       const profileId = await upsert.mutateAsync({ 
         ...(form as any), 
         ritmos_seleccionados: outSelected,
+        zonas: validatedZonas,
         cuenta_bancaria: (form as any).cuenta_bancaria || {}
       } as any);
 
@@ -793,7 +798,7 @@ export default function OrganizerProfileEditor() {
             nombre: '🎉 Mi Primer Social',
             descripcion: 'Crea tus eventos. Edita el nombre, descripción y agrega fechas desde el editor.',
             ritmos_seleccionados: outSelected || [],
-            zonas: form.zonas || []
+            zonas: validatedZonas
           };
 
           const { data: newParent, error: parentErr } = await supabase
@@ -822,7 +827,7 @@ export default function OrganizerProfileEditor() {
               ciudad: null,
               estado_publicacion: 'borrador',
               ritmos_seleccionados: outSelected || [],
-              zonas: form.zonas || [],
+              zonas: validatedZonas,
               cronograma: [],
               costos: []
             };
@@ -944,7 +949,9 @@ export default function OrganizerProfileEditor() {
       };
 
       const resolvedZona = resolvedZonaFromLocation();
-      const resolvedZonas = resolvedZonasFromLocations();
+      const resolvedZonasRaw = resolvedZonasFromLocations();
+      // Validar zonas contra el catálogo
+      const resolvedZonas = validateZonasAgainstCatalog(resolvedZonasRaw, allTags);
 
       const basePayload = {
         parent_id: Number(parentIdToUse),

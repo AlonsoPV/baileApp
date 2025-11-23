@@ -16,8 +16,11 @@ export function useMyOrganizer() {
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
+      console.log('[useMyOrganizer] Estado de aprobación obtenido:', data?.estado_aprobacion, 'Full data:', data);
       return data || null;
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
+    cacheTime: 0, // No cachear los datos
   });
 }
 

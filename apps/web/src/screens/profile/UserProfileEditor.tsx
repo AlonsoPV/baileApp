@@ -25,6 +25,7 @@ import { FilterPreferencesModal } from '../../components/profile/FilterPreferenc
 import { ZONAS_CATALOG } from '@/lib/zonasCatalog';
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
+import { validateZonasAgainstCatalog } from '../../utils/validateZonas';
 
 const colors = {
   dark: '#121212',
@@ -185,13 +186,16 @@ export default function UserProfileEditor() {
         if (mapped.length > 0) outRitmosSeleccionados = mapped;
       }
 
+      // Validar zonas contra el catálogo
+      const validatedZonas = validateZonasAgainstCatalog(form.zonas, allTags);
+
       const candidate = {
         display_name: form.display_name,
         bio: form.bio,
         rol_baile: (form as any).rol_baile || null,
         ritmos_seleccionados: outRitmosSeleccionados || [],
         ritmos: form.ritmos,
-        zonas: form.zonas,
+        zonas: validatedZonas,
         respuestas: {
           redes,
           dato_curioso: form.respuestas?.dato_curioso || null,

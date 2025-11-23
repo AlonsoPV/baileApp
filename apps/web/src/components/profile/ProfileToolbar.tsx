@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProfileMode } from "../../state/profileMode";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
+import { useDefaultProfile } from "../../hooks/useDefaultProfile";
 
 type RoleKey = "usuario" | "organizador" | "maestro" | "academia" | "marca";
 type RoleMeta = { key: RoleKey; label: string; icon: string; requireApproval?: true };
@@ -20,6 +21,7 @@ export default function ProfileToolbar() {
   const loc = useLocation();
   const { mode, setMode } = useProfileMode();
   const { data } = useMyApprovedRoles();
+  const { getDefaultRoute, defaultProfile } = useDefaultProfile();
   const [open, setOpen] = React.useState(false);
 
   const approved = new Set((data?.approved || []) as RoleKey[]);
@@ -39,6 +41,7 @@ export default function ProfileToolbar() {
     setMode(kind);
 
     if (kind === "usuario") {
+      // Cuando el usuario selecciona explícitamente "usuario", siempre ir a /profile
       nav(toEdit ? "/profile/edit" : "/profile");
       return;
     }
