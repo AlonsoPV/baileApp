@@ -14,6 +14,7 @@ import { Signup } from './screens/auth/Signup';
 import AuthCallback from './screens/auth/AuthCallback';
 import PinSetup from './screens/auth/PinSetup';
 import PinLogin from './screens/auth/PinLogin';
+import ResetPassword from './screens/auth/ResetPassword';
 
 // Onboarding Screens
 import { ProfileBasics } from './screens/onboarding/ProfileBasics';
@@ -101,6 +102,7 @@ export default function AppRouter() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/auth/pin/setup" element={<PinSetup />} />
       <Route path="/auth/pin" element={<PinLogin />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Onboarding public */}
       <Route path={routes.onboarding.basics} element={<ProfileBasics />} />

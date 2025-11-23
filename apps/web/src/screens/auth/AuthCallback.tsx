@@ -11,6 +11,18 @@ export default function AuthCallback() {
     let cancelled = false;
     (async () => {
       try {
+        // Verificar si hay un token de recovery en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const type = urlParams.get('type');
+        
+        if (token && type === 'recovery') {
+          // Si es un token de recovery, redirigir a la página de reset de contraseña
+          console.log('[AuthCallback] Token de recovery detectado, redirigiendo a reset-password');
+          navigate(`/reset-password?token=${token}&type=${type}`, { replace: true });
+          return;
+        }
+        
         // Forzar lectura/establecimiento de sesión desde la URL (hash/callback)
         const { data, error } = await supabase.auth.getSession();
         if (error) {
