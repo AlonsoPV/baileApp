@@ -7,11 +7,14 @@ import {
   adminDeleteTrending,
   adminAddRitmo,
   adminAddCandidate,
+  adminRemoveCandidate,
   adminUpdateTrending,
   adminSetRoundsConfig,
   adminStartFirstRound,
   adminCloseRound,
+  adminActivatePendingCandidates,
   getTrendingRounds,
+  getTrendingCandidates,
   type RoundConfig,
   type ListConfig,
 } from "@/lib/trending";
@@ -216,19 +219,116 @@ export default function TrendingAdmin() {
   const [editStartsAt, setEditStartsAt] = React.useState<string>("");
   const [editEndsAt, setEditEndsAt] = React.useState<string>("");
   const [editMode, setEditMode] = React.useState<Mode>("per_candidate");
+  // Estado para editar candidatos y rondas
+  const [editCandidates, setEditCandidates] = React.useState<any[]>([]);
+  const [editRoundsConfig, setEditRoundsConfig] = React.useState<RoundConfig[]>([]);
+  const [editListsConfig, setEditListsConfig] = React.useState<ListConfig[]>([]);
+  const [editUseRounds, setEditUseRounds] = React.useState(false);
+  const [editRitmosSel, setEditRitmosSel] = React.useState<string[]>([]);
+  const [editLists, setEditLists] = React.useState<UserList[]>([]);
+  const [loadingEditData, setLoadingEditData] = React.useState(false);
 
-  const beginEdit = (r: any) => {
+  const beginEdit = async (r: any) => {
     setEditId(r.id);
     setEditTitle(r.title || "");
     setEditDescription(r.description || "");
     setEditStartsAt(r.starts_at ? new Date(r.starts_at).toISOString().slice(0,16) : "");
     setEditEndsAt(r.ends_at ? new Date(r.ends_at).toISOString().slice(0,16) : "");
     setEditMode(r.allowed_vote_mode || "per_candidate");
+    
+    // Cargar datos adicionales
+    setLoadingEditData(true);
+    try {
+      // Cargar candidatos existentes
+      const candidates = await getTrendingCandidates(r.id);
+      setEditCandidates(candidates);
+      
+      // Cargar ritmos
+      const ritmos = await supabase
+        .from('trending_ritmos')
+        .select('ritmo_slug')
+        .eq('trending_id', r.id);
+      if (ritmos.data) {
+        setEditRitmosSel(ritmos.data.map((x: any) => x.ritmo_slug));
+      }
+      
+      // Cargar configuración de rondas si existe
+      if (r.rounds_config && r.lists_config) {
+        setEditUseRounds(true);
+        try {
+          const roundsConfig = r.rounds_config.rounds || r.rounds_config;
+          const listsConfig = r.lists_config.lists || r.lists_config;
+          
+          if (Array.isArray(roundsConfig)) {
+            setEditRoundsConfig(roundsConfig);
+          } else if (roundsConfig && typeof roundsConfig === 'object') {
+            // Si es un objeto con propiedad rounds
+            setEditRoundsConfig(roundsConfig.rounds || []);
+          }
+          
+          if (Array.isArray(listsConfig)) {
+            setEditListsConfig(listsConfig);
+          } else if (listsConfig && typeof listsConfig === 'object') {
+            setEditListsConfig(listsConfig.lists || []);
+          }
+        } catch (e) {
+          console.error('Error parsing rounds config', e);
+        }
+      } else {
+        setEditUseRounds(false);
+        setEditRoundsConfig([]);
+        setEditListsConfig([]);
+      }
+      
+      // Agrupar candidatos por lista para mostrar en el editor
+      const candidatesByList = new Map<string, any[]>();
+      candidates.forEach((c: any) => {
+        const listName = c.list_name || 'General';
+        if (!candidatesByList.has(listName)) {
+          candidatesByList.set(listName, []);
+        }
+        candidatesByList.get(listName)!.push(c);
+      });
+      
+      // Crear listas de edición desde candidatos existentes
+      const editListsData: UserList[] = [];
+      candidatesByList.forEach((candidatesList, listName) => {
+        editListsData.push({
+          key: Math.random().toString(36).slice(2),
+          name: listName,
+          ritmos: Array.from(new Set(candidatesList.map((c: any) => c.ritmo_slug))),
+          selected: candidatesList.map((c: any) => ({
+            id: c.user_id,
+            name: c.display_name || c.user_id,
+            avatar: c.avatar_url
+          })),
+          search: ""
+        });
+      });
+      
+      if (editListsData.length === 0) {
+        // Si no hay listas, crear una vacía
+        editListsData.push({
+          key: Math.random().toString(36).slice(2),
+          name: "",
+          ritmos: [],
+          selected: [],
+          search: ""
+        });
+      }
+      
+      setEditLists(editListsData);
+    } catch (e) {
+      console.error('Error loading edit data', e);
+    } finally {
+      setLoadingEditData(false);
+    }
   };
 
   const saveEdit = async () => {
     if (!canAdmin || editId == null) return;
     try {
+      // Actualizar información básica del trending
       await adminUpdateTrending({
         id: editId,
         title: editTitle,
@@ -237,6 +337,96 @@ export default function TrendingAdmin() {
         ends_at: editEndsAt ? new Date(editEndsAt).toISOString() : null,
         allowed_vote_mode: editMode,
       });
+      
+      // Actualizar ritmos
+      const currentRitmos = await supabase
+        .from('trending_ritmos')
+        .select('ritmo_slug')
+        .eq('trending_id', editId);
+      
+      const currentRitmoSlugs = (currentRitmos.data || []).map((x: any) => x.ritmo_slug);
+      
+      // Eliminar ritmos que ya no están seleccionados
+      for (const slug of currentRitmoSlugs) {
+        if (!editRitmosSel.includes(slug)) {
+          await supabase
+            .from('trending_ritmos')
+            .delete()
+            .eq('trending_id', editId)
+            .eq('ritmo_slug', slug);
+        }
+      }
+      
+      // Agregar nuevos ritmos
+      for (const slug of editRitmosSel) {
+        if (!currentRitmoSlugs.includes(slug)) {
+          await adminAddRitmo(editId, slug);
+        }
+      }
+      
+      // Obtener candidatos actuales para comparar
+      const currentCandidates = await getTrendingCandidates(editId);
+      const currentCandidateIds = new Set(currentCandidates.map((c: any) => c.id));
+      
+      // Crear set de candidatos que deberían existir (de las listas de edición)
+      const expectedCandidateKeys = new Set<string>();
+      editLists.forEach(L => {
+        L.selected.forEach(u => {
+          L.ritmos.forEach(rs => {
+            expectedCandidateKeys.add(`${u.id}-${rs}-${L.name}`);
+          });
+        });
+      });
+      
+      // Eliminar candidatos que ya no están en las listas
+      for (const candidate of currentCandidates) {
+        const key = `${candidate.user_id}-${candidate.ritmo_slug}-${candidate.list_name || ''}`;
+        if (!expectedCandidateKeys.has(key)) {
+          await adminRemoveCandidate(editId, candidate.id);
+        }
+      }
+      
+      // Agregar nuevos candidatos
+      for (const L of editLists) {
+        if (!L.ritmos || L.ritmos.length === 0) continue;
+        for (const rs of L.ritmos) {
+          for (const u of L.selected) {
+            // Verificar si ya existe
+            const exists = currentCandidates.some((c: any) => 
+              c.user_id === u.id && 
+              c.ritmo_slug === rs && 
+              (c.list_name || '') === (L.name || '')
+            );
+            
+            if (!exists) {
+              await adminAddCandidate({
+                trendingId: editId,
+                ritmoSlug: rs,
+                userId: u.id,
+                displayName: u.name,
+                avatarUrl: u.avatar,
+                listName: L.name || null as any,
+              });
+            }
+          }
+        }
+      }
+      
+      // Actualizar configuración de rondas si está habilitada
+      if (editUseRounds && editRoundsConfig.length > 0 && editListsConfig.length > 0) {
+        await adminSetRoundsConfig(editId, { rounds: editRoundsConfig }, { lists: editListsConfig }, editRoundsConfig.length);
+      }
+      
+      // Si hay una ronda activa, activar todos los candidatos pendientes
+      const trending = rows.find(r => r.id === editId);
+      if (trending?.current_round_number && trending.current_round_number > 0) {
+        try {
+          await adminActivatePendingCandidates(editId);
+        } catch (e) {
+          console.error('Error activando candidatos pendientes', e);
+        }
+      }
+      
       setEditId(null);
       await reload(statusFilter || undefined);
       showToast('Trending actualizado', 'success');
@@ -473,7 +663,7 @@ export default function TrendingAdmin() {
                               <select 
                                 value={round.duration_type}
                                 onChange={(e) => setRoundsConfig(roundsConfig.map((r, i) => i === idx ? { ...r, duration_type: e.target.value as any, duration_value: e.target.value === 'unlimited' ? undefined : r.duration_value } : r))}
-                                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#4a4a4a', color: '#fff' }}
                               >
                                 <option value="days">Días</option>
                                 <option value="hours">Horas</option>
@@ -586,37 +776,256 @@ export default function TrendingAdmin() {
         {editId !== null && (
           <section className="cc-glass" style={{ padding: '1rem', marginTop: '1rem' }}>
             <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>Editar trending #{editId}</h2>
-            <div style={{ display:'grid', gap: 10, maxWidth: 700 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Título</label>
-                <input value={editTitle} onChange={(e)=>setEditTitle(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Descripción</label>
-                <textarea value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} rows={3} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
+            {loadingEditData ? (
+              <div style={{ padding: 24, textAlign: 'center' }}>Cargando datos...</div>
+            ) : (
+              <div style={{ display:'grid', gap: 10, maxWidth: 700 }}>
                 <div>
-                  <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Inicia</label>
-                  <input type="datetime-local" value={editStartsAt} onChange={(e)=>setEditStartsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                  <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Título</label>
+                  <input value={editTitle} onChange={(e)=>setEditTitle(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
                 </div>
                 <div>
-                  <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Termina</label>
-                  <input type="datetime-local" value={editEndsAt} onChange={(e)=>setEditEndsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                  <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Descripción</label>
+                  <textarea value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} rows={3} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (slugs separados por comas)</label>
+                  <input 
+                    value={editRitmosSel.join(', ')} 
+                    onChange={(e) => setEditRitmosSel(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} 
+                    placeholder="Ej: salsa, bachata, kizomba"
+                    style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                  />
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Inicia</label>
+                    <input type="datetime-local" value={editStartsAt} onChange={(e)=>setEditStartsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                  </div>
+                  <div>
+                    <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Termina</label>
+                    <input type="datetime-local" value={editEndsAt} onChange={(e)=>setEditEndsAt(e.target.value)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Modo de voto</label>
+                  <select value={editMode} onChange={(e)=>setEditMode(e.target.value as any)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }}>
+                    <option value="per_candidate">per_candidate</option>
+                    <option value="per_ritmo">per_ritmo</option>
+                  </select>
+                </div>
+                
+                {/* Listas de participantes */}
+                <div className="cc-glass" style={{ padding: 12, borderRadius: 12, border: '2px solid rgba(0,188,212,0.3)' }}>
+                  <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: 12 }}>Listas de participantes</h3>
+                  <div style={{ display:'grid', gap: 10 }}>
+                    {editLists.map((L, idx) => (
+                      <div key={L.key} className="cc-glass" style={{ padding: 12, borderRadius: 12 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 8 }}>
+                          <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Lista #{idx+1}</h4>
+                          <button type="button" className="cc-btn" onClick={() => setEditLists(editLists.filter(x => x.key !== L.key))}>
+                            Eliminar lista
+                          </button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Nombre de lista</label>
+                            <input placeholder="Ej. Bachata Team" value={L.name} onChange={(e) => setEditLists(editLists.map(x => x.key===L.key ? { ...x, name: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Ritmos (opcional, slugs separados por comas)</label>
+                            <input 
+                              placeholder="Ej: salsa, bachata, kizomba"
+                              value={L.ritmos.join(', ')} 
+                              onChange={(e) => setEditLists(editLists.map(x => x.key===L.key ? { ...x, ritmos: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : x))} 
+                              style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} 
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: 13, opacity: .8 }}>Agregar usuarios (buscar por nombre)</label>
+                            <input placeholder="Escribe un nombre..." value={L.search} onChange={(e) => setEditLists(editLists.map(x => x.key===L.key ? { ...x, search: e.target.value } : x))} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }} />
+                            {L.search && (
+                              <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}>
+                                {allUsers.filter(u => u.name.toLowerCase().includes(L.search.toLowerCase())).slice(0,50).map(u => (
+                                  <button type="button" key={u.id} onClick={() => {
+                                    if (!L.selected.find(x=>x.id===u.id)) {
+                                      setEditLists(editLists.map(x => x.key===L.key ? { ...x, selected: [...x.selected, u] } : x));
+                                    }
+                                  }} style={{ display:'flex', gap:8, alignItems:'center', width:'100%', textAlign:'left', padding:8, background:'transparent', border:'none', color:'#fff', cursor:'pointer' }}>
+                                    <img src={u.avatar || 'https://placehold.co/32x32'} alt={u.name} style={{ width:24, height:24, borderRadius:999, objectFit:'cover' }} />
+                                    <span>{u.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            {L.selected.length > 0 && (
+                              <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:8 }}>
+                                {L.selected.map(u => (
+                                  <span key={u.id} className="cc-chip" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                                    {u.name}
+                                    <button type="button" onClick={() => setEditLists(editLists.map(x => x.key===L.key ? { ...x, selected: x.selected.filter(y=>y.id!==u.id) } : x))} style={{ border:'none', background:'transparent', color:'#fff', cursor:'pointer' }}>×</button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div>
+                      <button type="button" className="cc-btn" onClick={() => setEditLists([...editLists, { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" }])}>Añadir lista</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Configuración de rondas */}
+                <div className="cc-glass" style={{ padding: 12, borderRadius: 12, border: '2px solid rgba(0,188,212,0.3)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={editUseRounds} 
+                      onChange={(e) => {
+                        setEditUseRounds(e.target.checked);
+                        if (e.target.checked && editRoundsConfig.length === 0) {
+                          setEditRoundsConfig([{ round_number: 1, advances_per_list: 10, duration_type: 'days', duration_value: 1 }]);
+                          const listConfigs: ListConfig[] = editLists
+                            .filter(L => L.name.trim())
+                            .map(L => ({ name: L.name, size: L.selected.length }));
+                          if (listConfigs.length > 0) {
+                            setEditListsConfig(listConfigs);
+                          }
+                        }
+                      }}
+                      style={{ width: 18, height: 18 }}
+                    />
+                    <label style={{ fontSize: '1rem', fontWeight: 700 }}>Usar sistema de rondas</label>
+                  </div>
+                  
+                  {editUseRounds && (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {/* Configuración de listas para rondas */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 8 }}>Configuración de listas</label>
+                        {editListsConfig.map((listCfg, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                            <input 
+                              type="text" 
+                              placeholder="Nombre de lista"
+                              value={listCfg.name}
+                              onChange={(e) => setEditListsConfig(editListsConfig.map((l, i) => i === idx ? { ...l, name: e.target.value } : l))}
+                              style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                            />
+                            <input 
+                              type="number" 
+                              placeholder="Tamaño"
+                              value={listCfg.size}
+                              onChange={(e) => setEditListsConfig(editListsConfig.map((l, i) => i === idx ? { ...l, size: parseInt(e.target.value) || 0 } : l))}
+                              style={{ width: 100, padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                            />
+                            <button 
+                              type="button" 
+                              className="cc-btn" 
+                              onClick={() => setEditListsConfig(editListsConfig.filter((_, i) => i !== idx))}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          className="cc-btn" 
+                          onClick={() => setEditListsConfig([...editListsConfig, { name: '', size: 0 }])}
+                        >
+                          + Añadir lista
+                        </button>
+                      </div>
+
+                      {/* Configuración de rondas */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 13, opacity: .8, marginBottom: 8 }}>Rondas</label>
+                        {editRoundsConfig.map((round, idx) => (
+                          <div key={idx} className="cc-glass" style={{ padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                              <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Ronda {round.round_number}</h4>
+                              {editRoundsConfig.length > 1 && (
+                                <button 
+                                  type="button" 
+                                  className="cc-btn" 
+                                  onClick={() => setEditRoundsConfig(editRoundsConfig.filter((_, i) => i !== idx).map((r, i) => ({ ...r, round_number: i + 1 })))}
+                                >
+                                  Eliminar
+                                </button>
+                              )}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>Avances por lista</label>
+                                <input 
+                                  type="number" 
+                                  value={round.advances_per_list}
+                                  onChange={(e) => setEditRoundsConfig(editRoundsConfig.map((r, i) => i === idx ? { ...r, advances_per_list: parseInt(e.target.value) || 0 } : r))}
+                                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                                />
+                              </div>
+                              <div>
+                                <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>Tipo de duración</label>
+                                <select 
+                                  value={round.duration_type}
+                                  onChange={(e) => setEditRoundsConfig(editRoundsConfig.map((r, i) => i === idx ? { ...r, duration_type: e.target.value as any, duration_value: e.target.value === 'unlimited' ? undefined : r.duration_value } : r))}
+                                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#4a4a4a', color: '#fff' }}
+                                >
+                                  <option value="days">Días</option>
+                                  <option value="hours">Horas</option>
+                                  <option value="unlimited">Sin límite</option>
+                                </select>
+                              </div>
+                              {round.duration_type !== 'unlimited' && (
+                                <div>
+                                  <label style={{ display: 'block', fontSize: 12, opacity: .8, marginBottom: 4 }}>
+                                    Duración ({round.duration_type === 'days' ? 'días' : 'horas'})
+                                  </label>
+                                  <input 
+                                    type="number" 
+                                    value={round.duration_value || ''}
+                                    onChange={(e) => setEditRoundsConfig(editRoundsConfig.map((r, i) => i === idx ? { ...r, duration_value: parseInt(e.target.value) || undefined } : r))}
+                                    style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff' }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          className="cc-btn" 
+                          onClick={() => setEditRoundsConfig([...editRoundsConfig, { 
+                            round_number: editRoundsConfig.length + 1, 
+                            advances_per_list: Math.max(1, Math.floor((editRoundsConfig[editRoundsConfig.length - 1]?.advances_per_list || 10) / 2)), 
+                            duration_type: 'days', 
+                            duration_value: 1 
+                          }])}
+                        >
+                          + Añadir ronda
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display:'flex', gap:8 }}>
+                  <button className="cc-btn cc-btn--primary" onClick={saveEdit}>Guardar</button>
+                  <button className="cc-btn" onClick={()=>{
+                    setEditId(null);
+                    setEditCandidates([]);
+                    setEditRoundsConfig([]);
+                    setEditListsConfig([]);
+                    setEditUseRounds(false);
+                    setEditLists([]);
+                    setEditRitmosSel([]);
+                  }}>Cancelar</button>
                 </div>
               </div>
-              <div>
-                <label style={{ display:'block', fontSize: 13, opacity: .8 }}>Modo de voto</label>
-                <select value={editMode} onChange={(e)=>setEditMode(e.target.value as any)} style={{ width:'100%', padding:10, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', color:'#fff' }}>
-                  <option value="per_candidate">per_candidate</option>
-                  <option value="per_ritmo">per_ritmo</option>
-                </select>
-              </div>
-              <div style={{ display:'flex', gap:8 }}>
-                <button className="cc-btn cc-btn--primary" onClick={saveEdit}>Guardar</button>
-                <button className="cc-btn" onClick={()=>setEditId(null)}>Cancelar</button>
-              </div>
-            </div>
+            )}
           </section>
         )}
       </div>

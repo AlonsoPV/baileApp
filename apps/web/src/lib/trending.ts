@@ -168,6 +168,14 @@ export async function adminAddCandidate(args: {
   if (error) throw error;
 }
 
+export async function adminRemoveCandidate(trendingId: number, candidateId: number) {
+  const { error } = await supabase.rpc("rpc_trending_remove_candidate", {
+    p_trending_id: trendingId,
+    p_candidate_id: candidateId,
+  });
+  if (error) throw error;
+}
+
 export async function adminUpdateTrending(args: {
   id: number;
   title?: string;
@@ -246,6 +254,21 @@ export async function getTrendingRounds(trendingId: number) {
   });
   if (error) throw error;
   return (data ?? []) as Round[];
+}
+
+export async function adminActivatePendingCandidates(trendingId: number) {
+  const { error } = await supabase.rpc("rpc_trending_activate_pending_candidates", {
+    p_trending_id: trendingId,
+  });
+  if (error) throw error;
+}
+
+export async function debugTrendingCandidates(trendingId: number) {
+  const { data, error } = await supabase.rpc("rpc_trending_debug_candidates", {
+    p_trending_id: trendingId,
+  });
+  if (error) throw error;
+  return data ?? [];
 }
 
 

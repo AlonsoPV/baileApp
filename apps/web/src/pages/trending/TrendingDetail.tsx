@@ -10,6 +10,8 @@ import {
   getRoundCandidates,
   getTrendingRounds,
   adminCloseRound,
+  adminActivatePendingCandidates,
+  debugTrendingCandidates,
 } from "@/lib/trending";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/lib/supabase";
@@ -66,19 +68,59 @@ export default function TrendingDetail() {
         setActiveRitmo(rs?.[0]?.ritmo_slug ?? null);
         
         // Verificar si usa sistema de rondas
-        const hasRounds = tr?.rounds_config && tr?.current_round_number > 0;
+        const hasRounds = tr?.rounds_config && (tr?.current_round_number > 0 || roundsData.length > 0);
         setUseRoundsMode(hasRounds);
         
         // Si usa rondas, cargar candidatos de la ronda actual
-        if (hasRounds && tr.current_round_number) {
-          const roundCandidates = await getRoundCandidates(trendingId, tr.current_round_number);
-          setCurrentRoundCandidates(roundCandidates);
+        if (hasRounds) {
+          const roundNum = tr.current_round_number || (roundsData.find(r => r.status === 'active')?.round_number) || 1;
+          if (roundNum) {
+            try {
+              const roundCandidates = await getRoundCandidates(trendingId, roundNum);
+              setCurrentRoundCandidates(roundCandidates);
+              console.log('[TrendingDetail] Candidatos de ronda', roundNum, roundCandidates);
+            } catch (e) {
+              console.error('[TrendingDetail] Error cargando candidatos de ronda', e);
+              setCurrentRoundCandidates([]);
+            }
+          }
         }
       } finally {
         setLoading(false);
       }
     })();
   }, [trendingId]);
+
+  // Recargar candidatos cuando cambie la ronda activa
+  React.useEffect(() => {
+    if (!useRoundsMode || !t) return;
+    
+    const loadRoundCandidates = async () => {
+      const roundNum = t.current_round_number || (rounds.find(r => r.status === 'active')?.round_number);
+      if (roundNum) {
+        try {
+          // Primero intentar activar candidatos pendientes
+          if (isSA) {
+            try {
+              const { adminActivatePendingCandidates } = await import('@/lib/trending');
+              await adminActivatePendingCandidates(trendingId);
+            } catch (e) {
+              // Si no es admin o hay error, continuar
+              console.log('[TrendingDetail] No se pudieron activar candidatos pendientes', e);
+            }
+          }
+          
+          const roundCandidates = await getRoundCandidates(trendingId, roundNum);
+          setCurrentRoundCandidates(roundCandidates);
+          console.log('[TrendingDetail] Candidatos recargados para ronda', roundNum, roundCandidates.length);
+        } catch (e) {
+          console.error('[TrendingDetail] Error recargando candidatos', e);
+        }
+      }
+    };
+
+    loadRoundCandidates();
+  }, [useRoundsMode, t?.current_round_number, rounds, trendingId, isSA]);
 
   React.useEffect(() => {
     (async () => {
@@ -222,9 +264,13 @@ export default function TrendingDetail() {
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.12)',
           marginBottom: 12,
-          maxHeight: 220
+          maxHeight: 220,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.3)'
         }}>
-          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: '220px', display: 'block', objectFit: 'cover' }} />
+          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: '220px', display: 'block', objectFit: 'contain' }} />
         </div>
       )}
       <header style={{ marginBottom: 12 }}>
@@ -275,13 +321,39 @@ export default function TrendingDetail() {
               )}
             </div>
             {isSA && rounds.find(r => r.round_number === t.current_round_number)?.status === 'active' && (
-              <button 
-                className="cc-btn" 
-                onClick={() => doCloseRound(t.current_round_number)}
-                style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}
-              >
-                Cerrar Ronda
-              </button>
+              <>
+                <button 
+                  className="cc-btn" 
+                  onClick={async () => {
+                    try {
+                      // Debug: ver estado de candidatos
+                      const debug = await debugTrendingCandidates(trendingId);
+                      console.log('[TrendingDetail] Debug candidatos:', debug);
+                      
+                      await adminActivatePendingCandidates(trendingId);
+                      
+                      // Recargar candidatos
+                      const roundCandidates = await getRoundCandidates(trendingId, t.current_round_number);
+                      setCurrentRoundCandidates(roundCandidates);
+                      console.log('[TrendingDetail] Candidatos después de activar:', roundCandidates);
+                      alert(`Candidatos activados. Total: ${roundCandidates.length}`);
+                    } catch (e: any) {
+                      console.error('[TrendingDetail] Error activando candidatos', e);
+                      alert(e?.message || 'Error al activar candidatos');
+                    }
+                  }}
+                  style={{ background: 'rgba(0,188,212,0.3)', border: '1px solid rgba(0,188,212,0.5)' }}
+                >
+                  Activar Candidatos
+                </button>
+                <button 
+                  className="cc-btn" 
+                  onClick={() => doCloseRound(t.current_round_number)}
+                  style={{ background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.5)' }}
+                >
+                  Cerrar Ronda
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -315,7 +387,8 @@ export default function TrendingDetail() {
 
       {/* Listas de candidatos */}
       <div style={{ display: 'grid', gap: 16 }}>
-        {useRoundsMode && currentRoundCandidates.length > 0 ? (
+        {useRoundsMode ? (
+          currentRoundCandidates.length > 0 ? (
           // Modo rondas: mostrar candidatos de la ronda actual agrupados por lista
           (() => {
             const byList = new Map<string, any[]>();
@@ -392,6 +465,22 @@ export default function TrendingDetail() {
               </section>
             ));
           })()
+          ) : (
+            <div style={{ 
+              padding: 24, 
+              textAlign: 'center', 
+              background: 'rgba(255,255,255,0.05)', 
+              borderRadius: 12, 
+              border: '1px solid rgba(255,255,255,0.1)' 
+            }}>
+              <p style={{ opacity: 0.8 }}>No hay candidatos activos en esta ronda.</p>
+              {isSA && (
+                <p style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>
+                  Verifica que los candidatos estén asignados a la ronda {t.current_round_number}
+                </p>
+              )}
+            </div>
+          )
         ) : (
           // Modo tradicional: mostrar candidatos agrupados por lista y ritmo
           groupByList.map(([listName, items]) => (
