@@ -23,6 +23,8 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'bachata_sensual', label: 'Bachata sensual', parent: 'latinos' },
       { id: 'merengue', label: 'Merengue', parent: 'latinos' },
       { id: 'cumbia', label: 'Cumbia', parent: 'latinos' },
+      // Variante específica de cumbia que existe en tags: { id: 41, slug: "cumbia_texana" }
+      { id: 'cumbia_texana', label: 'Cumbia Texana', parent: 'latinos' },
       { id: 'timba', label: 'Timba', parent: 'latinos' },
     ],
   },
