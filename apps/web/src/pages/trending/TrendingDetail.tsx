@@ -391,15 +391,17 @@ export default function TrendingDetail() {
                     try {
                       // Debug: ver estado de candidatos
                       const debug = await debugTrendingCandidates(trendingId);
-                      console.log('[TrendingDetail] Debug candidatos:', debug);
+                      console.log('[TrendingDetail] Debug candidatos antes de activar:', debug);
                       
-                      await adminActivatePendingCandidates(trendingId);
+                      const result = await adminActivatePendingCandidates(trendingId);
+                      console.log('[TrendingDetail] Resultado de activación:', result);
                       
                       // Recargar candidatos
                       const roundCandidates = await getRoundCandidates(trendingId, t.current_round_number);
                       setCurrentRoundCandidates(roundCandidates);
                       console.log('[TrendingDetail] Candidatos después de activar:', roundCandidates);
-                      alert(`Candidatos activados. Total: ${roundCandidates.length}`);
+                      
+                      alert(`Candidatos activados: ${result.activated_count} de ${result.total_candidates} (Ronda ${result.current_round || 'N/A'}). Total en ronda: ${roundCandidates.length}`);
                     } catch (e: any) {
                       console.error('[TrendingDetail] Error activando candidatos', e);
                       alert(e?.message || 'Error al activar candidatos');

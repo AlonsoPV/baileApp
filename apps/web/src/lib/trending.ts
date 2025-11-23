@@ -289,10 +289,12 @@ export async function getTrendingRounds(trendingId: number) {
 }
 
 export async function adminActivatePendingCandidates(trendingId: number) {
-  const { error } = await supabase.rpc("rpc_trending_activate_pending_candidates", {
+  const { data, error } = await supabase.rpc("rpc_trending_activate_pending_candidates", {
     p_trending_id: trendingId,
   });
   if (error) throw error;
+  // Retorna información sobre la activación
+  return data?.[0] || { activated_count: 0, total_candidates: 0, current_round: null };
 }
 
 export async function debugTrendingCandidates(trendingId: number) {
