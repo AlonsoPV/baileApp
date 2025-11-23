@@ -10,6 +10,7 @@ import {
   adminRemoveCandidate,
   adminUpdateTrending,
   adminSetRoundsConfig,
+  adminSetParticipantsLists,
   adminStartFirstRound,
   adminCloseRound,
   adminActivatePendingCandidates,
@@ -140,6 +141,34 @@ export default function TrendingAdmin() {
         await adminSetRoundsConfig(id, { rounds: roundsConfig }, { lists: listsConfig }, roundsConfig.length);
       }
 
+      // Guardar participantes y listas
+      console.log('[TrendingAdmin] lists antes de procesar:', lists);
+      const participantsLists = {
+        lists: lists
+          .filter(L => {
+            const hasName = L.name && L.name.trim().length > 0;
+            const hasParticipants = L.selected && L.selected.length > 0;
+            console.log(`[TrendingAdmin] Lista "${L.name}": hasName=${hasName}, hasParticipants=${hasParticipants}, selected.length=${L.selected?.length || 0}`);
+            return hasName && hasParticipants;
+          })
+          .map(L => ({
+            name: L.name.trim(),
+            participants: L.selected.map(u => ({
+              id: u.id,
+              name: u.name,
+              avatar: u.avatar || null,
+            })),
+          })),
+      };
+      console.log('[TrendingAdmin] Guardando participants_lists:', JSON.stringify(participantsLists, null, 2));
+      try {
+        await adminSetParticipantsLists(id, participantsLists);
+        console.log('[TrendingAdmin] participants_lists guardado correctamente');
+      } catch (e: any) {
+        console.error('[TrendingAdmin] Error al guardar participants_lists:', e);
+        showToast(`Error al guardar participantes: ${e?.message}`, 'error');
+      }
+
       setTitle(""); setDescription(""); setStartsAt(""); setEndsAt(""); setMode("per_candidate"); setCoverFile(null); setRitmosSel([]);
       setLists([
         { key: Math.random().toString(36).slice(2), name: "", ritmos: [], selected: [], search: "" },
@@ -253,6 +282,7 @@ export default function TrendingAdmin() {
       }
       
       // Cargar configuración de rondas si existe
+      let parsedListsConfig: ListConfig[] = [];
       if (r.rounds_config && r.lists_config) {
         setEditUseRounds(true);
         try {
@@ -267,9 +297,11 @@ export default function TrendingAdmin() {
           }
           
           if (Array.isArray(listsConfig)) {
+            parsedListsConfig = listsConfig;
             setEditListsConfig(listsConfig);
           } else if (listsConfig && typeof listsConfig === 'object') {
-            setEditListsConfig(listsConfig.lists || []);
+            parsedListsConfig = listsConfig.lists || [];
+            setEditListsConfig(parsedListsConfig);
           }
         } catch (e) {
           console.error('Error parsing rounds config', e);
@@ -280,7 +312,7 @@ export default function TrendingAdmin() {
         setEditListsConfig([]);
       }
       
-      // Agrupar candidatos por lista para mostrar en el editor
+      // Agrupar candidatos por lista para poblar las listas
       const candidatesByList = new Map<string, any[]>();
       candidates.forEach((c: any) => {
         const listName = c.list_name || 'General';
@@ -290,21 +322,46 @@ export default function TrendingAdmin() {
         candidatesByList.get(listName)!.push(c);
       });
       
-      // Crear listas de edición desde candidatos existentes
+      // Crear listas de edición
       const editListsData: UserList[] = [];
-      candidatesByList.forEach((candidatesList, listName) => {
-        editListsData.push({
-          key: Math.random().toString(36).slice(2),
-          name: listName,
-          ritmos: Array.from(new Set(candidatesList.map((c: any) => c.ritmo_slug))),
-          selected: candidatesList.map((c: any) => ({
-            id: c.user_id,
-            name: c.display_name || c.user_id,
-            avatar: c.avatar_url
-          })),
-          search: ""
+      
+      // Si hay lists_config, crear las listas desde ahí
+      if (parsedListsConfig.length > 0) {
+        parsedListsConfig.forEach((listCfg) => {
+          const listName = listCfg.name || '';
+          const candidatesInList = candidatesByList.get(listName) || [];
+          
+          // Obtener ritmos únicos de los candidatos de esta lista
+          const ritmosFromCandidates = Array.from(new Set(candidatesInList.map((c: any) => c.ritmo_slug).filter(Boolean)));
+          
+          editListsData.push({
+            key: Math.random().toString(36).slice(2),
+            name: listName,
+            ritmos: ritmosFromCandidates,
+            selected: candidatesInList.map((c: any) => ({
+              id: c.user_id,
+              name: c.display_name || c.user_id,
+              avatar: c.avatar_url
+            })),
+            search: ""
+          });
         });
-      });
+      } else {
+        // Si no hay lists_config, crear desde candidatos existentes (comportamiento anterior)
+        candidatesByList.forEach((candidatesList, listName) => {
+          editListsData.push({
+            key: Math.random().toString(36).slice(2),
+            name: listName,
+            ritmos: Array.from(new Set(candidatesList.map((c: any) => c.ritmo_slug).filter(Boolean))),
+            selected: candidatesList.map((c: any) => ({
+              id: c.user_id,
+              name: c.display_name || c.user_id,
+              avatar: c.avatar_url
+            })),
+            search: ""
+          });
+        });
+      }
       
       if (editListsData.length === 0) {
         // Si no hay listas, crear una vacía
@@ -425,6 +482,34 @@ export default function TrendingAdmin() {
         } catch (e) {
           console.error('Error activando candidatos pendientes', e);
         }
+      }
+
+      // Guardar participantes y listas
+      console.log('[TrendingAdmin] editLists antes de procesar:', editLists);
+      const participantsLists = {
+        lists: editLists
+          .filter(L => {
+            const hasName = L.name && L.name.trim().length > 0;
+            const hasParticipants = L.selected && L.selected.length > 0;
+            console.log(`[TrendingAdmin] Lista "${L.name}": hasName=${hasName}, hasParticipants=${hasParticipants}, selected.length=${L.selected?.length || 0}`);
+            return hasName && hasParticipants;
+          })
+          .map(L => ({
+            name: L.name.trim(),
+            participants: L.selected.map(u => ({
+              id: u.id,
+              name: u.name,
+              avatar: u.avatar || null,
+            })),
+          })),
+      };
+      console.log('[TrendingAdmin] Guardando participants_lists (edit):', JSON.stringify(participantsLists, null, 2));
+      try {
+        await adminSetParticipantsLists(editId, participantsLists);
+        console.log('[TrendingAdmin] participants_lists guardado correctamente (edit)');
+      } catch (e: any) {
+        console.error('[TrendingAdmin] Error al guardar participants_lists (edit):', e);
+        showToast(`Error al guardar participantes: ${e?.message}`, 'error');
       }
       
       setEditId(null);

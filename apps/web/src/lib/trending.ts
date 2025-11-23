@@ -16,6 +16,16 @@ export type Trending = {
   lists_config?: any;
   current_round_number?: number;
   total_rounds?: number;
+  participants_lists?: {
+    lists: Array<{
+      name: string;
+      participants: Array<{
+        id: string;
+        name: string;
+        avatar?: string | null;
+      }>;
+    }>;
+  };
 };
 
 export type RoundConfig = {
@@ -213,6 +223,28 @@ export async function adminSetRoundsConfig(
     p_lists_config: listsConfig,
     p_total_rounds: totalRounds,
   });
+  if (error) throw error;
+}
+
+export async function adminSetParticipantsLists(
+  trendingId: number,
+  participantsLists: {
+    lists: Array<{
+      name: string;
+      participants: Array<{
+        id: string;
+        name: string;
+        avatar?: string | null;
+      }>;
+    }>;
+  }
+) {
+  console.log('[trending.ts] adminSetParticipantsLists - Input:', { trendingId, participantsLists });
+  const { data, error } = await supabase.rpc("rpc_trending_set_participants_lists", {
+    p_trending_id: trendingId,
+    p_participants_lists: participantsLists,
+  });
+  console.log('[trending.ts] adminSetParticipantsLists - Response:', { data, error });
   if (error) throw error;
 }
 
