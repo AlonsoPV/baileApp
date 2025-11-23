@@ -351,13 +351,22 @@ export default function TrendingAdmin() {
       // Prioridad 1: Si hay participants_lists, usar esa información
       if (participantsListsData && participantsListsData.lists && Array.isArray(participantsListsData.lists) && participantsListsData.lists.length > 0) {
         console.log('[TrendingAdmin] Cargando desde participants_lists');
+        // Obtener todos los ritmos del trending como fallback
+        const allRitmos = ritmos.data?.map((r: any) => r.ritmo_slug) || [];
+        
         participantsListsData.lists.forEach((listData: any) => {
           const listName = listData.name || '';
           const participants = listData.participants || [];
           
           // Obtener candidatos de esta lista para obtener ritmos
           const candidatesInList = candidatesByList.get(listName) || [];
-          const ritmosFromCandidates = Array.from(new Set(candidatesInList.map((c: any) => c.ritmo_slug).filter(Boolean)));
+          let ritmosFromCandidates = Array.from(new Set(candidatesInList.map((c: any) => c.ritmo_slug).filter(Boolean)));
+          
+          // Si no hay ritmos de candidatos, usar todos los ritmos del trending como fallback
+          if (ritmosFromCandidates.length === 0 && allRitmos.length > 0) {
+            ritmosFromCandidates = allRitmos;
+            console.log(`[TrendingAdmin] Lista "${listName}" no tiene ritmos de candidatos, usando todos los ritmos del trending:`, ritmosFromCandidates);
+          }
           
           editListsData.push({
             key: Math.random().toString(36).slice(2),
@@ -495,6 +504,7 @@ export default function TrendingAdmin() {
       }
       
       // Agregar nuevos candidatos
+      let newCandidatesAdded = false;
       for (const L of editLists) {
         if (!L.ritmos || L.ritmos.length === 0) continue;
         for (const rs of L.ritmos) {
@@ -507,6 +517,7 @@ export default function TrendingAdmin() {
             );
             
             if (!exists) {
+              newCandidatesAdded = true;
               await adminAddCandidate({
                 trendingId: editId,
                 ritmoSlug: rs,
@@ -519,6 +530,8 @@ export default function TrendingAdmin() {
           }
         }
       }
+      
+      console.log('[TrendingAdmin] Nuevos candidatos agregados:', newCandidatesAdded);
       
       // Guardar participantes y listas
       console.log('[TrendingAdmin] editLists antes de procesar:', editLists);
@@ -561,18 +574,24 @@ export default function TrendingAdmin() {
         await adminSetRoundsConfig(editId, { rounds: editRoundsConfig }, { lists: editListsConfig }, editRoundsConfig.length);
       }
       
-      // Si hay una ronda activa, activar todos los candidatos pendientes
-      const trending = rows.find(r => r.id === editId);
-      if (trending?.current_round_number && trending.current_round_number > 0) {
+      // Recargar el trending para obtener el estado actualizado
+      await reload(statusFilter || undefined);
+      
+      // Si hay una ronda activa, activar todos los candidatos pendientes (incluyendo los recién agregados)
+      const updatedTrending = rows.find(r => r.id === editId);
+      if (updatedTrending?.current_round_number && updatedTrending.current_round_number > 0) {
         try {
+          console.log('[TrendingAdmin] Activando candidatos pendientes para ronda', updatedTrending.current_round_number);
           await adminActivatePendingCandidates(editId);
+          console.log('[TrendingAdmin] Candidatos activados correctamente');
+          // Recargar nuevamente para ver los candidatos activados
+          await reload(statusFilter || undefined);
         } catch (e) {
           console.error('Error activando candidatos pendientes', e);
         }
       }
       
       setEditId(null);
-      await reload(statusFilter || undefined);
       showToast('Trending actualizado', 'success');
     } catch (e:any) {
       showToast(e?.message || 'Error al guardar cambios', 'error');

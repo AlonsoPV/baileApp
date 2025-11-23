@@ -79,6 +79,12 @@ export default function TrendingDetail() {
               const roundCandidates = await getRoundCandidates(trendingId, roundNum);
               setCurrentRoundCandidates(roundCandidates);
               console.log('[TrendingDetail] Candidatos de ronda', roundNum, roundCandidates);
+              
+              // Si no hay candidatos pero hay participants_lists, intentar activar candidatos
+              if (roundCandidates.length === 0 && tr.participants_lists) {
+                console.log('[TrendingDetail] No hay candidatos en ronda, pero hay participants_lists. Intentando activar...');
+                // Esto se manejará con el botón de activar candidatos o automáticamente
+              }
             } catch (e) {
               console.error('[TrendingDetail] Error cargando candidatos de ronda', e);
               setCurrentRoundCandidates([]);
