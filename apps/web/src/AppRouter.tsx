@@ -143,8 +143,11 @@ export default function AppRouter() {
         {/* Protected */}
         <Route element={<OnboardingGate />}>
           <Route path={routes.app.profile} element={<ProfileScreen />} />
+          {/* Rutas unificadas de perfil de usuario */}
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/profile/edit" element={<ProfileScreen />} />
+          {/* Nueva ruta explícita para el Live de usuario */}
+          <Route path="/profile/user" element={<ProfileScreen />} />
           <Route path="/profile/settings" element={<DefaultProfileSettings />} />
           <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
           <Route path="/profile/brand" element={<BrandProfileLive />} />

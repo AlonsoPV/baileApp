@@ -732,16 +732,44 @@ export const UserProfileLive: React.FC = () => {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const publicUrl = user?.id ? `${window.location.origin}/u/${user.id}` : '';
+                      if (!user?.id) {
+                        console.warn('[UserProfileLive] No se pudo compartir: user.id indefinido');
+                        return;
+                      }
+
+                      const publicUrl = `${window.location.origin}/u/${user.id}`;
                       const title = profile?.display_name || 'Perfil';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
+
+                      console.log('[UserProfileLive] Compartir perfil', {
+                        publicUrl,
+                        hasWebShare: !!(navAny && typeof navAny.share === 'function'),
+                        hasClipboard: !!navigator.clipboard,
+                      });
+
                       if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url: publicUrl }).catch(() => { });
+                        navAny
+                          .share({ title, text, url: publicUrl })
+                          .catch((err: any) => {
+                            console.warn('[UserProfileLive] Web Share cancelado o fallido', err);
+                          });
+                      } else if (navigator.clipboard?.writeText) {
+                        navigator.clipboard
+                          .writeText(publicUrl)
+                          .then(() => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          })
+                          .catch((err) => {
+                            console.error('[UserProfileLive] Error copiando al portapapeles', err);
+                          });
                       } else {
-                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => { });
+                        console.warn('[UserProfileLive] Ni Web Share ni clipboard disponibles para compartir');
                       }
-                    } catch { }
+                    } catch (err) {
+                      console.error('[UserProfileLive] Error inesperado al compartir perfil', err);
+                    }
                   }}
                   style={{
                     display: 'inline-flex',

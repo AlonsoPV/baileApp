@@ -26,29 +26,37 @@ export function ProfileScreen() {
   const { mode, setMode } = useProfileMode(); // mode ahora es el rol actual
   const { getDefaultRoute, defaultProfile } = useDefaultProfile();
   const isEditRoute = window.location.pathname.includes('/edit');
-  const { search, pathname } = useLocation();
+  const location = useLocation();
+  const search = location.search;
+  const pathname = location.pathname;
+  const locationState = location.state as any;
   const viewUserId = new URLSearchParams(search).get('userId');
   const [shouldRedirect, setShouldRedirect] = React.useState<string | null>(null);
+
+  // Calcular una vez por render la ruta por defecto como string estable
+  const defaultRoute = getDefaultRoute();
 
   // Si viene userId por query, redirigir a la ruta pública /u/:userId
   if (viewUserId) {
     return <Navigate to={`/u/${encodeURIComponent(viewUserId)}`} replace />;
   }
 
-  // Si se accede a /profile directamente (sin ruta específica), redirigir al perfil por defecto
+  // Si se accede a /profile o /app/profile directamente (sin ruta específica), redirigir al perfil por defecto
   React.useEffect(() => {
     // Solo procesar cuando los datos estén listos
     if (loading || isLoading || !user) return;
     
-    // Solo redirigir si estamos en /profile (no en /profile/edit ni otras rutas)
-    if (pathname === '/profile' && !isEditRoute) {
-      const defaultRoute = getDefaultRoute();
-      
+    // Solo redirigir si estamos en /profile o /app/profile (no en /profile/edit ni otras rutas)
+    // y si no venimos explícitamente con una instrucción de omitir el perfil por defecto
+    const isEntryRoute = pathname === '/profile' || pathname === '/app/profile';
+    if (isEntryRoute && !isEditRoute && !locationState?.bypassDefault) {
       console.log('[ProfileScreen] Redirección al perfil por defecto:', {
         defaultProfile,
         defaultRoute,
         pathname,
-        isEditRoute
+        isEditRoute,
+        mode,
+        locationState,
       });
       
       // Si la ruta por defecto es diferente a /profile, redirigir
@@ -62,21 +70,60 @@ export function ProfileScreen() {
           'brand': 'marca'
         };
         const newMode = modeMap[defaultProfile] || 'usuario';
-        setMode(newMode);
+        // Evitar bucles: solo actualizar si realmente cambia el modo
+        if (mode !== newMode) {
+          console.log('[ProfileScreen] setMode por perfil por defecto', {
+            from: mode,
+            to: newMode,
+          });
+          setMode(newMode);
+        } else {
+          console.log('[ProfileScreen] Modo ya coincide con perfil por defecto, no se llama setMode');
+        }
         // Redirigir inmediatamente
+        console.log('[ProfileScreen] Solicitando redirección a ruta por defecto', {
+          target: defaultRoute,
+        });
         setShouldRedirect(defaultRoute);
         return;
       }
       
       // Si el perfil por defecto es 'user', asegurar que el modo esté en 'usuario'
       if (defaultProfile === 'user') {
+        if (mode !== 'usuario') {
+          console.log('[ProfileScreen] Forzando modo usuario porque defaultProfile=user', {
+            from: mode,
+            to: 'usuario',
+          });
+          setMode('usuario');
+        } else {
+          console.log('[ProfileScreen] Modo ya es usuario, no se llama setMode');
+        }
+      }
+    }
+  }, [loading, isLoading, user, pathname, isEditRoute, defaultRoute, defaultProfile, mode, setMode, locationState]);
+
+  // Asegurar que en /profile/user siempre se muestre el perfil de usuario (modo 'usuario')
+  React.useEffect(() => {
+    if (loading || isLoading || !user) return;
+    if (pathname.startsWith('/profile/user')) {
+      if (mode !== 'usuario') {
+        console.log('[ProfileScreen] Forzando modo usuario porque pathname=/profile/user', {
+          from: mode,
+          to: 'usuario',
+          pathname,
+        });
         setMode('usuario');
       }
     }
-  }, [loading, isLoading, user, pathname, isEditRoute, getDefaultRoute, defaultProfile, setMode]);
+  }, [loading, isLoading, user, pathname, mode, setMode]);
 
-  // Redirigir si es necesario
-  if (shouldRedirect) {
+  // Redirigir si es necesario, salvo cuando venimos explícitamente con bypassDefault
+  if (shouldRedirect && !locationState?.bypassDefault) {
+    console.log('[ProfileScreen] Ejecutando Navigate a ruta por defecto', {
+      shouldRedirect,
+      bypassDefault: locationState?.bypassDefault,
+    });
     return <Navigate to={shouldRedirect} replace />;
   }
 

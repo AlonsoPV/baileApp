@@ -110,7 +110,8 @@ export function useDefaultProfile() {
         id: 'user',
         name: 'Usuario',
         icon: '👤',
-        route: '/profile',
+        // Usar slug explícito para el live de usuario
+        route: '/profile/user',
         available: true,
         hasProfile: isUserProfileConfigured(userProfile)
       },

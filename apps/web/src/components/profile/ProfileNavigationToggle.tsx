@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { useMyRoleRequests } from '@/hooks/useRoles';
+import { useProfileMode } from '../../state/profileMode';
 
 interface ProfileNavigationToggleProps {
   currentView: 'live' | 'edit';
@@ -42,6 +43,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   const qc = useQueryClient();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { mode, setMode } = useProfileMode();
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -63,7 +65,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
   const getLiveRoute = () => {
     if (liveHref) return liveHref;
     switch (profileType) {
-      case 'user': return '/profile';
+      case 'user': return '/profile/user';
       case 'organizer': return '/profile/organizer';
       case 'academy': return '/profile/academy';
       case 'brand': return '/profile/brand';
@@ -151,7 +153,8 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
 
   // Definir todos los roles posibles
   const allRoles = [
-    { id: 'user', name: 'Usuario', icon: '👤', route: '/profile' },
+    // Live de usuario ahora tiene slug explícito /profile/user
+    { id: 'user', name: 'Usuario', icon: '👤', route: '/profile/user' },
     { id: 'organizer', name: 'Organizador', icon: '🎤', route: '/profile/organizer' },
     { id: 'academy', name: 'Academia', icon: '🎓', route: '/profile/academy' },
     { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher' },
@@ -403,9 +406,19 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
                         // Botón para ir al perfil (Live si existe, Edit si no)
                         <button
                           onClick={() => {
-                            console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route);
-                            // Si el usuario tiene el rol aprobado, ir a la ruta del rol
-                            // La pantalla Live del rol se encargará de redirigir a Edit si no tiene perfil
+                            const slug = slugForRoleId(role.id);
+                            console.log('🔄 Cambio de rol clickeado:', role.name, 'Ruta:', role.route, {
+                              roleId: role.id,
+                              slug,
+                              currentMode: mode,
+                            });
+
+                            // Sincronizar el modo global con el rol seleccionado
+                            if (slug) {
+                              setMode(slug);
+                            }
+
+                            // Navegar a la ruta live del rol seleccionado
                             navigate(role.route);
                             setIsRoleDropdownOpen(false);
                           }}

@@ -6,6 +6,7 @@ import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 import { SEO_ICON_URL } from '@/lib/seoConfig';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -17,6 +18,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const { data: isAdmin } = useIsAdmin();
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
   const { profile } = useUserProfile();
+  const { getDefaultRoute } = useDefaultProfile();
 
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
   const avatarUrl = profile?.avatar_url;
@@ -274,7 +276,13 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             type="button"
             className="nav-profile-button"
             aria-label="Ir a mi perfil"
-            onClick={async () => { await markAllAsRead(); navigate(routes.app.profile); }}
+            onClick={async () => {
+              await markAllAsRead();
+              // Ir al perfil por defecto (organizador, usuario, etc.)
+              const target = getDefaultRoute();
+              console.log('[Navbar] Navegando al perfil por defecto desde avatar', { target });
+              navigate(target);
+            }}
           >
             {avatarUrl ? (
               <img

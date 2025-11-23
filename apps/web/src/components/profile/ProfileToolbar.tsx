@@ -34,15 +34,33 @@ export default function ProfileToolbar() {
     // Si requiere aprobación y no la tiene → manda a solicitar
     const meta = ROLES.find(r => r.key === kind)!;
     if (meta.requireApproval && !approved.has(kind as any)) {
+      console.log('[ProfileToolbar] goView → requiere aprobación, redirigiendo a /profile/roles', {
+        kind,
+        toEdit,
+        approved: Array.from(approved),
+      });
       nav("/profile/roles");
       return;
     }
 
+    console.log('[ProfileToolbar] goView → cambio de modo solicitado', {
+      kind,
+      toEdit,
+      currentMode: mode,
+    });
+
     setMode(kind);
 
     if (kind === "usuario") {
-      // Cuando el usuario selecciona explícitamente "usuario", siempre ir a /profile
-      nav(toEdit ? "/profile/edit" : "/profile");
+      // Cuando el usuario selecciona explícitamente "usuario":
+      // - Live: usar slug explícito /profile/user
+      // - Edit: mantener /profile/edit (editor unificado)
+      const target = toEdit ? "/profile/edit" : "/profile/user";
+      console.log('[ProfileToolbar] goView → navegando a perfil de usuario', {
+        target,
+        toEdit,
+      });
+      nav(target);
       return;
     }
 
@@ -56,6 +74,13 @@ export default function ProfileToolbar() {
     const target = toEdit 
       ? map[kind as Exclude<RoleKey, "usuario">].edit 
       : map[kind as Exclude<RoleKey, "usuario">].live;
+
+    console.log('[ProfileToolbar] goView → navegando a rol no-usuario', {
+      kind,
+      toEdit,
+      target,
+    });
+
     nav(target);
   }
 

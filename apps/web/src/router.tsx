@@ -107,6 +107,8 @@ export function AppRouter() {
         {/* User Profile Routes (new unified) */}
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/profile/edit" element={<ProfileScreen />} />
+        {/* Nueva ruta para Live de Usuario con slug explícito */}
+        <Route path="/profile/user" element={<ProfileScreen />} />
         
         {/* Default Profile Settings */}
         <Route path="/profile/settings" element={<DefaultProfileSettings />} />
