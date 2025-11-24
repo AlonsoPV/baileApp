@@ -24,6 +24,7 @@ type ScheduleItem = {
   ubicacion?: string;  // texto libre
   nivel?: string;
   referenciaCosto?: string; // enlaza con costos.nombre (normalizado)
+  realizadoPor?: string; // texto libre: "Se llevará a cabo por"
 };
 
 type RitmoTag = { id: number; nombre: string };
@@ -155,7 +156,8 @@ export default function ScheduleEditorPlus({
     fecha: eventFecha || '', // ✅ Usar fecha del evento
     ubicacion: ubicacion ?? '',
     nivel: '',
-    referenciaCosto: ''
+    referenciaCosto: '',
+    realizadoPor: ''
   });
   
   // Actualizar fecha cuando cambie eventFecha
@@ -167,14 +169,15 @@ export default function ScheduleEditorPlus({
 
   const addItem = () => {
     const hasTitulo = (newItem.titulo && newItem.titulo.trim()) || newItem.ritmoId;
-    if (hasTitulo && newItem.inicio && newItem.fin) {
+    // Permitir que la hora de fin sea opcional: solo exigir inicio
+    if (hasTitulo && newItem.inicio) {
       const titleFromRitmo = newItem.ritmoId ? (ritmos.find(r=>r.id===newItem.ritmoId)?.nombre || '') : '';
       const finalTitulo = (newItem.titulo && newItem.titulo.trim()) || titleFromRitmo;
       const next = [...schedule, {
         ...newItem,
         titulo: finalTitulo,
         inicio: normalizeTime(newItem.inicio),
-        fin: normalizeTime(newItem.fin),
+        fin: newItem.fin ? normalizeTime(newItem.fin) : '',
       }];
       onChangeSchedule(next);
       setNewItem({
@@ -187,7 +190,8 @@ export default function ScheduleEditorPlus({
         fecha: '',
         ubicacion: meta.ubicacion ?? '',
         nivel: '',
-        referenciaCosto: ''
+        referenciaCosto: '',
+        realizadoPor: ''
       });
       setIsAdding(false);
     }
@@ -319,6 +323,18 @@ export default function ScheduleEditorPlus({
             <div key={index} style={card}>
               {editingIndex === index ? (
                 <div style={{ display: 'grid', gap: 12 }}>
+                  {/* Nombre de la actividad */}
+                  <div>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre</div>
+                    <input
+                      type="text"
+                      value={item.titulo || ''}
+                      onChange={(e)=> updateItem(index, 'titulo', e.target.value)}
+                      placeholder="Nombre de la actividad"
+                      style={input}
+                    />
+                  </div>
+
                   {/* tipo y nivel */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <div>
@@ -347,6 +363,18 @@ export default function ScheduleEditorPlus({
                     </div>
                   </div>
 
+                  {/* Se llevará a cabo por */}
+                  <div>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Se llevará a cabo por:</div>
+                    <input
+                      type="text"
+                      value={item.realizadoPor || ''}
+                      onChange={(e)=> updateItem(index, 'realizadoPor', e.target.value)}
+                      placeholder="Ej: Profesor, grupo o entidad responsable"
+                      style={input}
+                    />
+                  </div>
+
                   {/* Ritmo (RitmosChips) */}
                   <div>
                     <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
@@ -366,15 +394,6 @@ export default function ScheduleEditorPlus({
                       }}
                     />
                   </div>
-
-                  {/* título manual */}
-                  <input
-                    type="text"
-                    value={item.titulo || ''}
-                    onChange={(e)=> updateItem(index, 'titulo', e.target.value)}
-                    placeholder="Título (opcional si eliges un ritmo)"
-                    style={input}
-                  />
 
                   {/* horario */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -398,20 +417,7 @@ export default function ScheduleEditorPlus({
                     </div>
                   </div>
 
-                  {/* referencia costo */}
-                  <div>
-                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Referencia de costo (opcional)</div>
-                    <select
-                      value={item.referenciaCosto || ''}
-                      onChange={(e)=> updateItem(index, 'referenciaCosto', e.target.value)}
-                      style={input}
-                    >
-                      <option value="">Sin referencia</option>
-                      {costoNombres.map((n, i)=> (
-                        <option key={i} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
+            
 
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -458,10 +464,14 @@ export default function ScheduleEditorPlus({
                       {item.titulo || (item.ritmoId ? ritmos.find(r=>r.id===item.ritmoId)?.nombre : '')}
                     </h4>
                     <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8 }}>
-                      🕐 {item.inicio} - {item.fin}
+                    🕐 {item.fin ? `${item.inicio} - ${item.fin}` : item.inicio}
                     </p>
                     {item.ubicacion && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>📍 {item.ubicacion}</p>}
-                    {item.referenciaCosto && <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>💲 {item.referenciaCosto}</p>}
+                  {item.realizadoPor && (
+                    <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8 }}>
+                      Se llevará a cabo por: {item.realizadoPor}
+                    </p>
+                  )}
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginLeft: 12 }}>
                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
@@ -496,6 +506,19 @@ export default function ScheduleEditorPlus({
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
           <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 12 }}>➕ Nueva Actividad</h4>
           <div style={{ display: 'grid', gap: 12 }}>
+            {/* Nombre primero */}
+            <div>
+              <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre</div>
+              <input
+                type="text"
+                value={newItem.titulo}
+                onChange={(e) => setNewItem({ ...newItem, titulo: e.target.value })}
+                placeholder="Nombre de la actividad"
+                style={input}
+              />
+            </div>
+
+            {/* Tipo y nivel */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
@@ -521,6 +544,18 @@ export default function ScheduleEditorPlus({
               </div>
             </div>
 
+            {/* Se llevará a cabo por */}
+            <div>
+              <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Se llevará a cabo por:</div>
+              <input
+                type="text"
+                value={newItem.realizadoPor || ''}
+                onChange={(e) => setNewItem({ ...newItem, realizadoPor: e.target.value })}
+                placeholder="Ej: Profesor, grupo o entidad responsable"
+                style={input}
+              />
+            </div>
+
             <div>
               <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
               <RitmosChips
@@ -539,14 +574,6 @@ export default function ScheduleEditorPlus({
                 }}
               />
             </div>
-
-            <input
-              type="text"
-              value={newItem.titulo}
-              onChange={(e) => setNewItem({ ...newItem, titulo: e.target.value })}
-              placeholder="Título (opcional si eliges un ritmo)"
-              style={input}
-            />
 
           {/*   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
@@ -572,7 +599,7 @@ export default function ScheduleEditorPlus({
                 />
               </div>
               <div>
-                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fin</div>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Fin (opcional)</div>
                 <input
                   type="time" step={60}
                   value={newItem.fin}
@@ -610,18 +637,18 @@ export default function ScheduleEditorPlus({
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={addItem}
-                disabled={!((newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin)}
+                disabled={!((newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio)}
                 style={{
                   padding: '10px 20px',
                   borderRadius: 8,
                   border: 'none',
-                  background: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin
+                  background: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio
                     ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` 
                     : `${colors.light}33`,
                   color: colors.light,
                   fontSize: '0.9rem',
                   fontWeight: 600,
-                  cursor: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio && newItem.fin ? 'pointer' : 'not-allowed',
+                  cursor: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio ? 'pointer' : 'not-allowed',
                 }}
               >✅ Agregar Actividad</motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}

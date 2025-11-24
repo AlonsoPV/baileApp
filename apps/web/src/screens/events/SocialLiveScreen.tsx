@@ -354,29 +354,136 @@ export function SocialLiveScreen() {
         )}
 
         {/* Fechas del Social */}
-        {dates && dates.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
-              📅 Fechas Disponibles
-            </h3>
-            <p style={{ marginBottom: '1.25rem', opacity: 0.7, fontSize: '0.9rem' }}>
-              {dates.length} {dates.length === 1 ? 'fecha' : 'fechas'} disponibles
-            </p>
+        {dates && dates.length > 0 && (() => {
+          // Filtrar fechas disponibles (desde hoy en adelante) y pasadas (del día anterior hacia atrás)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-            <DateFlyerSlider items={dateItems} onOpen={(href: string) => navigate(href)} />
-          </motion.section>
-        )}
+          const parseLocalYmd = (value: string) => {
+            const plain = String(value).split('T')[0];
+            const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+            if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+              const fallback = new Date(value);
+              return Number.isNaN(fallback.getTime()) ? null : fallback;
+            }
+            return new Date(y, m - 1, d);
+          };
+
+          const availableDates = dates.filter((d: any) => {
+            try {
+              const dateObj = parseLocalYmd(d.fecha);
+              if (!dateObj) return false;
+              dateObj.setHours(0, 0, 0, 0);
+              return dateObj >= today;
+            } catch {
+              return false;
+            }
+          });
+
+          const pastDates = dates.filter((d: any) => {
+            try {
+              const dateObj = parseLocalYmd(d.fecha);
+              if (!dateObj) return false;
+              dateObj.setHours(0, 0, 0, 0);
+              return dateObj < today;
+            } catch {
+              return false;
+            }
+          }).sort((a: any, b: any) => {
+            // Ordenar fechas pasadas de más reciente a más antigua
+            try {
+              const dateA = parseLocalYmd(a.fecha);
+              const dateB = parseLocalYmd(b.fecha);
+              if (!dateA || !dateB) return 0;
+              return dateB.getTime() - dateA.getTime();
+            } catch {
+              return 0;
+            }
+          });
+
+          const availableDateItems = availableDates.map((d: any) => {
+            const hora = d.hora_inicio && d.hora_fin ? `${fmtTime(d.hora_inicio)} - ${fmtTime(d.hora_fin)}` : (d.hora_inicio ? fmtTime(d.hora_inicio) : undefined);
+            const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+            const price = (() => {
+              const costos = (d as any)?.costos;
+              if (Array.isArray(costos) && costos.length) {
+                const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+                if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
+              }
+              return undefined;
+            })();
+            return { nombre: d.nombre || social.nombre, date: fmtDate(d.fecha), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+          });
+
+          const pastDateItems = pastDates.map((d: any) => {
+            const hora = d.hora_inicio && d.hora_fin ? `${fmtTime(d.hora_inicio)} - ${fmtTime(d.hora_fin)}` : (d.hora_inicio ? fmtTime(d.hora_inicio) : undefined);
+            const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+            const price = (() => {
+              const costos = (d as any)?.costos;
+              if (Array.isArray(costos) && costos.length) {
+                const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
+                if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
+              }
+              return undefined;
+            })();
+            return { nombre: d.nombre || social.nombre, date: fmtDate(d.fecha), time: hora, place: d.lugar || d.ciudad || '', flyer, price, href: `/social/fecha/${d.id}` };
+          });
+
+          return (
+            <>
+              {/* Fechas Disponibles */}
+              {availableDates.length > 0 && (
+                <motion.section
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  style={{
+                    marginBottom: '2rem',
+                    padding: '1.5rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700' }}>
+                    📅 Fechas Disponibles
+                  </h3>
+                  <p style={{ marginBottom: '1.25rem', opacity: 0.7, fontSize: '0.9rem' }}>
+                    {availableDates.length} {availableDates.length === 1 ? 'fecha' : 'fechas'} disponible{availableDates.length !== 1 ? 's' : ''}
+                  </p>
+
+                  <DateFlyerSlider items={availableDateItems} onOpen={(href: string) => navigate(href)} />
+                </motion.section>
+              )}
+
+              {/* Fechas Pasadas */}
+              {pastDates.length > 0 && (
+                <motion.section
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  style={{
+                    marginBottom: '2rem',
+                    padding: '1.5rem',
+                    background: 'rgba(100, 100, 100, 0.05)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(150, 150, 150, 0.1)',
+                    opacity: 0.85,
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '700', opacity: 0.9 }}>
+                    📜 Fechas Pasadas
+                  </h3>
+                  <p style={{ marginBottom: '1.25rem', opacity: 0.6, fontSize: '0.9rem' }}>
+                    {pastDates.length} {pastDates.length === 1 ? 'fecha' : 'fechas'} pasada{pastDates.length !== 1 ? 's' : ''}
+                  </p>
+
+                  <DateFlyerSlider items={pastDateItems} onOpen={(href: string) => navigate(href)} />
+                </motion.section>
+              )}
+            </>
+          );
+        })()}
 
         {/* Media */}
         {social.media && Array.isArray(social.media) && social.media.length > 0 && (

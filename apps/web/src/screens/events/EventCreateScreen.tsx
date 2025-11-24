@@ -45,7 +45,7 @@ export default function EventCreateScreen() {
     }
 
     // Asegurar que existe organizador
-    if (!organizer?.id) {
+    if (!(organizer as any)?.id) {
       try {
         await upsertOrganizer.mutateAsync({ nombre_publico: "Mi Social" });
       } catch (err: any) {
@@ -57,7 +57,7 @@ export default function EventCreateScreen() {
 
     setIsLoading(true);
     try {
-      const orgId = organizer?.id;
+      const orgId = (organizer as any)?.id;
       if (!orgId) {
         showToast('No se pudo obtener el ID del organizador', 'error');
         return;

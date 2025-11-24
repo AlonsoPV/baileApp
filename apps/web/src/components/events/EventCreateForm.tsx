@@ -56,7 +56,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   const navigate = useNavigate();
   const { data: organizer } = useMyOrganizer();
   const { showToast } = useToast();
-  const { data: orgLocations = [] } = useOrganizerLocations(organizer?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations((organizer as any)?.id);
 
   const clearLocationSelection = () => {
     setSelectedLocationId('');
@@ -708,32 +708,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
             </div>
           </div>
 
-          {/* Zonas */}
-        {/*   <div style={{
-            padding: '24px',
-            background: `${colors.dark}66`,
-            borderRadius: '16px',
-            border: `1px solid ${colors.light}22`,
-          }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: colors.light,
-              marginBottom: '12px',
-            }}>
-              📍 Zonas de la Ciudad
-            </h2>
-            <p style={{ fontSize: '0.9rem', opacity: 0.75, marginBottom: '12px', color: colors.light }}>
-              Elige las zonas donde se realizará este social (puedes seleccionar varias).
-            </p>
-            <ZonaGroupedChips
-              mode="edit"
-              selectedIds={((values as any)?.zonas || []) as number[]}
-              allTags={zonaTags as any}
-              onToggle={handleZonaToggle}
-              autoExpandSelectedParents={false}
-            />
-          </div> */}
+      
 
           {/* Campos específicos de parent */}
           {isParent && (

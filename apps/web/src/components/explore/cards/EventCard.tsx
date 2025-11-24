@@ -5,13 +5,16 @@ import { urls } from "../../../lib/urls";
 import AddToCalendarWithStats from "../../AddToCalendarWithStats";
 import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
+import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
+import { fmtDate } from "../../../utils/format";
 
 interface EventCardProps {
   item: any;
 }
 
 export default function EventCard({ item }: EventCardProps) {
-  const eventId = item.id ?? item.event_date_id;
+  // Si es una ocurrencia recurrente, usar el ID original para la navegación
+  const eventId = item._original_id ?? item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
   const { data: allTags } = useTags() as any;
   const formatHHMM = (t?: string) => {
@@ -53,13 +56,42 @@ export default function EventCard({ item }: EventCardProps) {
     return undefined;
   })();
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
-  const fecha = item.fecha || item.evento_fecha;
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
   const horaFin = item.hora_fin || item.evento_hora_fin;
   const lugar = item.lugar || item.evento_lugar;
   const ciudad = item.ciudad || item.evento_ciudad;
   const direccion = item.direccion || item.evento_direccion;
   const organizador = item.organizador_nombre || item.organizer_name;
+  
+  // Calcular la fecha a mostrar: si ya tiene fecha (de expansión recurrente), usarla; si no, calcular
+  const fecha = React.useMemo(() => {
+    // Si ya tiene fecha (de la expansión), usarla directamente
+    const fechaOriginal = item.fecha || item.evento_fecha;
+    if (!fechaOriginal) return null;
+    
+    // Si es una ocurrencia recurrente expandida, la fecha ya está calculada
+    if (item._recurrence_index !== undefined) {
+      return fechaOriginal;
+    }
+    
+    // Si tiene dia_semana pero no es una ocurrencia expandida, calcular la próxima fecha
+    if (item.dia_semana !== null && item.dia_semana !== undefined && typeof item.dia_semana === 'number') {
+      try {
+        const horaInicioStr = horaInicio || '20:00';
+        const proximaFecha = calculateNextDateWithTime(item.dia_semana, horaInicioStr);
+        const year = proximaFecha.getFullYear();
+        const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+        const day = String(proximaFecha.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch (e) {
+        console.error('Error calculando próxima fecha:', e);
+        return fechaOriginal;
+      }
+    }
+    
+    // Si no tiene dia_semana, usar la fecha original
+    return fechaOriginal;
+  }, [item.fecha, item.evento_fecha, item.dia_semana, item._recurrence_index, horaInicio]);
 
   const ritmoNames: string[] = React.useMemo(() => {
     try {
@@ -101,8 +133,10 @@ export default function EventCard({ item }: EventCardProps) {
           background: flyer
             ? `url(${flyer})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: 'cover',
+          backgroundSize: flyer ? 'contain' : 'cover',
+          backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
+          backgroundColor: flyer ? 'rgba(0,0,0,0.8)' : undefined,
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',
@@ -220,7 +254,7 @@ export default function EventCard({ item }: EventCardProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             {fecha && (
               <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
-                📅 {fecha}
+                📅 {fmtDate(fecha)}
               </span>
             )}
             {horaInicio && (

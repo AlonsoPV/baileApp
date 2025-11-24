@@ -22,6 +22,8 @@ import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
+import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
+import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -386,6 +388,10 @@ export default function TeacherProfileLive() {
   
   // Obtener academias donde el maestro enseña
   const { data: academies } = useTeacherAcademies(teacherIdNum);
+  
+  // Obtener grupos de competencia del maestro (solo los que no están asociados a una academia)
+  const teacherUserId = (teacher as any)?.user_id;
+  const { data: competitionGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
@@ -1166,6 +1172,38 @@ export default function TeacherProfileLive() {
                     </motion.article>
                   );
                 })}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Grupos de Competencia */}
+          {competitionGroups && competitionGroups.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              style={{
+                marginBottom: '2rem',
+                marginTop: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Grupos de entrenamiento y competencia</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                {competitionGroups.map((group: any) => (
+                  <CompetitionGroupCard key={group.id} group={group} />
+                ))}
               </div>
             </motion.section>
           )}

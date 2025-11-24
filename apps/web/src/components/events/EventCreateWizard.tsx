@@ -77,7 +77,7 @@ export default function EventCreateWizard({
       return;
     }
 
-    if (!organizer?.id) {
+    if (!(organizer as any)?.id) {
       showToast('No tienes organizador creado', 'error');
       return;
     }
@@ -88,7 +88,7 @@ export default function EventCreateWizard({
         descripcion: descripcion.trim() || null,
         sede_general: sedeGeneral.trim() || null,
         estilos: estilosSeleccionados,
-        organizer_id: organizer.id,
+        organizer_id: (organizer as any).id,
       };
 
       const newEvent = await createEventMutation.mutateAsync(payload);

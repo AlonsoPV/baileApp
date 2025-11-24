@@ -24,9 +24,9 @@ export function OrganizerEditScreen() {
 
   useEffect(() => {
     if (organizer) {
-      setNombrePublico(organizer.nombre_publico || '');
-      setBio(organizer.bio || '');
-      setMediaUrls(Array.isArray(organizer.media) ? organizer.media.join('\n') : '');
+      setNombrePublico((organizer as any).nombre_publico || '');
+      setBio((organizer as any).bio || '');
+      setMediaUrls(Array.isArray((organizer as any).media) ? (organizer as any).media.join('\n') : '');
     }
   }, [organizer]);
 
@@ -79,7 +79,7 @@ export function OrganizerEditScreen() {
       rechazado: { bg: '#EF4444', color: '#fff' },
     };
 
-    const style = badgeStyles[organizer.estado_aprobacion] || badgeStyles.borrador;
+    const style = badgeStyles[(organizer as any).estado_aprobacion] || badgeStyles.borrador;
 
     return (
       <span style={{
@@ -90,7 +90,7 @@ export function OrganizerEditScreen() {
         background: style.bg,
         color: style.color,
       }}>
-        {organizer.estado_aprobacion}
+        {(organizer as any).estado_aprobacion}
       </span>
     );
   };
@@ -120,7 +120,7 @@ export function OrganizerEditScreen() {
             <strong>Estado:</strong> {getEstadoBadge()}
           </div>
           
-          {organizer.estado_aprobacion === 'borrador' && (
+          {(organizer as any).estado_aprobacion === 'borrador' && (
             <button
               onClick={handleSubmitForReview}
               disabled={isSubmittingForReview}
@@ -139,9 +139,9 @@ export function OrganizerEditScreen() {
             </button>
           )}
 
-          {organizer.estado_aprobacion === 'aprobado' && (
+          {(organizer as any).estado_aprobacion === 'aprobado' && (
             <button
-              onClick={() => navigate(`/organizer/${organizer.id}`)}
+              onClick={() => navigate(`/organizer/${(organizer as any).id}`)}
               style={{
                 background: colors.primary[500],
                 color: '#fff',
@@ -271,7 +271,7 @@ export function OrganizerEditScreen() {
         </button>
       </form>
 
-      {organizer && organizer.estado_aprobacion === 'aprobado' && (
+      {organizer && (organizer as any).estado_aprobacion === 'aprobado' && (
         <div style={{
           marginTop: '3rem',
           padding: '2rem',

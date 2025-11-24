@@ -27,8 +27,8 @@ export function EventParentEditScreen() {
   const isEdit = !!idParam;
   const navigate = useNavigate();
   const { data: org } = useMyOrganizer();
-  const { data: parents } = useParentsByOrganizer(org?.id);
-  const { data: orgLocations = [] } = useOrganizerLocations(org?.id);
+  const { data: parents } = useParentsByOrganizer((org as any)?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const create = useCreateParent();
   const update = useUpdateParent();
   const { showToast } = useToast();
@@ -40,7 +40,7 @@ export function EventParentEditScreen() {
     isEdit,
     parentsCount: parents?.length,
     currentEvent,
-    organizerId: org?.id
+    organizerId: (org as any)?.id
   });
 
   const [form, setForm] = useState({
@@ -72,7 +72,7 @@ export function EventParentEditScreen() {
   async function save() {
     console.log('[EventParentEditScreen] Save called:', { isEdit, id: idParam, form });
     
-    if (!org?.id) {
+    if (!(org as any)?.id) {
       showToast('No tienes organizador creado', 'error');
       return;
     }
@@ -88,7 +88,7 @@ export function EventParentEditScreen() {
       if (!isEdit) {
         console.log('[EventParentEditScreen] Creating new event');
         const p = await create.mutateAsync({
-          organizer_id: org.id,
+          organizer_id: (org as any).id,
           nombre: form.nombre.trim(),
           descripcion: form.descripcion.trim() || null,
           sede_general: form.sede_general.trim() || null,
@@ -346,8 +346,8 @@ export function EventParentEditScreen() {
       <div className="parent-edit-card">
         {orgLocations.length > 4 && (
           <div style={{ marginBottom: 12 }}>
-            <OrganizerLocationPicker
-              organizerId={org?.id}
+              <OrganizerLocationPicker
+              organizerId={(org as any)?.id}
               onPick={(u) => {
                 const add = {
                   id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,

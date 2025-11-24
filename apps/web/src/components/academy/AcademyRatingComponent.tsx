@@ -147,8 +147,7 @@ export default function AcademyRatingComponent({ academyId }: AcademyRatingCompo
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="glass-card-container"
-      className="academy-rating-container"
+      className="glass-card-container academy-rating-container"
       style={{
         marginBottom: '2rem',
         padding: '2rem',

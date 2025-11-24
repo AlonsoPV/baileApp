@@ -22,6 +22,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
@@ -206,6 +207,12 @@ export function OrganizerPublicScreen() {
 
     const futureDates = (eventDates as any[])?.filter((d: any) => {
       try {
+        // Si tiene dia_semana, siempre mostrar (es recurrente)
+        if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+          return true;
+        }
+        
+        // Si no tiene dia_semana, filtrar por fecha específica
         const fechaStr = String(d.fecha).split('T')[0];
         const dateObj = parseLocalYmd(d.fecha);
         if (!dateObj) return false;
@@ -240,10 +247,26 @@ export function OrganizerPublicScreen() {
     futureDates.forEach((date) => {
       const nombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
       const horaFormateada = date.hora_inicio && date.hora_fin ? `${date.hora_inicio} - ${date.hora_fin}` : (date.hora_inicio || '');
+      
+      // Si tiene dia_semana, calcular la próxima fecha para mostrar
+      let fechaParaMostrar = date.fecha;
+      if ((date as any).dia_semana !== null && (date as any).dia_semana !== undefined && typeof (date as any).dia_semana === 'number') {
+        try {
+          const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+          const proximaFecha = calculateNextDateWithTime((date as any).dia_semana, horaInicio);
+          const year = proximaFecha.getFullYear();
+          const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+          const day = String(proximaFecha.getDate()).padStart(2, '0');
+          fechaParaMostrar = `${year}-${month}-${day}`;
+        } catch (e) {
+          console.error('Error calculando próxima fecha:', e);
+        }
+      }
+      
       items.push({
         id: date.id,
         nombre,
-        date: fmtDate(date.fecha),
+        date: fmtDate(fechaParaMostrar),
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
         href: `/social/fecha/${date.id}`,
@@ -261,7 +284,8 @@ export function OrganizerPublicScreen() {
         hora_inicio: date.hora_inicio,
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
-        biografia: (date as any).biografia
+        biografia: (date as any).biografia,
+        dia_semana: (date as any).dia_semana !== null && (date as any).dia_semana !== undefined ? (date as any).dia_semana : null
       });
     });
     return items;
@@ -274,6 +298,12 @@ export function OrganizerPublicScreen() {
     const ev = items[idx % items.length];
     const calendarStart = (() => {
       try {
+        // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === 'number') {
+          const horaInicio = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+          return calculateNextDateWithTime(ev.dia_semana, horaInicio);
+        }
+        // Si no tiene dia_semana, usar la fecha específica
         if (!ev.fecha) return new Date();
         const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
         const hora = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
@@ -283,6 +313,16 @@ export function OrganizerPublicScreen() {
     })();
     const calendarEnd = (() => {
       try {
+        // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === 'number') {
+          const horaFin = (ev.hora_fin || ev.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+          const startDate = calculateNextDateWithTime(ev.dia_semana, (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':'));
+          const [hora, minutos] = horaFin.split(':').map(Number);
+          const endDate = new Date(startDate);
+          endDate.setHours(hora || 23, minutos || 0, 0, 0);
+          return endDate;
+        }
+        // Si no tiene dia_semana, usar la fecha específica
         if (!ev.fecha) { const d = new Date(calendarStart); d.setHours(d.getHours() + 2); return d; }
         const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
         const hora = (ev.hora_fin || ev.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
@@ -323,6 +363,7 @@ export function OrganizerPublicScreen() {
                       location={ev.lugar}
                       start={calendarStart}
                       end={calendarEnd}
+                      diaSemana={ev.dia_semana !== null && ev.dia_semana !== undefined ? ev.dia_semana : undefined}
                       showAsIcon={true}
                     />
                   </RequireLogin>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useDatesByParent, useCreateDate, useUpdateDate, useDeleteDate } from "../../hooks/useEvents";
@@ -6,6 +6,7 @@ import { useTags } from "../../hooks/useTags";
 import { useToast } from "../Toast";
 import { Chip } from "../profile/Chip";
 import { fmtDate, fmtTime } from "../../utils/format";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -135,7 +136,31 @@ export default function EventDatesSection({ eventId, eventName }: EventDatesSect
           gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
           gap: '1rem'
         }}>
-          {dates.map((date, index) => (
+          {dates.map((date, index) => {
+            // Calcular la fecha a mostrar: si tiene dia_semana, usar la próxima fecha; si no, usar la fecha original
+            const fechaAMostrar = useMemo(() => {
+              if (!date.fecha) return null;
+              
+              // Si tiene dia_semana, calcular la próxima fecha
+              if (date.dia_semana !== null && date.dia_semana !== undefined && typeof date.dia_semana === 'number') {
+                try {
+                  const horaInicioStr = date.hora_inicio || '20:00';
+                  const proximaFecha = calculateNextDateWithTime(date.dia_semana, horaInicioStr);
+                  const year = proximaFecha.getFullYear();
+                  const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+                  const day = String(proximaFecha.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                } catch (e) {
+                  console.error('Error calculando próxima fecha:', e);
+                  return date.fecha;
+                }
+              }
+              
+              // Si no tiene dia_semana, usar la fecha original
+              return date.fecha;
+            }, [date.fecha, date.dia_semana, date.hora_inicio]);
+            
+            return (
             <motion.div
               key={date.id}
               initial={{ opacity: 0, y: 20 }}
@@ -163,7 +188,7 @@ export default function EventDatesSection({ eventId, eventName }: EventDatesSect
                     color: colors.light,
                     margin: '0 0 0.5rem 0'
                   }}>
-                    {fmtDate(date.fecha)}
+                    {fechaAMostrar ? fmtDate(fechaAMostrar) : 'Fecha no disponible'}
                   </h4>
                   <div style={{
                     display: 'flex',
@@ -321,7 +346,8 @@ export default function EventDatesSection({ eventId, eventName }: EventDatesSect
                 </div>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div style={{

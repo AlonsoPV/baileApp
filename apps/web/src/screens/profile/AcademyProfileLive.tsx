@@ -27,6 +27,8 @@ import { useAcceptedTeachers } from "../../hooks/useAcademyTeacherInvitations";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import AcademyRatingComponent from "../../components/academy/AcademyRatingComponent";
+import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
+import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -488,6 +490,16 @@ export default function AcademyProfileLive() {
   
   // Obtener clases desde las tablas academy_classes
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses({ academyId });
+  
+  // Obtener grupos de competencia de la academia
+  const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByAcademy(academyId);
+  
+  // Debug: verificar datos
+  React.useEffect(() => {
+    console.log('[AcademyProfileLive] academyId:', academyId);
+    console.log('[AcademyProfileLive] competitionGroups:', competitionGroups);
+    console.log('[AcademyProfileLive] loadingGroups:', loadingGroups);
+  }, [academyId, competitionGroups, loadingGroups]);
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
   React.useEffect(() => {
@@ -1633,6 +1645,38 @@ export default function AcademyProfileLive() {
                     </motion.article>
                   );
                 })}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Grupos de Competencia */}
+          {!loadingGroups && competitionGroups && Array.isArray(competitionGroups) && competitionGroups.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              style={{
+                marginBottom: '2rem',
+                marginTop: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Grupos de entrenamiento y competencia</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                {competitionGroups.map((group: any) => (
+                  <CompetitionGroupCard key={group.id} group={group} />
+                ))}
               </div>
             </motion.section>
           )}

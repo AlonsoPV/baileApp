@@ -2,6 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { ExploreFilters, ExploreType } from "../state/exploreFilters";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { calculateNextDateWithTime } from "../utils/calculateRecurringDates";
 
 const PAGE_LIMIT = 12;
 
@@ -64,6 +65,7 @@ function baseSelect(type: ExploreType) {
           parent_id,
           nombre,
           fecha,
+          dia_semana,
           hora_inicio,
           hora_fin,
           lugar,
@@ -149,17 +151,23 @@ async function fetchPage(params: QueryParams, page: number) {
     // Filtrar por organizadores aprobados (removido por ahora - el !inner falla si no hay relación)
     // query = query.eq("events_parent.profiles_organizer.estado_aprobacion", "aprobado");
     
-    // Si dateFrom y dateTo son undefined (preset "todos"), filtrar solo eventos futuros (>= hoy)
-    // Si dateFrom está definido, usarlo; si no, usar hoy como mínimo
+    // Para eventos con dia_semana, el filtrado se hará post-query (necesitamos calcular la próxima fecha)
+    // Para eventos sin dia_semana, filtrar por fecha normalmente
+    // Usamos una condición OR para incluir ambos casos
     if (dateFrom) {
-      query = query.gte("fecha", dateFrom);
+      // Incluir eventos con dia_semana O eventos con fecha >= dateFrom
+      // Nota: Los eventos con dia_semana se filtrarán post-query
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
     } else {
-      // Para "todos", mostrar solo eventos futuros (>= hoy en CDMX)
-      query = query.gte("fecha", todayCDMX);
+      // Para "todos", mostrar solo eventos futuros (>= hoy en CDMX) O eventos con dia_semana
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
     }
     
     if (dateTo) {
-      query = query.lte("fecha", dateTo);
+      // Para eventos con dia_semana, el filtrado se hará post-query
+      // Para eventos sin dia_semana, filtrar por fecha <= dateTo
+      // Nota: Esto puede excluir algunos eventos con dia_semana, pero los recuperaremos post-query
+      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
     }
     
     // filtrar por estilos/ritmos - a nivel de fecha y de parent
@@ -279,35 +287,129 @@ async function fetchPage(params: QueryParams, page: number) {
 
   let finalData = data || [];
 
-  // Filtro adicional por hora para eventos de HOY (CDMX):
-  // - No se muestran eventos cuya fecha sea hoy y cuya hora de inicio ya haya pasado.
+  // Filtro adicional para eventos con dia_semana y por hora para eventos de HOY (CDMX):
   if (type === 'fechas' && finalData.length > 0) {
     const todayStr = getTodayCDMX();
     const nowCDMX = getNowCDMX();
+    const expandedData: any[] = [];
 
-    finalData = finalData.filter((row: any) => {
-      if (!row?.fecha) return true;
-      const fechaStr = String(row.fecha).split('T')[0];
-      if (fechaStr !== todayStr) {
-        // Para fechas futuras o pasadas, confiar en el filtro por fecha del query
-        return true;
+    // Log para verificar si hay eventos recurrentes
+    const recurrentEvents = finalData.filter((row: any) => 
+      row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number'
+    );
+    if (recurrentEvents.length > 0) {
+      console.log('[useExploreQuery] Eventos recurrentes encontrados:', {
+        total: finalData.length,
+        recurrentes: recurrentEvents.length,
+        eventos: recurrentEvents.map((r: any) => ({
+          id: r.id,
+          dia_semana: r.dia_semana,
+          fecha_original: r.fecha,
+          hora_inicio: r.hora_inicio
+        }))
+      });
+    }
+
+    finalData.forEach((row: any) => {
+      // Si tiene dia_semana, expandir en 4 ocurrencias
+      if (row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number') {
+        try {
+          const horaInicioStr = row.hora_inicio || '20:00';
+          
+          // Calcular la fecha base (primera ocurrencia)
+          const primeraFecha = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
+          const ocurrenciasParaEsteEvento: any[] = [];
+          
+          // Calcular las próximas 4 ocurrencias (sin filtrar dentro del bucle, igual que EventParentPublicScreenModern)
+          for (let i = 0; i < 4; i++) {
+            // Calcular la fecha de esta ocurrencia (sumar i semanas)
+            const fechaOcurrencia = new Date(primeraFecha);
+            fechaOcurrencia.setDate(primeraFecha.getDate() + (i * 7));
+            
+            const year = fechaOcurrencia.getFullYear();
+            const month = String(fechaOcurrencia.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaOcurrencia.getDate()).padStart(2, '0');
+            const fechaStr = `${year}-${month}-${day}`;
+            
+            // Crear una copia del evento con la fecha de esta ocurrencia
+            // NO filtrar aquí - el filtrado se hará después en el frontend
+            const expandedItem = {
+              ...row,
+              fecha: fechaStr,
+              _recurrence_index: i, // Para identificar que es una ocurrencia recurrente
+              _original_id: row.id, // Mantener referencia al ID original
+              id: `${row.id}_${i}`, // ID único para cada ocurrencia
+            };
+            
+            ocurrenciasParaEsteEvento.push(expandedItem);
+            expandedData.push(expandedItem);
+          }
+          
+          // Log temporal para depuración - verificar que se generaron las 4 ocurrencias
+          if (ocurrenciasParaEsteEvento.length !== 4) {
+            console.warn(`[useExploreQuery] Evento ${row.id} solo generó ${ocurrenciasParaEsteEvento.length} ocurrencias de 4 esperadas:`, {
+              originalId: row.id,
+              dia_semana: row.dia_semana,
+              ocurrenciasGeneradas: ocurrenciasParaEsteEvento.length,
+              fechas: ocurrenciasParaEsteEvento.map((item: any) => item.fecha).sort(),
+              horaInicio: horaInicioStr
+            });
+          } else {
+            console.log(`[useExploreQuery] Evento ${row.id} expandido correctamente:`, {
+              originalId: row.id,
+              dia_semana: row.dia_semana,
+              ocurrenciasGeneradas: ocurrenciasParaEsteEvento.length,
+              fechas: ocurrenciasParaEsteEvento.map((item: any) => item.fecha).sort(),
+              horaInicio: horaInicioStr
+            });
+          }
+        } catch (e) {
+          console.error('Error calculando ocurrencias para evento recurrente:', e);
+          // Si falla, incluir el evento original
+          expandedData.push(row);
+        }
+      } else {
+        // Para eventos sin dia_semana, usar la lógica original de filtrado
+        let shouldInclude = true;
+        
+        if (row?.fecha) {
+          const fechaStr = String(row.fecha).split('T')[0];
+          
+          // Si es hoy, verificar que la hora no haya pasado
+          if (fechaStr === todayStr) {
+            const horaStr = row.hora_inicio as string | null | undefined;
+            if (horaStr) {
+              const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
+              if (Number.isFinite(yy) && Number.isFinite(mm) && Number.isFinite(dd)) {
+                const [hhRaw, minRaw] = String(horaStr).split(':');
+                const hh = parseInt(hhRaw ?? '0', 10);
+                const min = parseInt(minRaw ?? '0', 10);
+                const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
+                
+                // Si la hora de inicio ya pasó en CDMX, no incluir el evento
+                if (eventDateTime.getTime() < nowCDMX.getTime()) {
+                  shouldInclude = false;
+                }
+              }
+            }
+          }
+        }
+        
+        if (shouldInclude) {
+          expandedData.push(row);
+        }
       }
+    });
 
-      // Si no hay hora de inicio, mantener el comportamiento actual (mostrar todo el día)
-      const horaStr = row.hora_inicio as string | null | undefined;
-      if (!horaStr) return true;
-
-      const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
-      if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
-
-      const [hhRaw, minRaw] = String(horaStr).split(':');
-      const hh = parseInt(hhRaw ?? '0', 10);
-      const min = parseInt(minRaw ?? '0', 10);
-
-      const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
-
-      // Si la hora de inicio ya pasó en CDMX, ocultar el evento
-      return eventDateTime.getTime() >= nowCDMX.getTime();
+    finalData = expandedData;
+    
+    // Ordenar por fecha después de expandir
+    finalData.sort((a, b) => {
+      const fechaA = a.fecha || '';
+      const fechaB = b.fecha || '';
+      if (fechaA < fechaB) return -1;
+      if (fechaA > fechaB) return 1;
+      return 0;
     });
   }
   

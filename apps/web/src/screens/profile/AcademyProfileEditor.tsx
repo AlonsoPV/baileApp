@@ -36,6 +36,8 @@ import { useAvailableTeachers, useAcceptedTeachers, useSendInvitation, useCancel
 import { supabase } from "@/lib/supabase";
 import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPanel";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 
 const colors = {
   primary: '#E53935',
@@ -155,6 +157,10 @@ export default function AcademyProfileEditor() {
   const cancelInvitation = useCancelInvitation();
   const [showTeacherModal, setShowTeacherModal] = React.useState(false);
   const classFormRef = React.useRef<HTMLDivElement | null>(null);
+  
+  // Hooks para grupos de competencia
+  const { data: myCompetitionGroups, isLoading: loadingGroups, refetch: refetchGroups } = useMyCompetitionGroups();
+  const deleteGroup = useDeleteCompetitionGroup();
 
   // Asegurar que redes_sociales siempre sea un objeto, no null
   React.useEffect(() => {
@@ -213,7 +219,6 @@ export default function AcademyProfileEditor() {
         cronograma: (form as any).cronograma || [],   // También en cronograma para compatibilidad
         costos: (form as any).costos || [],           // Guardar costos
         redes_sociales: form.redes_sociales,
-        reseñas: (form as any).reseñas || [],
         cuenta_bancaria: (form as any).cuenta_bancaria || {},
         estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
       };
@@ -260,12 +265,6 @@ export default function AcademyProfileEditor() {
       : [...currentZonas, zonaId];
     setField('zonas' as any, newZonas as any);
   };
-
-  const primaryAvatarUrl = React.useMemo(() => {
-    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
-    const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
-    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
-  }, [media, academy]);
 
   const autoSavePromociones = React.useCallback(async (items: any[]) => {
     setField('promociones' as any, items as any);
@@ -351,7 +350,7 @@ export default function AcademyProfileEditor() {
           padding: 2rem 1rem;
         }
         .academy-editor-inner {
-          max-width: 800px;
+          max-width: 1200px;
           margin: 0 auto;
         }
         .academy-editor-header {
@@ -407,23 +406,6 @@ export default function AcademyProfileEditor() {
           color: #fff;
           cursor: pointer;
           transition: all 0.2s ease;
-        }
-        .academy-avatar-container {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 1.5rem;
-        }
-        .academy-avatar {
-          width: 160px;
-          height: 160px;
-          border-radius: 50%;
-          overflow: hidden;
-          border: 4px solid rgba(255,255,255,0.2);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-          background: linear-gradient(135deg, #1E88E5, #FF7043);
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
         .teachers-grid {
           display: grid;
@@ -550,10 +532,6 @@ export default function AcademyProfileEditor() {
             padding: 0.6rem 1rem !important;
             font-size: 0.9rem !important;
           }
-          .academy-avatar {
-            width: 120px !important;
-            height: 120px !important;
-          }
           .teachers-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
@@ -644,10 +622,6 @@ export default function AcademyProfileEditor() {
             padding: 0.5rem 0.75rem !important;
             font-size: 0.85rem !important;
           }
-          .academy-avatar {
-            width: 100px !important;
-            height: 100px !important;
-          }
           .teachers-grid {
             gap: 0.75rem !important;
           }
@@ -667,30 +641,263 @@ export default function AcademyProfileEditor() {
             margin-bottom: 1.5rem !important;
           }
         }
+        
+        /* Estilos para editor-section y glass-card-container */
+        .editor-section {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .editor-section-title {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+          color: ${colors.light};
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: ${colors.light};
+        }
+        .editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+        }
+        .editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+          resize: vertical;
+          font-family: inherit;
+        }
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        .info-redes-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: start;
+        }
+        
+        /* PROFILE SECTION COMPACT */
+        .profile-section-compact {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 1.5rem;
+          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        /* ABAJO: REDES */
+        .row-bottom {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .row-bottom-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .subtitle {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+          color: ${colors.light};
+        }
+        .tag {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        
+        /* LISTA DE REDES */
+        .social-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .field {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1rem;
+        }
+        .field-icon {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.9;
+          color: ${colors.light};
+        }
+        
+        /* INPUTS COMPACTOS */
+        .input-group {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+        .input-group:focus-within {
+          border-color: rgba(76, 173, 255, 0.6);
+          background: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
+        }
+        .prefix {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
+          border-right: 1px solid rgba(255, 255, 255, 0.15);
+          white-space: nowrap;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .input-group input {
+          border: none;
+          outline: none;
+          background: transparent;
+          color: ${colors.light};
+          font-size: 1rem;
+          padding: 0.75rem;
+          flex: 1;
+          min-width: 0;
+        }
+        .input-group input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+          .info-redes-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .editor-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .editor-section-title {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .profile-section-compact {
+            padding: 1rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.95rem !important;
+          }
+          .field-icon {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          .field {
+            font-size: 0.9rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.9rem !important;
+            padding: 0.6rem !important;
+          }
+          .prefix {
+            font-size: 0.85rem !important;
+            padding: 0.6rem 0.4rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .editor-section {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .editor-section-title {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .editor-input,
+          .editor-textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          .glass-card-container {
+            padding: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-radius: 10px !important;
+          }
+          .profile-section-compact {
+            padding: 0.75rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.9rem !important;
+          }
+          .tag {
+            font-size: 0.7rem !important;
+          }
+          .field-icon {
+            width: 22px !important;
+            height: 22px !important;
+          }
+          .social-list {
+            gap: 0.5rem !important;
+          }
+          .field {
+            font-size: 0.85rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.85rem !important;
+            padding: 0.5rem !important;
+          }
+          .prefix {
+            font-size: 0.8rem !important;
+            padding: 0.5rem 0.4rem !important;
+          }
+        }
       `}</style>
       <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div className="academy-editor-inner" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div className="academy-editor-inner">
         {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
         <div className="org-editor__header">
           <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
           <h1 className="org-editor__title">✏️ Editar Academia</h1>
           <div style={{ width: 100 }} />
-        </div>
-
-        <div className="academy-avatar-container">
-          <div className="academy-avatar">
-            {primaryAvatarUrl ? (
-              <ImageWithFallback
-                src={primaryAvatarUrl}
-                alt="Avatar de la academia"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <span style={{ fontSize: '4rem', color: '#fff', fontWeight: 700 }}>
-                {(form as any)?.nombre_publico?.[0]?.toUpperCase() || '🎓'}
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Toggle de navegación (arriba de las pestañas) */}
@@ -809,54 +1016,161 @@ export default function AcademyProfileEditor() {
           </motion.div>
         )}
 
-        {/* Información Básica */}
-        <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            📚 Información Básica
+        {/* Información Personal */}
+        <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
+          <h2 className="editor-section-title">
+            👤 Información Personal
           </h2>
 
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '2rem',
+            alignItems: 'start'
+          }}
+            className="info-redes-grid">
+            {/* Columna 1: Información Básica */}
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                🎓 Nombre de la Academia *
-              </label>
-              <input
-                type="text"
-                value={form.nombre_publico}
-                onChange={(e) => setField('nombre_publico', e.target.value)}
-                placeholder="Ej: Academia de Baile Moderno"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  background: `${colors.dark}cc`,
-                  border: `1px solid ${colors.light}33`,
-                  color: colors.light,
-                  fontSize: '1rem',
-                }}
-              />
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="editor-field">
+                  🎓 Nombre de la Academia *
+                </label>
+                <input
+                  type="text"
+                  value={form.nombre_publico}
+                  onChange={(e) => setField('nombre_publico', e.target.value)}
+                  placeholder="Ej: Academia de Baile Moderno"
+                  className="editor-input"
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="editor-field">
+                  📝 Descripción
+                </label>
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setField('bio', e.target.value)}
+                  placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
+                  rows={3}
+                  className="editor-textarea"
+                />
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📝 Descripción
-              </label>
-              <textarea
-                value={form.bio}
-                onChange={(e) => setField('bio', e.target.value)}
-                placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  background: `${colors.dark}cc`,
-                  border: `1px solid ${colors.light}33`,
-                  color: colors.light,
-                  fontSize: '1rem',
-                  resize: 'vertical',
-                }}
-              />
+            {/* Columna 2: Redes Sociales Compactas */}
+            <div className="profile-section-compact">
+              {/* REDES SOCIALES */}
+              <div className="row-bottom">
+                <div className="row-bottom-header">
+                  <h4 className="subtitle">Redes Sociales</h4>
+                  <span className="tag">Opcional</span>
+                </div>
+
+                <div className="social-list">
+                  {/* Instagram */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaInstagram size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">ig/</span>
+                      <input
+                        type="text"
+                        name="instagram"
+                        value={form.redes_sociales?.instagram || ''}
+                        onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                        placeholder="usuario"
+                      />
+                    </div>
+                  </label>
+
+                  {/* TikTok */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaTiktok size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">@</span>
+                      <input
+                        type="text"
+                        name="tiktok"
+                        value={form.redes_sociales?.tiktok || ''}
+                        onChange={(e) => setNested('redes_sociales.tiktok', e.target.value)}
+                        placeholder="usuario"
+                      />
+                    </div>
+                  </label>
+
+                  {/* YouTube */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaYoutube size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">yt/</span>
+                      <input
+                        type="text"
+                        name="youtube"
+                        value={form.redes_sociales?.youtube || ''}
+                        onChange={(e) => setNested('redes_sociales.youtube', e.target.value)}
+                        placeholder="canal o handle"
+                      />
+                    </div>
+                  </label>
+
+                  {/* Facebook */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaFacebookF size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">fb/</span>
+                      <input
+                        type="text"
+                        name="facebook"
+                        value={form.redes_sociales?.facebook || ''}
+                        onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                        placeholder="usuario o página"
+                      />
+                    </div>
+                  </label>
+
+                  {/* WhatsApp */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaWhatsapp size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">+52</span>
+                      <input
+                        type="tel"
+                        name="whatsapp"
+                        value={form.redes_sociales?.whatsapp || ''}
+                        onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                        placeholder="55 1234 5678"
+                      />
+                    </div>
+                  </label>
+
+                  {/* Email */}
+                  <label className="field">
+                    <span className="field-icon">
+                      📧
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">@</span>
+                      <input
+                        type="email"
+                        name="email"
+                        value={form.redes_sociales?.email || ''}
+                        onChange={(e) => setNested('redes_sociales.email', e.target.value)}
+                        placeholder="correo@ejemplo.com"
+                      />
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1166,8 +1480,30 @@ export default function AcademyProfileEditor() {
               {academy && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
                 <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
                   {(form as any).cronograma.map((it: any, idx: number) => {
-                    const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
-                    const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === refKey);
+                    const costos = ((form as any)?.costos || []) as any[];
+
+                    // Buscar costo por relación fuerte (id de clase / referenciaCosto)
+                    const classRef = it?.id ?? it?.referenciaCosto ?? null;
+                    let costo: any | undefined;
+
+                    if (classRef !== null && classRef !== undefined) {
+                      const classRefStr = String(classRef);
+                      costo = costos.find((c: any) => {
+                        if (c?.classId && String(c.classId) === classRefStr) return true;
+                        if (c?.referenciaCosto && String(c.referenciaCosto) === classRefStr) return true;
+                        if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === idx) return true;
+                        return false;
+                      });
+                    }
+
+                    // Fallback antiguo: por nombre de la clase (para render y para borrado)
+                    const refKey = ((it?.titulo || '') as string).trim().toLowerCase();
+                    if (!costo && refKey) {
+                      costo = costos.find((c: any) =>
+                        (c?.nombre || '').trim().toLowerCase() === refKey
+                      );
+                    }
+
                     const costoLabel = costo ? formatCurrency(costo.precio) : null;
                     const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null);
                     return (
@@ -1290,150 +1626,6 @@ export default function AcademyProfileEditor() {
           </div>
         </div>
 
-        {/* Redes Sociales */}
-        <div
-          id="organizer-social-networks"
-          data-test-id="organizer-social-networks"
-          style={{
-            marginBottom: '3rem',
-            padding: '2rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
-        >
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-            📱 Redes Sociales
-          </h2>
-
-          <div className="academy-social-grid">
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📸 Instagram
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales?.instagram || ""}
-                onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
-                placeholder="@tu_organizacion"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                👥 Facebook
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales?.facebook || ""}
-                onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
-                placeholder="Página o perfil"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                💬 WhatsApp
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales?.whatsapp || ""}
-                onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
-                placeholder="Número de teléfono"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                🎵 TikTok
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales?.tiktok || ""}
-                onChange={(e) => setNested('redes_sociales.tiktok', e.target.value)}
-                placeholder="@tu_usuario o URL"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📺 YouTube
-              </label>
-              <input
-                type="text"
-                value={form.redes_sociales?.youtube || ""}
-                onChange={(e) => setNested('redes_sociales.youtube', e.target.value)}
-                placeholder="@tu_canal o URL"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                📧 Correo electrónico
-              </label>
-              <input
-                type="email"
-                value={form.redes_sociales?.email || ""}
-                onChange={(e) => setNested('redes_sociales.email', e.target.value)}
-                placeholder="correo@ejemplo.com"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: colors.light,
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Maestros Invitados */}
         {academyId && (
@@ -1694,18 +1886,162 @@ export default function AcademyProfileEditor() {
           </>
         )}
 
+        {/* Grupos de Competencia */}
+        {academyId && (
+          <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+            <div className="teacher-invite-header">
+              <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
+                🎯 Grupos de Competencia
+              </h2>
+              <button
+                onClick={() => navigate('/competition-groups/new')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                ➕ Crear Grupo
+              </button>
+            </div>
+
+            {loadingGroups ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: colors.light }}>
+                Cargando grupos...
+              </div>
+            ) : !myCompetitionGroups || myCompetitionGroups.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: colors.light, opacity: 0.7 }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
+                <p>No has creado grupos de competencia aún</p>
+                <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Crea un grupo para organizar entrenamientos y competencias
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '1rem', marginTop: '1.5rem' }}>
+                {myCompetitionGroups
+                  .filter((g: any) => g.owner_id === user?.id)
+                  .map((group: any) => (
+                    <div
+                      key={group.id}
+                      style={{
+                        padding: '1.5rem',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                          {group.name}
+                        </h3>
+                        {group.description && (
+                          <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem' }}>
+                            {group.description.substring(0, 100)}{group.description.length > 100 ? '...' : ''}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                          {group.training_location && (
+                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff' }}>
+                              📍 {group.training_location}
+                            </span>
+                          )}
+                          {group.cost_amount && (
+                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#fff' }}>
+                              💰 ${group.cost_amount} {group.cost_type === 'monthly' ? '/mes' : group.cost_type === 'per_session' ? '/sesión' : '/paquete'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => navigate(`/competition-groups/${group.id}`)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(30,136,229,0.2)',
+                            border: '1px solid #1E88E5',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => navigate(`/competition-groups/${group.id}/edit`)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(255,193,7,0.2)',
+                            border: '1px solid #FFC107',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
+                              return;
+                            }
+                            try {
+                              await deleteGroup.mutateAsync(group.id);
+                              setStatusMsg({ type: 'ok', text: '✅ Grupo eliminado exitosamente' });
+                              setTimeout(() => setStatusMsg(null), 3000);
+                              await refetchGroups();
+                            } catch (error: any) {
+                              setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
+                              setTimeout(() => setStatusMsg(null), 3000);
+                            }
+                          }}
+                          disabled={deleteGroup.isPending}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(239,68,68,0.2)',
+                            border: '1px solid #EF4444',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: deleteGroup.isPending ? 'not-allowed' : 'pointer',
+                            opacity: deleteGroup.isPending ? 0.6 : 1
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Promociones y paquetes */}
         {supportsPromotions && (
-          <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
-              💸 Promociones y Paquetes
-            </h2>
-            <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
-              Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia.
-            </p>
+          <div style={{ marginBottom: '3rem' }}>
             <CostsPromotionsEditor
               value={(form as any).promociones || []}
               onChange={autoSavePromociones}
+              label="💸 Promociones y Paquetes"
+              helperText="Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia."
             />
           </div>
         )}

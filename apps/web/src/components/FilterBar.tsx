@@ -5,6 +5,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
+import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
 
 interface FilterBarProps {
   filters: ExploreFilters;
@@ -53,7 +54,25 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
   });
-  const { ritmos, zonas } = useTags();
+  const { ritmos: allRitmos, zonas: allZonas } = useTags();
+  const { usedRitmoIds, usedZonaIds, isLoading: loadingUsed, error: usedError } = useUsedFilterTags();
+
+  const ritmos = React.useMemo(() => {
+    // Mientras la query carga o si falla, mostrar todos los ritmos (comportamiento anterior)
+    if (loadingUsed || usedError) return allRitmos;
+    const set = new Set(usedRitmoIds);
+    // Si no hay ninguno usado, no mostrar chips (lista vacía)
+    if (set.size === 0) return [] as typeof allRitmos;
+    return allRitmos.filter((r) => set.has(r.id));
+  }, [allRitmos, usedRitmoIds, loadingUsed, usedError]);
+
+  const zonas = React.useMemo(() => {
+    if (loadingUsed || usedError) return allZonas;
+    const set = new Set(usedZonaIds);
+    if (set.size === 0) return [] as typeof allZonas;
+    return allZonas.filter((z) => set.has(z.id));
+  }, [allZonas, usedZonaIds, loadingUsed, usedError]);
+
   const { groups: zonaGroups } = useZonaCatalogGroups(zonas);
 
   useEffect(() => {
@@ -400,13 +419,21 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {openDropdown === 'ritmos' && (
               <DropdownPanel onClose={() => setOpenDropdown(null)}>
                 {(() => {
-                  // Mapeos nombre<->id para enlazar catálogo a tags
+                  // Mapeos nombre<->id para enlazar catálogo a tags (ya filtrados por uso)
                   const tagNameById = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
                   const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
 
                   // UI estado: chip padre expandida
                   const expandedGroup = expandedRitmoGroup;
                   const toggleGroup = (gid: string) => setExpandedRitmoGroup(prev => prev === gid ? null : gid);
+
+                  // Construir grupos de catálogo SOLO con hijos que existan en tags (ritmos filtrados)
+                  const catalogGroups = RITMOS_CATALOG
+                    .map(group => {
+                      const items = group.items.filter(item => tagIdByName.has(item.label));
+                      return { ...group, items };
+                    })
+                    .filter(group => group.items.length > 0);
 
                   // Helpers para activar/desactivar ritmos hijos
                   const isTagActive = (name: string) => {
@@ -424,9 +451,9 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
                   return (
                     <div style={{ display: 'grid', gap: 12 }}>
-                      {/* Chips padres */}
+                      {/* Chips padres (solo grupos con algún hijo mapeado) */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {RITMOS_CATALOG.map(group => {
+                        {catalogGroups.map(group => {
                           const activeInGroup = group.items.some(i => isTagActive(i.label));
                           const isOpen = expandedGroup === group.id;
                           const isActive = isOpen || activeInGroup;
@@ -460,7 +487,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                           display: 'flex', flexWrap: 'wrap', gap: '0.5rem',
                           borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12
                         }}>
-                          {RITMOS_CATALOG.find(g => g.id === expandedGroup)?.items.map(child => {
+                          {catalogGroups.find(g => g.id === expandedGroup)?.items.map(child => {
                             const active = isTagActive(child.label);
                             return (
                               <button

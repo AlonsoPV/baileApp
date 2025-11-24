@@ -32,6 +32,7 @@ interface CostsPromotionsEditorProps {
   onChange: (value: PromotionItem[]) => void;
   label?: string;
   helperText?: string;
+  hideHeader?: boolean;
 }
 
 const emptyPromotion: PromotionItem = {
@@ -88,6 +89,7 @@ export default function CostsPromotionsEditor({
   onChange,
   label = "Promociones y Paquetes",
   helperText = "Agrega descuentos, paquetes o beneficios especiales con su vigencia.",
+  hideHeader = false,
 }: CostsPromotionsEditorProps) {
   const [mode, setMode] = useState<"idle" | "adding" | "editing">("idle");
   const [draft, setDraft] = useState<PromotionItem>({ ...emptyPromotion });
@@ -164,19 +166,38 @@ export default function CostsPromotionsEditor({
   const hasDates = sanitizedDraft.validoDesde || sanitizedDraft.validoHasta;
 
   return (
-    <div style={{
-      background: "rgba(12, 14, 20, 0.6)",
-      borderRadius: 16,
-      border: `1px solid ${palette.border}`,
-      padding: "1.5rem",
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: palette.text }}>{label}</h3>
-          {helperText && (
-            <p style={{ margin: "0.25rem 0 0", fontSize: "0.9rem", color: "rgba(255,255,255,0.7)" }}>{helperText}</p>
-          )}
-        </div>
+    <div
+      style={{
+        background: "rgba(12, 14, 20, 0.6)",
+        borderRadius: 16,
+        border: `1px solid ${palette.border}`,
+        padding: "1.5rem",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: hideHeader ? "flex-end" : "space-between",
+          alignItems: "center",
+          gap: "1rem",
+        }}
+      >
+        {!hideHeader && (
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: palette.text }}>{label}</h3>
+            {helperText && (
+              <p
+                style={{
+                  margin: "0.25rem 0 0",
+                  fontSize: "0.9rem",
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
+                {helperText}
+              </p>
+            )}
+          </div>
+        )}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.96 }}

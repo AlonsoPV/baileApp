@@ -17,6 +17,7 @@ import RitmosChips from "../../components/RitmosChips";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -1262,18 +1263,35 @@ export default function EventDatePublicScreen() {
                           description={date.biografia || parent?.descripcion || undefined}
                           location={date.lugar || date.ciudad || date.direccion || undefined}
                           start={(() => {
+                            // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
+                            if ((date as any).dia_semana !== null && (date as any).dia_semana !== undefined && typeof (date as any).dia_semana === 'number') {
+                              const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+                              return calculateNextDateWithTime((date as any).dia_semana, horaInicio);
+                            }
+                            // Si no tiene dia_semana, usar la fecha específica
                             const fechaStr = (date.fecha || '').split('T')[0] || '';
                             const h = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
                             const d = new Date(`${fechaStr}T${h}:00`);
                             return isNaN(d.getTime()) ? new Date() : d;
                           })()}
                           end={(() => {
+                            // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
+                            if ((date as any).dia_semana !== null && (date as any).dia_semana !== undefined && typeof (date as any).dia_semana === 'number') {
+                              const horaFin = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+                              const startDate = calculateNextDateWithTime((date as any).dia_semana, (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':'));
+                              const [hora, minutos] = horaFin.split(':').map(Number);
+                              const endDate = new Date(startDate);
+                              endDate.setHours(hora || 23, minutos || 0, 0, 0);
+                              return endDate;
+                            }
+                            // Si no tiene dia_semana, usar la fecha específica
                             const fechaStr = (date.fecha || '').split('T')[0] || '';
                             const h = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
                             const d = new Date(`${fechaStr}T${h}:00`);
                             if (isNaN(d.getTime())) { const t = new Date(); t.setHours(t.getHours() + 2); return t; }
                             return d;
                           })()}
+                          diaSemana={(date as any).dia_semana !== null && (date as any).dia_semana !== undefined ? (date as any).dia_semana : undefined}
                           showAsIcon={false}
                         />
                       </RequireLogin>

@@ -19,7 +19,7 @@ export function EventCreateWizard() {
   const createParent = useCreateParent();
 
   const handleSubmit = async (values: any) => {
-    if (!organizer?.id) {
+    if (!(organizer as any)?.id) {
       throw new Error('No tienes organizador creado. Primero debes crear tu perfil de organizador.');
     }
 
@@ -29,7 +29,7 @@ export function EventCreateWizard() {
       sede_general: values.sede_general || null,
       estilos: values.estilos || [],
       media: values.media || [],
-      organizer_id: organizer.id,
+      organizer_id: (organizer as any).id,
     };
 
     const result = await createParent.mutateAsync(payload);

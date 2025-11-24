@@ -14,6 +14,7 @@ import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import type { AcademyLocation } from "../../types/academy";
 import { supabase } from "../../lib/supabase";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -46,7 +47,7 @@ export default function OrganizerEventDateCreateScreen() {
   
   const { data: parent, isLoading } = useEventParent(parentIdNum);
   const { data: org } = useMyOrganizer();
-  const { data: orgLocations = [] } = useOrganizerLocations(org?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
@@ -229,68 +230,45 @@ export default function OrganizerEventDateCreateScreen() {
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
       };
 
-      // Si hay repetición semanal, crear múltiples fechas
+      // Calcular la fecha a guardar: si tiene repetición semanal, usar la próxima fecha y dia_semana
+      let fechaAGuardar = dateForm.fecha;
+      let diaSemanaAGuardar: number | null = null;
+      
       if (dateForm.repetir_semanal && dateForm.fecha) {
-        const semanas = dateForm.semanas_repetir || 4;
-        // Parsear la fecha inicial correctamente (YYYY-MM-DD)
+        // Calcular el día de la semana de la fecha inicial
         const [year, month, day] = dateForm.fecha.split('-').map(Number);
         const fechaInicio = new Date(year, month - 1, day);
         const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
-        const fechas: any[] = [];
+        diaSemanaAGuardar = diaSemanaInicial;
         
-        for (let i = 0; i < semanas; i++) {
-          // Calcular la fecha de la semana i manteniendo el mismo día de la semana
-          const fechaNueva = new Date(fechaInicio);
-          fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
-          
-          // Asegurar que el día de la semana sea el mismo
-          const diaSemanaNueva = fechaNueva.getDay();
-          if (diaSemanaNueva !== diaSemanaInicial) {
-            // Ajustar para mantener el mismo día de la semana
-            const diferencia = diaSemanaInicial - diaSemanaNueva;
-            fechaNueva.setDate(fechaNueva.getDate() + diferencia);
-          }
-          
-          // Formatear como YYYY-MM-DD
-          const yearStr = fechaNueva.getFullYear();
-          const monthStr = String(fechaNueva.getMonth() + 1).padStart(2, '0');
-          const dayStr = String(fechaNueva.getDate()).padStart(2, '0');
-          
-          fechas.push({
-            ...basePayload,
-            fecha: `${yearStr}-${monthStr}-${dayStr}`,
-          });
+        // Calcular la próxima fecha basada en el día de la semana
+        try {
+          const horaInicioStr = dateForm.hora_inicio || '20:00';
+          const proximaFecha = calculateNextDateWithTime(diaSemanaInicial, horaInicioStr);
+          const yearStr = proximaFecha.getFullYear();
+          const monthStr = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(proximaFecha.getDate()).padStart(2, '0');
+          fechaAGuardar = `${yearStr}-${monthStr}-${dayStr}`;
+          console.log('[OrganizerEventDateCreateScreen] Fecha recurrente - próxima fecha:', fechaAGuardar, 'dia_semana:', diaSemanaAGuardar);
+        } catch (e) {
+          console.error('Error calculando próxima fecha:', e);
+          // Si falla el cálculo, usar la fecha original
         }
-
-        console.log('[OrganizerEventDateCreateScreen] Creando fechas recurrentes:', fechas.length);
-        
-        // Crear todas las fechas
-        const createdDates = await Promise.all(
-          fechas.map(payload => createDate.mutateAsync(payload))
-        );
-        
-        showToast(`${fechas.length} fecha${fechas.length !== 1 ? 's' : ''} creada${fechas.length !== 1 ? 's' : ''} ✅`, 'success');
-        
-        // Redirigir a la primera fecha creada
-        if (createdDates[0]?.id) {
-          navigate(`/social/fecha/${createdDates[0].id}`);
-        } else {
-          navigate(`/social/${parentIdNum}`);
-        }
+      }
+      
+      // Crear una sola fecha (con dia_semana si es recurrente)
+      const newDate = await createDate.mutateAsync({
+        ...basePayload,
+        fecha: fechaAGuardar,
+        dia_semana: diaSemanaAGuardar,
+      });
+      
+      showToast('Fecha creada ✅', 'success');
+      
+      if (newDate?.id) {
+        navigate(`/social/fecha/${newDate.id}`);
       } else {
-        // Crear una sola fecha
-        const newDate = await createDate.mutateAsync({
-          ...basePayload,
-          fecha: dateForm.fecha,
-        });
-        
-        showToast('Fecha creada ✅', 'success');
-        
-        if (newDate?.id) {
-          navigate(`/social/fecha/${newDate.id}`);
-        } else {
-          navigate(`/social/${parentIdNum}`);
-        }
+        navigate(`/social/${parentIdNum}`);
       }
     } catch (err: any) {
       console.error('Error creating date:', err);

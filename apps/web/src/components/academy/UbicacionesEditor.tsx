@@ -28,11 +28,12 @@ export default function UbicacionesEditor({
   savedLocations,
 }: UbicacionesEditorProps) {
   const ensureId = (loc: AcademyLocation): AcademyLocation & { id: string } => {
-    if (loc.id && typeof loc.id === 'string') return loc as AcademyLocation & { id: string };
-    if (loc.id && typeof loc.id === 'number') {
-      return { ...loc, id: String(loc.id) };
+    const locWithId = loc as AcademyLocation & { id?: string | number };
+    if (locWithId.id && typeof locWithId.id === 'string') return locWithId as AcademyLocation & { id: string };
+    if (locWithId.id && typeof locWithId.id === 'number') {
+      return { ...loc, id: String(locWithId.id) } as AcademyLocation & { id: string };
     }
-    return { ...loc, id: `ubicacion_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` };
+    return { ...loc, id: `ubicacion_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` } as AcademyLocation & { id: string };
   };
   const [items, setItems] = useState<AcademyLocation[]>((value || []).map(ensureId));
   const { zonas } = useTags('zona');
@@ -80,7 +81,7 @@ export default function UbicacionesEditor({
       if (!itemId) return;
       const match = normalizedSaved.find(
         (loc) =>
-          loc.nombre === (ensured.sede || ensured.nombre || '') &&
+          loc.nombre === (ensured.sede || '') &&
           loc.direccion === (ensured.direccion || '') &&
           loc.ciudad === (ensured.ciudad || '') &&
           loc.referencias === (ensured.referencias || '')
@@ -188,7 +189,7 @@ export default function UbicacionesEditor({
         }}>
           {normalizedSaved.length > 0 && (
             <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: typography.fontSize.xs, color: colors.mut }}>Ubicación guardada</label>
+              <label style={{ fontSize: typography.fontSize.xs, color: colors.gray[400] }}>Ubicación guardada</label>
               <select
                 style={{
                   background: 'rgba(255, 255, 255, 0.06)',
@@ -216,8 +217,6 @@ export default function UbicacionesEditor({
                       ciudad: savedLoc.ciudad,
                       referencias: savedLoc.referencias,
                       zona_id: savedLoc.zona_id,
-                      zonaIds: savedLoc.zonaIds,
-                      zonas: savedLoc.zonaIds,
                     });
                   }
                 }}

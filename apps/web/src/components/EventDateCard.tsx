@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { EventDate, RSVPCount } from "../types/events";
 import { RSVPCountsRow } from "./events/RSVPCountsRow";
 import { fmtDateTime } from "../utils/format";
+import { calculateNextDateWithTime } from "../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -34,7 +35,34 @@ export function EventDateCard({
 }: EventDateCardProps) {
   const counts = rsvpCounts.find(c => c.event_date_id === date.id);
   const isPublished = date.estado_publicacion === 'publicado';
-  const isPast = new Date(date.fecha) < new Date();
+  
+  // Calcular la fecha a mostrar: si tiene dia_semana, usar la próxima fecha; si no, usar la fecha original
+  const fechaAMostrar = React.useMemo(() => {
+    if (!date.fecha) return null;
+    
+    // Si tiene dia_semana, calcular la próxima fecha
+    if (date.dia_semana !== null && date.dia_semana !== undefined && typeof date.dia_semana === 'number') {
+      try {
+        const horaInicioStr = date.hora_inicio || '20:00';
+        const proximaFecha = calculateNextDateWithTime(date.dia_semana, horaInicioStr);
+        const year = proximaFecha.getFullYear();
+        const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+        const day = String(proximaFecha.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch (e) {
+        console.error('Error calculando próxima fecha:', e);
+        return date.fecha;
+      }
+    }
+    
+    // Si no tiene dia_semana, usar la fecha original
+    return date.fecha;
+  }, [date.fecha, date.dia_semana, date.hora_inicio]);
+  
+  // Si tiene dia_semana, nunca es pasado (siempre es futuro)
+  const isPast = date.dia_semana !== null && date.dia_semana !== undefined 
+    ? false 
+    : fechaAMostrar ? new Date(fechaAMostrar) < new Date() : false;
 
   const getEstadoBadge = () => {
     if (isPast) {
@@ -149,7 +177,7 @@ export function EventDateCard({
             marginBottom: '4px',
             color: colors.light,
           }}>
-            {fmtDateTime(date.fecha, date.hora_inicio)}
+            {fechaAMostrar ? fmtDateTime(fechaAMostrar, date.hora_inicio) : 'Fecha no disponible'}
           </h3>
           {date.hora_fin && (
             <p style={{

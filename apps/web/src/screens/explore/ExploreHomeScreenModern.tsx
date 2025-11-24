@@ -313,7 +313,23 @@ export default function ExploreHomeScreen() {
   });
   useAutoLoadAllPages(fechasQuery);
   const fechasLoading = fechasQuery.isLoading;
-  const fechasData = React.useMemo(() => flattenQueryData(fechasQuery.data), [fechasQuery.data]);
+  const fechasData = React.useMemo(() => {
+    const flattened = flattenQueryData(fechasQuery.data);
+    // Log temporal para depuración
+    const recurrentEvents = flattened.filter((f: any) => f._recurrence_index !== undefined);
+    if (recurrentEvents.length > 0) {
+      console.log('[ExploreHomeScreen] Ocurrencias expandidas encontradas:', {
+        total: recurrentEvents.length,
+        grupos: recurrentEvents.reduce((acc: any, f: any) => {
+          const key = f._original_id || f.id;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
+          return acc;
+        }, {} as Record<string, any[]>)
+      });
+    }
+    return flattened;
+  }, [fechasQuery.data]);
 
   // Fechas filtradas (solo futuras y ordenadas cronológicamente)
   const filteredFechas = React.useMemo(() => {
@@ -334,9 +350,34 @@ export default function ExploreHomeScreen() {
 
     const todayBase = parseYmdToDate(todayYmd);
     const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
+    
+    // Log para depuración
+    const recurrentBeforeFilter = allFechas.filter((f: any) => f._recurrence_index !== undefined);
+    if (recurrentBeforeFilter.length > 0) {
+      const grupos = recurrentBeforeFilter.reduce((acc: any, f: any) => {
+        const key = f._original_id || f.id;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
+        return acc;
+      }, {} as Record<string, any[]>);
+      console.log('[ExploreHomeScreen] Antes del filtrado:', {
+        totalFechas: allFechas.length,
+        recurrentEvents: recurrentBeforeFilter.length,
+        grupos: Object.keys(grupos).map(k => ({
+          id: k,
+          ocurrencias: grupos[k].length,
+          fechas: grupos[k].map((o: any) => o.fecha).sort()
+        }))
+      });
+    }
 
     // Si hay búsqueda activa, incluir eventos pasados también
     const includePastEvents = !!filters.q && filters.q.trim().length > 0;
+
+    // Aplicar filtros de rango de fechas si existen
+    const dateFrom = filters.dateFrom ? parseYmdToDate(filters.dateFrom) : null;
+    const dateTo = filters.dateTo ? parseYmdToDate(filters.dateTo) : null;
+    const hasDateRange = dateFrom !== null || dateTo !== null;
 
     const upcoming = allFechas.filter((fecha: any) => {
       // Si hay búsqueda activa, incluir todos los eventos (pasados y futuros)
@@ -344,6 +385,7 @@ export default function ExploreHomeScreen() {
       
       const fechaDate = parseYmdToDate(fecha?.fecha);
       if (!fechaDate || !todayBase) return true;
+      
       const fechaDateOnly = new Date(Date.UTC(
         fechaDate.getUTCFullYear(),
         fechaDate.getUTCMonth(),
@@ -356,6 +398,27 @@ export default function ExploreHomeScreen() {
         todayBase.getUTCDate(),
         0, 0, 0
       ));
+      
+      // Si es una ocurrencia expandida de un evento recurrente
+      // Siempre incluirla (igual que en EventParentPublicScreenModern)
+      // El filtrado por rango se aplica después si es necesario
+      if (fecha._recurrence_index !== undefined) {
+        // Si hay un rango de fechas específico, verificar que la fecha caiga dentro del rango
+        if (hasDateRange) {
+          if (dateFrom && fechaDateOnly < dateFrom) return false;
+          if (dateTo && fechaDateOnly > dateTo) return false;
+        }
+        // Si no hay rango, siempre incluir (las 4 ocurrencias futuras)
+        return true;
+      }
+      
+      // Para eventos sin dia_semana, filtrar por fecha específica
+      // Si hay rango, verificar que caiga dentro del rango
+      if (hasDateRange) {
+        if (dateFrom && fechaDateOnly < dateFrom) return false;
+        if (dateTo && fechaDateOnly > dateTo) return false;
+      }
+      // Si no hay rango, solo verificar que sea futura
       return fechaDateOnly >= todayDateOnly;
     });
 
@@ -370,8 +433,31 @@ export default function ExploreHomeScreen() {
       return dateA.getTime() - dateB.getTime();
     });
 
+    // Log después del filtrado
+    const recurrentAfterFilter = sorted.filter((f: any) => f._recurrence_index !== undefined);
+    if (recurrentAfterFilter.length > 0) {
+      const grupos = recurrentAfterFilter.reduce((acc: any, f: any) => {
+        const key = f._original_id || f.id;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
+        return acc;
+      }, {} as Record<string, any[]>);
+      console.log('[ExploreHomeScreen] Después del filtrado:', {
+        totalFechas: sorted.length,
+        recurrentEvents: recurrentAfterFilter.length,
+        grupos: Object.keys(grupos).map(k => ({
+          id: k,
+          ocurrencias: grupos[k].length,
+          fechas: grupos[k].map((o: any) => o.fecha).sort()
+        })),
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        hasDateRange
+      });
+    }
+
     return sorted;
-  }, [fechasData, todayYmd, filters.q]);
+  }, [fechasData, todayYmd, filters.q, filters.dateFrom, filters.dateTo]);
 
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
@@ -1309,30 +1395,58 @@ export default function ExploreHomeScreen() {
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (() => {
                 const list = filteredFechas;
+                
+                // Log para verificar qué se está pasando al slider
+                const recurrentInList = list.filter((f: any) => f._recurrence_index !== undefined);
+                if (recurrentInList.length > 0) {
+                  const grupos = recurrentInList.reduce((acc: any, f: any) => {
+                    const key = f._original_id || f.id;
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push({ fecha: f.fecha, index: f._recurrence_index, id: f.id });
+                    return acc;
+                  }, {} as Record<string, any[]>);
+                  console.log('[ExploreHomeScreen] Items pasados al HorizontalSlider:', {
+                    totalItems: list.length,
+                    recurrentItems: recurrentInList.length,
+                    grupos: Object.keys(grupos).map(k => ({
+                      id: k,
+                      ocurrencias: grupos[k].length,
+                      fechas: grupos[k].map((o: any) => ({ fecha: o.fecha, index: o.index, id: o.id })).sort((a: any, b: any) => a.index - b.index)
+                    }))
+                  });
+                }
+                
                 return list.length ? (
                   <HorizontalSlider
                     {...sliderProps}
                     items={list}
-                    renderItem={(fechaEvento: any, idx: number) => (
-                      <motion.div
-                        key={fechaEvento.id ?? idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        whileHover={{ y: -4, scale: 1.02 }}
-                        onClickCapture={handlePreNavigate}
-                        style={{
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: 16,
-                          padding: 0,
-                          overflow: 'hidden',
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                        }}
-                      >
-                        <EventCard item={fechaEvento} />
-                      </motion.div>
-                    )}
+                    renderItem={(fechaEvento: any, idx: number) => {
+                      // Usar un key único que incluya el índice de recurrencia si existe
+                      const uniqueKey = fechaEvento._recurrence_index !== undefined
+                        ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
+                        : (fechaEvento.id ?? `fecha_${idx}`);
+                      
+                      return (
+                        <motion.div
+                          key={uniqueKey}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <EventCard item={fechaEvento} />
+                        </motion.div>
+                      );
+                    }}
                   />
                 ) : (
                   <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>

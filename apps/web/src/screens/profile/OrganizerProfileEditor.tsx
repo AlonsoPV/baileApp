@@ -28,6 +28,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import CostsEditor from "../../components/events/CostsEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import RitmosSelectorEditor from "@/components/profile/RitmosSelectorEditor";
 import RSVPCounter from "../../components/RSVPCounter";
 import OrganizerLocationPicker from "../../components/locations/OrganizerLocationPicker";
@@ -40,6 +41,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEventMetricsPanel";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
+import { FaInstagram, FaFacebookF, FaWhatsapp } from 'react-icons/fa';
 
 const colors = {
   coral: '#FF3D57',
@@ -88,6 +90,58 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
       return input || '';
     }
   };
+
+  // Dividir fechas en disponibles (desde hoy en adelante) y pasadas (días anteriores)
+  const today = React.useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const parseLocalYmd = (value?: string | null) => {
+    if (!value) return null as Date | null;
+    try {
+      const plain = String(value).split('T')[0];
+      const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+        const fallback = new Date(value);
+        return Number.isNaN(fallback.getTime()) ? null : fallback;
+      }
+      return new Date(y, m - 1, d);
+    } catch {
+      return null;
+    }
+  };
+
+  const availableDates = (dates || []).filter((d: any) => {
+    try {
+      const dateObj = parseLocalYmd(d.fecha);
+      if (!dateObj) return false;
+      dateObj.setHours(0, 0, 0, 0);
+      return dateObj >= today;
+    } catch {
+      return false;
+    }
+  });
+
+  const pastDates = (dates || [])
+    .filter((d: any) => {
+      try {
+        const dateObj = parseLocalYmd(d.fecha);
+        if (!dateObj) return false;
+        dateObj.setHours(0, 0, 0, 0);
+        return dateObj < today;
+      } catch {
+        return false;
+      }
+    })
+    .sort((a: any, b: any) => {
+      const da = parseLocalYmd(a.fecha);
+      const db = parseLocalYmd(b.fecha);
+      if (!da || !db) return 0;
+      // Más recientes primero
+      return db.getTime() - da.getTime();
+    });
 
   const handleSocialClick = () => {
     navigate(`/social/${parent.id}`);
@@ -190,7 +244,12 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📅</span>
-                <span>{dates.length} fecha{dates.length > 1 ? 's' : ''} disponible{dates.length > 1 ? 's' : ''}</span>
+                <span>
+                  {availableDates.length} fecha
+                  {availableDates.length !== 1 ? 's' : ''} disponible
+                  {availableDates.length !== 1 ? 's' : ''} · {pastDates.length} pasada
+                  {pastDates.length !== 1 ? 's' : ''}
+                </span>
               </div>
               <motion.span
                 animate={{ rotate: expanded ? 180 : 0 }}
@@ -202,36 +261,344 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
             </motion.button>
 
             {expanded && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  marginTop: '1rem',
-                  padding: isMobile ? '0' : '1.5rem',
-                  /* borderRadius: '20px',
-                  border: '2px solid rgba(30, 136, 229, 0.3)', */
-                  background: 'rgba(15, 15, 15, 0.4)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Barra decorativa superior para fechas */}
-                {/*  <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '3px',
-                  background: `linear-gradient(90deg, ${colors.blue}, #00BCD4, ${colors.coral})`,
-                  borderRadius: '20px 20px 0 0',
-                }} /> */}
-                {dates.map((date: any, index: number) => {
-                  return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                {/* Contenedor 1: Fechas disponibles (hoy en adelante) */}
+                {availableDates.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{
+                      padding: isMobile ? '1rem' : '1.5rem',
+                      borderRadius: '16px',
+                      border: '2px solid rgba(30, 136, 229, 0.35)',
+                      background: 'rgba(10, 20, 40, 0.7)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>
+                      Fechas disponibles
+                    </div>
+                    {availableDates.map((date: any, index: number) => (
+                      <motion.div
+                        key={date.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.08, duration: 0.3 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/social/fecha/${date.id}`);
+                        }}
+                        style={{
+                          padding: isMobile ? '1.25rem' : '1.5rem',
+                          borderRadius: '16px',
+                          border: '2px solid rgba(255, 255, 255, 0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '1rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          background: 'rgba(20, 20, 20, 0.5)',
+                          marginBottom: '0.75rem'
+                        }}
+                        whileHover={{
+                          y: -4,
+                          borderColor: 'rgba(30, 136, 229, 0.5)',
+                          background: 'rgba(30, 30, 30, 0.6)'
+                        }}
+                      >
+                        {/* Efecto de brillo en hover */}
+                        <motion.div
+                          initial={{ x: '-100%' }}
+                          whileHover={{ x: '100%' }}
+                          transition={{ duration: 0.6, ease: 'easeInOut' }}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
+                            zIndex: 1,
+                            pointerEvents: 'none'
+                          }}
+                        />
+
+                        {/* FILA 1: Nombre y fecha principal */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: isMobile ? 'stretch' : 'center',
+                          justifyContent: 'space-between',
+                          gap: '1rem',
+                          position: 'relative',
+                          zIndex: 2,
+                          paddingBottom: '1rem',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          flexDirection: isMobile ? 'column' : 'row'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, flexDirection: isMobile ? 'column' : 'row', textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
+                            <motion.div
+                              whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                              transition={{ duration: 0.4 }}
+                              style={{
+                                width: isMobile ? '44px' : '48px',
+                                height: isMobile ? '44px' : '48px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: isMobile ? '1.2rem' : '1.4rem',
+                                background: 'rgba(30, 136, 229, 0.15)',
+                                border: '2px solid rgba(30, 136, 229, 0.3)',
+                                boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
+                                flexShrink: 0
+                              }}
+                            >
+                              📅
+                            </motion.div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{
+                                fontSize: isMobile ? '1.1rem' : '1.2rem',
+                                fontWeight: '800',
+                                color: colors.light,
+                                lineHeight: 1.3,
+                                letterSpacing: '-0.01em',
+                                marginBottom: '0.25rem'
+                              }}>
+                                {date.nombre || 'Fecha sin nombre'}
+                              </div>
+                              {/* Fecha en chip compacto */}
+                              <div style={{
+                                fontSize: '0.875rem',
+                                color: colors.blue,
+                                fontWeight: '700',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '0.4rem 0.75rem',
+                                background: 'rgba(30, 136, 229, 0.15)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(30, 136, 229, 0.25)',
+                                width: 'fit-content',
+                                margin: isMobile ? '0 auto' : undefined
+                              }}>
+                                <span>📅</span>
+                                <span>{formatEsDate(date.fecha)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Botones de acción en la primera fila */}
+                          <div style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            flexShrink: 0,
+                            flexDirection: isMobile ? 'column' : 'row',
+                            width: isMobile ? '100%' : 'auto'
+                          }}>
+                            <motion.button
+                              whileHover={{ scale: 1.08, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/social/fecha/${date.id}/edit`);
+                              }}
+                              style={{
+                                padding: '0.6rem 1rem',
+                                background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '10px',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
+                                whiteSpace: 'nowrap',
+                                width: isMobile ? '100%' : 'auto',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <span>✏️</span>
+                              <span>Editar</span>
+                            </motion.button>
+                            {onDuplicateDate && (
+                              <motion.button
+                                whileHover={{ scale: 1.08, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDuplicateDate(date);
+                                }}
+                                style={{
+                                  padding: '0.6rem 1rem',
+                                  background: `linear-gradient(135deg, ${colors.yellow}, ${colors.blue})`,
+                                  color: '#0B0B0B',
+                                  border: 'none',
+                                  borderRadius: '10px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '700',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  transition: 'all 0.3s ease',
+                                  boxShadow: '0 4px 12px rgba(255, 209, 102, 0.35)',
+                                  whiteSpace: 'nowrap',
+                                  width: isMobile ? '100%' : 'auto',
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <span>📄</span>
+                                <span>Duplicar</span>
+                              </motion.button>
+                            )}
+                            <motion.button
+                              whileHover={{ scale: 1.08, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteDate?.(date);
+                              }}
+                              disabled={Boolean(deletingDateId && deletingDateId === date.id)}
+                              style={{
+                                padding: '0.6rem 1rem',
+                                background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '10px',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
+                                whiteSpace: 'nowrap',
+                                width: isMobile ? '100%' : 'auto',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <span>{deletingDateId === date.id ? '⏳' : '🗑️'}</span>
+                              <span>{deletingDateId === date.id ? 'Eliminando...' : 'Eliminar'}</span>
+                            </motion.button>
+                          </div>
+                        </div>
+
+                        {/* FILA 2: Detalles de la fecha */}
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                          alignItems: 'center',
+                          position: 'relative',
+                          zIndex: 2,
+                          justifyContent: isMobile ? 'center' : 'flex-start'
+                        }}>
+                          {date.hora_inicio && date.hora_fin && (
+                            <div style={{
+                              fontSize: '0.875rem',
+                              color: colors.light,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.5rem 0.875rem',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              width: 'fit-content'
+                            }}>
+                              <span>🕐</span>
+                              <span>{date.hora_inicio} - {date.hora_fin}</span>
+                            </div>
+                          )}
+
+                          {date.lugar && (
+                            <div style={{
+                              fontSize: '0.875rem',
+                              color: colors.light,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.5rem 0.875rem',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              width: 'fit-content'
+                            }}>
+                              <span>📍</span>
+                              <span>{date.lugar}</span>
+                            </div>
+                          )}
+
+                          {date.ciudad && (
+                            <div style={{
+                              fontSize: '0.8rem',
+                              color: 'rgba(255, 255, 255, 0.8)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.4rem 0.75rem',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              borderRadius: '8px',
+                              width: 'fit-content'
+                            }}>
+                              <span>🏙️</span>
+                              <span>{date.ciudad}</span>
+                            </div>
+                          )}
+
+                          {/* Contador de RSVP */}
+                          <div style={{
+                            marginLeft: isMobile ? 0 : 'auto',
+                            padding: '0.5rem 0.875rem',
+                            background: 'rgba(255, 140, 66, 0.15)',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255, 140, 66, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            width: isMobile ? '100%' : 'auto',
+                            justifyContent: isMobile ? 'center' : 'flex-start'
+                          }}>
+                            <RSVPCounter
+                              eventDateId={date.id}
+                              variant="minimal"
+                              showIcons={true}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+
+                {/* Contenedor 2: Fechas pasadas (historial) */}
+                {pastDates.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.05 }}
+                    style={{
+                      padding: isMobile ? '1rem' : '1.5rem',
+                      borderRadius: '16px',
+                      border: '2px solid rgba(120, 120, 120, 0.4)',
+                      background: 'rgba(20, 20, 20, 0.75)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
+                      Fechas pasadas
+                    </div>
+                    {pastDates.map((date: any, index: number) => (
                     <motion.div
                       key={date.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -526,9 +893,10 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         </div>
                       </div>
                     </motion.div>
-                  );
-                })}
-              </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
             )}
           </>
         ) : (
@@ -559,8 +927,8 @@ export default function OrganizerProfileEditor() {
   const { data: org, isLoading } = useMyOrganizer();
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
-  const { data: parents } = useParentsByOrganizer(org?.id);
-  const { data: orgLocations = [] } = useOrganizerLocations(org?.id);
+  const { data: parents } = useParentsByOrganizer((org as any)?.id);
+  const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const createOrgLoc = useCreateOrganizerLocation();
   const updateOrgLoc = useUpdateOrganizerLocation();
   const deleteOrgLoc = useDeleteOrganizerLocation();
@@ -893,7 +1261,7 @@ export default function OrganizerProfileEditor() {
       let parentIdToUse = selectedParentId;
       if (!parentIdToUse) {
         const parentPayload: any = {
-          organizer_id: org?.id,
+          organizer_id: (org as any)?.id,
           nombre: dateForm.nombre ? `🎉 ${dateForm.nombre}` : '🎉 Nuevo Social',
           descripcion: dateForm.biografia || 'Evento creado automáticamente al crear una fecha.',
           ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
@@ -974,55 +1342,40 @@ export default function OrganizerProfileEditor() {
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
       };
 
-      // Si hay repetición semanal, crear múltiples fechas
+      // Calcular la fecha a guardar: si tiene repetición semanal, usar la próxima fecha y dia_semana
+      let fechaAGuardar = dateForm.fecha;
+      let diaSemanaAGuardar: number | null = null;
+      
       if (dateForm.repetir_semanal && dateForm.fecha) {
-        const semanas = dateForm.semanas_repetir || 4;
-        // Parsear la fecha inicial correctamente (YYYY-MM-DD)
+        // Calcular el día de la semana de la fecha inicial
         const [year, month, day] = dateForm.fecha.split('-').map(Number);
         const fechaInicio = new Date(year, month - 1, day);
         const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
-        const fechas: any[] = [];
+        diaSemanaAGuardar = diaSemanaInicial;
         
-        for (let i = 0; i < semanas; i++) {
-          // Calcular la fecha de la semana i manteniendo el mismo día de la semana
-          const fechaNueva = new Date(fechaInicio);
-          fechaNueva.setDate(fechaInicio.getDate() + (i * 7));
-          
-          // Asegurar que el día de la semana sea el mismo
-          const diaSemanaNueva = fechaNueva.getDay();
-          if (diaSemanaNueva !== diaSemanaInicial) {
-            // Ajustar para mantener el mismo día de la semana
-            const diferencia = diaSemanaInicial - diaSemanaNueva;
-            fechaNueva.setDate(fechaNueva.getDate() + diferencia);
-          }
-          
-          // Formatear como YYYY-MM-DD
-          const yearStr = fechaNueva.getFullYear();
-          const monthStr = String(fechaNueva.getMonth() + 1).padStart(2, '0');
-          const dayStr = String(fechaNueva.getDate()).padStart(2, '0');
-          
-          fechas.push({
-            ...basePayload,
-            fecha: `${yearStr}-${monthStr}-${dayStr}`,
-          });
+        // Calcular la próxima fecha basada en el día de la semana
+        try {
+          const horaInicioStr = dateForm.hora_inicio || '20:00';
+          const proximaFecha = calculateNextDateWithTime(diaSemanaInicial, horaInicioStr);
+          const yearStr = proximaFecha.getFullYear();
+          const monthStr = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(proximaFecha.getDate()).padStart(2, '0');
+          fechaAGuardar = `${yearStr}-${monthStr}-${dayStr}`;
+          console.log('[OrganizerProfileEditor] Fecha recurrente - próxima fecha:', fechaAGuardar, 'dia_semana:', diaSemanaAGuardar);
+        } catch (e) {
+          console.error('Error calculando próxima fecha:', e);
+          // Si falla el cálculo, usar la fecha original
         }
-
-        console.log('[OrganizerProfileEditor] Creando fechas recurrentes:', fechas.length);
-        
-        // Crear todas las fechas
-        await Promise.all(
-          fechas.map(payload => createEventDate.mutateAsync(payload))
-        );
-        
-        showToast(`${fechas.length} fecha${fechas.length !== 1 ? 's' : ''} creada${fechas.length !== 1 ? 's' : ''} ✅`, 'success');
-      } else {
-        // Crear una sola fecha
-        await createEventDate.mutateAsync({
-          ...basePayload,
-          fecha: dateForm.fecha,
-        });
-        showToast('Fecha creada ✅', 'success');
       }
+      
+      // Crear una sola fecha (con dia_semana si es recurrente)
+      await createEventDate.mutateAsync({
+        ...basePayload,
+        fecha: fechaAGuardar,
+        dia_semana: diaSemanaAGuardar,
+      });
+      
+      showToast('Fecha creada ✅', 'success');
       setShowDateForm(false);
       setDateForm({
         nombre: '',
@@ -1145,7 +1498,7 @@ export default function OrganizerProfileEditor() {
       rechazado: { bg: colors.coral, text: 'Rechazado', icon: '❌' },
     };
 
-    const estado = org.estado_aprobacion;
+    const estado = (org as any)?.estado_aprobacion;
     if (!estado || estado === 'borrador') return null;
 
     const badge = badges[estado] || badges.en_revision;
@@ -1602,7 +1955,6 @@ export default function OrganizerProfileEditor() {
           background: linear-gradient(135deg, #1E88E5, #FF3D57);
           -webkit-background-clip: text;
           background-clip: text;
-          -webkit-text-fill-color: transparent;
           line-height: 1.2;
           letter-spacing: -0.02em;
         }
@@ -1707,7 +2059,6 @@ export default function OrganizerProfileEditor() {
           background: linear-gradient(135deg, #1E88E5, #FF3D57);
           -webkit-background-clip: text;
           background-clip: text;
-          -webkit-text-fill-color: transparent;
         }
         
         .org-events-empty p {
@@ -2474,6 +2825,255 @@ export default function OrganizerProfileEditor() {
             font-size: 0.85rem !important;
           }
         }
+        
+        /* Estilos para editor-section y glass-card-container */
+        .editor-section {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .editor-section-title {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+          color: ${colors.light};
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: ${colors.light};
+        }
+        .editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+        }
+        .editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: ${colors.light};
+          font-size: 1rem;
+          resize: vertical;
+          font-family: inherit;
+        }
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        .info-redes-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: start;
+        }
+        
+        /* PROFILE SECTION COMPACT */
+        .profile-section-compact {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 1.5rem;
+          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        /* ABAJO: REDES */
+        .row-bottom {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .row-bottom-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .subtitle {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+          color: ${colors.light};
+        }
+        .tag {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        
+        /* LISTA DE REDES */
+        .social-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .field {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1rem;
+        }
+        .field-icon {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.9;
+          color: ${colors.light};
+        }
+        
+        /* INPUTS COMPACTOS */
+        .input-group {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+        .input-group:focus-within {
+          border-color: rgba(76, 173, 255, 0.6);
+          background: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
+        }
+        .prefix {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
+          border-right: 1px solid rgba(255, 255, 255, 0.15);
+          white-space: nowrap;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .input-group input {
+          border: none;
+          outline: none;
+          background: transparent;
+          color: ${colors.light};
+          font-size: 1rem;
+          padding: 0.75rem;
+          flex: 1;
+          min-width: 0;
+        }
+        .input-group input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+          .info-redes-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .editor-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .editor-section-title {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .profile-section-compact {
+            padding: 1rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.95rem !important;
+          }
+          .field-icon {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          .field {
+            font-size: 0.9rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.9rem !important;
+            padding: 0.6rem !important;
+          }
+          .prefix {
+            font-size: 0.85rem !important;
+            padding: 0.6rem 0.4rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .editor-section {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .editor-section-title {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .editor-input,
+          .editor-textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          .glass-card-container {
+            padding: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-radius: 10px !important;
+          }
+          .profile-section-compact {
+            padding: 0.75rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.9rem !important;
+          }
+          .tag {
+            font-size: 0.7rem !important;
+          }
+          .field-icon {
+            width: 22px !important;
+            height: 22px !important;
+          }
+          .social-list {
+            gap: 0.5rem !important;
+          }
+          .field {
+            font-size: 0.85rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.85rem !important;
+            padding: 0.5rem !important;
+          }
+          .prefix {
+            font-size: 0.8rem !important;
+            padding: 0.5rem 0.4rem !important;
+          }
+        }
       `}</style>
       <div style={{
         minHeight: '100vh',
@@ -2565,7 +3165,7 @@ export default function OrganizerProfileEditor() {
           </div>
 
           {/* Vista de métricas de eventos */}
-          {activeTab === "metricas" && org?.id && (
+          {activeTab === "metricas" && (org as any)?.id && (
             <div className="org-editor-card" style={{ marginBottom: "2rem" }}>
               <h2
                 style={{
@@ -2576,7 +3176,7 @@ export default function OrganizerProfileEditor() {
               >
                 📊 Métricas de eventos
               </h2>
-              <OrganizerEventMetricsPanel organizerId={org.id} />
+              <OrganizerEventMetricsPanel organizerId={(org as any).id} />
             </div>
           )}
 
@@ -2641,49 +3241,121 @@ export default function OrganizerProfileEditor() {
                 </motion.div>
               )}
 
-              {/* Información del Organizador */}
+              {/* Información Personal */}
               <div
                 id="organizer-basic-info"
                 data-test-id="organizer-basic-info"
-                className="org-editor-card"
+                className="editor-section glass-card-container"
+                style={{ marginBottom: '3rem' }}
               >
-                <h2
-                  style={{
-                    fontSize: "1rem",
-                    marginBottom: "1rem",
-                    color: colors.light,
-                  }}
-                >
-                  🏢 Información del Organizador
+                <h2 className="editor-section-title">
+                  👤 Información Personal
                 </h2>
 
-                <div className="org-editor-grid">
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '2rem',
+                  alignItems: 'start'
+                }}
+                  className="info-redes-grid">
+                  {/* Columna 1: Información Básica */}
                   <div>
-                    <label className="org-editor-field">Nombre Público</label>
-                    <input
-                      id="organizer-name-input"
-                      data-test-id="organizer-name-input"
-                      type="text"
-                      value={form.nombre_publico}
-                      onChange={(e) =>
-                        setField("nombre_publico", e.target.value)
-                      }
-                      placeholder="Nombre de tu organización"
-                      className="org-editor-input"
-                    />
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label className="editor-field">
+                        🏢 Nombre Público *
+                      </label>
+                      <input
+                        id="organizer-name-input"
+                        data-test-id="organizer-name-input"
+                        type="text"
+                        value={form.nombre_publico}
+                        onChange={(e) =>
+                          setField("nombre_publico", e.target.value)
+                        }
+                        placeholder="Nombre de tu organización"
+                        className="editor-input"
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label className="editor-field">
+                        📝 Biografía
+                      </label>
+                      <textarea
+                        id="organizer-bio-input"
+                        data-test-id="organizer-bio-input"
+                        value={form.bio}
+                        onChange={(e) => setField("bio", e.target.value)}
+                        placeholder="Cuéntanos sobre tu organización..."
+                        rows={3}
+                        className="editor-textarea"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="org-editor-field">Biografía</label>
-                    <textarea
-                      id="organizer-bio-input"
-                      data-test-id="organizer-bio-input"
-                      value={form.bio}
-                      onChange={(e) => setField("bio", e.target.value)}
-                      placeholder="Cuéntanos sobre tu organización..."
-                      rows={2}
-                      className="org-editor-textarea"
-                    />
+                  {/* Columna 2: Redes Sociales Compactas */}
+                  <div className="profile-section-compact">
+                    {/* REDES SOCIALES */}
+                    <div className="row-bottom">
+                      <div className="row-bottom-header">
+                        <h4 className="subtitle">Redes Sociales</h4>
+                        <span className="tag">Opcional</span>
+                      </div>
+
+                      <div className="social-list">
+                        {/* Instagram */}
+                        <label className="field">
+                          <span className="field-icon">
+                            <FaInstagram size={18} />
+                          </span>
+                          <div className="input-group">
+                            <span className="prefix">ig/</span>
+                            <input
+                              type="text"
+                              name="instagram"
+                              value={form.redes_sociales.instagram || ''}
+                              onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
+                              placeholder="usuario"
+                            />
+                          </div>
+                        </label>
+
+                        {/* Facebook */}
+                        <label className="field">
+                          <span className="field-icon">
+                            <FaFacebookF size={18} />
+                          </span>
+                          <div className="input-group">
+                            <span className="prefix">fb/</span>
+                            <input
+                              type="text"
+                              name="facebook"
+                              value={form.redes_sociales.facebook || ''}
+                              onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
+                              placeholder="usuario o página"
+                            />
+                          </div>
+                        </label>
+
+                        {/* WhatsApp */}
+                        <label className="field">
+                          <span className="field-icon">
+                            <FaWhatsapp size={18} />
+                          </span>
+                          <div className="input-group">
+                            <span className="prefix">+52</span>
+                            <input
+                              type="tel"
+                              name="whatsapp"
+                              value={form.redes_sociales.whatsapp || ''}
+                              onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
+                              placeholder="55 1234 5678"
+                            />
+                          </div>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2752,61 +3424,9 @@ export default function OrganizerProfileEditor() {
 
           {activeTab === "perfil" && (
             <>
-          {/* Redes Sociales */}
-          <div
-            id="organizer-social-networks"
-            data-test-id="organizer-social-networks"
-            className="org-editor-card"
-          >
-
-
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: colors.light }}>
-              📱 Redes Sociales
-            </h2>
-            <div className="org-editor-grid-small">
-              <div>
-                <label className="org-editor-field">
-                  📸 Instagram
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.instagram}
-                  onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
-                  placeholder="@tu_organizacion"
-                  className="org-editor-input"
-                />
-              </div>
-
-              <div>
-                <label className="org-editor-field">
-                  👥 Facebook
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.facebook}
-                  onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
-                  placeholder="Página o perfil"
-                  className="org-editor-input"
-                />
-              </div>
-
-              <div>
-                <label className="org-editor-field">
-                  💬 WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={form.redes_sociales.whatsapp}
-                  onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
-                  placeholder="Número de teléfono"
-                  className="org-editor-input"
-                />
-              </div>
-            </div>
-          </div>
           {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
           <div className="org-editor-card">
-            <OrganizerUbicacionesEditor organizerId={org?.id} />
+            <OrganizerUbicacionesEditor organizerId={(org as any)?.id} />
           </div>
 
           {/* Mis Eventos */}
@@ -3174,13 +3794,7 @@ export default function OrganizerProfileEditor() {
                     />
                   </div>
 
-                  {/* Costos */}
-                  {/*  <div className="org-editor-card">
-                    <CostsEditor
-                      value={dateForm.costos || []}
-                      onChange={(costos) => setDateForm({ ...dateForm, costos })}
-                    />
-                  </div> */}
+                 
 
                   {/* Flyer */}
                   <div className="org-editor-card">
@@ -3470,7 +4084,7 @@ export default function OrganizerProfileEditor() {
                 </div>
               )}
 
-              {org.estado_aprobacion === "borrador" && (
+              {(org as any)?.estado_aprobacion === "borrador" && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

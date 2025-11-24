@@ -9,6 +9,8 @@ import EventScheduleEditor from "../../components/EventScheduleEditor";
 import EventPriceEditor from "../../components/EventPriceEditor";
 import AddToCalendarButton from "../../components/AddToCalendarButton";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
+import { useMyOrganizer } from "../../hooks/useOrganizer";
+import { useOrganizerLocations } from "../../hooks/useOrganizerLocations";
 
 const colors = {
   coral: '#FF3D57',
@@ -30,6 +32,8 @@ export function EventDateEditScreen() {
   const dateIdNum = id ? parseInt(id) : undefined;
   const { data: currentDate } = useEventDate(!isNew ? dateIdNum : undefined);
   const { showToast } = useToast();
+  const { data: org } = useMyOrganizer();
+  const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
 
   // For new date, currentDate stays null; for edit, we fetch by dateId
 
@@ -44,6 +48,7 @@ export function EventDateEditScreen() {
     flyer_url: "",
     estado_publicacion: "borrador" as 'borrador' | 'publicado'
   });
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
 
   useEffect(() => {
     if (currentDate) {
@@ -58,8 +63,49 @@ export function EventDateEditScreen() {
         flyer_url: currentDate.flyer_url || "",
         estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
       });
+      // Preseleccionar ubicación si coincide con alguna guardada
+      const match = orgLocations.find((loc) =>
+        (loc.nombre || "") === (currentDate.lugar || "") &&
+        (loc.direccion || "") === (currentDate.direccion || "") &&
+        (loc.ciudad || "") === (currentDate.ciudad || "")
+      );
+      if (match?.id) {
+        setSelectedLocationId(String(match.id));
+      }
     }
-  }, [currentDate]);
+  }, [currentDate, orgLocations]);
+
+  const applyOrganizerLocationToForm = (loc?: any | null) => {
+    if (!loc) return;
+    setSelectedLocationId(loc.id ? String(loc.id) : "");
+    setForm(prev => ({
+      ...prev,
+      lugar: loc.nombre || prev.lugar,
+      direccion: loc.direccion || prev.direccion,
+      ciudad: loc.ciudad || prev.ciudad,
+    }));
+  };
+
+  const clearLocationSelection = () => {
+    setSelectedLocationId("");
+    setForm(prev => ({
+      ...prev,
+      lugar: "",
+      direccion: "",
+      ciudad: "",
+    }));
+  };
+
+  const updateManualLocationField = (
+    key: 'lugar' | 'direccion' | 'ciudad',
+    value: string
+  ) => {
+    setSelectedLocationId("");
+    setForm(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   async function save() {
     console.log('[EventDateEditScreen] Save called:', { isNew, parentId, id, form });
@@ -133,131 +179,259 @@ export function EventDateEditScreen() {
         {isNew ? "📅 Crear" : "📅 Editar"} Fecha
       </h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-            Fecha *
-          </label>
-          <input
-            type="date"
-            value={form.fecha}
-            onChange={e => setForm({...form, fecha: e.target.value})}
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '12px',
-              background: `${colors.dark}cc`,
-              border: `1px solid ${colors.light}33`,
-              color: colors.light,
-              fontSize: '1rem',
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-            Hora inicio
-          </label>
-          <input
-            type="time"
-            value={form.hora_inicio}
-            onChange={e => setForm({...form, hora_inicio: e.target.value})}
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '12px',
-              background: `${colors.dark}cc`,
-              border: `1px solid ${colors.light}33`,
-              color: colors.light,
-              fontSize: '1rem',
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-            Hora fin
-          </label>
-          <input
-            type="time"
-            value={form.hora_fin}
-            onChange={e => setForm({...form, hora_fin: e.target.value})}
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '12px',
-              background: `${colors.dark}cc`,
-              border: `1px solid ${colors.light}33`,
-              color: colors.light,
-              fontSize: '1rem',
-            }}
-          />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-            Lugar
-          </label>
-          <input
-            type="text"
-            value={form.lugar}
-            onChange={e => setForm({...form, lugar: e.target.value})}
-            placeholder="Ej: Salón Principal"
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '12px',
-              background: `${colors.dark}cc`,
-              border: `1px solid ${colors.light}33`,
-              color: colors.light,
-              fontSize: '1rem',
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-            Ciudad
-          </label>
-          <input
-            type="text"
-            value={form.ciudad}
-            onChange={e => setForm({...form, ciudad: e.target.value})}
-            placeholder="Ej: Ciudad de México"
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '12px',
-              background: `${colors.dark}cc`,
-              border: `1px solid ${colors.light}33`,
-              color: colors.light,
-              fontSize: '1rem',
-            }}
-          />
+      {/* Fecha y Hora - estilo similar a OrganizerProfileEditor */}
+      <div
+        className="org-editor-card"
+        style={{
+          marginBottom: '24px',
+          padding: '1.2rem',
+          background: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: 16,
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+        }}
+      >
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+          📅 Fecha y Hora
+        </h3>
+        <div
+          className="org-date-form-grid"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}
+        >
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Fecha *
+            </label>
+            <input
+              type="date"
+              value={form.fecha}
+              onChange={e => setForm({ ...form, fecha: e.target.value })}
+              required
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Hora Inicio
+            </label>
+            <input
+              type="time"
+              value={form.hora_inicio}
+              onChange={e => setForm({ ...form, hora_inicio: e.target.value })}
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Hora Fin
+            </label>
+            <input
+              type="time"
+              value={form.hora_fin}
+              onChange={e => setForm({ ...form, hora_fin: e.target.value })}
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      <div style={{ marginBottom: '24px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
-          Dirección
-        </label>
-        <input
-          type="text"
-          value={form.direccion}
-          onChange={e => setForm({...form, direccion: e.target.value})}
-          placeholder="Dirección completa"
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            background: `${colors.dark}cc`,
-            border: `1px solid ${colors.light}33`,
-            color: colors.light,
-            fontSize: '1rem',
-          }}
-        />
+      {/* Ubicación del Evento - estilo similar a OrganizerProfileEditor */}
+      <div
+        className="org-editor-card"
+        style={{
+          marginBottom: '24px',
+          padding: '1.2rem',
+          background: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: 16,
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+        }}
+      >
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+          📍 Ubicación del Evento
+        </h3>
+        {orgLocations.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Elegir ubicación existente o ingresa una nueva
+            </label>
+            <div className="org-date-form-select-wrapper" style={{ position: 'relative' }}>
+              <select
+                className="org-date-form-select"
+                value={selectedLocationId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  if (!nextId) {
+                    clearLocationSelection();
+                    return;
+                  }
+                  const found = orgLocations.find((loc) => String(loc.id ?? "") === nextId);
+                  applyOrganizerLocationToForm(found);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  paddingRight: 40,
+                  background: '#2b2b2b',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#FFFFFF',
+                  outline: 'none',
+                  fontSize: 14,
+                  borderRadius: 12,
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                }}
+              >
+                <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                  — Escribir manualmente —
+                </option>
+                {orgLocations.map((loc) => (
+                  <option
+                    key={loc.id}
+                    value={String(loc.id)}
+                    style={{ color: '#FFFFFF', background: '#2b2b2b' }}
+                  >
+                    {loc.nombre || loc.direccion || 'Ubicación'}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="org-date-form-select-arrow"
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: 'rgba(255,255,255,0.6)',
+                }}
+              >
+                ▼
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Formulario de ubicación manual */}
+        <div
+          className="org-date-form-grid-2"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+        >
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Nombre de la ubicación
+            </label>
+            <input
+              type="text"
+              value={form.lugar}
+              onChange={(e) => updateManualLocationField('lugar', e.target.value)}
+              placeholder="Ej: Sede Central / Salón Principal"
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Dirección
+            </label>
+            <input
+              type="text"
+              value={form.direccion}
+              onChange={(e) => updateManualLocationField('direccion', e.target.value)}
+              placeholder="Calle, número, colonia"
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+        </div>
+        <div
+          className="org-date-form-grid-2"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}
+        >
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Ciudad
+            </label>
+            <input
+              type="text"
+              value={form.ciudad}
+              onChange={(e) => updateManualLocationField('ciudad', e.target.value)}
+              placeholder="Ciudad"
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+          <div>
+            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+              Notas o referencias
+            </label>
+            <input
+              type="text"
+              value={form.requisitos}
+              onChange={e => setForm({ ...form, requisitos: e.target.value })}
+              placeholder="Ej. Entrada lateral, 2do piso"
+              className="org-editor-input"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: `${colors.dark}cc`,
+                border: `1px solid ${colors.light}33`,
+                color: '#FFFFFF',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div style={{ marginBottom: '24px' }}>

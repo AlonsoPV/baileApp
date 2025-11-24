@@ -92,6 +92,9 @@ import TeacherPublicLive from './screens/profile/TeacherPublicLive';
 import TrendingDetail from './pages/trending/TrendingDetail';
 import TrendingAdmin from './pages/trending/TrendingAdmin';
 import TrendingList from './pages/trending/TrendingList';
+import CompetitionGroupList from './components/competitionGroups/CompetitionGroupList';
+import CompetitionGroupDetail from './components/competitionGroups/CompetitionGroupDetail';
+import CompetitionGroupForm from './components/competitionGroups/CompetitionGroupForm';
 
 export default function AppRouter() {
   return (
@@ -134,6 +137,11 @@ export default function AppRouter() {
         {/* Trending público */}
         <Route path="/trending" element={<TrendingList />} />
         <Route path="/trending/:id" element={<TrendingDetail />} />
+        {/* Grupos de Competencia */}
+        <Route path="/competition-groups" element={<CompetitionGroupList />} />
+        <Route path="/competition-groups/new" element={<CompetitionGroupForm />} />
+        <Route path="/competition-groups/:id" element={<CompetitionGroupDetail />} />
+        <Route path="/competition-groups/:id/edit" element={<CompetitionGroupForm />} />
         {/* Clase pública (usa query o params) */}
         <Route path="/clase" element={<ClassPublicScreen />} />
         <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />

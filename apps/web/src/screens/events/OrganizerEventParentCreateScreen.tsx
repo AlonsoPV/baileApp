@@ -19,12 +19,12 @@ export default function OrganizerEventParentCreateScreen() {
   const createParent = useCreateEventParent();
 
   const handleSubmit = async (values: any) => {
-    if (!organizer?.id) {
+    if (!(organizer as any)?.id) {
       throw new Error('No tienes organizador creado');
     }
 
     const payload = {
-      organizer_id: organizer.id,
+      organizer_id: (organizer as any).id,
       nombre: values.nombre,
       biografia: values.biografia || null,
       estilos: values.estilos || [],
