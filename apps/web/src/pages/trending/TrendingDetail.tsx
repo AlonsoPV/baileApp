@@ -212,6 +212,44 @@ export default function TrendingDetail() {
     return m;
   }, [board]);
 
+  // Ganadores finales efectivos:
+  // - Si el backend retorna ganadores (finalWinners), usamos esos.
+  // - Si viene vacío pero hay leaderboard, usamos top 3 por lista del leaderboard como fallback.
+  const effectiveFinalWinners = React.useMemo(() => {
+    if (finalWinners.length > 0) return finalWinners;
+    if (!board.length) return [];
+
+    const byList = new Map<string, any[]>();
+    board.forEach((row: any) => {
+      const key = row.list_name || 'General';
+      if (!byList.has(key)) byList.set(key, []);
+      byList.get(key)!.push(row);
+    });
+
+    const result: any[] = [];
+    byList.forEach((items) => {
+      const sorted = [...items].sort(
+        (a: any, b: any) => (b.votes || 0) - (a.votes || 0)
+      );
+      sorted.slice(0, 3).forEach((item: any, idx: number) => {
+        result.push({
+          candidate_id: item.candidate_id,
+          user_id: item.user_id,
+          display_name: item.display_name,
+          avatar_url: item.avatar_url,
+          bio_short: item.bio_short ?? null,
+          list_name: item.list_name,
+          ritmo_slug: item.ritmo_slug,
+          final_round_number: null,
+          final_votes: item.votes || 0,
+          position: idx + 1,
+        });
+      });
+    });
+
+    return result;
+  }, [finalWinners, board]);
+
   const winnersByList = React.useMemo(() => {
     const best = new Map<string, any>();
     board.forEach(row => {
@@ -360,8 +398,8 @@ export default function TrendingDetail() {
         </div>
       </header>
 
-      {/* Mostrar participantes desde participants_lists si existe */}
-      {t.participants_lists && (() => {
+      {/* Mostrar participantes desde participants_lists si existe (solo mientras el trending NO está cerrado) */}
+      {t.status !== 'closed' && t.participants_lists && (() => {
         let participantsData: any = null;
         try {
           if (typeof t.participants_lists === 'string') {
@@ -417,8 +455,8 @@ export default function TrendingDetail() {
         return null;
       })()}
 
-      {/* Información de rondas */}
-      {useRoundsMode && t.current_round_number > 0 && (
+      {/* Información de rondas (solo mientras el trending NO está cerrado) */}
+      {t.status !== 'closed' && useRoundsMode && t.current_round_number > 0 && (
         <div style={{ 
           padding: 16, 
           borderRadius: 12, 
@@ -495,8 +533,8 @@ export default function TrendingDetail() {
         </div>
       )}
 
-      {/* Resultados finales de rondas cerradas */}
-      {useRoundsMode && roundResults.size > 0 && (() => {
+      {/* Resultados finales de rondas cerradas (solo mientras el trending NO está cerrado) */}
+      {t.status !== 'closed' && useRoundsMode && roundResults.size > 0 && (() => {
         const closedRounds = rounds.filter(r => r.status === 'closed' || r.status === 'completed').sort((a, b) => a.round_number - b.round_number);
         if (closedRounds.length === 0) return null;
         
@@ -703,10 +741,10 @@ export default function TrendingDetail() {
             </div>
           </div>
 
-          {finalWinners.length > 0 ? (() => {
+          {effectiveFinalWinners.length > 0 ? (() => {
             // Agrupar ganadores por lista
             const byList = new Map<string, any[]>();
-            finalWinners.forEach((w: any) => {
+            effectiveFinalWinners.forEach((w: any) => {
               const key = w.list_name || 'General';
               if (!byList.has(key)) byList.set(key, []);
               byList.get(key)!.push(w);
@@ -934,16 +972,27 @@ export default function TrendingDetail() {
         </div>
       )}
 
-      {/* Todos los Participantes - Solo cuando el trending está cerrado */}
-      {t && t.status === 'closed' && finalWinners.length > 0 && (() => {
-        // Agrupar todos los participantes por lista
-        const allParticipantsByList = new Map<string, any[]>();
-        finalWinners.forEach((w: any) => {
-          const key = w.list_name || 'General';
-          if (!allParticipantsByList.has(key)) allParticipantsByList.set(key, []);
-          allParticipantsByList.get(key)!.push(w);
-        });
-        
+      {/* Participantes del Trend - Solo cuando el trending está cerrado */}
+      {t && t.status === 'closed' && (() => {
+        // Preferimos participants_lists para mostrar TODOS los participantes por lista
+        let participantsData: any = null;
+        try {
+          if (t.participants_lists) {
+            if (typeof t.participants_lists === 'string') {
+              participantsData = JSON.parse(t.participants_lists);
+            } else {
+              participantsData = t.participants_lists;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing participants_lists en sección "Participantes del Trend"', e);
+        }
+
+        const lists = participantsData?.lists || [];
+        if (!lists.length) {
+          return null;
+        }
+
         return (
           <div style={{ marginBottom: 48 }}>
             <h2 style={{ 
@@ -956,92 +1005,73 @@ export default function TrendingDetail() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              👥 Todos los Participantes
+              👥 Participantes del Trend
             </h2>
             
-            {Array.from(allParticipantsByList.entries()).map(([listName, participants]) => {
-              const sortedParticipants = participants.sort((a, b) => a.position - b.position);
-              
-              return (
-                <div key={listName} style={{
-                  marginBottom: 32,
-                  padding: 24,
-                  borderRadius: 20,
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '2px solid rgba(255,255,255,0.15)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+            {lists.map((list: any) => (
+              <div key={list.name} style={{
+                marginBottom: 32,
+                padding: 24,
+                borderRadius: 20,
+                background: 'rgba(255,255,255,0.05)',
+                border: '2px solid rgba(255,255,255,0.15)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+              }}>
+                <h3 style={{ 
+                  margin: '0 0 20px 0', 
+                  fontSize: '1.5rem', 
+                  fontWeight: 800,
+                  textAlign: 'center',
+                  color: '#fff'
                 }}>
-                  <h3 style={{ 
-                    margin: '0 0 20px 0', 
-                    fontSize: '1.5rem', 
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    color: '#fff'
-                  }}>
-                    {listName} <span style={{ opacity: 0.7, fontSize: '1rem', fontWeight: 400 }}>({sortedParticipants.length} participantes)</span>
-                  </h3>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-                    {sortedParticipants.map((p: any) => {
-                      const m = userMeta[p.user_id] || {};
-                      const avatarSrc = p.avatar_url || m.avatar || "https://placehold.co/60x60?text=User";
-                      const displayName = p.display_name || m.name || "Sin nombre";
-                      const userHref = urls.userLive(p.user_id);
-                      
-                      return (
-                        <div key={p.candidate_id} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          padding: 16,
-                          borderRadius: 12,
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          transition: 'all 0.2s ease'
+                  {list.name} <span style={{ opacity: 0.7, fontSize: '1rem', fontWeight: 400 }}>({list.participants?.length || 0} participantes)</span>
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                  {list.participants?.map((p: any) => (
+                    <div key={p.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: 16,
+                      borderRadius: 12,
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <a href={urls.userLive(p.id)} title={p.name} style={{ display: 'inline-block' }}>
+                        <img
+                          src={p.avatar || "https://placehold.co/60x60?text=User"}
+                          alt={p.name}
+                          style={{ 
+                            width: 50, 
+                            height: 50, 
+                            borderRadius: 10, 
+                            objectFit: 'cover',
+                            border: '2px solid rgba(255,255,255,0.2)'
+                          }}
+                        />
+                      </a>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <a href={urls.userLive(p.id)} title={p.name} style={{ 
+                          color: '#fff', 
+                          textDecoration: 'none', 
+                          fontWeight: 700, 
+                          fontSize: '1rem',
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}>
-                          <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
-                            <img
-                              src={avatarSrc}
-                              alt={displayName}
-                              style={{ 
-                                width: 50, 
-                                height: 50, 
-                                borderRadius: 10, 
-                                objectFit: 'cover',
-                                border: '2px solid rgba(255,255,255,0.2)'
-                              }}
-                            />
-                          </a>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: '0.75rem',
-                              opacity: 0.7,
-                              marginBottom: 4,
-                              fontWeight: 600
-                            }}>
-                              {p.position}° Lugar
-                            </div>
-                            <a href={userHref} title={displayName} style={{ 
-                              color: '#fff', 
-                              textDecoration: 'none', 
-                              fontWeight: 700, 
-                              fontSize: '1rem',
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {displayName}
-                            </a>
-                          </div>
-                          {/* Votos ocultos para público */}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          {p.name}
+                        </a>
+                      </div>
+                      {/* Votos ocultos para público */}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         );
       })()}
@@ -1186,8 +1216,8 @@ export default function TrendingDetail() {
         </div>
       )}
 
-      {/* Tabs de ritmos (para filtrar candidatos) */}
-      {ritmos.length > 0 && (
+      {/* Tabs de ritmos (para filtrar candidatos) - solo cuando el trending NO está cerrado */}
+      {t.status !== 'closed' && ritmos.length > 0 && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           {ritmos.map((r) => {
             const active = activeRitmo === r.ritmo_slug;
@@ -1212,7 +1242,8 @@ export default function TrendingDetail() {
         </div>
       )}
 
-      {/* Listas de candidatos */}
+      {/* Listas de candidatos (solo cuando el trending NO está cerrado) */}
+      {t.status !== 'closed' && (
       <div style={{ display: 'grid', gap: 16 }}>
         {useRoundsMode ? (
           currentRoundCandidates.length > 0 ? (
@@ -1381,8 +1412,10 @@ export default function TrendingDetail() {
         ))
         )}
       </div>
+      )}
 
-      {isSA ? (
+      {/* Sección de favoritos/leaderboard rápido solo para admins y solo mientras el trending NO está cerrado */}
+      {t.status !== 'closed' && isSA && (
         <section style={{ marginTop: 24 }}>
           <h2 style={{ fontWeight: 900, marginBottom: 8 }}>🏆 Favoritos (Admin)</h2>
           {ritmos.map((r) => {
@@ -1423,28 +1456,6 @@ export default function TrendingDetail() {
             );
           })}
         </section>
-      ) : (
-        t.status === 'closed' && (
-          <section style={{ marginTop: 24 }}>
-            <h2 style={{ fontWeight: 900, marginBottom: 8 }}>🏆 Ganadores por lista</h2>
-            {winnersByList.length === 0 ? (
-              <div>Sin datos</div>
-            ) : (
-              <div style={{ display: 'grid', gap: 10 }}>
-                {winnersByList.map((w: any) => (
-                  <div key={`${w.list_name || 'General'}-${w.ritmo_slug}-${w.candidate_id}`} style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 10, background: 'rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontWeight: 900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                        {w.display_name} <span style={{ opacity:.8, fontSize:12 }}>({labelFromSlug(w.ritmo_slug)}{w.list_name ? ` • ${w.list_name}` : ''})</span>
-                      </div>
-                      {/* Votos ocultos para público */}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )
       )}
     </div>
   );

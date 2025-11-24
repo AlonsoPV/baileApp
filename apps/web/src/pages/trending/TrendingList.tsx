@@ -346,7 +346,7 @@ export default function TrendingList() {
                       e.currentTarget.style.boxShadow = '0 8px 20px rgba(229,57,53,.4)';
                     }}
                   >
-                    Ver y Votar →
+                    {r.status === 'closed' ? 'Ver →' : 'Ver y Votar →'}
                   </button>
                 </div>
               </article>
