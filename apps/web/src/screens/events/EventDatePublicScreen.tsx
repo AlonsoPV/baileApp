@@ -839,12 +839,15 @@ export default function EventDatePublicScreen() {
                 <div style={{ display: 'grid', gap: '.85rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
                     <button
-                      onClick={() => navigate(`/social/${date.parent_id}`)}
+                      onClick={() => navigate('/explore')}
                       style={{
-                        padding: '8px 12px', borderRadius: 999,
+                        padding: '8px 12px',
+                        borderRadius: 999,
                         border: '1px solid rgba(240,147,251,0.28)',
-                        background: 'rgba(240,147,251,0.10)', color: '#f093fb',
-                        fontWeight: 700, cursor: 'pointer'
+                        background: 'rgba(240,147,251,0.10)',
+                        color: '#f093fb',
+                        fontWeight: 700,
+                        cursor: 'pointer'
                       }}
                     >
                       ← Volver

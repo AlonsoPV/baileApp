@@ -1535,7 +1535,8 @@ export function OrganizerProfileLive() {
             />
           </div>
 
-          {/* Próximas Fechas del Organizador */}
+          {/* Secciones de sociales desactivadas temporalmente */}
+          {/*
           {inviteItems.length > 0 && (
             <motion.section
               id="organizer-upcoming-dates"
@@ -1580,13 +1581,10 @@ export function OrganizerProfileLive() {
                   </p>
                 </div>
               </div>
-
-              {/* Slider de 1 card con flyer vertical + info inferior */}
               <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />
             </motion.section>
           )}
 
-          {/* Mis Sociales */}
           {parents && parents.length > 0 && (
             <motion.section
               id="organizer-social-events"
@@ -1620,7 +1618,6 @@ export function OrganizerProfileLive() {
                   </p>
                 </div>
               </div>
-
               <div className="org-social-events-list">
                 {parents.map((parent) => (
                   <motion.div
@@ -1633,20 +1630,7 @@ export function OrganizerProfileLive() {
                     }}
                     className="org-social-card"
                   >
-                    {/* Barra decorativa superior */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '6px',
-                      background: `linear-gradient(90deg, ${colors.coral}, ${colors.orange}, ${colors.yellow})`,
-                      borderRadius: '24px 24px 0 0',
-                    }} />
-
-                    {/* FILA 1: Información del Social */}
                     <div className="org-social-card-row">
-                      {/* Icono */}
                       <motion.div
                         className="org-social-card-icon"
                         whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
@@ -1660,23 +1644,16 @@ export function OrganizerProfileLive() {
                       >
                         🎭
                       </motion.div>
-                      
-                      {/* Contenido principal */}
                       <div className="org-social-card-content">
-                        {/* Nombre del social */}
                         <h4 className="org-social-card-title">
                           {parent.nombre}
                         </h4>
-                        
-                        {/* Descripción */}
                         {parent.descripcion && (
                           <p className="org-social-card-description">
                             {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
                           </p>
                         )}
                       </div>
-                      
-                      {/* Botón de ver detalles */}
                       <div className="org-social-card-button">
                         <motion.button
                           whileHover={{ scale: 1.08, y: -2 }}
@@ -1693,6 +1670,7 @@ export function OrganizerProfileLive() {
               </div>
             </motion.section>
           )}
+          */}
 
           {/* Galería de Fotos del Organizador */}
           {carouselPhotos.length > 0 && (

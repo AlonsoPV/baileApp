@@ -1,11 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
-import { urls } from "../../../lib/urls";
-import { useTags } from "../../../hooks/useTags";
-import RitmosChips from "../../RitmosChips";
-import ZonaGroupedChips from "../../profile/ZonaGroupedChips";
-import { normalizeRitmosToSlugs } from "../../../utils/normalizeRitmos";
 
 interface OrganizerCardProps {
   item: any;
@@ -16,13 +11,6 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     item.portada_url ||
     (Array.isArray(item.media) ? item.media[0]?.url || item.media[0] : undefined) ||
     item.avatar_url;
-
-  const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
-
-  const ritmoSlugs = React.useMemo(
-    () => normalizeRitmosToSlugs(item, allRitmos),
-    [item, allRitmos]
-  );
 
   return (
     <LiveLink to={`/organizer/${item.id}`} asCard={false}>
@@ -104,33 +92,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
             )} */}
           </div>
 
-          {(ritmoSlugs.length > 0 || (Array.isArray(item?.zonas) && item.zonas.length > 0)) && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-                alignItems: 'flex-start',
-                marginBottom: 8,
-              }}
-            >
-              {ritmoSlugs.length > 0 && (
-                <RitmosChips
-                  selected={ritmoSlugs}
-                  onChange={() => {}}
-                  readOnly
-                  size="compact"
-                />
-              )}
-              {Array.isArray(item?.zonas) && item.zonas.length > 0 && (
-                <ZonaGroupedChips
-                  selectedIds={item.zonas}
-                  allTags={allZonas}
-                  mode="display"
-                />
-              )}
-            </div>
-          )}
+          {/* Chips de ritmos y zonas removidos según requerimiento */}
         </div>
         
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />

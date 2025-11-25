@@ -954,7 +954,8 @@ export function OrganizerPublicScreen() {
             <InvitedMastersSection masters={[]} title="🎭 Maestros Invitados" showTitle={true} isEditable={false} />
           </div>
 
-          {/* Próximas Fechas */}
+          {/* Secciones de sociales desactivadas temporalmente */}
+          {/*
           {inviteItems.length > 0 && (
             <motion.section id="organizer-upcoming-dates" data-test-id="organizer-upcoming-dates" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
@@ -968,7 +969,6 @@ export function OrganizerPublicScreen() {
             </motion.section>
           )}
 
-          {/* Sociales del Organizador */}
           {parents && parents.length > 0 && (
             <motion.section id="organizer-social-events" data-test-id="organizer-social-events" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card org-social-events-section" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
               <div className="org-social-events-header">
@@ -992,9 +992,7 @@ export function OrganizerPublicScreen() {
                     }}
                     className="org-social-card"
                   >
-                    {/* FILA 1: Información del Social */}
                     <div className="org-social-card-row">
-                      {/* Icono */}
                       <motion.div
                         className="org-social-card-row-icon"
                         whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
@@ -1008,23 +1006,16 @@ export function OrganizerPublicScreen() {
                       >
                         🎭
                       </motion.div>
-                      
-                      {/* Contenido principal */}
                       <div className="org-social-card-content">
-                        {/* Nombre del social */}
                         <h4 className="org-social-card-title">
                           {parent.nombre}
                         </h4>
-                        
-                        {/* Descripción */}
                         {parent.descripcion && (
                           <p className="org-social-card-description">
                             {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
                           </p>
                         )}
                       </div>
-                      
-                      {/* Botón de ver detalles */}
                       <div className="org-social-card-row-cta">
                         <motion.button
                           whileHover={{ scale: 1.08, y: -2 }}
@@ -1041,6 +1032,7 @@ export function OrganizerPublicScreen() {
               </div>
             </motion.section>
           )}
+          */}
 
           {/* Galería de Fotos */}
           {carouselPhotos.length > 0 && (

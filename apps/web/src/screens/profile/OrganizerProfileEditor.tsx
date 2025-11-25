@@ -143,75 +143,13 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
       return db.getTime() - da.getTime();
     });
 
-  const handleSocialClick = () => {
-    navigate(`/social/${parent.id}`);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="org-event-card"
+      className="org-event-dates-wrapper"
     >
-      {/* FILA 1: Información del Social */}
-      <div className="org-event-card-header">
-        {/* Contenido principal */}
-        <div className="org-event-card-content">
-          {/* Nombre del social */}
-          <h3 className="org-event-card-title">
-            {parent.nombre}
-          </h3>
-
-          {/* Descripción */}
-          {parent.descripcion && (
-            <p className="org-event-card-description">
-              {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
-            </p>
-          )}
-        </div>
-
-        {/* Botones de acción */}
-        <div className="org-event-card-actions">
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSocialClick}
-            className="org-event-card-button org-event-card-button--view"
-          >
-            <span>👁️</span>
-            <span>Ver</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/social/${parent.id}/edit`);
-            }}
-            className="org-event-card-button org-event-card-button--edit"
-          >
-            <span>✏️</span>
-            <span>Editar</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(parent.id);
-            }}
-            disabled={isDeleting}
-            className="org-event-card-button org-event-card-button--delete"
-          >
-            <span>{isDeleting ? '⏳' : '🗑️'}</span>
-            <span>{isDeleting ? 'Eliminando...' : 'Eliminar'}</span>
-          </motion.button>
-        </div>
-      </div>
-
-      {/* FILA 2: Fechas del social */}
+      {/* Fechas del social (tarjeta de social desactivada) */}
       <div style={{ position: 'relative', zIndex: 2 }}>
         {dates && dates.length > 0 ? (
           <>
@@ -3282,15 +3220,18 @@ export default function OrganizerProfileEditor() {
                     <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
                   </motion.button>
 
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/social/new')}
-                    className="org-events-action-button org-events-action-button--secondary"
-                  >
-                    <span>🎉</span>
-                    <span>Crear Social</span>
-                  </motion.button>
+                  {/* Botón de crear social desactivado temporalmente */}
+                  {false && (
+                    <motion.button
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate('/social/new')}
+                      className="org-events-action-button org-events-action-button--secondary"
+                    >
+                      <span>🎉</span>
+                      <span>Crear Social</span>
+                    </motion.button>
+                  )}
                 </div>
               </div>
 

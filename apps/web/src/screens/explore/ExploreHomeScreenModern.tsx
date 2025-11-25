@@ -484,6 +484,17 @@ export default function ExploreHomeScreen() {
   const maestrosLoading = maestrosQuery.isLoading;
   const maestrosData = React.useMemo(() => flattenQueryData(maestrosQuery.data), [maestrosQuery.data]);
 
+  const organizadoresQuery = useExploreQuery({
+    type: 'organizadores',
+    q: filters.q,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 500
+  });
+  useAutoLoadAllPages(organizadoresQuery);
+  const organizadoresLoading = organizadoresQuery.isLoading;
+  const organizadoresData = React.useMemo(() => flattenQueryData(organizadoresQuery.data), [organizadoresQuery.data]);
+
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: filters.q,
@@ -1576,25 +1587,32 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {/* {(showAll || selectedType === 'organizadores') && (
+          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
             <Section title="Organizadores" toAll="/explore/list?type=organizadores">
               {organizadoresLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : organizadores && organizadores.pages?.[0]?.data?.length > 0 ? (
+                <div className="cards-grid">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="card-skeleton">
+                      Cargando…
+                    </div>
+                  ))}
+                </div>
+              ) : organizadoresData.length > 0 ? (
                 <HorizontalSlider
-                  items={organizadores.pages[0].data}
+                  {...sliderProps}
+                  items={organizadoresData}
                   renderItem={(organizador: any, idx: number) => (
-                    <motion.div 
-                      key={organizador.id ?? idx} 
+                    <motion.div
+                      key={organizador.id ?? idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }} 
+                      whileHover={{ y: -4, scale: 1.02 }}
                       onClickCapture={handlePreNavigate}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.04)', 
-                        border: '1px solid rgba(255,255,255,0.08)', 
-                        borderRadius: 16, 
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
                         padding: 0,
                         overflow: 'hidden',
                         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
@@ -1608,7 +1626,7 @@ export default function ExploreHomeScreen() {
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
-          )} */}
+          )}
 
           {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
             <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
