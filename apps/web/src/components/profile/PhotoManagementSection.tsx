@@ -119,10 +119,11 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
         }
         .photo-container-main {
           aspect-ratio: 1/1;
-          width: 380px;
-          max-width: 100%;
-          height: 380px;
+          width: 100%;
+          max-width: 350px;
+          height: auto;
           border-radius: 50%;
+          margin: 0 auto;
         }
         
         /* Desktop optimizations */
@@ -161,8 +162,9 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             padding: 1.5rem;
           }
           .photo-container-main {
-            width: 400px;
-            height: 400px;
+            width: 100%;
+            max-width: 350px;
+            height: auto;
           }
         }
         

@@ -133,10 +133,10 @@ export default function EventCard({ item }: EventCardProps) {
           background: flyer
             ? `url(${flyer})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: flyer ? 'contain' : 'cover',
+          // Usar cover para que la imagen llene toda la card, sin barras
+          backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
-          backgroundColor: flyer ? 'rgba(0,0,0,0.8)' : undefined,
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',

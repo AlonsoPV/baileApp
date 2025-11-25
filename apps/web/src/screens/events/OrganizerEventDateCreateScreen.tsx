@@ -58,6 +58,9 @@ export default function OrganizerEventDateCreateScreen() {
   const [dateForm, setDateForm] = useState({
     nombre: '',
     biografia: '',
+    djs: '',
+    telefono_contacto: '',
+    mensaje_contacto: '',
     fecha: '',
     hora_inicio: '',
     hora_fin: '',
@@ -213,6 +216,9 @@ export default function OrganizerEventDateCreateScreen() {
         parent_id: Number(parentIdNum),
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
+        djs: dateForm.djs || null,
+        telefono_contacto: dateForm.telefono_contacto || null,
+        mensaje_contacto: dateForm.mensaje_contacto || null,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: resolvedLugar,
@@ -483,6 +489,49 @@ export default function OrganizerEventDateCreateScreen() {
                     value={dateForm.biografia}
                     onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
                     placeholder="Describe el evento, su propósito, qué esperar..."
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    DJs presentes
+                  </label>
+                  <textarea
+                    value={dateForm.djs}
+                    onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
+                    placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">
+                    Teléfono / WhatsApp para más información
+                  </label>
+                  <input
+                    type="tel"
+                    value={dateForm.telefono_contacto}
+                    onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
+                    placeholder="Ejemplo: 55 1234 5678"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    Mensaje de saludo para WhatsApp
+                  </label>
+                  <textarea
+                    value={dateForm.mensaje_contacto}
+                    onChange={(e) => setDateForm({ ...dateForm, mensaje_contacto: e.target.value })}
+                    onFocus={(e) => {
+                      if (!dateForm.mensaje_contacto) {
+                        const nombre = dateForm.nombre || 'este evento';
+                        const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
+                        setDateForm(prev => ({ ...prev, mensaje_contacto: template }));
+                      }
+                    }}
+                    placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX, me interesa el evento de esta fecha..."'
                     rows={2}
                     className="org-editor-textarea"
                   />

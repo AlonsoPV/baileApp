@@ -153,6 +153,13 @@ export default function ExploreHomeScreen() {
   // Obtener preferencias de filtros del usuario
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
 
+  // Consideramos que los filtros favoritos están configurados solo si existe
+  // un registro en la BD (preferences.id definido)
+  const hasConfiguredFavorites = React.useMemo(
+    () => !!(preferences && (preferences as any).id),
+    [preferences]
+  );
+
   const sliderProps = React.useMemo(
     () => ({
       className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
@@ -212,6 +219,13 @@ export default function ExploreHomeScreen() {
   React.useEffect(() => {
     if (!hasAppliedDefaults) return;
 
+    // Si el usuario aún no ha guardado filtros favoritos en BD,
+    // nunca marcamos que se están usando favoritos.
+    if (!hasConfiguredFavorites) {
+      setUsingFavoriteFilters(false);
+      return;
+    }
+
     // Si no hay preferencias, los filtros favoritos no pueden estar activos
     if (!preferences) {
       setUsingFavoriteFilters(false);
@@ -239,7 +253,7 @@ export default function ExploreHomeScreen() {
 
     // Actualizar el estado según si coinciden o no
     setUsingFavoriteFilters(matchesDefaults);
-  }, [filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults]);
+  }, [filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults, hasConfiguredFavorites]);
 
   // Función para restablecer a los filtros favoritos
   const resetToFavoriteFilters = React.useCallback(() => {

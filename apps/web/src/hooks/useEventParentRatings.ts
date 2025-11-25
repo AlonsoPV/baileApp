@@ -191,18 +191,15 @@ export function useMyEventParentRating(eventParentId?: number) {
         .select('*')
         .eq('event_parent_id', eventParentId)
         .eq('user_id', user.id)
-        .single();
+        .limit(1);
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No rating found
-          return null;
-        }
         console.error('[useMyEventParentRating] Error:', error);
         return null;
       }
 
-      return data as EventParentRating;
+      const rating = (data && data.length > 0) ? data[0] : null;
+      return rating as EventParentRating | null;
     },
     enabled: !!eventParentId && !!user?.id,
   });

@@ -61,6 +61,9 @@ export default function OrganizerEventDateEditScreen() {
   const [form, setForm] = useState({
     nombre: '',
     biografia: '',
+    djs: '',
+    telefono_contacto: '',
+    mensaje_contacto: '',
     fecha: '',
     hora_inicio: '',
     hora_fin: '',
@@ -224,6 +227,9 @@ export default function OrganizerEventDateEditScreen() {
       setForm({
         nombre: date.nombre || '',
         biografia: (date as any).biografia || '',
+        djs: (date as any).djs || '',
+        telefono_contacto: (date as any).telefono_contacto || '',
+        mensaje_contacto: (date as any).mensaje_contacto || '',
         fecha: fechaStr,
         hora_inicio: date.hora_inicio || '',
         hora_fin: date.hora_fin || '',
@@ -273,10 +279,13 @@ export default function OrganizerEventDateEditScreen() {
         }
       }
       
-      // Payload con TODAS las columnas (ahora existen en events_date)
+      // Payload con TODAS las columnas que existen en events_date
       const patch = {
         nombre: form.nombre || null,
         biografia: form.biografia || null,
+        djs: form.djs || null,
+        telefono_contacto: form.telefono_contacto || null,
+        mensaje_contacto: form.mensaje_contacto || null,
         fecha: fechaAGuardar,
         hora_inicio: form.hora_inicio || null,
         hora_fin: form.hora_fin || null,
@@ -293,7 +302,6 @@ export default function OrganizerEventDateEditScreen() {
         costos: form.costos || [],
         flyer_url: form.flyer_url || null,
         estado_publicacion: form.estado_publicacion || 'borrador',
-        ubicaciones: form.ubicaciones || [],
         dia_semana: diaSemanaAGuardar
       } as any;
 
@@ -755,32 +763,75 @@ export default function OrganizerEventDateEditScreen() {
             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
               📝 Información Básica
             </h3>
-            <div className="org-editor-grid">
-              <div>
-                <label className="org-editor-field">
-                  Nombre del Evento *
-                </label>
-                <input
-                  type="text"
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  placeholder="Nombre del evento"
-                  className="org-editor-input"
-                />
+              <div className="org-editor-grid">
+                <div>
+                  <label className="org-editor-field">
+                    Nombre del Evento *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                    placeholder="Nombre del evento"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    Biografía
+                  </label>
+                  <textarea
+                    value={form.biografia}
+                    onChange={(e) => setForm({ ...form, biografia: e.target.value })}
+                    placeholder="Describe el evento, su propósito, qué esperar..."
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    DJs presentes
+                  </label>
+                  <textarea
+                    value={form.djs}
+                    onChange={(e) => setForm({ ...form, djs: e.target.value })}
+                    placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
+                <div>
+                  <label className="org-editor-field">
+                    Teléfono / WhatsApp para más información
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.telefono_contacto}
+                    onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
+                    placeholder="Ejemplo: 55 1234 5678"
+                    className="org-editor-input"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="org-editor-field">
+                    Mensaje de saludo para WhatsApp
+                  </label>
+                  <textarea
+                    value={form.mensaje_contacto}
+                    onChange={(e) => setForm({ ...form, mensaje_contacto: e.target.value })}
+                    onFocus={() => {
+                      if (!form.mensaje_contacto) {
+                        const nombre = form.nombre || 'este evento';
+                        const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
+                        setForm(prev => ({ ...prev, mensaje_contacto: template }));
+                      }
+                    }}
+                    placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX, me interesa el evento de esta fecha..."'
+                    rows={2}
+                    className="org-editor-textarea"
+                  />
+                </div>
               </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">
-                  Biografía
-                </label>
-                <textarea
-                  value={form.biografia}
-                  onChange={(e) => setForm({ ...form, biografia: e.target.value })}
-                  placeholder="Describe el evento, su propósito, qué esperar..."
-                  rows={2}
-                  className="org-editor-textarea"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Ritmos */}
@@ -1000,6 +1051,46 @@ export default function OrganizerEventDateEditScreen() {
                 />
               </div>
             </div>
+
+            {/* Zonas - visualización cuando hay ubicación seleccionada */}
+            {selectedLocationId && (form.zonas || []).length > 0 && (
+              <div style={{ marginTop: '16px' }}>
+                <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                  Zonas de la ubicación seleccionada
+                </label>
+                <ZonaGroupedChips
+                  selectedIds={form.zonas || []}
+                  allTags={zonaTags}
+                  mode="display"
+                  autoExpandSelectedParents={true}
+                  size="compact"
+                  style={{
+                    gap: '4px',
+                    fontSize: 12,
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Zonas - selección cuando se ingresa la ubicación manualmente */}
+            {!selectedLocationId && (
+              <div style={{ marginTop: '16px' }}>
+                <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                  Zonas de la Ciudad
+                </label>
+                <ZonaGroupedChips
+                  selectedIds={form.zonas || []}
+                  allTags={zonaTags}
+                  mode="edit"
+                  onToggle={toggleZona}
+                  size="compact"
+                  style={{
+                    gap: '4px',
+                    fontSize: 12,
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Cronograma */}

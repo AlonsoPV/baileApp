@@ -261,641 +261,193 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
             </motion.button>
 
             {expanded && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                {/* Contenedor 1: Fechas disponibles (hoy en adelante) */}
-                {availableDates.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25 }}
-                    style={{
-                      padding: isMobile ? '1rem' : '1.5rem',
-                      borderRadius: '16px',
-                      border: '2px solid rgba(30, 136, 229, 0.35)',
-                      background: 'rgba(10, 20, 40, 0.7)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>
-                      Fechas disponibles
-                    </div>
-                    {availableDates.map((date: any, index: number) => (
-                      <motion.div
-                        key={date.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.08, duration: 0.3 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/social/fecha/${date.id}`);
-                        }}
-                        style={{
-                          padding: isMobile ? '1.25rem' : '1.5rem',
-                          borderRadius: '16px',
-                          border: '2px solid rgba(255, 255, 255, 0.15)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '1rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          background: 'rgba(20, 20, 20, 0.5)',
-                          marginBottom: '0.75rem'
-                        }}
-                        whileHover={{
-                          y: -4,
-                          borderColor: 'rgba(30, 136, 229, 0.5)',
-                          background: 'rgba(30, 30, 30, 0.6)'
-                        }}
-                      >
-                        {/* Efecto de brillo en hover */}
-                        <motion.div
-                          initial={{ x: '-100%' }}
-                          whileHover={{ x: '100%' }}
-                          transition={{ duration: 0.6, ease: 'easeInOut' }}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
-                            zIndex: 1,
-                            pointerEvents: 'none'
-                          }}
-                        />
+              <div style={{ marginTop: '1rem' }}>
+                <div className="dates-block">
+                  {/* Fechas disponibles */}
+                  {availableDates.length > 0 && (
+                    <details className="dates-section" open>
+                      <summary>
+                        <span className="dates-section-title">
+                          <span className="dates-section-icon available">✓</span>
+                          Fechas disponibles
+                          <span className="dates-section-count">
+                            ({availableDates.length})
+                          </span>
+                        </span>
+                        <span className="dates-chevron">▼</span>
+                      </summary>
 
-                        {/* FILA 1: Nombre y fecha principal */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: isMobile ? 'stretch' : 'center',
-                          justifyContent: 'space-between',
-                          gap: '1rem',
-                          position: 'relative',
-                          zIndex: 2,
-                          paddingBottom: '1rem',
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                          flexDirection: isMobile ? 'column' : 'row'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, flexDirection: isMobile ? 'column' : 'row', textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
-                            <motion.div
-                              whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                              transition={{ duration: 0.4 }}
-                              style={{
-                                width: isMobile ? '44px' : '48px',
-                                height: isMobile ? '44px' : '48px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: isMobile ? '1.2rem' : '1.4rem',
-                                background: 'rgba(30, 136, 229, 0.15)',
-                                border: '2px solid rgba(30, 136, 229, 0.3)',
-                                boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-                                flexShrink: 0
-                              }}
-                            >
-                              📅
-                            </motion.div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{
-                                fontSize: isMobile ? '1.1rem' : '1.2rem',
-                                fontWeight: '800',
-                                color: colors.light,
-                                lineHeight: 1.3,
-                                letterSpacing: '-0.01em',
-                                marginBottom: '0.25rem'
-                              }}>
-                                {date.nombre || 'Fecha sin nombre'}
-                              </div>
-                              {/* Fecha en chip compacto */}
-                              <div style={{
-                                fontSize: '0.875rem',
-                                color: colors.blue,
-                                fontWeight: '700',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '0.4rem 0.75rem',
-                                background: 'rgba(30, 136, 229, 0.15)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(30, 136, 229, 0.25)',
-                                width: 'fit-content',
-                                margin: isMobile ? '0 auto' : undefined
-                              }}>
-                                <span>📅</span>
-                                <span>{formatEsDate(date.fecha)}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Botones de acción en la primera fila */}
-                          <div style={{
-                            display: 'flex',
-                            gap: '0.5rem',
-                            flexShrink: 0,
-                            flexDirection: isMobile ? 'column' : 'row',
-                            width: isMobile ? '100%' : 'auto'
-                          }}>
-                            <motion.button
-                              whileHover={{ scale: 1.08, y: -2 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/social/fecha/${date.id}/edit`);
-                              }}
-                              style={{
-                                padding: '0.6rem 1rem',
-                                background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-                                color: '#FFFFFF',
-                                border: 'none',
-                                borderRadius: '10px',
-                                fontSize: '0.8rem',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                                whiteSpace: 'nowrap',
-                                width: isMobile ? '100%' : 'auto',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <span>✏️</span>
-                              <span>Editar</span>
-                            </motion.button>
-                            {onDuplicateDate && (
-                              <motion.button
-                                whileHover={{ scale: 1.08, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDuplicateDate(date);
-                                }}
-                                style={{
-                                  padding: '0.6rem 1rem',
-                                  background: `linear-gradient(135deg, ${colors.yellow}, ${colors.blue})`,
-                                  color: '#0B0B0B',
-                                  border: 'none',
-                                  borderRadius: '10px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '700',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  transition: 'all 0.3s ease',
-                                  boxShadow: '0 4px 12px rgba(255, 209, 102, 0.35)',
-                                  whiteSpace: 'nowrap',
-                                  width: isMobile ? '100%' : 'auto',
-                                  justifyContent: 'center'
-                                }}
-                              >
-                                <span>📄</span>
-                                <span>Duplicar</span>
-                              </motion.button>
-                            )}
-                            <motion.button
-                              whileHover={{ scale: 1.08, y: -2 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteDate?.(date);
-                              }}
-                              disabled={Boolean(deletingDateId && deletingDateId === date.id)}
-                              style={{
-                                padding: '0.6rem 1rem',
-                                background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                                color: '#FFFFFF',
-                                border: 'none',
-                                borderRadius: '10px',
-                                fontSize: '0.8rem',
-                                fontWeight: '700',
-                                cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
-                                whiteSpace: 'nowrap',
-                                width: isMobile ? '100%' : 'auto',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <span>{deletingDateId === date.id ? '⏳' : '🗑️'}</span>
-                              <span>{deletingDateId === date.id ? 'Eliminando...' : 'Eliminar'}</span>
-                            </motion.button>
-                          </div>
-                        </div>
-
-                        {/* FILA 2: Detalles de la fecha */}
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.75rem',
-                          alignItems: 'center',
-                          position: 'relative',
-                          zIndex: 2,
-                          justifyContent: isMobile ? 'center' : 'flex-start'
-                        }}>
-                          {date.hora_inicio && date.hora_fin && (
-                            <div style={{
-                              fontSize: '0.875rem',
-                              color: colors.light,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.5rem 0.875rem',
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              width: 'fit-content'
-                            }}>
-                              <span>🕐</span>
-                              <span>{date.hora_inicio} - {date.hora_fin}</span>
-                            </div>
-                          )}
-
-                          {date.lugar && (
-                            <div style={{
-                              fontSize: '0.875rem',
-                              color: colors.light,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.5rem 0.875rem',
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              width: 'fit-content'
-                            }}>
-                              <span>📍</span>
-                              <span>{date.lugar}</span>
-                            </div>
-                          )}
-
-                          {date.ciudad && (
-                            <div style={{
-                              fontSize: '0.8rem',
-                              color: 'rgba(255, 255, 255, 0.8)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.4rem 0.75rem',
-                              background: 'rgba(255, 255, 255, 0.06)',
-                              borderRadius: '8px',
-                              width: 'fit-content'
-                            }}>
-                              <span>🏙️</span>
-                              <span>{date.ciudad}</span>
-                            </div>
-                          )}
-
-                          {/* Contador de RSVP */}
-                          <div style={{
-                            marginLeft: isMobile ? 0 : 'auto',
-                            padding: '0.5rem 0.875rem',
-                            background: 'rgba(255, 140, 66, 0.15)',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255, 140, 66, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            width: isMobile ? '100%' : 'auto',
-                            justifyContent: isMobile ? 'center' : 'flex-start'
-                          }}>
-                            <RSVPCounter
-                              eventDateId={date.id}
-                              variant="minimal"
-                              showIcons={true}
-                            />
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-
-                {/* Contenedor 2: Fechas pasadas (historial) */}
-                {pastDates.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: 0.05 }}
-                    style={{
-                      padding: isMobile ? '1rem' : '1.5rem',
-                      borderRadius: '16px',
-                      border: '2px solid rgba(120, 120, 120, 0.4)',
-                      background: 'rgba(20, 20, 20, 0.75)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
-                      Fechas pasadas
-                    </div>
-                    {pastDates.map((date: any, index: number) => (
-                    <motion.div
-                      key={date.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.08, duration: 0.3 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/social/fecha/${date.id}`);
-                      }}
-                      style={{
-                        padding: isMobile ? '1.25rem' : '1.5rem',
-                        borderRadius: '16px',
-                        border: '2px solid rgba(255, 255, 255, 0.15)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        background: 'rgba(20, 20, 20, 0.5)'
-                      }}
-                      whileHover={{
-                        y: -4,
-                        borderColor: 'rgba(30, 136, 229, 0.5)',
-                        background: 'rgba(30, 30, 30, 0.6)'
-                      }}
-                    >
-                      {/* Efecto de brillo en hover */}
-                      <motion.div
-                        initial={{ x: '-100%' }}
-                        whileHover={{ x: '100%' }}
-                        transition={{ duration: 0.6, ease: 'easeInOut' }}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
-                          zIndex: 1,
-                          pointerEvents: 'none'
-                        }}
-                      />
-
-                      {/* FILA 1: Nombre y fecha principal */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: isMobile ? 'stretch' : 'center',
-                        justifyContent: 'space-between',
-                        gap: '1rem',
-                        position: 'relative',
-                        zIndex: 2,
-                        paddingBottom: '1rem',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                        flexDirection: isMobile ? 'column' : 'row'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, flexDirection: isMobile ? 'column' : 'row', textAlign: isMobile ? 'center' : 'left', width: '100%' }}>
-                          <motion.div
-                            whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                            transition={{ duration: 0.4 }}
-                            style={{
-                              width: isMobile ? '44px' : '48px',
-                              height: isMobile ? '44px' : '48px',
-                              borderRadius: '50%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: isMobile ? '1.2rem' : '1.4rem',
-                              background: 'rgba(30, 136, 229, 0.15)',
-                              border: '2px solid rgba(30, 136, 229, 0.3)',
-                              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.2)',
-                              flexShrink: 0
-                            }}
-                          >
-                            📅
-                          </motion.div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: isMobile ? '1.1rem' : '1.2rem',
-                              fontWeight: '800',
-                              color: colors.light,
-                              lineHeight: 1.3,
-                              letterSpacing: '-0.01em',
-                              marginBottom: '0.25rem'
-                            }}>
-                              {date.nombre || 'Fecha sin nombre'}
-                            </div>
-                            {/* Fecha en chip compacto */}
-                            <div style={{
-                              fontSize: '0.875rem',
-                              color: colors.blue,
-                              fontWeight: '700',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.4rem 0.75rem',
-                              background: 'rgba(30, 136, 229, 0.15)',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(30, 136, 229, 0.25)',
-                              width: 'fit-content',
-                              margin: isMobile ? '0 auto' : undefined
-                            }}>
-                              <span>📅</span>
-                              <span>{formatEsDate(date.fecha)}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Botones de acción en la primera fila */}
-                        <div style={{
-                          display: 'flex',
-                          gap: '0.5rem',
-                          flexShrink: 0,
-                          flexDirection: isMobile ? 'column' : 'row',
-                          width: isMobile ? '100%' : 'auto'
-                        }}>
-                          <motion.button
-                            whileHover={{ scale: 1.08, y: -2 }}
-                            whileTap={{ scale: 0.95 }}
+                      <div className="dates-strip">
+                        {availableDates.map((date: any) => (
+                          <article
+                            key={date.id}
+                            className="date-card"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/social/fecha/${date.id}/edit`);
+                              navigate(`/social/fecha/${date.id}`);
                             }}
-                            style={{
-                              padding: '0.6rem 1rem',
-                              background: `linear-gradient(135deg, ${colors.blue}, #00BCD4)`,
-                              color: '#FFFFFF',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '0.8rem',
-                              fontWeight: '700',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              transition: 'all 0.3s ease',
-                              boxShadow: '0 4px 12px rgba(30, 136, 229, 0.3)',
-                              whiteSpace: 'nowrap',
-                              width: isMobile ? '100%' : 'auto',
-                              justifyContent: 'center'
-                            }}
+                            style={{ cursor: 'pointer' }}
                           >
-                            <span>✏️</span>
-                            <span>Editar</span>
-                          </motion.button>
-                          {onDuplicateDate && (
-                            <motion.button
-                              whileHover={{ scale: 1.08, y: -2 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDuplicateDate(date);
-                              }}
-                              style={{
-                                padding: '0.6rem 1rem',
-                                background: `linear-gradient(135deg, ${colors.yellow}, ${colors.blue})`,
-                                color: '#0B0B0B',
-                                border: 'none',
-                                borderRadius: '10px',
-                                fontSize: '0.8rem',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(255, 209, 102, 0.35)',
-                              whiteSpace: 'nowrap',
-                              width: isMobile ? '100%' : 'auto',
-                              justifyContent: 'center'
-                              }}
-                            >
-                              <span>📄</span>
-                              <span>Duplicar</span>
-                            </motion.button>
-                          )}
-                          <motion.button
-                            whileHover={{ scale: 1.08, y: -2 }}
-                            whileTap={{ scale: 0.95 }}
+                            <header className="date-card-header">
+                              <div>
+                                <h3 className="date-card-title">
+                                  {date.nombre || 'Fecha sin nombre'}
+                                </h3>
+                                <div className="date-pill">
+                                  <span className="date-pill-icon">📅</span>
+                                  {formatEsDate(date.fecha)}
+                                </div>
+                              </div>
+                              <span className="date-status date-status-available">
+                                Disponible
+                              </span>
+                            </header>
+
+                            <div className="date-card-body">
+                              {date.hora_inicio && date.hora_fin && (
+                                <div className="date-row">
+                                  <span className="chip">
+                                    🕒 {date.hora_inicio} – {date.hora_fin}
+                                  </span>
+                                </div>
+                              )}
+                              {(date.lugar || date.ciudad) && (
+                                <div className="date-row">
+                                  {date.lugar && (
+                                    <span className="chip">📍 {date.lugar}</span>
+                                  )}
+                                  {date.ciudad && (
+                                    <span className="chip chip-muted">
+                                      {date.ciudad}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <footer className="date-card-footer">
+                              <span className="chip chip-people">
+                                <RSVPCounter
+                                  eventDateId={date.id}
+                                  variant="minimal"
+                                  showIcons={true}
+                                />
+                              </span>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/social/fecha/${date.id}`);
+                                  }}
+                                  style={{
+                                    padding: '3px 8px',
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(255,255,255,0.18)',
+                                    background: 'transparent',
+                                    color: 'var(--text-main)',
+                                    fontSize: 11,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  👁 Ver
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/social/fecha/${date.id}/edit`);
+                                  }}
+                                  style={{
+                                    padding: '3px 8px',
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(39,195,255,0.6)',
+                                    background: 'rgba(39,195,255,0.12)',
+                                    color: 'var(--accent-blue)',
+                                    fontSize: 11,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✏️ Editar
+                                </button>
+                              </div>
+                            </footer>
+                          </article>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+
+                  {/* Fechas pasadas */}
+                  {pastDates.length > 0 && (
+                    <details className="dates-section">
+                      <summary>
+                        <span className="dates-section-title">
+                          <span className="dates-section-icon past">⏱</span>
+                          Fechas pasadas
+                          <span className="dates-section-count">
+                            ({pastDates.length})
+                          </span>
+                        </span>
+                        <span className="dates-chevron">▼</span>
+                      </summary>
+
+                      <div className="dates-strip">
+                        {pastDates.map((date: any) => (
+                          <article
+                            key={date.id}
+                            className="date-card past"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onDeleteDate?.(date);
+                              navigate(`/social/fecha/${date.id}`);
                             }}
-                            disabled={Boolean(deletingDateId && deletingDateId === date.id)}
-                            style={{
-                              padding: '0.6rem 1rem',
-                              background: `linear-gradient(135deg, ${colors.coral}, ${colors.orange})`,
-                              color: '#FFFFFF',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '0.8rem',
-                              fontWeight: '700',
-                              cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              transition: 'all 0.3s ease',
-                              boxShadow: '0 4px 12px rgba(255, 61, 87, 0.3)',
-                              whiteSpace: 'nowrap',
-                              width: isMobile ? '100%' : 'auto',
-                              justifyContent: 'center'
-                            }}
+                            style={{ cursor: 'pointer' }}
                           >
-                            <span>{deletingDateId === date.id ? '⏳' : '🗑️'}</span>
-                            <span>{deletingDateId === date.id ? 'Eliminando...' : 'Eliminar'}</span>
-                          </motion.button>
-                        </div>
+                            <header className="date-card-header">
+                              <div>
+                                <h3 className="date-card-title">
+                                  {date.nombre || 'Fecha sin nombre'}
+                                </h3>
+                                <div className="date-pill">
+                                  <span className="date-pill-icon">📅</span>
+                                  {formatEsDate(date.fecha)}
+                                </div>
+                              </div>
+                              <span className="date-status date-status-past">
+                                Pasada
+                              </span>
+                            </header>
+
+                            <div className="date-card-body">
+                              {(date.lugar || date.ciudad) && (
+                                <div className="date-row">
+                                  {date.lugar && (
+                                    <span className="chip">{date.lugar}</span>
+                                  )}
+                                  {date.ciudad && (
+                                    <span className="chip chip-muted">
+                                      {date.ciudad}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <footer className="date-card-footer">
+                              <span className="chip chip-people">
+                                <RSVPCounter
+                                  eventDateId={date.id}
+                                  variant="minimal"
+                                  showIcons={true}
+                                />
+                              </span>
+                            </footer>
+                          </article>
+                        ))}
                       </div>
-
-                      {/* FILA 2: Detalles de la fecha */}
-                      <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '0.75rem',
-                        alignItems: 'center',
-                        position: 'relative',
-                        zIndex: 2,
-                        justifyContent: isMobile ? 'center' : 'flex-start'
-                      }}>
-                        {date.hora_inicio && date.hora_fin && (
-                          <div style={{
-                            fontSize: '0.875rem',
-                            color: colors.light,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '0.5rem 0.875rem',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            width: 'fit-content'
-                          }}>
-                            <span>🕐</span>
-                            <span>{date.hora_inicio} - {date.hora_fin}</span>
-                          </div>
-                        )}
-
-                        {date.lugar && (
-                          <div style={{
-                            fontSize: '0.875rem',
-                            color: colors.light,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '0.5rem 0.875rem',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            width: 'fit-content'
-                          }}>
-                            <span>📍</span>
-                            <span>{date.lugar}</span>
-                          </div>
-                        )}
-
-                        {date.ciudad && (
-                          <div style={{
-                            fontSize: '0.8rem',
-                            color: 'rgba(255, 255, 255, 0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '0.4rem 0.75rem',
-                            background: 'rgba(255, 255, 255, 0.06)',
-                            borderRadius: '8px',
-                            width: 'fit-content'
-                          }}>
-                            <span>🏙️</span>
-                            <span>{date.ciudad}</span>
-                          </div>
-                        )}
-
-                        {/* Contador de RSVP */}
-                        <div style={{
-                          marginLeft: isMobile ? 0 : 'auto',
-                          padding: '0.5rem 0.875rem',
-                          background: 'rgba(255, 140, 66, 0.15)',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(255, 140, 66, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          width: isMobile ? '100%' : 'auto',
-                          justifyContent: isMobile ? 'center' : 'flex-start'
-                        }}>
-                          <RSVPCounter
-                            eventDateId={date.id}
-                            variant="minimal"
-                            showIcons={true}
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+                    </details>
+                  )}
+                </div>
               </div>
             )}
           </>
@@ -965,6 +517,9 @@ export default function OrganizerProfileEditor() {
   const [dateForm, setDateForm] = useState({
     nombre: '',
     biografia: '',
+    djs: '',
+    telefono_contacto: '',
+    mensaje_contacto: '',
     fecha: '',
     hora_inicio: '',
     hora_fin: '',
@@ -1021,6 +576,17 @@ export default function OrganizerProfileEditor() {
       [key]: value,
       ubicaciones: [],
     }));
+  };
+
+  const toggleDateZona = (id: number) => {
+    setDateForm((prev) => {
+      const current = prev.zonas || [];
+      const exists = current.includes(id);
+      return {
+        ...prev,
+        zonas: exists ? current.filter((z) => z !== id) : [...current, id],
+      };
+    });
   };
 
   // Nota: No auto-seleccionar la primera ubicación guardada para permitir entrada manual por defecto
@@ -1325,6 +891,9 @@ export default function OrganizerProfileEditor() {
         parent_id: Number(parentIdToUse),
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
+        djs: dateForm.djs || null,
+        telefono_contacto: dateForm.telefono_contacto || null,
+        mensaje_contacto: dateForm.mensaje_contacto || null,
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: resolvedLugar,
@@ -1380,6 +949,9 @@ export default function OrganizerProfileEditor() {
       setDateForm({
         nombre: '',
         biografia: '',
+        djs: '',
+        telefono_contacto: '',
+        mensaje_contacto: '',
         fecha: '',
         hora_inicio: '',
         hora_fin: '',
@@ -1914,6 +1486,254 @@ export default function OrganizerProfileEditor() {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
+        }
+
+        /* Bloque de fechas (disponibles y pasadas) dentro de cada social */
+        :root {
+          --bg-section: #11141f;
+          --bg-card: #181c2a;
+          --border-soft: rgba(255, 255, 255, 0.06);
+          --text-main: #f8fbff;
+          --text-muted: #8f96b3;
+          --accent-blue: #27c3ff;
+          --accent-orange: #ff865e;
+          --accent-purple: #8b6cff;
+        }
+
+        .dates-block {
+          background: var(--bg-section);
+          border-radius: 18px;
+          border: 1px solid var(--border-soft);
+          padding: 14px 14px 10px;
+          color: var(--text-main);
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: 14px;
+        }
+
+        .dates-section {
+          background: #121623;
+          border-radius: 14px;
+          border: 1px solid var(--border-soft);
+          margin-bottom: 10px;
+          overflow: hidden;
+        }
+
+        .dates-section:last-child {
+          margin-bottom: 0;
+        }
+
+        .dates-section summary {
+          list-style: none;
+          cursor: pointer;
+          padding: 10px 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          font-weight: 500;
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .dates-section summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .dates-section-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .dates-section-icon {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+        }
+
+        .dates-section-icon.available {
+          background: rgba(39, 195, 255, 0.16);
+          color: var(--accent-blue);
+        }
+
+        .dates-section-icon.past {
+          background: rgba(255, 134, 94, 0.12);
+          color: var(--accent-orange);
+        }
+
+        .dates-section-count {
+          font-size: 12px;
+          color: var(--text-muted);
+        }
+
+        .dates-chevron {
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+
+        .dates-strip {
+          padding: 10px 10px 8px;
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+        }
+
+        .dates-strip::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .dates-strip::-webkit-scrollbar-track {
+          background: #0b0d18;
+          border-radius: 999px;
+        }
+
+        .dates-strip::-webkit-scrollbar-thumb {
+          background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+          border-radius: 999px;
+        }
+
+        .date-card {
+          min-width: 240px;
+          max-width: 260px;
+          background: radial-gradient(120% 160% at 0% 0%, #20263a 0%, #151927 55%, #0b0d18 100%);
+          border-radius: 16px;
+          border: 1px solid rgba(39, 195, 255, 0.35);
+          padding: 12px 12px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          scroll-snap-align: start;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .date-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+          opacity: 0.95;
+        }
+        
+        .date-card.past {
+          opacity: 0.9;
+          border-color: rgba(255, 134, 94, 0.55);
+          background: radial-gradient(130% 180% at 0% 0%, #2a1b24 0%, #171320 55%, #0b0d18 100%);
+        }
+        
+        .date-card.past::before {
+          background: linear-gradient(90deg, var(--accent-orange), #ff3d57);
+        }
+        
+        .date-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        
+        .date-card-title {
+          font-size: 14px;
+          font-weight: 700;
+          margin-bottom: 4px;
+          color: var(--text-main);
+        }
+        
+        .date-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 3px 8px;
+          border-radius: 999px;
+          background: #0f1524;
+          font-size: 11px;
+          color: var(--accent-blue);
+          border: 1px solid rgba(39, 195, 255, 0.45);
+        }
+
+        .date-pill-icon {
+          font-size: 12px;
+        }
+
+        .date-card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .date-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 999px;
+          font-size: 11px;
+          background: #0d1222;
+          color: var(--text-main);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .chip-muted {
+          color: var(--text-muted);
+          background: #101425;
+        }
+
+        .chip-people {
+          background: rgba(139, 108, 255, 0.25);
+          border-color: rgba(139, 108, 255, 0.6);
+        }
+
+        .date-status {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          padding: 3px 8px;
+          border-radius: 999px;
+          white-space: nowrap;
+          font-weight: 700;
+        }
+        
+        .date-status-available {
+          background: rgba(39, 195, 255, 0.18);
+          color: var(--accent-blue);
+          border: 1px solid rgba(39, 195, 255, 0.7);
+        }
+        
+        .date-status-past {
+          background: rgba(255, 134, 94, 0.18);
+          color: var(--accent-orange);
+          border: 1px solid rgba(255, 134, 94, 0.8);
+        }
+        
+        .date-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+
+        @media (max-width: 600px) {
+          .dates-block {
+            padding: 10px;
+          }
+
+          .date-card {
+            min-width: 220px;
+          }
         }
         
         .org-event-card::before {
@@ -3558,6 +3378,49 @@ export default function OrganizerProfileEditor() {
                           className="org-editor-textarea"
                         />
                       </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          DJs presentes
+                        </label>
+                        <textarea
+                          value={dateForm.djs}
+                          onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
+                          placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                          rows={2}
+                          className="org-editor-textarea"
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Teléfono / WhatsApp para más información
+                        </label>
+                        <input
+                          type="tel"
+                          value={dateForm.telefono_contacto}
+                          onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
+                          placeholder="Ejemplo: 55 1234 5678"
+                          className="org-editor-input"
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="org-editor-field">
+                          Mensaje de saludo para WhatsApp
+                        </label>
+                        <textarea
+                          value={dateForm.mensaje_contacto}
+                          onChange={(e) => setDateForm({ ...dateForm, mensaje_contacto: e.target.value })}
+                          onFocus={() => {
+                            if (!dateForm.mensaje_contacto) {
+                              const nombre = dateForm.nombre || 'este evento';
+                              const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
+                              setDateForm(prev => ({ ...prev, mensaje_contacto: template }));
+                            }
+                          }}
+                          placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX, me interesa el evento de esta fecha..."'
+                          rows={2}
+                          className="org-editor-textarea"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -3772,6 +3635,46 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     </div>
+
+                    {/* Zonas - visualización cuando hay ubicación seleccionada */}
+                    {selectedDateLocationId && (dateForm.zonas || []).length > 0 && (
+                      <div style={{ marginTop: '16px' }}>
+                        <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                          Zonas de la ubicación seleccionada
+                        </label>
+                        <ZonaGroupedChips
+                          selectedIds={dateForm.zonas || []}
+                          allTags={zonaTags}
+                          mode="display"
+                          autoExpandSelectedParents={true}
+                          size="compact"
+                          style={{
+                            gap: '4px',
+                            fontSize: 12,
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Zonas - selección cuando se ingresa la ubicación manualmente */}
+                    {!selectedDateLocationId && (
+                      <div style={{ marginTop: '16px' }}>
+                        <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
+                          Zonas de la Ciudad
+                        </label>
+                        <ZonaGroupedChips
+                          selectedIds={dateForm.zonas || []}
+                          allTags={zonaTags}
+                          mode="edit"
+                          onToggle={toggleDateZona}
+                          size="compact"
+                          style={{
+                            gap: '4px',
+                            fontSize: 12,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                
@@ -3854,6 +3757,9 @@ export default function OrganizerProfileEditor() {
                         setDateForm({
                           nombre: '',
                           biografia: '',
+                          djs: '',
+                          telefono_contacto: '',
+                          mensaje_contacto: '',
                           fecha: '',
                           hora_inicio: '',
                           hora_fin: '',
