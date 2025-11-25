@@ -19,7 +19,10 @@ type AddToCalendarProps = {
   classId?: number;      // ID de clase (si es diferente de eventId)
   academyId?: number;    // ID de academia dueña de la clase
   teacherId?: number;    // ID de maestro dueño de la clase
-  roleBaile?: 'lead' | 'follow' | 'ambos' | null; // Rol de baile del usuario
+  // Rol de baile del usuario:
+  // - 'lead' / 'follow' / 'ambos' vienen del front
+  // - 'leader' / 'follower' son las formas normalizadas que guardamos en BD
+  roleBaile?: 'lead' | 'follow' | 'ambos' | 'leader' | 'follower' | null;
   zonaTagId?: number | null; // ID de tag de zona
   // Información de la clase para calcular fechas específicas
   fecha?: string | null; // Fecha específica (YYYY-MM-DD) - si existe, no es recurrente
@@ -157,11 +160,11 @@ export default function AddToCalendarWithStats({
         eventId,
         title,
       });
-      console.log("[AddToCalendarWithStats] 🔍 ========== DEBUG FIN ==========");
+      
       
       // Validar que classId sea un número válido (incluyendo 0)
       if (typeof finalClassId === 'number' && !Number.isNaN(finalClassId)) {
-        console.log("[AddToCalendarWithStats] ✅ classId válido, procediendo a insertar...");
+        
         try {
           // Normalizar role_baile: convertir 'lead' a 'leader' y 'follow' a 'follower' para consistencia
           let normalizedRoleBaile = roleBaile;
@@ -213,7 +216,6 @@ export default function AddToCalendarWithStats({
           if (insertError) {
             // Si hay conflictos (algunos registros ya existen), intentar actualizar solo los que faltan
             if (insertError.code === '23505') {
-              console.log("[AddToCalendarWithStats] ⚠️ Algunos registros ya existen, actualizando...");
               
               // Para cada fecha, intentar insertar o actualizar
               const results = await Promise.allSettled(
@@ -226,7 +228,7 @@ export default function AddToCalendarWithStats({
                     .select();
                   
                   if (upsertError) {
-                    console.error("[AddToCalendarWithStats] ❌ Error en upsert:", upsertError);
+                   
                     throw upsertError;
                   }
                   return upsertData;
