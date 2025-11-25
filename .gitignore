@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -33,6 +34,10 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+google-service-account.json
+
+# generic build artifacts
+build/
 
 # typescript
 *.tsbuildinfo

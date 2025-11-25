@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Platform,
 } from 'react-native';
-import { colors, spacing, typography, layout, shadows } from '../theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, spacing, typography, layout, shadows, borderRadius } from '../theme';
 
 interface HeaderProps {
   title: string;
@@ -23,48 +23,53 @@ export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary[600]} />
-      <View style={styles.header}>
-        {/* Gradient background simulation */}
-        <View style={styles.gradientBg} />
-        
-        <View style={styles.content}>
-          {/* Menu Button */}
-          <TouchableOpacity
-            onPress={onMenuPress}
-            style={styles.iconButton}
-            activeOpacity={0.7}
-          >
-            <View style={styles.hamburger}>
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Title */}
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-
-          {/* Right Action */}
-          {rightAction ? (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          {/* Gradient background simulation */}
+          <View style={styles.gradientBg} />
+          
+          <View style={styles.content}>
+            {/* Menu Button */}
             <TouchableOpacity
-              onPress={rightAction.onPress}
+              onPress={onMenuPress}
               style={styles.iconButton}
               activeOpacity={0.7}
             >
-              <Text style={styles.rightIcon}>{rightAction.icon}</Text>
+              <View style={styles.hamburger}>
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+              </View>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.iconButton} />
-          )}
+
+            {/* Title */}
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+
+            {/* Right Action */}
+            {rightAction ? (
+              <TouchableOpacity
+                onPress={rightAction.onPress}
+                style={styles.iconButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.rightIcon}>{rightAction.icon}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.iconButton} />
+            )}
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: colors.primary[600],
+  },
   header: {
     height: layout.headerHeight,
     backgroundColor: colors.primary[600],
@@ -82,7 +87,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 44 : 0,
   },
   iconButton: {
     width: 44,

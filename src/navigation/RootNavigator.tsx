@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthStack } from "./AuthStack";
 import { MainTabs } from "./MainTabs";
+import WebAppScreen from "../screens/WebAppScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -13,7 +14,8 @@ export function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isLoggedIn ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          // Para la opción 2: app Expo que muestra la web como WebView de pantalla completa
+          <Stack.Screen name="WebApp" component={WebAppScreen} />
         ) : (
           <Stack.Screen name="Auth" component={AuthStack} />
         )}

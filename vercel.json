@@ -1,5 +1,38 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  // Reglas de caché para mejorar LCP y visitas repetidas
+  "headers": [
+    {
+      // Assets estáticos versionados por hash (salida de Vite: /assets/*.js, *.css, imágenes, fuentes)
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      // Otros archivos estáticos comunes (por si no van bajo /assets)
+      "source": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|woff2?)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      // HTML: caché corta para permitir despliegues rápidos sin forzar recarga manual
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=60, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
-
-
