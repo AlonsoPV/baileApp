@@ -18,6 +18,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { FaWhatsapp } from "react-icons/fa";
 
 const colors = {
   coral: '#FF3D57',
@@ -27,6 +28,23 @@ const colors = {
   dark: '#121212',
   light: '#F5F5F5',
 };
+
+function buildWhatsAppUrl(phone?: string | null, message?: string | null) {
+  if (!phone) return undefined;
+  const cleanedPhone = phone.replace(/[^\d]/g, ''); // usar solo dígitos en el número
+  if (!cleanedPhone) return undefined;
+
+  const text = typeof message === 'string' ? message : '';
+  const trimmed = text.trim();
+
+  // Si no hay mensaje guardado, solo abrimos el chat sin texto prellenado
+  if (!trimmed) {
+    return `https://wa.me/${cleanedPhone}`;
+  }
+
+  const encoded = encodeURIComponent(trimmed);
+  return `https://wa.me/${cleanedPhone}?text=${encoded}`;
+}
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
@@ -642,6 +660,11 @@ export default function EventDatePublicScreen() {
       border-color:rgba(30,136,229,0.32);
       color:#d4f0ff;
     }
+    .chip-whatsapp {
+      background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(16,185,129,0.16));
+      border-color: rgba(34,197,94,0.38);
+      color: #bbf7d0;
+    }
     .chip-link {
       text-decoration: none;
       color: inherit;
@@ -864,7 +887,7 @@ export default function EventDatePublicScreen() {
                     </p>
                   )}
 
-                  <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
                     {date.hora_inicio && (
                       <span className="chip chip-time">
@@ -881,6 +904,19 @@ export default function EventDatePublicScreen() {
                         rel="noopener noreferrer"
                       >
                         📍 {date.lugar}
+                      </a>
+                    )}
+                    {date.telefono_contacto && (
+                      <a
+                        className="chip chip-whatsapp chip-link"
+                        href={buildWhatsAppUrl(
+                          (date as any).telefono_contacto,
+                          (date as any).mensaje_contacto ?? null
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FaWhatsapp size={18} />
                       </a>
                     )}
                   </div>
