@@ -282,7 +282,7 @@ export default function AddToCalendarWithStats({
     }
   };
 
-  // Validar y normalizar fechas
+  // Validar y normalizar fecas
   const normalizedStart = useMemo(() => {
     try {
       if (!start) {
