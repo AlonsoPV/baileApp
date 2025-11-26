@@ -90,37 +90,87 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       
       const dateRange = getDateRange(filters.dateFilter, filters.from, filters.to);
       
-      // Construir query base
-      let query = supabase
-        .from("clase_asistencias")
-        .select(`
-          id,
-          user_id,
-          class_id,
-          role_baile,
-          zona_tag_id,
-          fecha_especifica,
-          created_at
-        `)
-        .eq("academy_id", academyIdNum!)
-        .eq("status", "tentative");
+      // Usar función RPC para bypassar RLS y obtener todas las reservas de la academia
+      // Esta función verifica que el usuario sea dueño de la academia
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc("get_academy_class_reservations", { p_academy_id: academyIdNum! });
       
-      // Aplicar filtros de fecha si existen
-      if (dateRange.from) {
-        query = query.gte("created_at", `${dateRange.from}T00:00:00.000Z`);
+      let data: any[] = [];
+      
+      if (rpcError) {
+        console.error("[useAcademyMetrics] ❌ Error en RPC get_academy_class_reservations:", rpcError);
+        console.log("[useAcademyMetrics] 💡 La función RPC puede no existir aún. Ejecuta: supabase/07_get_academy_class_reservations.sql");
+        // Fallback: intentar consulta directa (puede fallar por RLS)
+        console.log("[useAcademyMetrics] 🔄 Intentando consulta directa como fallback...");
+        let query = supabase
+          .from("clase_asistencias")
+          .select(`
+            id,
+            user_id,
+            class_id,
+            role_baile,
+            zona_tag_id,
+            fecha_especifica,
+            created_at
+          `)
+          .eq("academy_id", academyIdNum!)
+          .eq("status", "tentative");
+        
+        // Aplicar filtros de fecha si existen
+        if (dateRange.from) {
+          query = query.gte("created_at", `${dateRange.from}T00:00:00.000Z`);
+        }
+        if (dateRange.to) {
+          query = query.lte("created_at", `${dateRange.to}T23:59:59.999Z`);
+        }
+        
+        const { data: directData, error: directError } = await query;
+        
+        if (directError) {
+          console.error("[useAcademyMetrics] ❌ Error en consulta directa:", directError);
+          throw directError;
+        }
+        
+        // Filtrar por fecha si es necesario
+        data = directData || [];
+        if (dateRange.from || dateRange.to) {
+          data = data.filter((row: any) => {
+            const created = new Date(row.created_at);
+            if (dateRange.from) {
+              const fromDate = new Date(`${dateRange.from}T00:00:00.000Z`);
+              if (created < fromDate) return false;
+            }
+            if (dateRange.to) {
+              const toDate = new Date(`${dateRange.to}T23:59:59.999Z`);
+              if (created > toDate) return false;
+            }
+            return true;
+          });
+        }
+        
+        console.log("[useAcademyMetrics] 📊 Registros encontrados (fallback):", data?.length || 0);
+      } else {
+        // Filtrar por fecha si es necesario (ya que RPC no tiene filtros)
+        data = rpcData || [];
+        if (dateRange.from || dateRange.to) {
+          data = data.filter((row: any) => {
+            const created = new Date(row.created_at);
+            if (dateRange.from) {
+              const fromDate = new Date(`${dateRange.from}T00:00:00.000Z`);
+              if (created < fromDate) return false;
+            }
+            if (dateRange.to) {
+              const toDate = new Date(`${dateRange.to}T23:59:59.999Z`);
+              if (created > toDate) return false;
+            }
+            return true;
+          });
+        }
+        
+        console.log("[useAcademyMetrics] 📊 Registros encontrados (RPC):", data?.length || 0);
       }
-      if (dateRange.to) {
-        query = query.lte("created_at", `${dateRange.to}T23:59:59.999Z`);
-      }
       
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("[useAcademyMetrics] ❌ Error consultando:", error);
-        throw error;
-      }
-      
-      console.log("[useAcademyMetrics] 📊 Registros encontrados:", data?.length || 0);
+      console.log("[useAcademyMetrics] 📊 Total registros procesados:", data?.length || 0);
       
       // Obtener información de clases, zonas y usuarios
       const classIds = [...new Set((data || []).map((r: any) => r.class_id))];
