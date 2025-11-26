@@ -37,7 +37,7 @@ import { supabase } from "@/lib/supabase";
 import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPanel";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
-import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
 
 const colors = {
   primary: '#E53935',
@@ -52,9 +52,13 @@ const colors = {
 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const formatCurrency = (value?: number | string | null) => {
-  if (value === null || value === undefined || value === '') return 'Gratis';
+  // Si es null/undefined/vacío, retornar null para no mostrar nada
+  if (value === null || value === undefined || value === '') return null;
   const numeric = typeof value === 'string' ? Number(value) : value;
-  if (numeric === null || Number.isNaN(numeric)) return `$${String(value)}`;
+  if (numeric === null || Number.isNaN(numeric)) return null;
+  // Si es 0, retornar "Gratis"
+  if (numeric === 0) return 'Gratis';
+  // Si es > 0, formatear como precio
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -67,13 +71,46 @@ const formatCurrency = (value?: number | string | null) => {
   }
 };
 
-const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
+const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?: Array<string | number> | null) => {
   if (fecha) {
-    const parsed = new Date(fecha);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    try {
+      // Parsear fecha como hora local para evitar problemas de zona horaria
+      const fechaOnly = fecha.includes('T') ? fecha.split('T')[0] : fecha;
+      const [year, month, day] = fechaOnly.split('-').map(Number);
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        const parsed = new Date(year, month - 1, day);
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      }
+    } catch (e) {
+      console.error('[AcademyProfileEditor] Error formatting date:', e);
     }
   }
+  // Si tiene múltiples días (diasSemana), formatear todos
+  if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
+    const dayNameMap: Record<string, string> = {
+      'domingo': 'Domingo', 'dom': 'Domingo',
+      'lunes': 'Lunes', 'lun': 'Lunes',
+      'martes': 'Martes', 'mar': 'Martes',
+      'miércoles': 'Miércoles', 'miercoles': 'Miércoles', 'mié': 'Miércoles', 'mie': 'Miércoles',
+      'jueves': 'Jueves', 'jue': 'Jueves',
+      'viernes': 'Viernes', 'vie': 'Viernes',
+      'sábado': 'Sábado', 'sabado': 'Sábado', 'sáb': 'Sábado', 'sab': 'Sábado',
+    };
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasLegibles = diasSemana.map((d: string | number) => {
+      if (typeof d === 'number' && d >= 0 && d <= 6) {
+        return dayNames[d];
+      }
+      if (typeof d === 'string') {
+        return dayNameMap[d.toLowerCase()] || d;
+      }
+      return null;
+    }).filter((d: string | null) => d !== null);
+    return diasLegibles.length > 0 ? diasLegibles.join(', ') : null;
+  }
+  // Si tiene un solo día (diaSemana)
   if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
     return dayNames[diaSemana];
   }
@@ -119,7 +156,9 @@ export default function AcademyProfileEditor() {
         whatsapp: "",
         tiktok: "",
         youtube: "",
-        email: ""
+        email: "",
+        web: "",
+        telegram: ""
       },
       respuestas: {
         redes: {
@@ -128,7 +167,9 @@ export default function AcademyProfileEditor() {
           whatsapp: "",
           tiktok: "",
           youtube: "",
-          email: ""
+          email: "",
+          web: "",
+          telegram: ""
         },
         dato_curioso: "",
         gusta_bailar: ""
@@ -171,7 +212,9 @@ export default function AcademyProfileEditor() {
         whatsapp: "",
         tiktok: "",
         youtube: "",
-        email: ""
+        email: "",
+        web: "",
+        telegram: ""
       });
     }
   }, [form.redes_sociales, setField]);
@@ -996,7 +1039,6 @@ export default function AcademyProfileEditor() {
               marginBottom: '0.5rem',
               background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
               WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
             }}>
               ¡Bienvenido, Academia!
             </h3>
@@ -1166,6 +1208,40 @@ export default function AcademyProfileEditor() {
                         value={form.redes_sociales?.email || ''}
                         onChange={(e) => setNested('redes_sociales.email', e.target.value)}
                         placeholder="correo@ejemplo.com"
+                      />
+                    </div>
+                  </label>
+
+                  {/* Sitio Web */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaGlobe size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">https://</span>
+                      <input
+                        type="text"
+                        name="web"
+                        value={form.redes_sociales?.web || ''}
+                        onChange={(e) => setNested('redes_sociales.web', e.target.value)}
+                        placeholder="tusitio.com"
+                      />
+                    </div>
+                  </label>
+
+                  {/* Telegram */}
+                  <label className="field">
+                    <span className="field-icon">
+                      <FaTelegram size={18} />
+                    </span>
+                    <div className="input-group">
+                      <span className="prefix">@</span>
+                      <input
+                        type="text"
+                        name="telegram"
+                        value={form.redes_sociales?.telegram || ''}
+                        onChange={(e) => setNested('redes_sociales.telegram', e.target.value)}
+                        placeholder="usuario o canal"
                       />
                     </div>
                   </label>
@@ -1382,7 +1458,7 @@ export default function AcademyProfileEditor() {
                       id: costoId, // ID único del costo
                       nombre: c.nombre, // Mantener nombre para visualización
                       tipo: c.tipo,
-                      precio: c.precio ?? null,
+                      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
                       regla: c.regla || '',
                       classId: classId, // ID de la clase (referencia principal)
                       referenciaCosto: String(classId), // También guardar como referenciaCosto para compatibilidad
@@ -1395,11 +1471,23 @@ export default function AcademyProfileEditor() {
                       id: classId,
                       tipo: 'clase',
                       titulo: c.nombre,
-                      fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
-                      diaSemana: c.fechaModo === 'semanal' ? c.diaSemana : null,
+                      descripcion: c.descripcion || undefined,
+                      fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+                      fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+                      diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+                      diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+                        // Convertir números a nombres de días
+                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                        return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+                      })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                        return [dayNames[c.diaSemana]] as string[];
+                      })() : undefined),
                       recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                      inicio: c.inicio,
-                      fin: c.fin,
+                      horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+                      inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+                      fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+                      duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
                       nivel: c.nivel || undefined,
                       referenciaCosto: String(classId), // Usar ID de clase en lugar del nombre
                       costo: updatedCosto, // Incluir costo directamente en el item del cronograma
@@ -1441,7 +1529,7 @@ export default function AcademyProfileEditor() {
                       id: Date.now(), // ID único del costo
                       nombre: c.nombre, // Mantener nombre para visualización
                       tipo: c.tipo,
-                      precio: c.precio ?? null,
+                      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
                       regla: c.regla || '',
                       classId: newClassId, // ID de la clase (referencia principal)
                       referenciaCosto: String(newClassId), // También guardar como referenciaCosto para compatibilidad
@@ -1452,11 +1540,23 @@ export default function AcademyProfileEditor() {
                       id: newClassId,
                       tipo: 'clase',
                       titulo: c.nombre,
-                      fecha: c.fechaModo === 'especifica' ? c.fecha : undefined,
-                      diaSemana: c.fechaModo === 'semanal' ? c.diaSemana : null,
+                      descripcion: c.descripcion || undefined,
+                      fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+                      fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+                      diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+                      diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+                        // Convertir números a nombres de días
+                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                        return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+                      })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                        return [dayNames[c.diaSemana]] as string[];
+                      })() : undefined),
                       recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                      inicio: c.inicio,
-                      fin: c.fin,
+                      horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+                      inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+                      fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+                      duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
                       nivel: c.nivel || undefined,
                       referenciaCosto: String(newClassId), // Usar ID de clase en lugar del nombre
                       costo: newCosto, // Incluir costo directamente en el item del cronograma
@@ -1505,7 +1605,7 @@ export default function AcademyProfileEditor() {
                     }
 
                     const costoLabel = costo ? formatCurrency(costo.precio) : null;
-                    const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null);
+                    const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null, (it as any)?.diasSemana ?? null);
                     return (
                     <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1520,7 +1620,7 @@ export default function AcademyProfileEditor() {
                               )}
                               {costoLabel && (
                                 <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.28)' }}>
-                                  💰 {costoLabel}
+                                  💰 {costoLabel === 'Gratis' ? 'Gratis' : costoLabel}
                                 </span>
                               )}
                             </div>
@@ -1535,14 +1635,31 @@ export default function AcademyProfileEditor() {
                             setEditInitial({
                               nombre: it.titulo || '',
                               tipo: (costo?.tipo as any) || 'clases sueltas',
-                              precio: costo?.precio ?? null,
+                              precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
                               regla: costo?.regla || '',
                               nivel: (it as any)?.nivel ?? null,
-                              fechaModo: it.fecha ? 'especifica' : 'semanal',
+                              descripcion: (it as any)?.descripcion || '',
+                              fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
                               fecha: it.fecha || '',
                               diaSemana: (it as any)?.diaSemana ?? null,
+                              diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? (() => {
+                                // Convertir strings o números a números
+                                const dayNameToNumber = (dayName: string | number): number | null => {
+                                  if (typeof dayName === 'number') return dayName;
+                                  const normalized = String(dayName).toLowerCase().trim();
+                                  const map: Record<string, number> = {
+                                    'domingo': 0, 'dom': 0, 'lunes': 1, 'lun': 1, 'martes': 2, 'mar': 2,
+                                    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3, 'jueves': 4, 'jue': 4,
+                                    'viernes': 5, 'vie': 5, 'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                                  };
+                                  return map[normalized] ?? null;
+                                };
+                                return (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
+                              })() : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
+                              horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
                               inicio: it.inicio || '',
                               fin: it.fin || '',
+                              duracionHoras: (it as any)?.duracionHoras ?? null,
                               ritmoId: it.ritmoId ?? null,
                               ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
                               zonaId: it.zonaId ?? null,
@@ -1626,6 +1743,17 @@ export default function AcademyProfileEditor() {
           </div>
         </div>
 
+        {/* Promociones y paquetes */}
+        {supportsPromotions && (
+          <div style={{ marginBottom: '3rem' }}>
+            <CostsPromotionsEditor
+              value={(form as any).promociones || []}
+              onChange={autoSavePromociones}
+              label="💸 Promociones y Paquetes"
+              helperText="Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia."
+            />
+          </div>
+        )}
 
         {/* Maestros Invitados */}
         {academyId && (
@@ -2031,18 +2159,6 @@ export default function AcademyProfileEditor() {
                   ))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Promociones y paquetes */}
-        {supportsPromotions && (
-          <div style={{ marginBottom: '3rem' }}>
-            <CostsPromotionsEditor
-              value={(form as any).promociones || []}
-              onChange={autoSavePromociones}
-              label="💸 Promociones y Paquetes"
-              helperText="Define paquetes, membresías o descuentos especiales para tu academia y controla su vigencia."
-            />
           </div>
         )}
 

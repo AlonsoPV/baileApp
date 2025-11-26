@@ -40,6 +40,9 @@ function cronoItemToClases(
   const ritmos = item.ritmos_seleccionados || item.ritmoIds || (ritmo ? [ritmo] : null);
   const fecha = item.fecha || null;
   const descripcion = item.descripcion || null;
+  const fechaModo = item.fechaModo || (fecha ? 'especifica' : (item.diaSemana !== null && item.diaSemana !== undefined ? 'semanal' : null));
+  const horarioModo = item.horarioModo || (fechaModo === 'por_agendar' ? 'duracion' : (item.duracionHoras ? 'duracion' : 'especifica'));
+  const duracionHoras = item.duracionHoras ?? null;
   
   // PRIORIDAD 1: Buscar costo directamente en el item del cronograma (más rápido y confiable)
   let costo: number | null = null;
@@ -126,18 +129,49 @@ function cronoItemToClases(
     ? item.id 
     : (index * 1000);
 
+  // Si tiene fechaModo 'por_agendar', crear clase sin fecha ni hora
+  if (fechaModo === 'por_agendar') {
+    clases.push({
+      id: classId,
+      titulo,
+      nombre: titulo,
+      descripcion,
+      fechaModo: 'por_agendar',
+      horarioModo,
+      hora_inicio: null,
+      hora_fin: null,
+      inicio: null,
+      fin: null,
+      duracionHoras,
+      nivel,
+      ritmo: ritmo ? String(ritmo) : null,
+      ritmos_seleccionados: ritmos,
+      ubicacion,
+      ubicacionJson,
+      costo: costo ? Number(costo) : null,
+      moneda: 'MXN',
+      academia_id: academyId || null,
+      maestro_id: teacherId || null,
+      teacher_id: teacherId || null,
+      cover_url: null,
+      cronogramaIndex: index,
+    });
+  }
   // Si tiene fecha específica, crear una clase con esa fecha
-  if (fecha) {
+  else if (fecha) {
     clases.push({
       id: classId, // Usar ID de la clase si existe, si no usar índice * 1000
       titulo,
       nombre: titulo,
       descripcion,
       fecha,
+      fechaModo: fechaModo || 'especifica',
+      horarioModo,
       hora_inicio: inicio,
       hora_fin: fin,
       inicio,
       fin,
+      duracionHoras,
       nivel,
       ritmo: ritmo ? String(ritmo) : null,
       ritmos_seleccionados: ritmos,
@@ -168,10 +202,13 @@ function cronoItemToClases(
           descripcion,
           dia_semana: diaNum,
           diaSemana: diaNum,
+          fechaModo: fechaModo || 'semanal',
+          horarioModo,
           hora_inicio: inicio,
           hora_fin: fin,
           inicio,
           fin,
+          duracionHoras,
           nivel,
           ritmo: ritmo ? String(ritmo) : null,
           ritmos_seleccionados: ritmos,
@@ -198,10 +235,13 @@ function cronoItemToClases(
       descripcion,
       dia_semana: diaNum,
       diaSemana: diaNum,
+      fechaModo: fechaModo || 'semanal',
+      horarioModo,
       hora_inicio: inicio,
       hora_fin: fin,
       inicio,
       fin,
+      duracionHoras,
       nivel,
       ritmo: ritmo ? String(ritmo) : null,
       ritmos_seleccionados: ritmos,

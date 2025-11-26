@@ -568,28 +568,71 @@ export default function ExploreHomeScreen() {
       return undefined as unknown as string | undefined;
     };
 
-    const mapClase = (owner: any, c: any, ownerType: 'academy' | 'teacher', cronogramaIndex: number) => ({
-      titulo: c?.titulo,
-      fecha: c?.fecha,
-      diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
-      inicio: c?.inicio,
-      fin: c?.fin,
-      ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || '',
-      ownerType,
-      ownerId: owner?.id,
-      ownerName: owner?.nombre_publico,
-      ownerCoverUrl: resolveOwnerCover(owner),
-      cronogramaIndex // Índice original en el cronograma
-    });
+    // Función auxiliar para convertir nombre de día a número
+    const dayNameToNumber = (dayName: string | number): number | null => {
+      if (typeof dayName === 'number' && dayName >= 0 && dayName <= 6) {
+        return dayName;
+      }
+      const normalized = String(dayName).toLowerCase().trim();
+      const map: Record<string, number> = {
+        'domingo': 0, 'dom': 0,
+        'lunes': 1, 'lun': 1,
+        'martes': 2, 'mar': 2,
+        'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+        'jueves': 4, 'jue': 4,
+        'viernes': 5, 'vie': 5,
+        'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+      };
+      return map[normalized] ?? null;
+    };
+
+    const mapClase = (owner: any, c: any, ownerType: 'academy' | 'teacher', cronogramaIndex: number) => {
+      const baseClase = {
+        titulo: c?.titulo,
+        fecha: c?.fecha,
+        diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
+        inicio: c?.inicio,
+        fin: c?.fin,
+        ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || '',
+        ownerType,
+        ownerId: owner?.id,
+        ownerName: owner?.nombre_publico,
+        ownerCoverUrl: resolveOwnerCover(owner),
+        cronogramaIndex // Índice original en el cronograma
+      };
+
+      // Si tiene múltiples días, expandir en múltiples copias (una por cada día)
+      if (baseClase.diasSemana && Array.isArray(baseClase.diasSemana) && baseClase.diasSemana.length > 1) {
+        const expanded: any[] = [];
+        for (const dayStr of baseClase.diasSemana) {
+          const dayNum = dayNameToNumber(dayStr);
+          if (dayNum !== null) {
+            expanded.push({
+              ...baseClase,
+              diaSemana: dayNum, // Añadir el día específico para esta copia
+              diasSemana: [dayStr], // Mantener solo este día en el array para esta copia
+            });
+          }
+        }
+        return expanded.length > 0 ? expanded : [baseClase];
+      }
+
+      // Si tiene un solo día o no tiene diasSemana, retornar una sola entrada
+      return [baseClase];
+    };
 
     // Usar cronograma como fuente principal, con horarios como fallback
     const fromAcademies = allA.flatMap((ac: any) => {
       const cronogramaData = ac?.cronograma || ac?.horarios || [];
-      return Array.isArray(cronogramaData) ? cronogramaData.map((c: any, idx: number) => mapClase(ac, c, 'academy', idx)) : [];
+      return Array.isArray(cronogramaData) 
+        ? cronogramaData.flatMap((c: any, idx: number) => mapClase(ac, c, 'academy', idx))
+        : [];
     });
     const fromTeachers = allM.flatMap((tc: any) => {
       const cronogramaData = tc?.cronograma || tc?.horarios || [];
-      return Array.isArray(cronogramaData) ? cronogramaData.map((c: any, idx: number) => mapClase(tc, c, 'teacher', idx)) : [];
+      return Array.isArray(cronogramaData) 
+        ? cronogramaData.flatMap((c: any, idx: number) => mapClase(tc, c, 'teacher', idx))
+        : [];
     });
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));

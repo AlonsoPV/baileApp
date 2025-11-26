@@ -41,7 +41,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEventMetricsPanel";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
-import { FaInstagram, FaFacebookF, FaWhatsapp } from 'react-icons/fa';
+import { FaInstagram, FaFacebookF, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
 
 const colors = {
   coral: '#FF3D57',
@@ -606,7 +606,9 @@ export default function OrganizerProfileEditor() {
       redes_sociales: {
         instagram: "",
         facebook: "",
-        whatsapp: ""
+        whatsapp: "",
+        web: "",
+        telegram: ""
       },
       respuestas: {
         musica_tocaran: "",
@@ -1827,23 +1829,6 @@ export default function OrganizerProfileEditor() {
           color: rgba(255, 255, 255, 0.9);
         }
         
-        .org-events-empty-button {
-          padding: 1rem 2rem;
-          border-radius: 14px;
-          border: none;
-          background: linear-gradient(135deg, #FF3D57, #FF8C42);
-          color: #FFFFFF;
-          font-size: 1rem;
-          font-weight: 700;
-          cursor: pointer;
-          box-shadow: 0 8px 24px rgba(255, 61, 87, 0.4);
-          transition: all 0.3s ease;
-        }
-        
-        .org-events-empty-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(255, 61, 87, 0.5);
-        }
         
         .org-event-card {
           padding: clamp(1.5rem, 2.5vw, 2.5rem);
@@ -3112,6 +3097,40 @@ export default function OrganizerProfileEditor() {
                             />
                           </div>
                         </label>
+
+                        {/* Sitio Web */}
+                        <label className="field">
+                          <span className="field-icon">
+                            <FaGlobe size={18} />
+                          </span>
+                          <div className="input-group">
+                            <span className="prefix">https://</span>
+                            <input
+                              type="text"
+                              name="web"
+                              value={form.redes_sociales.web || ''}
+                              onChange={(e) => setNested('redes_sociales.web', e.target.value)}
+                              placeholder="tusitio.com"
+                            />
+                          </div>
+                        </label>
+
+                        {/* Telegram */}
+                        <label className="field">
+                          <span className="field-icon">
+                            <FaTelegram size={18} />
+                          </span>
+                          <div className="input-group">
+                            <span className="prefix">@</span>
+                            <input
+                              type="text"
+                              name="telegram"
+                              value={form.redes_sociales.telegram || ''}
+                              onChange={(e) => setNested('redes_sociales.telegram', e.target.value)}
+                              placeholder="usuario o canal"
+                            />
+                          </div>
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -3772,16 +3791,8 @@ export default function OrganizerProfileEditor() {
                     No tienes sociales creados
                   </h3>
                   <p>
-                    Crea tu primer social para comenzar a organizar eventos
+                    ¡Crea tu primer social!
                   </p>
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/social/new')}
-                    className="org-events-empty-button"
-                  >
-                    🎉 Crear mi Primer Social
-                  </motion.button>
                 </motion.div>
               )}
             </div>

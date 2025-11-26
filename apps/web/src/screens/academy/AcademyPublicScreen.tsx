@@ -400,11 +400,16 @@ const formatPriceLabel = (value: any): string | null => {
 
 const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
   if (fecha) {
-    const plain = String(fecha).split('T')[0];
-    const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-      const safe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Mexico_City' });
+    try {
+      // Parsear fecha como hora local para evitar problemas de zona horaria
+      const plain = String(fecha).split('T')[0];
+      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        const safe = new Date(year, month - 1, day);
+        return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch (e) {
+      console.error('[AcademyPublicScreen] Error formatting date:', e);
     }
   }
   if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
@@ -429,7 +434,7 @@ export default function AcademyPublicScreen() {
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses({ academyId: id });
   
   // Obtener grupos de competencia de la academia
-  const { data: competitionGroups } = useCompetitionGroupsByAcademy(id);
+  const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByAcademy(id);
 
   const media = (academy as any)?.media || [];
   const carouselPhotos = PHOTO_SLOTS
@@ -1340,7 +1345,7 @@ export default function AcademyPublicScreen() {
           )}
 
           {/* Grupos de Competencia */}
-          {competitionGroups && competitionGroups.length > 0 && (
+          {!loadingGroups && competitionGroups && Array.isArray(competitionGroups) && competitionGroups.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1529,23 +1534,6 @@ export default function AcademyPublicScreen() {
             </motion.section>
           )}
 
-          {getMediaBySlot(media as unknown as MediaSlotItem[], 'p1') && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
-              style={{
-                marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'center', opacity: 1
-              }}
-            >
-              <div style={{ width: '100%', maxWidth: '500px', height: 'auto', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(255, 255, 255, 0.1)' }}>
-                <ImageWithFallback
-                  alt="Foto principal"
-                  src={getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }}
-                />
-              </div>
-            </motion.section>
-          )}
 
           {carouselPhotos.length > 0 && (
             <motion.section

@@ -178,11 +178,11 @@ export default function ClasesLiveTabs({
         const plain = String(fecha).split('T')[0];
         const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
         if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-          const safe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+          // Crear fecha en hora local para evitar problemas de zona horaria
+          const safe = new Date(year, month - 1, day);
           return safe.toLocaleDateString('es-ES', { 
             day: 'numeric', 
-            month: 'short',
-            timeZone: 'America/Mexico_City'
+            month: 'short'
           });
         }
       } catch (e) {
@@ -397,7 +397,20 @@ export default function ClasesLiveTabs({
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
                             <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900 }}>{titulo}</h4>
-                            {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
+                            {c.fechaModo === 'por_agendar' ? (
+                              <span style={{ 
+                                fontSize: "1rem", 
+                                opacity: 1, 
+                                fontWeight: 800,
+                                color: "#fff",
+                                padding: ".3rem .6rem",
+                                borderRadius: 8,
+                                background: "rgba(251, 191, 36, 0.2)",
+                                border: "1px solid rgba(251, 191, 36, 0.4)"
+                              }}>
+                                📅 Por agendar con academia
+                              </span>
+                            ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
                               <span style={{ 
                                 fontSize: "1rem", 
                                 opacity: 1, 
@@ -410,7 +423,7 @@ export default function ClasesLiveTabs({
                               }}>
                                 📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
                               </span>
-                            )}
+                            ) : null}
                           </div>
                           <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                             {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
@@ -418,11 +431,26 @@ export default function ClasesLiveTabs({
                         </div>
 
                         <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
-                          {(horaInicio || horaFin) && (
-                            <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
+                          {c.fechaModo === 'por_agendar' ? (
+                            // Si es por agendar, mostrar duración si está disponible
+                            c.duracionHoras ? (
+                              <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
+                            ) : null
+                          ) : (
+                            // Si no es por agendar, mostrar hora según el modo de horario
+                            <>
+                              {c.horarioModo === 'duracion' && c.duracionHoras ? (
+                                <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
+                              ) : (horaInicio || horaFin) ? (
+                                <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
+                              ) : null}
+                            </>
                           )}
                           {ubicacion && <span>📍 {ubicacion}</span>}
-                          {typeof costo === "number" && (
+                          {typeof costo === "number" && costo === 0 && (
+                            <span>💰 Gratis</span>
+                          )}
+                          {typeof costo === "number" && costo > 0 && (
                             <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
                           )}
                         </div>
@@ -436,6 +464,73 @@ export default function ClasesLiveTabs({
                         {/* Botones de compartir, calendario y ver detalle */}
                         <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
                           {(() => {
+                            // Si la clase es "por agendar", no mostrar botón de calendario
+                            if (c.fechaModo === 'por_agendar') {
+                              const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
+                                ? c.cronogramaIndex 
+                                : Math.floor((c.id || 0) / 1000);
+                              const shareUrl = isClickable && sourceType && sourceId 
+                                ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
+                                : (sourceType && sourceId 
+                                  ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                                  : window.location.href);
+                              
+                              return (
+                                <>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <ShareButton
+                                      url={shareUrl}
+                                      title={titulo}
+                                      text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
+                                      style={{ 
+                                        padding: ".5rem .8rem",
+                                        borderRadius: 999,
+                                        border: "1px solid rgba(255,255,255,.2)",
+                                        background: "rgba(255,255,255,0.08)",
+                                        color: "#fff",
+                                        fontWeight: 700,
+                                        fontSize: ".85rem",
+                                      }}
+                                    >
+                                      📤 Compartir
+                                    </ShareButton>
+                                  </div>
+                                  {isClickable && sourceType && sourceId && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleClassClick(c);
+                                      }}
+                                      style={{
+                                        padding: ".6rem 1rem",
+                                        borderRadius: 999,
+                                        border: "1px solid rgba(30,136,229,.5)",
+                                        background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
+                                        color: "#fff",
+                                        fontWeight: 800,
+                                        fontSize: ".9rem",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s ease",
+                                        boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
+                                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
+                                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
+                                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
+                                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                                      }}
+                                    >
+                                      👁️ Ver detalle
+                                    </button>
+                                  )}
+                                </>
+                              );
+                            }
+                            
                             const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
                             const startTime = horaInicio || '10:00';
                             const endTime = horaFin || '12:00';
@@ -728,7 +823,20 @@ export default function ClasesLiveTabs({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
                       <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
-                      {formatDateShort(fecha, c.dia_semana || c.diaSemana) && (
+                      {c.fechaModo === 'por_agendar' ? (
+                        <span style={{ 
+                          fontSize: "1.05rem", 
+                          opacity: 1, 
+                          fontWeight: 800,
+                          color: "#fff",
+                          padding: ".35rem .7rem",
+                          borderRadius: 8,
+                          background: "rgba(251, 191, 36, 0.2)",
+                          border: "1px solid rgba(251, 191, 36, 0.4)"
+                        }}>
+                          📅 Por agendar con academia
+                        </span>
+                      ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
                         <span style={{ 
                           fontSize: "1.05rem", 
                           opacity: 1, 
@@ -741,7 +849,7 @@ export default function ClasesLiveTabs({
                         }}>
                           📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                       {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
@@ -749,11 +857,26 @@ export default function ClasesLiveTabs({
                   </div>
 
                   <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
-                    {(horaInicio || horaFin) && (
-                      <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
+                    {c.fechaModo === 'por_agendar' ? (
+                      // Si es por agendar, mostrar duración si está disponible
+                      c.duracionHoras ? (
+                        <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
+                      ) : null
+                    ) : (
+                      // Si no es por agendar, mostrar hora según el modo de horario
+                      <>
+                        {c.horarioModo === 'duracion' && c.duracionHoras ? (
+                          <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
+                        ) : (horaInicio || horaFin) ? (
+                          <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
+                        ) : null}
+                      </>
                     )}
                     {ubicacion && <span>📍 {ubicacion}</span>}
-                    {typeof costo === "number" && (
+                    {typeof costo === "number" && costo === 0 && (
+                      <span>💰 Gratis</span>
+                    )}
+                    {typeof costo === "number" && costo > 0 && (
                       <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
                     )}
                   </div>
@@ -767,6 +890,73 @@ export default function ClasesLiveTabs({
                   {/* Botones de compartir, calendario y ver detalle */}
                   <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
                     {(() => {
+                      // Si la clase es "por agendar", no mostrar botón de calendario
+                      if (c.fechaModo === 'por_agendar') {
+                        const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
+                          ? c.cronogramaIndex 
+                          : Math.floor((c.id || 0) / 1000);
+                        const shareUrl = isClickable && sourceType && sourceId 
+                          ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
+                          : (sourceType && sourceId 
+                            ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                            : window.location.href);
+                        
+                        return (
+                          <>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <ShareButton
+                                url={shareUrl}
+                                title={titulo}
+                                text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
+                                style={{ 
+                                  padding: ".6rem .9rem",
+                                  borderRadius: 999,
+                                  border: "1px solid rgba(255,255,255,.2)",
+                                  background: "rgba(255,255,255,0.08)",
+                                  color: "#fff",
+                                  fontWeight: 700,
+                                  fontSize: ".9rem",
+                                }}
+                              >
+                                📤 Compartir
+                              </ShareButton>
+                            </div>
+                            {isClickable && sourceType && sourceId && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClassClick(c);
+                                }}
+                                style={{
+                                  padding: ".7rem 1.1rem",
+                                  borderRadius: 999,
+                                  border: "1px solid rgba(30,136,229,.5)",
+                                  background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
+                                  color: "#fff",
+                                  fontWeight: 800,
+                                  fontSize: ".95rem",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                  boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
+                                }}
+                                onMouseEnter={(e) => {
+                                  (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
+                                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
+                                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
+                                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
+                                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                                }}
+                              >
+                                👁️ Ver detalle
+                              </button>
+                            )}
+                          </>
+                        );
+                      }
+                      
                       const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
                       const startTime = horaInicio || '10:00';
                       const endTime = horaFin || '12:00';

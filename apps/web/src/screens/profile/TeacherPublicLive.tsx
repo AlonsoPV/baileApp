@@ -344,11 +344,16 @@ const formatPriceLabel = (value: any): string | null => {
 
 const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
   if (fecha) {
-    const plain = String(fecha).split('T')[0];
-    const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-      const safe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Mexico_City' });
+    try {
+      // Parsear fecha como hora local para evitar problemas de zona horaria
+      const plain = String(fecha).split('T')[0];
+      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        const safe = new Date(year, month - 1, day);
+        return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch (e) {
+      console.error('[TeacherPublicLive] Error formatting date:', e);
     }
   }
   if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
@@ -1525,50 +1530,10 @@ export default function TeacherProfileLive() {
             </motion.section>
           )}
 
-        
-
-          {/* Foto Principal */}
-          {getMediaBySlot(media as unknown as MediaSlotItem[], 'p1') && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                display: 'flex',
-                justifyContent: 'center',
-                opacity: 1,
-                transform: 'none'
-              }}
-            >
-              <div style={{
-                width: '100%',
-                maxWidth: '500px',
-                height: 'auto',
-                aspectRatio: '16/9',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.1)'
-              }}>
-                <ImageWithFallback
-                  alt="Foto principal"
-                  src={getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center'
-                  }}
-                />
-              </div>
-            </motion.section>
+          {/* Componente de Calificaciones */}
+          {teacherIdNum && (
+            <TeacherRatingComponent teacherId={teacherIdNum} />
           )}
-
-
 
           {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
@@ -1674,11 +1639,6 @@ export default function TeacherProfileLive() {
                 ))}
               </div>
             </motion.section>
-          )}
-
-          {/* Componente de Calificaciones */}
-          {teacherIdNum && (
-            <TeacherRatingComponent teacherId={teacherIdNum} />
           )}
 
         </div>

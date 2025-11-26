@@ -144,6 +144,27 @@ export default function CompetitionGroupForm() {
     }
   }, [teacherProfile, academyProfile]);
 
+  // Establecer automáticamente el academy_id cuando se crea desde una academia
+  useEffect(() => {
+    if (!isEditMode) {
+      // Si hay un perfil de academia, establecer su ID automáticamente
+      if (academyProfile?.id) {
+        console.log('[CompetitionGroupForm] Estableciendo academy_id automáticamente:', academyProfile.id);
+        setFormData(prev => ({
+          ...prev,
+          academy_id: academyProfile.id,
+        }));
+      } else if (teacherProfile && !academyProfile) {
+        // Si solo hay perfil de maestro (sin academia), asegurar que academy_id sea null
+        console.log('[CompetitionGroupForm] Creando grupo desde perfil de maestro, academy_id será null');
+        setFormData(prev => ({
+          ...prev,
+          academy_id: null,
+        }));
+      }
+    }
+  }, [academyProfile, teacherProfile, isEditMode]);
+
   // Cargar datos existentes si estamos editando
   useEffect(() => {
     if (isEditMode && existingGroup) {
@@ -439,344 +460,521 @@ export default function CompetitionGroupForm() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
-      <div style={{ marginBottom: 24 }}>
-        <button onClick={() => navigate(-1)} className="cc-btn cc-btn--ghost">
-          ← Volver
-        </button>
-      </div>
-
-      <h1 style={{ marginBottom: 24, fontWeight: 900 }}>
-        {isEditMode ? 'Editar Grupo de Competencia' : 'Crear Grupo de Competencia'}
-      </h1>
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 24 }}>
-        {/* Nombre */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Nombre del Grupo *
-          </label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            required
+    <>
+      <style>{`
+        .form-container {
+          max-width: 900px;
+          margin: 0 auto;
+          padding: 2rem;
+        }
+        .form-header {
+          margin-bottom: 2rem;
+        }
+        .form-title {
+          font-size: 2.5rem;
+          font-weight: 900;
+          background: linear-gradient(135deg, #f093fb, #f5576c, #FFD166);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 0.5rem;
+          line-height: 1.2;
+        }
+        .form-subtitle {
+          font-size: 1rem;
+          color: rgba(255,255,255,0.7);
+          margin: 0;
+        }
+        .form-card {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          padding: 2.5rem;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+          margin-bottom: 1.5rem;
+        }
+        .form-section {
+          margin-bottom: 2rem;
+        }
+        .form-section:last-child {
+          margin-bottom: 0;
+        }
+        .form-section-title {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1.25rem;
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #fff;
+        }
+        .form-section-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(245, 87, 108, 0.3));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          box-shadow: 0 4px 16px rgba(240, 147, 251, 0.2);
+        }
+        .form-field {
+          margin-bottom: 1.5rem;
+        }
+        .form-field:last-child {
+          margin-bottom: 0;
+        }
+        .form-label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 700;
+          color: #fff;
+          font-size: 0.95rem;
+        }
+        .form-label-required::after {
+          content: " *";
+          color: #f5576c;
+        }
+        .form-help {
+          font-size: 0.875rem;
+          color: rgba(255,255,255,0.7);
+          margin-top: 0.5rem;
+          line-height: 1.5;
+        }
+        .form-input, .form-textarea, .form-select {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.05);
+          color: #fff;
+          font-size: 1rem;
+          font-family: inherit;
+          transition: all 0.2s ease;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+          outline: none;
+          border-color: rgba(240, 147, 251, 0.5);
+          background: rgba(255,255,255,0.08);
+          box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+        }
+        .form-textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        .form-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
+          margin-top: 2rem;
+          padding-top: 2rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        @media (max-width: 768px) {
+          .form-container {
+            padding: 1rem;
+          }
+          .form-card {
+            padding: 1.5rem;
+          }
+          .form-title {
+            font-size: 2rem;
+          }
+          .form-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+      <div className="form-container">
+        <div className="form-header">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="cc-btn cc-btn--ghost"
             style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '1rem',
+              marginBottom: '1.5rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}
-            placeholder="Ej: Grupo de Competencia Bachata Avanzada"
-          />
-        </div>
-
-        {/* Descripción */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Descripción
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '1rem',
-              fontFamily: 'inherit',
-              resize: 'vertical',
-            }}
-            placeholder="Describe el grupo, objetivos, nivel requerido, etc."
-          />
-        </div>
-
-        {/* Horarios de Entrenamiento */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Horarios de Entrenamiento
-          </label>
-          <textarea
-            value={formData.training_schedule}
-            onChange={(e) => handleChange('training_schedule', e.target.value)}
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              fontSize: '1rem',
-              fontFamily: 'inherit',
-              resize: 'vertical',
-            }}
-            placeholder="Ej: Lunes y Miércoles de 7:00 PM a 9:00 PM"
-          />
-        </div>
-
-        {/* Ubicación */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Ubicación de Entrenamientos *
-          </label>
-          <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: 12 }}>
-            Selecciona una ubicación de tu perfil o agrega una nueva manualmente
+          >
+            ← Volver
+          </button>
+          <h1 className="form-title">
+            {isEditMode ? 'Editar Grupo de Competencia' : 'Crear Grupo de Competencia'}
+          </h1>
+          <p className="form-subtitle">
+            {isEditMode 
+              ? 'Actualiza la información de tu grupo de competencia'
+              : 'Completa la información para crear un nuevo grupo de competencia. Serás el administrador del grupo automáticamente.'}
           </p>
-          <UbicacionesEditor
-            value={selectedLocations}
-            onChange={(locations) => {
-              setSelectedLocations(locations);
-              // No actualizar training_location aquí, el useEffect lo hará
-              // Esto evita duplicación de actualizaciones
-            }}
-            title=""
-            allowedZoneIds={userZonas.length > 0 ? userZonas : undefined}
-            style={{ marginBottom: 16 }}
-          />
         </div>
 
-        {/* Tipo de Costo y Monto */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-              Tipo de Costo *
-            </label>
-            <select
-              value={formData.cost_type}
-              onChange={(e) => handleChange('cost_type', e.target.value as CompetitionGroupCostType)}
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: '#000000',
-                color: '#fff',
-                fontSize: '1rem',
-              }}
-            >
-              <option value="monthly">Mensual</option>
-              <option value="per_session">Por Sesión</option>
-              <option value="package">Paquete</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-              Monto (MXN) *
-            </label>
-            <input
-              type="number"
-              value={formData.cost_amount}
-              onChange={(e) => handleChange('cost_amount', parseFloat(e.target.value) || 0)}
-              required
-              min="0"
-              step="0.01"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: '#fff',
-                fontSize: '1rem',
-              }}
-              placeholder="0.00"
-            />
-          </div>
-        </div>
-
-        {/* Foto de Portada */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Foto de Portada
-          </label>
-          {formData.cover_image_url ? (
-            <div style={{ marginBottom: 12 }}>
-              <img
-                src={formData.cover_image_url}
-                alt="Portada"
-                style={{
-                  width: '100%',
-                  maxHeight: 300,
-                  objectFit: 'cover',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                style={{
-                  marginTop: 8,
-                  padding: '8px 16px',
-                  background: 'rgba(239,68,68,0.2)',
-                  border: '1px solid #EF4444',
-                  borderRadius: 8,
-                  color: '#fff',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Eliminar Imagen
-              </button>
+        <form onSubmit={handleSubmit}>
+          {/* Información Básica */}
+          <div className="form-card">
+            <div className="form-section-title">
+              <div className="form-section-icon">📋</div>
+              <span>Información Básica</span>
             </div>
-          ) : (
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
-                id="cover-image-upload"
-              />
-              <label
-                htmlFor="cover-image-upload"
-                style={{
-                  display: 'block',
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  border: '1px dashed rgba(255,255,255,0.3)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: '#fff',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                📷 Subir Foto de Portada
+            
+            <div className="form-field">
+              <label className="form-label form-label-required">
+                Nombre del Grupo
               </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                required
+                className="form-input"
+                placeholder="Ej: Grupo de Competencia Bachata Avanzada"
+              />
             </div>
-          )}
-        </div>
 
-        {/* Video Promocional */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-            Video Promocional
-          </label>
-          <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: 12 }}>
-            Puedes subir un video o ingresar una URL de YouTube/Vimeo
-          </p>
-          
-          {formData.promo_video_url ? (
-            <div style={{ marginBottom: 12 }}>
-              {formData.promo_video_url.startsWith('http') ? (
-                <div style={{ padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 12 }}>
-                  <p style={{ margin: 0, opacity: 0.9 }}>URL: {formData.promo_video_url}</p>
+            <div className="form-field">
+              <label className="form-label">
+                Descripción
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                rows={4}
+                className="form-textarea"
+                placeholder="Describe el grupo, objetivos, nivel requerido, etc."
+              />
+              <p className="form-help">
+                Proporciona una descripción detallada que ayude a los miembros potenciales a entender el propósito y requisitos del grupo.
+              </p>
+            </div>
+          </div>
+
+          {/* Horarios y Ubicación */}
+          <div className="form-card">
+            <div className="form-section-title">
+              <div className="form-section-icon">📍</div>
+              <span>Horarios y Ubicación</span>
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">
+                Horarios de Entrenamiento
+              </label>
+              <textarea
+                value={formData.training_schedule}
+                onChange={(e) => handleChange('training_schedule', e.target.value)}
+                rows={3}
+                className="form-textarea"
+                placeholder="Ej: Lunes y Miércoles de 7:00 PM a 9:00 PM"
+              />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label form-label-required">
+                Ubicación de Entrenamientos
+              </label>
+              <p className="form-help">
+                Selecciona una ubicación de tu perfil o agrega una nueva manualmente
+              </p>
+              <UbicacionesEditor
+                value={selectedLocations}
+                onChange={(locations) => {
+                  setSelectedLocations(locations);
+                }}
+                title=""
+                allowedZoneIds={userZonas.length > 0 ? userZonas : undefined}
+                style={{ marginBottom: 16 }}
+              />
+            </div>
+          </div>
+
+          {/* Costos */}
+          <div className="form-card">
+            <div className="form-section-title">
+              <div className="form-section-icon">💰</div>
+              <span>Información de Costos</span>
+            </div>
+            
+            <div className="form-grid">
+              <div className="form-field">
+                <label className="form-label form-label-required">
+                  Tipo de Costo
+                </label>
+                <select
+                  value={formData.cost_type}
+                  onChange={(e) => handleChange('cost_type', e.target.value as CompetitionGroupCostType)}
+                  required
+                  className="form-select"
+                  style={{ background: '#000000' }}
+                >
+                  <option value="monthly">Mensual</option>
+                  <option value="per_session">Por Sesión</option>
+                  <option value="package">Paquete</option>
+                </select>
+              </div>
+              <div className="form-field">
+                <label className="form-label form-label-required">
+                  Monto (MXN)
+                </label>
+                <input
+                  type="number"
+                  value={formData.cost_amount}
+                  onChange={(e) => handleChange('cost_amount', parseFloat(e.target.value) || 0)}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="form-input"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Medios */}
+          <div className="form-card">
+            <div className="form-section-title">
+              <div className="form-section-icon">🖼️</div>
+              <span>Medios Visuales</span>
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">
+                Foto de Portada
+              </label>
+              {formData.cover_image_url ? (
+                <div style={{ marginBottom: 12 }}>
+                  <img
+                    src={formData.cover_image_url}
+                    alt="Portada"
+                    style={{
+                      width: '100%',
+                      maxHeight: 300,
+                      objectFit: 'cover',
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    style={{
+                      marginTop: 12,
+                      padding: '0.75rem 1.5rem',
+                      background: 'rgba(239,68,68,0.2)',
+                      border: '1px solid #EF4444',
+                      borderRadius: 12,
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.2)';
+                    }}
+                  >
+                    🗑️ Eliminar Imagen
+                  </button>
                 </div>
               ) : (
-                <video
-                  src={formData.promo_video_url}
-                  controls
-                  style={{
-                    width: '100%',
-                    maxHeight: 300,
-                    borderRadius: 12,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                  }}
-                />
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                    id="cover-image-upload"
+                  />
+                  <label
+                    htmlFor="cover-image-upload"
+                    style={{
+                      display: 'block',
+                      padding: '2rem',
+                      borderRadius: 12,
+                      border: '2px dashed rgba(255,255,255,0.3)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: '#fff',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    }}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📷</div>
+                    <div style={{ fontWeight: 600 }}>Subir Foto de Portada</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.25rem' }}>
+                      PNG, JPG o WEBP (máx. 10MB)
+                    </div>
+                  </label>
+                </div>
               )}
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">
+                Video Promocional
+              </label>
+              <p className="form-help">
+                Puedes subir un video o ingresar una URL de YouTube/Vimeo
+              </p>
+              
+              {formData.promo_video_url ? (
+                <div style={{ marginBottom: 12 }}>
+                  {formData.promo_video_url.startsWith('http') ? (
+                    <div style={{ 
+                      padding: '1rem', 
+                      background: 'rgba(255,255,255,0.05)', 
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.1)',
+                    }}>
+                      <p style={{ margin: 0, opacity: 0.9, wordBreak: 'break-all' }}>
+                        <strong>URL:</strong> {formData.promo_video_url}
+                      </p>
+                    </div>
+                  ) : (
+                    <video
+                      src={formData.promo_video_url}
+                      controls
+                      style={{
+                        width: '100%',
+                        maxHeight: 300,
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                      }}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRemoveVideo}
+                    style={{
+                      marginTop: 12,
+                      padding: '0.75rem 1.5rem',
+                      background: 'rgba(239,68,68,0.2)',
+                      border: '1px solid #EF4444',
+                      borderRadius: 12,
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.2)';
+                    }}
+                  >
+                    🗑️ Eliminar Video
+                  </button>
+                </div>
+              ) : null}
+              
+              <div className="form-grid">
+                <div>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoUpload}
+                    style={{ display: 'none' }}
+                    id="promo-video-upload"
+                  />
+                  <label
+                    htmlFor="promo-video-upload"
+                    style={{
+                      display: 'block',
+                      padding: '1rem',
+                      borderRadius: 12,
+                      border: '2px dashed rgba(255,255,255,0.3)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: '#fff',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    }}
+                  >
+                    <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🎥</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Subir Video</div>
+                  </label>
+                </div>
+                <div>
+                  <input
+                    type="url"
+                    value={formData.promo_video_url?.startsWith('http') ? formData.promo_video_url : ''}
+                    onChange={(e) => handleChange('promo_video_url', e.target.value)}
+                    placeholder="URL de YouTube o Vimeo"
+                    className="form-input"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Invitaciones */}
+          <div className="form-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="form-section-title" style={{ margin: 0 }}>
+                <div className="form-section-icon">👥</div>
+                <span>Invitaciones (Opcional)</span>
+              </div>
               <button
                 type="button"
-                onClick={handleRemoveVideo}
+                onClick={() => setShowInvitations(!showInvitations)}
                 style={{
-                  marginTop: 8,
-                  padding: '8px 16px',
-                  background: 'rgba(239,68,68,0.2)',
-                  border: '1px solid #EF4444',
-                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  background: showInvitations ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.1)',
+                  border: `1px solid ${showInvitations ? '#3B82F6' : 'rgba(255,255,255,0.2)'}`,
+                  borderRadius: 12,
                   color: '#fff',
                   fontSize: '0.875rem',
+                  fontWeight: 600,
                   cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = showInvitations ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = showInvitations ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.1)';
                 }}
               >
-                Eliminar Video
+                {showInvitations ? '👁️ Ocultar' : '👁️‍🗨️ Mostrar'}
               </button>
             </div>
-          ) : null}
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleVideoUpload}
-                style={{ display: 'none' }}
-                id="promo-video-upload"
-              />
-              <label
-                htmlFor="promo-video-upload"
-                style={{
-                  display: 'block',
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  border: '1px dashed rgba(255,255,255,0.3)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: '#fff',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                🎥 Subir Video
-              </label>
-            </div>
-            <div>
-              <input
-                type="url"
-                value={formData.promo_video_url?.startsWith('http') ? formData.promo_video_url : ''}
-                onChange={(e) => handleChange('promo_video_url', e.target.value)}
-                placeholder="URL de YouTube o Vimeo"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: '#fff',
-                  fontSize: '1rem',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Invitaciones (Opcional) */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <label style={{ display: 'block', fontWeight: 700 }}>
-              Invitar Usuarios o Maestros (Opcional)
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowInvitations(!showInvitations)}
-              style={{
-                padding: '8px 16px',
-                background: showInvitations ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.1)',
-                border: `1px solid ${showInvitations ? '#3B82F6' : 'rgba(255,255,255,0.2)'}`,
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-              }}
-            >
-              {showInvitations ? 'Ocultar' : 'Mostrar'}
-            </button>
-          </div>
-          
-          {showInvitations && (
-            <div style={{
-              padding: 16,
-              borderRadius: 12,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.15)',
-            }}>
+            {showInvitations && (
+              <div style={{
+                padding: '1.5rem',
+                borderRadius: 16,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}>
               {!isEditMode && (
                 <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: 12, padding: 12, background: 'rgba(59,130,246,0.1)', borderRadius: 8 }}>
                   💡 Las invitaciones se enviarán después de crear el grupo. Puedes seleccionar usuarios/maestros ahora.
@@ -1074,29 +1272,56 @@ export default function CompetitionGroupForm() {
           )}
         </div>
 
-        {/* Botones */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="cc-btn cc-btn--ghost"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="cc-btn"
-            disabled={createGroup.isPending || updateGroup.isPending}
-          >
-            {createGroup.isPending || updateGroup.isPending
-              ? 'Guardando...'
-              : isEditMode
-              ? 'Actualizar Grupo'
-              : 'Crear Grupo'}
-          </button>
-        </div>
-      </form>
-    </div>
+          {/* Acciones */}
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="cc-btn cc-btn--ghost"
+              style={{
+                padding: '0.875rem 1.75rem',
+                fontSize: '1rem',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="cc-btn"
+              disabled={createGroup.isPending || updateGroup.isPending}
+              style={{
+                padding: '0.875rem 2rem',
+                fontSize: '1rem',
+                fontWeight: 700,
+                background: createGroup.isPending || updateGroup.isPending 
+                  ? 'rgba(255,255,255,0.2)' 
+                  : 'linear-gradient(135deg, #f093fb, #f5576c)',
+                boxShadow: createGroup.isPending || updateGroup.isPending 
+                  ? 'none' 
+                  : '0 8px 24px rgba(240, 147, 251, 0.4)',
+                transition: 'all 0.2s ease',
+                cursor: createGroup.isPending || updateGroup.isPending ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!createGroup.isPending && !updateGroup.isPending) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(240, 147, 251, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              {createGroup.isPending || updateGroup.isPending
+                ? '⏳ Guardando...'
+                : isEditMode
+                ? '💾 Actualizar Grupo'
+                : '✨ Crear Grupo'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
 

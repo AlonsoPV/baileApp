@@ -270,10 +270,14 @@ export default function ClasesLive({
                     📅 {' '}
                     {(it as any)?.fecha ? (() => {
                       try {
-                        const d = new Date((it as any).fecha);
-                        const day = d.getDate();
-                        const month = d.toLocaleDateString('es-MX', { month: 'short' });
-                        return `${day} ${month}`;
+                        // Parsear fecha como hora local para evitar problemas de zona horaria
+                        const fechaValue = (it as any).fecha;
+                        const fechaOnly = fechaValue.includes('T') ? fechaValue.split('T')[0] : fechaValue;
+                        const [year, month, day] = fechaOnly.split('-').map(Number);
+                        const d = new Date(year, month - 1, day);
+                        const dayNum = d.getDate();
+                        const monthStr = d.toLocaleDateString('es-MX', { month: 'short' });
+                        return `${dayNum} ${monthStr}`;
                       } catch {
                         return (it as any).fecha;
                       }
@@ -309,23 +313,49 @@ export default function ClasesLive({
               {/* Fila: Chips de Costo y Ubicación */}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {/* Chip de Costo */}
-                {it.costos && it.costos.length > 0 && it.costos[0] && (
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    border: '1px solid rgba(255, 209, 102, 0.4)',
-                    borderRadius: 12,
-                    padding: '6px 12px',
-                    background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
-                    color: '#FFD166',
-                    boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
-                  }}>
-                    💰 {it.costos[0].precio !== undefined && it.costos[0].precio !== null ? `$${it.costos[0].precio.toLocaleString()}` : 'Gratis'}
-                  </span>
-                )}
+                {it.costos && it.costos.length > 0 && it.costos[0] && (() => {
+                  const precio = it.costos[0].precio;
+                  // Si precio es null/undefined, no mostrar nada
+                  if (precio === null || precio === undefined) return null;
+                  // Si precio es 0, mostrar "Gratis"
+                  if (precio === 0) {
+                    return (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        border: '1px solid rgba(255, 209, 102, 0.4)',
+                        borderRadius: 12,
+                        padding: '6px 12px',
+                        background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
+                        color: '#FFD166',
+                        boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
+                      }}>
+                        💰 Gratis
+                      </span>
+                    );
+                  }
+                  // Si precio > 0, mostrar el precio formateado
+                  return (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      border: '1px solid rgba(255, 209, 102, 0.4)',
+                      borderRadius: 12,
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 140, 66, 0.15))',
+                      color: '#FFD166',
+                      boxShadow: '0 2px 8px rgba(255, 209, 102, 0.2)'
+                    }}>
+                      💰 ${precio.toLocaleString()}
+                    </span>
+                  );
+                })()}
                 
                 {/* Chip de Ubicación */}
                 {((it as any)?.ubicacion || ubicacion?.nombre) && (

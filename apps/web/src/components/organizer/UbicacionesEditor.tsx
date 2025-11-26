@@ -236,97 +236,240 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
           <div
             key={key}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: spacing[3],
-              padding: spacing[3],
+              padding: spacing[4],
               borderRadius: borderRadius.xl,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
               marginBottom: spacing[3],
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
           >
-            <input
+            <div
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: borderRadius.lg,
-                padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: colors.light,
-                fontSize: typography.fontSize.sm,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: spacing[3],
+                marginBottom: spacing[3],
               }}
-              placeholder="Nombre de la sede"
-              value={item.sede || ''}
-              onChange={(e) => patch(index, { sede: e.target.value })}
-            />
-
-            <input
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: borderRadius.lg,
-                padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: colors.light,
-                fontSize: typography.fontSize.sm,
-              }}
-              placeholder="Dirección"
-              value={item.direccion || ''}
-              onChange={(e) => patch(index, { direccion: e.target.value })}
-            />
-
-            <input
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: borderRadius.lg,
-                padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: colors.light,
-                fontSize: typography.fontSize.sm,
-              }}
-              placeholder="Ciudad"
-              value={item.ciudad || ''}
-              onChange={(e) => patch(index, { ciudad: e.target.value })}
-            />
-
-            <select
-              style={{
-                background: '#2b2b2b',
-                borderRadius: borderRadius.lg,
-                padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255,255,255,0.25)',
-                color: '#FFFFFF',
-                fontSize: typography.fontSize.sm,
-              }}
-              value={item.zona_id || ''}
-              onChange={(e) => patch(index, { zona_id: e.target.value ? Number(e.target.value) : null })}
             >
-              <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
-                Seleccionar zona
-              </option>
-              {uniqueZones.map((z: any) => (
-                <option key={z.id} value={z.id} style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
-                  {z.nombre}
-                </option>
-              ))}
-            </select>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: spacing[1],
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.light,
+                  }}
+                >
+                  Nombre de la sede
+                </label>
+                <input
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: borderRadius.lg,
+                    padding: `${spacing[2]} ${spacing[3]}`,
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: colors.light,
+                    fontSize: typography.fontSize.sm,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                  placeholder="Ej: Sede Central / Salón Principal"
+                  value={item.sede || ''}
+                  onChange={(e) => patch(index, { sede: e.target.value })}
+                />
+              </div>
 
-            <textarea
-              style={{
-                gridColumn: '1 / -1',
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: borderRadius.lg,
-                padding: `${spacing[2]} ${spacing[3]}`,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: colors.light,
-                fontSize: typography.fontSize.sm,
-                minHeight: 64,
-              }}
-              placeholder="Notas / referencias"
-              value={item.referencias || ''}
-              onChange={(e) => patch(index, { referencias: e.target.value })}
-            />
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: spacing[1],
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.light,
+                  }}
+                >
+                  Dirección
+                </label>
+                <input
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: borderRadius.lg,
+                    padding: `${spacing[2]} ${spacing[3]}`,
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: colors.light,
+                    fontSize: typography.fontSize.sm,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                  placeholder="Calle, número, colonia"
+                  value={item.direccion || ''}
+                  onChange={(e) => patch(index, { direccion: e.target.value })}
+                />
+              </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing[2] }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: spacing[1],
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.light,
+                  }}
+                >
+                  Ciudad
+                </label>
+                <input
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: borderRadius.lg,
+                    padding: `${spacing[2]} ${spacing[3]}`,
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: colors.light,
+                    fontSize: typography.fontSize.sm,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                  placeholder="Ciudad"
+                  value={item.ciudad || ''}
+                  onChange={(e) => patch(index, { ciudad: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: spacing[1],
+                    fontSize: typography.fontSize.sm,
+                    fontWeight: typography.fontWeight.medium,
+                    color: colors.light,
+                  }}
+                >
+                  Seleccionar zona
+                </label>
+
+                <div style={{ position: 'relative' }}>
+                  <select
+                    style={{
+                      width: '100%',
+                      background: '#2b2b2b',
+                      borderRadius: borderRadius.lg,
+                      padding: `${spacing[2]} ${spacing[3]}`,
+                      paddingRight: '40px',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      color: '#FFFFFF',
+                      fontSize: typography.fontSize.sm,
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                      e.currentTarget.style.background = 'rgba(43, 43, 43, 0.95)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
+                      e.currentTarget.style.background = '#2b2b2b';
+                    }}
+                    value={item.zona_id || ''}
+                    onChange={(e) => patch(index, { zona_id: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                      Seleccionar zona
+                    </option>
+                    {uniqueZones.map((z: any) => (
+                      <option key={z.id} value={z.id} style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                        {z.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: '14px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      color: 'rgba(255,255,255,0.6)',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    ▼
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: spacing[3] }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: spacing[1],
+                  fontSize: typography.fontSize.sm,
+                  fontWeight: typography.fontWeight.medium,
+                  color: colors.light,
+                }}
+              >
+                Notas / referencias
+              </label>
+              <textarea
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: borderRadius.lg,
+                  padding: `${spacing[2]} ${spacing[3]}`,
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: colors.light,
+                  fontSize: typography.fontSize.sm,
+                  transition: 'all 0.2s ease',
+                  resize: 'vertical',
+                  minHeight: 80,
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.5)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+                placeholder="Ej. Entrada lateral, 2do piso"
+                value={item.referencias || ''}
+                onChange={(e) => patch(index, { referencias: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: spacing[2], alignItems: 'center', paddingTop: spacing[2], borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <button
                 type="button"
                 onClick={() => saveOne(index)}
@@ -359,17 +502,24 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
                 style={{
                   padding: `${spacing[2]} ${spacing[3]}`,
                   borderRadius: borderRadius.lg,
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
                   color: colors.light,
                   cursor: 'pointer',
                   fontSize: typography.fontSize.sm,
                   fontWeight: typography.fontWeight.medium,
                   transition: 'all 0.2s ease',
                 }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
               >
                 Cancelar
               </button>
+              <div style={{ flex: 1 }} />
               <button
                 type="button"
                 onClick={() => remove(index)}

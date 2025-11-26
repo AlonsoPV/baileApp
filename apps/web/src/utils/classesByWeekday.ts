@@ -16,9 +16,30 @@ export function getWeekdayLabel(key: WeekdayKey) {
 }
 
 /**
+ * Convierte nombre de día (string) a número (0-6)
+ */
+function dayNameToNumber(dayName: string | number): number | null {
+  if (typeof dayName === 'number' && dayName >= 0 && dayName <= 6) {
+    return dayName;
+  }
+  const normalized = String(dayName).toLowerCase().trim();
+  const map: Record<string, number> = {
+    'domingo': 0, 'dom': 0,
+    'lunes': 1, 'lun': 1,
+    'martes': 2, 'mar': 2,
+    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+    'jueves': 4, 'jue': 4,
+    'viernes': 5, 'vie': 5,
+    'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+  };
+  return map[normalized] ?? null;
+}
+
+/**
  * Toma clases con dia_semana o fecha y las agrupa por clave weekday 0-6.
  * - Si una clase tiene fecha -> calcula weekday desde esa fecha
- * - Si una clase tiene dia_semana -> usa ese valor
+ * - Si una clase tiene dia_semana (único) -> usa ese valor
+ * - Si una clase tiene diasSemana (array) -> expande en múltiples copias, una por cada día
  * - Si una clase no tiene ninguno, se ignora
  */
 export function groupClassesByWeekday(classes: Clase[]) {
@@ -26,6 +47,31 @@ export function groupClassesByWeekday(classes: Clase[]) {
   const map = new Map<WeekdayKey, Clase[]>();
   
   for (const c of classes) {
+    // Si tiene diasSemana (array), expandir en múltiples copias
+    if (c.diasSemana && Array.isArray(c.diasSemana) && c.diasSemana.length > 0) {
+      const dayNumbers: number[] = [];
+      for (const dayStr of c.diasSemana) {
+        const dayNum = dayNameToNumber(dayStr);
+        if (dayNum !== null && dayNum >= 0 && dayNum <= 6) {
+          dayNumbers.push(dayNum);
+        }
+      }
+      
+      // Crear una copia de la clase para cada día
+      for (const dayNum of dayNumbers) {
+        const wd = dayNum as WeekdayKey;
+        if (!map.has(wd)) map.set(wd, []);
+        // Crear una copia de la clase con el diaSemana específico para este día
+        map.get(wd)!.push({
+          ...c,
+          dia_semana: dayNum,
+          diaSemana: dayNum,
+        });
+      }
+      continue;
+    }
+    
+    // Lógica original para clases con un solo día
     let wd: WeekdayKey | null = null;
 
     if (c.fecha) {

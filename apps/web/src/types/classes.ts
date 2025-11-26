@@ -11,10 +11,17 @@ export type Clase = {
   // O clase por fecha puntual (YYYY-MM-DD)
   fecha?: string | null;
 
+  // Modo de fecha: 'especifica', 'semanal', o 'por_agendar'
+  fechaModo?: 'especifica' | 'semanal' | 'por_agendar';
+
+  // Modo de horario: 'especifica' (inicio/fin) o 'duracion' (duracionHoras)
+  horarioModo?: 'especifica' | 'duracion';
+  
   hora_inicio?: string | null; // 'HH:mm'
   hora_fin?: string | null;    // 'HH:mm'
   inicio?: string | null;      // Alias para hora_inicio
   fin?: string | null;         // Alias para hora_fin
+  duracionHoras?: number | null; // Duración en horas (ej: 1.5 = 1 hora 30 min)
 
   ubicacion?: string | null;
   ubicacionJson?: any; // Para ubicacion JSONB

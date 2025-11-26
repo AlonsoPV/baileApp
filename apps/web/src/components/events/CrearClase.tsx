@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import ZonaGroupedChips from '../profile/ZonaGroupedChips';
 
@@ -21,15 +21,19 @@ const colors = {
 
 export type CrearClaseValue = {
   nombre?: string;
-  tipo?: 'clases sueltas' | 'paquetes' | 'coreografia' | 'entrenamiento' | 'otro';
+  tipo?: 'clases sueltas' | 'paquetes' | 'coreografia' | 'entrenamiento' | 'otro' | 'personalizado';
   precio?: number | null;
   regla?: string;
   nivel?: string | null;
-  fechaModo?: 'especifica' | 'semanal';
+  descripcion?: string;
+  fechaModo?: 'especifica' | 'semanal' | 'por_agendar';
   fecha?: string;
   diaSemana?: number | null;
+  diasSemana?: number[]; // Array de días de la semana (0=Dom, 1=Lun, ..., 6=Sab)
+  horarioModo?: 'especifica' | 'duracion';
   inicio?: string;
   fin?: string;
+  duracionHoras?: number | null;
   ritmoId?: number | null;
   ritmoIds?: number[];
   zonaId?: number | null;
@@ -147,7 +151,7 @@ const normalizeTime = (t?: string) => {
 };
 
 const tipos: Array<NonNullable<CrearClaseValue['tipo']>> = [
-  'clases sueltas', 'paquetes', 'coreografia', 'entrenamiento', 'otro'
+  'clases sueltas', 'paquetes', 'coreografia', 'entrenamiento', 'otro', 'personalizado'
 ];
 
 const diasSemana = [
@@ -159,6 +163,28 @@ const diasSemana = [
   { id: 5, nombre: 'Viernes' },
   { id: 6, nombre: 'Sábado' },
 ];
+
+// Convertir números a nombres de días (para guardar en backend)
+const numberToDayName = (num: number): string | null => {
+  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  return (num >= 0 && num <= 6) ? dayNames[num] : null;
+};
+
+// Convertir nombres de días a números (para cargar desde backend)
+const dayNameToNumber = (dayName: string | number): number | null => {
+  if (typeof dayName === 'number') return dayName;
+  const normalized = String(dayName).toLowerCase().trim();
+  const map: Record<string, number> = {
+    'domingo': 0, 'dom': 0,
+    'lunes': 1, 'lun': 1,
+    'martes': 2, 'mar': 2,
+    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+    'jueves': 4, 'jue': 4,
+    'viernes': 5, 'vie': 5,
+    'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+  };
+  return map[normalized] ?? null;
+};
 
 const niveles = [
   'Todos los niveles',
@@ -187,17 +213,30 @@ export default function CrearClase({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  // Usar ref para onChange para evitar cambios en el array de dependencias
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  
   const [form, setForm] = useState<CrearClaseValue>({
     nombre: value?.nombre || '',
     tipo: value?.tipo || 'clases sueltas',
     precio: value?.precio ?? null,
     regla: value?.regla || '',
     nivel: value?.nivel ?? null,
+    descripcion: value?.descripcion || '',
     fechaModo: enableDate ? (value?.fechaModo || 'especifica') : undefined,
     fecha: enableDate ? (value?.fecha || '') : undefined,
     diaSemana: enableDate ? (value?.diaSemana ?? null) : null,
+    diasSemana: enableDate && value?.diasSemana && Array.isArray(value.diasSemana) ? (() => {
+      // Convertir strings a números si es necesario
+      return value.diasSemana.map((d: string | number) => typeof d === 'number' ? d : dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
+    })() : (value?.diaSemana !== null && value?.diaSemana !== undefined ? [value.diaSemana] : []),
+    horarioModo: value?.horarioModo || (value?.duracionHoras ? 'duracion' : (value?.fechaModo === 'por_agendar' ? 'duracion' : 'especifica')),
     inicio: normalizeTime(value?.inicio),
     fin: normalizeTime(value?.fin),
+    duracionHoras: value?.duracionHoras ?? null,
     ritmoId: value?.ritmoId ?? (value?.ritmoIds && value.ritmoIds.length ? value.ritmoIds[0] ?? null : null),
     ritmoIds: value?.ritmoIds ? [...value.ritmoIds] : (value?.ritmoId ? [value.ritmoId] : []),
     zonaId: value?.zonaId ?? null,
@@ -218,11 +257,18 @@ export default function CrearClase({
         precio: effective?.precio ?? null,
         regla: effective?.regla || '',
         nivel: effective?.nivel ?? null,
+        descripcion: effective?.descripcion || '',
         fechaModo: enableDate ? (effective?.fechaModo || 'especifica') : undefined,
         fecha: enableDate ? (effective?.fecha || '') : undefined,
         diaSemana: enableDate ? (effective?.diaSemana ?? null) : null,
+        diasSemana: enableDate && effective?.diasSemana && Array.isArray(effective.diasSemana) ? (() => {
+      // Convertir strings a números si es necesario
+      return effective.diasSemana.map((d: string | number) => typeof d === 'number' ? d : dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
+    })() : (effective?.diaSemana !== null && effective?.diaSemana !== undefined ? [effective.diaSemana] : []),
+        horarioModo: effective?.horarioModo || (effective?.duracionHoras ? 'duracion' : (effective?.fechaModo === 'por_agendar' ? 'duracion' : 'especifica')),
         inicio: normalizeTime(effective?.inicio),
         fin: normalizeTime(effective?.fin),
+        duracionHoras: effective?.duracionHoras ?? null,
         ritmoId: effective?.ritmoId ?? (effective?.ritmoIds && effective.ritmoIds.length ? effective.ritmoIds[0] ?? null : null),
         ritmoIds: effective?.ritmoIds ? [...effective.ritmoIds] : (effective?.ritmoId ? [effective.ritmoId] : []),
         zonaId: effective?.zonaId ?? null,
@@ -267,6 +313,24 @@ export default function CrearClase({
       return next;
     });
   }, [onChange]);
+
+  // Ajustar horarioModo cuando cambia fechaModo a 'por_agendar'
+  useEffect(() => {
+    if (enableDate && form.fechaModo === 'por_agendar' && form.horarioModo !== 'duracion') {
+      setForm(prev => {
+        const updated = {
+          ...prev,
+          horarioModo: 'duracion' as const,
+          // Limpiar inicio y fin cuando se cambia a por_agendar
+          inicio: undefined,
+          fin: undefined
+        };
+        // Usar ref para onChange para mantener array de dependencias estable
+        onChangeRef.current?.(updated);
+        return updated;
+      });
+    }
+  }, [form.fechaModo, form.horarioModo, enableDate]);
 
   const setField = useCallback((k: keyof CrearClaseValue, v: any) => {
     updateForm(prev => ({ ...prev, [k]: v }));
@@ -316,35 +380,49 @@ export default function CrearClase({
 
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
-    const horarioOk = Boolean(form.inicio && form.fin);
+    const porAgendar = form.fechaModo === 'por_agendar';
+    const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
+    // Si es por agendar, siempre requiere duración
+    const horarioOk = porAgendar 
+      ? Boolean(form.duracionHoras && form.duracionHoras > 0)
+      : (
+        horarioModo === 'duracion' 
+          ? Boolean(form.duracionHoras && form.duracionHoras > 0) 
+          : Boolean(form.inicio && form.fin)
+      );
     const fechaOk = enableDate
-      ? form.fechaModo === 'especifica' ? Boolean(form.fecha) : form.diaSemana !== null
+      ? form.fechaModo === 'por_agendar' ? true
+        : form.fechaModo === 'especifica' ? Boolean(form.fecha)
+        : (form.diasSemana && form.diasSemana.length > 0) || form.diaSemana !== null
       : true;
     return nombreOk && horarioOk && fechaOk;
   }, [form, enableDate]);
 
   // Validaciones visuales (solo estilos, sin cambiar estructura)
+  const porAgendar = form.fechaModo === 'por_agendar';
+  const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
   const invalid = {
     nombre: !(form.nombre || '').trim(),
     fecha: enableDate && form.fechaModo === 'especifica' && !form.fecha,
-    dia: enableDate && form.fechaModo === 'semanal' && form.diaSemana === null,
-    inicio: !form.inicio,
-    fin: !form.fin,
+    dia: enableDate && form.fechaModo === 'semanal' && (!form.diasSemana || form.diasSemana.length === 0) && form.diaSemana === null,
+    inicio: porAgendar ? false : (horarioModo === 'especifica' ? !form.inicio : false),
+    fin: porAgendar ? false : (horarioModo === 'especifica' ? !form.fin : false),
+    duracion: (porAgendar || horarioModo === 'duracion') ? !(form.duracionHoras && form.duracionHoras > 0) : false,
   };
 
   const completion = useMemo(() => {
     const total = enableDate ? 5 : 4;
     let done = 0;
     if (!invalid.nombre) done++;
-    if (!invalid.inicio) done++;
-    if (!invalid.fin) done++;
+    if (horarioModo === 'duracion' ? !invalid.duracion : (!invalid.inicio && !invalid.fin)) done++;
     if (enableDate) {
-      if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
+      if (form.fechaModo === 'por_agendar') done++;
+      else if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
     }
     const hasRitmo = (form.ritmoIds && form.ritmoIds.length > 0) || !!form.ritmoId;
     if (hasRitmo) done++;
     return Math.round((done / total) * 100);
-  }, [invalid, form.fechaModo, form.ritmoIds, form.ritmoId, enableDate]);
+  }, [invalid, form.fechaModo, form.ritmoIds, form.ritmoId, enableDate, horarioModo]);
 
   const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
 
@@ -355,11 +433,15 @@ export default function CrearClase({
       precio: null,
       regla: '',
       nivel: null,
+      descripcion: '',
       fechaModo: enableDate ? 'especifica' : undefined,
       fecha: enableDate ? '' : undefined,
       diaSemana: enableDate ? null : null,
+      diasSemana: [],
+      horarioModo: form.fechaModo === 'por_agendar' ? 'duracion' : 'especifica',
       inicio: '',
       fin: '',
+      duracionHoras: null,
       ritmoId: null,
       ritmoIds: [],
       zonaId: null,
@@ -439,11 +521,27 @@ export default function CrearClase({
                     min={0}
                     step="1"
                     placeholder="Ej. 200"
-                    value={form.precio ?? ''}
-                    onChange={(e) => setField('precio', e.target.value === '' ? null : Number(e.target.value))}
+                    value={form.precio !== null && form.precio !== undefined ? form.precio : ''}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      // Si está vacío, guardar como null (no mostrar nada)
+                      if (val === '' || val === null || val === undefined) {
+                        setField('precio', null);
+                      } else {
+                        const num = Number(val);
+                        // Number("") devuelve 0, pero queremos null si está vacío
+                        // Si el valor es un número válido (incluyendo 0), guardarlo
+                        if (Number.isNaN(num)) {
+                          setField('precio', null);
+                        } else {
+                          // Permitir 0 explícitamente
+                          setField('precio', num);
+                        }
+                      }
+                    }}
                   />
                 </div>
-                <div style={helpText()}>Déjalo vacío para marcar como <b>Gratis</b></div>
+                <div style={helpText()}>Déjalo vacío para no mostrar precio. Pon <b>0</b> para marcar como Gratis</div>
               </div>
 
               <div>
@@ -475,6 +573,27 @@ export default function CrearClase({
               ))}
             </div>
 
+            {/* DESCRIPCIÓN */}
+            <div style={sectionHeader}><span>📄</span><b>Descripción</b></div>
+            <div>
+              <div style={label}>Descripción de la clase (opcional)</div>
+              <div style={fieldShell()}>
+                <div style={leftIcon('📝')} />
+                <textarea
+                  style={{
+                    ...inputBase,
+                    minHeight: '80px',
+                    resize: 'vertical',
+                    paddingTop: '12px',
+                    paddingBottom: '12px',
+                  }}
+                  placeholder="Describe la clase, qué se enseñará, requisitos, etc."
+                  value={form.descripcion || ''}
+                  onChange={(e) => setField('descripcion', e.target.value)}
+                />
+              </div>
+            </div>
+
             {/* FECHA */}
             {enableDate && (
               <>
@@ -483,12 +602,33 @@ export default function CrearClase({
                   <div>
                     <div style={label}>Modo</div>
                     <div style={chipWrap}>
-                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={() => setField('fechaModo', 'especifica')}>Específica</button>
-                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={() => setField('fechaModo', 'semanal')}>Semanal</button>
+                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={() => {
+                        setField('fechaModo', 'especifica');
+                        // Si cambia a específica y no tiene horarioModo, establecerlo en 'especifica'
+                        if (!form.horarioModo || form.horarioModo === 'duracion') {
+                          setField('horarioModo', 'especifica');
+                        }
+                      }}>Específica</button>
+                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={() => {
+                        setField('fechaModo', 'semanal');
+                        // Si cambia a semanal y no tiene horarioModo, establecerlo en 'especifica'
+                        if (!form.horarioModo || form.horarioModo === 'duracion') {
+                          setField('horarioModo', 'especifica');
+                        }
+                      }}>Semanal</button>
+                      <button type="button" style={chip(form.fechaModo === 'por_agendar')} onClick={() => {
+                        setField('fechaModo', 'por_agendar');
+                        // Cuando se elige "por agendar", establecer automáticamente horarioModo a 'duracion'
+                        setField('horarioModo', 'duracion');
+                      }}>Por agendar con academia</button>
                     </div>
                   </div>
                   <div>
-                    {form.fechaModo === 'especifica' ? (
+                    {form.fechaModo === 'por_agendar' ? (
+                      <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', color: colors.text, fontSize: 13 }}>
+                        📅 La fecha y hora se acordarán directamente con la academia
+                      </div>
+                    ) : form.fechaModo === 'especifica' ? (
                       <>
                         <div style={fieldShell(invalid.fecha)}>
                           <div style={leftIcon('📆')} />
@@ -504,18 +644,49 @@ export default function CrearClase({
                     ) : (
                       <>
                         <div style={chipWrap}>
-                          {diasSemana.map(d => (
-                            <button
-                              type="button"
-                              key={d.id}
-                              style={chip(form.diaSemana === d.id)}
-                              onClick={() => setField('diaSemana', d.id)}
-                            >
-                              {d.nombre}
-                            </button>
-                          ))}
+                          {diasSemana.map(d => {
+                            const diasSeleccionados = form.diasSemana || [];
+                            const estaSeleccionado = diasSeleccionados.includes(d.id);
+                            return (
+                              <button
+                                type="button"
+                                key={d.id}
+                                style={chip(estaSeleccionado)}
+                                onClick={() => {
+                                  const diasActuales = form.diasSemana || [];
+                                  if (estaSeleccionado) {
+                                    // Deseleccionar día
+                                    const nuevosDias = diasActuales.filter((dia: number) => dia !== d.id);
+                                    setField('diasSemana', nuevosDias);
+                                    // Si queda un solo día, también actualizar diaSemana para compatibilidad
+                                    if (nuevosDias.length === 1) {
+                                      setField('diaSemana', nuevosDias[0]);
+                                    } else if (nuevosDias.length === 0) {
+                                      setField('diaSemana', null);
+                                    }
+                                  } else {
+                                    // Seleccionar día
+                                    const nuevosDias = [...diasActuales, d.id].sort();
+                                    setField('diasSemana', nuevosDias);
+                                    // Actualizar diaSemana con el primer día para compatibilidad
+                                    setField('diaSemana', nuevosDias[0]);
+                                  }
+                                }}
+                              >
+                                {d.nombre}
+                              </button>
+                            );
+                          })}
                         </div>
-                        {invalid.dia && <div style={helpText(true)}>Elige un día de la semana</div>}
+                        {invalid.dia && <div style={helpText(true)}>Elige al menos un día de la semana</div>}
+                        {(form.diasSemana && form.diasSemana.length > 0) && (
+                          <div style={helpText()}>
+                            {form.diasSemana.length === 1 
+                              ? `Día seleccionado: ${diasSemana.find(d => d.id === form.diasSemana![0])?.nombre}`
+                              : `${form.diasSemana.length} días seleccionados: ${form.diasSemana.map(d => diasSemana.find(ds => ds.id === d)?.nombre).join(', ')}`
+                            }
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -524,38 +695,120 @@ export default function CrearClase({
             )}
 
             {/* HORARIO */}
-            <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
-            <div style={row}>
-              <div>
-                <div style={label}>Hora inicio (HH:MM)</div>
-                <div style={fieldShell(invalid.inicio)}>
-                  <div style={leftIcon('🟢')} />
-                  <input
-                    type="time"
-                    step={60}
-                    style={inputBase}
-                    value={form.inicio || ''}
-                    onChange={(e) => setField('inicio', normalizeTime(e.target.value))}
-                  />
+            {!porAgendar && (
+              <>
+                <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
+                <div style={row}>
+                  <div>
+                    <div style={label}>Modo de horario</div>
+                    <div style={chipWrap}>
+                      <button 
+                        type="button" 
+                        style={chip(horarioModo === 'especifica')} 
+                        onClick={() => setField('horarioModo', 'especifica')}
+                      >
+                        Hora específica
+                      </button>
+                      <button 
+                        type="button" 
+                        style={chip(horarioModo === 'duracion')} 
+                        onClick={() => setField('horarioModo', 'duracion')}
+                      >
+                        Duración (horas)
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
-              </div>
+                
+                {horarioModo === 'especifica' ? (
+                  <div style={row}>
+                    <div>
+                      <div style={label}>Hora inicio (HH:MM)</div>
+                      <div style={fieldShell(invalid.inicio)}>
+                        <div style={leftIcon('🟢')} />
+                        <input
+                          type="time"
+                          step={60}
+                          style={inputBase}
+                          value={form.inicio || ''}
+                          onChange={(e) => setField('inicio', normalizeTime(e.target.value))}
+                        />
+                      </div>
+                      {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
+                    </div>
 
-              <div>
-                <div style={label}>Hora fin (HH:MM)</div>
-                <div style={fieldShell(invalid.fin)}>
-                  <div style={leftIcon('🔴')} />
-                  <input
-                    type="time"
-                    step={60}
-                    style={inputBase}
-                    value={form.fin || ''}
-                    onChange={(e) => setField('fin', normalizeTime(e.target.value))}
-                  />
+                    <div>
+                      <div style={label}>Hora fin (HH:MM)</div>
+                      <div style={fieldShell(invalid.fin)}>
+                        <div style={leftIcon('🔴')} />
+                        <input
+                          type="time"
+                          step={60}
+                          style={inputBase}
+                          value={form.fin || ''}
+                          onChange={(e) => setField('fin', normalizeTime(e.target.value))}
+                        />
+                      </div>
+                      {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={row}>
+                    <div>
+                      <div style={label}>Duración (horas)</div>
+                      <div style={fieldShell(invalid.duracion)}>
+                        <div style={leftIcon('⏱️')} />
+                        <input
+                          type="number"
+                          min="0.5"
+                          step="0.5"
+                          style={inputBase}
+                          placeholder="Ej. 1.5"
+                          value={form.duracionHoras ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setField('duracionHoras', val === '' ? null : parseFloat(val));
+                          }}
+                        />
+                      </div>
+                      {invalid.duracion && <div style={helpText(true)}>Indica la duración en horas (ej: 1, 1.5, 2)</div>}
+                      <div style={helpText()}>Ej: 1 = 1 hora, 1.5 = 1 hora 30 min, 2 = 2 horas</div>
+                    </div>
+                    <div></div>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {/* HORARIO - Solo duración cuando es "Por agendar" */}
+            {porAgendar && (
+              <>
+                <div style={sectionHeader}><span>⏰</span><b>Duración Estimada</b></div>
+                <div style={row}>
+                  <div>
+                    <div style={label}>Duración (horas)</div>
+                    <div style={fieldShell(invalid.duracion)}>
+                      <div style={leftIcon('⏱️')} />
+                      <input
+                        type="number"
+                        min="0.5"
+                        step="0.5"
+                        style={inputBase}
+                        placeholder="Ej. 1.5"
+                        value={form.duracionHoras ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setField('duracionHoras', val === '' ? null : parseFloat(val));
+                        }}
+                      />
+                    </div>
+                    {invalid.duracion && <div style={helpText(true)}>Indica la duración estimada en horas</div>}
+                    <div style={helpText()}>Ej: 1 = 1 hora, 1.5 = 1 hora 30 min, 2 = 2 horas</div>
+                  </div>
+                  <div></div>
                 </div>
-                {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
-              </div>
-            </div>
+              </>
+            )}
 
             {/* RITMO + ZONA */}
             <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>

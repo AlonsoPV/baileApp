@@ -12,6 +12,7 @@ import { urls } from '@/lib/urls';
 import SeoHead from '@/components/SeoHead';
 import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
 import { getMediaBySlot } from '@/utils/mediaSlots';
+import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -25,6 +26,7 @@ export default function ClassPublicScreen() {
   const rawId = (params as any)?.id || sp.get('id') || '';
   const classIdParam = sp.get('classId') || sp.get('claseId') || '';
   const classIndexParam = sp.get('i') || sp.get('index') || '';
+  const diaParam = sp.get('dia'); // Día específico para clases con múltiples días
   const idNum = Number(rawId);
 
   const isTeacher = sourceType === 'teacher';
@@ -150,6 +152,9 @@ export default function ClassPublicScreen() {
         const precio = costoEnClase?.precio;
         if (typeof precio === 'number') {
           console.log('[ClassPublicScreen] ✅ Costo encontrado directamente en el item del cronograma:', { costoEnClase });
+          if (precio === 0) {
+            return 'Gratis';
+          }
           return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -157,6 +162,8 @@ export default function ClassPublicScreen() {
             maximumFractionDigits: 0,
           }).format(precio);
         }
+        // Si precio es null/undefined, retornar undefined para no mostrar nada
+        return undefined;
       }
       
       // PRIORIDAD 2: Buscar en el array de costos (fallback para datos antiguos)
@@ -283,6 +290,9 @@ export default function ClassPublicScreen() {
         
         const precio = match?.precio;
         if (typeof precio === 'number') {
+          if (precio === 0) {
+            return 'Gratis';
+          }
           return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -295,6 +305,9 @@ export default function ClassPublicScreen() {
         if (nums.length) {
           const min = Math.min(...(nums as number[]));
           console.log('[ClassPublicScreen] 💰 Usando precio mínimo:', min);
+          if (min === 0) {
+            return 'Gratis';
+          }
           return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -574,8 +587,16 @@ export default function ClassPublicScreen() {
                 {/* Chip de fecha o día */}
                 {(() => {
                   if (selectedClass?.fecha) {
-                    // Fecha específica
-                    const fechaStr = new Date(selectedClass.fecha).toLocaleDateString('es-ES', { 
+                    // Fecha específica - parsear como hora local para evitar problemas de zona horaria
+                    const fechaDate = (() => {
+                      const fechaValue = selectedClass.fecha;
+                      // Si la fecha ya incluye hora, extraer solo la parte de fecha
+                      const fechaOnly = fechaValue.includes('T') ? fechaValue.split('T')[0] : fechaValue;
+                      const [year, month, day] = fechaOnly.split('-').map(Number);
+                      // Crear fecha en hora local (no UTC) para evitar mostrar día anterior
+                      return new Date(year, month - 1, day);
+                    })();
+                    const fechaStr = fechaDate.toLocaleDateString('es-ES', { 
                       weekday: 'short', 
                       day: 'numeric', 
                       month: 'short' 
@@ -585,6 +606,30 @@ export default function ClassPublicScreen() {
                         📅 {fechaStr}
                       </span>
                     );
+                  } else if (diaParam !== null) {
+                    // Si hay un parámetro de día específico en la URL, mostrar solo ese día
+                    const diaNum = Number(diaParam);
+                    if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                      const dayName = dayNames[diaNum] || 'Día no especificado';
+                      return (
+                        <span className="chip chip-date">
+                          📅 {dayName}
+                        </span>
+                      );
+                    }
+                  } else if (diaParam !== null) {
+                    // Si hay un parámetro de día específico en la URL, mostrar solo ese día
+                    const diaNum = Number(diaParam);
+                    if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                      const dayName = dayNames[diaNum] || 'Día no especificado';
+                      return (
+                        <span className="chip chip-date">
+                          📅 {dayName}
+                        </span>
+                      );
+                    }
                   } else if (selectedClass?.diaSemana !== undefined && selectedClass?.diaSemana !== null) {
                     // Día de la semana
                     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -595,10 +640,29 @@ export default function ClassPublicScreen() {
                       </span>
                     );
                   } else if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
-                    // Múltiples días
+                    // Múltiples días - convertir números/strings a nombres de días
+                    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const dayNameMap: Record<string, string> = {
+                      'domingo': 'Domingo', 'dom': 'Domingo',
+                      'lunes': 'Lunes', 'lun': 'Lunes',
+                      'martes': 'Martes', 'mar': 'Martes',
+                      'miércoles': 'Miércoles', 'miercoles': 'Miércoles', 'mié': 'Miércoles', 'mie': 'Miércoles',
+                      'jueves': 'Jueves', 'jue': 'Jueves',
+                      'viernes': 'Viernes', 'vie': 'Viernes',
+                      'sábado': 'Sábado', 'sabado': 'Sábado', 'sáb': 'Sábado', 'sab': 'Sábado',
+                    };
+                    const diasLegibles = selectedClass.diasSemana.map((d: string | number) => {
+                      if (typeof d === 'number' && d >= 0 && d <= 6) {
+                        return dayNames[d];
+                      }
+                      if (typeof d === 'string') {
+                        return dayNameMap[d.toLowerCase()] || d;
+                      }
+                      return null;
+                    }).filter((d: string | null) => d !== null);
                     return (
                       <span className="chip chip-date">
-                        📅 {selectedClass.diasSemana.join(', ')}
+                        📅 {diasLegibles.join(', ')}
                       </span>
                     );
                   }
@@ -608,7 +672,7 @@ export default function ClassPublicScreen() {
                 {scheduleLabel && (
                   <span className="chip chip-time">🕒 {scheduleLabel}</span>
                 )}
-                {typeof costLabel === 'string' && costLabel && (
+                {costLabel && (
                   <span className="chip chip-cost">💰 {costLabel}</span>
                 )}
                 {locationLabel && (
@@ -671,22 +735,43 @@ export default function ClassPublicScreen() {
                       description={`Clase de ${classTitle} con ${creatorName}`}
                       location={locationLabel}
                       fecha={selectedClass?.fecha || null}
-                      diaSemana={selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null}
-                      diasSemana={selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) ? (() => {
-                        const dayMap: Record<string, number> = {
-                          'domingo': 0, 'dom': 0,
-                          'lunes': 1, 'lun': 1,
-                          'martes': 2, 'mar': 2,
-                          'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-                          'jueves': 4, 'jue': 4,
-                          'viernes': 5, 'vie': 5,
-                          'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                        };
-                        const dias = selectedClass.diasSemana
-                          .map((d: string) => dayMap[String(d).toLowerCase().trim()])
-                          .filter((d: number | undefined) => d !== undefined) as number[];
-                        return dias.length > 0 ? dias : null;
-                      })() : null}
+                      diaSemana={(() => {
+                        // Si hay un parámetro dia en la URL, usar ese día específico
+                        if (diaParam !== null) {
+                          const diaNum = Number(diaParam);
+                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                            return diaNum;
+                          }
+                        }
+                        // Si no, usar el diaSemana de la clase
+                        return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
+                      })()}
+                      diasSemana={(() => {
+                        // Si hay un parámetro dia en la URL, no pasar diasSemana (solo ese día específico)
+                        if (diaParam !== null) {
+                          const diaNum = Number(diaParam);
+                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                            return null; // No pasar diasSemana, solo diaSemana con el día específico
+                          }
+                        }
+                        // Si no hay parámetro dia, usar la lógica normal
+                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana)) {
+                          const dayMap: Record<string, number> = {
+                            'domingo': 0, 'dom': 0,
+                            'lunes': 1, 'lun': 1,
+                            'martes': 2, 'mar': 2,
+                            'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                            'jueves': 4, 'jue': 4,
+                            'viernes': 5, 'vie': 5,
+                            'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                          };
+                          const dias = selectedClass.diasSemana
+                            .map((d: string) => dayMap[String(d).toLowerCase().trim()])
+                            .filter((d: number | undefined) => d !== undefined) as number[];
+                          return dias.length > 0 ? dias : null;
+                        }
+                        return null;
+                      })()}
                       start={(() => {
                         try {
                           if (selectedClass.fecha) {
@@ -694,7 +779,23 @@ export default function ClassPublicScreen() {
                             const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
                             return new Date(`${fechaStr}T${hora}:00`);
                           }
-                          // Si es clase semanal, calcular próxima ocurrencia
+                          // Si es clase semanal, calcular próxima ocurrencia usando el día específico de la URL si está presente
+                          const diaParaCalcular = (() => {
+                            if (diaParam !== null) {
+                              const diaNum = Number(diaParam);
+                              if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                                return diaNum;
+                              }
+                            }
+                            return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
+                          })();
+                          
+                          if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                            const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
+                            return calculateNextDateWithTime(diaParaCalcular, hora);
+                          }
+                          
+                          // Fallback: usar fecha/hora actual
                           const now = new Date();
                           const hora = (selectedClass.inicio || '20:00').split(':').slice(0, 2).join(':');
                           now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);
@@ -710,6 +811,31 @@ export default function ClassPublicScreen() {
                             const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
                             return new Date(`${fechaStr}T${hora}:00`);
                           }
+                          // Si es clase semanal, calcular próxima ocurrencia usando el día específico de la URL si está presente
+                          const diaParaCalcular = (() => {
+                            if (diaParam !== null) {
+                              const diaNum = Number(diaParam);
+                              if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
+                                return diaNum;
+                              }
+                            }
+                            return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
+                          })();
+                          
+                          if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                            const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
+                            const startDate = calculateNextDateWithTime(diaParaCalcular, selectedClass.inicio || '20:00');
+                            const endDate = new Date(startDate);
+                            const [horaFin, minutoFin] = hora.split(':').map(Number);
+                            endDate.setHours(horaFin || 22, minutoFin || 0, 0, 0);
+                            // Si la hora de fin es menor o igual a la de inicio, agregar 2 horas
+                            if (endDate.getTime() <= startDate.getTime()) {
+                              endDate.setHours(startDate.getHours() + 2);
+                            }
+                            return endDate;
+                          }
+                          
+                          // Fallback: usar fecha/hora actual
                           const now = new Date();
                           const hora = (selectedClass.fin || selectedClass.inicio || '22:00').split(':').slice(0, 2).join(':');
                           now.setHours(parseInt(hora.split(':')[0]), parseInt(hora.split(':')[1]), 0, 0);

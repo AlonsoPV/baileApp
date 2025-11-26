@@ -9,6 +9,7 @@ type ClaseItem = {
   titulo?: string;
   fecha?: string; // YYYY-MM-DD si específica
   diasSemana?: string[]; // si semanal
+  diaSemana?: number; // día específico (0-6) para clases expandidas con múltiples días
   inicio?: string; // HH:MM
   fin?: string;    // HH:MM
   ubicacion?: string;
@@ -72,25 +73,41 @@ export default function ClassCard({ item }: Props) {
   // Si hay ownerType y ownerId, usar la ruta con parámetros
   // Si no, usar query params como fallback
   const href = React.useMemo(() => {
+    // Construir los query params
+    const params = new URLSearchParams();
+    
+    if (item.cronogramaIndex !== null && item.cronogramaIndex !== undefined) {
+      params.set('i', String(item.cronogramaIndex));
+    }
+    
+    // Si hay diaSemana específico (para clases expandidas con múltiples días), incluirlo
+    if (typeof item.diaSemana === 'number' && item.diaSemana >= 0 && item.diaSemana <= 6) {
+      params.set('dia', String(item.diaSemana));
+    }
+    
+    const queryString = params.toString();
+    const queryParam = queryString ? `?${queryString}` : '';
+    
     if (item.ownerType && item.ownerId) {
       // Asegurar que ownerId sea un string válido
       const ownerIdStr = String(item.ownerId);
-      // Si hay cronogramaIndex, incluirlo en la URL como query param
-      const indexParam = (item.cronogramaIndex !== null && item.cronogramaIndex !== undefined) ? `?i=${item.cronogramaIndex}` : '';
-      const route = `/clase/${item.ownerType}/${ownerIdStr}${indexParam}`;
-     
+      const route = `/clase/${item.ownerType}/${ownerIdStr}${queryParam}`;
       return route;
     }
     if (item.ownerId) {
       const ownerIdStr = String(item.ownerId);
-      const indexParam = (item.cronogramaIndex !== null && item.cronogramaIndex !== undefined) ? `&i=${item.cronogramaIndex}` : '';
-      const route = `/clase?type=${item.ownerType || 'teacher'}&id=${ownerIdStr}${indexParam}`;
-      
+      if (queryString) {
+        params.set('type', item.ownerType || 'teacher');
+        params.set('id', ownerIdStr);
+        const route = `/clase?${params.toString()}`;
+        return route;
+      }
+      const route = `/clase?type=${item.ownerType || 'teacher'}&id=${ownerIdStr}`;
       return route;
     }
     const route = `/clase?type=${item.ownerType || 'teacher'}`;
-   return route;
-  }, [item.ownerType, item.ownerId, item.cronogramaIndex]);
+    return route;
+  }, [item.ownerType, item.ownerId, item.cronogramaIndex, item.diaSemana]);
   const normalizeUrl = (u?: string) => {
     if (!u) return u;
     const v = String(u).trim();
@@ -184,7 +201,11 @@ export default function ClassCard({ item }: Props) {
           </>
         )}
         {isSemanal ? (
-          <span style={chip}>🗓️ {item.diasSemana!.join(', ')}</span>
+          <span style={chip}>🗓️ {
+            typeof item.diaSemana === 'number' 
+              ? ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][item.diaSemana] || item.diasSemana!.join(', ')
+              : item.diasSemana!.join(', ')
+          }</span>
         ) : (
           item.fecha && <span style={chip}>🗓️ {fmtDate(item.fecha)}</span>
         )}

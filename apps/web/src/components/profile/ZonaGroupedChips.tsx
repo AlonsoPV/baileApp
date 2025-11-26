@@ -129,11 +129,22 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
 
+  // TODOS LOS HOOKS DEBEN ESTAR ANTES DE CUALQUIER RETURN TEMPRANO
+  // Mover selectedZonesFlat useMemo antes del return temprano
+  const selectedZonesFlat = React.useMemo(
+    () =>
+      relevantGroups
+        .flatMap((g) => g.items)
+        .filter((z) => selectedSet.has(z.id)),
+    [relevantGroups, selectedSet]
+  );
+
   // Return temprano DESPUÉS de todos los hooks
   if (mode === "display" && relevantGroups.length === 0) {
     return null;
   }
 
+  // Funciones auxiliares (no hooks, pueden estar después del return temprano)
   const toggleGroup = (groupId: string) => {
     setExpanded((prev) => ({
       ...prev,
@@ -176,14 +187,6 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           childPadding: "5px 10px",
           childFont: "0.82rem",
         };
-
-  const selectedZonesFlat = React.useMemo(
-    () =>
-      relevantGroups
-        .flatMap((g) => g.items)
-        .filter((z) => selectedSet.has(z.id)),
-    [relevantGroups, selectedSet]
-  );
 
   // Modo display: sólo chips elegidas (sin chips padre)
   if (mode === "display") {

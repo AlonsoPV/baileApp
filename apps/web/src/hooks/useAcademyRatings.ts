@@ -186,25 +186,43 @@ export function useMyAcademyRating(academyId?: number) {
     queryFn: async () => {
       if (!academyId || !user?.id) return null;
 
-      const { data, error } = await supabase
-        .from('academy_ratings')
-        .select('*')
-        .eq('academy_id', academyId)
-        .eq('user_id', user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('academy_ratings')
+          .select('*')
+          .eq('academy_id', academyId)
+          .eq('user_id', user.id)
+          .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No rating found
+        if (error) {
+          // PGRST116 = No rows found
+          if (error.code === 'PGRST116') {
+            return null;
+          }
+          
+          // Error 406 = Not Acceptable (puede ser problema de headers o RLS)
+          if (error.message?.includes('406') || error.code === '406') {
+            console.warn('[useMyAcademyRating] Error 406 - Posible problema de autenticación o RLS:', error);
+            return null;
+          }
+          
+          console.error('[useMyAcademyRating] Error:', error);
           return null;
         }
-        console.error('[useMyAcademyRating] Error:', error);
+
+        return data as AcademyRating;
+      } catch (err: any) {
+        // Capturar errores de red o otros errores inesperados
+        if (err?.message?.includes('406') || err?.status === 406) {
+          console.warn('[useMyAcademyRating] Error 406 capturado:', err);
+          return null;
+        }
+        console.error('[useMyAcademyRating] Error inesperado:', err);
         return null;
       }
-
-      return data as AcademyRating;
     },
     enabled: !!academyId && !!user?.id,
+    retry: false, // No reintentar para evitar spam de errores
   });
 }
 

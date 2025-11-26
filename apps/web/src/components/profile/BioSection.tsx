@@ -9,7 +9,8 @@ import {
   FaSpotify,
   FaWhatsapp,
   FaGlobe,
-  FaEnvelope
+  FaEnvelope,
+  FaTelegram
 } from 'react-icons/fa';
 
 interface BioSectionProps {
@@ -25,6 +26,8 @@ interface BioSectionProps {
     spotify?: string;
     whatsapp?: string;
     website?: string;
+    web?: string;
+    telegram?: string;
   } | null;
 }
 
@@ -38,7 +41,18 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
   }, [bio, redes]);
 
   // Normalizar redes sociales (pueden venir en diferentes formatos)
-  const socialLinks = redes || {};
+  const rawLinks = redes || {};
+  
+  // Normalizar 'web' a 'website' para compatibilidad y evitar duplicados
+  // Si existe website, usar solo website (excluir web)
+  // Si solo existe web, normalizar a website (excluir web del resultado)
+  const { web, website, ...otherLinks } = rawLinks;
+  const websiteNormalized = website || web; // Usar website si existe, si no usar web
+  
+  const socialLinks = {
+    ...otherLinks,
+    ...(websiteNormalized ? { website: websiteNormalized } : {}),
+  };
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
@@ -61,7 +75,10 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
       case 'email':
         return <FaEnvelope size={20} />;
       case 'website':
+      case 'web':
         return <FaGlobe size={20} />;
+      case 'telegram':
+        return <FaTelegram size={20} />;
       default:
         return null;
     }
@@ -88,7 +105,10 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
       case 'email':
         return '#EA4335';
       case 'website':
+      case 'web':
         return '#6C757D';
+      case 'telegram':
+        return '#0088cc';
       default:
         return '#999';
     }
@@ -131,7 +151,17 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         return '#';
       }
       case 'website':
+      case 'web': {
+        // Si no empieza con http/https, agregarlo
+        if (!username.startsWith('http://') && !username.startsWith('https://')) {
+          return `https://${username}`;
+        }
         return username;
+      }
+      case 'telegram': {
+        const cleanUsername = username.replace('@', '').replace(/^t\.me\//, '');
+        return `https://t.me/${cleanUsername}`;
+      }
       default:
         return '#';
     }

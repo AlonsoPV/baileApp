@@ -53,8 +53,8 @@ const QUESTIONS = [
 export default function AcademyRatingComponent({ academyId }: AcademyRatingComponentProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { data: stats, isLoading: statsLoading } = useAcademyRatingStats(academyId);
-  const { data: myRating, isLoading: myRatingLoading } = useMyAcademyRating(academyId);
+  const { data: stats, isLoading: statsLoading, error: statsError } = useAcademyRatingStats(academyId);
+  const { data: myRating, isLoading: myRatingLoading, error: myRatingError } = useMyAcademyRating(academyId);
   const upsertRating = useUpsertAcademyRating();
 
   const [isOpen, setIsOpen] = useState(false);

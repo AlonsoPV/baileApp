@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -6,6 +6,7 @@ import { useCompetitionGroup, useDeleteCompetitionGroup } from '@/hooks/useCompe
 import { useCompetitionGroupMembers } from '@/hooks/useCompetitionGroupMembers';
 import { urls } from '@/lib/urls';
 import { useToast } from '@/components/Toast';
+import { supabase } from '@/lib/supabase';
 
 const allowedVideoHosts = ['youtube.com', 'youtu.be', 'vimeo.com'];
 
@@ -36,9 +37,78 @@ export default function CompetitionGroupDetail() {
   const { data: group, isLoading: loadingGroup, error: groupError } = useCompetitionGroup(id ?? null);
   const { data: members, isLoading: loadingMembers, error: membersError } = useCompetitionGroupMembers(id ?? null);
   const deleteGroup = useDeleteCompetitionGroup();
+  
+  // Estado para almacenar información del owner (academia o maestro)
+  const [ownerData, setOwnerData] = useState<{
+    name?: string;
+    type?: 'academy' | 'teacher';
+    id?: number | string;
+  } | null>(null);
 
   const isOwner = group?.owner_id === user?.id;
   const isMember = members?.some(m => m.user_id === user?.id && m.is_active) || false;
+
+  // Cargar información del owner
+  useEffect(() => {
+    if (!group) return;
+
+    const loadOwnerData = async () => {
+      try {
+        // Si tiene academy_id, cargar datos de la academia
+        if (group.academy_id) {
+          const { data: academy } = await supabase
+            .from('profiles_academy')
+            .select('id, nombre_publico')
+            .eq('id', group.academy_id)
+            .single();
+
+          if (academy) {
+            setOwnerData({
+              name: academy.nombre_publico,
+              type: 'academy',
+              id: academy.id,
+            });
+            return;
+          }
+        }
+
+        // Si no tiene academia, buscar maestro por owner_id
+        const { data: teacher } = await supabase
+          .from('profiles_teacher')
+          .select('id, nombre_publico')
+          .eq('user_id', group.owner_id)
+          .maybeSingle();
+
+        if (teacher) {
+          setOwnerData({
+            name: teacher.nombre_publico,
+            type: 'teacher',
+            id: teacher.id,
+          });
+          return;
+        }
+
+        // Si no hay maestro, intentar buscar academia por owner_id
+        const { data: academy } = await supabase
+          .from('profiles_academy')
+          .select('id, nombre_publico')
+          .eq('user_id', group.owner_id)
+          .maybeSingle();
+
+        if (academy) {
+          setOwnerData({
+            name: academy.nombre_publico,
+            type: 'academy',
+            id: academy.id,
+          });
+        }
+      } catch (error) {
+        console.error('[CompetitionGroupDetail] Error loading owner data:', error);
+      }
+    };
+
+    loadOwnerData();
+  }, [group]);
 
   if (loadingGroup) {
     return <div style={{ padding: 24, textAlign: 'center' }}>Cargando...</div>;
@@ -100,7 +170,7 @@ export default function CompetitionGroupDetail() {
           right: 0;
           background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
           padding: 3rem 2rem 2rem;
-          pointer-events: none;
+          pointer-events: auto;
         }
         .group-header-card {
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
@@ -393,7 +463,7 @@ export default function CompetitionGroupDetail() {
             </div>
 
             {/* Badges de estado */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: '1.5rem', alignItems: 'center' }}>
               <span style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '999px',
@@ -423,6 +493,51 @@ export default function CompetitionGroupDetail() {
                   🏛️ Asociado a Academia
                 </span>
               )}
+              {/* Campo "Por: academia o maestro" */}
+              {ownerData && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '999px',
+                  background: ownerData.type === 'academy' 
+                    ? 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.2))'
+                    : 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(249,115,22,0.2))',
+                  border: `1px solid ${ownerData.type === 'academy' ? '#8B5CF6' : '#FB923C'}`,
+                }}>
+                  <span style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                    Por:
+                  </span>
+                  <a
+                    href={ownerData.type === 'academy' 
+                      ? `/academia/${ownerData.id}` 
+                      : `/maestro/${ownerData.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(ownerData.type === 'academy' 
+                        ? `/academia/${ownerData.id}` 
+                        : `/maestro/${ownerData.id}`);
+                    }}
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#fff',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.8';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                    }}
+                  >
+                    {ownerData.type === 'academy' ? '🏛️' : '👨‍🏫'} {ownerData.name}
+                  </a>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -433,7 +548,7 @@ export default function CompetitionGroupDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '2rem' }}
+            style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}
           >
             <span style={{
               padding: '0.5rem 1rem',
@@ -463,6 +578,51 @@ export default function CompetitionGroupDetail() {
               }}>
                 🏛️ Asociado a Academia
               </span>
+            )}
+            {/* Campo "Por: academia o maestro" */}
+            {ownerData && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '999px',
+                background: ownerData.type === 'academy' 
+                  ? 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.2))'
+                  : 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(249,115,22,0.2))',
+                border: `1px solid ${ownerData.type === 'academy' ? '#8B5CF6' : '#FB923C'}`,
+              }}>
+                <span style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                  Por:
+                </span>
+                <a
+                  href={ownerData.type === 'academy' 
+                    ? `/academia/${ownerData.id}` 
+                    : `/maestro/${ownerData.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(ownerData.type === 'academy' 
+                      ? `/academia/${ownerData.id}` 
+                      : `/maestro/${ownerData.id}`);
+                  }}
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#fff',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  {ownerData.type === 'academy' ? '🏛️' : '👨‍🏫'} {ownerData.name}
+                </a>
+              </div>
             )}
             {isOwner && (
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginLeft: 'auto' }}>

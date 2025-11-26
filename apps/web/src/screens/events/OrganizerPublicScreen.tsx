@@ -954,8 +954,7 @@ export function OrganizerPublicScreen() {
             <InvitedMastersSection masters={[]} title="🎭 Maestros Invitados" showTitle={true} isEditable={false} />
           </div>
 
-          {/* Secciones de sociales desactivadas temporalmente */}
-          {/*
+          {/* Próximas Fechas */}
           {inviteItems.length > 0 && (
             <motion.section id="organizer-upcoming-dates" data-test-id="organizer-upcoming-dates" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
@@ -968,71 +967,6 @@ export function OrganizerPublicScreen() {
               <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />
             </motion.section>
           )}
-
-          {parents && parents.length > 0 && (
-            <motion.section id="organizer-social-events" data-test-id="organizer-social-events" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card org-social-events-section" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-              <div className="org-social-events-header">
-                <div className="org-social-events-header-icon" style={{ background: colors.gradients.secondary, boxShadow: `0 8px 24px ${colors.secondary[500]}40` }}>
-                  🎭
-                </div>
-                <div className="org-social-events-header-text">
-                  <h3 className="section-title">Sociales que organizamos</h3>
-                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{parents.length} social{parents.length !== 1 ? 'es' : ''} organizado{parents.length !== 1 ? 's' : ''}</p>
-                </div>
-              </div>
-              <div className="org-social-events-list">
-                {parents.map((parent: any) => (
-                  <motion.div
-                    key={parent.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{
-                      y: -4,
-                      borderColor: 'rgba(255, 61, 87, 0.4)'
-                    }}
-                    className="org-social-card"
-                  >
-                    <div className="org-social-card-row">
-                      <motion.div
-                        className="org-social-card-row-icon"
-                        whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
-                        transition={{ duration: 0.5 }}
-                        style={{
-                          background: `linear-gradient(135deg, rgba(255, 61, 87, 0.2), rgba(255, 140, 66, 0.2))`,
-                          border: '3px solid rgba(255, 61, 87, 0.4)',
-                          boxShadow: '0 6px 20px rgba(255, 61, 87, 0.4)',
-                          filter: 'drop-shadow(0 4px 8px rgba(255, 61, 87, 0.4))'
-                        }}
-                      >
-                        🎭
-                      </motion.div>
-                      <div className="org-social-card-content">
-                        <h4 className="org-social-card-title">
-                          {parent.nombre}
-                        </h4>
-                        {parent.descripcion && (
-                          <p className="org-social-card-description">
-                            {parent.descripcion.length > 200 ? `${parent.descripcion.substring(0, 200)}...` : parent.descripcion}
-                          </p>
-                        )}
-                      </div>
-                      <div className="org-social-card-row-cta">
-                        <motion.button
-                          whileHover={{ scale: 1.08, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => navigate(`/social/${parent.id}`)}
-                        >
-                          <span>📅</span>
-                          <span>Ver Fechas</span>
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
-          */}
 
           {/* Galería de Fotos */}
           {carouselPhotos.length > 0 && (
