@@ -3253,42 +3253,6 @@ export default function OrganizerProfileEditor() {
                     gap: '1.5rem'
                   }}
                 >
-                  {/* Info/Selector de evento padre */}
-                  {(!parents || parents.length === 0) && (
-                    <div className="org-editor-card" style={{ borderStyle: 'dashed' }}>
-                      <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)' }}>
-                        No tienes eventos sociales aún. Al crear esta fecha, se creará automáticamente un evento
-                        social base con la información proporcionada.
-                      </p>
-                    </div>
-                  )}
-
-                  {parents && parents.length > 1 && (
-                    <div className="org-editor-card">
-                      <label className="org-editor-field">
-                        Evento Social *
-                      </label>
-                      <select
-                        className="org-date-form-select"
-                        value={selectedParentId || ''}
-                        onChange={(e) => setSelectedParentId(Number(e.target.value))}
-                      >
-                        <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
-                          Selecciona un evento
-                        </option>
-                        {parents.map((parent: any) => (
-                          <option
-                            key={parent.id}
-                            value={parent.id}
-                            style={{ background: '#2b2b2b', color: '#FFFFFF' }}
-                          >
-                            {parent.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
                   {/* Información Básica */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>

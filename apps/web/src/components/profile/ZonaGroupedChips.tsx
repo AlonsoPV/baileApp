@@ -168,23 +168,27 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
     size === "compact"
       ? {
           wrapperGap: "0.5rem",
-          parentFont: "0.78rem",
-          parentPadding: "5px 10px",
-          childGap: "0.35rem",
           childPadding: "5px 10px",
           childFont: "0.72rem",
         }
       : {
           wrapperGap: "0.75rem",
-          parentFont: "0.9rem",
-          parentPadding: "5px 10px",
-          childGap: "0.5rem",
           childPadding: "5px 10px",
           childFont: "0.82rem",
         };
 
-  // Modo display: mostrar chips simples (sin cambios)
+  const selectedZonesFlat = React.useMemo(
+    () =>
+      relevantGroups
+        .flatMap((g) => g.items)
+        .filter((z) => selectedSet.has(z.id)),
+    [relevantGroups, selectedSet]
+  );
+
+  // Modo display: sólo chips elegidas (sin chips padre)
   if (mode === "display") {
+    if (selectedZonesFlat.length === 0) return null;
+
     return (
       <>
         <style>{`
@@ -192,25 +196,9 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
             display: flex;
             flex-wrap: wrap;
             gap: ${metrics.wrapperGap};
-            align-items: flex-start;
+            align-items: center;
           }
-          .zona-chips-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            align-items: flex-start;
-            min-width: fit-content;
-            flex: 0 0 auto;
-          }
-          .zona-chips-children {
-            display: flex;
-            flex-wrap: wrap;
-            gap: ${metrics.childGap};
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 0.4rem;
-            width: 100%;
-          }
-          .zona-chips-children .chip {
+          .zona-chips-container .chip {
             font-size: ${metrics.childFont};
             padding: ${metrics.childPadding};
           }
@@ -218,106 +206,33 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
             .zona-chips-container {
               gap: 0.5rem;
             }
-            .zona-chips-group {
-              gap: 0.3rem;
-              width: 100%;
-            }
-            .zona-chips-children {
-              gap: 0.4rem;
-              padding-top: 0.3rem;
-            }
-            .zona-chips-children .chip {
-              font-size: 0.7rem;
-              padding: 4px 8px;
-            }
           }
           @media (max-width: 480px) {
             .zona-chips-container {
               gap: 0.4rem;
             }
-            .zona-chips-group {
-              gap: 0.25rem;
-            }
-            .zona-chips-children {
-              gap: 0.35rem;
-              padding-top: 0.25rem;
-            }
-            .zona-chips-children .chip {
-              font-size: 0.65rem;
-              padding: 3px 7px;
-            }
           }
         `}</style>
         <div className={className} style={style}>
           <div className="zona-chips-container">
-          {relevantGroups.map((group) => {
-            const hasSelected = group.items.some((item) =>
-              selectedSet.has(item.id)
-            );
-            const isExpanded = expanded[group.id] ?? false;
-            const showChildren = isExpanded;
-            return (
-              <div
-                key={group.id}
-                className="zona-chips-group"
-              >
-                <Chip
-                  label={`${group.label} ${isExpanded ? "▾" : "▸"}`}
-                  icon={icon}
-                  variant="custom"
-                  active={hasSelected || isExpanded}
-                  onClick={() => toggleGroup(group.id)}
-                  style={{
-                    fontSize: metrics.parentFont,
-                    alignSelf: "flex-start",
-                    width: "fit-content",
-                    minWidth: "auto",
-                    justifyContent: "center",
-                    padding: metrics.parentPadding,
-                    background:
-                      hasSelected || isExpanded
-                        ? "rgba(76,173,255,0.18)"
-                        : "rgba(255,255,255,0.05)",
-                    border:
-                      hasSelected || isExpanded
-                        ? "1px solid rgba(76,173,255,0.6)"
-                        : "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 999,
-                  }}
-                />
-
-                {showChildren && (
-                  <div className="zona-chips-children">
-                    {group.items.map((item) => {
-                      const isActive = selectedSet.has(item.id);
-                      return (
-                        <Chip
-                          key={item.id}
-                          label={item.label}
-                          icon={icon}
-                          variant="zona"
-                          active={isActive}
-                          style={{
-                            fontSize: metrics.childFont,
-                            padding: metrics.childPadding,
-                            background: isActive
-                              ? "rgba(76,173,255,0.18)"
-                              : "rgba(255,255,255,0.06)",
-                            border: isActive
-                              ? "1px solid rgba(76,173,255,0.6)"
-                              : "1px solid rgba(255,255,255,0.12)",
-                            borderRadius: 999,
-                            color: "#fff",
-                            fontWeight: 700,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            {selectedZonesFlat.map((item) => (
+              <Chip
+                key={item.id}
+                label={item.label}
+                icon={icon}
+                variant="zona"
+                active
+                style={{
+                  fontSize: metrics.childFont,
+                  padding: metrics.childPadding,
+                  background: "rgba(76,173,255,0.18)",
+                  border: "1px solid rgba(76,173,255,0.6)",
+                  borderRadius: 999,
+                  color: "#fff",
+                  fontWeight: 700,
+                }}
+              />
+            ))}
           </div>
         </div>
       </>
