@@ -3799,7 +3799,7 @@ export default function OrganizerProfileEditor() {
           </div>
           {/* Botón Crear Evento (movido a cabecera, se elimina el flotante) */}
           {/* Información para Asistentes */}
-          <div className="org-editor-card">
+        {/*   <div className="org-editor-card">
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
               💬 Información para Asistentes
             </h2>
@@ -3831,7 +3831,7 @@ export default function OrganizerProfileEditor() {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Cuenta Bancaria */}
           <div className="org-editor-card" style={{ marginBottom: '3rem' }}>

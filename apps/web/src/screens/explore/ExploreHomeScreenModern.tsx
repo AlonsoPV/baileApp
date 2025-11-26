@@ -1630,23 +1630,17 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
-            <Section title="Organizadores" toAll="/explore/list?type=organizadores">
-              {organizadoresLoading ? (
-                <div className="cards-grid">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="card-skeleton">
-                      Cargando…
-                    </div>
-                  ))}
-                </div>
-              ) : organizadoresData.length > 0 ? (
+          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
+            <Section title="Maestros" toAll="/explore/list?type=teacher">
+              {maestrosLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (
                 <HorizontalSlider
                   {...sliderProps}
-                  items={organizadoresData}
-                  renderItem={(organizador: any, idx: number) => (
+                  items={maestrosData}
+                  renderItem={(maestro: any, idx: number) => (
                     <motion.div
-                      key={organizador.id ?? idx}
+                      key={maestro.id ?? idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}
@@ -1661,12 +1655,10 @@ export default function ExploreHomeScreen() {
                         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                       }}
                     >
-                      <OrganizerCard item={organizador} />
+                      <TeacherCard item={maestro} />
                     </motion.div>
                   )}
                 />
-              ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
           )}
@@ -1717,17 +1709,23 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title="Maestros" toAll="/explore/list?type=teacher">
-              {maestrosLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (
+          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
+            <Section title="Organizadores" toAll="/explore/list?type=organizadores">
+              {organizadoresLoading ? (
+                <div className="cards-grid">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="card-skeleton">
+                      Cargando…
+                    </div>
+                  ))}
+                </div>
+              ) : organizadoresData.length > 0 ? (
                 <HorizontalSlider
                   {...sliderProps}
-                  items={maestrosData}
-                  renderItem={(maestro: any, idx: number) => (
+                  items={organizadoresData}
+                  renderItem={(organizador: any, idx: number) => (
                     <motion.div
-                      key={maestro.id ?? idx}
+                      key={organizador.id ?? idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05, duration: 0.3 }}
@@ -1742,10 +1740,12 @@ export default function ExploreHomeScreen() {
                         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                       }}
                     >
-                      <TeacherCard item={maestro} />
+                      <OrganizerCard item={organizador} />
                     </motion.div>
                   )}
                 />
+              ) : (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
             </Section>
           )}
