@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../Navbar';
 import AppBootstrap from '@/providers/AppBootstrap';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -59,13 +59,67 @@ export default function AppShell() {
           min-height: 100vh;
           background: #0b0d10;
           color: #e5e7eb;
+          display: flex;
+          flex-direction: column;
+        }
+        .app-shell-content {
+          flex: 1;
+        }
+        .app-footer {
+          margin-top: auto;
+          padding: 1.5rem 1rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.3);
+        }
+        .app-footer-content {
+          max-width: 1280px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 2rem;
+          flex-wrap: wrap;
+        }
+        .app-footer-link {
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          font-size: 0.875rem;
+          transition: color 0.2s ease;
+        }
+        .app-footer-link:hover {
+          color: rgba(255, 255, 255, 0.9);
+          text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+          .app-footer {
+            padding: 1rem 0.75rem;
+          }
+          .app-footer-content {
+            gap: 1rem;
+          }
+          .app-footer-link {
+            font-size: 0.8125rem;
+          }
         }
       `}</style>
       <div className="app-shell-root">
         <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
-        <AppBootstrap>
-          <Outlet />
-        </AppBootstrap>
+        <div className="app-shell-content">
+          <AppBootstrap>
+            <Outlet />
+          </AppBootstrap>
+        </div>
+
+        <footer className="app-footer">
+          <div className="app-footer-content">
+            <Link to="/aviso-de-privacidad" className="app-footer-link">
+              Legal
+            </Link>
+            <Link to="/app/roles/info" className="app-footer-link">
+              Info
+            </Link>
+          </div>
+        </footer>
 
         {user && (
           <OffCanvasMenu
