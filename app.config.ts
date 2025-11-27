@@ -26,6 +26,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     supportsTablet: true,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
+    },
     // Si en el futuro sirves contenido HTTP no seguro, añade excepciones ATS aquí.
   },
   android: {
