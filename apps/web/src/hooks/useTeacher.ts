@@ -55,9 +55,12 @@ export function useTeacherMy() {
   
   return useQuery({
     queryKey: ['teacher','mine'],
-    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
+    enabled: !authLoading && !!user?.id && typeof user.id === 'string' && user.id.length > 0,
     queryFn: async (): Promise<TeacherProfile|null> => {
-      if (!user?.id) return null;
+      if (!user?.id || typeof user.id !== 'string') {
+        console.warn('[useTeacherMy] Usuario sin ID válido');
+        return null;
+      }
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')

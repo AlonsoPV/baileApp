@@ -30,37 +30,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    // Timeout de seguridad: si getSession() tarda más de 10 segundos, forzar loading = false
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn('[AuthProvider] Timeout en getSession(), forzando loading = false');
+        setLoading(false);
+      }
+    }, 10000);
+
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-      
-      // 🎭 Resetear a usuario si no hay sesión
-      if (!data.session?.user) {
-        useProfileMode.getState().setMode("usuario");
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('[AuthProvider] Error en getSession():', error);
+        }
+        
+        setSession(data?.session ?? null);
+        setUser(data?.session?.user ?? null);
+        setLoading(false);
+        
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
+        // 🎭 Resetear a usuario si no hay sesión
+        if (!data?.session?.user) {
+          useProfileMode.getState().setMode("usuario");
+        }
+      } catch (err) {
+        console.error('[AuthProvider] Excepción en getSession():', err);
+        if (mounted) {
+          setLoading(false);
+          setSession(null);
+          setUser(null);
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
       }
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, sess) => {
+      if (!mounted) return;
+      
       setSession(sess ?? null);
       setUser(sess?.user ?? null);
       setLoading(false);
       
       // 🔁 Invalidar todas las queries de perfiles cuando cambia el estado de autenticación
       if (sess?.user) {
-        await qc.invalidateQueries({ queryKey: ["profile"] });
-        await qc.invalidateQueries({ queryKey: ["profile", "me", sess.user.id] });
-        await qc.invalidateQueries({ queryKey: ["academy"] });
-        await qc.invalidateQueries({ queryKey: ["academy", "my"] });
-        await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
-        await qc.invalidateQueries({ queryKey: ["organizer"] });
-        await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
-        await qc.invalidateQueries({ queryKey: ["teacher"] });
-        await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
-        await qc.invalidateQueries({ queryKey: ["brand"] });
-        await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
+        try {
+          await qc.invalidateQueries({ queryKey: ["profile"] });
+          await qc.invalidateQueries({ queryKey: ["profile", "me", sess.user.id] });
+          await qc.invalidateQueries({ queryKey: ["academy"] });
+          await qc.invalidateQueries({ queryKey: ["academy", "my"] });
+          await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+          await qc.invalidateQueries({ queryKey: ["organizer"] });
+          await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
+          await qc.invalidateQueries({ queryKey: ["teacher"] });
+          await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+          await qc.invalidateQueries({ queryKey: ["brand"] });
+          await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
+        } catch (err) {
+          console.warn('[AuthProvider] Error invalidando queries:', err);
+        }
       }
       
       // 🎭 Resetear a usuario si se cierra sesión
@@ -70,10 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => { 
-      mounted = false; 
+      mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       sub.subscription.unsubscribe(); 
     };
-  }, []);
+  }, [qc]);
 
   const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({

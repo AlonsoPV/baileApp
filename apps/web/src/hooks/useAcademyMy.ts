@@ -34,9 +34,12 @@ export function useAcademyMy() {
   
   return useQuery({
     queryKey: ["academy", "my"],
-    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
+    enabled: !authLoading && !!user?.id && typeof user.id === 'string' && user.id.length > 0,
     queryFn: async (): Promise<AcademyProfile | null> => {
-      if (!user?.id) return null;
+      if (!user?.id || typeof user.id !== 'string') {
+        console.warn('[useAcademyMy] Usuario sin ID válido');
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("profiles_academy")

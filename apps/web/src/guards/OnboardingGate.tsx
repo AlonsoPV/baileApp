@@ -21,14 +21,18 @@ export default function OnboardingGate() {
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['onboarding-status', user?.id],
-    enabled: !!user && !authLoading,
+    enabled: !!user && !authLoading && !!user.id,
     queryFn: async () => {
+      if (!user?.id) {
+        throw new Error('Usuario sin ID');
+      }
+      
       const { data, error } = await supabase
         .from('profiles_user')
         .select(
           'user_id, onboarding_complete, onboarding_completed, pin_hash, updated_at, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile'
         )
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         // En caso de que existan filas duplicadas para el mismo user_id,
         // tomar siempre la más reciente para reflejar el último estado real
         .order('updated_at', { ascending: false })
@@ -54,7 +58,7 @@ export default function OnboardingGate() {
           const { error: updError } = await supabase
             .from('profiles_user')
             .update({ onboarding_complete: true, onboarding_completed: true })
-            .eq('user_id', user!.id);
+            .eq('user_id', user.id);
           if (updError) {
             console.warn('[OnboardingGate] No se pudo actualizar onboarding_complete automáticamente:', updError.message);
           } else {
@@ -68,10 +72,28 @@ export default function OnboardingGate() {
       return { ...row, onboarding_complete: complete };
     },
     staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
+    // Timeout: si la query tarda más de 15 segundos, considerar error
+    gcTime: 60000,
   });
 
-  // 1) Aún autenticando o esperando query
-  if (authLoading || isLoading || isFetching) {
+  // Timeout de seguridad: si lleva más de 15 segundos cargando, permitir acceso
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+  React.useEffect(() => {
+    if (authLoading || isLoading || isFetching) {
+      const timeout = setTimeout(() => {
+        console.warn('[OnboardingGate] Timeout en carga, permitiendo acceso');
+        setLoadingTimeout(true);
+      }, 15000);
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [authLoading, isLoading, isFetching]);
+
+  // 1) Aún autenticando o esperando query (con timeout de seguridad)
+  if ((authLoading || isLoading || isFetching) && !loadingTimeout) {
     return (
       <div style={{
         minHeight: '100vh',

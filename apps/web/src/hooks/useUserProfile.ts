@@ -28,17 +28,23 @@ export function useUserProfile() {
 
   const profile = useQuery({
     queryKey: KEY(user?.id),
-    enabled: !!user?.id,
+    enabled: !!user?.id && typeof user.id === 'string' && user.id.length > 0,
     queryFn: async () => {
+      if (!user?.id || typeof user.id !== 'string') {
+        throw new Error('Usuario sin ID válido');
+      }
+      
       const { data, error } = await supabase
         .from("profiles_user")
         .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, updated_at")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
       return data as ProfileUser | null;
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const updateFields = useMutation({

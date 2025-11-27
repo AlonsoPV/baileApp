@@ -8,12 +8,17 @@ export function useMyOrganizer() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["organizer", "me", user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && typeof user.id === 'string' && user.id.length > 0,
     queryFn: async (): Promise<Organizer|null> => {
+      if (!user?.id || typeof user.id !== 'string') {
+        console.warn('[useMyOrganizer] Usuario sin ID válido');
+        return null;
+      }
+      
       const { data, error } = await supabase
         .from("profiles_organizer")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       
       if (error) {

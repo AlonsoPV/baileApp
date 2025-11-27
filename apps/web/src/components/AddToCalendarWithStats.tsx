@@ -110,7 +110,7 @@ export default function AddToCalendarWithStats({
       roleBaile,
       zonaTagId,
     });
-    
+
     if (!user?.id) {
       alert("Inicia sesión para añadir al calendario 🙌");
       setOpen(false);
@@ -138,42 +138,21 @@ export default function AddToCalendarWithStats({
 
       // Registrar asistencia tentativa en clase_asistencias (si hay classId o academyId)
       const finalClassId = classId || (typeof eventId === 'number' ? eventId : Number(eventIdStr));
-      console.log("[AddToCalendarWithStats] 🔍 ========== DEBUG INICIO ==========");
-      console.log("[AddToCalendarWithStats] 🔍 Datos para clase_asistencias:", {
-        finalClassId,
-        classId,
-        eventId,
-        eventIdStr,
-        academyId,
-        teacherId,
-        roleBaile,
-        zonaTagId,
-        userId: user.id,
-        isValidClassId: finalClassId && !Number.isNaN(finalClassId),
-      });
-      console.log("[AddToCalendarWithStats] 🔍 Props recibidos:", {
-        classId,
-        academyId,
-        teacherId,
-        roleBaile,
-        zonaTagId,
-        eventId,
-        title,
-      });
-      
-      
+
+
+
       // Validar que classId sea un número válido (incluyendo 0)
       if (typeof finalClassId === 'number' && !Number.isNaN(finalClassId)) {
-        
+
         try {
           // Normalizar role_baile: convertir 'lead' a 'leader' y 'follow' a 'follower' para consistencia
           let normalizedRoleBaile = roleBaile;
           if (roleBaile === 'lead') normalizedRoleBaile = 'leader';
           else if (roleBaile === 'follow') normalizedRoleBaile = 'follower';
-          
+
           // Calcular fechas específicas para clases recurrentes
           let fechasEspecificas: string[] = [];
-          
+
           // Si tiene fecha específica, usar solo esa fecha
           if (fecha) {
             fechasEspecificas = [fecha];
@@ -190,9 +169,9 @@ export default function AddToCalendarWithStats({
           else {
             fechasEspecificas = [null as any]; // null significa sin fecha específica
           }
-          
+
           console.log("[AddToCalendarWithStats] 📅 Fechas específicas calculadas:", fechasEspecificas);
-          
+
           // Insertar un registro por cada fecha específica
           const insertPayloads = fechasEspecificas.map(fechaEspecifica => ({
             user_id: user.id,
@@ -204,19 +183,17 @@ export default function AddToCalendarWithStats({
             status: "tentative" as const,
             fecha_especifica: fechaEspecifica || null,
           }));
-          
-          console.log("[AddToCalendarWithStats] 📤 Insertando", insertPayloads.length, "registros en clase_asistencias");
-          
+
           // Insertar todos los registros
           const { data: insertData, error: insertError } = await supabase
             .from("clase_asistencias")
             .insert(insertPayloads)
             .select();
-          
+
           if (insertError) {
             // Si hay conflictos (algunos registros ya existen), intentar actualizar solo los que faltan
             if (insertError.code === '23505') {
-              
+
               // Para cada fecha, intentar insertar o actualizar
               const results = await Promise.allSettled(
                 insertPayloads.map(async (payload) => {
@@ -226,24 +203,23 @@ export default function AddToCalendarWithStats({
                       onConflict: 'user_id,class_id,fecha_especifica',
                     })
                     .select();
-                  
+
                   if (upsertError) {
-                   
+
                     throw upsertError;
                   }
                   return upsertData;
                 })
               );
-              
+
               const successful = results.filter(r => r.status === 'fulfilled').length;
-              console.log("[AddToCalendarWithStats] ✅", successful, "registros procesados exitosamente");
             } else {
               console.error("[AddToCalendarWithStats] ❌ Error insertando asistencias:", insertError);
             }
           } else {
             console.log("[AddToCalendarWithStats] ✅", insertData?.length || 0, "asistencias registradas exitosamente");
           }
-          
+
           // Invalidar y refetch queries de métricas si hay academyId o teacherId
           if (academyId) {
             console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
@@ -275,7 +251,7 @@ export default function AddToCalendarWithStats({
       setOpen(false);
       window.open(href, "_blank");
     } catch (err) {
-      console.error("Error al registrar interés:", err);
+
       alert("Error al añadir al calendario. Intenta nuevamente.");
     } finally {
       setLoading(false);
@@ -302,7 +278,7 @@ export default function AddToCalendarWithStats({
 
       // Si es string, extraer fecha y hora ignorando zona horaria (Z, +00:00, etc.)
       const dateStr = String(dateInput);
-      
+
       // 1️⃣ Si viene en formato ISO con Z u offset, extraer solo fecha y hora
       //    y reconstruir como hora local (sin Z)
       const isoMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}(?::\d{2})?(?:\.\d{3})?)/);
@@ -314,20 +290,12 @@ export default function AddToCalendarWithStats({
           // Reconstruir como fecha local (SIN Z) para que se interprete como hora local
           const localDate = new Date(`${fecha}T${h}:${m}:${s}`);
           if (!isNaN(localDate.getTime())) {
-            console.log('[AddToCalendarWithStats] 🔧 Fecha reconstruida como local:', {
-              original: dateStr,
-              fecha,
-              hora,
-              localDate: localDate.toISOString(),
-              localTime: localDate.toLocaleString(),
-              localHours: localDate.getHours(),
-              localMinutes: localDate.getMinutes()
-            });
+
             return { isValid: true, date: localDate };
           }
         }
       }
-      
+
       // 2️⃣ Si no es formato ISO "bonito", intentar parsear normal
       //    pero si tiene Z u offset, extraer solo la parte de fecha/hora
       const parsed = new Date(dateStr);
@@ -343,12 +311,7 @@ export default function AddToCalendarWithStats({
           const seconds = String(parsed.getSeconds()).padStart(2, '0');
           const localDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
           if (!isNaN(localDate.getTime())) {
-            console.log('[AddToCalendarWithStats] 🔧 Fecha con Z/offset reconstruida como local:', {
-              original: dateStr,
-              parsed: parsed.toISOString(),
-              localDate: localDate.toISOString(),
-              localTime: localDate.toLocaleString()
-            });
+
             return { isValid: true, date: localDate };
           }
         }
@@ -365,35 +328,24 @@ export default function AddToCalendarWithStats({
   const normalizedStart = useMemo(() => {
     try {
       if (!start) {
-        console.warn('[AddToCalendarWithStats] ⚠️ No start date provided');
+
         return new Date(); // Fallback a fecha actual
       }
 
       const validation = extractAndValidateTime(start);
-      
+
       if (!validation.isValid || !validation.date) {
-        console.warn('[AddToCalendarWithStats] ⚠️ Invalid start date:', {
-          original: start,
-          type: typeof start,
-          error: validation.error
-        });
+
         return new Date(); // Fallback
       }
 
       const d = validation.date;
-      
-      // Log para depuración
-      console.log('[AddToCalendarWithStats] ✅ Start date normalized:', {
-        original: start,
-        normalized: d.toISOString(),
-        local: d.toLocaleString(),
-        hours: d.getHours(),
-        minutes: d.getMinutes()
-      });
+
+
 
       return d;
     } catch (err) {
-      console.error('[AddToCalendarWithStats] ❌ Error normalizing start date:', err);
+
       return new Date();
     }
   }, [start]);
@@ -401,51 +353,36 @@ export default function AddToCalendarWithStats({
   const normalizedEnd = useMemo(() => {
     try {
       if (!end) {
-        console.warn('[AddToCalendarWithStats] ⚠️ No end date provided, using start + 2 hours');
         const defaultEnd = new Date(normalizedStart);
         defaultEnd.setHours(defaultEnd.getHours() + 2);
         return defaultEnd;
       }
 
       const validation = extractAndValidateTime(end);
-      
+
       if (!validation.isValid || !validation.date) {
-        console.warn('[AddToCalendarWithStats] ⚠️ Invalid end date:', {
-          original: end,
-          type: typeof end,
-          error: validation.error
-        });
+
         const defaultEnd = new Date(normalizedStart);
         defaultEnd.setHours(defaultEnd.getHours() + 2);
         return defaultEnd;
       }
 
       const d = validation.date;
-      
+
       // Asegurar que end sea después de start
       if (d.getTime() <= normalizedStart.getTime()) {
-        console.warn('[AddToCalendarWithStats] ⚠️ End date is before or equal to start date, correcting...', {
-          start: normalizedStart.toISOString(),
-          end: d.toISOString()
-        });
+
         const correctedEnd = new Date(normalizedStart);
         correctedEnd.setHours(correctedEnd.getHours() + 2);
         return correctedEnd;
       }
 
       // Log para depuración
-      console.log('[AddToCalendarWithStats] ✅ End date normalized:', {
-        original: end,
-        normalized: d.toISOString(),
-        local: d.toLocaleString(),
-        hours: d.getHours(),
-        minutes: d.getMinutes(),
-        durationHours: (d.getTime() - normalizedStart.getTime()) / (1000 * 60 * 60)
-      });
+
 
       return d;
     } catch (err) {
-      console.error('[AddToCalendarWithStats] ❌ Error normalizing end date:', err);
+
       const defaultEnd = new Date(normalizedStart);
       defaultEnd.setHours(defaultEnd.getHours() + 2);
       return defaultEnd;
@@ -455,17 +392,17 @@ export default function AddToCalendarWithStats({
   // Construir URLs
   const icsBlobUrl = useMemo(() => {
     try {
-      const ics = buildICS({ 
-        title, 
-        description, 
-        location, 
-        start: normalizedStart, 
-        end: normalizedEnd, 
-        allDay 
+      const ics = buildICS({
+        title,
+        description,
+        location,
+        start: normalizedStart,
+        end: normalizedEnd,
+        allDay
       });
       return URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     } catch (err) {
-      console.error("[AddToCalendarWithStats] Error building ICS:", err);
+
       return null;
     }
   }, [title, description, location, normalizedStart, normalizedEnd, allDay]);
@@ -481,7 +418,7 @@ export default function AddToCalendarWithStats({
         allDay,
       });
     } catch (err) {
-      console.error("[AddToCalendarWithStats] Error building Google URL:", err);
+
       // Devolver URL genérica de Google Calendar como fallback
       const params = new URLSearchParams({
         action: 'TEMPLATE',
@@ -499,26 +436,26 @@ export default function AddToCalendarWithStats({
       const rect = buttonRef.current.getBoundingClientRect();
       const menuWidth = 200;
       const menuHeight = 120; // Estimado
-      
+
       // Calcular posición, asegurándose de que esté dentro del viewport
       let left = rect.right - menuWidth;
       let top = rect.bottom + 8;
-      
+
       // Ajustar si se sale por la derecha
       if (left < 8) {
         left = 8;
       }
-      
+
       // Ajustar si se sale por abajo
       if (top + menuHeight > window.innerHeight - 8) {
         top = rect.top - menuHeight - 8;
       }
-      
+
       // Ajustar si se sale por arriba
       if (top < 8) {
         top = 8;
       }
-      
+
       setMenuPosition({
         top,
         left,
@@ -667,15 +604,15 @@ export default function AddToCalendarWithStats({
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MenuItem 
-                    label="Google Calendar" 
-                    onClick={() => handleAdd(googleUrl)} 
+                  <MenuItem
+                    label="Google Calendar"
+                    onClick={() => handleAdd(googleUrl)}
                     icon="📅"
                   />
                   {icsBlobUrl && (
-                    <MenuItem 
-                      label="Apple Calendar (.ics)" 
-                      onClick={() => handleAdd(icsBlobUrl)} 
+                    <MenuItem
+                      label="Apple Calendar (.ics)"
+                      onClick={() => handleAdd(icsBlobUrl)}
                       icon="📱"
                     />
                   )}
@@ -782,57 +719,57 @@ export default function AddToCalendarWithStats({
         )}
       </AnimatePresence> */}
 
-  {typeof document !== 'undefined' && document.body && createPortal(
-    <>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9998,
-              background: 'rgba(0, 0, 0, 0.3)',
-            }}
-            onClick={() => setOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              minWidth: 240,
-              background: "rgba(20,20,28,0.95)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 12,
-              boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
-              overflow: "hidden",
-              zIndex: 9999,
-              backdropFilter: "blur(20px)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MenuItem label="Google Calendar" onClick={() => handleAdd(googleUrl)} icon="📅" />
-            {icsBlobUrl && (
-              <MenuItem label="Apple Calendar (.ics)" onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+      {typeof document !== 'undefined' && document.body && createPortal(
+        <>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 9998,
+                  background: 'rgba(0, 0, 0, 0.3)',
+                }}
+                onClick={() => setOpen(false)}
+              />
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>,
-    document.body
-  )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  minWidth: 240,
+                  background: "rgba(20,20,28,0.95)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 12,
+                  boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
+                  overflow: "hidden",
+                  zIndex: 9999,
+                  backdropFilter: "blur(20px)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MenuItem label="Google Calendar" onClick={() => handleAdd(googleUrl)} icon="📅" />
+                {icsBlobUrl && (
+                  <MenuItem label="Apple Calendar (.ics)" onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
