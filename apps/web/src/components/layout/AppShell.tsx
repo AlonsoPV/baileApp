@@ -65,6 +65,26 @@ export default function AppShell() {
         }
         .app-shell-content {
           flex: 1;
+          padding-top: 1rem;
+          padding-bottom: 1.5rem;
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+        @media (max-width: 768px) {
+          .app-shell-content {
+            padding-top: 0.75rem;
+            padding-bottom: 1.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .app-shell-content {
+            padding-top: 0.5rem;
+            padding-bottom: 1rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+          }
         }
         .app-footer {
           margin-top: auto;
