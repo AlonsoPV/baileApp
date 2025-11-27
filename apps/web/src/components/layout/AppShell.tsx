@@ -65,32 +65,38 @@ export default function AppShell() {
         }
         .app-shell-content {
           flex: 1;
-          padding-top: 1rem;
-          padding-bottom: 1.5rem;
+          padding-top: 2rem;
+          padding-bottom: 2rem;
           padding-left: 1rem;
           padding-right: 1rem;
+          min-height: calc(100vh - 200px);
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: 0.75rem;
-            padding-bottom: 1.25rem;
+            padding-top: 1.5rem;
+            padding-bottom: 1.75rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
+            min-height: calc(100vh - 180px);
           }
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: 0.5rem;
-            padding-bottom: 1rem;
+            padding-top: 1.25rem;
+            padding-bottom: 1.5rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
+            min-height: calc(100vh - 160px);
           }
         }
         .app-footer {
           margin-top: auto;
-          padding: 1.25rem 1rem;
+          padding: 1.5rem 1rem;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
           background: rgba(0, 0, 0, 0.2);
+          min-height: 80px;
+          display: flex;
+          align-items: center;
         }
         .app-footer-content {
           max-width: 1280px;

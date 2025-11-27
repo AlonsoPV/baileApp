@@ -41,6 +41,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         position: 'sticky',
         top: 0,
         zIndex: 100,
+        minHeight: '64px',
       }}
     >
       <style>{`
