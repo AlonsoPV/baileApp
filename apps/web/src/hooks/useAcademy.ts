@@ -35,6 +35,8 @@ export function useAcademyPublic(id: number) {
       if (!data) return null;
 
       let result: any = { ...data };
+      
+      // Obtener promociones si no están en la vista
       if (typeof result.promociones === 'undefined') {
         const { data: promosData, error: promosError } = await supabase
           .from('profiles_academy')
@@ -43,6 +45,18 @@ export function useAcademyPublic(id: number) {
           .maybeSingle();
         if (!promosError && promosData && typeof promosData.promociones !== 'undefined') {
           result.promociones = promosData.promociones;
+        }
+      }
+      
+      // Obtener respuestas si no están en la vista
+      if (typeof result.respuestas === 'undefined') {
+        const { data: respuestasData, error: respuestasError } = await supabase
+          .from('profiles_academy')
+          .select('respuestas')
+          .eq('id', id)
+          .maybeSingle();
+        if (!respuestasError && respuestasData && typeof respuestasData.respuestas !== 'undefined') {
+          result.respuestas = respuestasData.respuestas;
         }
       }
 

@@ -1833,7 +1833,12 @@ export default function AcademyPublicScreen() {
 
           {/* Sección: Un poco más de nosotros */}
           {hasAboutSection && (
-            <>
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
+              style={{ width: '100%', display: 'block', visibility: 'visible' }}
+            >
               <style>{`
                 .about-section-container {
                   margin-bottom: 2rem;
@@ -1844,7 +1849,12 @@ export default function AcademyPublicScreen() {
                   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
                   backdrop-filter: blur(10px);
                   position: relative;
-                  overflow: hidden;
+                  overflow: visible;
+                  width: 100%;
+                  max-width: 100%;
+                  display: block;
+                  visibility: visible;
+                  opacity: 1;
                 }
                 .about-section-header {
                   display: flex;
@@ -1873,6 +1883,10 @@ export default function AcademyPublicScreen() {
                   align-items: center;
                   position: relative;
                   z-index: 1;
+                  width: 100%;
+                  max-width: 100%;
+                  visibility: visible;
+                  opacity: 1;
                 }
                 .about-section-photo {
                   position: relative;
@@ -1905,6 +1919,7 @@ export default function AcademyPublicScreen() {
                   }
                   .about-section-photo {
                     max-width: 100%;
+                    width: 100%;
                   }
                   .about-section-photo img {
                     width: 100%;
@@ -1913,8 +1928,14 @@ export default function AcademyPublicScreen() {
                 }
                 @media (max-width: 768px) {
                   .about-section-container {
-                    padding: 1.5rem;
-                    border-radius: 20px;
+                    padding: 1.5rem !important;
+                    border-radius: 20px !important;
+                    margin-bottom: 1.5rem !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                   }
                   .about-section-header {
                     flex-direction: column;
@@ -1930,12 +1951,44 @@ export default function AcademyPublicScreen() {
                   }
                   .about-section-content {
                     gap: 1.5rem;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 0;
+                    display: flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                  }
+                  .about-section-photo {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    display: flex !important;
+                    visibility: visible !important;
+                  }
+                  .about-section-photo img {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    display: block !important;
+                    visibility: visible !important;
+                  }
+                  .about-section-photo a {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    padding: 0.875rem 1.5rem !important;
+                    font-size: 0.9rem !important;
+                    display: inline-flex !important;
+                    visibility: visible !important;
                   }
                 }
                 @media (max-width: 480px) {
                   .about-section-container {
-                    padding: 1.25rem;
-                    border-radius: 16px;
+                    padding: 1.25rem !important;
+                    border-radius: 16px !important;
+                    margin-bottom: 1.25rem !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                   }
                   .about-section-header {
                     margin-bottom: 1.25rem;
@@ -1946,20 +1999,40 @@ export default function AcademyPublicScreen() {
                     font-size: 1.5rem;
                     border-radius: 14px;
                   }
+                  .about-section-content {
+                    gap: 1.25rem;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 0;
+                    display: flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                  }
                   .about-section-photo {
                     padding: 0.375rem;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    display: flex !important;
+                    visibility: visible !important;
                   }
                   .about-section-photo img {
+                    width: 100% !important;
+                    max-width: 100% !important;
                     border-radius: 10px;
+                    display: block !important;
+                    visibility: visible !important;
+                  }
+                  .about-section-photo a {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    padding: 0.875rem 1.5rem !important;
+                    font-size: 0.9rem !important;
+                    display: inline-flex !important;
+                    visibility: visible !important;
                   }
                 }
               `}</style>
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.45 }}
-                className="about-section-container"
-              >
+              <div className="about-section-container">
                 {/* Top gradient bar */}
                 <div style={{
                   position: 'absolute',
@@ -2059,7 +2132,8 @@ export default function AcademyPublicScreen() {
                   {datoCurioso && (
                     <div style={{
                       width: '100%',
-                      maxWidth: '600px'
+                      maxWidth: '600px',
+                      padding: '0'
                     }}>
                       <ExpandableText text={datoCurioso} maxLength={450} />
                     </div>
@@ -2103,8 +2177,8 @@ export default function AcademyPublicScreen() {
                     </a>
                   )}
                 </div>
-              </motion.section>
-            </>
+              </div>
+            </motion.section>
           )}
 
           {carouselPhotos.length > 0 && (

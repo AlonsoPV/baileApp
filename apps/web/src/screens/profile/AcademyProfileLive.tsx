@@ -2280,6 +2280,7 @@ export default function AcademyProfileLive() {
                   }
                   .about-section-photo {
                     max-width: 100%;
+                    width: 100%;
                   }
                   .about-section-photo img {
                     width: 100%;
@@ -2305,6 +2306,22 @@ export default function AcademyProfileLive() {
                   }
                   .about-section-content {
                     gap: 1.5rem;
+                    width: 100%;
+                    padding: 0;
+                  }
+                  .about-section-photo {
+                    width: 100%;
+                    max-width: 100%;
+                  }
+                  .about-section-photo img {
+                    width: 100%;
+                    max-width: 100%;
+                  }
+                  .about-section-photo a {
+                    width: 100%;
+                    justify-content: center;
+                    padding: 0.875rem 1.5rem;
+                    font-size: 0.9rem;
                   }
                 }
                 @media (max-width: 480px) {
@@ -2321,11 +2338,26 @@ export default function AcademyProfileLive() {
                     font-size: 1.5rem;
                     border-radius: 14px;
                   }
+                  .about-section-content {
+                    gap: 1.25rem;
+                    width: 100%;
+                    padding: 0;
+                  }
                   .about-section-photo {
                     padding: 0.375rem;
+                    width: 100%;
+                    max-width: 100%;
                   }
                   .about-section-photo img {
+                    width: 100%;
+                    max-width: 100%;
                     border-radius: 10px;
+                  }
+                  .about-section-photo a {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    padding: 0.875rem 1.5rem !important;
+                    font-size: 0.9rem !important;
                   }
                 }
               `}</style>
@@ -2434,7 +2466,8 @@ export default function AcademyProfileLive() {
                   {datoCurioso && (
                     <div style={{
                       width: '100%',
-                      maxWidth: '600px'
+                      maxWidth: '600px',
+                      padding: '0'
                     }}>
                       <ExpandableText text={datoCurioso} maxLength={450} />
                     </div>
