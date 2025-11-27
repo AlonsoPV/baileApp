@@ -883,45 +883,46 @@ export default function TrendingAdmin() {
           ) : rows.length === 0 ? (
             <div style={{ opacity: .85 }}>Sin elementos</div>
           ) : (
-            <style>{`
-              .trending-admin-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(280px, 450px));
-                gap: 12px;
-                justify-content: center;
-              }
-              
-              .trending-admin-card {
-                position: relative;
-                width: 100%;
-                max-width: 450px;
-                border-radius: 16px;
-                overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.18);
-              }
-              
-              @media (max-width: 768px) {
+            <>
+              <style>{`
                 .trending-admin-grid {
-                  grid-template-columns: 1fr;
-                  gap: 10px;
-                  padding: 0 0.5rem;
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(280px, 450px));
+                  gap: 12px;
+                  justify-content: center;
                 }
+                
                 .trending-admin-card {
-                  max-width: 100%;
-                  border-radius: 12px;
+                  position: relative;
+                  width: 100%;
+                  max-width: 450px;
+                  border-radius: 16px;
+                  overflow: hidden;
+                  border: 1px solid rgba(255,255,255,0.18);
                 }
-              }
-              
-              @media (max-width: 480px) {
-                .trending-admin-grid {
-                  gap: 8px;
+                
+                @media (max-width: 768px) {
+                  .trending-admin-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                    padding: 0 0.5rem;
+                  }
+                  .trending-admin-card {
+                    max-width: 100%;
+                    border-radius: 12px;
+                  }
                 }
-                .trending-admin-card {
-                  border-radius: 10px;
+                
+                @media (max-width: 480px) {
+                  .trending-admin-grid {
+                    gap: 8px;
+                  }
+                  .trending-admin-card {
+                    border-radius: 10px;
+                  }
                 }
-              }
-            `}</style>
-            <div className="trending-admin-grid">
+              `}</style>
+              <div className="trending-admin-grid">
               {rows.map((r) => (
                 <div key={r.id} className="trending-admin-card">
                   <div style={{
@@ -966,7 +967,8 @@ export default function TrendingAdmin() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </section>
         {editId !== null && (
