@@ -214,24 +214,24 @@ export default function ClasesLive({
                         }
                         
                         if (diaParaCalcular !== null && diaParaCalcular >= 0 && diaParaCalcular <= 6) {
-                          base = new Date();
-                          const today = base.getDay();  // 0=Domingo, 1=Lunes, ..., 6=Sábado
+                        base = new Date();
+                        const today = base.getDay();  // 0=Domingo, 1=Lunes, ..., 6=Sábado
                           const targetDay = diaParaCalcular;
-                          
-                          // Calcular días hasta el próximo targetDay
-                          let daysUntilTarget = targetDay - today;
-                          
-                          // Si el día ya pasó esta semana, ir a la próxima semana
-                          if (daysUntilTarget <= 0) {
-                            daysUntilTarget += 7;
-                          }
-                          
-                          // Agregar los días
-                          base.setDate(base.getDate() + daysUntilTarget);
-                        } 
-                        // Si no hay fecha ni día, usar fecha actual
-                        else {
-                          base = new Date();
+                        
+                        // Calcular días hasta el próximo targetDay
+                        let daysUntilTarget = targetDay - today;
+                        
+                        // Si el día ya pasó esta semana, ir a la próxima semana
+                        if (daysUntilTarget <= 0) {
+                          daysUntilTarget += 7;
+                        }
+                        
+                        // Agregar los días
+                        base.setDate(base.getDate() + daysUntilTarget);
+                      } 
+                      // Si no hay fecha ni día, usar fecha actual
+                      else {
+                        base = new Date();
                         }
                       }
                       

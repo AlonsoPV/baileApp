@@ -2234,7 +2234,7 @@ export default function AcademyPublicScreen() {
                   <div>
                     <h3 className="photo-gallery-section-title">Videos</h3>
                     <p className="photo-gallery-section-subtitle">Videos de clases, eventos y promocionales</p>
-                  </div>
+              </div>
                 </div>
                 <div className="photo-gallery-section-count">
                   <span className="photo-gallery-section-count-number">{videos.length}</span>

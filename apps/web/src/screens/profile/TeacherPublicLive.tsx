@@ -1238,199 +1238,47 @@ export default function TeacherProfileLive() {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="glass-card-container"
-              style={{ textAlign: 'left', marginTop: '1.25rem' }}
+              transition={{ duration: 0.6, delay: 0.65 }}
+              style={{
+                marginBottom: '2rem',
+                marginTop: '2rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  marginBottom: '1.25rem'
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)' }}>🎓</div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Doy clases en</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
+                </div>
+              </div>
+              <HorizontalSlider
+                items={academies}
+                renderItem={(academy: any) => {
+                  const academyData = {
+                    id: academy.academy_id,
+                    nombre_publico: academy.academy_name,
+                    bio: academy.academy_bio || '',
+                    avatar_url: academy.academy_avatar || null,
+                    portada_url: academy.academy_portada || null,
+                    ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+                    zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+                    media: academy.academy_portada 
+                      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
+                      : academy.academy_avatar 
+                      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
+                      : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
+                  };
+                  return <AcademyCard key={academy.academy_id} item={academyData} />;
                 }}
-              >
-                <h3 className="section-title" style={{ marginBottom: 0 }}>Doy clases en</h3>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem'
-                  }}
-                >
-                  <button
-                    style={{
-                      position: 'relative',
-                      border: '1px solid transparent',
-                      borderRadius: 999,
-                      padding: '0.6rem 1.5rem',
-                      background: 'linear-gradient(120deg, rgba(94,234,212,0.65), rgba(59,130,246,0.65))',
-                      color: '#fff',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: '0.6rem',
-                      cursor: 'default',
-                      boxShadow: '0 14px 32px rgba(68,55,155,0.45)',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      letterSpacing: 0.2,
-                    }}
-                  >
-                    <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: 0.95 }}>
-                      Academias:
-                    </span>
-                    <span style={{ fontSize: '1.2rem' }}>
-                      {academies.length.toLocaleString('es-MX')}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ position: 'relative' }}>
-                {/* Custom scrollbar styles */}
-                <style>{`
-                  .community-scroll {
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(255,255,255,.25) transparent;
-                    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-                    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-                  }
-                  .community-scroll::-webkit-scrollbar { height: 8px; }
-                  .community-scroll::-webkit-scrollbar-track { background: transparent; }
-                  .community-scroll::-webkit-scrollbar-thumb {
-                    background: rgba(255,255,255,.22);
-                    border-radius: 999px;
-                  }
-                  .community-scroll::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255,255,255,.35);
-                  }
-                `}</style>
-                <div
-                  className="community-scroll"
-                  style={{
-                    display: 'flex',
-                    gap: '0.9rem',
-                    overflowX: 'auto',
-                    paddingBottom: '0.5rem',
-                    scrollSnapType: 'x mandatory',
-                    WebkitOverflowScrolling: 'touch'
-                  }}
-                >
-                  {academies.map((academy: any) => {
-                    const academyData = {
-                      id: academy.academy_id,
-                      display_name: academy.academy_name,
-                      avatar_url: academy.academy_avatar || null,
-                    };
-                    return (
-                      <button
-                        key={academy.academy_id}
-                        onClick={() => navigate(`/academia/${academy.academy_id}`)}
-                        style={{
-                          position: 'relative',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.75rem',
-                          padding: '1rem 1.25rem',
-                          minWidth: '230px',
-                          borderRadius: '22px',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          background: 'linear-gradient(135deg, rgba(18,18,28,0.95), rgba(8,8,16,0.92))',
-                          cursor: 'pointer',
-                          boxShadow: '0 18px 32px rgba(0,0,0,0.45)',
-                          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-                          scrollSnapAlign: 'start'
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 22px 36px rgba(0,0,0,0.5)';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 32px rgba(0,0,0,0.45)';
-                        }}
-                      >
-                        <span
-                          aria-hidden
-                          style={{
-                            position: 'absolute',
-                            inset: '-20% -30%',
-                            background: 'linear-gradient(140deg, rgba(110,231,183,0.22), rgba(147,197,253,0.15))',
-                            opacity: 0.9,
-                            pointerEvents: 'none'
-                          }}
-                        />
-                        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                          <div
-                            style={{
-                              width: 54,
-                              height: 54,
-                              borderRadius: '50%',
-                              padding: 2,
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
-                            }}
-                          >
-                            <ImageWithFallback
-                              src={academyData.avatar_url || ''}
-                              alt={academyData.display_name || 'Academia'}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                border: '2px solid rgba(0,0,0,0.4)'
-                              }}
-                            />
-                          </div>
-                          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
-                              {academyData.display_name || 'Academia'}
-                            </div>
-                            <span
-                              style={{
-                                alignSelf: 'flex-start',
-                                padding: '0.2rem 0.65rem',
-                                borderRadius: 999,
-                                fontSize: '0.72rem',
-                                letterSpacing: 0.3,
-                                textTransform: 'uppercase',
-                                background: 'rgba(0,0,0,0.35)',
-                                border: '1px solid rgba(255,255,255,0.18)',
-                                color: 'rgba(255,255,255,0.8)'
-                              }}
-                            >
-                              Colaboro aquí
-                            </span>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            position: 'relative',
-                            zIndex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            paddingTop: '0.6rem',
-                            borderTop: '1px solid rgba(255,255,255,0.08)'
-                          }}
-                        >
-                          <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
-                            Ver perfil
-                          </span>
-                          <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {/* Edge fades */}
-                <div aria-hidden style={{ pointerEvents: 'none' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to right, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
-                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to left, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
-                </div>
-              </div>
+                gap={24}
+                autoColumns="280px"
+              />
             </motion.section>
           )}
 

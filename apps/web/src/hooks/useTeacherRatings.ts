@@ -86,33 +86,63 @@ export function useTeacherRatingStats(teacherId?: number) {
     queryFn: async () => {
       if (!teacherId) return null;
 
-      const { data, error } = await supabase.rpc('get_teacher_rating_average', {
-        teacher_id_param: teacherId,
-      });
+      try {
+        const { data, error } = await supabase.rpc('get_teacher_rating_average', {
+          teacher_id_param: teacherId,
+        });
 
-      if (error) {
-        console.error('[useTeacherRatingStats] Error:', error);
-        // Si la función no existe, calcular manualmente
-        return await calculateStatsManually(teacherId);
+        if (error) {
+          // Error 406 = Not Acceptable (tabla/función no existe o problema de RLS)
+          // Silenciar el error - puede ser que la tabla no exista aún
+          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+            return getEmptyStats();
+          }
+          
+          // Si la función no existe, calcular manualmente
+          return await calculateStatsManually(teacherId);
+        }
+
+        return data as TeacherRatingStats;
+      } catch (err: any) {
+        // Capturar errores de red o otros errores inesperados
+        // Silenciar errores 406 (tabla no existe o problema de RLS)
+        if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
+          return getEmptyStats();
+        }
+        // Solo mostrar otros errores inesperados
+        if (err?.status && err.status !== 406 && err?.code !== '406') {
+          console.error('[useTeacherRatingStats] Error inesperado:', err);
+        }
+        return getEmptyStats();
       }
-
-      return data as TeacherRatingStats;
     },
     enabled: !!teacherId,
+    retry: false, // No reintentar para evitar spam de errores
+    refetchOnWindowFocus: false, // No refetch al enfocar ventana para evitar errores repetidos
+    refetchOnMount: false, // No refetch al montar si ya hay datos
   });
 }
 
 // Calcular estadísticas manualmente (fallback)
 async function calculateStatsManually(teacherId: number): Promise<TeacherRatingStats> {
-  const { data, error } = await supabase
-    .from('teacher_ratings')
-    .select('*')
-    .eq('teacher_id', teacherId);
+  try {
+    const { data, error } = await supabase
+      .from('teacher_ratings')
+      .select('*')
+      .eq('teacher_id', teacherId);
 
-  if (error) {
-    console.error('[calculateStatsManually] Error:', error);
-    return getEmptyStats();
-  }
+    if (error) {
+      // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
+      // Silenciar el error - puede ser que la tabla no exista aún
+      if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+        return getEmptyStats();
+      }
+      // Solo mostrar otros errores inesperados
+      if (error.code && error.code !== '406') {
+        console.error('[calculateStatsManually] Error:', error);
+      }
+      return getEmptyStats();
+    }
 
   const ratings = data || [];
 
@@ -163,7 +193,19 @@ async function calculateStatsManually(teacherId: number): Promise<TeacherRatingS
     }
   });
 
-  return stats;
+    return stats;
+  } catch (err: any) {
+    // Capturar errores de red o otros errores inesperados
+    // Silenciar errores 406 (tabla no existe o problema de RLS)
+    if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
+      return getEmptyStats();
+    }
+    // Solo mostrar otros errores inesperados
+    if (err?.status && err.status !== 406 && err?.code !== '406') {
+      console.error('[calculateStatsManually] Error inesperado:', err);
+    }
+    return getEmptyStats();
+  }
 }
 
 function getEmptyStats(): TeacherRatingStats {
@@ -186,25 +228,51 @@ export function useMyTeacherRating(teacherId?: number) {
     queryFn: async () => {
       if (!teacherId || !user?.id) return null;
 
-      const { data, error } = await supabase
-        .from('teacher_ratings')
-        .select('*')
-        .eq('teacher_id', teacherId)
-        .eq('user_id', user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('teacher_ratings')
+          .select('*')
+          .eq('teacher_id', teacherId)
+          .eq('user_id', user.id)
+          .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No rating found
+        if (error) {
+          // PGRST116 = No rows found (esperado)
+          if (error.code === 'PGRST116') {
+            return null;
+          }
+          
+          // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
+          // Silenciar el error - puede ser que la tabla no exista aún
+          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+            return null;
+          }
+          
+          // Solo mostrar otros errores inesperados
+          if (error.code && !['PGRST116', '406'].includes(error.code)) {
+            console.error('[useMyTeacherRating] Error inesperado:', error);
+          }
           return null;
         }
-        console.error('[useMyTeacherRating] Error:', error);
+
+        return data as TeacherRating;
+      } catch (err: any) {
+        // Capturar errores de red o otros errores inesperados
+        // Silenciar errores 406 (tabla no existe o problema de RLS)
+        if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
+          return null;
+        }
+        // Solo mostrar otros errores inesperados
+        if (err?.status && err.status !== 406 && err?.code !== '406') {
+          console.error('[useMyTeacherRating] Error inesperado:', err);
+        }
         return null;
       }
-
-      return data as TeacherRating;
     },
     enabled: !!teacherId && !!user?.id,
+    retry: false, // No reintentar para evitar spam de errores
+    refetchOnWindowFocus: false, // No refetch al enfocar ventana para evitar errores repetidos
+    refetchOnMount: false, // No refetch al montar si ya hay datos
   });
 }
 

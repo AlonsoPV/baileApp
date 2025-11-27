@@ -305,7 +305,7 @@ export default function AcademyProfileEditor() {
       }
 
       console.log("[AcademyProfileEditor] 📤 Payload a enviar:", JSON.stringify(payload, null, 2));
-      
+
       await upsert.mutateAsync(payload);
 
       // Mostrar mensaje de éxito
@@ -2499,42 +2499,42 @@ export default function AcademyProfileEditor() {
                 </div>
                 <div className="media-management-content">
                   <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    {/* Columna 1: Avatar / Foto Principal */}
-                    <PhotoManagementSection
-                      media={media}
-                      uploading={{ p1: add.isPending }}
-                      uploadFile={uploadFile}
-                      removeFile={removeFile}
+                {/* Columna 1: Avatar / Foto Principal */}
+                <PhotoManagementSection
+                  media={media}
+                  uploading={{ p1: add.isPending }}
+                  uploadFile={uploadFile}
+                  removeFile={removeFile}
                       title="👤 Avatar / Foto Principal"
                       description="Foto principal que aparece en tu perfil (p1)"
-                      slots={['p1']}
-                      isMainPhoto={true}
-                    />
+                  slots={['p1']}
+                  isMainPhoto={true}
+                />
 
-                    {/* Columna 2: Fotos Destacadas */}
-                    <PhotoManagementSection
-                      media={media}
-                      uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
-                      uploadFile={uploadFile}
-                      removeFile={removeFile}
+                {/* Columna 2: Fotos Destacadas */}
+                <PhotoManagementSection
+                  media={media}
+                  uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
+                  uploadFile={uploadFile}
+                  removeFile={removeFile}
                       title="⭐ Fotos Destacadas"
                       description="Fotos que se muestran en secciones destacadas (p2 - p3)"
-                      slots={['p2', 'p3']}
-                      isMainPhoto={false}
-                      verticalLayout={true}
-                    />
-                  </div>
+                  slots={['p2', 'p3']}
+                  isMainPhoto={false}
+                  verticalLayout={true}
+                />
+              </div>
 
-                  {/* Fotos Adicionales */}
-                  <PhotoManagementSection
-                    media={media}
-                    uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
-                    uploadFile={uploadFile}
-                    removeFile={removeFile}
+              {/* Fotos Adicionales */}
+              <PhotoManagementSection
+                media={media}
+                uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
+                uploadFile={uploadFile}
+                removeFile={removeFile}
                     title="📸 Fotos Adicionales"
                     description="Más fotos para mostrar diferentes aspectos de tu academia (p4-p10)"
-                    slots={PHOTO_SLOTS.slice(3)} // p4-p10
-                  />
+                slots={PHOTO_SLOTS.slice(3)} // p4-p10
+              />
                 </div>
               </div>
 
@@ -2566,15 +2566,15 @@ export default function AcademyProfileEditor() {
                   </div>
                 </div>
                 <div className="media-management-content">
-                  <VideoManagementSection
-                    media={media}
-                    uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
-                    uploadFile={uploadFile}
-                    removeFile={removeFile}
+              <VideoManagementSection
+                media={media}
+                uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
+                uploadFile={uploadFile}
+                removeFile={removeFile}
                     title=""
                     description=""
-                    slots={[...VIDEO_SLOTS]}
-                  />
+                slots={[...VIDEO_SLOTS]}
+              />
                 </div>
               </div>
             </>

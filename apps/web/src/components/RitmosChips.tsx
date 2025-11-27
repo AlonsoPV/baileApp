@@ -74,16 +74,16 @@ function RitrosChipsInternal({
     return filtered;
   }, [allowedIds]);
 
-  // Log para debug
-  React.useEffect(() => {
-    console.log('[RitmosChips] Renderizado:', {
-      selected: selected,
-      allowedIds: allowedIds,
-      filteredCatalogGroups: filteredCatalog.length,
-      filteredCatalogItems: filteredCatalog.reduce((sum, g) => sum + g.items.length, 0),
-      isReadOnly: isReadOnly
-    });
-  }, [selected, allowedIds, filteredCatalog, isReadOnly]);
+  // Log para debug (comentado para producción)
+  // React.useEffect(() => {
+  //   console.log('[RitmosChips] Renderizado:', {
+  //     selected: selected,
+  //     allowedIds: allowedIds,
+  //     filteredCatalogGroups: filteredCatalog.length,
+  //     filteredCatalogItems: filteredCatalog.reduce((sum, g) => sum + g.items.length, 0),
+  //     isReadOnly: isReadOnly
+  //   });
+  // }, [selected, allowedIds, filteredCatalog, isReadOnly]);
 
   const autoExpanded = React.useMemo(() => {
     if (!isReadOnly) return null;

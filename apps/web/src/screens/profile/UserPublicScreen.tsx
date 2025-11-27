@@ -1285,65 +1285,65 @@ export const UserProfileLive: React.FC = () => {
             if (!hasSection1Content) return null;
             
             return (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="section-content glass-card-container"
-              >
-                <div className="question-section">
-                  {/* Foto */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="section-content glass-card-container"
+          >
+            <div className="question-section">
+              {/* Foto */}
+              <div style={{
+                width: '100%',
+                height: '100%',
+                    objectFit: 'contain',
+                objectPosition: 'center',
+                transition: 'transform 0.3s ease',
+              }}>
+                    {fotoP2 ? (
+                  <ImageWithFallback
+                        src={fotoP2.url}
+                    alt="Foto personal"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
                   <div style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                    transition: 'transform 0.3s ease',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '0.875rem'
                   }}>
-                    {fotoP2 ? (
-                      <ImageWithFallback
-                        src={fotoP2.url}
-                        alt="Foto personal"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        fontSize: '0.875rem'
-                      }}>
-                        📷 Sin foto
-                      </div>
-                    )}
+                    📷 Sin foto
                   </div>
+                )}
+              </div>
 
-                  {/* Pregunta */}
-                  <div>
-                    <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
-                    <div style={{
-                      padding: '1.25rem',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      fontSize: '1.05rem',
-                      lineHeight: '1.7',
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      fontWeight: '400'
-                    }}>
+              {/* Pregunta */}
+              <div>
+              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
+                <div style={{
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  fontSize: '1.05rem',
+                  lineHeight: '1.7',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontWeight: '400'
+                }}>
                       {datoCurioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
-                    </div>
-                  </div>
                 </div>
-              </motion.section>
+              </div>
+            </div>
+          </motion.section>
             );
           })()}
 
@@ -1356,65 +1356,65 @@ export const UserProfileLive: React.FC = () => {
             if (!hasSection2Content) return null;
             
             return (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="section-content glass-card-container"
-              >
-                <div className="question-section">
-                  {/* Pregunta */}
-                  <div>
-                    <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
-                    <div style={{
-                      padding: '1.25rem',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      fontSize: '1.05rem',
-                      lineHeight: '1.7',
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      fontWeight: '400'
-                    }}>
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="section-content glass-card-container"
+          >
+            <div className="question-section">
+              {/* Pregunta */}
+              <div>
+              <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
+                <div style={{
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  fontSize: '1.05rem',
+                  lineHeight: '1.7',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontWeight: '400'
+                }}>
                       {gustaBailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  {/* Foto */}
+              {/* Foto */}
+              <div style={{
+                width: '100%',
+                height: '100%',
+                    objectFit: 'contain',
+                objectPosition: 'center',
+                transition: 'transform 0.3s ease',
+              }}>
+                    {fotoP3 ? (
+                  <ImageWithFallback
+                        src={fotoP3.url}
+                    alt="Foto de baile"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
                   <div style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                    transition: 'transform 0.3s ease',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '0.875rem'
                   }}>
-                    {fotoP3 ? (
-                      <ImageWithFallback
-                        src={fotoP3.url}
-                        alt="Foto de baile"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        fontSize: '0.875rem'
-                      }}>
-                        📷 Sin foto
-                      </div>
-                    )}
+                    📷 Sin foto
                   </div>
-                </div>
-              </motion.section>
+                )}
+              </div>
+            </div>
+          </motion.section>
             );
           })()}
 
