@@ -90,7 +90,7 @@ export default function TrendingList() {
         .trending-card {
           position: relative;
           aspect-ratio: 1 / 1;
-          width: 450px;
+          width: 100%;
           max-width: 450px;
           margin: 0 auto;
           border-radius: 24px;
@@ -100,6 +100,63 @@ export default function TrendingList() {
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           background: radial-gradient(circle at center, rgba(229,57,53,.12), rgba(18,22,27,.8));
+        }
+        
+        .trending-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 450px));
+          gap: 1.5rem;
+          justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+          .trending-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 0 1rem;
+          }
+          .trending-card {
+            max-width: 100%;
+            border-radius: 20px;
+          }
+          .trending-card__body {
+            padding: 1.25rem !important;
+            gap: 0.5rem !important;
+          }
+          .trending-card__body > div:first-child > div:first-child {
+            font-size: 1.25rem !important;
+          }
+          .trending-card__placeholder {
+            width: 50% !important;
+            height: 50% !important;
+            font-size: 2.5rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .trending-grid {
+            gap: 0.75rem;
+            padding: 0 0.5rem;
+          }
+          .trending-card {
+            border-radius: 16px;
+          }
+          .trending-card__body {
+            padding: 1rem !important;
+            gap: 0.5rem !important;
+          }
+          .trending-card__body > div:first-child > div:first-child {
+            font-size: 1.1rem !important;
+          }
+          .trending-card__body button {
+            padding: 0.6rem 1.25rem !important;
+            font-size: 0.875rem !important;
+          }
+          .trending-card__placeholder {
+            width: 45% !important;
+            height: 45% !important;
+            font-size: 2rem !important;
+          }
         }
 
         .trending-card:hover {
@@ -153,7 +210,7 @@ export default function TrendingList() {
           border: 2px dashed rgba(255,255,255,.25);
         }
       `}</style>
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '1.5rem' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(1rem, 3vw, 1.5rem)' }}>
         {/* Hero mejorado */}
         <section className="trending-hero">
           {/* Efectos decorativos */}
@@ -170,14 +227,14 @@ export default function TrendingList() {
           
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <div style={{ 
-              width: 80, 
-              height: 80, 
+              width: 'clamp(60px, 10vw, 80px)', 
+              height: 'clamp(60px, 10vw, 80px)', 
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #E53935, #FB8C00)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2.5rem',
+              fontSize: 'clamp(2rem, 5vw, 2.5rem)',
               margin: '0 auto 1.5rem',
               boxShadow: '0 16px 40px rgba(229,57,53,.4)',
               border: '3px solid rgba(229,57,53,.3)'
@@ -196,30 +253,30 @@ export default function TrendingList() {
         {loading ? (
           <div style={{
             background: 'linear-gradient(135deg, rgba(11,13,16,.95), rgba(18,22,27,.92))',
-            borderRadius: 24,
-            padding: '3rem 2rem',
+            borderRadius: 'clamp(16px, 4vw, 24px)',
+            padding: 'clamp(2rem, 5vw, 3rem) clamp(1.5rem, 4vw, 2rem)',
             textAlign: 'center',
             boxShadow: '0 16px 48px rgba(0,0,0,.5)'
           }}>
-            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-            <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,.85)' }}>Cargando...</div>
+            <div style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '1rem' }}>⏳</div>
+            <div style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'rgba(255,255,255,.85)' }}>Cargando...</div>
           </div>
         ) : rows.length === 0 ? (
           <div style={{
             background: 'linear-gradient(135deg, rgba(11,13,16,.95), rgba(18,22,27,.92))',
-            borderRadius: 24,
-            padding: '3rem 2rem',
+            borderRadius: 'clamp(16px, 4vw, 24px)',
+            padding: 'clamp(2rem, 5vw, 3rem) clamp(1.5rem, 4vw, 2rem)',
             textAlign: 'center',
             border: '2px dashed rgba(255,255,255,.15)',
             boxShadow: '0 16px 48px rgba(0,0,0,.5)'
           }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎯</div>
-            <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,.85)' }}>
+            <div style={{ fontSize: 'clamp(3rem, 8vw, 4rem)', marginBottom: '1rem' }}>🎯</div>
+            <div style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'rgba(255,255,255,.85)' }}>
               No hay trendings activos en este momento
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, 450px)', gap: '1.5rem', justifyContent: 'center' }}>
+          <div className="trending-grid">
             {rows.map((r) => (
               <article
                 key={r.id}

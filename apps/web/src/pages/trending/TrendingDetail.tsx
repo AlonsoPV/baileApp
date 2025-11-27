@@ -361,11 +361,89 @@ export default function TrendingDetail() {
     }
   };
 
-  if (loading) return <div style={{ padding: 24 }}>Cargando...</div>;
-  if (!t) return <div style={{ padding: 24 }}>Trending no encontrado</div>;
+  if (loading) return <div style={{ padding: 'clamp(1rem, 3vw, 24px)' }}>Cargando...</div>;
+  if (!t) return <div style={{ padding: 'clamp(1rem, 3vw, 24px)' }}>Trending no encontrado</div>;
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+    <>
+      <style>{`
+        .trending-detail-container {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: clamp(1rem, 3vw, 24px);
+        }
+        
+        .trending-detail-header h1 {
+          font-size: clamp(1.75rem, 5vw, 2.5rem);
+          margin-bottom: 6px;
+        }
+        
+        .trending-detail-cover {
+          width: 100%;
+          border-radius: clamp(12px, 2vw, 16px);
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.12);
+          margin-bottom: 12px;
+          max-height: clamp(150px, 30vw, 220px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.3);
+        }
+        
+        .trending-detail-cover img {
+          width: 100%;
+          height: clamp(150px, 30vw, 220px);
+          display: block;
+          object-fit: contain;
+        }
+        
+        .trending-participants-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(150px, 200px));
+          gap: 12px;
+        }
+        
+        .trending-candidates-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(260px, 450px));
+          gap: 12px;
+          justify-content: center;
+        }
+        
+        .trending-leaderboard-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          gap: 8px;
+        }
+        
+        @media (max-width: 768px) {
+          .trending-detail-container {
+            padding: 1rem;
+          }
+          .trending-participants-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+          }
+          .trending-candidates-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          .trending-leaderboard-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .trending-detail-container {
+            padding: 0.75rem;
+          }
+          .trending-participants-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+      <div className="trending-detail-container">
       {/* Botón Volver */}
       <div style={{ marginBottom: 12 }}>
         <button onClick={() => navigate('/trending')} className="cc-btn cc-btn--ghost">
@@ -373,22 +451,11 @@ export default function TrendingDetail() {
         </button>
       </div>
       {t.cover_url && (
-        <div style={{
-          width: '100%',
-          borderRadius: 16,
-          overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.12)',
-          marginBottom: 12,
-          maxHeight: 220,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(0,0,0,0.3)'
-        }}>
-          <img src={t.cover_url} alt={t.title} style={{ width: '100%', height: '220px', display: 'block', objectFit: 'contain' }} />
+        <div className="trending-detail-cover">
+          <img src={t.cover_url} alt={t.title} />
         </div>
       )}
-      <header style={{ marginBottom: 12 }}>
+      <header className="trending-detail-header" style={{ marginBottom: 12 }}>
         <h1 style={{ fontWeight: 900, marginBottom: 6 }}>{t.title}</h1>
         {t.description && <p style={{ opacity: 0.9, margin: 0 }}>{t.description}</p>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
@@ -426,7 +493,7 @@ export default function TrendingDetail() {
                     <h3 style={{ margin: '0 0 12px 0', fontWeight: 900, fontSize: '1.1rem' }}>
                       {list.name} <span style={{ opacity: 0.7, fontSize: '0.9rem', fontWeight: 400 }}>({list.participants?.length || 0})</span>
                     </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                    <div className="trending-participants-grid">
                       {list.participants?.map((p: any) => (
                         <div key={p.id} style={{
                           display: 'flex',
@@ -1264,7 +1331,7 @@ export default function TrendingDetail() {
                 <h3 style={{ margin: 0, fontWeight: 900 }}>
                   {listName} <span style={{ opacity: .75, fontSize: 12 }}>({items.length})</span>
                 </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,450px))", gap: 12, justifyContent:'center' }}>
+                <div className="trending-candidates-grid">
                   {items.map((c: any) => {
                     const m = userMeta[c.user_id] || {};
                     const avatarSrc = c.avatar_url || m.avatar || "https://placehold.co/96x96?text=User";
@@ -1434,7 +1501,7 @@ export default function TrendingDetail() {
                   {Object.entries(byList).map(([lname, items]: any) => (
                     <div key={lname} style={{ border:'1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 8 }}>
                       <div style={{ fontWeight: 700, marginBottom: 6, opacity: .9 }}>{lname}</div>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap: 8 }}>
+                      <div className="trending-leaderboard-grid">
                         {items.slice(0,5).map((x:any, i:number) => (
                           <div key={x.candidate_id} style={{ display:'flex', alignItems:'center', gap: 10, border:'1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 8, background:'rgba(255,255,255,0.04)' }}>
                             <div style={{ width: 30, textAlign:'center' }}>{i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : i+1}</div>
@@ -1457,7 +1524,8 @@ export default function TrendingDetail() {
           })}
         </section>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
