@@ -61,9 +61,31 @@ export function useTeacherMy() {
         .eq('user_id', user.id)
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
+      
+      if (error) {
+        // PGRST116 = No rows found (esperado cuando no hay perfil)
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        // Error 406 = Not Acceptable (posible problema de RLS o tabla no existe)
+        if (error.code === '406' || error.status === 406) {
+          console.warn('[useTeacherMy] Error 406 al cargar perfil (posible problema de RLS):', error);
+          return null;
+        }
+        // Para otros errores, lanzar para que React Query los maneje
+        console.error('[useTeacherMy] Error inesperado al cargar perfil:', error);
+        throw error;
+      }
       return normalizeTeacherProfile(data as TeacherProfile | null);
-    }
+    },
+    retry: (failureCount, error: any) => {
+      // No reintentar si es error 406 o PGRST116
+      if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {
+        return false;
+      }
+      // Reintentar hasta 2 veces para otros errores
+      return failureCount < 2;
+    },
   });
 }
 

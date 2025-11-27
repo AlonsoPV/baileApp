@@ -780,7 +780,7 @@ export default function TeacherProfileLive() {
           className="teacher-banner glass-card-container"
           style={{
             position: 'relative',
-            margin: '0 auto',
+            margin: '2rem auto 0 auto',
             overflow: 'hidden'
           }}
         >

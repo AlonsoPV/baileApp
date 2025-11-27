@@ -779,7 +779,7 @@ const formatPriceLabel = (value: any): string | null => {
 
 export default function AcademyProfileLive() {
   const navigate = useNavigate();
-  const { data: academy, isLoading } = useAcademyMy();
+  const { data: academy, isLoading, error, isError } = useAcademyMy();
   const { media } = useAcademyMedia();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
@@ -800,14 +800,17 @@ export default function AcademyProfileLive() {
     console.log('[AcademyProfileLive] academyId:', academyId);
     console.log('[AcademyProfileLive] competitionGroups:', competitionGroups);
     console.log('[AcademyProfileLive] loadingGroups:', loadingGroups);
-  }, [academyId, competitionGroups, loadingGroups]);
+    console.log('[AcademyProfileLive] Error state:', { isError, error });
+  }, [academyId, competitionGroups, loadingGroups, isError, error]);
 
-  // ✅ Auto-redirigir a Edit si no tiene perfil de academia (DEBE estar antes de cualquier return)
+  // ✅ Auto-redirigir a Edit si no tiene perfil de academia (solo si no hay error)
+  // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
-    if (!isLoading && !academy) {
+    if (!isLoading && !academy && !isError) {
+      console.log('[AcademyProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
       navigate('/profile/academy/edit', { replace: true });
     }
-  }, [isLoading, academy, navigate]);
+  }, [isLoading, academy, isError, navigate]);
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
@@ -868,6 +871,53 @@ export default function AcademyProfileLive() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando academia...</p>
+      </div>
+    );
+  }
+
+  // Mostrar error si hay un problema de carga (no redirigir automáticamente)
+  if (isError && error) {
+    const errorMessage = (error as any)?.message || 'Error desconocido al cargar el perfil';
+    const errorCode = (error as any)?.code;
+    
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+            Error al cargar perfil
+          </h2>
+          <p style={{ opacity: 0.7, marginBottom: '24px' }}>
+            {errorMessage}
+            {errorCode && ` (Código: ${errorCode})`}
+          </p>
+          <button
+            onClick={() => {
+              // Intentar recargar la página
+              window.location.reload();
+            }}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

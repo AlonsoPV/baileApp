@@ -15,12 +15,34 @@ export function useMyOrganizer() {
         .select("*")
         .eq("user_id", user!.id)
         .maybeSingle();
-      if (error) throw error;
+      
+      if (error) {
+        // PGRST116 = No rows found (esperado cuando no hay perfil)
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        // Error 406 = Not Acceptable (posible problema de RLS o tabla no existe)
+        if (error.code === '406' || error.status === 406) {
+          console.warn('[useMyOrganizer] Error 406 al cargar perfil (posible problema de RLS):', error);
+          return null;
+        }
+        // Para otros errores, lanzar para que React Query los maneje
+        console.error('[useMyOrganizer] Error inesperado al cargar perfil:', error);
+        throw error;
+      }
       console.log('[useMyOrganizer] Estado de aprobación obtenido:', data?.estado_aprobacion, 'Full data:', data);
       return data || null;
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
     cacheTime: 0, // No cachear los datos
+    retry: (failureCount, error: any) => {
+      // No reintentar si es error 406 o PGRST116
+      if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {
+        return false;
+      }
+      // Reintentar hasta 2 veces para otros errores
+      return failureCount < 2;
+    },
   });
 }
 

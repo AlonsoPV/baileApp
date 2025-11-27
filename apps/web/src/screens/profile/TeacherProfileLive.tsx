@@ -374,7 +374,7 @@ const formatPriceLabel = (value: any): string | null => {
 
 export default function TeacherProfileLive() {
   const navigate = useNavigate();
-  const { data: teacher, isLoading } = useTeacherMy();
+  const { data: teacher, isLoading, error, isError } = useTeacherMy();
   const { media } = useTeacherMedia();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
@@ -388,12 +388,14 @@ export default function TeacherProfileLive() {
   const teacherUserId = (teacher as any)?.user_id;
   const { data: competitionGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
-  // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (DEBE estar ANTES de cualquier return)
+  // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (solo si no hay error)
+  // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
-    if (!isLoading && !teacher) {
+    if (!isLoading && !teacher && !isError) {
+      console.log('[TeacherProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
       navigate('/profile/teacher/edit', { replace: true });
     }
-  }, [isLoading, teacher, navigate]);
+  }, [isLoading, teacher, isError, navigate]);
 
   // Obtener clases desde las tablas / cronograma
   const teacherNumericId = (teacher as any)?.id as number | undefined;
@@ -449,6 +451,53 @@ export default function TeacherProfileLive() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando maestro...</p>
+      </div>
+    );
+  }
+
+  // Mostrar error si hay un problema de carga (no redirigir automáticamente)
+  if (isError && error) {
+    const errorMessage = (error as any)?.message || 'Error desconocido al cargar el perfil';
+    const errorCode = (error as any)?.code;
+    
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+            Error al cargar perfil
+          </h2>
+          <p style={{ opacity: 0.7, marginBottom: '24px' }}>
+            {errorMessage}
+            {errorCode && ` (Código: ${errorCode})`}
+          </p>
+          <button
+            onClick={() => {
+              // Intentar recargar la página
+              window.location.reload();
+            }}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

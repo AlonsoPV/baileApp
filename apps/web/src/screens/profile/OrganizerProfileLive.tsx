@@ -348,19 +348,21 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 
 export function OrganizerProfileLive() {
   const navigate = useNavigate();
-  const { data: org, isLoading } = useMyOrganizer();
+  const { data: org, isLoading, error, isError } = useMyOrganizer();
   const { data: parents } = useEventParentsByOrganizer(org?.id);
   const { data: eventDates } = useEventDatesByOrganizer(org?.id);
   const { media } = useOrganizerMedia();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
 
-  // Auto-redirigir a Edit si no tiene perfil de organizador
+  // Auto-redirigir a Edit si no tiene perfil de organizador (solo si no hay error)
+  // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
-    if (!isLoading && !org) {
+    if (!isLoading && !org && !isError) {
+      console.log('[OrganizerProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
       navigate('/profile/organizer/edit', { replace: true });
     }
-  }, [isLoading, org, navigate]);
+  }, [isLoading, org, isError, navigate]);
 
   // Obtener fotos del carrusel usando los media slots
   const carouselPhotos = PHOTO_SLOTS
@@ -427,6 +429,54 @@ export function OrganizerProfileLive() {
       }}>
         <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
         <p style={{ fontSize: typography.fontSize.lg }}>Cargando organizador...</p>
+      </div>
+    );
+  }
+
+  // Mostrar error si hay un problema de carga (no redirigir automáticamente)
+  if (isError && error) {
+    const errorMessage = (error as any)?.message || 'Error desconocido al cargar el perfil';
+    const errorCode = (error as any)?.code;
+    
+    return (
+      <div style={{
+        padding: spacing[12],
+        textAlign: 'center',
+        color: colors.gray[50],
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⚠️</div>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
+            Error al cargar perfil
+          </h2>
+          <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[6] }}>
+            {errorMessage}
+            {errorCode && ` (Código: ${errorCode})`}
+          </p>
+          <button
+            onClick={() => {
+              // Intentar recargar la página
+              window.location.reload();
+            }}
+            style={{
+              padding: `${spacing[3]} ${spacing[6]}`,
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+              color: colors.gray[50],
+              cursor: 'pointer',
+              fontSize: typography.fontSize.base,
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

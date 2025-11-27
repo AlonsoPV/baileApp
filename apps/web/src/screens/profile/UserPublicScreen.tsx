@@ -759,42 +759,10 @@ export const UserProfileLive: React.FC = () => {
           className="profile-banner glass-card-container"
           style={{
             position: 'relative',
-            margin: '0 auto',
+            margin: '2rem auto 0 auto',
             overflow: 'hidden'
           }}
         >
-          {/* Botón discreto para compartir */}
-          <button
-            aria-label="Compartir perfil"
-            title="Compartir"
-            onClick={handleShareProfile}
-            style={{
-              position: 'absolute', top: 12, right: 12,
-              width: 36, height: 36,
-              display: 'grid', placeItems: 'center',
-              background: 'rgba(255,255,255,0.10)',
-              border: '1px solid rgba(255,255,255,0.25)',
-              color: '#fff', borderRadius: 999,
-              backdropFilter: 'blur(8px)', cursor: 'pointer'
-            }}
-          >
-            📤
-          </button>
-          {copied && (
-            <div
-              role="status"
-              aria-live="polite"
-              style={{
-                position: 'absolute', top: 14, right: 56,
-                padding: '4px 8px', borderRadius: 8,
-                background: 'rgba(0,0,0,0.6)', color: '#fff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                fontSize: 12, fontWeight: 700
-              }}
-            >
-              Copiado
-            </div>
-          )}
           <div
             id="user-profile-banner-grid"
             data-baile-id="user-profile-banner-grid"
@@ -808,8 +776,10 @@ export const UserProfileLive: React.FC = () => {
               data-test-id="user-profile-banner-avatar-container"
               style={{
                 display: 'flex',
+                flexDirection: 'column',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: '1rem'
               }}
             >
               <div
@@ -851,6 +821,77 @@ export const UserProfileLive: React.FC = () => {
                   }}>
                     {profile?.display_name?.[0]?.toUpperCase() || '?'}
                   </div>
+                )}
+              </div>
+              
+              {/* Botón mejorado para compartir debajo del avatar */}
+              <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Compartir perfil"
+                  title="Compartir"
+                  onClick={handleShareProfile}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    backdropFilter: 'blur(12px)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.12))';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>📤</span>
+                  <span>Compartir</span>
+                </motion.button>
+                {copied && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      marginTop: '0.5rem',
+                      padding: '6px 12px',
+                      borderRadius: 12,
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
+                      zIndex: 11,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <span>✓</span>
+                    <span>Copiado</span>
+                  </motion.div>
                 )}
               </div>
             </div>
@@ -1236,126 +1277,146 @@ export const UserProfileLive: React.FC = () => {
           </motion.section>
 
           {/* Sección 1: Foto - Pregunta */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="section-content glass-card-container"
-          >
-            <div className="question-section">
-              {/* Foto */}
-              <div style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain', // 🔹 se ve completa
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                {getMediaBySlot(safeMedia as any, 'p2') ? (
-                  <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p2')!.url}
-                    alt="Foto personal"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
+          {(() => {
+            const fotoP2 = getMediaBySlot(safeMedia as any, 'p2');
+            const datoCurioso = profile?.respuestas?.dato_curioso?.trim();
+            const hasSection1Content = fotoP2 || datoCurioso;
+            
+            if (!hasSection1Content) return null;
+            
+            return (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="section-content glass-card-container"
+              >
+                <div className="question-section">
+                  {/* Foto */}
                   <div style={{
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    transition: 'transform 0.3s ease',
                   }}>
-                    📷 Sin foto
+                    {fotoP2 ? (
+                      <ImageWithFallback
+                        src={fotoP2.url}
+                        alt="Foto personal"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '0.875rem'
+                      }}>
+                        📷 Sin foto
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Pregunta */}
-              <div>
-              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                  {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+                  {/* Pregunta */}
+                  <div>
+                    <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
+                    <div style={{
+                      padding: '1.25rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      fontSize: '1.05rem',
+                      lineHeight: '1.7',
+                      color: 'rgba(255, 255, 255, 0.95)',
+                      fontWeight: '400'
+                    }}>
+                      {datoCurioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.section>
+              </motion.section>
+            );
+          })()}
 
           {/* Sección 2: Pregunta - Foto */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="section-content glass-card-container"
-          >
-            <div className="question-section">
-              {/* Pregunta */}
-              <div>
-              <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                  {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
-                </div>
-              </div>
+          {(() => {
+            const fotoP3 = getMediaBySlot(safeMedia as any, 'p3');
+            const gustaBailar = profile?.respuestas?.gusta_bailar?.trim();
+            const hasSection2Content = fotoP3 || gustaBailar;
+            
+            if (!hasSection2Content) return null;
+            
+            return (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="section-content glass-card-container"
+              >
+                <div className="question-section">
+                  {/* Pregunta */}
+                  <div>
+                    <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
+                    <div style={{
+                      padding: '1.25rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      fontSize: '1.05rem',
+                      lineHeight: '1.7',
+                      color: 'rgba(255, 255, 255, 0.95)',
+                      fontWeight: '400'
+                    }}>
+                      {gustaBailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+                    </div>
+                  </div>
 
-              {/* Foto */}
-              <div style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain', // 🔹 se ve completa
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                {getMediaBySlot(safeMedia as any, 'p3') ? (
-                  <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p3')!.url}
-                    alt="Foto de baile"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
+                  {/* Foto */}
                   <div style={{
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    transition: 'transform 0.3s ease',
                   }}>
-                    📷 Sin foto
+                    {fotoP3 ? (
+                      <ImageWithFallback
+                        src={fotoP3.url}
+                        alt="Foto de baile"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '0.875rem'
+                      }}>
+                        📷 Sin foto
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          </motion.section>
+                </div>
+              </motion.section>
+            );
+          })()}
 
 
           {/* Eventos de Interés */}

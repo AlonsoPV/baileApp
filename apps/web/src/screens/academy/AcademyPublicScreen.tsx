@@ -1356,7 +1356,7 @@ export default function AcademyPublicScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="academy-banner glass-card-container"
-          style={{ position: 'relative', margin: '0 auto', overflow: 'hidden' }}
+          style={{ position: 'relative', margin: '2rem auto 0 auto', overflow: 'hidden' }}
         >
           {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="academy-banner-grid">
