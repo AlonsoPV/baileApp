@@ -158,10 +158,14 @@ export default function UserProfileEditor() {
   // Funciones para toggle de chips
 
   const toggleZona = (id: number) => {
-    const newZonas = form.zonas.includes(id)
-      ? form.zonas.filter(z => z !== id)
-      : [...form.zonas, id];
-    setField('zonas', newZonas);
+    // Para usuarios con rol "usuario", solo permitir una zona
+    if (form.zonas.includes(id)) {
+      // Si ya está seleccionada, deseleccionarla
+      setField('zonas', []);
+    } else {
+      // Si hay otra zona seleccionada, reemplazarla con la nueva
+      setField('zonas', [id]);
+    }
   };
 
   // Ritmos: usar componente unificado que guarda catálogo y mapea a tags
@@ -995,7 +999,7 @@ export default function UserProfileEditor() {
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
                   <div>
                     <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas donde Bailas</h2>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde bailas</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica la zona donde bailas (solo una)</div>
                   </div>
                 </div>
 
@@ -1007,6 +1011,7 @@ export default function UserProfileEditor() {
                     mode="edit"
                     onToggle={toggleZona}
                     icon="📍"
+                    singleSelect={true}
                   />
                 </div>
               </div>

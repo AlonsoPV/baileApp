@@ -667,8 +667,12 @@ export default function CrearClase({
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...style }} className={className}>
-      <div style={{ ...card }}>
+    <div style={style} className={className}>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        style={card as any}
+      >
         {/* Accent bar / progreso */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${colors.blue}, ${colors.purple})` }} />
         <div style={{ position: 'absolute', top: 0, left: 0, height: 4, background: colors.ok, width: `${completion}%`, transition: 'width .25s ease' }} />
@@ -1251,7 +1255,7 @@ export default function CrearClase({
             })()}
           </motion.button>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

@@ -47,9 +47,14 @@ export function PickZonas() {
   });
 
   const toggleZona = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((zid) => zid !== id) : [...prev, id]
-    );
+    // Para usuarios con rol "usuario", solo permitir una zona
+    if (selectedIds.includes(id)) {
+      // Si ya está seleccionada, deseleccionarla
+      setSelectedIds([]);
+    } else {
+      // Si hay otra zona seleccionada, reemplazarla con la nueva
+      setSelectedIds([id]);
+    }
   };
 
   useEffect(() => {
@@ -135,7 +140,7 @@ export function PickZonas() {
               ¿Dónde vives tu baile? 📍
             </h2>
             <p style={{ color: colors.gray[400], fontSize: '0.95rem' }}>
-              Selecciona todas las zonas en las que sueles bailar o te interesa descubrir. Esto personaliza tus recomendaciones.
+              Selecciona la zona donde sueles bailar o te interesa descubrir. Esto personaliza tus recomendaciones.
             </p>
           </header>
 
@@ -151,12 +156,13 @@ export function PickZonas() {
                   selectedIds={selectedIds}
                   onToggle={toggleZona}
                   mode="edit"
+                  singleSelect={true}
                 />
               </div>
 
               <div style={{ color: colors.gray[400], fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <span>{selectedIds.length} zona(s) seleccionada(s)</span>
-                <span style={{ color: colors.gray[500] }}>Puedes editarlas después desde tu perfil</span>
+                <span>{selectedIds.length > 0 ? '1 zona seleccionada' : 'Ninguna zona seleccionada'}</span>
+                <span style={{ color: colors.gray[500] }}>Puedes editarla después desde tu perfil</span>
               </div>
 
               {error && (
@@ -196,10 +202,10 @@ export function PickZonas() {
                 </button>
                 <Button
                   type="submit"
-                  disabled={isLoading || selectedIds.length === 0}
+                  disabled={isLoading || selectedIds.length !== 1}
                   style={{
                     width: '100%',
-                    opacity: isLoading || selectedIds.length === 0 ? 0.6 : 1,
+                    opacity: isLoading || selectedIds.length !== 1 ? 0.6 : 1,
                     background: 'linear-gradient(120deg, #34d399, #fbbf24)',
                   }}
                 >

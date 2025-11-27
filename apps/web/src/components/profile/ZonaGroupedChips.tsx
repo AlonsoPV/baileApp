@@ -19,6 +19,7 @@ export interface ZonaGroupedChipsProps {
   style?: React.CSSProperties;
   autoExpandSelectedParents?: boolean;
   size?: "default" | "compact";
+  singleSelect?: boolean; // Si es true, solo permite seleccionar una zona
 }
 
 function normalizeSelected(selected?: Array<number | null | undefined> | null) {
@@ -35,6 +36,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   style,
   autoExpandSelectedParents = true,
   size = "default",
+  singleSelect = false,
 }) => {
   const normalizedSelected = React.useMemo(
     () => normalizeSelected(selectedIds),
@@ -157,6 +159,8 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
       // Validar que la zona esté en el catálogo antes de permitir la selección
       const validatedZonas = validateZonasAgainstCatalog([id], allTags);
       if (validatedZonas.includes(id)) {
+        // Si singleSelect está activado, el componente padre maneja la lógica
+        // Solo llamamos onToggle y el padre decide si reemplazar o deseleccionar
         onToggle(id);
       } else {
         console.warn(`[ZonaGroupedChips] Zona con ID ${id} no está en el catálogo y no se puede seleccionar`);
