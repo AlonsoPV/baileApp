@@ -1867,10 +1867,10 @@ export default function AcademyPublicScreen() {
                   flex-shrink: 0;
                 }
                 .about-section-content {
-                  display: grid;
-                  grid-template-columns: 350px 1fr;
-                  gap: 2.5rem;
-                  align-items: start;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 2rem;
+                  align-items: center;
                   position: relative;
                   z-index: 1;
                 }
@@ -1883,6 +1883,10 @@ export default function AcademyPublicScreen() {
                   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
                   padding: 0.5rem;
                   transition: transform 0.3s ease, box-shadow 0.3s ease;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 1rem;
                 }
                 .about-section-photo:hover {
                   transform: translateY(-4px) scale(1.02);
@@ -1897,11 +1901,9 @@ export default function AcademyPublicScreen() {
                 }
                 @media (max-width: 968px) {
                   .about-section-content {
-                    grid-template-columns: 1fr;
-                    gap: 2rem;
+                    gap: 1.5rem;
                   }
                   .about-section-photo {
-                    justify-self: center;
                     max-width: 100%;
                   }
                   .about-section-photo img {
@@ -1997,10 +1999,8 @@ export default function AcademyPublicScreen() {
                   </div>
                 </div>
 
-                <div className="about-section-content" style={{
-                  gridTemplateColumns: fotoAbout ? undefined : '1fr'
-                }}>
-                  {/* Foto */}
+                <div className="about-section-content">
+                  {/* Foto con botón debajo */}
                   {fotoAbout && (
                     <div className="about-section-photo">
                       <div style={{
@@ -2016,55 +2016,92 @@ export default function AcademyPublicScreen() {
                           alt="Foto sobre nosotros"
                         />
                       </div>
+                      {verMasLink && (
+                        <a
+                          href={verMasLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '1rem 2rem',
+                            background: 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))',
+                            border: '2px solid rgba(30,136,229,0.5)',
+                            borderRadius: '16px',
+                            color: '#fff',
+                            fontSize: '1rem',
+                            fontWeight: '700',
+                            textDecoration: 'none',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
+                            width: 'fit-content'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 12px 32px rgba(30,136,229,0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(30,136,229,0.3)';
+                          }}
+                        >
+                          <span>Conoce más</span>
+                          <span style={{ fontSize: '1.2rem' }}>→</span>
+                        </a>
+                      )}
                     </div>
                   )}
 
-                  {/* Contenido */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.5rem'
-                  }}>
-                    {datoCurioso && (
+                  {/* Contenido de texto */}
+                  {datoCurioso && (
+                    <div style={{
+                      width: '100%',
+                      maxWidth: '600px'
+                    }}>
                       <ExpandableText text={datoCurioso} maxLength={450} />
-                    )}
-                    {verMasLink && (
-                      <a
-                        href={verMasLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '1rem 2rem',
-                          background: 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))',
-                          border: '2px solid rgba(30,136,229,0.5)',
-                          borderRadius: '16px',
-                          color: '#fff',
-                          fontSize: '1rem',
-                          fontWeight: '700',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
-                          alignSelf: 'flex-start'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 12px 32px rgba(30,136,229,0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(30,136,229,0.3)';
-                        }}
-                      >
-                        <span>Conoce más</span>
-                        <span style={{ fontSize: '1.2rem' }}>→</span>
-                      </a>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Botón si no hay foto */}
+                  {!fotoAbout && verMasLink && (
+                    <a
+                      href={verMasLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '1rem 2rem',
+                        background: 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))',
+                        border: '2px solid rgba(30,136,229,0.5)',
+                        borderRadius: '16px',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        fontWeight: '700',
+                        textDecoration: 'none',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
+                        width: 'fit-content'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(30,136,229,0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(30,136,229,0.3)';
+                      }}
+                    >
+                      <span>Conoce más</span>
+                      <span style={{ fontSize: '1.2rem' }}>→</span>
+                    </a>
+                  )}
                 </div>
               </motion.section>
             </>
