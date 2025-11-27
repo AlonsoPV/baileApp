@@ -30,10 +30,27 @@ function normalizeDate(date: string | Date): Date {
 
 /**
  * Formatea una fecha para ICS/Google Calendar
+ * IMPORTANTE: Usa los componentes locales de la fecha (no UTC) para evitar
+ * que 10:00 CDMX se convierta en 4:00 am al interpretarse como UTC
+ * 
+ * Para ICS: Sin Z = "floating time" (hora local sin zona horaria específica)
+ * Para Google Calendar: Acepta hora local sin Z
  */
 function formatDateForCalendar(date: string | Date): string {
   const d = normalizeDate(date);
-  return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  
+  // Usar componentes locales en lugar de UTC para mantener la hora local
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  
+  // Formato: YYYYMMDDTHHMMSS (SIN Z)
+  // Sin Z significa "floating time" - la hora se interpreta como local
+  // Esto evita que Google Calendar/ICS conviertan la hora a UTC
+  return `${year}${month}${day}T${hours}${minutes}${seconds}`;
 }
 
 /**

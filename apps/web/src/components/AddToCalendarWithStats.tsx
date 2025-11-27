@@ -291,6 +291,8 @@ export default function AddToCalendarWithStats({
   };
 
   // Función auxiliar para extraer y validar hora de un string de fecha
+  // IMPORTANTE: Trata todas las fechas como hora local, ignorando Z (UTC) u offsets
+  // Esto evita que 10:00 CDMX se convierta en 4:00 am al interpretarse como UTC
   const extractAndValidateTime = (dateInput: string | Date): { isValid: boolean; date: Date | null; error?: string } => {
     try {
       // Si ya es un objeto Date, validarlo directamente
@@ -298,26 +300,62 @@ export default function AddToCalendarWithStats({
         return { isValid: !isNaN(dateInput.getTime()), date: dateInput };
       }
 
-      // Si es string, intentar parsearlo
+      // Si es string, extraer fecha y hora ignorando zona horaria (Z, +00:00, etc.)
       const dateStr = String(dateInput);
-      const parsed = new Date(dateStr);
       
-      if (isNaN(parsed.getTime())) {
-        // Intentar extraer fecha y hora si está en formato "YYYY-MM-DD HH:MM" o similar
-        const dateTimeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}(?::\d{2})?)/);
-        if (dateTimeMatch) {
-          const [, fecha, hora] = dateTimeMatch;
-          if (isValidTimeFormat(hora)) {
-            const correctedDate = new Date(`${fecha}T${hora}:00`);
-            if (!isNaN(correctedDate.getTime())) {
-              return { isValid: true, date: correctedDate };
-            }
+      // 1️⃣ Si viene en formato ISO con Z u offset, extraer solo fecha y hora
+      //    y reconstruir como hora local (sin Z)
+      const isoMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}(?::\d{2})?(?:\.\d{3})?)/);
+      if (isoMatch) {
+        const [, fecha, hora] = isoMatch;
+        if (isValidTimeFormat(hora)) {
+          // Extraer horas, minutos y segundos (si existen)
+          const [h, m, s = '00'] = hora.split(':');
+          // Reconstruir como fecha local (SIN Z) para que se interprete como hora local
+          const localDate = new Date(`${fecha}T${h}:${m}:${s}`);
+          if (!isNaN(localDate.getTime())) {
+            console.log('[AddToCalendarWithStats] 🔧 Fecha reconstruida como local:', {
+              original: dateStr,
+              fecha,
+              hora,
+              localDate: localDate.toISOString(),
+              localTime: localDate.toLocaleString(),
+              localHours: localDate.getHours(),
+              localMinutes: localDate.getMinutes()
+            });
+            return { isValid: true, date: localDate };
           }
         }
-        return { isValid: false, date: null, error: 'Invalid date format' };
+      }
+      
+      // 2️⃣ Si no es formato ISO "bonito", intentar parsear normal
+      //    pero si tiene Z u offset, extraer solo la parte de fecha/hora
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        // Si el string original tenía Z u offset, reconstruir como local
+        if (dateStr.includes('Z') || dateStr.match(/[+-]\d{2}:\d{2}$/)) {
+          // Extraer componentes de la fecha parseada y reconstruir como local
+          const year = parsed.getFullYear();
+          const month = String(parsed.getMonth() + 1).padStart(2, '0');
+          const day = String(parsed.getDate()).padStart(2, '0');
+          const hours = String(parsed.getHours()).padStart(2, '0');
+          const minutes = String(parsed.getMinutes()).padStart(2, '0');
+          const seconds = String(parsed.getSeconds()).padStart(2, '0');
+          const localDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+          if (!isNaN(localDate.getTime())) {
+            console.log('[AddToCalendarWithStats] 🔧 Fecha con Z/offset reconstruida como local:', {
+              original: dateStr,
+              parsed: parsed.toISOString(),
+              localDate: localDate.toISOString(),
+              localTime: localDate.toLocaleString()
+            });
+            return { isValid: true, date: localDate };
+          }
+        }
+        return { isValid: true, date: parsed };
       }
 
-      return { isValid: true, date: parsed };
+      return { isValid: false, date: null, error: 'Invalid date format' };
     } catch (err) {
       return { isValid: false, date: null, error: String(err) };
     }
