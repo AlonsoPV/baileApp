@@ -7,6 +7,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
+import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 interface EventCardProps {
   item: any;
@@ -32,26 +33,18 @@ export default function EventCard({ item }: EventCardProps) {
     } catch {}
     return t;
   };
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
   // Prioridad: avatar slot > avatar_url > portada_url > primer media
   const flyer = (() => {
     if (Array.isArray(item.media) && item.media.length > 0) {
       const avatarSlot = item.media.find((m: any) => m?.slot === 'avatar');
-      if (avatarSlot?.url) return normalizeUrl(avatarSlot.url);
+      if (avatarSlot?.url) return normalizeAndOptimizeUrl(avatarSlot.url);
     }
-    if (item.avatar_url) return normalizeUrl(item.avatar_url);
-    if (item.portada_url) return normalizeUrl(item.portada_url);
-    if (item.flyer_url) return normalizeUrl(item.flyer_url);
+    if (item.avatar_url) return normalizeAndOptimizeUrl(item.avatar_url);
+    if (item.portada_url) return normalizeAndOptimizeUrl(item.portada_url);
+    if (item.flyer_url) return normalizeAndOptimizeUrl(item.flyer_url);
     if (Array.isArray(item.media) && item.media.length > 0) {
       const first = item.media[0];
-      return normalizeUrl((first as any)?.url || (first as any)?.path || first);
+      return normalizeAndOptimizeUrl((first as any)?.url || (first as any)?.path || first);
     }
     return undefined;
   })();

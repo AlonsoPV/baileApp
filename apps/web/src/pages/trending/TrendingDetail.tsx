@@ -822,7 +822,7 @@ export default function TrendingDetail() {
               const sortedWinners = winners.sort((a, b) => a.position - b.position).slice(0, 3);
               
               return (
-                <div key={listName} style={{
+                <div key={listName} className="winners-list-container" style={{
                   marginBottom: 48,
                   padding: 32,
                   borderRadius: 24,
@@ -844,7 +844,7 @@ export default function TrendingDetail() {
                     pointerEvents: 'none'
                   }} />
                   
-                  <h2 style={{ 
+                  <h2 className="winners-list-title" style={{ 
                     margin: '0 0 32px 0', 
                     fontSize: '2rem', 
                     fontWeight: 900,
@@ -859,7 +859,7 @@ export default function TrendingDetail() {
                     {listName}
                   </h2>
                   
-                  <div style={{ display: 'grid', gap: 20, position: 'relative', zIndex: 1 }}>
+                  <div className="winners-grid" style={{ display: 'grid', gap: 20, position: 'relative', zIndex: 1 }}>
                     {sortedWinners.map((w: any) => {
                       const m = userMeta[w.user_id] || {};
                       const avatarSrc = w.avatar_url || m.avatar || "https://placehold.co/80x80?text=User";
@@ -902,7 +902,7 @@ export default function TrendingDetail() {
                       }
                       
                       return (
-                        <div key={w.candidate_id} style={{
+                        <div key={w.candidate_id} className="winner-card" style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: 24,
@@ -916,7 +916,7 @@ export default function TrendingDetail() {
                           transition: 'transform 0.3s ease'
                         }}>
                           {/* Medalla Grande */}
-                          <div style={{
+                          <div className="winner-medal" style={{
                             fontSize: medalSize,
                             lineHeight: 1,
                             minWidth: 80,
@@ -928,8 +928,8 @@ export default function TrendingDetail() {
                           </div>
                           
                           {/* Avatar con borde especial */}
-                          <a href={userHref} title={displayName} style={{ display: 'inline-block' }}>
-                            <div style={{
+                          <a href={userHref} title={displayName} className="winner-avatar-link" style={{ display: 'inline-block' }}>
+                            <div className="winner-avatar" style={{
                               width: 80,
                               height: 80,
                               borderRadius: 16,
@@ -953,9 +953,9 @@ export default function TrendingDetail() {
                           </a>
                           
                           {/* Información del ganador */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="winner-info" style={{ flex: 1, minWidth: 0 }}>
                             {positionText && (
-                              <div style={{
+                              <div className="winner-position-text" style={{
                                 fontSize: '0.9rem',
                                 fontWeight: 800,
                                 color: positionColor,
@@ -967,7 +967,7 @@ export default function TrendingDetail() {
                                 {positionText}
                               </div>
                             )}
-                            <div style={{
+                            <div className="winner-position" style={{
                               fontSize: '1rem',
                               opacity: 0.9,
                               marginBottom: 8,
@@ -976,7 +976,7 @@ export default function TrendingDetail() {
                             }}>
                               {w.position}° Lugar
                             </div>
-                            <a href={userHref} title={displayName} style={{ 
+                            <a href={userHref} title={displayName} className="winner-name" style={{ 
                               color: '#fff', 
                               textDecoration: 'none', 
                               fontWeight: 900, 
@@ -990,7 +990,7 @@ export default function TrendingDetail() {
                               {displayName}
                             </a>
                             {w.bio_short && (
-                              <div style={{ 
+                              <div className="winner-bio" style={{ 
                                 opacity: 0.9, 
                                 fontSize: '1rem', 
                                 marginTop: 8,
@@ -1029,11 +1029,134 @@ export default function TrendingDetail() {
             </div>
           )}
           
-          {/* Estilos de animación */}
+          {/* Estilos de animación y responsivos */}
           <style>{`
             @keyframes pulse {
               0%, 100% { transform: scale(1); }
               50% { transform: scale(1.1); }
+            }
+            
+            /* Estilos responsivos para ganadores */
+            .winner-card {
+              flex-wrap: wrap;
+            }
+            
+            .winners-list-container {
+              width: 100%;
+            }
+            
+            @media (max-width: 768px) {
+              .winners-list-container {
+                padding: 20px !important;
+                margin-bottom: 32px !important;
+                border-radius: 20px !important;
+              }
+              
+              .winners-list-title {
+                font-size: 1.5rem !important;
+                margin-bottom: 24px !important;
+              }
+              
+              .winners-grid {
+                gap: 16px !important;
+              }
+              
+              .winner-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                padding: 20px !important;
+                gap: 16px !important;
+              }
+              
+              .winner-medal {
+                min-width: auto !important;
+                font-size: 3rem !important;
+              }
+              
+              .winner-avatar {
+                width: 70px !important;
+                height: 70px !important;
+              }
+              
+              .winner-info {
+                width: 100%;
+                text-align: center;
+              }
+              
+              .winner-name {
+                font-size: 1.25rem !important;
+                white-space: normal !important;
+                word-break: break-word;
+                overflow: visible !important;
+                text-overflow: unset !important;
+              }
+              
+              .winner-bio {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: unset !important;
+                font-size: 0.9rem !important;
+              }
+              
+              .winner-position-text {
+                font-size: 0.8rem !important;
+              }
+              
+              .winner-position {
+                font-size: 0.9rem !important;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .winners-list-container {
+                padding: 16px !important;
+                margin-bottom: 24px !important;
+                border-radius: 16px !important;
+              }
+              
+              .winners-list-title {
+                font-size: 1.25rem !important;
+                margin-bottom: 20px !important;
+                letter-spacing: 0.5px !important;
+              }
+              
+              .winners-grid {
+                gap: 12px !important;
+              }
+              
+              .winner-card {
+                padding: 16px !important;
+                gap: 12px !important;
+                border-radius: 16px !important;
+              }
+              
+              .winner-medal {
+                font-size: 2.5rem !important;
+              }
+              
+              .winner-avatar {
+                width: 60px !important;
+                height: 60px !important;
+                border-radius: 12px !important;
+              }
+              
+              .winner-name {
+                font-size: 1.1rem !important;
+              }
+              
+              .winner-bio {
+                font-size: 0.85rem !important;
+              }
+              
+              .winner-position-text {
+                font-size: 0.75rem !important;
+                letter-spacing: 0.5px !important;
+              }
+              
+              .winner-position {
+                font-size: 0.85rem !important;
+              }
             }
           `}</style>
         </div>

@@ -1,16 +1,18 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
+import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 interface OrganizerCardProps {
   item: any;
 }
 
 export default function OrganizerCard({ item }: OrganizerCardProps) {
-  const bannerUrl: string | undefined =
+  const bannerUrl: string | undefined = normalizeAndOptimizeUrl(
     item.portada_url ||
     (Array.isArray(item.media) ? item.media[0]?.url || item.media[0] : undefined) ||
-    item.avatar_url;
+    item.avatar_url
+  );
 
   return (
     <LiveLink to={`/organizer/${item.id}`} asCard={false}>

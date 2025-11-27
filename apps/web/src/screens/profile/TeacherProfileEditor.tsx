@@ -934,8 +934,8 @@ export default function TeacherProfileEditor() {
           </motion.div>
         )}
 
-        {/* Banner de Bienvenida (solo para perfiles nuevos) */}
-        {!teacher && (
+        {/* Banner de Bienvenida (solo para perfiles nuevos, no mientras carga) */}
+        {!isLoading && !teacher && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -955,7 +955,6 @@ export default function TeacherProfileEditor() {
               marginBottom: '0.5rem',
               background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
               WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
             }}>
               ¡Bienvenido, Maestro!
             </h3>

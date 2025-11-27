@@ -4,6 +4,7 @@ import LiveLink from '../../LiveLink';
 import { urls } from '../../../lib/urls';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
+import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
 
 type ClaseItem = {
   titulo?: string;
@@ -108,15 +109,7 @@ export default function ClassCard({ item }: Props) {
     const route = `/clase?type=${item.ownerType || 'teacher'}`;
     return route;
   }, [item.ownerType, item.ownerId, item.cronogramaIndex, item.diaSemana]);
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
-  const bg = normalizeUrl(item.ownerCoverUrl as any);
+  const bg = normalizeAndOptimizeUrl(item.ownerCoverUrl as any);
   const { data: allTags } = useTags() as any;
 
   const ritmoNames: string[] = React.useMemo(() => {

@@ -43,10 +43,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, sess) => {
       setSession(sess ?? null);
       setUser(sess?.user ?? null);
       setLoading(false);
+      
+      // 🔁 Invalidar todas las queries de perfiles cuando cambia el estado de autenticación
+      if (sess?.user) {
+        await qc.invalidateQueries({ queryKey: ["profile"] });
+        await qc.invalidateQueries({ queryKey: ["profile", "me", sess.user.id] });
+        await qc.invalidateQueries({ queryKey: ["academy"] });
+        await qc.invalidateQueries({ queryKey: ["academy", "my"] });
+        await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+        await qc.invalidateQueries({ queryKey: ["organizer"] });
+        await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
+        await qc.invalidateQueries({ queryKey: ["teacher"] });
+        await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+        await qc.invalidateQueries({ queryKey: ["brand"] });
+        await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
+      }
       
       // 🎭 Resetear a usuario si se cierra sesión
       if (!sess?.user) {
@@ -75,9 +90,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     
     if (!error && data.user) {
-      // 🔁 Invalida perfil justo después del login
+      // 🔁 Invalida todos los perfiles justo después del login para forzar refetch
       await qc.invalidateQueries({ queryKey: ["profile"] });
       await qc.invalidateQueries({ queryKey: ["profile", "me", data.user.id] });
+      // Invalidar queries de todos los tipos de perfil
+      await qc.invalidateQueries({ queryKey: ["academy"] });
+      await qc.invalidateQueries({ queryKey: ["academy", "my"] });
+      await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      await qc.invalidateQueries({ queryKey: ["organizer"] });
+      await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
+      await qc.invalidateQueries({ queryKey: ["teacher"] });
+      await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+      await qc.invalidateQueries({ queryKey: ["brand"] });
+      await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
       
       // 🎭 Resetear modo de perfil a "usuario" por defecto
       useProfileMode.getState().setMode("usuario");

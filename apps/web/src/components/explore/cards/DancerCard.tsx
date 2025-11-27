@@ -4,6 +4,7 @@ import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
+import { normalizeAndOptimizeUrl, optimizeSupabaseImageUrl } from "../../../utils/imageOptimization";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
 type DancerItem = {
@@ -27,27 +28,23 @@ interface Props {
 export default function DancerCard({ item, to }: Props) {
   const { data: allTags } = useTags() as any;
 
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
-
-  // Convierte rutas tipo "bucket/path/to/file" a URL pública de Supabase
+  // Convierte rutas tipo "bucket/path/to/file" a URL pública de Supabase y luego la optimiza
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;
     const v = String(maybePath).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) {
+      // Si ya es una URL completa, optimizarla directamente
+      return optimizeSupabaseImageUrl(v) || v;
+    }
     const slash = v.indexOf('/');
     if (slash > 0) {
       const bucket = v.slice(0, slash);
       const path = v.slice(slash + 1);
       try {
         const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-        return data.publicUrl || v;
+        const publicUrl = data.publicUrl || v;
+        // Optimizar la URL pública
+        return optimizeSupabaseImageUrl(publicUrl) || publicUrl;
       } catch {
         return v;
       }
@@ -58,14 +55,14 @@ export default function DancerCard({ item, to }: Props) {
   // Resolver imagen de portada del usuario (prioriza banner/portada, luego avatar, luego media[0])
   const coverUrl: string | undefined = (() => {
     const direct = item.banner_url || item.portada_url || item.avatar_url;
-    if (direct) return toSupabasePublicUrl(normalizeUrl(direct as string) as string);
+    if (direct) return toSupabasePublicUrl(normalizeAndOptimizeUrl(direct as string) as string);
     const media = Array.isArray(item.media) ? item.media : [];
     if (media.length) {
       const bySlot: any = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
-      if (bySlot?.url) return toSupabasePublicUrl(normalizeUrl(bySlot.url as string) as string);
-      if (bySlot?.path) return toSupabasePublicUrl(normalizeUrl(bySlot.path as string) as string);
+      if (bySlot?.url) return toSupabasePublicUrl(normalizeAndOptimizeUrl(bySlot.url as string) as string);
+      if (bySlot?.path) return toSupabasePublicUrl(normalizeAndOptimizeUrl(bySlot.path as string) as string);
       const first = media[0] as any;
-      return toSupabasePublicUrl(normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined);
+      return toSupabasePublicUrl(normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined);
     }
     return undefined;
   })();

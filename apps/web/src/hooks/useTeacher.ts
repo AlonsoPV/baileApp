@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getMediaBySlot } from '@/utils/mediaSlots';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export type TeacherProfile = {
   id?: number;
@@ -50,11 +51,13 @@ function normalizeTeacherProfile(profile: TeacherProfile | null): TeacherProfile
 }
 
 export function useTeacherMy() {
+  const { user, loading: authLoading } = useAuth();
+  
   return useQuery({
     queryKey: ['teacher','mine'],
+    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
     queryFn: async (): Promise<TeacherProfile|null> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')
@@ -78,6 +81,7 @@ export function useTeacherMy() {
       }
       return normalizeTeacherProfile(data as TeacherProfile | null);
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
     retry: (failureCount, error: any) => {
       // No reintentar si es error 406 o PGRST116
       if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {

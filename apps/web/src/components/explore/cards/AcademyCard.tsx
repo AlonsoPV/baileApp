@@ -6,6 +6,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
+import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 interface AcademyCardProps {
   item: any;
@@ -13,20 +14,12 @@ interface AcademyCardProps {
 
 export default function AcademyCard({ item }: AcademyCardProps) {
   const { data: allTags } = useTags() as any;
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Academia";
   const bio = item.bio || "";
   const mediaList = Array.isArray(item?.media) ? (item.media as MediaSlotItem[]) : [];
   const primaryAvatar =
-    normalizeUrl(
+    normalizeAndOptimizeUrl(
       getMediaBySlot(mediaList, 'p1')?.url ||
       getMediaBySlot(mediaList, 'cover')?.url ||
       item.avatar_url ||

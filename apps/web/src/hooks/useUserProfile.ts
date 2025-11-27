@@ -38,6 +38,7 @@ export function useUserProfile() {
       if (error) throw error;
       return data as ProfileUser | null;
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
   });
 
   const updateFields = useMutation({

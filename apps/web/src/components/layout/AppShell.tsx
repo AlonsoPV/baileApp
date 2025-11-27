@@ -10,6 +10,7 @@ import { OffCanvasMenu } from '@ui/index';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import SeoHead from '@/components/SeoHead';
+import JoinCommunityForm from '@/components/forms/JoinCommunityForm';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
@@ -67,9 +68,9 @@ export default function AppShell() {
         }
         .app-footer {
           margin-top: auto;
-          padding: 1.5rem 1rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(0, 0, 0, 0.3);
+          padding: 1.25rem 1rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(0, 0, 0, 0.2);
         }
         .app-footer-content {
           max-width: 1280px;
@@ -77,28 +78,48 @@ export default function AppShell() {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 2rem;
-          flex-wrap: wrap;
+          gap: 1.5rem;
+          flex-wrap: nowrap;
         }
         .app-footer-link {
-          color: rgba(255, 255, 255, 0.7);
+          color: rgba(255, 255, 255, 0.5);
           text-decoration: none;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           transition: color 0.2s ease;
         }
         .app-footer-link:hover {
-          color: rgba(255, 255, 255, 0.9);
-          text-decoration: underline;
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
         }
         @media (max-width: 768px) {
           .app-footer {
             padding: 1rem 0.75rem;
           }
           .app-footer-content {
-            gap: 1rem;
+            gap: 0.75rem;
+            flex-wrap: nowrap;
+            justify-content: center;
           }
           .app-footer-link {
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+          }
+          .join-cta-button {
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            white-space: nowrap;
+          }
+        }
+        @media (max-width: 480px) {
+          .app-footer-content {
+            gap: 0.5rem;
+          }
+          .app-footer-link {
+            font-size: 0.6875rem;
+          }
+          .join-cta-button {
+            font-size: 0.6875rem;
+            padding: 0.5rem 0.75rem;
           }
         }
       `}</style>
@@ -112,11 +133,12 @@ export default function AppShell() {
 
         <footer className="app-footer">
           <div className="app-footer-content">
+            <JoinCommunityForm />
             <Link to="/aviso-de-privacidad" className="app-footer-link">
               Legal
             </Link>
             <Link to="/app/roles/info" className="app-footer-link">
-              Info
+              Roles en la comunidad
             </Link>
           </div>
         </footer>

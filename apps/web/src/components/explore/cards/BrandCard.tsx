@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
+import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 type Props = { item: any };
 
@@ -11,15 +12,7 @@ export default function BrandCard({ item }: Props) {
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Marca";
   const bio = item.bio || "";
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
-  const cover = normalizeUrl((item.portada_url)
+  const cover = normalizeAndOptimizeUrl((item.portada_url)
     || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined)
     || item.avatar_url || undefined) as string | undefined;
   const ritmoNombres: string[] = (item.ritmos || [])

@@ -4,34 +4,23 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
+import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
-  const normalizeUrl = (u?: string) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
   // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
   const bannerUrl: string | undefined = (() => {
     
     const mediaList = Array.isArray(item?.media) ? item.media : [];
     const slotP1 = getMediaBySlot(mediaList as any, 'p1');
     if (slotP1?.url) {
-      const normalizedP1 = normalizeUrl(slotP1.url as string) as string;
-      
-      return normalizedP1;
+      return normalizeAndOptimizeUrl(slotP1.url as string) as string;
     }
     // Intentar múltiples claves comunes
     const direct = item?.avatar_url || item?.banner_url || item?.portada_url || item?.avatar || item?.portada || item?.banner;
     
     if (direct) {
-      const normalized = normalizeUrl(direct as string) as string;
-      
-      return normalized;
+      return normalizeAndOptimizeUrl(direct as string) as string;
     }
    
     if (mediaList.length) {
@@ -39,18 +28,13 @@ export default function TeacherCard({ item }: { item: any }) {
       const bySlot = mediaList.find((m: any) => m?.slot === 'cover' || m?.slot === 'avatar');
       
       if (bySlot?.url) {
-        const normalized = normalizeUrl(bySlot.url as string) as string;
-        
-        return normalized;
+        return normalizeAndOptimizeUrl(bySlot.url as string) as string;
       }
       if (bySlot?.path) {
-        const normalized = normalizeUrl(bySlot.path as string) as string;
-        return normalized;
+        return normalizeAndOptimizeUrl(bySlot.path as string) as string;
       }
       const first = mediaList[0];
-      const firstUrl = normalizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
-      
-      return firstUrl;
+      return normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
     }
     
     return undefined;

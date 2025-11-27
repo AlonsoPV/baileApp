@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { supabase } from '../../../lib/supabase';
 import type { CompetitionGroup } from '../../../types/competitionGroup';
+import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
 
 interface Props {
   group: CompetitionGroup & {
@@ -133,17 +134,8 @@ export default function CompetitionGroupCard({ group }: Props) {
     loadOwnerData();
   }, [group.owner_id, group.academy_id, group.owner_name, group.owner_type]);
 
-  const normalizeUrl = (u?: string | null) => {
-    if (!u) return u;
-    const v = String(u).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if (/^\d+x\d+(\/.*)?$/i.test(v)) return `https://via.placeholder.com/${v}`;
-    if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(v)) return `https://via.placeholder.com/800x400/${v}`;
-    return v;
-  };
-
   // Priorizar cover_image_url del grupo, luego cover_url del dueño
-  const bg = normalizeUrl(group.cover_image_url || ownerData?.cover_url);
+  const bg = normalizeAndOptimizeUrl(group.cover_image_url || ownerData?.cover_url);
 
   const href = `/competition-groups/${group.id}`;
   const ownerLabel = ownerData?.type === 'academy' ? 'Academia' : 'Maestro';

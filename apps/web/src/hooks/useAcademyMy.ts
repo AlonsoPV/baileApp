@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "@/contexts/AuthProvider";
 
 export interface AcademyProfile {
   id: number;
@@ -29,11 +30,13 @@ export interface AcademyProfile {
 }
 
 export function useAcademyMy() {
+  const { user, loading: authLoading } = useAuth();
+  
   return useQuery({
     queryKey: ["academy", "my"],
+    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
     queryFn: async (): Promise<AcademyProfile | null> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user?.id) return null;
 
       const { data, error } = await supabase
         .from("profiles_academy")
@@ -58,6 +61,7 @@ export function useAcademyMy() {
       }
       return data;
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
     retry: (failureCount, error: any) => {
       // No reintentar si es error 406 o PGRST116
       if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {

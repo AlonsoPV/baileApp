@@ -148,6 +148,9 @@ export default function AppRouter() {
         {/* Challenges (público: lista y detalle) */}
         <Route path="/challenges" element={<ChallengesList />} />
         <Route path="/challenges/:id" element={<ChallengeDetail />} />
+        {/* Info screens públicas */}
+        <Route path="/app/roles/info" element={<RolesInfoScreen />} />
+        <Route path="/validation/info" element={<ValidationInfoScreen />} />
         {/** Public user profile by id was removed along with UserPublicProfile.tsx */}
 
         {/* Protected */}
@@ -179,8 +182,6 @@ export default function AppRouter() {
           <Route path="/profile/roles" element={<RoleSelectorScreen />} />
           <Route path="/profile/roles/request" element={<RequestRoleScreen />} />
           <Route path="/app/roles/request" element={<RequestRoleScreen />} />
-          <Route path="/app/roles/info" element={<RolesInfoScreen />} />
-          <Route path="/validation/info" element={<ValidationInfoScreen />} />
           <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin" element={<AdminRoleRequestsScreen />} />
           <Route path="/admin/trending" element={<TrendingAdmin />} />

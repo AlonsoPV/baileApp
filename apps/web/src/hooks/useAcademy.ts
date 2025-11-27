@@ -1,15 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { AcademyProfile } from '../types/academy';
+import { useAuth } from '@/contexts/AuthProvider';
 
 const TABLE = 'profiles_academy';
 
 export function useAcademyMy() {
+  const { user, loading: authLoading } = useAuth();
+  
   return useQuery({
     queryKey: ['academy','mine'],
+    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
     queryFn: async (): Promise<AcademyProfile|null> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')
@@ -18,7 +21,8 @@ export function useAcademyMy() {
         .maybeSingle();
       if (error) throw error;
       return data as AcademyProfile | null;
-    }
+    },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
   });
 }
 
