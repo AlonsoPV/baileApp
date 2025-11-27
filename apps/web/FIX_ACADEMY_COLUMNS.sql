@@ -101,6 +101,20 @@ BEGIN
         RAISE NOTICE '⏭️  Columna cronograma ya existe';
     END IF;
 
+    -- 8. Verificar que respuestas existe
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'profiles_academy'
+        AND column_name = 'respuestas'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE public.profiles_academy 
+        ADD COLUMN respuestas JSONB DEFAULT '{}'::jsonb;
+        RAISE NOTICE '✅ Columna respuestas agregada';
+    ELSE
+        RAISE NOTICE '⏭️  Columna respuestas ya existe';
+    END IF;
+
 END $$;
 
 -- Verificar columnas finales

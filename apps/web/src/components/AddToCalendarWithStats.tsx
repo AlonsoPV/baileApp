@@ -282,21 +282,80 @@ export default function AddToCalendarWithStats({
     }
   };
 
+  // Función auxiliar para validar formato de hora (HH:MM o HH:MM:SS)
+  const isValidTimeFormat = (timeStr: string): boolean => {
+    if (!timeStr || typeof timeStr !== 'string') return false;
+    // Acepta HH:MM o HH:MM:SS
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+    return timeRegex.test(timeStr);
+  };
+
+  // Función auxiliar para extraer y validar hora de un string de fecha
+  const extractAndValidateTime = (dateInput: string | Date): { isValid: boolean; date: Date | null; error?: string } => {
+    try {
+      // Si ya es un objeto Date, validarlo directamente
+      if (dateInput instanceof Date) {
+        return { isValid: !isNaN(dateInput.getTime()), date: dateInput };
+      }
+
+      // Si es string, intentar parsearlo
+      const dateStr = String(dateInput);
+      const parsed = new Date(dateStr);
+      
+      if (isNaN(parsed.getTime())) {
+        // Intentar extraer fecha y hora si está en formato "YYYY-MM-DD HH:MM" o similar
+        const dateTimeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}(?::\d{2})?)/);
+        if (dateTimeMatch) {
+          const [, fecha, hora] = dateTimeMatch;
+          if (isValidTimeFormat(hora)) {
+            const correctedDate = new Date(`${fecha}T${hora}:00`);
+            if (!isNaN(correctedDate.getTime())) {
+              return { isValid: true, date: correctedDate };
+            }
+          }
+        }
+        return { isValid: false, date: null, error: 'Invalid date format' };
+      }
+
+      return { isValid: true, date: parsed };
+    } catch (err) {
+      return { isValid: false, date: null, error: String(err) };
+    }
+  };
+
   // Validar y normalizar fechas
   const normalizedStart = useMemo(() => {
     try {
       if (!start) {
-        console.warn('[AddToCalendarWithStats] No start date provided');
+        console.warn('[AddToCalendarWithStats] ⚠️ No start date provided');
         return new Date(); // Fallback a fecha actual
       }
-      const d = typeof start === 'string' ? new Date(start) : start;
-      if (isNaN(d.getTime())) {
-        console.warn('[AddToCalendarWithStats] Invalid start date:', start);
+
+      const validation = extractAndValidateTime(start);
+      
+      if (!validation.isValid || !validation.date) {
+        console.warn('[AddToCalendarWithStats] ⚠️ Invalid start date:', {
+          original: start,
+          type: typeof start,
+          error: validation.error
+        });
         return new Date(); // Fallback
       }
+
+      const d = validation.date;
+      
+      // Log para depuración
+      console.log('[AddToCalendarWithStats] ✅ Start date normalized:', {
+        original: start,
+        normalized: d.toISOString(),
+        local: d.toLocaleString(),
+        hours: d.getHours(),
+        minutes: d.getMinutes()
+      });
+
       return d;
     } catch (err) {
-      console.error('[AddToCalendarWithStats] Error normalizing start date:', err);
+      console.error('[AddToCalendarWithStats] ❌ Error normalizing start date:', err);
       return new Date();
     }
   }, [start]);
@@ -304,27 +363,51 @@ export default function AddToCalendarWithStats({
   const normalizedEnd = useMemo(() => {
     try {
       if (!end) {
-        console.warn('[AddToCalendarWithStats] No end date provided, using start + 2 hours');
+        console.warn('[AddToCalendarWithStats] ⚠️ No end date provided, using start + 2 hours');
         const defaultEnd = new Date(normalizedStart);
         defaultEnd.setHours(defaultEnd.getHours() + 2);
         return defaultEnd;
       }
-      const d = typeof end === 'string' ? new Date(end) : end;
-      if (isNaN(d.getTime())) {
-        console.warn('[AddToCalendarWithStats] Invalid end date:', end);
+
+      const validation = extractAndValidateTime(end);
+      
+      if (!validation.isValid || !validation.date) {
+        console.warn('[AddToCalendarWithStats] ⚠️ Invalid end date:', {
+          original: end,
+          type: typeof end,
+          error: validation.error
+        });
         const defaultEnd = new Date(normalizedStart);
         defaultEnd.setHours(defaultEnd.getHours() + 2);
         return defaultEnd;
       }
+
+      const d = validation.date;
+      
       // Asegurar que end sea después de start
       if (d.getTime() <= normalizedStart.getTime()) {
+        console.warn('[AddToCalendarWithStats] ⚠️ End date is before or equal to start date, correcting...', {
+          start: normalizedStart.toISOString(),
+          end: d.toISOString()
+        });
         const correctedEnd = new Date(normalizedStart);
         correctedEnd.setHours(correctedEnd.getHours() + 2);
         return correctedEnd;
       }
+
+      // Log para depuración
+      console.log('[AddToCalendarWithStats] ✅ End date normalized:', {
+        original: end,
+        normalized: d.toISOString(),
+        local: d.toLocaleString(),
+        hours: d.getHours(),
+        minutes: d.getMinutes(),
+        durationHours: (d.getTime() - normalizedStart.getTime()) / (1000 * 60 * 60)
+      });
+
       return d;
     } catch (err) {
-      console.error('[AddToCalendarWithStats] Error normalizing end date:', err);
+      console.error('[AddToCalendarWithStats] ❌ Error normalizing end date:', err);
       const defaultEnd = new Date(normalizedStart);
       defaultEnd.setHours(defaultEnd.getHours() + 2);
       return defaultEnd;

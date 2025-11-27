@@ -22,10 +22,7 @@ function RitrosChipsInternal({
   const isReadOnly =
     readOnly !== undefined
       ? readOnly
-      : (() => {
-          const fnStr = onChange.toString().replace(/\s/g, '');
-          return fnStr === '()=>{}' || fnStr.includes('()=>{}') || fnStr === '()=>{}' || onChange.name === '';
-        })();
+      : false; // Por defecto, siempre es editable a menos que se especifique explícitamente
 
   const metrics =
     size === 'compact'
@@ -51,12 +48,42 @@ function RitrosChipsInternal({
         };
 
   const filteredCatalog = React.useMemo(() => {
-    if (!allowedIds || allowedIds.length === 0) return RITMOS_CATALOG;
-    return RITMOS_CATALOG.map((g) => ({
+    if (!allowedIds || allowedIds.length === 0) {
+      console.log('[RitmosChips] No hay allowedIds, mostrando todos los ritmos');
+      return RITMOS_CATALOG;
+    }
+    
+    console.log('[RitmosChips] Filtrando catálogo con allowedIds:', allowedIds);
+    const filtered = RITMOS_CATALOG.map((g) => ({
       ...g,
       items: g.items.filter((i) => allowedIds.includes(i.id)),
     })).filter((g) => g.items.length > 0);
+    
+    console.log('[RitmosChips] Resultado del filtro:', {
+      totalGrupos: filtered.length,
+      totalItems: filtered.reduce((sum, g) => sum + g.items.length, 0),
+      grupos: filtered.map(g => ({ id: g.id, label: g.label, items: g.items.length }))
+    });
+    
+    // Si después de filtrar no hay coincidencias, mostrar todos (fallback)
+    if (filtered.length === 0) {
+      console.warn('[RitmosChips] No se encontraron coincidencias con allowedIds:', allowedIds, '- Mostrando todos los ritmos');
+      return RITMOS_CATALOG;
+    }
+    
+    return filtered;
   }, [allowedIds]);
+
+  // Log para debug
+  React.useEffect(() => {
+    console.log('[RitmosChips] Renderizado:', {
+      selected: selected,
+      allowedIds: allowedIds,
+      filteredCatalogGroups: filteredCatalog.length,
+      filteredCatalogItems: filteredCatalog.reduce((sum, g) => sum + g.items.length, 0),
+      isReadOnly: isReadOnly
+    });
+  }, [selected, allowedIds, filteredCatalog, isReadOnly]);
 
   const autoExpanded = React.useMemo(() => {
     if (!isReadOnly) return null;
@@ -327,12 +354,13 @@ function RitrosChipsInternal({
           }
         }
       `}</style>
-      <div className="ritmos-dropdown-container">
+      <div className="ritmos-dropdown-container" style={{ display: 'block', visibility: 'visible' }}>
         <button
           ref={triggerRef}
           type="button"
           className={`ritmos-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
         >
           <span>
             {selectedCategoryGroup

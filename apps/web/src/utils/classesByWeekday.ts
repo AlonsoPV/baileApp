@@ -47,8 +47,27 @@ export function groupClassesByWeekday(classes: Clase[]) {
   const map = new Map<WeekdayKey, Clase[]>();
   
   for (const c of classes) {
-    // Si tiene diasSemana (array), expandir en múltiples copias
+    // Si tiene diasSemana (array) PERO también tiene diaSemana/dia_semana específico,
+    // significa que ya fue expandida en useLiveClasses, así que NO expandir de nuevo
+    // Solo expandir si NO tiene diaSemana/dia_semana específico
     if (c.diasSemana && Array.isArray(c.diasSemana) && c.diasSemana.length > 0) {
+      // Si ya tiene un diaSemana específico, significa que ya fue expandida
+      if (c.diaSemana !== null && c.diaSemana !== undefined && typeof c.diaSemana === 'number') {
+        // Ya fue expandida, usar el diaSemana específico
+        const wd = c.diaSemana as WeekdayKey;
+        if (!map.has(wd)) map.set(wd, []);
+        map.get(wd)!.push(c);
+        continue;
+      }
+      if (c.dia_semana !== null && c.dia_semana !== undefined && typeof c.dia_semana === 'number') {
+        // Ya fue expandida, usar el dia_semana específico
+        const wd = c.dia_semana as WeekdayKey;
+        if (!map.has(wd)) map.set(wd, []);
+        map.get(wd)!.push(c);
+        continue;
+      }
+      
+      // Si no tiene diaSemana específico, expandir aquí (caso legacy o datos sin procesar)
       const dayNumbers: number[] = [];
       for (const dayStr of c.diasSemana) {
         const dayNum = dayNameToNumber(dayStr);

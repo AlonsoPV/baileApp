@@ -88,6 +88,298 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   );
 };
 {/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */ }
+
+// Componente para texto expandible
+const ExpandableText: React.FC<{ text: string; maxLength?: number }> = ({ text, maxLength = 450 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldTruncate = text.length > maxLength;
+  const displayText = shouldTruncate && !isExpanded 
+    ? text.substring(0, maxLength) + '...'
+    : text;
+
+  return (
+    <div style={{
+      padding: '1.5rem',
+      background: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: '16px',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      backdropFilter: 'blur(5px)'
+    }}>
+      <p style={{
+        fontSize: '1.1rem',
+        lineHeight: 1.8,
+        color: 'rgba(255, 255, 255, 0.95)',
+        margin: 0,
+        marginBottom: shouldTruncate ? '1rem' : 0,
+        fontWeight: 400
+      }}>
+        {displayText}
+      </p>
+      {shouldTruncate && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            padding: '0.5rem 1rem',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            color: '#fff',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            alignSelf: 'flex-start'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          }}
+        >
+          {isExpanded ? 'Ver menos' : 'Ver más'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Componente Carousel para videos
+const VideoCarouselComponent: React.FC<{ videos: string[] }> = ({ videos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  if (videos.length === 0) return null;
+
+  const nextVideo = () => {
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  };
+
+  const prevVideo = () => {
+    setCurrentIndex((prev) => (prev - 1 + videos.length) % videos.length);
+  };
+
+  const goToVideo = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  return (
+    <>
+      <style>{`
+        .video-gallery-main {
+          position: relative;
+          aspect-ratio: 16/9;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .video-gallery-main:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+        .video-gallery-video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          cursor: pointer;
+        }
+        .video-gallery-counter {
+          position: absolute;
+          top: 1.25rem;
+          right: 1.25rem;
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+          backdrop-filter: blur(10px);
+          color: white;
+          padding: 0.6rem 1.2rem;
+          border-radius: 24px;
+          fontSize: 0.875rem;
+          fontWeight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        .video-gallery-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(10px);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 50%;
+          width: 52px;
+          height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1.5rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+          z-index: 10;
+        }
+        .video-gallery-nav-btn:hover {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .video-gallery-nav-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+        .video-gallery-nav-btn--prev {
+          left: 1.25rem;
+        }
+        .video-gallery-nav-btn--next {
+          right: 1.25rem;
+        }
+        .video-gallery-thumbnails {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+          max-width: 100%;
+        }
+        .video-gallery-thumb {
+          position: relative;
+          aspect-ratio: 16/9;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 3px solid transparent;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .video-gallery-thumb:hover {
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .video-gallery-thumb.active {
+          border-color: #E53935;
+          box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
+        }
+        .video-gallery-thumb video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        @media (max-width: 768px) {
+          .video-gallery-main {
+            border-radius: 16px;
+          }
+          .video-gallery-counter {
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+          }
+          .video-gallery-nav-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.25rem;
+          }
+          .video-gallery-nav-btn--prev {
+            left: 1rem;
+          }
+          .video-gallery-nav-btn--next {
+            right: 1rem;
+          }
+          .video-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .video-gallery-main {
+            border-radius: 12px;
+          }
+          .video-gallery-counter {
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+          }
+          .video-gallery-nav-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+          }
+          .video-gallery-nav-btn--prev {
+            left: 0.75rem;
+          }
+          .video-gallery-nav-btn--next {
+            right: 0.75rem;
+          }
+          .video-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+          }
+        }
+      `}</style>
+      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
+        {/* Video principal */}
+        <div className="video-gallery-main">
+          <video
+            src={videos[currentIndex]}
+            controls
+            className="video-gallery-video"
+          />
+
+          {/* Contador */}
+          <div className="video-gallery-counter">
+            {currentIndex + 1} / {videos.length}
+          </div>
+
+          {/* Botones de navegación */}
+          {videos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevVideo(); }}
+                className="video-gallery-nav-btn video-gallery-nav-btn--prev"
+                aria-label="Video anterior"
+              >
+                ‹
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextVideo(); }}
+                className="video-gallery-nav-btn video-gallery-nav-btn--next"
+                aria-label="Video siguiente"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Miniaturas */}
+        {videos.length > 1 && (
+          <div className="video-gallery-thumbnails">
+            {videos.map((video, index) => (
+              <button
+                key={index}
+                onClick={() => goToVideo(index)}
+                className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
+                aria-label={`Ver video ${index + 1}`}
+              >
+                <video src={video} muted />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
 // Componente Carousel para fotos mejorado
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -532,6 +824,12 @@ export default function AcademyProfileLive() {
   const videos = VIDEO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[];
+
+  // Obtener datos de "Un poco más de nosotros"
+  const fotoAbout = getMediaBySlot(media as unknown as MediaSlotItem[], 'about');
+  const datoCurioso = (academy as any)?.respuestas?.dato_curioso || '';
+  const verMasLink = (academy as any)?.respuestas?.ver_mas_link || '';
+  const hasAboutSection = fotoAbout || datoCurioso || verMasLink;
 
   // Get rhythm names from either numeric tag IDs (ritmos/estilos) or catalog IDs (ritmos_seleccionados)
   const getRitmoNombres = () => {
@@ -1858,6 +2156,245 @@ export default function AcademyProfileLive() {
 
 
 
+          {/* Sección: Un poco más de nosotros */}
+          {hasAboutSection && (
+            <>
+              <style>{`
+                .about-section-container {
+                  margin-bottom: 2rem;
+                  padding: 2.5rem;
+                  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+                  border-radius: 24px;
+                  border: 1px solid rgba(255, 255, 255, 0.15);
+                  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                  backdrop-filter: blur(10px);
+                  position: relative;
+                  overflow: hidden;
+                }
+                .about-section-header {
+                  display: flex;
+                  align-items: center;
+                  gap: 1rem;
+                  margin-bottom: 2rem;
+                  position: relative;
+                  z-index: 1;
+                }
+                .about-section-icon {
+                  width: 60px;
+                  height: 60px;
+                  border-radius: 20px;
+                  background: linear-gradient(135deg, #E53935, #FB8C00);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 2rem;
+                  box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+                  flex-shrink: 0;
+                }
+                .about-section-content {
+                  display: grid;
+                  grid-template-columns: 350px 1fr;
+                  gap: 2.5rem;
+                  align-items: start;
+                  position: relative;
+                  z-index: 1;
+                }
+                .about-section-photo {
+                  position: relative;
+                  border-radius: 20px;
+                  overflow: hidden;
+                  border: 3px solid rgba(255, 255, 255, 0.25);
+                  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+                  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+                  padding: 0.5rem;
+                  transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
+                .about-section-photo:hover {
+                  transform: translateY(-4px) scale(1.02);
+                  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+                }
+                .about-section-photo img {
+                  width: 350px;
+                  height: auto;
+                  display: block;
+                  object-fit: contain;
+                  border-radius: 12px;
+                }
+                @media (max-width: 968px) {
+                  .about-section-content {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                  }
+                  .about-section-photo {
+                    justify-self: center;
+                    max-width: 100%;
+                  }
+                  .about-section-photo img {
+                    width: 100%;
+                    max-width: 350px;
+                  }
+                }
+                @media (max-width: 768px) {
+                  .about-section-container {
+                    padding: 1.5rem;
+                    border-radius: 20px;
+                  }
+                  .about-section-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                  }
+                  .about-section-icon {
+                    width: 56px;
+                    height: 56px;
+                    font-size: 1.75rem;
+                    border-radius: 16px;
+                  }
+                  .about-section-content {
+                    gap: 1.5rem;
+                  }
+                }
+                @media (max-width: 480px) {
+                  .about-section-container {
+                    padding: 1.25rem;
+                    border-radius: 16px;
+                  }
+                  .about-section-header {
+                    margin-bottom: 1.25rem;
+                  }
+                  .about-section-icon {
+                    width: 48px;
+                    height: 48px;
+                    font-size: 1.5rem;
+                    border-radius: 14px;
+                  }
+                  .about-section-photo {
+                    padding: 0.375rem;
+                  }
+                  .about-section-photo img {
+                    border-radius: 10px;
+                  }
+                }
+              `}</style>
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.45 }}
+                className="about-section-container"
+              >
+                {/* Top gradient bar */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #E53935, #FB8C00, #FFD166)',
+                  opacity: 0.9,
+                  borderRadius: '24px 24px 0 0'
+                }} />
+
+                {/* Header */}
+                <div className="about-section-header">
+                  <div className="about-section-icon">
+                    📖
+                  </div>
+                  <div>
+                    <h2 style={{
+                      fontSize: '1.75rem',
+                      fontWeight: 900,
+                      margin: 0,
+                      color: '#fff',
+                      textShadow: '0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2)'
+                    }}>
+                      Un poco más de nosotros
+                    </h2>
+                    <p style={{
+                      fontSize: '0.95rem',
+                      opacity: 0.85,
+                      margin: '0.25rem 0 0 0',
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 500
+                    }}>
+                      Conoce más sobre nuestra academia
+                    </p>
+                  </div>
+                </div>
+
+                <div className="about-section-content" style={{
+                  gridTemplateColumns: fotoAbout ? undefined : '1fr'
+                }}>
+                  {/* Foto */}
+                  {fotoAbout && (
+                    <div className="about-section-photo">
+                      <div style={{
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}>
+                        <img
+                          src={fotoAbout.url}
+                          alt="Foto sobre nosotros"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                {/* Contenido */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.5rem'
+                }}>
+                  {datoCurioso && (
+                    <ExpandableText text={datoCurioso} maxLength={450} />
+                  )}
+                  {verMasLink && (
+                    <a
+                      href={verMasLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '1rem 2rem',
+                        background: 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))',
+                        border: '2px solid rgba(30,136,229,0.5)',
+                        borderRadius: '16px',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        fontWeight: '700',
+                        textDecoration: 'none',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
+                        alignSelf: 'flex-start'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(30,136,229,0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.25), rgba(124,77,255,0.25))';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(30,136,229,0.3)';
+                      }}
+                    >
+                      <span>Conoce más</span>
+                      <span style={{ fontSize: '1.2rem' }}>→</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.section>
+            </>
+          )}
+
           {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
             <motion.section
@@ -1893,56 +2430,38 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Videos */}
+          {/* Videos - Carrusel */}
           {videos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="academy-section"
+              className="photo-gallery-section"
               style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
+                marginBottom: '2rem'
               }}
             >
-              <h3 className="section-title">🎥 Videos</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '1.5rem'
-              }}
-                className="academy-videos-grid"
-              >
-                {videos.map((video, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '16/9',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      background: 'rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <video
-                      src={video}
-                      controls
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
+              {/* Top gradient bar */}
+              <div className="photo-gallery-section-top-bar" />
+              
+              {/* Header destacado */}
+              <div className="photo-gallery-section-header">
+                <div className="photo-gallery-section-header-left">
+                  <div className="photo-gallery-section-icon">
+                    🎥
                   </div>
-                ))}
+                  <div>
+                    <h3 className="photo-gallery-section-title">Videos</h3>
+                    <p className="photo-gallery-section-subtitle">Videos de clases, eventos y promocionales</p>
+                  </div>
+                </div>
+                <div className="photo-gallery-section-count">
+                  <span className="photo-gallery-section-count-number">{videos.length}</span>
+                  <span className="photo-gallery-section-count-label">videos</span>
+                </div>
               </div>
+              
+              <VideoCarouselComponent videos={videos} />
             </motion.section>
           )}
 

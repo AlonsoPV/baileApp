@@ -207,20 +207,44 @@ export default function ClasesLiveTabs({
   };
 
   // Calcular fecha completa para el calendario (necesita fecha completa, no solo día)
-  const getFullDateForCalendar = (fecha?: string | null, diaSemana?: number | null): string | null => {
+  const getFullDateForCalendar = (fecha?: string | null, diaSemana?: number | null, horaInicio?: string | null): string | null => {
     if (fecha) {
       return fecha;
     }
     if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
-      const today = new Date();
-      const currentDay = today.getDay();
-      let daysUntil = diaSemana - currentDay;
-      if (daysUntil < 0) daysUntil += 7;
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + daysUntil);
+      const hoy = new Date();
+      const hoyDia = hoy.getDay();
+      let diasHasta = diaSemana - hoyDia;
+      
+      // Si tenemos hora de inicio, considerar si la hora ya pasó hoy
+      if (horaInicio && typeof horaInicio === 'string') {
+        const [hora, minutos] = horaInicio.split(':').map(Number);
+        const horaClase = (hora || 20) * 60 + (minutos || 0);
+        const horaActual = hoy.getHours() * 60 + hoy.getMinutes();
+        
+        // Si el día ya pasó esta semana, o si es el mismo día pero la hora ya pasó, ir a la próxima semana
+        if (diasHasta < 0 || (diasHasta === 0 && horaActual >= horaClase)) {
+          diasHasta += 7;
+        }
+      } else {
+        // Si no hay hora, solo considerar si el día ya pasó
+        if (diasHasta < 0) diasHasta += 7;
+      }
+      
+      const nextDate = new Date(hoy);
+      nextDate.setDate(hoy.getDate() + diasHasta);
       const year = nextDate.getFullYear();
       const month = String(nextDate.getMonth() + 1).padStart(2, '0');
       const day = String(nextDate.getDate()).padStart(2, '0');
+      
+      console.log('[ClasesLiveTabs] 📅 Fecha calculada:', {
+        diaSemana,
+        horaInicio,
+        hoyDia,
+        diasHasta,
+        fechaCalculada: `${year}-${month}-${day}`
+      });
+      
       return `${year}-${month}-${day}`;
     }
     return null;
@@ -352,9 +376,12 @@ export default function ClasesLiveTabs({
                   const ritmo = c.ritmo;
                   const fecha = c.fecha;
 
+                  // Crear clave única combinando día, índice y ID de clase
+                  const uniqueKey = `day-${d.key}-class-${c.id || `idx-${idx}`}-${idx}`;
+                  
                   return (
                     <motion.article
-                      key={c.id || idx}
+                      key={uniqueKey}
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: .25 }}
@@ -531,22 +558,114 @@ export default function ClasesLiveTabs({
                               );
                             }
                             
-                            const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
-                            const startTime = horaInicio || '10:00';
-                            const endTime = horaFin || '12:00';
-                            
-                            // Construir fecha/hora completa para el calendario
-                            let calendarStart: string | null = null;
-                            let calendarEnd: string | null = null;
-                            
-                            if (fullDate) {
-                              const [year, month, day] = fullDate.split('-').map(Number);
-                              const [startHour, startMin] = startTime.split(':').map(Number);
-                              const [endHour, endMin] = endTime.split(':').map(Number);
+                            // Calcular el día para usar en el calendario
+                            // Priorizar diaSemana/dia_semana (día específico de esta clase expandida)
+                            // Si no existe, usar el primer día de diasSemana
+                            const diaParaCalcular = (() => {
+                              // Primero, intentar usar diaSemana o dia_semana (día específico de esta clase)
+                              if (c.diaSemana !== null && c.diaSemana !== undefined && typeof c.diaSemana === 'number' && c.diaSemana >= 0 && c.diaSemana <= 6) {
+                                return c.diaSemana;
+                              }
+                              if (c.dia_semana !== null && c.dia_semana !== undefined && typeof c.dia_semana === 'number' && c.dia_semana >= 0 && c.dia_semana <= 6) {
+                                return c.dia_semana;
+                              }
                               
-                              calendarStart = new Date(Date.UTC(year, month - 1, day, startHour || 10, startMin || 0, 0)).toISOString();
-                              calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
-                            }
+                              // Si no tiene diaSemana específico, usar el primer día de diasSemana
+                              if (c.diasSemana && Array.isArray(c.diasSemana) && c.diasSemana.length > 0) {
+                                const dayMap: Record<string, number> = {
+                                  'domingo': 0, 'dom': 0,
+                                  'lunes': 1, 'lun': 1,
+                                  'martes': 2, 'mar': 2,
+                                  'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                                  'jueves': 4, 'jue': 4,
+                                  'viernes': 5, 'vie': 5,
+                                  'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                                };
+                                const firstDay = c.diasSemana[0];
+                                if (typeof firstDay === 'number' && firstDay >= 0 && firstDay <= 6) {
+                                  return firstDay;
+                                }
+                                if (typeof firstDay === 'string') {
+                                  const dayNum = dayMap[firstDay.toLowerCase().trim()];
+                                  if (dayNum !== undefined) return dayNum;
+                                }
+                              }
+                              
+                              return null;
+                            })();
+                            
+                            console.log('[ClasesLiveTabs] 🔍 Día calculado para calendario:', {
+                              titulo: c.titulo,
+                              diaSemana: c.diaSemana,
+                              dia_semana: c.dia_semana,
+                              diasSemana: c.diasSemana,
+                              diaParaCalcular
+                            });
+                            
+                      // Validar y normalizar horas
+                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                        // Asegurar formato HH:MM
+                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                        if (timeMatch) {
+                          const hours = parseInt(timeMatch[1], 10);
+                          const minutes = parseInt(timeMatch[2], 10);
+                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          }
+                        }
+                        console.warn('[ClasesLiveTabs] ⚠️ Hora inválida, usando default:', { received: timeStr, default: defaultTime });
+                        return defaultTime;
+                      };
+                      
+                      const startTime = normalizeTime(horaInicio, '10:00');
+                      const endTime = normalizeTime(horaFin, '12:00');
+                      
+                      // Pasar la hora de inicio para que getFullDateForCalendar considere si la hora ya pasó
+                      const fullDate = getFullDateForCalendar(fecha, diaParaCalcular, startTime);
+                      
+                      // Construir fecha/hora completa para el calendario
+                      let calendarStart: string | null = null;
+                      let calendarEnd: string | null = null;
+                      
+                      if (fullDate) {
+                        const [year, month, day] = fullDate.split('-').map(Number);
+                        const [startHour, startMin] = startTime.split(':').map(Number);
+                        const [endHour, endMin] = endTime.split(':').map(Number);
+                        
+                        // Validar que los valores sean números válidos
+                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && 
+                            !isNaN(startHour) && !isNaN(startMin) && 
+                            !isNaN(endHour) && !isNaN(endMin)) {
+                          // Usar fecha local en lugar de UTC para evitar problemas de zona horaria
+                          const startDate = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+                          const endDate = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+                          
+                          // Validar que las fechas sean válidas
+                          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                            calendarStart = startDate.toISOString();
+                            calendarEnd = endDate.toISOString();
+                            
+                            // Log para depuración
+                            console.log('[ClasesLiveTabs] ✅ Fechas construidas (desktop):', {
+                              titulo: c.titulo,
+                              fullDate,
+                              startTime,
+                              endTime,
+                              calendarStart,
+                              calendarEnd,
+                              diasSemana: c.diasSemana,
+                              diaParaCalcular
+                            });
+                          } else {
+                            console.warn('[ClasesLiveTabs] ⚠️ Fechas inválidas (desktop):', { startDate, endDate, fullDate, startTime, endTime });
+                          }
+                        } else {
+                          console.warn('[ClasesLiveTabs] ⚠️ Valores numéricos inválidos (desktop):', { year, month, day, startHour, startMin, endHour, endMin });
+                        }
+                      } else {
+                        console.warn('[ClasesLiveTabs] ⚠️ No se pudo calcular fullDate (desktop):', { fecha, diaParaCalcular, diasSemana: c.diasSemana });
+                      }
 
                             // Calcular cronogramaIndex desde el id de la clase
                             const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
@@ -777,9 +896,12 @@ export default function ClasesLiveTabs({
             const ritmo = c.ritmo;
             const fecha = c.fecha;
 
+            // Crear clave única combinando día activo, índice y ID de clase
+            const uniqueKey = `desktop-day-${activeIdx}-class-${c.id || `idx-${idx}`}-${idx}`;
+
             return (
               <motion.article
-                key={c.id || idx}
+                key={uniqueKey}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: .25 }}
@@ -957,9 +1079,71 @@ export default function ClasesLiveTabs({
                         );
                       }
                       
-                      const fullDate = getFullDateForCalendar(fecha, c.dia_semana || c.diaSemana);
-                      const startTime = horaInicio || '10:00';
-                      const endTime = horaFin || '12:00';
+                      // Calcular el día para usar en el calendario
+                      // Priorizar diaSemana/dia_semana (día específico de esta clase expandida)
+                      // Si no existe, usar el primer día de diasSemana
+                      const diaParaCalcular = (() => {
+                        // Primero, intentar usar diaSemana o dia_semana (día específico de esta clase)
+                        if (c.diaSemana !== null && c.diaSemana !== undefined && typeof c.diaSemana === 'number' && c.diaSemana >= 0 && c.diaSemana <= 6) {
+                          return c.diaSemana;
+                        }
+                        if (c.dia_semana !== null && c.dia_semana !== undefined && typeof c.dia_semana === 'number' && c.dia_semana >= 0 && c.dia_semana <= 6) {
+                          return c.dia_semana;
+                        }
+                        
+                        // Si no tiene diaSemana específico, usar el primer día de diasSemana
+                        if (c.diasSemana && Array.isArray(c.diasSemana) && c.diasSemana.length > 0) {
+                          const dayMap: Record<string, number> = {
+                            'domingo': 0, 'dom': 0,
+                            'lunes': 1, 'lun': 1,
+                            'martes': 2, 'mar': 2,
+                            'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                            'jueves': 4, 'jue': 4,
+                            'viernes': 5, 'vie': 5,
+                            'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                          };
+                          const firstDay = c.diasSemana[0];
+                          if (typeof firstDay === 'number' && firstDay >= 0 && firstDay <= 6) {
+                            return firstDay;
+                          }
+                          if (typeof firstDay === 'string') {
+                            const dayNum = dayMap[firstDay.toLowerCase().trim()];
+                            if (dayNum !== undefined) return dayNum;
+                          }
+                        }
+                        
+                        return null;
+                      })();
+                      
+                      console.log('[ClasesLiveTabs] 🔍 Día calculado para calendario (desktop):', {
+                        titulo: c.titulo,
+                        diaSemana: c.diaSemana,
+                        dia_semana: c.dia_semana,
+                        diasSemana: c.diasSemana,
+                        diaParaCalcular
+                      });
+                      
+                      // Validar y normalizar horas
+                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                        // Asegurar formato HH:MM
+                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                        if (timeMatch) {
+                          const hours = parseInt(timeMatch[1], 10);
+                          const minutes = parseInt(timeMatch[2], 10);
+                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          }
+                        }
+                        console.warn('[ClasesLiveTabs] ⚠️ Hora inválida, usando default:', { received: timeStr, default: defaultTime });
+                        return defaultTime;
+                      };
+                      
+                      const startTime = normalizeTime(horaInicio, '10:00');
+                      const endTime = normalizeTime(horaFin, '12:00');
+                      
+                      // Pasar la hora de inicio para que getFullDateForCalendar considere si la hora ya pasó
+                      const fullDate = getFullDateForCalendar(fecha, diaParaCalcular, startTime);
                       
                       // Construir fecha/hora completa para el calendario
                       let calendarStart: string | null = null;
@@ -970,8 +1154,38 @@ export default function ClasesLiveTabs({
                         const [startHour, startMin] = startTime.split(':').map(Number);
                         const [endHour, endMin] = endTime.split(':').map(Number);
                         
-                        calendarStart = new Date(Date.UTC(year, month - 1, day, startHour || 10, startMin || 0, 0)).toISOString();
-                        calendarEnd = new Date(Date.UTC(year, month - 1, day, endHour || 12, endMin || 0, 0)).toISOString();
+                        // Validar que los valores sean números válidos
+                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && 
+                            !isNaN(startHour) && !isNaN(startMin) && 
+                            !isNaN(endHour) && !isNaN(endMin)) {
+                          // Usar fecha local en lugar de UTC para evitar problemas de zona horaria
+                          const startDate = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+                          const endDate = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+                          
+                          // Validar que las fechas sean válidas
+                          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                            calendarStart = startDate.toISOString();
+                            calendarEnd = endDate.toISOString();
+                            
+                            // Log para depuración
+                            console.log('[ClasesLiveTabs] ✅ Fechas construidas:', {
+                              titulo: c.titulo,
+                              fullDate,
+                              startTime,
+                              endTime,
+                              calendarStart,
+                              calendarEnd,
+                              diasSemana: c.diasSemana,
+                              diaParaCalcular
+                            });
+                          } else {
+                            console.warn('[ClasesLiveTabs] ⚠️ Fechas inválidas:', { startDate, endDate, fullDate, startTime, endTime });
+                          }
+                        } else {
+                          console.warn('[ClasesLiveTabs] ⚠️ Valores numéricos inválidos:', { year, month, day, startHour, startMin, endHour, endMin });
+                        }
+                      } else {
+                        console.warn('[ClasesLiveTabs] ⚠️ No se pudo calcular fullDate:', { fecha, diaParaCalcular, diasSemana: c.diasSemana });
                       }
 
                       // Calcular cronogramaIndex desde el id de la clase

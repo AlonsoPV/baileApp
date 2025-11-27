@@ -1,6 +1,40 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import ZonaGroupedChips from '../profile/ZonaGroupedChips';
+import RitmosChips from '../RitmosChips';
+import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
+
+// Mapeo de nombres de tags a slugs del catálogo (para compatibilidad con variaciones de nombres)
+const TAG_NAME_TO_SLUG_MAP: Record<string, string> = {
+  'Salsa On 1': 'salsa_on1',
+  'Moderna': 'moderna',
+  'Salsa On 2': 'salsa_on2',
+  'Salsa Casino': 'salsa_casino',
+  'Bachata tradicional': 'bachata_tradicional',
+  'Bachata Tradicional': 'bachata_tradicional',
+  'Bachata sensual': 'bachata_sensual',
+  'Bachata Sensual': 'bachata_sensual',
+  'Merengue': 'merengue',
+  'Cumbia': 'cumbia',
+  'Timba': 'timba',
+  'Kizomba': 'kizomba',
+  'Semba': 'semba',
+  'Zouk': 'zouk',
+  'Hip hop': 'hiphop',
+  'Hip Hop': 'hiphop',
+  'Break dance': 'breakdance',
+  'Reggaetón': 'reggaeton',
+  'Reggaeton': 'reggaeton',
+  'Twerk': 'twerk',
+  'Danzón': 'danzon',
+  'Rock and Roll': 'rockandroll',
+  'Swing': 'swing',
+  'Cha-cha-chá': 'chachacha',
+  'Boogie Woogie': 'boogiewoogie',
+  'Yoga': 'yoga',
+  'Pilates': 'pilates',
+  'Cumbia Sonidera': 'cumbia_sonidera',
+};
 
 const colors = {
   coral: '#FF3D57',
@@ -350,6 +384,182 @@ export default function CrearClase({
       };
     });
   }, [updateForm]);
+
+  // Convertir ritmos disponibles (tag IDs) a slugs del catálogo para allowedIds
+  const allowedRitmoSlugs = useMemo(() => {
+    // Si no hay ritmos disponibles, mostrar todos (undefined = sin filtro)
+    if (!ritmos || ritmos.length === 0) return undefined;
+    
+    // Crear mapa de tag nombre → catálogo slug (usando normalizeRitmos para mejor compatibilidad)
+    const nameToSlug = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => {
+      g.items.forEach(item => {
+        nameToSlug.set(item.label, item.id);
+        // También agregar variaciones comunes
+        nameToSlug.set(item.label.toLowerCase().trim(), item.id);
+      });
+    });
+    
+    // También usar el mapeo de nombres a slugs
+    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]: [string, string]) => {
+      nameToSlug.set(name, slug);
+      nameToSlug.set(name.toLowerCase().trim(), slug);
+    });
+    
+    // Convertir tag nombres → slugs del catálogo
+    const slugs = ritmos
+      .map(r => {
+        if (!r || !r.nombre) return null;
+        // Intentar coincidencia exacta primero
+        let slug = nameToSlug.get(r.nombre);
+        if (slug) {
+          console.log(`[CrearClase] Mapeo encontrado (exacto): "${r.nombre}" -> "${slug}"`);
+          return slug;
+        }
+        // Intentar case-insensitive
+        slug = nameToSlug.get(r.nombre.toLowerCase().trim());
+        if (slug) {
+          console.log(`[CrearClase] Mapeo encontrado (case-insensitive): "${r.nombre}" -> "${slug}"`);
+          return slug;
+        }
+        // Intentar buscar en el catálogo por label
+        const catalogItem = RITMOS_CATALOG.flatMap(g => g.items).find(
+          item => item.label.toLowerCase().trim() === r.nombre.toLowerCase().trim()
+        );
+        if (catalogItem) {
+          console.log(`[CrearClase] Mapeo encontrado (catálogo): "${r.nombre}" -> "${catalogItem.id}"`);
+          return catalogItem.id;
+        }
+        console.warn(`[CrearClase] No se encontró mapeo para: "${r.nombre}"`);
+        return null;
+      })
+      .filter(Boolean) as string[];
+    
+    console.log('[CrearClase] Resultado del mapeo:', {
+      ritmosInput: ritmos.map(r => r.nombre),
+      slugsOutput: slugs,
+      total: slugs.length
+    });
+    
+    // Si no se encontraron coincidencias, mostrar todos (undefined = sin filtro)
+    // Esto evita que el componente no se renderice cuando hay allowedIds pero no hay coincidencias
+    if (slugs.length === 0) {
+      console.warn('[CrearClase] No se encontraron coincidencias, mostrando todos los ritmos');
+      return undefined;
+    }
+    
+    return slugs;
+  }, [ritmos]);
+
+  // Convertir ritmoIds (tag IDs numéricos) a slugs del catálogo para RitmosChips
+  // Similar a AcademyProfileEditor.tsx pero adaptado para convertir IDs → slugs
+  const selectedCatalogIds = useMemo(() => {
+    const ritmoIds = form.ritmoIds && form.ritmoIds.length
+      ? form.ritmoIds
+      : (form.ritmoId !== null && form.ritmoId !== undefined ? [form.ritmoId] : []);
+    
+    if (ritmoIds.length === 0 || !ritmos || ritmos.length === 0) return [];
+    
+    // Crear mapa de tag ID → tag nombre
+    const tagIdToName = new Map<number, string>();
+    ritmos.forEach(r => {
+      if (r && r.id && r.nombre) {
+        tagIdToName.set(r.id, r.nombre);
+        // También agregar variaciones case-insensitive
+        tagIdToName.set(r.id, r.nombre.toLowerCase().trim());
+      }
+    });
+    
+    // Crear mapa de tag nombre → catálogo slug
+    const nameToSlug = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => {
+      g.items.forEach(item => {
+        nameToSlug.set(item.label, item.id);
+        nameToSlug.set(item.label.toLowerCase().trim(), item.id);
+      });
+    });
+    
+    // También usar el mapeo de nombres a slugs
+    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]: [string, string]) => {
+      nameToSlug.set(name, slug);
+      nameToSlug.set(name.toLowerCase().trim(), slug);
+    });
+    
+    // Convertir tag IDs → nombres → slugs
+    return ritmoIds
+      .map(id => {
+        const tagName = tagIdToName.get(id);
+        if (!tagName) return null;
+        // Intentar coincidencia exacta
+        let slug = nameToSlug.get(tagName);
+        if (slug) return slug;
+        // Intentar case-insensitive
+        slug = nameToSlug.get(tagName.toLowerCase().trim());
+        if (slug) return slug;
+        // Intentar buscar en el catálogo por label
+        const catalogItem = RITMOS_CATALOG.flatMap(g => g.items).find(
+          item => item.label.toLowerCase().trim() === tagName.toLowerCase().trim()
+        );
+        return catalogItem?.id || null;
+      })
+      .filter(Boolean) as string[];
+  }, [form.ritmoIds, form.ritmoId, ritmos]);
+
+  // Manejar cambio de ritmos desde RitmosChips (slugs → tag IDs)
+  // Similar a AcademyProfileEditor.tsx pero adaptado para convertir slugs → IDs
+  const onChangeCatalog = useCallback((slugs: string[]) => {
+    if (!ritmos || ritmos.length === 0) {
+      // Si no hay ritmos disponibles, no podemos mapear
+      updateForm(prev => ({
+        ...prev,
+        ritmoIds: [],
+        ritmoId: null,
+      }));
+      return;
+    }
+
+    // Crear mapa de catálogo slug → tag nombre
+    const slugToName = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => {
+      g.items.forEach(item => {
+        slugToName.set(item.id, item.label);
+      });
+    });
+    
+    // Crear mapa de tag nombre → tag ID (con variaciones case-insensitive)
+    const nameToTagId = new Map<string, number>();
+    ritmos.forEach(r => {
+      if (r && r.nombre && r.id) {
+        nameToTagId.set(r.nombre, r.id);
+        nameToTagId.set(r.nombre.toLowerCase().trim(), r.id);
+      }
+    });
+    
+    // Convertir slugs → nombres → tag IDs
+    const tagIds = slugs
+      .map(slug => {
+        const catalogLabel = slugToName.get(slug);
+        if (!catalogLabel) return null;
+        // Intentar coincidencia exacta
+        let tagId = nameToTagId.get(catalogLabel);
+        if (tagId) return tagId;
+        // Intentar case-insensitive
+        tagId = nameToTagId.get(catalogLabel.toLowerCase().trim());
+        if (tagId) return tagId;
+        // Buscar en ritmos por nombre (case-insensitive)
+        const matchingRitmo = ritmos.find(r => 
+          r.nombre && r.nombre.toLowerCase().trim() === catalogLabel.toLowerCase().trim()
+        );
+        return matchingRitmo?.id || null;
+      })
+      .filter((id): id is number => typeof id === 'number');
+    
+    updateForm(prev => ({
+      ...prev,
+      ritmoIds: tagIds,
+      ritmoId: tagIds.length > 0 ? tagIds[0] : null,
+    }));
+  }, [ritmos, updateForm]);
 
   const zonaTagSource = useMemo(() => {
     if (zonaTags && zonaTags.length) return zonaTags;
@@ -811,25 +1021,16 @@ export default function CrearClase({
             )}
 
             {/* RITMO + ZONA */}
-            <div style={sectionHeader}><span>🎶</span><b>Ritmo & Zona</b></div>
-            <div style={row}>
+            <div style={sectionHeader}><span>🎶</span><b>Ritmo</b></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <div style={label}>Ritmos (puedes elegir varios)</div>
-                <div style={chipWrap}>
-                  {ritmos.map(r => {
-                    const isActive = (form.ritmoIds && form.ritmoIds.includes(r.id)) || form.ritmoId === r.id;
-                    return (
-                      <button
-                        type="button"
-                        key={r.id}
-                        style={chip(isActive)}
-                        onClick={() => toggleRitmoChip(r.id)}
-                        title={r.nombre}
-                      >
-                        {r.nombre}
-                      </button>
-                    );
-                  })}
+                <div >
+                  <RitmosChips 
+                    selected={selectedCatalogIds} 
+                    onChange={onChangeCatalog}
+                    allowedIds={allowedRitmoSlugs}
+                  />
                 </div>
                 {(!form.ritmoIds || form.ritmoIds.length === 0) && (
                   <div style={helpText()}>
@@ -839,7 +1040,7 @@ export default function CrearClase({
               </div>
 
              {/*  <div>
-                <div style={label}>Zona</div>
+                <div style={label}>Zona</div>   
                 <div style={chipWrap}>
                   {zonas.map(z => (
                     <button

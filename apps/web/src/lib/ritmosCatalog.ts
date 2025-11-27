@@ -23,8 +23,9 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'bachata_sensual', label: 'Bachata sensual', parent: 'latinos' },
       { id: 'merengue', label: 'Merengue', parent: 'latinos' },
       { id: 'cumbia', label: 'Cumbia', parent: 'latinos' },
-      // Variante específica de cumbia que existe en tags: { id: 41, slug: "cumbia_texana" }
+      // Variantes específicas de cumbia que existen en tags
       { id: 'cumbia_texana', label: 'Cumbia Texana', parent: 'latinos' },
+      { id: 'cumbia_sonidera', label: 'Cumbia Sonidera', parent: 'latinos' },
       { id: 'timba', label: 'Timba', parent: 'latinos' },
     ],
   },
@@ -51,6 +52,8 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'pole_dance', label: 'Pole Dance', parent: 'urbanos' },
       { id: 'acrobacia', label: 'Acrobacia', parent: 'urbanos' },
       { id: 'elasticidad', label: 'Elasticidad', parent: 'urbanos' },
+      { id: 'yoga', label: 'Yoga', parent: 'urbanos' },
+      { id: 'pilates', label: 'Pilates', parent: 'urbanos' },
     ],
   },
   {

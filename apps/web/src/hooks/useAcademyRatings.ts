@@ -91,14 +91,25 @@ export function useAcademyRatingStats(academyId?: number) {
       });
 
       if (error) {
-        console.error('[useAcademyRatingStats] Error:', error);
-        // Si la función no existe, calcular manualmente
+        // Si la función no existe o hay error 406, calcular manualmente
+        // No mostrar error 406 en consola (tabla puede no existir)
+        if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+          return await calculateStatsManually(academyId);
+        }
+        // Solo mostrar otros errores
+        if (error.code && error.code !== '406') {
+          console.error('[useAcademyRatingStats] Error en RPC:', error);
+        }
+        // Intentar calcular manualmente como fallback
         return await calculateStatsManually(academyId);
       }
 
       return data as AcademyRatingStats;
     },
     enabled: !!academyId,
+    retry: false, // No reintentar para evitar spam de errores
+    refetchOnWindowFocus: false, // No refetch al enfocar ventana
+    refetchOnMount: false, // No refetch al montar si ya hay datos
   });
 }
 
@@ -110,7 +121,14 @@ async function calculateStatsManually(academyId: number): Promise<AcademyRatingS
     .eq('academy_id', academyId);
 
   if (error) {
-    console.error('[calculateStatsManually] Error:', error);
+    // Silenciar errores 406 (tabla no existe o problema de RLS)
+    if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+      return getEmptyStats();
+    }
+    // Solo mostrar otros errores
+    if (error.code && error.code !== '406') {
+      console.error('[calculateStatsManually] Error:', error);
+    }
     return getEmptyStats();
   }
 
@@ -195,34 +213,42 @@ export function useMyAcademyRating(academyId?: number) {
           .single();
 
         if (error) {
-          // PGRST116 = No rows found
+          // PGRST116 = No rows found (esperado)
           if (error.code === 'PGRST116') {
             return null;
           }
           
-          // Error 406 = Not Acceptable (puede ser problema de headers o RLS)
-          if (error.message?.includes('406') || error.code === '406') {
-            console.warn('[useMyAcademyRating] Error 406 - Posible problema de autenticación o RLS:', error);
+          // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
+          // Silenciar el error - puede ser que la tabla no exista aún
+          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
             return null;
           }
           
-          console.error('[useMyAcademyRating] Error:', error);
+          // Solo mostrar otros errores inesperados
+          if (error.code && !['PGRST116', '406'].includes(error.code)) {
+            console.error('[useMyAcademyRating] Error inesperado:', error);
+          }
           return null;
         }
 
         return data as AcademyRating;
       } catch (err: any) {
         // Capturar errores de red o otros errores inesperados
-        if (err?.message?.includes('406') || err?.status === 406) {
-          console.warn('[useMyAcademyRating] Error 406 capturado:', err);
+        // Silenciar errores 406 (tabla no existe o problema de RLS)
+        if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
           return null;
         }
-        console.error('[useMyAcademyRating] Error inesperado:', err);
+        // Solo mostrar otros errores inesperados
+        if (err?.status && err.status !== 406 && err?.code !== '406') {
+          console.error('[useMyAcademyRating] Error inesperado:', err);
+        }
         return null;
       }
     },
     enabled: !!academyId && !!user?.id,
     retry: false, // No reintentar para evitar spam de errores
+    refetchOnWindowFocus: false, // No refetch al enfocar ventana para evitar errores repetidos
+    refetchOnMount: false, // No refetch al montar si ya hay datos
   });
 }
 

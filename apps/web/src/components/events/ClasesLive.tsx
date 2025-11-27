@@ -175,33 +175,64 @@ export default function ClasesLive({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(() => {
-                    const buildTimeDate = (time?: string, fecha?: string, diaSemana?: number) => {
+                    // Función auxiliar para convertir día (string o número) a número
+                    const dayToNumber = (day: string | number | null | undefined): number | null => {
+                      if (day === null || day === undefined) return null;
+                      if (typeof day === 'number' && day >= 0 && day <= 6) return day;
+                      if (typeof day === 'string') {
+                        const dayMap: Record<string, number> = {
+                          'domingo': 0, 'dom': 0,
+                          'lunes': 1, 'lun': 1,
+                          'martes': 2, 'mar': 2,
+                          'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                          'jueves': 4, 'jue': 4,
+                          'viernes': 5, 'vie': 5,
+                          'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                        };
+                        return dayMap[day.toLowerCase().trim()] ?? null;
+                      }
+                      return null;
+                    };
+
+                    const buildTimeDate = (time?: string, fecha?: string, diaSemana?: number | null, diasSemana?: (string | number)[] | null) => {
                       let base: Date;
                       
                       // Si hay fecha específica, usarla
                       if (fecha) {
                         base = new Date(fecha);
                       } 
-                      // Si es clase semanal (diaSemana), calcular próxima ocurrencia
-                      else if (diaSemana !== undefined && diaSemana !== null) {
-                        base = new Date();
-                        const today = base.getDay();  // 0=Domingo, 1=Lunes, ..., 6=Sábado
-                        const targetDay = Number(diaSemana);
-                        
-                        // Calcular días hasta el próximo targetDay
-                        let daysUntilTarget = targetDay - today;
-                        
-                        // Si el día ya pasó esta semana, ir a la próxima semana
-                        if (daysUntilTarget <= 0) {
-                          daysUntilTarget += 7;
+                      // Si es clase semanal, calcular próxima ocurrencia
+                      else {
+                        // Si tiene múltiples días, usar el primer día
+                        let diaParaCalcular: number | null = null;
+                        if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
+                          diaParaCalcular = dayToNumber(diasSemana[0]);
+                        }
+                        // Si no, usar diaSemana
+                        if (diaParaCalcular === null) {
+                          diaParaCalcular = diaSemana !== null && diaSemana !== undefined ? Number(diaSemana) : null;
                         }
                         
-                        // Agregar los días
-                        base.setDate(base.getDate() + daysUntilTarget);
-                      } 
-                      // Si no hay fecha ni día, usar fecha actual
-                      else {
-                        base = new Date();
+                        if (diaParaCalcular !== null && diaParaCalcular >= 0 && diaParaCalcular <= 6) {
+                          base = new Date();
+                          const today = base.getDay();  // 0=Domingo, 1=Lunes, ..., 6=Sábado
+                          const targetDay = diaParaCalcular;
+                          
+                          // Calcular días hasta el próximo targetDay
+                          let daysUntilTarget = targetDay - today;
+                          
+                          // Si el día ya pasó esta semana, ir a la próxima semana
+                          if (daysUntilTarget <= 0) {
+                            daysUntilTarget += 7;
+                          }
+                          
+                          // Agregar los días
+                          base.setDate(base.getDate() + daysUntilTarget);
+                        } 
+                        // Si no hay fecha ni día, usar fecha actual
+                        else {
+                          base = new Date();
+                        }
                       }
                       
                       // Establecer hora
@@ -213,9 +244,36 @@ export default function ClasesLive({
                     
                     const classDate = (it as any)?.fecha;
                     const classDiaSemana = (it as any)?.diaSemana;
-                    const start = buildTimeDate((it as any).inicio, classDate, classDiaSemana);
+                    const classDiasSemana = (it as any)?.diasSemana;
+                    
+                    // Convertir diasSemana a números si es necesario
+                    const diasSemanaNumeros = (() => {
+                      if (!classDiasSemana || !Array.isArray(classDiasSemana)) return null;
+                      const dayMap: Record<string, number> = {
+                        'domingo': 0, 'dom': 0,
+                        'lunes': 1, 'lun': 1,
+                        'martes': 2, 'mar': 2,
+                        'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+                        'jueves': 4, 'jue': 4,
+                        'viernes': 5, 'vie': 5,
+                        'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                      };
+                      const dias = classDiasSemana
+                        .map((d: string | number) => {
+                          if (typeof d === 'number' && d >= 0 && d <= 6) return d;
+                          if (typeof d === 'string') {
+                            const dayNum = dayMap[d.toLowerCase().trim()];
+                            return dayNum !== undefined ? dayNum : null;
+                          }
+                          return null;
+                        })
+                        .filter((d: number | null) => d !== null) as number[];
+                      return dias.length > 0 ? dias : null;
+                    })();
+                    
+                    const start = buildTimeDate((it as any).inicio, classDate, classDiaSemana, classDiasSemana);
                     const end = (() => {
-                      const e = buildTimeDate((it as any).fin, classDate, classDiaSemana);
+                      const e = buildTimeDate((it as any).fin, classDate, classDiaSemana, classDiasSemana);
                       if (e.getTime() <= start.getTime()) {
                         const plus = new Date(start);
                         plus.setHours(plus.getHours() + 2);
@@ -234,6 +292,9 @@ export default function ClasesLive({
                           start={start}
                           end={end}
                           showAsIcon={false}
+                          fecha={classDate || null}
+                          diaSemana={classDiaSemana ?? null}
+                          diasSemana={diasSemanaNumeros}
                         />
                       </RequireLogin>
                     );

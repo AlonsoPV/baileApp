@@ -188,6 +188,15 @@ function cronoItemToClases(
   }
   // Si tiene diasSemana (array de strings), crear una clase por cada día
   else if (item.diasSemana && Array.isArray(item.diasSemana)) {
+    // Convertir todos los días a números para preservarlos
+    const diasSemanaNumeros: number[] = [];
+    item.diasSemana.forEach((diaStr: string) => {
+      const diaNum = dayNameToNumber(diaStr);
+      if (diaNum !== null) {
+        diasSemanaNumeros.push(diaNum);
+      }
+    });
+    
     item.diasSemana.forEach((diaStr: string, diaIdx: number) => {
       const diaNum = dayNameToNumber(diaStr);
       if (diaNum !== null) {
@@ -202,6 +211,8 @@ function cronoItemToClases(
           descripcion,
           dia_semana: diaNum,
           diaSemana: diaNum,
+          // Preservar diasSemana original (como números) para que los componentes puedan usarlo
+          diasSemana: diasSemanaNumeros.length > 0 ? diasSemanaNumeros : null,
           fechaModo: fechaModo || 'semanal',
           horarioModo,
           hora_inicio: inicio,

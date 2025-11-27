@@ -1,35 +1,102 @@
 import React from "react";
-import { motion } from "framer-motion";
-import { useOrganizerEventMetrics } from "@/hooks/useOrganizerEventMetrics";
+import { motion, AnimatePresence } from "framer-motion";
+import { useOrganizerEventMetrics, type DateFilter, type MetricsFilters } from "@/hooks/useOrganizerEventMetrics";
 
 type PanelProps = { organizerId: number };
 
 export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
-  const { global, porFecha, loading, error, refetch } =
-    useOrganizerEventMetrics(organizerId);
-
+  const [dateFilter, setDateFilter] = React.useState<DateFilter>("all");
+  const [customFrom, setCustomFrom] = React.useState<string>("");
+  const [customTo, setCustomTo] = React.useState<string>("");
+  const [expandedDates, setExpandedDates] = React.useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  
+  const filters: MetricsFilters = {
+    dateFilter,
+    from: dateFilter === "custom" ? customFrom : undefined,
+    to: dateFilter === "custom" ? customTo : undefined,
+  };
+  
+  const { global, byDate, loading, error, refetch } = useOrganizerEventMetrics(organizerId, filters);
+  
+  // Refrescar métricas cuando cambian los filtros
   React.useEffect(() => {
     if (organizerId) {
       refetch();
     }
-  }, [organizerId, refetch]);
-
+  }, [organizerId, refetch, filters]);
+  
+  const toggleDateExpanded = (dateId: number) => {
+    setExpandedDates(prev => {
+      const next = new Set(prev);
+      if (next.has(dateId)) {
+        next.delete(dateId);
+      } else {
+        next.add(dateId);
+      }
+      return next;
+    });
+  };
+  
+  // Filtrar fechas por búsqueda
+  const filteredDates = React.useMemo(() => {
+    if (!searchQuery.trim()) return byDate;
+    const query = searchQuery.toLowerCase();
+    return byDate.filter(date => 
+      date.eventDateName.toLowerCase().includes(query) ||
+      date.reservations.some(r => r.userName.toLowerCase().includes(query))
+    );
+  }, [byDate, searchQuery]);
+  
+  // Calcular porcentajes para gráficos
+  const rolePercentages = React.useMemo(() => {
+    if (!global || global.totalRsvps === 0) return null;
+    return {
+      leader: ((global.porRol.leader || 0) / global.totalRsvps) * 100,
+      follower: ((global.porRol.follower || 0) / global.totalRsvps) * 100,
+      ambos: ((global.porRol.ambos || 0) / global.totalRsvps) * 100,
+      otros: ((global.porRol.otros || 0) / global.totalRsvps) * 100,
+    };
+  }, [global]);
+  
   if (loading) {
     return (
-      <div style={{ padding: "1.5rem 0", textAlign: "center", color: "#fff" }}>
-        Cargando métricas de fechas...
+      <div style={{ padding: "3rem", textAlign: "center", color: "#fff" }}>
+        <div style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>⏳</div>
+        <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Cargando métricas...</p>
       </div>
     );
   }
-
+  
   if (error) {
     return (
-      <div style={{ padding: "1.5rem 0", textAlign: "center", color: "#ff6b6b" }}>
-        Hubo un problema al cargar las métricas de fechas.
+      <div style={{ padding: "2rem", textAlign: "center", color: "#ff6b6b" }}>
+        <div style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>❌</div>
+        <p style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.5rem" }}>
+          Hubo un problema al cargar métricas
+        </p>
+        <p style={{ fontSize: "0.875rem", opacity: 0.8 }}>
+          {error?.message || "Error desconocido"}
+        </p>
+        <button
+          onClick={() => refetch()}
+          style={{
+            marginTop: "1rem",
+            padding: "0.5rem 1rem",
+            borderRadius: 8,
+            border: "1px solid rgba(255,107,107,0.3)",
+            background: "rgba(255,107,107,0.1)",
+            color: "#ff6b6b",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          🔄 Reintentar
+        </button>
       </div>
     );
   }
-
+  
   return (
     <>
       <style>{`
@@ -46,36 +113,223 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
           box-shadow: 0 8px 32px rgba(0,0,0,.3);
         }
         .metrics-section h3 {
-          margin: 0 0 1rem 0;
+          margin: 0 0 1.25rem 0;
           font-size: 1.5rem;
           font-weight: 800;
           color: #fff;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .metrics-filters {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-bottom: 1rem;
+        }
+        .metrics-filter-button {
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.05);
+          color: #fff;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .metrics-filter-button:hover {
+          background: rgba(255,255,255,0.1);
+          transform: translateY(-1px);
+        }
+        .metrics-filter-button.active {
+          background: linear-gradient(135deg, rgba(240,147,251,0.3), rgba(245,87,108,0.3));
+          border-color: rgba(240,147,251,0.5);
+          box-shadow: 0 4px 12px rgba(240,147,251,0.2);
+        }
+        .metrics-search {
+          width: 100%;
+          padding: 0.75rem;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+          font-size: 0.875rem;
+          margin-bottom: 1rem;
+        }
+        .metrics-search::placeholder {
+          color: rgba(255,255,255,0.5);
+        }
+        .metrics-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+        }
+        .metrics-stat-card {
+          padding: 1.25rem;
+          background: linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.15));
+          border-radius: 16px;
+          border: 1px solid rgba(240,147,251,0.3);
+          position: relative;
+          overflow: hidden;
+        }
+        .metrics-stat-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #f093fb, #f5576c);
+        }
+        .metrics-stat-label {
+          font-size: 0.75rem;
+          opacity: 0.9;
+          margin-bottom: 0.5rem;
+          color: #fff;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          font-weight: 600;
+        }
+        .metrics-stat-value {
+          font-size: 2.5rem;
+          font-weight: 900;
+          color: #f093fb;
+          line-height: 1;
         }
         .metrics-role-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 0.75rem;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 1rem;
         }
-        .metrics-date-card {
+        .metrics-role-card {
           padding: 1rem;
-          background: rgba(255,255,255,0.05);
           border-radius: 12px;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid;
+          position: relative;
+          overflow: hidden;
         }
-        .metrics-date-header {
+        .metrics-role-card.leader {
+          background: rgba(30,136,229,0.1);
+          border-color: rgba(30,136,229,0.3);
+        }
+        .metrics-role-card.follower {
+          background: rgba(255,209,102,0.1);
+          border-color: rgba(255,209,102,0.3);
+        }
+        .metrics-role-card.ambos {
+          background: rgba(76,175,80,0.1);
+          border-color: rgba(76,175,80,0.3);
+        }
+        .metrics-role-card.otros {
+          background: rgba(255,255,255,0.05);
+          border-color: rgba(255,255,255,0.2);
+        }
+        .metrics-progress-bar {
+          width: 100%;
+          height: 6px;
+          background: rgba(255,255,255,0.1);
+          border-radius: 3px;
+          overflow: hidden;
+          margin-top: 0.5rem;
+        }
+        .metrics-progress-fill {
+          height: 100%;
+          border-radius: 3px;
+          transition: width 0.3s ease;
+        }
+        .metrics-class-card {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 1.25rem;
+          margin-bottom: 1rem;
+          transition: all 0.2s ease;
+        }
+        .metrics-class-card:hover {
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .metrics-class-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
           gap: 1rem;
-          flex-wrap: wrap;
+          cursor: pointer;
         }
-        .metrics-date-info {
+        .metrics-class-title {
+          font-weight: 800;
+          font-size: 1.25rem;
+          color: #fff;
+          margin-bottom: 0.5rem;
+        }
+        .metrics-class-badges {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-top: 0.75rem;
+        }
+        .metrics-class-total {
+          text-align: right;
+          min-width: 80px;
+        }
+        .metrics-class-total-value {
+          font-size: 2rem;
+          font-weight: 900;
+          color: #f093fb;
+          line-height: 1;
+        }
+        .metrics-reservations-list {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .metrics-reservation-item {
+          padding: 0.875rem;
+          background: rgba(255,255,255,0.03);
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.08);
+          margin-bottom: 0.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+        }
+        .metrics-reservation-item:last-child {
+          margin-bottom: 0;
+        }
+        .metrics-reservation-info {
           flex: 1;
           min-width: 0;
         }
-        .metrics-date-rsvp {
-          text-align: right;
-          min-width: 120px;
+        .metrics-reservation-name {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #fff;
+          margin-bottom: 0.25rem;
+        }
+        .metrics-reservation-badges {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .metrics-badge {
+          padding: 0.2rem 0.5rem;
+          font-size: 0.7rem;
+          border-radius: 6px;
+          font-weight: 600;
+        }
+        .metrics-empty-state {
+          text-align: center;
+          padding: 3rem 1rem;
+          color: rgba(255,255,255,0.6);
+        }
+        .metrics-empty-state-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+          opacity: 0.5;
         }
         @media (max-width: 768px) {
           .metrics-container {
@@ -83,512 +337,380 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
             padding: 1rem 0;
           }
           .metrics-section {
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 16px;
           }
           .metrics-section h3 {
             font-size: 1.25rem;
-            margin-bottom: 0.75rem;
+          }
+          .metrics-stats-grid {
+            grid-template-columns: 1fr;
           }
           .metrics-role-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
           }
-          .metrics-date-card {
-            padding: 0.875rem;
-          }
-          .metrics-date-header {
+          .metrics-class-header {
             flex-direction: column;
-            gap: 0.75rem;
           }
-          .metrics-date-rsvp {
+          .metrics-class-total {
             text-align: left;
-            min-width: auto;
             width: 100%;
           }
         }
-        @media (max-width: 480px) {
-          .metrics-container {
-            gap: 0.75rem;
-            padding: 0.75rem 0;
-          }
-          .metrics-section {
-            padding: 0.875rem;
-            border-radius: 12px;
-          }
-          .metrics-section h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-          }
-          .metrics-role-grid {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-          }
-          .metrics-date-card {
-            padding: 0.75rem;
-          }
-        }
       `}</style>
+      
       <div className="metrics-container">
-        {/* Resumen global */}
+        {/* Filtros de fecha */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="metrics-section"
         >
-          <h3>
-            Métricas globales de fechas
-          </h3>
-
-        {global ? (
-          <div style={{ display: "grid", gap: "1.5rem" }}>
-            <div
-              style={{
-                padding: "1rem",
-                background: "rgba(240,147,251,0.1)",
-                borderRadius: 12,
-                border: "1px solid rgba(240,147,251,0.2)",
-              }}
+          <h3>📅 Filtros</h3>
+          <div className="metrics-filters">
+            {(['today', 'this_week', 'this_month', 'all'] as DateFilter[]).map((filter) => (
+              <button
+                key={filter}
+                className={`metrics-filter-button ${dateFilter === filter ? 'active' : ''}`}
+                onClick={() => setDateFilter(filter)}
+              >
+                {filter === 'today' && '📅 Hoy'}
+                {filter === 'this_week' && '📆 Esta semana'}
+                {filter === 'this_month' && '📅 Este mes'}
+                {filter === 'all' && '🌐 Todas'}
+              </button>
+            ))}
+            <button
+              className={`metrics-filter-button ${dateFilter === 'custom' ? 'active' : ''}`}
+              onClick={() => setDateFilter('custom')}
             >
-              <div
-                style={{
-                  fontSize: "0.875rem",
-                  opacity: 0.9,
-                  marginBottom: "0.5rem",
-                  color: "#fff",
-                }}
-              >
-                Total RSVPs (interesados)
+              🗓️ Personalizado
+            </button>
+          </div>
+          
+          {dateFilter === 'custom' && (
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ display: 'block', color: '#fff', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>
+                  Desde:
+                </label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="metrics-search"
+                  style={{ marginBottom: 0 }}
+                />
               </div>
-              <div
-                style={{
-                  fontSize: "2rem",
-                  fontWeight: 900,
-                  color: "#f093fb",
-                }}
-              >
-                {global.totalRsvps}
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ display: 'block', color: '#fff', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>
+                  Hasta:
+                </label>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="metrics-search"
+                  style={{ marginBottom: 0 }}
+                />
+              </div>
+            </div>
+          )}
+        </motion.section>
+
+        {/* Resumen global */}
+        {global && global.totalRsvps > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="metrics-section"
+          >
+            <h3>📊 Resumen Global</h3>
+            <div className="metrics-stats-grid">
+              <div className="metrics-stat-card">
+                <div className="metrics-stat-label">Total RSVPs</div>
+                <div className="metrics-stat-value">{global.totalRsvps}</div>
+              </div>
+              
+              <div className="metrics-stat-card">
+                <div className="metrics-stat-label">Fechas con RSVPs</div>
+                <div className="metrics-stat-value">{byDate.length}</div>
               </div>
             </div>
 
-            {/* Por rol */}
-            <div>
-              <div
-                style={{
-                  fontSize: "0.875rem",
-                  opacity: 0.9,
-                  marginBottom: "0.75rem",
-                  color: "#fff",
-                }}
-              >
-                Por rol
+            <div style={{ marginTop: '1.5rem' }}>
+              <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '1rem', color: '#fff', fontWeight: 600 }}>
+                Distribución por Rol
               </div>
               <div className="metrics-role-grid">
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    background: "rgba(30,136,229,0.1)",
-                    borderRadius: 10,
-                    border: "1px solid rgba(30,136,229,0.2)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      opacity: 0.8,
-                      marginBottom: "0.25rem",
-                      color: "#fff",
-                    }}
-                  >
-                    Leader
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 800,
-                      color: "#1E88E5",
-                    }}
-                  >
-                    {global.porRol.leader}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    background: "rgba(255,209,102,0.1)",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,209,102,0.2)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      opacity: 0.8,
-                      marginBottom: "0.25rem",
-                      color: "#fff",
-                    }}
-                  >
-                    Follower
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 800,
-                      color: "#FFD166",
-                    }}
-                  >
-                    {global.porRol.follower}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    background: "rgba(76,175,80,0.1)",
-                    borderRadius: 10,
-                    border: "1px solid rgba(76,175,80,0.2)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      opacity: 0.8,
-                      marginBottom: "0.25rem",
-                      color: "#fff",
-                    }}
-                  >
-                    Ambos
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 800,
-                      color: "#4CAF50",
-                    }}
-                  >
-                    {global.porRol.ambos}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    background: "rgba(255,255,255,0.05)",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      opacity: 0.8,
-                      marginBottom: "0.25rem",
-                      color: "#fff",
-                    }}
-                  >
-                    Otros
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 800,
-                      color: "#fff",
-                    }}
-                  >
-                    {global.porRol.otros}
-                  </div>
-                </div>
+                {[
+                  { key: 'leader', label: '👨‍💼 Leader', count: global.porRol.leader || 0, color: '#1E88E5' },
+                  { key: 'follower', label: '👩‍💼 Follower', count: global.porRol.follower || 0, color: '#FFD166' },
+                  { key: 'ambos', label: '👥 Ambos', count: global.porRol.ambos || 0, color: '#4CAF50' },
+                  { key: 'otros', label: '❓ Otros', count: global.porRol.otros || 0, color: '#fff' },
+                ].map(({ key, label, count, color }) => {
+                  const percentage = rolePercentages ? rolePercentages[key as keyof typeof rolePercentages] : 0;
+                  return (
+                    <div key={key} className={`metrics-role-card ${key}`}>
+                      <div style={{ fontSize: '0.75rem', opacity: 0.8, marginBottom: '0.5rem', color: '#fff' }}>
+                        {label}
+                      </div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color, marginBottom: '0.25rem' }}>
+                        {count}
+                      </div>
+                      {rolePercentages && (
+                        <>
+                          <div style={{ fontSize: '0.7rem', opacity: 0.7, color: '#fff', marginBottom: '0.25rem' }}>
+                            {percentage.toFixed(1)}%
+                          </div>
+                          <div className="metrics-progress-bar">
+                            <div
+                              className="metrics-progress-fill"
+                              style={{
+                                width: `${percentage}%`,
+                                background: color,
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Zonas top */}
-            {global.zonas && global.zonas.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.875rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                    color: "#fff",
-                  }}
-                >
-                  Zonas de origen (top)
+            {/* Métricas por zona */}
+            {Object.keys(global.byZone).length > 0 && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '1rem', color: '#fff', fontWeight: 600 }}>
+                  Por Zona
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "0.5rem",
-                  }}
-                >
-                  {global.zonas.slice(0, 8).map((z) => (
-                    <span
-                      key={`${z.zona_tag_id}-${z.zona_nombre}`}
-                      style={{
-                        padding: "0.35rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(30,136,229,0.35)",
-                        background: "rgba(30,136,229,0.12)",
-                        fontSize: "0.8rem",
-                        fontWeight: 700,
-                        color: "#fff",
-                      }}
-                    >
-                      📍 {z.zona_nombre} · {z.count}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Ritmos top */}
-            {global.ritmos && global.ritmos.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.875rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                    color: "#fff",
-                  }}
-                >
-                  Ritmos favoritos de quienes dan RSVP
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "0.5rem",
-                  }}
-                >
-                  {global.ritmos.slice(0, 8).map((r) => (
-                    <span
-                      key={`${r.ritmo_tag_id}-${r.ritmo_nombre}`}
-                      style={{
-                        padding: "0.35rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,209,102,0.45)",
-                        background: "rgba(255,209,102,0.16)",
-                        fontSize: "0.8rem",
-                        fontWeight: 700,
-                        color: "#fff",
-                      }}
-                    >
-                      🎵 {r.ritmo_nombre} · {r.count}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p style={{ color: "rgba(255,255,255,0.7)" }}>
-            Aún no hay datos de RSVPs en tus fechas.
-          </p>
-        )}
-      </motion.section>
-
-      {/* Detalle por fecha */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.05 }}
-        className="metrics-section"
-      >
-        <h3>
-          Métricas por fecha
-        </h3>
-
-        {porFecha.length === 0 ? (
-          <p style={{ color: "rgba(255,255,255,0.7)" }}>
-            No hay fechas con RSVPs todavía.
-          </p>
-        ) : (
-          <div style={{ display: "grid", gap: "1rem" }}>
-            {porFecha.map((f) => {
-              let fechaFormateada: string | null = null;
-              if (f.fecha) {
-                const m = String(f.fecha).match(/^\d{4}-\d{2}-\d{2}$/);
-                if (m) {
-                  const d = new Date(f.fecha + "T12:00:00");
-                  if (!Number.isNaN(d.getTime())) {
-                    fechaFormateada = d.toLocaleDateString("es-MX", {
-                      weekday: "short",
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    });
-                  }
-                } else {
-                  fechaFormateada = String(f.fecha);
-                }
-              }
-
-              return (
-                <motion.div
-                  key={f.event_date_id}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="metrics-date-card"
-                >
-                  <div className="metrics-date-header">
-                    <div className="metrics-date-info">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                  {Object.entries(global.byZone)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([zona, count]) => (
                       <div
+                        key={zona}
                         style={{
-                          fontSize: "1rem",
-                          fontWeight: 800,
-                          color: "#fff",
-                          marginBottom: "0.25rem",
+                          padding: '0.75rem',
+                          background: 'rgba(30,136,229,0.1)',
+                          borderRadius: 10,
+                          border: '1px solid rgba(30,136,229,0.2)',
                         }}
                       >
-                        {f.nombre}
-                      </div>
-                      {fechaFormateada && (
-                        <div
-                          style={{
-                            fontSize: "0.85rem",
-                            color: "rgba(255,255,255,0.85)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <span>📅</span>
-                          <span>{fechaFormateada}</span>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '0.25rem', color: '#fff' }}>
+                          📍 {zona}
                         </div>
-                      )}
-                    </div>
-                    <div className="metrics-date-rsvp">
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          opacity: 0.8,
-                          marginBottom: "0.25rem",
-                          color: "#fff",
-                        }}
-                      >
-                        RSVPs
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E88E5' }}>
+                          {count}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: "1.5rem",
-                          fontWeight: 900,
-                          color: "#FFD166",
-                        }}
-                      >
-                        {f.totalRsvps}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Roles */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "0.5rem",
-                      marginTop: "0.75rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        padding: "0.3rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(30,136,229,0.35)",
-                        background: "rgba(30,136,229,0.1)",
-                        fontSize: "0.8rem",
-                        color: "#fff",
-                      }}
-                    >
-                      Leader: {f.porRol.leader}
-                    </span>
-                    <span
-                      style={{
-                        padding: "0.3rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,209,102,0.35)",
-                        background: "rgba(255,209,102,0.1)",
-                        fontSize: "0.8rem",
-                        color: "#fff",
-                      }}
-                    >
-                      Follower: {f.porRol.follower}
-                    </span>
-                    <span
-                      style={{
-                        padding: "0.3rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(76,175,80,0.35)",
-                        background: "rgba(76,175,80,0.1)",
-                        fontSize: "0.8rem",
-                        color: "#fff",
-                      }}
-                    >
-                      Ambos: {f.porRol.ambos}
-                    </span>
-                    <span
-                      style={{
-                        padding: "0.3rem 0.7rem",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,255,255,0.3)",
-                        background: "rgba(255,255,255,0.06)",
-                        fontSize: "0.8rem",
-                        color: "#fff",
-                      }}
-                    >
-                      Otros: {f.porRol.otros}
-                    </span>
-                  </div>
-
-                  {/* Zonas & Ritmos */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "0.5rem",
-                      marginTop: "0.75rem",
-                    }}
-                  >
-                    {f.zonas.slice(0, 6).map((z) => (
-                      <span
-                        key={`${f.event_date_id}-z-${z.zona_tag_id}-${z.zona_nombre}`}
-                        style={{
-                          padding: "0.25rem 0.6rem",
-                          borderRadius: 999,
-                          border: "1px solid rgba(30,136,229,0.35)",
-                          background: "rgba(30,136,229,0.12)",
-                          fontSize: "0.75rem",
-                          color: "#fff",
-                        }}
-                      >
-                        📍 {z.zona_nombre} · {z.count}
-                      </span>
                     ))}
-                    {f.ritmos.slice(0, 6).map((r) => (
-                      <span
-                        key={`${f.event_date_id}-r-${r.ritmo_tag_id}-${r.ritmo_nombre}`}
-                        style={{
-                          padding: "0.25rem 0.6rem",
-                          borderRadius: 999,
-                          border: "1px solid rgba(255,209,102,0.35)",
-                          background: "rgba(255,209,102,0.14)",
-                          fontSize: "0.75rem",
-                          color: "#fff",
-                        }}
-                      >
-                        🎵 {r.ritmo_nombre} · {r.count}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                </div>
+              </div>
+            )}
+          </motion.section>
         )}
-      </motion.section>
-    </div>
+
+        {/* Métricas por fecha */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="metrics-section"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ margin: 0 }}>📅 Fechas ({byDate.length})</h3>
+            {byDate.length > 0 && (
+              <input
+                type="text"
+                placeholder="🔍 Buscar fecha o usuario..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="metrics-search"
+                style={{ maxWidth: '300px', marginBottom: 0 }}
+              />
+            )}
+          </div>
+          
+          {filteredDates.length === 0 ? (
+            <div className="metrics-empty-state">
+              <div className="metrics-empty-state-icon">
+                {searchQuery ? '🔍' : '📭'}
+              </div>
+              <p style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                {searchQuery ? 'No se encontraron resultados' : 'No hay fechas con RSVPs'}
+              </p>
+              <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
+                {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Los RSVPs aparecerán aquí cuando los usuarios muestren interés en tus eventos'}
+              </p>
+            </div>
+          ) : (
+            <div>
+              {filteredDates.map((dateSummary) => {
+                const isExpanded = expandedDates.has(dateSummary.eventDateId);
+                const roleColors: Record<string, { bg: string; border: string; text: string }> = {
+                  leader: { bg: "rgba(30,136,229,0.15)", border: "rgba(30,136,229,0.3)", text: "#1E88E5" },
+                  follower: { bg: "rgba(255,209,102,0.15)", border: "rgba(255,209,102,0.3)", text: "#FFD166" },
+                  ambos: { bg: "rgba(76,175,80,0.15)", border: "rgba(76,175,80,0.3)", text: "#4CAF50" },
+                  otro: { bg: "rgba(255,255,255,0.1)", border: "rgba(255,255,255,0.2)", text: "#fff" },
+                };
+                
+                return (
+                  <motion.div
+                    key={dateSummary.eventDateId}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="metrics-class-card"
+                  >
+                    <div className="metrics-class-header" onClick={() => toggleDateExpanded(dateSummary.eventDateId)}>
+                      <div style={{ flex: 1 }}>
+                        <div className="metrics-class-title" style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <span>{dateSummary.eventDateName}</span>
+                          {dateSummary.eventDate && (() => {
+                            try {
+                              const fecha = new Date(dateSummary.eventDate);
+                              if (!isNaN(fecha.getTime()) && fecha.getFullYear() > 1970) {
+                                return (
+                                  <span className="metrics-badge" style={{ 
+                                    background: 'rgba(240,147,251,0.15)',
+                                    border: '1px solid rgba(240,147,251,0.3)',
+                                    color: '#f093fb',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    padding: '0.2rem 0.5rem',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600,
+                                    borderRadius: '6px',
+                                  }}>
+                                    <span>📅</span>
+                                    <span>{fecha.toLocaleDateString("es-MX", {
+                                      weekday: "short",
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}</span>
+                                  </span>
+                                );
+                              }
+                            } catch (e) {
+                              console.error("[OrganizerEventMetricsPanel] Error formateando fecha:", e);
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        <div className="metrics-class-badges">
+                          {Object.entries(dateSummary.byRole).map(([role, count]) => {
+                            if (count === 0) return null;
+                            const roleColor = roleColors[role] || roleColors.otro;
+                            return (
+                              <span
+                                key={role}
+                                className="metrics-badge"
+                                style={{
+                                  background: roleColor.bg,
+                                  border: `1px solid ${roleColor.border}`,
+                                  color: roleColor.text,
+                                }}
+                              >
+                                {role === 'leader' ? '👨‍💼' : role === 'follower' ? '👩‍💼' : role === 'ambos' ? '👥' : '❓'} {count}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="metrics-class-total">
+                        <div style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '0.25rem', color: '#fff' }}>
+                          Total
+                        </div>
+                        <div className="metrics-class-total-value">{dateSummary.totalRsvps}</div>
+                        <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem' }}>
+                          {isExpanded ? '▲' : '▼'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="metrics-reservations-list"
+                        >
+                          <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem', color: '#fff' }}>
+                            👥 Interesados ({dateSummary.reservations.length}):
+                          </div>
+                          
+                          <div style={{ display: 'grid', gap: '0.5rem' }}>
+                            {dateSummary.reservations.map((rsvp) => {
+                              const roleColor = roleColors[rsvp.roleType || 'otro'] || roleColors.otro;
+                              return (
+                                <div key={rsvp.id} className="metrics-reservation-item">
+                                  <div className="metrics-reservation-info">
+                                    <div className="metrics-reservation-name">👤 {rsvp.userName}</div>
+                                    <div className="metrics-reservation-badges">
+                                      <span
+                                        className="metrics-badge"
+                                        style={{
+                                          background: roleColor.bg,
+                                          border: `1px solid ${roleColor.border}`,
+                                          color: roleColor.text,
+                                        }}
+                                      >
+                                        {rsvp.roleType === 'leader' ? '👨‍💼 Leader' :
+                                         rsvp.roleType === 'follower' ? '👩‍💼 Follower' :
+                                         rsvp.roleType === 'ambos' ? '👥 Ambos' : '❓ Otro'}
+                                      </span>
+                                      {rsvp.zone && (
+                                        <span
+                                          className="metrics-badge"
+                                          style={{
+                                            background: 'rgba(30,136,229,0.15)',
+                                            border: '1px solid rgba(30,136,229,0.3)',
+                                            color: '#1E88E5',
+                                          }}
+                                        >
+                                          📍 {rsvp.zone}
+                                        </span>
+                                      )}
+                                      <span
+                                        className="metrics-badge"
+                                        style={{
+                                          background: 'rgba(255,255,255,0.08)',
+                                          border: '1px solid rgba(255,255,255,0.15)',
+                                          color: 'rgba(255,255,255,0.7)',
+                                        }}
+                                      >
+                                        🕐 Registrado: {new Date(rsvp.createdAt).toLocaleDateString("es-MX", {
+                                          day: "2-digit",
+                                          month: "short",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </motion.section>
+      </div>
     </>
   );
 }
-
-

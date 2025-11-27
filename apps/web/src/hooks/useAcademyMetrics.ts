@@ -33,9 +33,12 @@ export interface ClassSummary {
   classId: number;
   className: string;
   classDate: string | null;
+  diaSemana: number | null; // 0=Domingo, 1=Lunes, ..., 6=Sábado
+  diaSemanaNombre: string | null; // 'lunes', 'martes', etc.
   totalAsistentes: number;
   byRole: Record<string, number>; // 'leader', 'follower', 'ambos', 'otro'
   reservations: ClassReservationMetric[]; // Lista de usuarios
+  reservationsByDate: Map<string, ClassReservationMetric[]>; // Agrupado por fecha específica
 }
 
 export interface AcademyMetricsResult {
@@ -92,14 +95,23 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       
       // Usar función RPC para bypassar RLS y obtener todas las reservas de la academia
       // Esta función verifica que el usuario sea dueño de la academia
+      console.log("[useAcademyMetrics] 🔧 Llamando a función RPC get_academy_class_reservations con academyId:", academyIdNum);
       const { data: rpcData, error: rpcError } = await supabase
         .rpc("get_academy_class_reservations", { p_academy_id: academyIdNum! });
+      
+      console.log("[useAcademyMetrics] 📥 Respuesta RPC:", { 
+        hasData: !!rpcData, 
+        dataLength: rpcData?.length || 0, 
+        hasError: !!rpcError,
+        error: rpcError 
+      });
       
       let data: any[] = [];
       
       if (rpcError) {
         console.error("[useAcademyMetrics] ❌ Error en RPC get_academy_class_reservations:", rpcError);
         console.log("[useAcademyMetrics] 💡 La función RPC puede no existir aún. Ejecuta: supabase/07_get_academy_class_reservations.sql");
+        console.log("[useAcademyMetrics] 💡 Detalles del error:", JSON.stringify(rpcError, null, 2));
         // Fallback: intentar consulta directa (puede fallar por RLS)
         console.log("[useAcademyMetrics] 🔄 Intentando consulta directa como fallback...");
         let query = supabase
@@ -177,8 +189,15 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       const zonaTagIds = [...new Set((data || []).map((r: any) => r.zona_tag_id).filter(Boolean))];
       const userIds = [...new Set((data || []).map((r: any) => r.user_id))];
       
-      // Obtener nombres de clases (desde cronograma)
-      const classInfoMap = new Map<number, { nombre: string; fecha: string | null }>();
+      // Obtener información de clases (desde cronograma) incluyendo día de la semana
+      const classInfoMap = new Map<number, { 
+        nombre: string; 
+        fecha: string | null;
+        diaSemana: number | null;
+        diaSemanaNombre: string | null;
+      }>();
+      
+      const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
       
       if (classIds.length > 0) {
         // Intentar obtener desde profiles_academy.cronograma
@@ -194,11 +213,36 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             const claseId = clase.id ? Number(clase.id) : null;
             const nombreClase = clase.titulo || clase.nombre || null;
             
+            // Obtener día de la semana
+            let diaSemana: number | null = null;
+            let diaSemanaNombre: string | null = null;
+            
+            if (clase.diaSemana !== null && clase.diaSemana !== undefined) {
+              diaSemana = Number(clase.diaSemana);
+              diaSemanaNombre = dayNames[diaSemana] || null;
+            } else if (clase.diasSemana && Array.isArray(clase.diasSemana) && clase.diasSemana.length > 0) {
+              // Si tiene array de días, usar el primero
+              const firstDay = clase.diasSemana[0];
+              if (typeof firstDay === 'number') {
+                diaSemana = firstDay;
+                diaSemanaNombre = dayNames[diaSemana] || null;
+              } else if (typeof firstDay === 'string') {
+                // Convertir nombre de día a número
+                const dayIndex = dayNames.findIndex(d => d.toLowerCase() === firstDay.toLowerCase());
+                if (dayIndex >= 0) {
+                  diaSemana = dayIndex;
+                  diaSemanaNombre = dayNames[dayIndex];
+                }
+              }
+            }
+            
             // Buscar por ID exacto
             if (claseId && classIds.includes(claseId)) {
               classInfoMap.set(claseId, {
                 nombre: nombreClase || `Clase #${claseId}`,
-                fecha: clase.fecha || null
+                fecha: clase.fecha || null,
+                diaSemana,
+                diaSemanaNombre
               });
             }
             
@@ -208,7 +252,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
                 if (!classInfoMap.has(id)) {
                   classInfoMap.set(id, {
                     nombre: nombreClase || `Clase #${id}`,
-                    fecha: clase.fecha || null
+                    fecha: clase.fecha || null,
+                    diaSemana,
+                    diaSemanaNombre
                   });
                 }
               }
@@ -220,7 +266,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
                 if (!classInfoMap.has(id)) {
                   classInfoMap.set(id, {
                     nombre: nombreClase || `Clase #${id}`,
-                    fecha: clase.fecha || null
+                    fecha: clase.fecha || null,
+                    diaSemana,
+                    diaSemanaNombre
                   });
                 }
               }
@@ -231,9 +279,17 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           classIds.forEach((id) => {
             if (id === academyIdNum && academyData.cronograma.length > 0 && !classInfoMap.has(id)) {
               const primeraClase = academyData.cronograma[0];
+              let diaSemana: number | null = null;
+              let diaSemanaNombre: string | null = null;
+              if (primeraClase.diaSemana !== null && primeraClase.diaSemana !== undefined) {
+                diaSemana = Number(primeraClase.diaSemana);
+                diaSemanaNombre = dayNames[diaSemana] || null;
+              }
               classInfoMap.set(id, {
                 nombre: primeraClase.titulo || primeraClase.nombre || `Clase #${id}`,
-                fecha: primeraClase.fecha || null
+                fecha: primeraClase.fecha || null,
+                diaSemana,
+                diaSemanaNombre
               });
             }
           });
@@ -350,11 +406,28 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           // Si no se encontró, intentar buscar de nuevo o usar fallback
           classInfoMap.set(row.class_id, {
             nombre: `Clase #${row.class_id}`,
-            fecha: null
+            fecha: null,
+            diaSemana: null,
+            diaSemanaNombre: null
           });
         }
         const finalClassInfo = classInfoMap.get(row.class_id)!;
         const classDate = row.fecha_especifica || finalClassInfo.fecha || null;
+        
+        // Si hay fecha_especifica, determinar el día de la semana
+        let diaSemana: number | null = finalClassInfo.diaSemana;
+        let diaSemanaNombre: string | null = finalClassInfo.diaSemanaNombre;
+        if (row.fecha_especifica && !diaSemana) {
+          try {
+            const fecha = new Date(row.fecha_especifica);
+            if (!isNaN(fecha.getTime())) {
+              diaSemana = fecha.getDay();
+              diaSemanaNombre = dayNames[diaSemana];
+            }
+          } catch (e) {
+            // Ignorar errores de fecha
+          }
+        }
         
         // Información del usuario - asegurar que siempre tenga un nombre
         let userName = userInfoMap.get(row.user_id);
@@ -383,22 +456,75 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       // Ordenar perClass por fecha de creación (más recientes primero)
       perClass.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-      // Agrupar por clase
-      const byClassMap = new Map<number, ClassSummary>();
+      // Agrupar por clase + día de la semana
+      // Usar una clave compuesta: classId-diaSemana para separar clases del mismo nombre en diferentes días
+      const byClassMap = new Map<string, ClassSummary>();
       
       perClass.forEach((reservation) => {
-        const existing = byClassMap.get(reservation.classId);
+        const classInfo = classInfoMap.get(reservation.classId)!;
+        
+        // Determinar día de la semana
+        let diaSemana: number | null = classInfo.diaSemana;
+        let diaSemanaNombre: string | null = classInfo.diaSemanaNombre;
+        
+        // Si hay fecha específica, usar el día de esa fecha
+        if (reservation.classDate) {
+          try {
+            const fecha = new Date(reservation.classDate);
+            if (!isNaN(fecha.getTime()) && fecha.getFullYear() > 1970) {
+              diaSemana = fecha.getDay();
+              diaSemanaNombre = dayNames[diaSemana];
+            }
+          } catch (e) {
+            // Ignorar errores
+          }
+        }
+        
+        // Crear clave única: classId-diaSemana (o solo classId si no hay día)
+        const key = diaSemana !== null ? `${reservation.classId}-${diaSemana}` : String(reservation.classId);
+        
+        const existing = byClassMap.get(key);
         
         if (existing) {
           existing.totalAsistentes += 1;
           existing.byRole[reservation.roleType || 'otro'] = (existing.byRole[reservation.roleType || 'otro'] || 0) + 1;
           existing.reservations.push(reservation);
+          
+          // Si el ClassSummary no tiene classDate pero esta reserva sí tiene, actualizarlo
+          if (!existing.classDate && reservation.classDate) {
+            try {
+              const fecha = new Date(reservation.classDate);
+              if (!isNaN(fecha.getTime()) && fecha.getFullYear() > 1970) {
+                existing.classDate = reservation.classDate;
+              }
+            } catch (e) {
+              // Ignorar errores
+            }
+          }
+          
+          // Agrupar por fecha específica
+          const fechaKey = reservation.classDate || 'sin-fecha';
+          if (!existing.reservationsByDate.has(fechaKey)) {
+            existing.reservationsByDate.set(fechaKey, []);
+          }
+          existing.reservationsByDate.get(fechaKey)!.push(reservation);
         } else {
-          const classInfo = classInfoMap.get(reservation.classId)!;
-          byClassMap.set(reservation.classId, {
+          // Crear nombre de clase con día de la semana
+          let classNameWithDay = reservation.className;
+          if (diaSemanaNombre) {
+            classNameWithDay = `${reservation.className} - ${diaSemanaNombre.charAt(0).toUpperCase() + diaSemanaNombre.slice(1)}`;
+          }
+          
+          const reservationsByDate = new Map<string, ClassReservationMetric[]>();
+          const fechaKey = reservation.classDate || 'sin-fecha';
+          reservationsByDate.set(fechaKey, [reservation]);
+          
+          byClassMap.set(key, {
             classId: reservation.classId,
-            className: reservation.className,
+            className: classNameWithDay,
             classDate: reservation.classDate,
+            diaSemana,
+            diaSemanaNombre,
             totalAsistentes: 1,
             byRole: {
               leader: reservation.roleType === 'leader' ? 1 : 0,
@@ -406,8 +532,53 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               ambos: reservation.roleType === 'ambos' ? 1 : 0,
               otro: reservation.roleType === 'otro' || !reservation.roleType ? 1 : 0,
             },
-            reservations: [reservation]
+            reservations: [reservation],
+            reservationsByDate
           });
+        }
+      });
+      
+      // Post-procesamiento: asegurar que todas las clases tengan classDate si alguna reserva tiene fecha
+      byClassMap.forEach((classSummary) => {
+        // Si no tiene classDate, buscar la fecha más común entre las reservas
+        if (!classSummary.classDate || (() => {
+          try {
+            const fecha = new Date(classSummary.classDate);
+            return isNaN(fecha.getTime()) || fecha.getFullYear() <= 1970;
+          } catch {
+            return true;
+          }
+        })()) {
+          // Contar fechas válidas
+          const fechaCounts = new Map<string, number>();
+          classSummary.reservations.forEach((reservation) => {
+            if (reservation.classDate) {
+              try {
+                const fecha = new Date(reservation.classDate);
+                if (!isNaN(fecha.getTime()) && fecha.getFullYear() > 1970) {
+                  const fechaKey = reservation.classDate;
+                  fechaCounts.set(fechaKey, (fechaCounts.get(fechaKey) || 0) + 1);
+                }
+              } catch {
+                // Ignorar fechas inválidas
+              }
+            }
+          });
+          
+          // Encontrar la fecha más común
+          if (fechaCounts.size > 0) {
+            let maxCount = 0;
+            let mostCommonDate: string | null = null;
+            fechaCounts.forEach((count, fecha) => {
+              if (count > maxCount) {
+                maxCount = count;
+                mostCommonDate = fecha;
+              }
+            });
+            if (mostCommonDate) {
+              classSummary.classDate = mostCommonDate;
+            }
+          }
         }
       });
       

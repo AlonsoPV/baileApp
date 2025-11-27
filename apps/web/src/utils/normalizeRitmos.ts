@@ -31,12 +31,15 @@ const TAG_ID_TO_SLUG: Record<number, string> = {
   19: 'swing',
   20: 'chachacha',
   21: 'boogiewoogie',
+  66: 'yoga',
+  67: 'pilates',
+  68: 'cumbia_sonidera',
 };
 
 /**
  * Mapeo de nombres de tags a slugs del catálogo
  */
-const TAG_NAME_TO_SLUG: Record<string, string> = {
+export const TAG_NAME_TO_SLUG: Record<string, string> = {
   'Salsa On 1': 'salsa_on1',
   'Moderna': 'moderna',
   'Salsa On 2': 'salsa_on2',
@@ -62,6 +65,9 @@ const TAG_NAME_TO_SLUG: Record<string, string> = {
   'Swing': 'swing',
   'Cha-cha-chá': 'chachacha',
   'Boogie Woogie': 'boogiewoogie',
+  'Yoga': 'yoga',
+  'Pilates': 'pilates',
+  'Cumbia Sonidera': 'cumbia_sonidera',
 };
 
 /**
