@@ -1,8 +1,10 @@
 {
-  // Reglas de caché para mejorar LCP y visitas repetidas
+  "buildCommand": "pnpm --filter @baileapp/web build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "outputDirectory": "apps/web/dist",
   "headers": [
     {
-      // Assets estáticos versionados por hash (salida de Vite: /assets/*.js, *.css, imágenes, fuentes)
       "source": "/assets/(.*)",
       "headers": [
         {
@@ -12,7 +14,6 @@
       ]
     },
     {
-      // Otros archivos estáticos comunes (por si no van bajo /assets)
       "source": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|woff2?)",
       "headers": [
         {
@@ -22,7 +23,6 @@
       ]
     },
     {
-      // HTML: caché corta para permitir despliegues rápidos sin forzar recarga manual
       "source": "/(.*)",
       "headers": [
         {
