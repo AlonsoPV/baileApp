@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm --filter @baileapp/web build",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install",
   "framework": null,
   "outputDirectory": "apps/web/dist",
   "headers": [
