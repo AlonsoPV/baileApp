@@ -47,6 +47,7 @@ import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 import QuienesSomosScreen from './screens/static/QuienesSomosScreen';
 import AboutScreen from './screens/static/AboutScreen';
 import LegalScreen from './screens/static/LegalScreen';
+import DeleteAccountScreen from './screens/static/DeleteAccountScreen';
 import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
 
 // Academy Screens
@@ -121,6 +122,7 @@ export default function AppRouter() {
         <Route path="/about" element={<AboutScreen />} />
         <Route path="/legal" element={<LegalScreen />} />
         <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
+        <Route path="/eliminar-cuenta" element={<DeleteAccountScreen />} />
         <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
         <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
         <Route path="/social/:id" element={<EventParentPublicScreenModern />} />

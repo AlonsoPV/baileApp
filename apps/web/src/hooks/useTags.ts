@@ -25,6 +25,8 @@ export function useTags(tipo?: 'ritmo' | 'zona') {
   const query = useQuery({
     queryKey: ['tags', tipo],
     queryFn: () => fetchTags(tipo),
+    staleTime: 1000 * 60 * 5, // 5 minutos - tags cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
   });
 
   // Si no se especifica tipo, separar ritmos y zonas del resultado

@@ -33,6 +33,36 @@ function formatPrice(price: string | number | undefined): string {
   return `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
 }
 
+// Helper para construir URL de WhatsApp con mensaje personalizado
+function buildProductWhatsAppUrl(
+  phone?: string | null,
+  messageTemplate?: string | null,
+  productName?: string
+): string | undefined {
+  if (!phone) return undefined;
+  
+  const cleanedPhone = phone.replace(/[^\d]/g, '');
+  if (!cleanedPhone) return undefined;
+
+  let message = '';
+  if (messageTemplate && productName) {
+    // Reemplazar {nombre} o {producto} con el nombre del producto
+    message = messageTemplate
+      .replace(/\{nombre\}/g, productName)
+      .replace(/\{producto\}/g, productName);
+  } else if (productName) {
+    // Mensaje por defecto si no hay template
+    message = `Hola, me interesa el producto: ${productName}`;
+  }
+
+  if (!message.trim()) {
+    return `https://wa.me/${cleanedPhone}`;
+  }
+
+  const encoded = encodeURIComponent(message.trim());
+  return `https://wa.me/${cleanedPhone}?text=${encoded}`;
+}
+
 export default function BrandProfileLive() {
   const navigate = useNavigate();
   const { data: brand, isLoading } = useMyBrand();
@@ -105,6 +135,10 @@ export default function BrandProfileLive() {
   const fitTipsRows = Array.isArray((brand as any)?.fit_tips) ? (brand as any).fit_tips : [];
   const conversion = (brand as any)?.conversion || {};
   const partners: any[] = [];
+  
+  // Configuración WhatsApp para productos
+  const whatsappNumber = (brand as any)?.whatsapp_number || (brand as any)?.redes_sociales?.whatsapp || null;
+  const whatsappMessageTemplate = (brand as any)?.whatsapp_message_template || 'Hola, me interesa el producto: {nombre}';
 
   return (
     <>
@@ -689,6 +723,8 @@ export default function BrandProfileLive() {
                   ropa: conversion?.ropaLabel,
                   accesorios: conversion?.accesoriosLabel,
                 }}
+                whatsappNumber={whatsappNumber}
+                whatsappMessageTemplate={whatsappMessageTemplate}
               />
             </motion.section>
           )}
@@ -1119,9 +1155,13 @@ export default function BrandProfileLive() {
 function CatalogTabs({
   items = [] as any[],
   labels,
+  whatsappNumber,
+  whatsappMessageTemplate,
 }: {
   items?: any[];
   labels?: { calzado?: string; ropa?: string; accesorios?: string };
+  whatsappNumber?: string | null;
+  whatsappMessageTemplate?: string | null;
 }) {
   const allTabs = ['calzado', 'ropa', 'accesorios'] as const;
   type Tab = (typeof allTabs)[number];
@@ -1406,6 +1446,46 @@ function CatalogTabs({
                     {p.sizes.length > 6 && (
                       <span style={sizePill}>+{p.sizes.length - 6}</span>
                     )}
+                  </div>
+                )}
+
+                {/* Botón WhatsApp */}
+                {whatsappNumber && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <a
+                      href={buildProductWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, p.name) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                        color: '#fff',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = '';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
+                      }}
+                    >
+                      <FaWhatsapp size={20} />
+                      <span>Consultar por WhatsApp</span>
+                    </a>
                   </div>
                 )}
               </div>

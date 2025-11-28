@@ -29,7 +29,8 @@ export function useOnboardingStatus() {
                 profile: data
               };
     },
-    staleTime: 0,
+    staleTime: 1000 * 60, // 1 minuto - estado de onboarding cambia poco
+    gcTime: 1000 * 60 * 5, // 5 minutos en cache
   });
 
   return {

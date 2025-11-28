@@ -79,6 +79,26 @@ export interface CreateRatingInput {
   precio_valor?: RatingValue | null;
 }
 
+// Función helper para verificar si es un error 406
+function is406Error(error: any): boolean {
+  if (!error) return false;
+  
+  // Verificar diferentes formas en que puede venir el error 406
+  const errorString = JSON.stringify(error).toLowerCase();
+  const status = error.status || error.statusCode || error.code;
+  const message = error.message || error.msg || '';
+  
+  return (
+    status === 406 ||
+    status === '406' ||
+    errorString.includes('406') ||
+    message.includes('406') ||
+    message.includes('not acceptable') ||
+    error.code === '406' ||
+    error.code === 'PGRST406'
+  );
+}
+
 // Obtener estadísticas de calificaciones de una academia
 export function useAcademyRatingStats(academyId?: number) {
   return useQuery({
@@ -86,102 +106,129 @@ export function useAcademyRatingStats(academyId?: number) {
     queryFn: async () => {
       if (!academyId) return null;
 
-      const { data, error } = await supabase.rpc('get_academy_rating_average', {
-        academy_id_param: academyId,
-      });
+      try {
+        const { data, error } = await supabase.rpc('get_academy_rating_average', {
+          academy_id_param: academyId,
+        });
 
-      if (error) {
-        // Si la función no existe o hay error 406, calcular manualmente
-        // No mostrar error 406 en consola (tabla puede no existir)
-        if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+        if (error) {
+          // Si la función no existe o hay error 406, calcular manualmente
+          // No mostrar error 406 en consola (tabla puede no existir)
+          if (is406Error(error)) {
+            return await calculateStatsManually(academyId);
+          }
+          // Solo mostrar otros errores
+          if (error.code && !is406Error(error)) {
+            console.error('[useAcademyRatingStats] Error en RPC:', error);
+          }
+          // Intentar calcular manualmente como fallback
           return await calculateStatsManually(academyId);
         }
-        // Solo mostrar otros errores
-        if (error.code && error.code !== '406') {
-          console.error('[useAcademyRatingStats] Error en RPC:', error);
+
+        return data as AcademyRatingStats;
+      } catch (err: any) {
+        // Capturar errores de red o otros errores inesperados
+        if (is406Error(err)) {
+          return await calculateStatsManually(academyId);
+        }
+        // Solo mostrar otros errores inesperados
+        if (!is406Error(err)) {
+          console.error('[useAcademyRatingStats] Error inesperado:', err);
         }
         // Intentar calcular manualmente como fallback
         return await calculateStatsManually(academyId);
       }
-
-      return data as AcademyRatingStats;
     },
     enabled: !!academyId,
     retry: false, // No reintentar para evitar spam de errores
     refetchOnWindowFocus: false, // No refetch al enfocar ventana
     refetchOnMount: false, // No refetch al montar si ya hay datos
+    throwOnError: false, // Suprimir errores en la consola del navegador
   });
 }
 
 // Calcular estadísticas manualmente (fallback)
 async function calculateStatsManually(academyId: number): Promise<AcademyRatingStats> {
-  const { data, error } = await supabase
-    .from('academy_ratings')
-    .select('*')
-    .eq('academy_id', academyId);
+  try {
+    const { data, error } = await supabase
+      .from('academy_ratings')
+      .select('*')
+      .eq('academy_id', academyId);
 
-  if (error) {
-    // Silenciar errores 406 (tabla no existe o problema de RLS)
-    if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+    if (error) {
+      // Silenciar errores 406 (tabla no existe o problema de RLS)
+      if (is406Error(error)) {
+        return getEmptyStats();
+      }
+      // Solo mostrar otros errores
+      if (error.code && !is406Error(error)) {
+        console.error('[calculateStatsManually] Error:', error);
+      }
       return getEmptyStats();
     }
-    // Solo mostrar otros errores
-    if (error.code && error.code !== '406') {
-      console.error('[calculateStatsManually] Error:', error);
+
+    const ratings = data || [];
+
+    const stats: AcademyRatingStats = {
+      overall: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+      puntualidad: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+      instalaciones: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+      atencion_staff: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+      organizacion: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+      precio_valor: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
+    };
+
+    ratings.forEach((rating) => {
+      // Overall
+      if (rating.overall_rating) {
+        stats.overall[rating.overall_rating as RatingValue]++;
+        stats.overall.total++;
+      }
+
+      // Puntualidad
+      if (rating.puntualidad) {
+        stats.puntualidad[rating.puntualidad as RatingValue]++;
+        stats.puntualidad.total++;
+      }
+
+      // Instalaciones
+      if (rating.instalaciones) {
+        stats.instalaciones[rating.instalaciones as RatingValue]++;
+        stats.instalaciones.total++;
+      }
+
+      // Atención staff
+      if (rating.atencion_staff) {
+        stats.atencion_staff[rating.atencion_staff as RatingValue]++;
+        stats.atencion_staff.total++;
+      }
+
+      // Organización
+      if (rating.organizacion) {
+        stats.organizacion[rating.organizacion as RatingValue]++;
+        stats.organizacion.total++;
+      }
+
+      // Precio-valor
+      if (rating.precio_valor) {
+        stats.precio_valor[rating.precio_valor as RatingValue]++;
+        stats.precio_valor.total++;
+      }
+    });
+
+    return stats;
+  } catch (err: any) {
+    // Capturar errores de red o otros errores inesperados
+    // Silenciar errores 406 (tabla no existe o problema de RLS)
+    if (is406Error(err)) {
+      return getEmptyStats();
+    }
+    // Solo mostrar otros errores inesperados
+    if (!is406Error(err)) {
+      console.error('[calculateStatsManually] Error inesperado:', err);
     }
     return getEmptyStats();
   }
-
-  const ratings = data || [];
-
-  const stats: AcademyRatingStats = {
-    overall: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-    puntualidad: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-    instalaciones: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-    atencion_staff: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-    organizacion: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-    precio_valor: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_aplica: 0, total: 0 },
-  };
-
-  ratings.forEach((rating) => {
-    // Overall
-    if (rating.overall_rating) {
-      stats.overall[rating.overall_rating as RatingValue]++;
-      stats.overall.total++;
-    }
-
-    // Puntualidad
-    if (rating.puntualidad) {
-      stats.puntualidad[rating.puntualidad as RatingValue]++;
-      stats.puntualidad.total++;
-    }
-
-    // Instalaciones
-    if (rating.instalaciones) {
-      stats.instalaciones[rating.instalaciones as RatingValue]++;
-      stats.instalaciones.total++;
-    }
-
-    // Atención staff
-    if (rating.atencion_staff) {
-      stats.atencion_staff[rating.atencion_staff as RatingValue]++;
-      stats.atencion_staff.total++;
-    }
-
-    // Organización
-    if (rating.organizacion) {
-      stats.organizacion[rating.organizacion as RatingValue]++;
-      stats.organizacion.total++;
-    }
-
-    // Precio-valor
-    if (rating.precio_valor) {
-      stats.precio_valor[rating.precio_valor as RatingValue]++;
-      stats.precio_valor.total++;
-    }
-  });
-
-  return stats;
 }
 
 function getEmptyStats(): AcademyRatingStats {
@@ -220,12 +267,12 @@ export function useMyAcademyRating(academyId?: number) {
           
           // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
           // Silenciar el error - puede ser que la tabla no exista aún
-          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+          if (is406Error(error)) {
             return null;
           }
           
           // Solo mostrar otros errores inesperados
-          if (error.code && !['PGRST116', '406'].includes(error.code)) {
+          if (error.code && error.code !== 'PGRST116') {
             console.error('[useMyAcademyRating] Error inesperado:', error);
           }
           return null;
@@ -235,11 +282,11 @@ export function useMyAcademyRating(academyId?: number) {
       } catch (err: any) {
         // Capturar errores de red o otros errores inesperados
         // Silenciar errores 406 (tabla no existe o problema de RLS)
-        if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
+        if (is406Error(err)) {
           return null;
         }
         // Solo mostrar otros errores inesperados
-        if (err?.status && err.status !== 406 && err?.code !== '406') {
+        if (!is406Error(err)) {
           console.error('[useMyAcademyRating] Error inesperado:', err);
         }
         return null;
@@ -249,6 +296,7 @@ export function useMyAcademyRating(academyId?: number) {
     retry: false, // No reintentar para evitar spam de errores
     refetchOnWindowFocus: false, // No refetch al enfocar ventana para evitar errores repetidos
     refetchOnMount: false, // No refetch al montar si ya hay datos
+    throwOnError: false, // Suprimir errores en la consola del navegador para errores 406
   });
 }
 

@@ -386,7 +386,7 @@ export default function TeacherProfileLive() {
   
   // Obtener grupos de competencia del maestro (solo los que no están asociados a una academia)
   const teacherUserId = (teacher as any)?.user_id;
-  const { data: competitionGroups } = useCompetitionGroupsByTeacher(teacherUserId);
+  const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (solo si no hay error)
   // Si hay error, no redirigir para evitar perder el mensaje de error
@@ -1232,7 +1232,7 @@ export default function TeacherProfileLive() {
           )}
 
           {/* Grupos de Competencia */}
-          {competitionGroups && competitionGroups.length > 0 && (
+          {!loadingGroups && competitionGroups && Array.isArray(competitionGroups) && competitionGroups.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

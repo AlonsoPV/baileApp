@@ -277,12 +277,15 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             type="button"
             className="nav-profile-button"
             aria-label="Ir a mi perfil"
-            onClick={async () => {
-              await markAllAsRead();
-              // Ir al perfil por defecto (organizador, usuario, etc.)
+            onClick={() => {
+              // Navegar inmediatamente sin esperar
               const target = getDefaultRoute();
               console.log('[Navbar] Navegando al perfil por defecto desde avatar', { target });
               navigate(target);
+              // Marcar como leído en segundo plano (no bloquea la navegación)
+              markAllAsRead().catch(err => {
+                console.error('[Navbar] Error al marcar notificaciones como leídas:', err);
+              });
             }}
           >
             {avatarUrl ? (

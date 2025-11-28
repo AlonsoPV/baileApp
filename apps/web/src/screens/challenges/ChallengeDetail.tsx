@@ -16,6 +16,7 @@ import HorizontalSlider from '../../components/explore/HorizontalSlider';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
 import RitmosChips from '../../components/RitmosChips';
+import { useUserMeta } from '../../hooks/useUserMeta';
 
 // ⬇️ Estilos compartidos aplicados
 import '../../styles/event-public.css';
@@ -191,40 +192,21 @@ export default function ChallengeDetail() {
   }, [challenge]);
 
   // Fetch uploader display_name, bio and a safe public route (when available)
-  React.useEffect(() => {
-    (async () => {
-      const ids = new Set<string>();
-      (subs || []).forEach((s) => s?.user_id && ids.add(s.user_id));
-      (leaderboard || []).forEach((r) => r?.user_id && ids.add(r.user_id));
-      if (ids.size === 0) return;
-      const arr = Array.from(ids);
-      const [{ data, error }, { data: rolesData }] = await Promise.all([
-        supabase
-          .from('profiles_user')
-          .select('user_id, display_name, email, bio')
-          .in('user_id', arr),
-        supabase
-          .from('user_roles')
-          .select('user_id, role_slug')
-          .in('user_id', arr)
-      ]);
-      if (error) return;
-      const roleByUser = new Map<string, string>();
-      (rolesData || []).forEach((r: any) => {
-        if (r?.user_id && r?.role_slug) roleByUser.set(r.user_id, r.role_slug);
-      });
-      const map: Record<string, { name: string; bio?: string; route?: string }> = {};
-      (data || []).forEach((p: any) => {
-        const name = p.display_name || p.email || p.user_id;
-        const role = roleByUser.get(p.user_id);
-        let route: string | undefined = undefined;
-        if (role === 'organizador') route = `/organizer/${p.user_id}`;
-        if (role === 'maestro') route = `/maestro/${p.user_id}`;
-        map[p.user_id] = { name, bio: p.bio, route };
-      });
-      setUserMeta(map);
-    })();
+  // ✅ Optimizado: Usa React Query para cachear metadata de usuarios
+  const userIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    (subs || []).forEach((s) => s?.user_id && ids.add(s.user_id));
+    (leaderboard || []).forEach((r) => r?.user_id && ids.add(r.user_id));
+    return Array.from(ids);
   }, [subs, leaderboard]);
+  
+  const { data: userMetaData } = useUserMeta(userIds);
+  
+  React.useEffect(() => {
+    if (userMetaData) {
+      setUserMeta(userMetaData);
+    }
+  }, [userMetaData]);
 
   const subById = React.useMemo(() => {
     const m = new Map<string, any>();
@@ -364,6 +346,18 @@ export default function ChallengeDetail() {
           .appr-slider { padding: .75rem !important; }
           .appr-card { max-width: 100% !important; width: 100% !important; }
           .appr-media video { width: 100% !important; }
+          section.cc-glass > div[style*="grid-template-columns"] {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          section.cc-glass {
+            padding: 1rem !important;
+          }
+          section.cc-glass > div[style*="grid-template-columns"] {
+            gap: 1rem !important;
+          }
         }
       `}</style>
       {/* Contenedor principal (layout simple) */}
@@ -427,16 +421,47 @@ export default function ChallengeDetail() {
         </header>
 
         {/* Encabezado combinado: Col 1 (portada + info + ritmos) | Col 2 (video) */}
-        <section className="cc-glass" style={{ padding: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '1rem', alignItems: 'start' }}>
-            <div>
-              {(challenge as any).cover_image_url && (
-                <div style={{ display: 'grid', placeItems: 'center', marginBottom: '.75rem' }}>
-                  <img src={(challenge as any).cover_image_url} alt="cover" style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block' }} />
-                </div>
-              )}
+        <section className="cc-glass" style={{ padding: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'stretch' }}>
+            {/* Columna 1: Portada */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ 
+                width: '100%', 
+                aspectRatio: '16/9',
+                borderRadius: 16,
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, rgba(240,147,251,.1), rgba(245,87,108,.1))',
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                {(challenge as any).cover_image_url ? (
+                  <img 
+                    src={(challenge as any).cover_image_url} 
+                    alt="cover" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'contain',
+                      display: 'block'
+                    }} 
+                  />
+                ) : (
+                  <div style={{ 
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: '1.1rem',
+                    textAlign: 'center',
+                    padding: '2rem'
+                  }}>
+                    📷 Sin portada
+                  </div>
+                )}
+              </div>
+              
               {canModerate && (
-                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '.75rem' }}>
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                   <input
                     ref={coverFileRef}
                     type="file"
@@ -450,9 +475,13 @@ export default function ChallengeDetail() {
                     }}
                   />
                   <button onClick={() => coverFileRef.current?.click()} disabled={uploadingCover} className="cc-btn cc-btn--primary">
-                    Seleccionar portada
+                    {uploadingCover ? 'Subiendo...' : 'Seleccionar portada'}
                   </button>
-                  {pendingCoverFile && (<span className="cc-chip">Archivo listo: {pendingCoverFile.name}</span>)}
+                  {pendingCoverFile && (
+                    <span className="cc-chip" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      ✓ {pendingCoverFile.name}
+                    </span>
+                  )}
                   {(challenge as any).cover_image_url && (
                     <button
                       onClick={async () => {
@@ -473,38 +502,88 @@ export default function ChallengeDetail() {
                         });
                       }}
                       className="cc-btn cc-btn--ghost"
-                    >Eliminar portada</button>
+                    >
+                      Eliminar portada
+                    </button>
                   )}
                 </div>
               )}
-             {/*  <div style={{ fontWeight: 900, fontSize: '1.15rem', marginBottom: 6 }}>{challenge.title}</div>
-              {(challenge as any).description && (
-                <div className="cc-two-lines" style={{ opacity: .92, marginBottom: 8 }}>{(challenge as any).description}</div>
-              )} */}
+
               {requirementsList.length > 0 && (
-                <div style={{ marginTop: '.75rem', display: 'grid', gap: '.35rem' }}>
-                  <h4 style={{ margin: 0, fontWeight: 800 }}>Requisitos</h4>
+                <div style={{ 
+                  marginTop: 'auto',
+                  padding: '1rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.08)'
+                }}>
+                  <h4 style={{ margin: '0 0 0.75rem', fontWeight: 800, fontSize: '1rem', color: '#fff' }}>
+                    📋 Requisitos
+                  </h4>
                   <ul style={{
-                    listStyle: 'disc',
-                    paddingLeft: '1.5rem',
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
                     display: 'grid',
-                    gap: '.35rem'
+                    gap: '0.5rem'
                   }}>
-                    {requirementsList.map((req) => (
-                      <li key={req}>{req}</li>
+                    {requirementsList.map((req, idx) => (
+                      <li key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.5rem',
+                        fontSize: '0.9rem',
+                        color: 'rgba(255,255,255,0.9)',
+                        lineHeight: 1.5
+                      }}>
+                        <span style={{ color: '#f5576c', marginTop: '0.2rem' }}>•</span>
+                        <span>{req}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
-            <div>
-              {(challenge as any).owner_video_url ? (
-                <video controls style={{ width: 350, maxWidth: '100%', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }} src={(challenge as any).owner_video_url} />
-              ) : (
-                <div style={{ opacity: .85 }}>Aún no hay video de referencia.</div>
-              )}
+
+            {/* Columna 2: Video */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ 
+                width: '100%', 
+                aspectRatio: '16/9',
+                borderRadius: 16,
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, rgba(30,136,229,.1), rgba(245,87,108,.1))',
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                {(challenge as any).owner_video_url ? (
+                  <video 
+                    controls 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      display: 'block'
+                    }} 
+                    src={(challenge as any).owner_video_url} 
+                  />
+                ) : (
+                  <div style={{ 
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: '1.1rem',
+                    textAlign: 'center',
+                    padding: '2rem'
+                  }}>
+                    🎥 Sin video de referencia
+                  </div>
+                )}
+              </div>
+
               {canModerate && (
-                <div style={{ marginTop: '.75rem', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                   <input
                     ref={ownerFileRef}
                     type="file"
@@ -517,8 +596,18 @@ export default function ChallengeDetail() {
                       if (ownerFileRef.current) ownerFileRef.current.value = '';
                     }}
                   />
-                  <button onClick={() => ownerFileRef.current?.click()} disabled={uploadingOwner} className="cc-btn cc-btn--primary">Seleccionar video</button>
-                  {pendingOwnerVideo && (<span className="cc-chip">Archivo listo: {pendingOwnerVideo.name}</span>)}
+                  <button 
+                    onClick={() => ownerFileRef.current?.click()} 
+                    disabled={uploadingOwner} 
+                    className="cc-btn cc-btn--primary"
+                  >
+                    {uploadingOwner ? 'Subiendo...' : 'Seleccionar video'}
+                  </button>
+                  {pendingOwnerVideo && (
+                    <span className="cc-chip" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      ✓ {pendingOwnerVideo.name}
+                    </span>
+                  )}
                   {(challenge as any).owner_video_url && (
                     <button
                       onClick={async () => {
@@ -539,7 +628,9 @@ export default function ChallengeDetail() {
                         });
                       }}
                       className="cc-btn cc-btn--ghost"
-                    >Eliminar video</button>
+                    >
+                      Eliminar video
+                    </button>
                   )}
                 </div>
               )}

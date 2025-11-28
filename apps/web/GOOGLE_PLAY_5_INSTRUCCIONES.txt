@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════════════════════════
+5 INSTRUCCIONES OPTIMIZADAS PARA GOOGLE PLAY CONSOLE
+═══════════════════════════════════════════════════════════════════════════════
+
+Copia y pega estas 5 instrucciones en Google Play Console. Cada una está 
+optimizada para cumplir con el límite de caracteres.
+
+═══════════════════════════════════════════════════════════════════════════════
+INSTRUCCIÓN 1: ACCESO INICIAL Y AUTENTICACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+La app muestra contenido público sin autenticación (eventos, academias, maestros, 
+marcas). Para funciones restringidas:
+
+1. Abrir app "Donde Bailar MX" → Tocar "Iniciar Sesión"
+2. Opción A (Recomendada): Tocar "Continuar con Google" → Seleccionar cuenta 
+   → Autorizar
+3. Opción B: Ingresar email → Tocar "Enviar enlace mágico" → Revisar correo 
+   (incluyendo spam) → Hacer clic en enlace
+4. Si es primera vez: Configurar PIN de 4 dígitos (ejemplo: 1234)
+5. Completar onboarding de 3 pasos:
+   - Paso 1: Nombre y foto de perfil (foto obligatoria)
+   - Paso 2: Seleccionar al menos un ritmo
+   - Paso 3: Seleccionar una zona geográfica
+
+Nota: Registro gratuito. No requiere pagos ni verificación de identidad.
+
+═══════════════════════════════════════════════════════════════════════════════
+INSTRUCCIÓN 2: GESTIÓN DE PERFIL E INTERACCIONES
+═══════════════════════════════════════════════════════════════════════════════
+
+Funciones: Editar perfil personal, marcar interés en eventos (RSVP), agregar 
+eventos al calendario, ver notificaciones.
+
+Pasos:
+1. Completar Instrucción 1 (tener cuenta activa)
+2. Tocar ícono de perfil → "Editar perfil" para gestionar información personal
+3. Navegar a cualquier evento → Tocar "Me interesa" o "Agregar al calendario"
+4. Tocar ícono de campana (🔔) para ver notificaciones
+5. Tocar "Marcar todas como leídas" si está disponible
+
+Nota: Todas estas funciones son gratuitas y están disponibles inmediatamente 
+después del onboarding.
+
+═══════════════════════════════════════════════════════════════════════════════
+INSTRUCCIÓN 3: CREACIÓN DE PERFILES DE MAESTRO Y ACADEMIA
+═══════════════════════════════════════════════════════════════════════════════
+
+Funciones: Crear perfiles de maestro o academia, publicar clases, configurar 
+horarios y costos.
+
+Pasos:
+1. Completar Instrucción 1 (tener cuenta activa)
+2. Tocar ícono de perfil → "Cambiar rol"
+3. Seleccionar "Maestro" o "Academia"
+4. Completar formulario (nombre, biografía, ritmos, zonas, redes sociales)
+5. Guardar perfil
+6. Acceder a sección de clases para crear y publicar clases
+
+Nota: Función opcional. Disponible para cualquier usuario registrado. No 
+requiere aprobación previa ni pagos.
+
+═══════════════════════════════════════════════════════════════════════════════
+INSTRUCCIÓN 4: CREACIÓN DE PERFILES DE ORGANIZADOR Y MARCA
+═══════════════════════════════════════════════════════════════════════════════
+
+Funciones: Crear perfiles de organizador (publicar eventos) o marca (catálogo 
+de productos con WhatsApp).
+
+Pasos:
+1. Completar Instrucción 1 (tener cuenta activa)
+2. Tocar ícono de perfil → "Cambiar rol"
+3. Seleccionar "Organizador" o "Marca"
+4. Completar formulario correspondiente
+5. Para Organizador: Acceder a eventos para crear y publicar
+6. Para Marca: En pestaña "Productos" subir imágenes y completar información; 
+   en "WhatsApp para Productos" configurar número y mensaje template (opcional)
+
+Nota: Funciones opcionales. Disponibles para cualquier usuario registrado. No 
+requieren aprobación previa ni pagos.
+
+═══════════════════════════════════════════════════════════════════════════════
+INSTRUCCIÓN 5: FUNCIONES ADICIONALES Y SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════════════════════
+
+Funciones adicionales: Seguir a otros usuarios, guardar filtros de búsqueda, 
+reportar contenido.
+
+Pasos:
+1. Completar Instrucción 1 (tener cuenta activa)
+2. Seguir usuarios: Navegar a perfil público → Tocar "Seguir"
+3. Guardar filtros: Usar filtros en exploración → Se guardan automáticamente
+4. Reportar contenido: Buscar botón "Reportar" o "..." en cualquier contenido
+
+Solución de problemas:
+- Magic Link no llega: Revisar spam, solicitar uno nuevo
+- PIN olvidado: Usar "¿Olvidé mi PIN?" en login
+- Onboarding no avanza: Asegurar completar 3 pasos, foto es obligatoria en Paso 1
+- Sin contenido visible: Normal si base de datos está vacía
+
+Contacto: info@dondebailar.com.mx
+
+Nota: La app NO usa contraseñas tradicionales (usa Magic Link). No hay pagos, 
+suscripciones ni restricciones geográficas. No se requiere acceso a ubicación GPS.
+
+═══════════════════════════════════════════════════════════════════════════════
+

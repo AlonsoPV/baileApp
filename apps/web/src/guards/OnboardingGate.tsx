@@ -78,22 +78,66 @@ export default function OnboardingGate() {
     gcTime: 60000,
   });
 
-  // Timeout de seguridad: si lleva más de 15 segundos cargando, permitir acceso
+  // Timeout de seguridad: si lleva más de 30 segundos cargando, mostrar error pero NO permitir acceso automáticamente
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
   React.useEffect(() => {
     if (authLoading || isLoading || isFetching) {
       const timeout = setTimeout(() => {
-        console.warn('[OnboardingGate] Timeout en carga, permitiendo acceso');
+        console.error('[OnboardingGate] Timeout en carga después de 30 segundos - esto no debería pasar');
         setLoadingTimeout(true);
-      }, 15000);
+      }, 30000); // Aumentado a 30 segundos
       return () => clearTimeout(timeout);
     } else {
       setLoadingTimeout(false);
     }
   }, [authLoading, isLoading, isFetching]);
 
-  // 1) Aún autenticando o esperando query (con timeout de seguridad)
-  if ((authLoading || isLoading || isFetching) && !loadingTimeout) {
+  // 1) Aún autenticando o esperando query (sin timeout que permita acceso automático)
+  if (authLoading || isLoading || isFetching) {
+    // Si hay timeout, mostrar mensaje de error pero NO permitir acceso
+    if (loadingTimeout) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#0b0d10',
+          color: '#e5e7eb',
+          fontFamily: 'system-ui, sans-serif'
+        }}>
+          <div style={{
+            padding: 24,
+            borderRadius: 12,
+            border: '1px solid rgba(239,68,68,0.3)',
+            background: 'rgba(239,68,68,0.1)',
+            maxWidth: 400,
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 8 }}>
+              ⚠️ Error de conexión
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: 16 }}>
+              No se pudo verificar tu estado de onboarding. Por favor, recarga la página.
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: 8,
+                border: 'none',
+                background: '#ef4444',
+                color: '#fff',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Recargar página
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{
         minHeight: '100vh',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useCompetitionGroup, useDeleteCompetitionGroup } from '@/hooks/useCompetitionGroups';
 import { useCompetitionGroupMembers } from '@/hooks/useCompetitionGroupMembers';
@@ -33,10 +33,23 @@ export default function CompetitionGroupDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const { data: group, isLoading: loadingGroup, error: groupError } = useCompetitionGroup(id ?? null);
   const { data: members, isLoading: loadingMembers, error: membersError } = useCompetitionGroupMembers(id ?? null);
   const deleteGroup = useDeleteCompetitionGroup();
+  
+  // Detectar si estamos en una vista pública
+  // Verificar si el referrer viene de una vista pública o si no hay usuario autenticado
+  const [isPublicView, setIsPublicView] = useState(false);
+  
+  useEffect(() => {
+    // Verificar referrer para ver si venimos de una vista pública
+    const referrer = document.referrer;
+    const isFromPublicView = referrer.includes('/academia/') || referrer.includes('/maestro/');
+    // También considerar vista pública si no hay usuario autenticado
+    setIsPublicView(isFromPublicView || !user);
+  }, [user, location]);
   
   // Estado para almacenar información del owner (academia o maestro)
   const [ownerData, setOwnerData] = useState<{
@@ -267,19 +280,342 @@ export default function CompetitionGroupDetail() {
           -webkit-text-fill-color: transparent;
           background-clip: text;
           margin: 0;
+          word-break: break-word;
+        }
+        .owner-badge-container {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 999px;
+          flex-wrap: wrap;
+        }
+        .action-buttons-container {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .badges-container {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .action-buttons-container {
+            width: 100%;
+            flex-direction: column;
+          }
+          .action-buttons-container button {
+            width: 100% !important;
+            justify-content: center;
+          }
+          .badges-container {
+            gap: 8px;
+          }
+          .owner-badge-container {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.875rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .action-buttons-container {
+            width: 100%;
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .action-buttons-container button {
+            width: 100% !important;
+            justify-content: center;
+            padding: 0.875rem 1.5rem !important;
+            font-size: 0.875rem !important;
+          }
+          .badges-container {
+            gap: 0.5rem;
+          }
+          .badges-container > span,
+          .badges-container > div {
+            font-size: 0.75rem !important;
+            padding: 0.375rem 0.75rem !important;
+            white-space: nowrap;
+          }
+          .owner-badge-container {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            width: 100%;
+          }
+          .owner-badge-container a {
+            font-size: 0.75rem !important;
+          }
+        }
+        @media (max-width: 1024px) {
+          .group-detail-container {
+            padding: 1.5rem;
+          }
+          .group-cover-image {
+            height: 400px;
+          }
+          .group-header-card {
+            padding: 2rem;
+          }
+          .section-title {
+            font-size: 1.75rem;
+          }
         }
         @media (max-width: 768px) {
           .group-detail-container {
             padding: 1rem;
           }
+          .group-hero-section {
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+          }
           .group-cover-image {
-            height: 350px;
+            height: 300px;
+          }
+          .group-cover-overlay {
+            padding: 2rem 1.5rem 1.5rem;
+          }
+          .group-cover-overlay h1 {
+            font-size: 2rem !important;
+            margin-bottom: 0.5rem;
+          }
+          .group-cover-overlay p {
+            font-size: 1rem !important;
           }
           .group-header-card {
             padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+          }
+          .group-header-card > div {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          .group-header-card h1 {
+            font-size: 2rem !important;
+            margin-bottom: 0.75rem;
+          }
+          .group-header-card p {
+            font-size: 1rem !important;
+            margin-bottom: 1rem;
+          }
+          .group-header-card > div > div:last-child {
+            width: 100% !important;
+            margin-top: 1rem;
+          }
+          .group-header-card > div > div:last-child button {
+            width: 100% !important;
+            justify-content: center;
           }
           .section-title {
             font-size: 1.5rem;
+          }
+          .section-icon {
+            width: 56px;
+            height: 56px;
+            font-size: 1.75rem;
+          }
+          .info-card {
+            padding: 1.25rem;
+            border-radius: 16px;
+          }
+          .info-card-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+          }
+          .info-card h3 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .info-card p {
+            font-size: 0.9rem !important;
+          }
+          .member-card {
+            padding: 1rem;
+            border-radius: 12px;
+          }
+          .member-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+          }
+          .member-card > div > div:first-child {
+            font-size: 0.9rem !important;
+          }
+          /* Badges y botones en tablet */
+          .group-header-card > div > div:last-of-type,
+          .group-detail-container > div > div[style*="flex"][style*="gap"] {
+            flex-wrap: wrap !important;
+            width: 100% !important;
+          }
+          .group-detail-container > div > div[style*="flex"][style*="gap"] > span,
+          .group-detail-container > div > div[style*="flex"][style*="gap"] > div {
+            font-size: 0.8rem !important;
+            padding: 0.4rem 0.875rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .group-detail-container {
+            padding: 0.75rem;
+          }
+          .group-hero-section {
+            border-radius: 12px;
+            margin-bottom: 1rem;
+          }
+          .group-cover-image {
+            height: 250px;
+          }
+          .group-cover-overlay {
+            padding: 1.5rem 1rem 1rem;
+          }
+          .group-cover-overlay h1 {
+            font-size: 1.5rem !important;
+            margin-bottom: 0.375rem;
+          }
+          .group-cover-overlay p {
+            font-size: 0.875rem !important;
+            line-height: 1.5;
+          }
+          .group-header-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+          }
+          .group-header-card h1 {
+            font-size: 1.75rem !important;
+            margin-bottom: 0.5rem;
+          }
+          .group-header-card p {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.75rem;
+          }
+          .section-title {
+            font-size: 1.25rem;
+          }
+          .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+          }
+          .section-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+            border-radius: 16px;
+          }
+          .info-card {
+            padding: 1rem;
+            border-radius: 12px;
+          }
+          .info-card-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+          }
+          .info-card h3 {
+            font-size: 1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .info-card p {
+            font-size: 0.875rem !important;
+            line-height: 1.6;
+          }
+          .member-card {
+            padding: 0.875rem;
+            border-radius: 10px;
+            gap: 0.75rem;
+          }
+          .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+          }
+          .member-card > div > div:first-child {
+            font-size: 0.875rem !important;
+          }
+          .member-card > div > div:last-child {
+            font-size: 0.75rem !important;
+          }
+          .member-card > div > div:last-child span {
+            padding: 0.2rem 0.5rem !important;
+            font-size: 0.7rem !important;
+          }
+          /* Grid de información en móvil */
+          .group-detail-container > div > div[style*="gridTemplateColumns"] {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          /* Grid de miembros en móvil */
+          .group-detail-container > div > div[style*="gridTemplateColumns"]:last-of-type {
+            grid-template-columns: 1fr !important;
+            gap: 0.875rem !important;
+          }
+          /* Botones de acción en móvil */
+          .group-header-card > div > div:last-child,
+          .group-detail-container > div > div[style*="flex"][style*="marginLeft"] {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-top: 1rem;
+            flex-direction: column;
+          }
+          .group-header-card > div > div:last-child button,
+          .group-detail-container > div > div[style*="flex"][style*="marginLeft"] button {
+            width: 100% !important;
+            justify-content: center;
+            padding: 0.875rem 1.5rem !important;
+            font-size: 0.875rem !important;
+          }
+          /* Badges en móvil */
+          .group-header-card > div > div:last-of-type,
+          .group-detail-container > div > div[style*="flex"][style*="gap"]:not([style*="marginLeft"]) {
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            gap: 0.5rem !important;
+          }
+          .group-detail-container > div > div[style*="flex"][style*="gap"] > span,
+          .group-detail-container > div > div[style*="flex"][style*="gap"] > div {
+            font-size: 0.75rem !important;
+            padding: 0.375rem 0.75rem !important;
+            white-space: nowrap;
+          }
+          /* Video responsivo en móvil */
+          .group-detail-container > div > div[style*="borderRadius"][style*="overflow"] {
+            border-radius: 12px !important;
+            margin-top: 1rem;
+          }
+          .group-detail-container > div > div[style*="paddingBottom"][style*="56.25%"] {
+            padding-bottom: 56.25% !important;
+            border-radius: 12px !important;
+          }
+          /* Sección de miembros en móvil */
+          .group-detail-container > div > div[style*="marginBottom"][style*="3rem"] {
+            padding: 1.5rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 2rem !important;
+          }
+        }
+        @media (max-width: 768px) {
+          /* Grid de información en tablet */
+          .group-detail-container > div > div[style*="gridTemplateColumns"]:not(:last-of-type) {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+            gap: 1.25rem !important;
+          }
+          /* Grid de miembros en tablet */
+          .group-detail-container > div > div[style*="gridTemplateColumns"]:last-of-type {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+            gap: 1rem !important;
+          }
+          /* Video en tablet */
+          .group-detail-container > div > div[style*="paddingBottom"][style*="56.25%"] {
+            padding-bottom: 56.25% !important;
+            border-radius: 16px !important;
           }
         }
       `}</style>
@@ -305,7 +641,9 @@ export default function CompetitionGroupDetail() {
               fontSize: '0.95rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              width: '100%',
+              justifyContent: 'center'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
@@ -340,7 +678,8 @@ export default function CompetitionGroupDetail() {
                 color: '#fff',
                 margin: 0,
                 marginBottom: '0.5rem',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.8)'
+                textShadow: '0 4px 20px rgba(0, 0, 0, 0.8)',
+                wordBreak: 'break-word'
               }}>
                 {group.name}
               </h1>
@@ -350,7 +689,8 @@ export default function CompetitionGroupDetail() {
                   color: 'rgba(255,255,255,0.95)',
                   margin: 0,
                   lineHeight: 1.6,
-                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.6)'
+                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.6)',
+                  wordBreak: 'break-word'
                 }}>
                   {group.description}
                 </p>
@@ -366,8 +706,8 @@ export default function CompetitionGroupDetail() {
             animate={{ opacity: 1, y: 0 }}
             className="group-header-card"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', width: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
                 <h1 style={{
                   fontSize: '3rem',
                   fontWeight: 900,
@@ -376,7 +716,8 @@ export default function CompetitionGroupDetail() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   marginBottom: '1rem',
-                  lineHeight: 1.2
+                  lineHeight: 1.2,
+                  wordBreak: 'break-word'
                 }}>
                   {group.name}
                 </h1>
@@ -385,14 +726,15 @@ export default function CompetitionGroupDetail() {
                     fontSize: '1.2rem', 
                     color: 'rgba(255,255,255,0.9)', 
                     lineHeight: 1.7, 
-                    marginBottom: '1.5rem' 
+                    marginBottom: '1.5rem',
+                    wordBreak: 'break-word'
                   }}>
                     {group.description}
                   </p>
                 )}
               </div>
               {isOwner && (
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div className="action-buttons-container">
                   <button
                     onClick={() => navigate(`/competition-groups/${id}/edit`)}
                     style={{
@@ -405,7 +747,11 @@ export default function CompetitionGroupDetail() {
                       fontWeight: 700,
                       cursor: 'pointer',
                       boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -463,7 +809,7 @@ export default function CompetitionGroupDetail() {
             </div>
 
             {/* Badges de estado */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: '1.5rem', alignItems: 'center' }}>
+            <div className="badges-container" style={{ marginTop: '1.5rem' }}>
               <span style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '999px',
@@ -480,7 +826,8 @@ export default function CompetitionGroupDetail() {
               }}>
                 {group.is_active ? '✓' : '○'} {group.is_active ? 'Activo' : 'Inactivo'}
               </span>
-              {group.academy_id && (
+              {/* Botón "Asociado a Academia" solo en vistas privadas */}
+              {!isPublicView && group.academy_id && (
                 <span style={{
                   padding: '0.5rem 1rem',
                   borderRadius: '999px',
@@ -495,12 +842,7 @@ export default function CompetitionGroupDetail() {
               )}
               {/* Campo "Por: academia o maestro" */}
               {ownerData && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '999px',
+                <div className="owner-badge-container" style={{
                   background: ownerData.type === 'academy' 
                     ? 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.2))'
                     : 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(249,115,22,0.2))',
@@ -548,7 +890,7 @@ export default function CompetitionGroupDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}
+            className="badges-container" style={{ marginBottom: '2rem' }}
           >
             <span style={{
               padding: '0.5rem 1rem',
@@ -566,7 +908,8 @@ export default function CompetitionGroupDetail() {
             }}>
               {group.is_active ? '✓' : '○'} {group.is_active ? 'Activo' : 'Inactivo'}
             </span>
-            {group.academy_id && (
+            {/* Botón "Asociado a Academia" solo en vistas privadas */}
+            {!isPublicView && group.academy_id && (
               <span style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '999px',
@@ -581,12 +924,7 @@ export default function CompetitionGroupDetail() {
             )}
             {/* Campo "Por: academia o maestro" */}
             {ownerData && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '999px',
+              <div className="owner-badge-container" style={{
                 background: ownerData.type === 'academy' 
                   ? 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(124,58,237,0.2))'
                   : 'linear-gradient(135deg, rgba(251,146,60,0.2), rgba(249,115,22,0.2))',
@@ -625,7 +963,7 @@ export default function CompetitionGroupDetail() {
               </div>
             )}
             {isOwner && (
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginLeft: 'auto' }}>
+              <div className="action-buttons-container" style={{ marginTop: '1rem' }}>
                 <button
                   onClick={() => navigate(`/competition-groups/${id}/edit`)}
                   style={{
@@ -638,7 +976,11 @@ export default function CompetitionGroupDetail() {
                     fontWeight: 700,
                     cursor: 'pointer',
                     boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -709,7 +1051,9 @@ export default function CompetitionGroupDetail() {
             border: '1px solid rgba(255, 255, 255, 0.15)',
             padding: '2rem',
             boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)'
+            backdropFilter: 'blur(10px)',
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           <div className="section-header">
@@ -723,19 +1067,38 @@ export default function CompetitionGroupDetail() {
             overflow: 'hidden',
             border: '2px solid rgba(255,255,255,0.1)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            background: '#000'
+            background: '#000',
+            position: 'relative',
+            width: '100%',
+            paddingBottom: '56.25%',
+            height: 0,
+            marginTop: '1rem'
           }}>
             {group.promo_video_url.includes('youtube.com') || group.promo_video_url.includes('youtu.be') ? (
               <iframe
                 src={group.promo_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                style={{ width: '100%', height: 500, border: 'none' }}
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%', 
+                  height: '100%', 
+                  border: 'none' 
+                }}
                 allowFullScreen
                 title={`${group.name} - video`}
               />
             ) : group.promo_video_url.includes('vimeo.com') ? (
               <iframe
                 src={group.promo_video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
-                style={{ width: '100%', height: 500, border: 'none' }}
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%', 
+                  height: '100%', 
+                  border: 'none' 
+                }}
                 allowFullScreen
                 title={`${group.name} - video`}
               />
@@ -743,7 +1106,14 @@ export default function CompetitionGroupDetail() {
               <video
                 src={group.promo_video_url}
                 controls
-                style={{ width: '100%', height: 500, objectFit: 'contain' }}
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain' 
+                }}
               />
             )}
           </div>
@@ -757,7 +1127,7 @@ export default function CompetitionGroupDetail() {
         transition={{ delay: 0.4 }}
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '1.5rem',
           marginBottom: '3rem'
         }}
@@ -868,7 +1238,9 @@ export default function CompetitionGroupDetail() {
           border: '1px solid rgba(255, 255, 255, 0.15)',
           padding: '2.5rem',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)',
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          width: '100%',
+          boxSizing: 'border-box'
         }}
       >
         <div className="section-header">
@@ -918,7 +1290,7 @@ export default function CompetitionGroupDetail() {
         ) : members && members.length > 0 ? (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
             gap: '1.25rem',
             marginTop: '1.5rem'
           }}>

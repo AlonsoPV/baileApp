@@ -1,0 +1,89 @@
+INSTRUCCIONES DE ACCESO PARA REVISORES DE GOOGLE PLAY
+=====================================================
+
+INSTRUCCIÓN 1: ACCESO INICIAL Y CONTENIDO PÚBLICO
+--------------------------------------------------
+La app muestra contenido público sin necesidad de autenticación. Los revisores pueden:
+- Explorar eventos, academias, maestros y marcas
+- Ver detalles de eventos y perfiles públicos
+- Navegar por catálogos de productos
+- Acceder a información estática (aviso de privacidad, roles en la comunidad)
+
+No se requiere ninguna acción para acceder a estas funciones.
+
+
+INSTRUCCIÓN 2: INICIAR SESIÓN (Método Recomendado - Google OAuth)
+------------------------------------------------------------------
+Para acceder a funciones que requieren autenticación:
+
+1. Abrir la app "Donde Bailar MX"
+2. Tocar "Iniciar Sesión"
+3. Tocar "Continuar con Google"
+4. Seleccionar una cuenta de Google y autorizar
+5. Si es la primera vez, configurar un PIN de 4 dígitos (ejemplo: 1234)
+6. Completar el onboarding de 3 pasos (ver Instrucción 3)
+
+ALTERNATIVA: Si no se puede usar Google OAuth, usar Magic Link:
+1. Tocar "Iniciar Sesión"
+2. Ingresar un email válido (cualquier email de prueba funciona)
+3. Tocar "Enviar enlace mágico"
+4. Revisar el correo (incluyendo spam) y hacer clic en el enlace
+5. La app se abrirá automáticamente
+6. Configurar PIN de 4 dígitos si es la primera vez
+7. Completar el onboarding
+
+
+INSTRUCCIÓN 3: COMPLETAR ONBOARDING (Obligatorio Primera Vez)
+---------------------------------------------------------------
+Después de iniciar sesión por primera vez, se debe completar un proceso de 3 pasos:
+
+PASO 1 - Datos Básicos:
+- Ingresar nombre público (ejemplo: "Revisor Google Play")
+- Subir una foto de perfil (OBLIGATORIA - puede usar cualquier imagen)
+- Tocar "Continuar"
+
+PASO 2 - Ritmos:
+- Seleccionar al menos un ritmo de baile (ejemplo: "Salsa", "Bachata")
+- Puede seleccionar múltiples ritmos
+- Tocar "Continuar"
+
+PASO 3 - Zona:
+- Seleccionar UNA zona geográfica (ejemplo: "Ciudad de México")
+- Solo se puede seleccionar una zona
+- Tocar "Finalizar"
+
+Una vez completado, el revisor tendrá acceso completo a todas las funciones.
+
+
+INSTRUCCIÓN 4: FUNCIONES DISPONIBLES DESPUÉS DEL ONBOARDING
+------------------------------------------------------------
+Una vez completado el onboarding, los revisores pueden:
+
+- Editar su perfil personal
+- Marcar interés en eventos (RSVP)
+- Agregar eventos al calendario
+- Ver y gestionar notificaciones
+- Crear perfiles de maestro, academia, organizador o marca (opcional)
+- Publicar eventos y clases (opcional)
+- Subir productos para marcas (opcional)
+
+Todas estas funciones son gratuitas y no requieren pagos ni suscripciones.
+
+
+INSTRUCCIÓN 5: NOTAS IMPORTANTES Y SOLUCIÓN DE PROBLEMAS
+----------------------------------------------------------
+IMPORTANTE:
+- La app NO usa contraseñas tradicionales, usa Magic Link (enlace por email)
+- Se requiere un PIN de 4 dígitos después del primer login (solo una vez)
+- El onboarding es obligatorio para usuarios nuevos
+- No hay pagos, suscripciones ni membresías premium
+- No se requiere acceso a ubicación GPS
+
+SI HAY PROBLEMAS:
+- Si no llega el Magic Link: revisar carpeta de spam, solicitar uno nuevo
+- Si se olvida el PIN: usar "¿Olvidé mi PIN?" en la pantalla de login
+- Si el onboarding no avanza: asegurarse de completar los 3 pasos en orden, la foto es obligatoria en el Paso 1
+- Si no hay contenido visible: es normal si la base de datos está vacía, el contenido se genera cuando los usuarios crean perfiles
+
+CONTACTO: info@dondebailar.com.mx
+

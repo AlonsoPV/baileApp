@@ -42,7 +42,8 @@ export function useUserProfile() {
       if (error) throw error;
       return data as ProfileUser | null;
     },
-    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    staleTime: 1000 * 30, // 30 segundos - perfil puede cambiar pero no tan frecuentemente
+    gcTime: 1000 * 60 * 5, // 5 minutos en cache
     retry: 2,
     retryDelay: 1000,
   });

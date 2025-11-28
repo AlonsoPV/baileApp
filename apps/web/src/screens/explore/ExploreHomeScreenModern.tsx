@@ -297,10 +297,38 @@ export default function ExploreHomeScreen() {
 
   // Fecha base (hoy) usando SIEMPRE zona horaria CDMX para evitar desfases
   const todayYmd = React.useMemo(() => getTodayCDMX(), []);
-  const applyDatePreset = (preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    const { from, to } = computePresetRange(preset);
-    set({ datePreset: preset, dateFrom: from, dateTo: to });
-  };
+  
+  // Ref para almacenar el timeout del debounce
+  const datePresetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  
+  const applyDatePreset = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
+    // Si es el mismo preset, no hacer nada
+    if (filters.datePreset === preset) return;
+    
+    // Limpiar timeout anterior si existe
+    if (datePresetTimeoutRef.current) {
+      clearTimeout(datePresetTimeoutRef.current);
+    }
+    
+    // Actualizar preset inmediatamente para feedback visual
+    set({ datePreset: preset });
+    
+    // Aplicar fechas con un pequeño debounce para evitar recálculos innecesarios
+    datePresetTimeoutRef.current = setTimeout(() => {
+      const { from, to } = computePresetRange(preset);
+      set({ datePreset: preset, dateFrom: from, dateTo: to });
+      datePresetTimeoutRef.current = null;
+    }, 100); // 100ms de debounce
+  }, [filters.datePreset, computePresetRange, set]);
+  
+  // Limpiar timeout al desmontar
+  React.useEffect(() => {
+    return () => {
+      if (datePresetTimeoutRef.current) {
+        clearTimeout(datePresetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
@@ -329,19 +357,7 @@ export default function ExploreHomeScreen() {
   const fechasLoading = fechasQuery.isLoading;
   const fechasData = React.useMemo(() => {
     const flattened = flattenQueryData(fechasQuery.data);
-    // Log temporal para depuración
-    const recurrentEvents = flattened.filter((f: any) => f._recurrence_index !== undefined);
-    if (recurrentEvents.length > 0) {
-      console.log('[ExploreHomeScreen] Ocurrencias expandidas encontradas:', {
-        total: recurrentEvents.length,
-        grupos: recurrentEvents.reduce((acc: any, f: any) => {
-          const key = f._original_id || f.id;
-          if (!acc[key]) acc[key] = [];
-          acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
-          return acc;
-        }, {} as Record<string, any[]>)
-      });
-    }
+    // Logs de depuración removidos para reducir spam en consola
     return flattened;
   }, [fechasQuery.data]);
 
@@ -364,26 +380,6 @@ export default function ExploreHomeScreen() {
 
     const todayBase = parseYmdToDate(todayYmd);
     const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
-    
-    // Log para depuración
-    const recurrentBeforeFilter = allFechas.filter((f: any) => f._recurrence_index !== undefined);
-    if (recurrentBeforeFilter.length > 0) {
-      const grupos = recurrentBeforeFilter.reduce((acc: any, f: any) => {
-        const key = f._original_id || f.id;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
-        return acc;
-      }, {} as Record<string, any[]>);
-      console.log('[ExploreHomeScreen] Antes del filtrado:', {
-        totalFechas: allFechas.length,
-        recurrentEvents: recurrentBeforeFilter.length,
-        grupos: Object.keys(grupos).map(k => ({
-          id: k,
-          ocurrencias: grupos[k].length,
-          fechas: grupos[k].map((o: any) => o.fecha).sort()
-        }))
-      });
-    }
 
     // Si hay búsqueda activa, incluir eventos pasados también
     const includePastEvents = !!filters.q && filters.q.trim().length > 0;
@@ -447,28 +443,7 @@ export default function ExploreHomeScreen() {
       return dateA.getTime() - dateB.getTime();
     });
 
-    // Log después del filtrado
-    const recurrentAfterFilter = sorted.filter((f: any) => f._recurrence_index !== undefined);
-    if (recurrentAfterFilter.length > 0) {
-      const grupos = recurrentAfterFilter.reduce((acc: any, f: any) => {
-        const key = f._original_id || f.id;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push({ fecha: f.fecha, index: f._recurrence_index });
-        return acc;
-      }, {} as Record<string, any[]>);
-      console.log('[ExploreHomeScreen] Después del filtrado:', {
-        totalFechas: sorted.length,
-        recurrentEvents: recurrentAfterFilter.length,
-        grupos: Object.keys(grupos).map(k => ({
-          id: k,
-          ocurrencias: grupos[k].length,
-          fechas: grupos[k].map((o: any) => o.fecha).sort()
-        })),
-        dateFrom: filters.dateFrom,
-        dateTo: filters.dateTo,
-        hasDateRange
-      });
-    }
+    // Logs de depuración removidos para reducir spam en consola
 
     return sorted;
   }, [fechasData, todayYmd, filters.q, filters.dateFrom, filters.dateTo]);
@@ -1473,15 +1448,7 @@ export default function ExploreHomeScreen() {
                     acc[key].push({ fecha: f.fecha, index: f._recurrence_index, id: f.id });
                     return acc;
                   }, {} as Record<string, any[]>);
-                  console.log('[ExploreHomeScreen] Items pasados al HorizontalSlider:', {
-                    totalItems: list.length,
-                    recurrentItems: recurrentInList.length,
-                    grupos: Object.keys(grupos).map(k => ({
-                      id: k,
-                      ocurrencias: grupos[k].length,
-                      fechas: grupos[k].map((o: any) => ({ fecha: o.fecha, index: o.index, id: o.id })).sort((a: any, b: any) => a.index - b.index)
-                    }))
-                  });
+                  // Log de depuración removido para reducir spam en consola
                 }
                 
                 return list.length ? (

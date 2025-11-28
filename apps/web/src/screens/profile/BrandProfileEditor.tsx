@@ -60,13 +60,15 @@ type BrandForm = {
   reviews: BrandReview[];
   faqs: BrandFaq[];
   commitment: BrandCommitmentItem[];
+  whatsapp_number?: string;
+  whatsapp_message_template?: string;
 };
 
 const colors = { dark: '#121212', light: '#F5F5F5' };
 
 type Action =
   | { type: 'SET_ALL'; payload: Partial<BrandForm> }
-  | { type: 'SET_FIELD'; key: 'nombre_publico' | 'bio'; value: string }
+  | { type: 'SET_FIELD'; key: 'nombre_publico' | 'bio' | 'whatsapp_number' | 'whatsapp_message_template'; value: string }
   | { type: 'SET_RS'; key: string; value: string }
   | { type: 'SET_AVATAR'; url: string | null }
   | { type: 'ADD_SIZE' }
@@ -106,6 +108,8 @@ const initialForm: BrandForm = {
   reviews: [],
   faqs: [],
   commitment: [],
+  whatsapp_number: '',
+  whatsapp_message_template: 'Hola, me interesa el producto: {nombre}',
 };
 
 function formReducer(state: BrandForm, action: Action): BrandForm {
@@ -220,6 +224,8 @@ export default function BrandProfileEditor() {
           reviews: Array.isArray((brand as any).reviews) ? (brand as any).reviews : [],
           faqs: Array.isArray((brand as any).faqs) ? (brand as any).faqs : [],
           commitment: Array.isArray((brand as any).commitment) ? (brand as any).commitment : [],
+          whatsapp_number: (brand as any).whatsapp_number || '',
+          whatsapp_message_template: (brand as any).whatsapp_message_template || 'Hola, me interesa el producto: {nombre}',
         }
       });
     }
@@ -274,9 +280,18 @@ export default function BrandProfileEditor() {
       if (form.commitment && form.commitment.length > 0) {
         payload.commitment = form.commitment;
       }
+      // Guardar campos de WhatsApp siempre
+      if (form.whatsapp_number !== undefined) {
+        payload.whatsapp_number = form.whatsapp_number.trim() || null;
+      }
+      if (form.whatsapp_message_template !== undefined) {
+        payload.whatsapp_message_template = form.whatsapp_message_template.trim() || 'Hola, me interesa el producto: {nombre}';
+      }
 
       console.log('📦 [BrandProfileEditor] Payload limpio:', payload);
       console.log('✅ [BrandProfileEditor] Estado de aprobación:', payload.estado_aprobacion);
+      console.log('💬 [BrandProfileEditor] WhatsApp number:', payload.whatsapp_number);
+      console.log('💬 [BrandProfileEditor] WhatsApp template:', payload.whatsapp_message_template);
       await upsert.mutateAsync(payload);
       showToast('✅ Perfil guardado exitosamente', 'success');
     } catch (error: any) {
@@ -906,6 +921,106 @@ export default function BrandProfileEditor() {
                         </label>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Configuración WhatsApp para Productos */}
+              <div className="editor-section glass-card-container">
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem' 
+                }}>
+                  <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #25D366, #128C7E)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '1.75rem',
+                    boxShadow: '0 8px 24px rgba(37, 211, 102, 0.4)'
+                  }}>
+                    💬
+                  </div>
+                  <div>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>WhatsApp para Productos</h2>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                      Configura el número y mensaje para que los clientes contacten sobre productos
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ 
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'grid',
+                  gap: '1.25rem'
+                }}>
+                  {/* Número de WhatsApp */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      fontSize: '0.9rem', 
+                      fontWeight: '600', 
+                      marginBottom: '0.5rem',
+                      opacity: 0.9
+                    }}>
+                      📱 Número de WhatsApp para Productos
+                    </label>
+                    <div className="input-group">
+                      <span className="prefix">+52</span>
+                      <input
+                        type="tel"
+                        className="editor-input"
+                        value={form.whatsapp_number || ''}
+                        onChange={(e) => dispatch({ type: 'SET_FIELD', key: 'whatsapp_number', value: e.target.value })}
+                        placeholder="55 1234 5678"
+                        style={{ 
+                          width: '100%', 
+                          padding: '0.75rem',
+                          fontSize: '0.95rem'
+                        }}
+                      />
+                    </div>
+                    <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem', marginBottom: 0 }}>
+                      Este número aparecerá en cada producto. Si no lo configuras, se usará el número de redes sociales.
+                    </p>
+                  </div>
+
+                  {/* Mensaje Template */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      fontSize: '0.9rem', 
+                      fontWeight: '600', 
+                      marginBottom: '0.5rem',
+                      opacity: 0.9
+                    }}>
+                      💬 Mensaje Template
+                    </label>
+                    <textarea
+                      className="editor-textarea"
+                      value={form.whatsapp_message_template || ''}
+                      onChange={(e) => dispatch({ type: 'SET_FIELD', key: 'whatsapp_message_template', value: e.target.value })}
+                      placeholder="Hola, me interesa el producto: {nombre}"
+                      rows={3}
+                      style={{ 
+                        width: '100%', 
+                        padding: '0.75rem',
+                        fontSize: '0.9rem',
+                        lineHeight: '1.5',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                    <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem', marginBottom: 0 }}>
+                      Usa <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{producto}'}</code> para que se reemplace automáticamente con el nombre del producto.
+                    </p>
                   </div>
                 </div>
               </div>
