@@ -139,13 +139,26 @@ export function ProfileScreen() {
           color: colors.light,
         }}
       >
-        <p>Cargando perfil…</p>
+        <p>Cargando sesión…</p>
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/auth/login" replace />;
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.dark,
+          color: colors.light,
+        }}
+      >
+        <p>No has iniciado sesión</p>
+      </div>
+    );
   }
 
   if (!profile) {

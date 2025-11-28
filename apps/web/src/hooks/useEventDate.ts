@@ -84,9 +84,11 @@ export function useCreateEventDate() {
     },
     onSuccess: (row) => {
       // Invalidar con las keys correctas que usa useDatesByParent
-      qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
+      if (row.parent_id) {
+        qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
+        qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
+      }
       qc.invalidateQueries({ queryKey: ["dates"] }); // Invalidar todas las fechas
-      qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
       qc.invalidateQueries({ queryKey: ["event", "date", row.id] });
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });

@@ -32,15 +32,29 @@ export default function AppShell() {
     return undefined;
   })();
 
-  const handleLogout = async () => {
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = React.useCallback(async () => {
+    // ✅ Prevenir múltiples clicks
+    if (isLoggingOut) return;
+    
     try {
-      await signOut();
-      navigate('/');
+      setIsLoggingOut(true);
       setMenuOpen(false);
+      
+      // ✅ Cerrar sesión (actualiza el estado inmediatamente)
+      await signOut();
+      
+      // ✅ Navegar inmediatamente
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('[AppShell] Error al cerrar sesión:', error);
+      // ✅ Aún así navegar
+      navigate('/', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
-  };
+  }, [signOut, navigate, isLoggingOut]);
 
   const menuItems = [
     { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },

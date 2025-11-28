@@ -35,8 +35,16 @@ const colors = {
 
 export default function UserProfileEditor() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile, updateProfileFields, refetchProfile } = useUserProfile();
+
+  // 🔍 Debug logs para diagnosticar problemas de carga
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[UserProfileEditor] Auth state:', { user: user?.id, authLoading });
+      console.log('[UserProfileEditor] Profile state:', { profile: profile?.user_id, isLoading: !profile });
+    }
+  }, [user?.id, authLoading, profile?.user_id]);
   const { media, uploadToSlot, removeFromSlot } = useUserMediaSlots();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
@@ -232,8 +240,32 @@ export default function UserProfileEditor() {
     }
   };
 
+  // ✅ Esperar a que auth termine de cargar antes de renderizar
+  if (authLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
   if (!user) {
-    return <div>Cargando...</div>;
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
+        <p>No has iniciado sesión</p>
+      </div>
+    );
   }
 
   return (

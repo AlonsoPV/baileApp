@@ -1,15 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { BrandProfile } from '../types/brand';
+import { useAuth } from '@/contexts/AuthProvider';
 
 const TABLE = 'profiles_brand';
 
 export function useMyBrand() {
+  const { user, loading: authLoading } = useAuth();
+  
   return useQuery({
     queryKey: ['brand','mine'],
+    enabled: !authLoading && !!user?.id && typeof user.id === 'string' && user.id.length > 0,
     queryFn: async (): Promise<BrandProfile|null> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user?.id || typeof user.id !== 'string') {
+        console.warn('[useMyBrand] Usuario sin ID válido');
+        return null;
+      }
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')

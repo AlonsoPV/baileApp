@@ -193,8 +193,8 @@ function formReducer(state: BrandForm, action: Action): BrandForm {
 
 export default function BrandProfileEditor() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { data: brand } = useMyBrand();
+  const { user, loading: authLoading } = useAuth();
+  const { data: brand, isLoading: brandLoading } = useMyBrand();
   const upsert = useUpsertBrand();
   const { showToast } = useToast();
 
@@ -384,6 +384,47 @@ export default function BrandProfileEditor() {
     }
   };
 
+  // ✅ Esperar a que auth termine de cargar antes de renderizar
+  if (authLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
+  if (!user) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
+        <p>No has iniciado sesión</p>
+      </div>
+    );
+  }
+
+  // ✅ Esperar a que el perfil cargue
+  if (brandLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando marca...</p>
+      </div>
+    );
+  }
 
   return (
     <>

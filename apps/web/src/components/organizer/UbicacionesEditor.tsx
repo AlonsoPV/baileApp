@@ -42,8 +42,16 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const lastOrgLocsSignature = React.useRef<string | null>(null);
 
   useEffect(() => {
+    // Evitar loops de renderizado infinito: solo sincronizar si los datos realmente cambiaron
+    const signature = JSON.stringify(orgLocs || []);
+    if (signature === lastOrgLocsSignature.current) {
+      return;
+    }
+    lastOrgLocsSignature.current = signature;
+
     const mapped: UIItem[] = (orgLocs || []).map((u: any) => ({
       sede: u?.nombre || '',
       direccion: u?.direccion || '',

@@ -115,8 +115,8 @@ export function EventDateEditScreen() {
       return;
     }
 
-    if (!parentId && !id) {
-      showToast('ID requerido', 'error');
+    if (!isNew && !id) {
+      showToast('ID requerido para actualizar', 'error');
       return;
     }
 
@@ -124,7 +124,7 @@ export function EventDateEditScreen() {
       if (isNew) {
         console.log('[EventDateEditScreen] Creating new date with parentId:', parentId);
         const result = await create.mutateAsync({
-          parent_id: Number(parentId),
+          parent_id: parentId ? Number(parentId) : null,
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
           hora_fin: form.hora_fin || null,

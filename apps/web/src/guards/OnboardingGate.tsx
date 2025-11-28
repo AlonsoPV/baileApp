@@ -7,21 +7,20 @@ import { routes } from '@/routes/registry';
 import { isPinVerified, needsPinVerify } from '@/lib/pin';
 
 export default function OnboardingGate() {
+  // ✅ TODOS LOS HOOKS DEBEN IR ANTES DE CUALQUIER EARLY RETURN
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
   // Guard only /app/* and /profile/* paths
   const PROTECTED_PREFIX = [/^\/app\//, /^\/profile(\/|$)/];
   const shouldGuard = PROTECTED_PREFIX.some((r) => r.test(location.pathname));
-  if (!shouldGuard) {
-    return <Outlet />;
-  }
-
   const isOnboardingRoute = location.pathname.startsWith('/onboarding');
 
+  // ✅ useQuery debe llamarse SIEMPRE, sin importar shouldGuard
+  // Usamos 'enabled' para controlar cuándo se ejecuta
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['onboarding-status', user?.id],
-    enabled: !!user && !authLoading && !!user.id,
+    enabled: shouldGuard && !!user && !authLoading && !!user.id,
     queryFn: async () => {
       if (!user?.id) {
         throw new Error('Usuario sin ID');
@@ -78,8 +77,10 @@ export default function OnboardingGate() {
     gcTime: 60000,
   });
 
-  // Timeout de seguridad: si lleva más de 30 segundos cargando, mostrar error pero NO permitir acceso automáticamente
+  // ✅ useState debe llamarse SIEMPRE
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+  
+  // ✅ useEffect debe llamarse SIEMPRE
   React.useEffect(() => {
     if (authLoading || isLoading || isFetching) {
       const timeout = setTimeout(() => {
@@ -91,6 +92,11 @@ export default function OnboardingGate() {
       setLoadingTimeout(false);
     }
   }, [authLoading, isLoading, isFetching]);
+
+  // ✅ AHORA SÍ podemos hacer early returns después de todos los hooks
+  if (!shouldGuard) {
+    return <Outlet />;
+  }
 
   // 1) Aún autenticando o esperando query (sin timeout que permita acceso automático)
   if (authLoading || isLoading || isFetching) {

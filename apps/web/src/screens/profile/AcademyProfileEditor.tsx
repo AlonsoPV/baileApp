@@ -119,8 +119,16 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
 
 export default function AcademyProfileEditor() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: academy, isLoading } = useAcademyMy();
+
+  // 🔍 Debug logs para diagnosticar problemas de carga
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[AcademyProfileEditor] Auth state:', { user: user?.id, authLoading });
+      console.log('[AcademyProfileEditor] Profile state:', { academy: academy?.id, isLoading });
+    }
+  }, [user?.id, authLoading, academy?.id, isLoading]);
   const { data: allTags } = useTags();
   const { allowedIds, isLoading: allowedLoading } = useAllowedRitmos();
   const { media, add, remove } = useAcademyMedia();
@@ -406,6 +414,35 @@ export default function AcademyProfileEditor() {
     }
   };
 
+  // ✅ Esperar a que auth termine de cargar antes de renderizar
+  if (authLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
+  if (!user) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
+        <p>No has iniciado sesión</p>
+      </div>
+    );
+  }
+
+  // ✅ Esperar a que el perfil cargue
   if (isLoading) {
     return (
       <div style={{

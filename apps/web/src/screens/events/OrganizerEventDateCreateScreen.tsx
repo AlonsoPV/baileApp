@@ -169,11 +169,6 @@ export default function OrganizerEventDateCreateScreen() {
       return;
     }
 
-    if (!parentIdNum) {
-      showToast('ID del social no válido', 'error');
-      return;
-    }
-
     try {
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -213,7 +208,7 @@ export default function OrganizerEventDateCreateScreen() {
       const resolvedZonas = resolvedZonasFromLocations();
 
       const basePayload = {
-        parent_id: Number(parentIdNum),
+        parent_id: parentIdNum ? Number(parentIdNum) : null,
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,

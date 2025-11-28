@@ -586,7 +586,7 @@ export default function OrganizerProfileEditor() {
   useRoleChange();
 
   // Obtener usuario autenticado
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Cargar tags
   const { data: allTags } = useTags();
@@ -763,30 +763,8 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // Si no existe un evento padre seleccionado, crear uno automáticamente
-      let parentIdToUse = selectedParentId;
-      if (!parentIdToUse) {
-        const parentPayload: any = {
-          organizer_id: (org as any)?.id,
-          nombre: dateForm.nombre ? `🎉 ${dateForm.nombre}` : '🎉 Nuevo Social',
-          descripcion: dateForm.biografia || 'Evento creado automáticamente al crear una fecha.',
-          ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
-          zonas: dateForm.zonas || []
-        };
-
-        const { data: newParent, error: parentErr } = await supabase
-          .from('events_parent')
-          .insert(parentPayload)
-          .select('id')
-          .single();
-
-        if (parentErr) {
-          console.error('Error creando evento padre automáticamente:', parentErr);
-          showToast('No se pudo crear el evento automáticamente', 'error');
-          return;
-        }
-        parentIdToUse = newParent?.id;
-      }
+      // parent_id es opcional - usar el seleccionado si existe, sino null
+      const parentIdToUse = selectedParentId || null;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -828,7 +806,7 @@ export default function OrganizerProfileEditor() {
       const resolvedZonas = validateZonasAgainstCatalog(resolvedZonasRaw, allTags);
 
       const basePayload = {
-        parent_id: Number(parentIdToUse),
+        parent_id: parentIdToUse ? Number(parentIdToUse) : null,
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
@@ -1033,6 +1011,45 @@ export default function OrganizerProfileEditor() {
     );
   };
 
+  // ✅ Esperar a que auth termine de cargar antes de renderizar
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#000000',
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+          <div>Cargando sesión...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
+  if (!user) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#000000',
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔒</div>
+          <div>No has iniciado sesión</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Esperar a que el perfil cargue
   if (isLoading) {
     return (
       <div style={{
@@ -3724,7 +3741,7 @@ export default function OrganizerProfileEditor() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleCreateDate}
-                      disabled={createEventDate.isPending || !dateForm.fecha || (((parents?.length) || 0) > 1 && !selectedParentId)}
+                      disabled={createEventDate.isPending || !dateForm.fecha}
                       style={{
                         padding: '12px 24px',
                         borderRadius: '12px',
@@ -3735,9 +3752,9 @@ export default function OrganizerProfileEditor() {
                         color: '#FFFFFF',
                         fontSize: '0.9rem',
                         fontWeight: '700',
-                        cursor: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 'not-allowed' : 'pointer',
+                        cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
                         boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                        opacity: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId) ? 0.6 : 1
+                        opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
                       }}
                     >
                       {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}

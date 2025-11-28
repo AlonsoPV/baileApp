@@ -217,7 +217,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
 export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, updateProfileFields } = useUserProfile();
+  const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
   const { media, addMedia, removeMedia } = useUserMedia();
   const [copied, setCopied] = useState(false);
@@ -392,6 +392,41 @@ export const UserProfileLive: React.FC = () => {
     .map(slot => getMediaBySlot(safeMedia as any, slot))
     .filter(item => item && item.kind === 'photo')
     .map(item => item!.url);
+
+  // Estados intermedios seguros para evitar accesos a datos indefinidos
+  if (profileLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.darkBase,
+          color: colors.light,
+        }}
+      >
+        Cargando perfil…
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.darkBase,
+          color: colors.light,
+        }}
+      >
+        No se encontró el perfil
+      </div>
+    );
+  }
 
   return (
     <>

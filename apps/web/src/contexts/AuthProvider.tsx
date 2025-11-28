@@ -158,25 +158,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      // ✅ ACTUALIZAR ESTADO LOCAL INMEDIATAMENTE (antes de llamar a signOut)
+      // Esto asegura que la UI se actualice de forma instantánea
+      setSession(null);
+      setUser(null);
+      setLoading(false);
       
-      // 🧹 Limpiar cache SIEMPRE, incluso si hay error 403
-      // El error 403 puede ser de Supabase pero el logout local funciona
+      // 🧹 Limpiar cache INMEDIATAMENTE
       qc.clear();
       clearAllPinVerified();
       
       // 🎭 Resetear modo de perfil a "usuario"
       useProfileMode.getState().setMode("usuario");
       
-      // Si hay error, solo loguearlo pero no fallar
-      if (error) {
-        console.warn('[AuthProvider] Logout warning (puede ignorarse):', error);
+      // 🔐 Cerrar sesión en Supabase (intentar global primero, luego local como fallback)
+      let error: any = null;
+      try {
+        // Intentar logout global primero (cierra sesión en todos los dispositivos)
+        const { error: globalError } = await supabase.auth.signOut({ scope: 'global' });
+        if (globalError) {
+          // Si falla, intentar logout local
+          const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+          error = localError;
+        }
+      } catch (signOutError: any) {
+        error = signOutError;
+        console.warn('[AuthProvider] Error en signOut de Supabase (continuando con logout local):', signOutError);
       }
       
-      return { error: null }; // Siempre retornar success para el logout local
+      // Si hay error, solo loguearlo pero no fallar (ya limpiamos el estado local)
+      if (error) {
+        console.warn('[AuthProvider] Logout warning (puede ignorarse, estado local ya limpiado):', error);
+      }
+      
+      return { error: null }; // Siempre retornar success porque el estado local ya está limpio
     } catch (e: any) {
       console.error('[AuthProvider] Logout error:', e);
-      // Limpiar cache de todas formas
+      // ✅ Asegurar que el estado local se limpie incluso si hay excepción
+      setSession(null);
+      setUser(null);
+      setLoading(false);
       qc.clear();
       clearAllPinVerified();
       useProfileMode.getState().setMode("usuario");

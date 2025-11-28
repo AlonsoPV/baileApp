@@ -119,7 +119,7 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
 
 export default function TeacherProfileEditor() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: teacher, isLoading } = useTeacherMy();
   const { data: allTags } = useTags();
   const { media, add, remove } = useTeacherMedia();
@@ -363,9 +363,38 @@ export default function TeacherProfileEditor() {
     }
   };
 
+  // ✅ Esperar a que auth termine de cargar antes de renderizar
+  if (authLoading) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+        <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
+  if (!user) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
+        <p>No has iniciado sesión</p>
+      </div>
+    );
+  }
+
+  // ✅ Esperar a que el perfil cargue
   if (isLoading) {
-  return (
-    <div style={{
+    return (
+      <div style={{
         padding: '48px 24px',
         textAlign: 'center',
         color: colors.light,

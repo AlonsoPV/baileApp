@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
@@ -19,14 +20,31 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
   const { profile } = useUserProfile();
   const { getDefaultRoute } = useDefaultProfile();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
   const avatarUrl = profile?.avatar_url;
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate(routes.auth.login);
-  };
+  const handleLogout = React.useCallback(async () => {
+    // ✅ Prevenir múltiples clicks
+    if (isLoggingOut) return;
+    
+    try {
+      setIsLoggingOut(true);
+      
+      // ✅ Cerrar sesión (actualiza el estado inmediatamente)
+      await signOut();
+      
+      // ✅ Navegar inmediatamente (el estado ya está actualizado en signOut)
+      navigate(routes.auth.login, { replace: true });
+    } catch (error) {
+      console.error('[Navbar] Error en logout:', error);
+      // ✅ Aún así navegar al login
+      navigate(routes.auth.login, { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [signOut, navigate, isLoggingOut]);
 
   return (
     <nav
