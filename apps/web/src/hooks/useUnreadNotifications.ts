@@ -52,39 +52,77 @@ export function useUnreadNotifications(userId?: string) {
 
     load();
 
-    const channel = supabase
-      .channel(`notifications-unread:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => setUnread((prev) => prev + 1)
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          // Si alguna pasa a is_read=true, decrémentalo en caliente o recalc
-          const becameRead = (payload.new as any)?.is_read === true && (payload.old as any)?.is_read === false;
-          if (becameRead) {
-            setUnread((prev) => Math.max(prev - 1, 0));
+    // Suscripción a Realtime con manejo de errores
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    try {
+      channel = supabase
+        .channel(`notifications-unread:${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`,
+          },
+          () => {
+            if (active) {
+              setUnread((prev) => prev + 1);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            if (!active) return;
+            // Si alguna pasa a is_read=true, decrémentalo en caliente o recalc
+            const becameRead = (payload.new as any)?.is_read === true && (payload.old as any)?.is_read === false;
+            if (becameRead) {
+              setUnread((prev) => Math.max(prev - 1, 0));
+            }
+          }
+        )
+        .subscribe((status) => {
+          // Manejar estados de la suscripción
+          if (status === 'SUBSCRIBED') {
+            // Suscripción exitosa
+            if (import.meta.env.MODE === 'development') {
+              console.log('[useUnreadNotifications] Realtime subscribed successfully');
+            }
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            // Error en la conexión - no es crítico, la app funciona sin Realtime
+            if (import.meta.env.MODE === 'development') {
+              console.warn('[useUnreadNotifications] Realtime subscription issue (non-critical):', status);
+            }
+            // La app seguirá funcionando con polling manual si es necesario
+          }
+        });
+    } catch (error) {
+      // Si falla la suscripción, no es crítico - la app funciona sin Realtime
+      if (import.meta.env.MODE === 'development') {
+        console.warn('[useUnreadNotifications] Failed to subscribe to Realtime (non-critical):', error);
+      }
+    }
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (error) {
+          // Ignorar errores al remover el canal
+          if (import.meta.env.MODE === 'development') {
+            console.warn('[useUnreadNotifications] Error removing channel:', error);
+          }
+        }
+      }
     };
   }, [userId]);
 

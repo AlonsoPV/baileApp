@@ -170,25 +170,48 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
     <>
       <style>{`
         .join-cta-button {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: rgba(255, 255, 255, 0.85);
-          padding: 0.625rem 1.25rem;
-          border-radius: 8px;
-          font-weight: 500;
-          font-size: 0.8125rem;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(251, 140, 0, 0.2));
+          border: 1px solid rgba(229, 57, 53, 0.4);
+          color: rgba(255, 255, 255, 0.95);
+          padding: 0.65rem 1.35rem;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 0.875rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: nowrap;
           flex-shrink: 0;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(229, 57, 53, 0.15);
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .join-cta-button::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.3), rgba(251, 140, 0, 0.3));
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
         .join-cta-button:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.25);
-          color: rgba(255, 255, 255, 0.95);
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.3), rgba(251, 140, 0, 0.3));
+          border-color: rgba(229, 57, 53, 0.6);
+          color: rgba(255, 255, 255, 1);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(229, 57, 53, 0.25);
+        }
+        .join-cta-button:hover::before {
+          opacity: 1;
         }
         .join-cta-button:active {
-          transform: scale(0.98);
+          transform: translateY(0) scale(0.98);
+        }
+        .join-cta-button span {
+          position: relative;
+          z-index: 1;
         }
         .form-overlay {
           position: fixed;
@@ -416,7 +439,8 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        ✨ Quiero formar parte
+        <span>✨</span>
+        <span>Quiero formar parte</span>
       </button>
 
       <AnimatePresence>

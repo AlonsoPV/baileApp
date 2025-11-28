@@ -16,6 +16,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
+  realtime: {
+    // Configuración de Realtime para manejar conexiones de manera más robusta
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  global: {
+    headers: {
+      'x-client-info': 'baileapp-web',
+    },
+  },
 });
 
 

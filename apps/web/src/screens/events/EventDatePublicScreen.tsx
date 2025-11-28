@@ -998,6 +998,16 @@ export default function EventDatePublicScreen() {
                                   {it.instructor && (
                                     <p className="event-row__subtitle">por {it.instructor}</p>
                                   )}
+                                  {(it.realizadoPor || it.realizado_por) && (
+                                    <p className="event-row__subtitle" style={{ marginTop: '0.25rem' }}>
+                                      Se llevará a cabo por: {it.realizadoPor || it.realizado_por}
+                                    </p>
+                                  )}
+                                  {it.nivel && (
+                                    <p className="event-row__subtitle" style={{ marginTop: '0.25rem' }}>
+                                      Nivel: {it.nivel}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                               <div className="event-row__right">

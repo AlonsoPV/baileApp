@@ -281,10 +281,41 @@ export default function CrearClase({
     ubicacionId: value?.ubicacionId ?? null,
   });
 
+  // Usar refs para comparar valores anteriores y evitar loops infinitos
+  const prevValueRef = useRef<CrearClaseValue | undefined>(undefined);
+  const prevEditValueRef = useRef<CrearClaseValue | undefined>(undefined);
+
   // Synchronize form when editing value changes
   useEffect(() => {
     const effective = editValue || value;
-    if (effective) {
+    
+    // Comparar si realmente cambió el valor para evitar loops
+    const prevEffective = editValue ? prevEditValueRef.current : prevValueRef.current;
+    const hasChanged = !prevEffective || 
+      prevEffective.nombre !== effective?.nombre ||
+      prevEffective.tipo !== effective?.tipo ||
+      prevEffective.precio !== effective?.precio ||
+      prevEffective.regla !== effective?.regla ||
+      prevEffective.nivel !== effective?.nivel ||
+      prevEffective.descripcion !== effective?.descripcion ||
+      prevEffective.fechaModo !== effective?.fechaModo ||
+      prevEffective.fecha !== effective?.fecha ||
+      prevEffective.diaSemana !== effective?.diaSemana ||
+      JSON.stringify(prevEffective.diasSemana) !== JSON.stringify(effective?.diasSemana) ||
+      prevEffective.horarioModo !== effective?.horarioModo ||
+      prevEffective.inicio !== effective?.inicio ||
+      prevEffective.fin !== effective?.fin ||
+      prevEffective.duracionHoras !== effective?.duracionHoras ||
+      prevEffective.ritmoId !== effective?.ritmoId ||
+      JSON.stringify(prevEffective.ritmoIds) !== JSON.stringify(effective?.ritmoIds) ||
+      prevEffective.zonaId !== effective?.zonaId ||
+      prevEffective.ubicacion !== effective?.ubicacion ||
+      prevEffective.ubicacionNombre !== effective?.ubicacionNombre ||
+      prevEffective.ubicacionDireccion !== effective?.ubicacionDireccion ||
+      prevEffective.ubicacionNotas !== effective?.ubicacionNotas ||
+      prevEffective.ubicacionId !== effective?.ubicacionId;
+
+    if (effective && hasChanged) {
       setForm({
         nombre: effective?.nombre || '',
         tipo: effective?.tipo || 'clases sueltas',
@@ -314,31 +345,60 @@ export default function CrearClase({
       });
       setIsOpen(true);
       setSelectedLocationId((effective?.ubicacionId as any) || '');
+      
+      // Actualizar refs
+      if (editValue) {
+        prevEditValueRef.current = { ...effective };
+      } else {
+        prevValueRef.current = { ...effective };
+      }
     }
-  }, [value, editValue]);
+  }, [value, editValue, enableDate]);
+
+  // Memoizar locations para evitar recreación en cada render
+  const locationsMemo = useMemo(() => {
+    if (!locations || !Array.isArray(locations)) return locations;
+    return locations;
+  }, [
+    locations?.length,
+    // Crear una clave estable basada en el contenido
+    locations ? JSON.stringify(locations.map(l => ({ id: l.id, nombre: l.nombre, direccion: l.direccion }))) : null
+  ]);
 
   // Sincronizar campos de ubicación cuando cambia la selección del dropdown
   useEffect(() => {
-    if (!locations || !Array.isArray(locations)) return;
+    if (!locationsMemo || !Array.isArray(locationsMemo)) return;
     if (selectedLocationId) {
-      const sel = locations.find(l => (l.id || '') === selectedLocationId);
+      const sel = locationsMemo.find(l => (l.id || '') === selectedLocationId);
       if (sel) {
-        setForm(prev => ({
-          ...prev,
-          ubicacionId: selectedLocationId,
-          ubicacionNombre: sel.nombre || '',
-          ubicacionDireccion: sel.direccion || '',
-          ubicacionNotas: sel.referencias || ''
-        }));
+        setForm(prev => {
+          // Solo actualizar si realmente cambió algo
+          if (prev.ubicacionId === selectedLocationId && 
+              prev.ubicacionNombre === (sel.nombre || '') &&
+              prev.ubicacionDireccion === (sel.direccion || '') &&
+              prev.ubicacionNotas === (sel.referencias || '')) {
+            return prev;
+          }
+          return {
+            ...prev,
+            ubicacionId: selectedLocationId,
+            ubicacionNombre: sel.nombre || '',
+            ubicacionDireccion: sel.direccion || '',
+            ubicacionNotas: sel.referencias || ''
+          };
+        });
       }
     } else {
-      // Modo manual
-      setForm(prev => ({
-        ...prev,
-        ubicacionId: null
-      }));
+      // Modo manual - solo actualizar si ubicacionId no es null
+      setForm(prev => {
+        if (prev.ubicacionId === null) return prev;
+        return {
+          ...prev,
+          ubicacionId: null
+        };
+      });
     }
-  }, [selectedLocationId, locations]);
+  }, [selectedLocationId, locationsMemo]);
 
   const updateForm = useCallback((updater: (prev: CrearClaseValue) => CrearClaseValue) => {
     setForm(prev => {

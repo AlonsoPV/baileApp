@@ -91,12 +91,26 @@ export default function AppShell() {
         }
         .app-footer {
           margin-top: auto;
-          padding: 1.5rem 1rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-          background: rgba(0, 0, 0, 0.2);
-          min-height: 80px;
-          display: flex;
-          align-items: center;
+          padding: 2rem 1.5rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          background: linear-gradient(180deg, rgba(11, 13, 16, 0.95) 0%, rgba(8, 10, 14, 0.98) 100%);
+          backdrop-filter: blur(20px);
+          position: relative;
+          overflow: hidden;
+        }
+        .app-footer::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(229, 57, 53, 0.3) 20%, 
+            rgba(251, 140, 0, 0.3) 50%, 
+            rgba(229, 57, 53, 0.3) 80%, 
+            transparent 100%);
         }
         .app-footer-content {
           max-width: 1280px;
@@ -104,48 +118,91 @@ export default function AppShell() {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 1.5rem;
+          gap: 2rem;
           flex-wrap: nowrap;
+          position: relative;
+          z-index: 1;
         }
         .app-footer-link {
-          color: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.65);
           text-decoration: none;
-          font-size: 0.8125rem;
-          transition: color 0.2s ease;
+          font-size: 0.875rem;
+          font-weight: 500;
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .app-footer-link::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 8px;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.1), rgba(251, 140, 0, 0.1));
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
         .app-footer-link:hover {
-          color: rgba(255, 255, 255, 0.7);
+          color: rgba(255, 255, 255, 0.95);
+          transform: translateY(-2px);
           text-decoration: none;
+        }
+        .app-footer-link:hover::before {
+          opacity: 1;
+        }
+        .footer-separator {
+          width: 1px;
+          height: 24px;
+          background: linear-gradient(180deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.2) 50%, 
+            transparent 100%);
+          opacity: 0.3;
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding: 1rem 0.75rem;
+            padding: 1.5rem 1rem;
           }
           .app-footer-content {
-            gap: 0.75rem;
+            gap: 1rem;
             flex-wrap: nowrap;
             justify-content: center;
           }
           .app-footer-link {
-            font-size: 0.75rem;
-            white-space: nowrap;
+            font-size: 0.8125rem;
+            padding: 0.45rem 0.85rem;
+          }
+          .footer-separator {
+            height: 20px;
           }
           .join-cta-button {
-            font-size: 0.75rem;
-            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+            padding: 0.55rem 1.1rem;
             white-space: nowrap;
           }
         }
         @media (max-width: 480px) {
+          .app-footer {
+            padding: 1.25rem 0.75rem;
+          }
           .app-footer-content {
-            gap: 0.5rem;
+            gap: 0.75rem;
           }
           .app-footer-link {
-            font-size: 0.6875rem;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.7rem;
+          }
+          .footer-separator {
+            height: 18px;
+            opacity: 0.2;
           }
           .join-cta-button {
-            font-size: 0.6875rem;
-            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.9rem;
           }
         }
       `}</style>
@@ -160,11 +217,15 @@ export default function AppShell() {
         <footer className="app-footer">
           <div className="app-footer-content">
             <JoinCommunityForm />
+            <div className="footer-separator" />
             <Link to="/aviso-de-privacidad" className="app-footer-link">
-              Legal
+              <span>🔒</span>
+              <span>Legal</span>
             </Link>
+            <div className="footer-separator" />
             <Link to="/app/roles/info" className="app-footer-link">
-              Roles en la comunidad
+              <span>🎭</span>
+              <span>Roles en la comunidad</span>
             </Link>
           </div>
         </footer>
