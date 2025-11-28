@@ -2330,7 +2330,7 @@ export default function AcademyProfileEditor() {
                       </h2>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                        {/* Carga de Fotso */}
+                        {/* Carga de Fosso */}
                         <div>
                           <div style={{
                             padding: '1rem',
