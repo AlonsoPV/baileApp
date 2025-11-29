@@ -38,8 +38,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#000000",
     },
     edgeToEdgeEnabled: true,
-    // Permite tráfico HTTP claro si algún recurso no va por HTTPS (por ahora todo es HTTPS)
-    usesCleartextTraffic: true,
     intentFilters: [
       {
         action: "VIEW",

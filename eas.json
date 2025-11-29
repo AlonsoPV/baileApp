@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.0.0"
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -21,6 +22,9 @@
       },
       "ios": {
         "image": "latest"
+      },
+      "env": {
+        "YARN_IGNORE_ENGINES": "1"
       }
     }
   },
@@ -35,5 +39,3 @@
     }
   }
 }
-
-
