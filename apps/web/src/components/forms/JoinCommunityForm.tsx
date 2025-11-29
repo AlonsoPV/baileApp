@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FormData {
@@ -218,13 +219,13 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           inset: 0;
           background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(8px);
-          z-index: 99999;
+          z-index: 9999999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 1rem;
           /* Asegurar que el overlay esté por encima de todo, incluyendo footer y otros elementos */
-          isolation: isolate;
+          /* Renderizado con Portal en document.body para evitar contextos de apilamiento */
         }
         .form-container {
           background: linear-gradient(135deg, #1a1d29 0%, #0f1117 100%);
@@ -236,9 +237,8 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
-          z-index: 100000;
+          z-index: 10000000;
           /* Asegurar que el contenedor esté por encima del overlay y de todos los demás elementos */
-          isolation: isolate;
         }
         .form-header {
           padding: 2rem 2rem 1rem;
@@ -502,184 +502,187 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
         <span>Quiero formar parte</span>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="form-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setIsOpen(false);
-            }}
-          >
+      {typeof document !== 'undefined' && document.body && createPortal(
+        <AnimatePresence>
+          {isOpen && (
             <motion.div
-              className="form-container"
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', duration: 0.3 }}
+              className="form-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setIsOpen(false);
+              }}
             >
-              {submitSuccess ? (
-                <div className="success-message">
-                  <div className="success-icon">✅</div>
-                  <div className="success-text">
-                    ¡Gracias por tu interés!<br />
-                    Se abrirá tu cliente de correo para enviar tu solicitud.
+              <motion.div
+                className="form-container"
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', duration: 0.3 }}
+              >
+                {submitSuccess ? (
+                  <div className="success-message">
+                    <div className="success-icon">✅</div>
+                    <div className="success-text">
+                      ¡Gracias por tu interés!<br />
+                      Se abrirá tu cliente de correo para enviar tu solicitud.
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <div className="form-header">
-                    <button
-                      className="form-close"
-                      onClick={() => setIsOpen(false)}
-                      type="button"
-                      aria-label="Cerrar"
-                    >
-                      ×
-                    </button>
-                    <h2 className="form-title">Únete a la comunidad</h2>
-                    <p className="form-subtitle">
-                      Completa el formulario y nos pondremos en contacto contigo
-                    </p>
-                  </div>
-
-                  <form className="form-body" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                      <label className="form-label">
-                        Nombre <span className="required">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={formData.nombre}
-                        onChange={(e) => handleInputChange('nombre', e.target.value)}
-                        placeholder="Tu nombre completo"
-                        required
-                      />
-                      {errors.nombre && (
-                        <div className="form-error">{errors.nombre}</div>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Correo electrónico <span className="required">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        className="form-input"
-                        value={formData.correo}
-                        onChange={(e) => handleInputChange('correo', e.target.value)}
-                        placeholder="tu@correo.com"
-                        required
-                      />
-                      {errors.correo && (
-                        <div className="form-error">{errors.correo}</div>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Celular <span className="optional">(opcional)</span>
-                      </label>
-                      <input
-                        type="tel"
-                        className="form-input"
-                        value={formData.celular}
-                        onChange={(e) => handleInputChange('celular', e.target.value)}
-                        placeholder="55 1234 5678"
-                      />
-                      {errors.celular && (
-                        <div className="form-error">{errors.celular}</div>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        ¿Qué roles te interesan? <span className="required">*</span>
-                      </label>
-                      <div className="roles-grid">
-                        {ROLES_OPTIONS.map((role) => (
-                          <div key={role.id} className="role-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`role-${role.id}`}
-                              checked={formData.roles.includes(role.id)}
-                              onChange={() => handleRoleToggle(role.id)}
-                            />
-                            <label
-                              htmlFor={`role-${role.id}`}
-                              className="role-checkbox-label"
-                            >
-                              {role.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      {errors.roles && (
-                        <div className="form-error">{errors.roles}</div>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Tipo de perfil
-                      </label>
-                      <select
-                        className="form-select"
-                        value={formData.tipoPerfil}
-                        onChange={(e) => handleInputChange('tipoPerfil', e.target.value)}
+                ) : (
+                  <>
+                    <div className="form-header">
+                      <button
+                        className="form-close"
+                        onClick={() => setIsOpen(false)}
+                        type="button"
+                        aria-label="Cerrar"
                       >
-                        <option value="">Selecciona una opción</option>
-                        {TIPO_PERFIL_OPTIONS.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                        ×
+                      </button>
+                      <h2 className="form-title">Únete a la comunidad</h2>
+                      <p className="form-subtitle">
+                        Completa el formulario y nos pondremos en contacto contigo
+                      </p>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label">
-                        Redes sociales
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={formData.redesSociales}
-                        onChange={(e) => handleInputChange('redesSociales', e.target.value)}
-                        placeholder="Instagram, Facebook, TikTok, etc."
-                      />
-                    </div>
+                    <form className="form-body" onSubmit={handleSubmit}>
+                      <div className="form-group">
+                        <label className="form-label">
+                          Nombre <span className="required">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={formData.nombre}
+                          onChange={(e) => handleInputChange('nombre', e.target.value)}
+                          placeholder="Tu nombre completo"
+                          required
+                        />
+                        {errors.nombre && (
+                          <div className="form-error">{errors.nombre}</div>
+                        )}
+                      </div>
 
-                    <div className="form-group">
-                      <label className="form-label">
-                        Datos de interés
-                      </label>
-                      <textarea
-                        className="form-textarea"
-                        value={formData.datosInteres}
-                        onChange={(e) => handleInputChange('datosInteres', e.target.value)}
-                        placeholder="Cuéntanos más sobre ti, tu proyecto, experiencia, etc."
-                      />
-                    </div>
+                      <div className="form-group">
+                        <label className="form-label">
+                          Correo electrónico <span className="required">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          className="form-input"
+                          value={formData.correo}
+                          onChange={(e) => handleInputChange('correo', e.target.value)}
+                          placeholder="tu@correo.com"
+                          required
+                        />
+                        {errors.correo && (
+                          <div className="form-error">{errors.correo}</div>
+                        )}
+                      </div>
 
-                    <button
-                      type="submit"
-                      className="form-submit"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
-                    </button>
-                  </form>
-                </>
-              )}
+                      <div className="form-group">
+                        <label className="form-label">
+                          Celular <span className="optional">(opcional)</span>
+                        </label>
+                        <input
+                          type="tel"
+                          className="form-input"
+                          value={formData.celular}
+                          onChange={(e) => handleInputChange('celular', e.target.value)}
+                          placeholder="55 1234 5678"
+                        />
+                        {errors.celular && (
+                          <div className="form-error">{errors.celular}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">
+                          ¿Qué roles te interesan? <span className="required">*</span>
+                        </label>
+                        <div className="roles-grid">
+                          {ROLES_OPTIONS.map((role) => (
+                            <div key={role.id} className="role-checkbox">
+                              <input
+                                type="checkbox"
+                                id={`role-${role.id}`}
+                                checked={formData.roles.includes(role.id)}
+                                onChange={() => handleRoleToggle(role.id)}
+                              />
+                              <label
+                                htmlFor={`role-${role.id}`}
+                                className="role-checkbox-label"
+                              >
+                                {role.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {errors.roles && (
+                          <div className="form-error">{errors.roles}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">
+                          Tipo de perfil
+                        </label>
+                        <select
+                          className="form-select"
+                          value={formData.tipoPerfil}
+                          onChange={(e) => handleInputChange('tipoPerfil', e.target.value)}
+                        >
+                          <option value="">Selecciona una opción</option>
+                          {TIPO_PERFIL_OPTIONS.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">
+                          Redes sociales
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={formData.redesSociales}
+                          onChange={(e) => handleInputChange('redesSociales', e.target.value)}
+                          placeholder="Instagram, Facebook, TikTok, etc."
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">
+                          Datos de interés
+                        </label>
+                        <textarea
+                          className="form-textarea"
+                          value={formData.datosInteres}
+                          onChange={(e) => handleInputChange('datosInteres', e.target.value)}
+                          placeholder="Cuéntanos más sobre ti, tu proyecto, experiencia, etc."
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="form-submit"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
+                      </button>
+                    </form>
+                  </>
+                )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }

@@ -8,7 +8,14 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, typography, layout, shadows, borderRadius } from '../theme';
+import {
+  colors,
+  spacing,
+  typography,
+  layout,
+  shadows,
+  borderRadius,
+} from '../theme';
 
 interface HeaderProps {
   title: string;
@@ -19,17 +26,26 @@ interface HeaderProps {
   };
 }
 
+/**
+ * Header fijo en la parte superior que respeta la safe area,
+ * mantiene una altura estable y se dibuja siempre por encima del contenido.
+ */
 export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary[600]} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={colors.primary[600]}
+      />
+
+      {/* SafeAreaView se encarga de no pisar la status bar */}
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          {/* Gradient background simulation */}
+          {/* Fondo degradado simulado */}
           <View style={styles.gradientBg} />
-          
+
           <View style={styles.content}>
-            {/* Menu Button */}
+            {/* Botón menú */}
             <TouchableOpacity
               onPress={onMenuPress}
               style={styles.iconButton}
@@ -42,12 +58,12 @@ export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
               </View>
             </TouchableOpacity>
 
-            {/* Title */}
+            {/* Título */}
             <Text style={styles.title} numberOfLines={1}>
               {title}
             </Text>
 
-            {/* Right Action */}
+            {/* Acción derecha (por ejemplo, botón de login / ajustes) */}
             {rightAction ? (
               <TouchableOpacity
                 onPress={rightAction.onPress}
@@ -57,6 +73,7 @@ export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
                 <Text style={styles.rightIcon}>{rightAction.icon}</Text>
               </TouchableOpacity>
             ) : (
+              // Placeholder para mantener alineación cuando no hay acción
               <View style={styles.iconButton} />
             )}
           </View>
@@ -69,14 +86,17 @@ export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
 const styles = StyleSheet.create({
   safeArea: {
     backgroundColor: colors.primary[600],
+    // Nos aseguramos de que todo el header esté por encima del contenido
+    zIndex: 20,
+    ...shadows.md,
+    elevation: 20, // Override elevation from shadows.md
   },
   header: {
-    height: layout.headerHeight,
+    // Altura mínima del header (puede crecer si el texto lo requiere)
+    minHeight: layout.headerHeight,
     backgroundColor: colors.primary[600],
     position: 'relative',
-    zIndex: 10,
-    ...shadows.md,
-    elevation: 10, // Sobrescribir elevation de shadows.md para asegurar que el header esté por encima
+    width: '100%',
   },
   gradientBg: {
     ...StyleSheet.absoluteFillObject,
@@ -84,11 +104,12 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   content: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
+    // Un poco de padding vertical para que no se vea aplastado
+    paddingVertical: spacing.sm,
   },
   iconButton: {
     width: 44,
@@ -117,6 +138,6 @@ const styles = StyleSheet.create({
   },
   rightIcon: {
     fontSize: typography.sizes['2xl'],
+    color: colors.background,
   },
 });
-
