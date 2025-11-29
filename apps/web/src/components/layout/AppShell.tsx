@@ -104,7 +104,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: 1rem;
+            padding-top: 0.75rem;
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
@@ -135,12 +135,12 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
           }
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
           }
         }
         .app-footer::before {
@@ -159,6 +159,7 @@ export default function AppShell() {
         }
         .app-footer-content {
           max-width: 1280px;
+          width: 100%;
           margin: 0 auto;
           display: flex;
           justify-content: center;
@@ -177,7 +178,6 @@ export default function AppShell() {
           border-radius: 8px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
-          white-space: nowrap;
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
@@ -260,11 +260,17 @@ export default function AppShell() {
             gap: 0.4rem !important;
             flex-wrap: nowrap !important;
             justify-content: space-between !important;
+            width: 100% !important;
+          }
+          .app-footer-content > * {
+            flex: 1 1 0;
+            min-width: 0;
           }
           .app-footer-link {
             font-size: 0.7rem !important;
             padding: 0.35rem 0.6rem !important;
             border-radius: 6px !important;
+            text-align: center !important;
           }
           .app-footer-link span:first-child {
             font-size: 0.75rem !important;
@@ -277,6 +283,7 @@ export default function AppShell() {
             font-size: 0.68rem !important;
             padding: 0.4rem 0.7rem !important;
             border-radius: 16px !important;
+            text-align: center !important;
           }
           .join-cta-button span {
             font-size: 0.68rem !important;
