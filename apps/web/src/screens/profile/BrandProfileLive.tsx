@@ -52,15 +52,16 @@ function buildProductWhatsAppUrl(
       .replace(/\{producto\}/g, productName);
   } else if (productName) {
     // Mensaje por defecto si no hay template
-    message = `Hola, me interesa el producto: ${productName}`;
+    message = `me interesa el producto: ${productName}`;
   }
 
-  if (!message.trim()) {
-    return `https://wa.me/${cleanedPhone}`;
-  }
+  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
+  const fullMessage = message.trim() 
+    ? `Hola vengo de Donde Bailar MX, ${message.trim()}`
+    : 'Hola vengo de Donde Bailar MX';
 
-  const encoded = encodeURIComponent(message.trim());
-  return `https://wa.me/${cleanedPhone}?text=${encoded}`;
+  const encoded = encodeURIComponent(fullMessage);
+  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
 }
 
 export default function BrandProfileLive() {
@@ -138,7 +139,7 @@ export default function BrandProfileLive() {
   
   // Configuración WhatsApp para productos
   const whatsappNumber = (brand as any)?.whatsapp_number || (brand as any)?.redes_sociales?.whatsapp || null;
-  const whatsappMessageTemplate = (brand as any)?.whatsapp_message_template || 'Hola, me interesa el producto: {nombre}';
+  const whatsappMessageTemplate = (brand as any)?.whatsapp_message_template || 'me interesa el producto: {nombre}';
 
   return (
     <>

@@ -29,7 +29,7 @@ const colors = {
   light: '#F5F5F5',
 };
 
-function buildWhatsAppUrl(phone?: string | null, message?: string | null) {
+function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventName?: string | null) {
   if (!phone) return undefined;
   const cleanedPhone = phone.replace(/[^\d]/g, ''); // usar solo dígitos en el número
   if (!cleanedPhone) return undefined;
@@ -37,13 +37,29 @@ function buildWhatsAppUrl(phone?: string | null, message?: string | null) {
   const text = typeof message === 'string' ? message : '';
   const trimmed = text.trim();
 
-  // Si no hay mensaje guardado, solo abrimos el chat sin texto prellenado
-  if (!trimmed) {
-    return `https://wa.me/${cleanedPhone}`;
+  // Construir el mensaje base
+  let baseMessage = '';
+  if (trimmed) {
+    // Si hay mensaje personalizado, usarlo directamente (asumiendo que ya tiene el formato correcto)
+    baseMessage = trimmed;
+  } else if (eventName && eventName.trim()) {
+    // Sin mensaje personalizado, crear uno con el nombre del evento
+    baseMessage = `me interesa el evento: ${eventName.trim()}`;
+  } else {
+    // Sin mensaje ni nombre, mensaje genérico
+    baseMessage = 'me interesa este evento';
   }
 
-  const encoded = encodeURIComponent(trimmed);
-  return `https://wa.me/${cleanedPhone}?text=${encoded}`;
+  // Verificar si el mensaje ya incluye el prefijo para evitar duplicación
+  const hasPrefix = baseMessage.toLowerCase().includes('hola vengo de donde bailar mx');
+  
+  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje si no lo tiene
+  const fullMessage = hasPrefix 
+    ? baseMessage 
+    : `Hola vengo de Donde Bailar MX, ${baseMessage}`;
+
+  const encoded = encodeURIComponent(fullMessage);
+  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
 }
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
@@ -1012,20 +1028,79 @@ export default function EventDatePublicScreen() {
                         📍 {date.lugar}
                       </a>
                     )}
-                    {date.telefono_contacto && (
-                      <a
-                        className="chip chip-whatsapp chip-link"
-                        href={buildWhatsAppUrl(
-                          (date as any).telefono_contacto,
-                          (date as any).mensaje_contacto ?? null
-                        )}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FaWhatsapp size={18} />
-                      </a>
-                    )}
                   </div>
+
+                  {/* Botones de acción: WhatsApp y Maps */}
+                  {(date.telefono_contacto || (date.lugar || date.direccion || date.ciudad)) && (
+                    <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1rem', width: '100%' }}>
+                      {/* Botón Ver en Maps */}
+                      {(date.lugar || date.direccion || date.ciudad) && (
+                        <motion.a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                            `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.97 }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '.55rem',
+                            padding: '.6rem 1.1rem',
+                            borderRadius: 999,
+                            border: '1px solid rgba(240,147,251,.4)',
+                            color: '#f7d9ff',
+                            background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
+                            boxShadow: '0 6px 18px rgba(240,147,251,.20)',
+                            fontWeight: 800,
+                            fontSize: '.9rem',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span>📍</span>
+                          <span>Ver en Maps</span>
+                          <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
+                        </motion.a>
+                      )}
+
+                      {/* Botón WhatsApp */}
+                      {date.telefono_contacto && (
+                        <motion.a
+                          href={buildWhatsAppUrl(
+                            (date as any).telefono_contacto,
+                            (date as any).mensaje_contacto ?? null,
+                            date.nombre || (parent as any)?.nombre || null
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.97 }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '.55rem',
+                            padding: '.6rem 1.1rem',
+                            borderRadius: 999,
+                            border: '1px solid rgba(37, 211, 102, 0.5)',
+                            color: '#fff',
+                            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                            boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
+                            fontWeight: 800,
+                            fontSize: '.9rem',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <FaWhatsapp size={18} />
+                          <span>Consultar por WhatsApp</span>
+                        </motion.a>
+                      )}
+                    </div>
+                  )}
 
                   {/* Ritmos & Zonas (zonas agrupadas en chips padres colapsables) */}
                   {(Array.isArray(date.ritmos) && date.ritmos.length > 0) || (Array.isArray(date.zonas) && date.zonas.length > 0) ? (

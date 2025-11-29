@@ -64,6 +64,23 @@ export function useAcademyPublic(id: number) {
         }
       }
 
+      // Obtener WhatsApp si no está en la vista
+      if (typeof result.whatsapp_number === 'undefined' || typeof result.whatsapp_message_template === 'undefined') {
+        const { data: whatsappData, error: whatsappError } = await supabase
+          .from('profiles_academy')
+          .select('whatsapp_number, whatsapp_message_template')
+          .eq('id', id)
+          .maybeSingle();
+        if (!whatsappError && whatsappData) {
+          if (typeof whatsappData.whatsapp_number !== 'undefined') {
+            result.whatsapp_number = whatsappData.whatsapp_number;
+          }
+          if (typeof whatsappData.whatsapp_message_template !== 'undefined') {
+            result.whatsapp_message_template = whatsappData.whatsapp_message_template;
+          }
+        }
+      }
+
       return result as AcademyProfile;
     }
   });

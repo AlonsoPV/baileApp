@@ -211,7 +211,9 @@ export default function AcademyProfileEditor() {
       },
       faq: [] as any[],
       reseñas: [] as any[],
-      cuenta_bancaria: {} as BankAccountData
+      cuenta_bancaria: {} as BankAccountData,
+      whatsapp_number: "",
+      whatsapp_message_template: "me interesa la clase: {nombre}"
     } as any
   });
 
@@ -316,7 +318,9 @@ export default function AcademyProfileEditor() {
         costos: (form as any).costos || [],           // Guardar costos
         redes_sociales: form.redes_sociales,
         cuenta_bancaria: (form as any).cuenta_bancaria || {},
-        estado_aprobacion: 'aprobado'  // Marcar como aprobado al guardar
+        estado_aprobacion: 'aprobado',  // Marcar como aprobado al guardar
+        whatsapp_number: (form as any).whatsapp_number || null,
+        whatsapp_message_template: (form as any).whatsapp_message_template || 'me interesa la clase: {nombre}'
       };
 
       // Solo incluir respuestas si tiene contenido
@@ -1499,6 +1503,55 @@ export default function AcademyProfileEditor() {
                 </div>
               </div>
 
+              {/* Configuración de WhatsApp para Clases */}
+              <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
+                <h2 className="editor-section-title">
+                  💬 WhatsApp para Clases
+                </h2>
+                <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
+                  Configura un número de WhatsApp y un mensaje personalizado que aparecerá en cada clase. Usa <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>{'{clase}'}</code> para que se reemplace automáticamente con el nombre de la clase.
+                </p>
+                
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                  <div>
+                    <label className="editor-field">
+                      📱 Número de WhatsApp para Clases
+                    </label>
+                    <div className="input-group" style={{ marginTop: '0.5rem' }}>
+                      <span className="prefix">+52</span>
+                      <input
+                        type="tel"
+                        value={(form as any).whatsapp_number || ''}
+                        onChange={(e) => setField('whatsapp_number' as any, e.target.value)}
+                        placeholder="55 1234 5678"
+                        className="editor-input"
+                        style={{ border: 'none', background: 'transparent', padding: '0.75rem' }}
+                      />
+                    </div>
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7, color: 'rgba(255,255,255,0.8)' }}>
+                      Este número aparecerá en cada clase para que los estudiantes puedan contactarte directamente
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="editor-field">
+                      ✉️ Mensaje Personalizado
+                    </label>
+                    <textarea
+                      value={(form as any).whatsapp_message_template || 'me interesa la clase: {nombre}'}
+                      onChange={(e) => setField('whatsapp_message_template' as any, e.target.value)}
+                      placeholder="me interesa la clase: {nombre}"
+                      className="editor-textarea"
+                      rows={3}
+                      style={{ marginTop: '0.5rem' }}
+                    />
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7, color: 'rgba(255,255,255,0.8)' }}>
+                      El mensaje se enviará como: "Hola vengo de Donde Bailar MX, [tu mensaje]". Ejemplo: "Hola vengo de Donde Bailar MX, me interesa la clase: {'{nombre}'}. ¿Podrías darme más información?"
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Estilos & Zonas - tarjeta mejorada */}
               <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
@@ -1911,7 +1964,13 @@ export default function AcademyProfileEditor() {
                                       ritmoId: it.ritmoId ?? null,
                                       ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
                                       zonaId: it.zonaId ?? null,
+                                      // Texto completo de ubicación guardada
                                       ubicacion: it.ubicacion || '',
+                                      // Campos desglosados para el formulario de edición
+                                      ubicacionNombre: (it as any)?.ubicacionNombre || '',
+                                      // Si no hay dirección desglosada, usar el texto completo como fallback
+                                      ubicacionDireccion: (it as any)?.ubicacionDireccion || it.ubicacion || '',
+                                      ubicacionNotas: (it as any)?.ubicacionNotas || '',
                                       ubicacionId: (it as any)?.ubicacionId || null
                                     });
                                     setStatusMsg(null);

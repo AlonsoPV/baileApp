@@ -13,8 +13,40 @@ import SeoHead from '@/components/SeoHead';
 import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
+import { FaWhatsapp } from 'react-icons/fa';
 
 type SourceType = 'teacher' | 'academy';
+
+// Función para construir URL de WhatsApp para clases
+function buildClassWhatsAppUrl(
+  phone?: string | null,
+  messageTemplate?: string | null,
+  className?: string
+): string | undefined {
+  if (!phone) return undefined;
+  
+  const cleanedPhone = phone.replace(/[^\d]/g, '');
+  if (!cleanedPhone) return undefined;
+
+  let message = '';
+  if (messageTemplate && className) {
+    // Reemplazar {nombre} o {clase} con el nombre de la clase
+    message = messageTemplate
+      .replace(/\{nombre\}/g, className)
+      .replace(/\{clase\}/g, className);
+  } else if (className) {
+    // Mensaje por defecto si no hay template
+    message = `me interesa la clase: ${className}`;
+  }
+
+  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
+  const fullMessage = message.trim() 
+    ? `Hola vengo de Donde Bailar MX, ${message.trim()}`
+    : 'Hola vengo de Donde Bailar MX';
+
+  const encoded = encodeURIComponent(fullMessage);
+  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
+}
 
 export default function ClassPublicScreen() {
   const [sp] = useSearchParams();
@@ -123,6 +155,20 @@ export default function ClassPublicScreen() {
     || (selectedClass?.clase)
     || (selectedClass?.estilo)
     || 'Clase';
+
+  // Configuración WhatsApp para clases (solo academias tienen WhatsApp configurado)
+  const whatsappNumber = !isTeacher ? ((profile as any)?.whatsapp_number || null) : null;
+  const whatsappMessageTemplate = !isTeacher ? ((profile as any)?.whatsapp_message_template || 'me interesa la clase: {nombre}') : null;
+  
+  // Debug: verificar datos de WhatsApp
+  console.log('[ClassPublicScreen] 📱 WhatsApp config:', {
+    isTeacher,
+    whatsappNumber,
+    whatsappMessageTemplate,
+    profileId: profile?.id,
+    profileType: isTeacher ? 'teacher' : 'academy',
+    hasWhatsappNumber: !!(profile as any)?.whatsapp_number
+  });
 
   // Horario, costo y ubicación (para chips del header)
   const scheduleLabel = (() => {
@@ -943,6 +989,36 @@ export default function ClassPublicScreen() {
                     <span>📍</span>
                     <span>Ver en Maps</span>
                     <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
+                  </motion.a>
+                )}
+
+                {/* Botón WhatsApp (solo para academias con WhatsApp configurado) */}
+                {whatsappNumber && (
+                  <motion.a
+                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '.55rem',
+                      padding: '.6rem 1.1rem',
+                      borderRadius: 999,
+                      border: '1px solid rgba(37, 211, 102, 0.5)',
+                      color: '#fff',
+                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                      boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
+                      fontWeight: 800,
+                      fontSize: '.9rem',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <FaWhatsapp size={18} />
+                    <span>Consultar por WhatsApp</span>
                   </motion.a>
                 )}
 

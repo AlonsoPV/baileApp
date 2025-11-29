@@ -95,7 +95,7 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: 0.25rem;
+            padding-top: 3rem;
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -104,7 +104,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: 0.75rem;
+            padding-top: 3rem;
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;

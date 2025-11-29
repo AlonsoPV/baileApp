@@ -69,6 +69,7 @@ import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 
 // User Screens
 import UserProfileEditor from './screens/profile/UserProfileEditor';
+import { UserProfileLive } from './screens/profile/UserProfileLive';
 import { UserProfileLive as UserPublicScreen } from './screens/profile/UserPublicScreen';
 
 // System Screens
@@ -162,7 +163,7 @@ export default function AppRouter() {
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/profile/edit" element={<ProfileScreen />} />
           {/* Nueva ruta explícita para el Live de usuario */}
-          <Route path="/profile/user" element={<ProfileScreen />} />
+          <Route path="/profile/user" element={<UserProfileLive />} />
           <Route path="/profile/settings" element={<DefaultProfileSettings />} />
           <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
           <Route path="/profile/brand" element={<BrandProfileLive />} />

@@ -109,7 +109,7 @@ const initialForm: BrandForm = {
   faqs: [],
   commitment: [],
   whatsapp_number: '',
-  whatsapp_message_template: 'Hola, me interesa el producto: {nombre}',
+  whatsapp_message_template: 'me interesa el producto: {nombre}',
 };
 
 function formReducer(state: BrandForm, action: Action): BrandForm {
@@ -251,7 +251,7 @@ export default function BrandProfileEditor() {
           faqs: Array.isArray((brand as any).faqs) ? (brand as any).faqs : [],
           commitment: Array.isArray((brand as any).commitment) ? (brand as any).commitment : [],
           whatsapp_number: (brand as any).whatsapp_number || '',
-          whatsapp_message_template: (brand as any).whatsapp_message_template || 'Hola, me interesa el producto: {nombre}',
+          whatsapp_message_template: (brand as any).whatsapp_message_template || 'me interesa el producto: {nombre}',
         }
       });
     }
@@ -311,7 +311,7 @@ export default function BrandProfileEditor() {
         payload.whatsapp_number = form.whatsapp_number.trim() || null;
       }
       if (form.whatsapp_message_template !== undefined) {
-        payload.whatsapp_message_template = form.whatsapp_message_template.trim() || 'Hola, me interesa el producto: {nombre}';
+        payload.whatsapp_message_template = form.whatsapp_message_template.trim() || 'me interesa el producto: {nombre}';
       }
 
       console.log('📦 [BrandProfileEditor] Payload limpio:', payload);
@@ -1141,7 +1141,7 @@ export default function BrandProfileEditor() {
                       className="editor-textarea"
                       value={form.whatsapp_message_template || ''}
                       onChange={(e) => dispatch({ type: 'SET_FIELD', key: 'whatsapp_message_template', value: e.target.value })}
-                      placeholder="Hola, me interesa el producto: {nombre}"
+                      placeholder="me interesa el producto: {nombre}"
                       rows={3}
                       style={{ 
                         width: '100%', 
@@ -1152,7 +1152,7 @@ export default function BrandProfileEditor() {
                       }}
                     />
                     <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem', marginBottom: 0 }}>
-                      Usa <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{producto}'}</code> para que se reemplace automáticamente con el nombre del producto.
+                      El mensaje se enviará como: "Hola vengo de Donde Bailar MX, [tu mensaje]". Usa <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{'{producto}'}</code> para que se reemplace automáticamente con el nombre del producto.
                     </p>
                   </div>
                 </div>

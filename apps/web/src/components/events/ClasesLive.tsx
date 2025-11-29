@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import AddToCalendarWithStats from '../../components/AddToCalendarWithStats';
 import RequireLogin from '@/components/auth/RequireLogin';
+import { FaWhatsapp } from 'react-icons/fa';
 
 type CronoItem = {
   tipo?: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro' | string;
@@ -37,7 +38,40 @@ type Props = {
   sourceType?: 'teacher' | 'academy';
   sourceId?: number;
   isClickable?: boolean;
+  whatsappNumber?: string | null;
+  whatsappMessageTemplate?: string | null;
 };
+
+// Helper para construir URL de WhatsApp con mensaje personalizado para clases
+function buildClassWhatsAppUrl(
+  phone?: string | null,
+  messageTemplate?: string | null,
+  className?: string
+): string | undefined {
+  if (!phone) return undefined;
+  
+  const cleanedPhone = phone.replace(/[^\d]/g, '');
+  if (!cleanedPhone) return undefined;
+
+  let message = '';
+  if (messageTemplate && className) {
+    // Reemplazar {nombre} o {clase} con el nombre de la clase
+    message = messageTemplate
+      .replace(/\{nombre\}/g, className)
+      .replace(/\{clase\}/g, className);
+  } else if (className) {
+    // Mensaje por defecto si no hay template
+    message = `me interesa la clase: ${className}`;
+  }
+
+  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
+  const fullMessage = message.trim() 
+    ? `Hola vengo de Donde Bailar MX, ${message.trim()}`
+    : 'Hola vengo de Donde Bailar MX';
+
+  const encoded = encodeURIComponent(fullMessage);
+  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
+}
 
 const iconFor = (tipo?: string) => {
   if (tipo === 'clase') return '📚';
@@ -55,7 +89,9 @@ export default function ClasesLive({
   showCalendarButton = false,
   sourceType,
   sourceId,
-  isClickable = false
+  isClickable = false,
+  whatsappNumber,
+  whatsappMessageTemplate
 }: Props) {
   const navigate = useNavigate();
   const costoIndex = useMemo(() => {
@@ -436,6 +472,47 @@ export default function ClasesLive({
                   </span>
                 )}
               </div>
+
+              {/* Botón WhatsApp */}
+              {whatsappNumber && (it as any)?.titulo && (
+                <div style={{ marginTop: '1rem' }}>
+                  <a
+                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, (it as any).titulo) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                      color: '#fff',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = '';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
+                    }}
+                  >
+                    <FaWhatsapp size={20} />
+                    <span>Consultar por WhatsApp</span>
+                  </a>
+                </div>
+              )}
             </div>
           </motion.div>
           );

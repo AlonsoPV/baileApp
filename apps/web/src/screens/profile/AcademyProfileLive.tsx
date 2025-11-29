@@ -30,6 +30,7 @@ import AcademyRatingComponent from "../../components/academy/AcademyRatingCompon
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import { colors } from "../../theme/colors";
 import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
+import { useAuth } from "@/contexts/AuthProvider";
 
 // Componente FA   Q Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -695,16 +696,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
-const colors = {
-  primary: '#E53935',
-  secondary: '#FB8C00',
-  blue: '#1E88E5',
-  coral: '#FF7043',
-  light: '#F5F5F5',
-  dark: '#1A1A1A',
-  orange: '#FF9800'
-};
-
 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const formatCurrency = (value?: number | string | null) => {
@@ -780,6 +771,7 @@ const formatPriceLabel = (value: any): string | null => {
 
 export default function AcademyProfileLive() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { data: academy, isLoading, error, isError } = useAcademyMy();
   const { media } = useAcademyMedia();
   const { data: allTags } = useTags();
@@ -925,32 +917,83 @@ export default function AcademyProfileLive() {
 
   if (!academy) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-            Cargando perfil...
-          </h2>
-          <p style={{ opacity: 0.7 }}>
-            Redirigiendo a edición para crear tu perfil de academia
-          </p>
+      <div style={{ padding: '16px' }}>
+        {/* <pre
+          style={{
+            fontSize: 12,
+            background: '#f3f4f6',
+            padding: 8,
+            marginBottom: 16,
+            borderRadius: 8,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {JSON.stringify(
+            {
+              isLoadingUser: authLoading,
+              user: user ? { id: user.id, email: (user as any).email ?? null } : null,
+              isLoadingProfile: isLoading,
+              hasProfile: !!academy,
+              profilePreview: null,
+              error: isError ? (error as any) ?? null : null,
+            },
+            null,
+            2
+          )}
+        </pre> */}
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div>
+            <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+            <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+              Cargando perfil...
+            </h2>
+            <p style={{ opacity: 0.7 }}>
+              Redirigiendo a edición para crear tu perfil de academia
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-
+  const debugState = {
+    isLoadingUser: authLoading,
+    user: user ? { id: user.id, email: (user as any).email ?? null } : null,
+    isLoadingProfile: isLoading,
+    hasProfile: !!academy,
+    profilePreview: academy
+      ? {
+          id: (academy as any).id,
+          nombre_publico: (academy as any).nombre_publico || null,
+        }
+      : null,
+    error: isError ? (error as any) ?? null : null,
+  };
 
   return (
     <>
+      {/* <div style={{ padding: 16, maxWidth: 900, margin: '0 auto 16px auto' }}>
+        <pre
+          style={{
+            fontSize: 12,
+            background: '#f3f4f6',
+            padding: 8,
+            marginBottom: 16,
+            borderRadius: 8,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {JSON.stringify(debugState, null, 2)}
+        </pre>
+      </div> */}
       <style>{`
         .academy-container {
           width: 100%;
@@ -1915,6 +1958,8 @@ export default function AcademyProfileLive() {
                     sourceType="academy"
                     sourceId={academy?.id}
                     isClickable={false}
+                    whatsappNumber={(academy as any)?.whatsapp_number}
+                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
                   />
                 </>
               ) : (
@@ -1938,6 +1983,8 @@ export default function AcademyProfileLive() {
                     sourceType="academy"
                     sourceId={academy?.id}
                     isClickable={false}
+                    whatsappNumber={(academy as any)?.whatsapp_number}
+                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
                   />
                 </>
               )}

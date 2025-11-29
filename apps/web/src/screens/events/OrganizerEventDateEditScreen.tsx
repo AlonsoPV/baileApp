@@ -822,11 +822,11 @@ export default function OrganizerEventDateEditScreen() {
                     onFocus={() => {
                       if (!form.mensaje_contacto) {
                         const nombre = form.nombre || 'este evento';
-                        const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
+                        const template = `me interesa el evento "${nombre}".`;
                         setForm(prev => ({ ...prev, mensaje_contacto: template }));
                       }
                     }}
-                    placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX, me interesa el evento de esta fecha..."'
+                    placeholder='Ejemplo: "me interesa el evento de esta fecha..."'
                     rows={2}
                     className="org-editor-textarea"
                   />

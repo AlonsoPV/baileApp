@@ -290,16 +290,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
-const colors = {
-  primary: '#E53935',
-  secondary: '#FB8C00',
-  blue: '#1E88E5',
-  coral: '#FF7043',
-  light: '#F5F5F5',
-  dark: '#1A1A1A',
-  orange: '#FF9800'
-};
-
 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const formatCurrency = (value?: number | string | null) => {
