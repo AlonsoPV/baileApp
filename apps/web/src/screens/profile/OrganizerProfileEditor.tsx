@@ -588,6 +588,32 @@ export default function OrganizerProfileEditor() {
   // Obtener usuario autenticado
   const { user, loading: authLoading } = useAuth();
 
+  // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
+  const [authTimeoutReached, setAuthTimeoutReached] = useState(false);
+  const [profileTimeoutReached, setProfileTimeoutReached] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthTimeoutReached(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setAuthTimeoutReached(true);
+    }, 15000); // 15s
+    return () => window.clearTimeout(timer);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setProfileTimeoutReached(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setProfileTimeoutReached(true);
+    }, 15000); // 15s
+    return () => window.clearTimeout(timer);
+  }, [isLoading]);
+
   // Cargar tags
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
@@ -1012,7 +1038,7 @@ export default function OrganizerProfileEditor() {
   };
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
-  if (authLoading) {
+  if (authLoading && !authTimeoutReached) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -1025,6 +1051,44 @@ export default function OrganizerProfileEditor() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
           <div>Cargando sesión...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ⛔ Si la sesión nunca termina de cargar
+  if (authLoading && authTimeoutReached) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#000000',
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+          </div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '4px',
+              padding: '0.55rem 1.4rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.35)',
+              background: 'transparent',
+              color: colors.light,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -1050,7 +1114,7 @@ export default function OrganizerProfileEditor() {
   }
 
   // ✅ Esperar a que el perfil cargue
-  if (isLoading) {
+  if (isLoading && !profileTimeoutReached) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -1063,6 +1127,44 @@ export default function OrganizerProfileEditor() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
           <div>Cargando perfil del organizador...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ⛔ Si el perfil nunca termina de cargar
+  if (isLoading && profileTimeoutReached) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#000000',
+        color: colors.light,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            No pudimos cargar el perfil del organizador. Revisa tu conexión e inténtalo de nuevo.
+          </div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '4px',
+              padding: '0.55rem 1.4rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.35)',
+              background: 'transparent',
+              color: colors.light,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );

@@ -138,6 +138,32 @@ export default function AcademyProfileEditor() {
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
 
+  // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
+  const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
+  const [profileTimeoutReached, setProfileTimeoutReached] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!authLoading) {
+      setAuthTimeoutReached(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setAuthTimeoutReached(true);
+    }, 15000); // 15s
+    return () => window.clearTimeout(timer);
+  }, [authLoading]);
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      setProfileTimeoutReached(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setProfileTimeoutReached(true);
+    }, 15000); // 15s
+    return () => window.clearTimeout(timer);
+  }, [isLoading]);
+
   // Scroll al top cuando cambia la pestaña
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -415,7 +441,7 @@ export default function AcademyProfileEditor() {
   };
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
-  if (authLoading) {
+  if (authLoading && !authTimeoutReached) {
     return (
       <div style={{
         padding: '48px 24px',
@@ -424,6 +450,39 @@ export default function AcademyProfileEditor() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ⛔ Si la sesión nunca termina de cargar
+  if (authLoading && authTimeoutReached) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
+        <p style={{ marginBottom: '12px' }}>
+          No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          style={{
+            marginTop: '4px',
+            padding: '0.5rem 1.25rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'transparent',
+            color: colors.light,
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+          }}
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -443,7 +502,7 @@ export default function AcademyProfileEditor() {
   }
 
   // ✅ Esperar a que el perfil cargue
-  if (isLoading) {
+  if (isLoading && !profileTimeoutReached) {
     return (
       <div style={{
         padding: '48px 24px',
@@ -452,6 +511,39 @@ export default function AcademyProfileEditor() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando academia...</p>
+      </div>
+    );
+  }
+
+  // ⛔ Si el perfil nunca termina de cargar
+  if (isLoading && profileTimeoutReached) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
+        <p style={{ marginBottom: '12px' }}>
+          No pudimos cargar el perfil de la academia. Revisa tu conexión e inténtalo de nuevo.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          style={{
+            marginTop: '4px',
+            padding: '0.5rem 1.25rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'transparent',
+            color: colors.light,
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+          }}
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

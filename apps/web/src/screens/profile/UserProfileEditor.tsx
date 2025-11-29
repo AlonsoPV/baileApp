@@ -45,6 +45,20 @@ export default function UserProfileEditor() {
       console.log('[UserProfileEditor] Profile state:', { profile: profile?.user_id, isLoading: !profile });
     }
   }, [user?.id, authLoading, profile?.user_id]);
+
+  // ⏳ Timeout de seguridad para evitar loop eterno de "Cargando sesión" (especialmente en WebView)
+  const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!authLoading) {
+      setAuthTimeoutReached(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setAuthTimeoutReached(true);
+    }, 15000); // 15s
+    return () => window.clearTimeout(timer);
+  }, [authLoading]);
   const { media, uploadToSlot, removeFromSlot } = useUserMediaSlots();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
@@ -241,7 +255,7 @@ export default function UserProfileEditor() {
   };
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
-  if (authLoading) {
+  if (authLoading && !authTimeoutReached) {
     return (
       <div style={{
         padding: '48px 24px',
@@ -250,6 +264,39 @@ export default function UserProfileEditor() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
+  // ⛔ Si la sesión nunca termina de cargar (WebView, red lenta, etc.)
+  if (authLoading && authTimeoutReached) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: '#F5F5F5',
+      }}>
+        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
+        <p style={{ marginBottom: '12px' }}>
+          No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          style={{
+            marginTop: '4px',
+            padding: '0.5rem 1.25rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'transparent',
+            color: '#F5F5F5',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+          }}
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
