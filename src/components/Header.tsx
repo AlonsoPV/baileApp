@@ -74,7 +74,9 @@ const styles = StyleSheet.create({
     height: layout.headerHeight,
     backgroundColor: colors.primary[600],
     position: 'relative',
+    zIndex: 10,
     ...shadows.md,
+    elevation: 10, // Sobrescribir elevation de shadows.md para asegurar que el header esté por encima
   },
   gradientBg: {
     ...StyleSheet.absoluteFillObject,

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Header, OffCanvasMenu } from '../components';
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, layout } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,7 +47,13 @@ function ScreenWrapper({ title, children }: { title: string; children: React.Rea
           onPress: () => console.log('Notifications'),
         }}
       />
-      {children}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: layout.headerHeight, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
       <OffCanvasMenu
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
@@ -118,11 +124,11 @@ export function MainTabs() {
 
 const styles = StyleSheet.create({
   screenContent: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface,
     padding: spacing.lg,
+    minHeight: '100%', // Asegurar que el contenido tenga altura mínima para centrarse
   },
   screenTitle: {
     fontSize: typography.sizes['3xl'],

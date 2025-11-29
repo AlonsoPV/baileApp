@@ -418,15 +418,26 @@ export default function ClassPublicScreen() {
         .class-hero-content > div:first-child {
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: flex-start;
+          gap: 1rem;
         }
         
         .class-hero-content > div:last-child {
           display: flex;
           flex-direction: column;
-          justify-content: center;
+          justify-content: flex-start;
           align-items: center;
           gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+          .class-hero-content > div:first-child {
+            gap: 0.875rem !important;
+          }
+          .class-hero-content > div:last-child {
+            gap: 0.875rem !important;
+            margin-top: 0.5rem !important;
+          }
         }
         
         .class-title {
@@ -443,33 +454,67 @@ export default function ClassPublicScreen() {
             grid-template-columns: 1fr !important;
             gap: 2rem !important;
           }
+          .class-hero-banner {
+            min-height: auto !important;
+          }
         }
         
         @media (max-width: 768px) {
-          .date-public-root { padding: 16px 0 !important; }
-          .date-public-inner { padding: 0 16px !important; }
-          .class-hero-banner { 
-            padding: 2rem 1.5rem !important;
-            min-height: 100vh !important;
+          .date-public-root { 
+            padding: 12px 0 !important; 
           }
-          .class-hero-content { 
-            gap: 1.5rem !important;
-            padding: 1.5rem 0 !important;
+          .date-public-inner { 
+            padding: 0 12px !important; 
           }
-        }
-        
-        @media (max-width: 480px) {
-          .date-public-root { padding: 12px 0 !important; }
-          .date-public-inner { padding: 0 12px !important; }
           .class-hero-banner { 
             padding: 1.5rem 1rem !important;
-            min-height: 100vh !important;
+            min-height: auto !important;
+            border-radius: 20px !important;
+            margin-bottom: 1.5rem !important;
           }
           .class-hero-content { 
             gap: 1.25rem !important;
             padding: 1rem 0 !important;
           }
-          .class-title { font-size: 2rem !important; }
+          .class-title {
+            font-size: 2rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .chip {
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.85rem !important;
+          }
+          .class-back-button {
+            padding: 0.6rem 1rem !important;
+            font-size: 0.85rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .date-public-root { 
+            padding: 8px 0 !important; 
+          }
+          .date-public-inner { 
+            padding: 0 8px !important; 
+          }
+          .class-hero-banner { 
+            padding: 1.25rem 0.75rem !important;
+            min-height: auto !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+          }
+          .class-hero-content { 
+            gap: 1rem !important;
+            padding: 0.75rem 0 !important;
+          }
+          .class-title { 
+            font-size: 1.75rem !important;
+            margin-bottom: 0.875rem !important;
+          }
+          .chip {
+            padding: 0.45rem 0.7rem !important;
+            font-size: 0.8rem !important;
+          }
         }
         
         @media (max-width: 430px) {
@@ -480,23 +525,24 @@ export default function ClassPublicScreen() {
             padding: 0 2px !important; 
           }
           .class-hero-banner { 
-            padding: 1rem 0.5rem !important;
+            padding: 0.875rem 0.5rem !important;
             border-radius: 12px !important;
             margin-bottom: 0.75rem !important;
             min-height: auto !important;
             border-width: 1px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
           }
           .class-hero-content { 
-            gap: 1rem !important;
+            gap: 0.875rem !important;
             padding: 0.5rem 0 !important;
           }
           .class-hero-content > div:first-child {
-            gap: 0.75rem !important;
+            gap: 0.625rem !important;
           }
           .class-title { 
-            font-size: 1.4rem !important; 
-            margin-bottom: 0.75rem !important;
-            line-height: 1.25 !important;
+            font-size: 1.35rem !important; 
+            margin-bottom: 0.625rem !important;
+            line-height: 1.3 !important;
             letter-spacing: -0.02em !important;
           }
           .chip {
@@ -505,6 +551,7 @@ export default function ClassPublicScreen() {
             border-radius: 8px !important;
             gap: 0.3rem !important;
             border-width: 1px !important;
+            font-weight: 600 !important;
           }
           .glass-card-container {
             padding: 0.875rem !important;
@@ -561,19 +608,20 @@ export default function ClassPublicScreen() {
           }
           /* Botón Volver optimizado para móvil */
           .class-back-button-container {
-            margin-bottom: 0.75rem !important;
+            margin-bottom: 0.625rem !important;
           }
           .class-back-button {
-            padding: 0.5rem 0.9rem !important;
-            font-size: 0.8rem !important;
-            border-radius: 16px !important;
+            padding: 0.45rem 0.85rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 14px !important;
+            border-width: 1.5px !important;
           }
           /* Botones de acción en columna en móvil */
           .class-action-buttons {
             flex-direction: column !important;
             align-items: stretch !important;
             gap: 0.5rem !important;
-            margin-bottom: 0.75rem !important;
+            margin-bottom: 0.625rem !important;
           }
           .class-action-buttons a,
           .class-action-buttons > div {
@@ -584,6 +632,7 @@ export default function ClassPublicScreen() {
             padding: 0.5rem 0.85rem !important;
             font-size: 0.75rem !important;
             border-radius: 18px !important;
+            border-width: 1px !important;
           }
           .class-action-buttons > div {
             width: 100% !important;
@@ -594,25 +643,58 @@ export default function ClassPublicScreen() {
           /* Chips en mejor distribución */
           .class-chips-container {
             gap: 0.5rem !important;
-            margin-bottom: 1rem !important;
+            margin-bottom: 0.875rem !important;
+            flex-wrap: wrap !important;
           }
           /* Columna 2 (creador) optimizada */
           .class-creator-section {
-            gap: 0.75rem !important;
+            gap: 0.625rem !important;
             margin-top: 0.5rem !important;
             width: 100% !important;
           }
           .class-creator-info {
-            padding: 0.75rem 0.9rem !important;
+            padding: 0.625rem 0.75rem !important;
             border-radius: 12px !important;
             max-width: 100% !important;
           }
           .class-creator-info a {
-            font-size: 0.9rem !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
           }
           .class-creator-section > div:last-child {
             width: 100% !important;
             max-width: 100% !important;
+          }
+          /* Optimizar efectos decorativos en móvil */
+          .class-hero-banner > div:first-child {
+            opacity: 0.5 !important;
+          }
+          /* Asegurar que el contenido no se desborde */
+          .class-hero-content {
+            overflow: visible !important;
+          }
+          .class-hero-content > div:first-child,
+          .class-hero-content > div:last-child {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .class-title {
+            font-size: 1.2rem !important;
+          }
+          .chip {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.65rem !important;
+          }
+          .class-back-button {
+            padding: 0.4rem 0.75rem !important;
+            font-size: 0.7rem !important;
+          }
+          .btn-maps-inline {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.7rem !important;
           }
         }
         
@@ -701,7 +783,7 @@ export default function ClassPublicScreen() {
           <div className="class-hero-content">
             {/* Columna 1: Info de la clase */}
             <div>
-              <div className="class-back-button-container" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              <div className="class-back-button-container" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', width: '100%' }}>
                 <motion.button
                   className="class-back-button"
                   whileHover={{ scale: 1.05, y: -2 }}
@@ -728,7 +810,7 @@ export default function ClassPublicScreen() {
               </h1>
 
               {/* Chips de fecha/día, horario, costo, ubicación y nivel */}
-              <div className="class-chips-container" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="class-chips-container" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem', width: '100%' }}>
                 {/* Chip de fecha o día */}
                 {(() => {
                   if (selectedClass?.fecha) {
@@ -831,7 +913,7 @@ export default function ClassPublicScreen() {
               </div>
 
               {/* Botones de acción */}
-              <div className="class-action-buttons" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+              <div className="class-action-buttons" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem', width: '100%' }}>
                 {/* Botón Ver en Maps */}
                 {ubicacion && (ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
                   <motion.a

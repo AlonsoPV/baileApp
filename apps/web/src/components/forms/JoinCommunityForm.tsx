@@ -218,12 +218,12 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           inset: 0;
           background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(8px);
-          z-index: 10000;
+          z-index: 99999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 1rem;
-          /* Asegurar que el overlay esté por encima de todo */
+          /* Asegurar que el overlay esté por encima de todo, incluyendo footer y otros elementos */
           isolation: isolate;
         }
         .form-container {
@@ -236,8 +236,8 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
-          z-index: 10001;
-          /* Asegurar que el contenedor esté por encima del overlay */
+          z-index: 100000;
+          /* Asegurar que el contenedor esté por encima del overlay y de todos los demás elementos */
           isolation: isolate;
         }
         .form-header {
