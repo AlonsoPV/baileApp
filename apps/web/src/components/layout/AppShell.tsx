@@ -234,6 +234,38 @@ export default function AppShell() {
             padding: 0.5rem 0.9rem;
           }
         }
+
+        @media (max-width: 430px) {
+          .app-footer {
+            padding: 1rem 0.5rem !important;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+          }
+          .app-footer-content {
+            gap: 0.5rem !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+          }
+          .app-footer-link {
+            font-size: 0.7rem !important;
+            padding: 0.35rem 0.6rem !important;
+            border-radius: 6px !important;
+          }
+          .app-footer-link span:first-child {
+            font-size: 0.75rem !important;
+          }
+          .footer-separator {
+            height: 16px !important;
+            opacity: 0.15 !important;
+          }
+          .join-cta-button {
+            font-size: 0.7rem !important;
+            padding: 0.45rem 0.8rem !important;
+            border-radius: 16px !important;
+          }
+          .join-cta-button span {
+            font-size: 0.7rem !important;
+          }
+        }
       `}</style>
       <div className="app-shell-root">
         <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />

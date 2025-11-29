@@ -769,6 +769,44 @@ export default function TeacherProfileLive() {
           .promo-section { padding: 18px 14px 22px !important; }
           .promo-card { padding: 14px 16px !important; }
         }
+        @media (max-width: 430px) {
+          .teacher-container { padding: 0.75rem !important; }
+          .teacher-banner { padding: 1.25rem 0.875rem !important; border-radius: 14px !important; }
+          .teacher-banner h1 { font-size: 1.9rem !important; }
+          .teacher-banner-avatar { width: 160px !important; height: 160px !important; }
+          .teacher-banner-avatar-fallback { font-size: 3.8rem !important; }
+          .glass-card-container { 
+            padding: 0.625rem !important; 
+            border-radius: 10px !important;
+            margin-bottom: 0.875rem !important;
+          }
+          .section-title { font-size: 1rem !important; margin-bottom: 0.75rem !important; }
+          .teacher-section {
+            padding: 0.625rem !important;
+            margin-bottom: 0.875rem !important;
+            border-radius: 10px !important;
+          }
+          .teacher-section h2, .teacher-section h3 {
+            font-size: 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .promo-section { 
+            padding: 14px 12px 18px !important;
+            border-radius: 20px !important;
+          }
+          .promo-header h2, .promo-header h3 { font-size: 1.4rem !important; }
+          .promo-icon { width: 44px !important; height: 44px !important; font-size: 22px !important; }
+          .promo-card { 
+            padding: 12px 14px !important;
+            border-radius: 18px !important;
+          }
+          .promo-info h3 { font-size: 1rem !important; }
+          .promo-price-box { 
+            padding: 8px 12px !important;
+            border-radius: 14px !important;
+            min-width: 100px !important;
+          }
+        }
       `}</style>
 
       <div className="teacher-container">

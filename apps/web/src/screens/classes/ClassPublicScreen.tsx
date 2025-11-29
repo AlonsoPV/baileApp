@@ -472,6 +472,35 @@ export default function ClassPublicScreen() {
           .class-title { font-size: 2rem !important; }
         }
         
+        @media (max-width: 430px) {
+          .date-public-root { padding: 8px 0 !important; }
+          .date-public-inner { padding: 0 10px !important; }
+          .class-hero-banner { 
+            padding: 1.25rem 0.875rem !important;
+            border-radius: 20px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .class-hero-content { 
+            gap: 1rem !important;
+            padding: 0.75rem 0 !important;
+          }
+          .class-title { font-size: 1.75rem !important; margin-bottom: 1rem !important; }
+          .chip {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.85rem !important;
+            border-radius: 10px !important;
+          }
+          .glass-card-container {
+            padding: 1.25rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .btn {
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.85rem !important;
+          }
+        }
+        
         .chip {
           display:inline-flex;
           align-items:center;

@@ -149,6 +149,41 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           }
         }
 
+        @media (max-width: 430px) {
+          .nav-root {
+            padding: 0.45rem 0.5rem !important;
+            padding-top: calc(0.45rem + env(safe-area-inset-top)) !important;
+            min-height: 48px !important;
+          }
+          .nav-brand-title {
+            font-size: 0.7rem !important;
+            letter-spacing: 0.8px !important;
+          }
+          .nav-logo-img {
+            width: 26px !important;
+            height: 26px !important;
+          }
+          .nav-center-brand {
+            gap: 0.35rem !important;
+          }
+          .nav-icon {
+            font-size: 1rem !important;
+            padding: 0.35rem !important;
+          }
+          .nav-profile-button {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .nav-login-button {
+            padding: 0.35rem 0.7rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 16px !important;
+          }
+          .nav-icons {
+            gap: 0.25rem !important;
+          }
+        }
+
         .nav-profile-button {
           position: relative;
           display: inline-flex;
@@ -205,6 +240,14 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           .nav-login-button {
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .nav-login-button {
+            padding: 0.35rem 0.7rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 16px !important;
           }
         }
       `}</style>

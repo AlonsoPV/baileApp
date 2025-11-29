@@ -245,6 +245,21 @@ export default function BrandProfileLive() {
           .section-title { font-size: 1.1rem !important; }
           .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
         }
+        @media (max-width: 430px) {
+          .profile-container { padding: 0.75rem !important; }
+          .profile-banner { padding: 1.25rem 0.875rem !important; }
+          .banner-grid h1 { font-size: 1.9rem !important; }
+          .banner-avatar { width: 160px !important; height: 160px !important; }
+          .section-title { font-size: 1rem !important; margin-bottom: 0.75rem !important; }
+          .glass-card-container { 
+            padding: 0.625rem !important; 
+            border-radius: 10px !important;
+            margin-bottom: 0.875rem !important;
+          }
+          .brand-novedades-wrap { grid-auto-columns: 82% !important; }
+          .brand-novedad-card { border-radius: 18px !important; }
+          .brand-novedad-body { padding: 0.75rem 0.875rem 0.875rem !important; }
+        }
       `}</style>
 
       <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>

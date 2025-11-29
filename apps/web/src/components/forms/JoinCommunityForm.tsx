@@ -432,6 +432,61 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
             grid-template-columns: 1fr;
           }
         }
+
+        @media (max-width: 430px) {
+          .join-cta-button {
+            padding: 0.45rem 0.8rem !important;
+            font-size: 0.7rem !important;
+            border-radius: 16px !important;
+            gap: 0.4rem !important;
+          }
+          .join-cta-button span {
+            font-size: 0.7rem !important;
+          }
+          .form-container {
+            border-radius: 16px !important;
+            max-height: 95vh !important;
+          }
+          .form-header {
+            padding: 1.25rem 1.25rem 0.75rem !important;
+          }
+          .form-body {
+            padding: 1.25rem !important;
+          }
+          .form-title {
+            font-size: 1.1rem !important;
+          }
+          .form-subtitle {
+            font-size: 0.8rem !important;
+          }
+          .form-close {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 1.1rem !important;
+            top: 1.25rem !important;
+            right: 1.25rem !important;
+          }
+          .form-label {
+            font-size: 0.8rem !important;
+          }
+          .form-input,
+          .form-textarea,
+          .form-select {
+            padding: 0.65rem 0.85rem !important;
+            font-size: 0.8rem !important;
+            border-radius: 10px !important;
+          }
+          .role-checkbox-label {
+            padding: 0.65rem 0.85rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 10px !important;
+          }
+          .form-submit {
+            padding: 0.85rem !important;
+            font-size: 0.9rem !important;
+            border-radius: 10px !important;
+          }
+        }
       `}</style>
 
       <button
