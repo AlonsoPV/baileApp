@@ -103,7 +103,10 @@ export default function ChallengesList() {
       background: 'radial-gradient(circle at top, #0f1419, #050608)',
       color: '#fff',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      /* Safe areas support */
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
       {/* Background decorative elements */}
       <div style={{

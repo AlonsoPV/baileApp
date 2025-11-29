@@ -404,6 +404,9 @@ export const UserProfileLive: React.FC = () => {
           justifyContent: 'center',
           background: colors.darkBase,
           color: colors.light,
+          /* Safe areas support */
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         Cargando perfil…
@@ -421,6 +424,9 @@ export const UserProfileLive: React.FC = () => {
           justifyContent: 'center',
           background: colors.darkBase,
           color: colors.light,
+          /* Safe areas support */
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         No se encontró el perfil
@@ -457,6 +463,13 @@ export const UserProfileLive: React.FC = () => {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 1.5rem;
+        }
+        .events-section {
+          width: 100%;
+        }
+        .events-section > div:first-child {
+          flex-wrap: wrap;
+          gap: 0.75rem;
         }
         .profile-banner h2,
         .profile-banner h3,
@@ -564,6 +577,12 @@ export const UserProfileLive: React.FC = () => {
           transform: none;
         }
         
+        @media (max-width: 1024px) {
+          .events-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+            gap: 1.25rem !important;
+          }
+        }
         @media (max-width: 768px) {
           .profile-container {
             max-width: 100% !important;
@@ -602,6 +621,14 @@ export const UserProfileLive: React.FC = () => {
           .events-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
+          }
+          .events-section > div:first-child {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .events-section > div:first-child > div:last-child {
+            align-self: flex-start !important;
           }
           .carousel-container {
             max-width: 100% !important;
@@ -692,6 +719,12 @@ export const UserProfileLive: React.FC = () => {
             padding: 0.75rem !important;
             border-radius: 12px !important;
           }
+          .events-grid {
+            gap: 0.75rem !important;
+          }
+          .events-section > div:first-child {
+            margin-bottom: 1rem !important;
+          }
         }
       `}</style>
       <div style={{
@@ -700,6 +733,9 @@ export const UserProfileLive: React.FC = () => {
         minHeight: '100vh',
         background: colors.darkBase,
         color: colors.light,
+        /* Safe areas support */
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
         {/* Profile Toolbar - Toggle y Edición (Fixed) */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -1364,13 +1400,15 @@ export const UserProfileLive: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="events-section glass-card-container"
           >
-            <div style={{
+            <div className="events-header" style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1.5rem'
+              marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
             }}>
-              <h3 className="section-title">
+              <h3 className="section-title" style={{ margin: 0 }}>
                 ✨ Eventos de Interés
               </h3>
               {availableRsvpEvents.length > 0 && (
@@ -1380,7 +1418,8 @@ export const UserProfileLive: React.FC = () => {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: colors.light
+                  color: colors.light,
+                  whiteSpace: 'nowrap'
                 }}>
                   {availableRsvpEvents.length} evento{availableRsvpEvents.length !== 1 ? 's' : ''}
                 </div>

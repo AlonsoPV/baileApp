@@ -76,6 +76,9 @@ export default function AppShell() {
           color: #e5e7eb;
           display: flex;
           flex-direction: column;
+          /* Safe areas support */
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
         }
         .app-shell-content {
           flex: 1;
@@ -111,6 +114,18 @@ export default function AppShell() {
           backdrop-filter: blur(20px);
           position: relative;
           overflow: hidden;
+          /* Safe area bottom support */
+          padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+        }
+        @media (max-width: 768px) {
+          .app-footer {
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+          }
+        }
+        @media (max-width: 480px) {
+          .app-footer {
+            padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+          }
         }
         .app-footer::before {
           content: '';

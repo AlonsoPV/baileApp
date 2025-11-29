@@ -60,6 +60,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         top: 0,
         zIndex: 100,
         minHeight: '64px',
+        /* Safe area top support */
+        paddingTop: 'calc(1rem + env(safe-area-inset-top))',
       }}
     >
       <style>{`
@@ -68,6 +70,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             position: sticky !important;
             top: 0 !important; bottom: auto; left: 0; right: 0;
             padding: .55rem .7rem !important;
+            padding-top: calc(.55rem + env(safe-area-inset-top)) !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
             min-height: 54px;
           }
@@ -105,6 +108,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         @media (max-width: 480px) {
           .nav-root {
             padding: .5rem .6rem !important;
+            padding-top: calc(.5rem + env(safe-area-inset-top)) !important;
           }
           .nav-brand-tagline {
             display: none !important;
