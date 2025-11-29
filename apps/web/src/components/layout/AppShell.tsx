@@ -84,8 +84,8 @@ export default function AppShell() {
         }
         .app-shell-content {
           flex: 1;
-          /* Dejar espacio mínimo para el header fijo */
-          padding-top: calc(3.25rem + env(safe-area-inset-top));
+          /* Espacio mínimo bajo el header fijo (sin duplicar safe-area) */
+          padding-top: 1.5rem;
           padding-bottom: 2rem;
           padding-left: 1rem;
           padding-right: 1rem;
@@ -95,7 +95,7 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: calc(3.1rem + env(safe-area-inset-top));
+            padding-top: 1.25rem;
             padding-bottom: calc(1.75rem + 100px);
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -104,7 +104,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: calc(3rem + env(safe-area-inset-top));
+            padding-top: 1rem;
             padding-bottom: calc(1.5rem + 90px);
             padding-left: 0.5rem;
             padding-right: 0.5rem;
@@ -257,9 +257,9 @@ export default function AppShell() {
             padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
           }
           .app-footer-content {
-            gap: 0.5rem !important;
-            flex-wrap: wrap !important;
-            justify-content: center !important;
+            gap: 0.4rem !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
           }
           .app-footer-link {
             font-size: 0.7rem !important;
@@ -274,12 +274,12 @@ export default function AppShell() {
             opacity: 0.15 !important;
           }
           .join-cta-button {
-            font-size: 0.7rem !important;
-            padding: 0.45rem 0.8rem !important;
+            font-size: 0.68rem !important;
+            padding: 0.4rem 0.7rem !important;
             border-radius: 16px !important;
           }
           .join-cta-button span {
-            font-size: 0.7rem !important;
+            font-size: 0.68rem !important;
           }
         }
       `}</style>
