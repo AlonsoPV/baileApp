@@ -79,6 +79,8 @@ export default function AppShell() {
           /* Safe areas support */
           padding-top: env(safe-area-inset-top);
           padding-bottom: env(safe-area-inset-bottom);
+          /* Asegurar que no haya overflow que cause problemas de stacking */
+          overflow-x: hidden;
         }
         .app-shell-content {
           flex: 1;
@@ -87,11 +89,13 @@ export default function AppShell() {
           padding-left: 1rem;
           padding-right: 1rem;
           min-height: calc(100vh - 200px);
+          /* Asegurar padding-bottom suficiente para que el footer no tape contenido */
+          padding-bottom: calc(2rem + 120px);
         }
         @media (max-width: 768px) {
           .app-shell-content {
             padding-top: 1.5rem;
-            padding-bottom: 1.75rem;
+            padding-bottom: calc(1.75rem + 100px);
             padding-left: 0.75rem;
             padding-right: 0.75rem;
             min-height: calc(100vh - 180px);
@@ -100,10 +104,15 @@ export default function AppShell() {
         @media (max-width: 480px) {
           .app-shell-content {
             padding-top: 1.25rem;
-            padding-bottom: 1.5rem;
+            padding-bottom: calc(1.5rem + 90px);
             padding-left: 0.5rem;
             padding-right: 0.5rem;
             min-height: calc(100vh - 160px);
+          }
+        }
+        @media (max-width: 430px) {
+          .app-shell-content {
+            padding-bottom: calc(1.5rem + 80px) !important;
           }
         }
         .app-footer {
@@ -116,6 +125,8 @@ export default function AppShell() {
           overflow: hidden;
           /* Safe area bottom support */
           padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+          /* Asegurar que el footer esté por encima del contenido pero debajo de modales */
+          z-index: 10;
         }
         @media (max-width: 768px) {
           .app-footer {

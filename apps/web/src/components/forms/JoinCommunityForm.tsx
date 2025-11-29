@@ -218,11 +218,13 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           inset: 0;
           background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(8px);
-          z-index: 9998;
+          z-index: 10000;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 1rem;
+          /* Asegurar que el overlay esté por encima de todo */
+          isolation: isolate;
         }
         .form-container {
           background: linear-gradient(135deg, #1a1d29 0%, #0f1117 100%);
@@ -234,7 +236,9 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
-          z-index: 9999;
+          z-index: 10001;
+          /* Asegurar que el contenedor esté por encima del overlay */
+          isolation: isolate;
         }
         .form-header {
           padding: 2rem 2rem 1rem;

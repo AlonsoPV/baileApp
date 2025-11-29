@@ -476,28 +476,71 @@ export default function ClassPublicScreen() {
           .date-public-root { padding: 8px 0 !important; }
           .date-public-inner { padding: 0 10px !important; }
           .class-hero-banner { 
-            padding: 1.25rem 0.875rem !important;
-            border-radius: 20px !important;
-            margin-bottom: 1.25rem !important;
+            padding: 1rem 0.75rem !important;
+            border-radius: 16px !important;
+            margin-bottom: 1rem !important;
+            min-height: auto !important;
           }
           .class-hero-content { 
-            gap: 1rem !important;
-            padding: 0.75rem 0 !important;
+            gap: 0.75rem !important;
+            padding: 0.5rem 0 !important;
           }
-          .class-title { font-size: 1.75rem !important; margin-bottom: 1rem !important; }
+          .class-title { 
+            font-size: 1.5rem !important; 
+            margin-bottom: 0.75rem !important;
+            line-height: 1.2 !important;
+          }
           .chip {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.85rem !important;
-            border-radius: 10px !important;
+            padding: 0.4rem 0.65rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 8px !important;
+            gap: 0.35rem !important;
           }
           .glass-card-container {
-            padding: 1.25rem !important;
-            border-radius: 16px !important;
-            margin-bottom: 1.25rem !important;
+            padding: 1rem !important;
+            border-radius: 14px !important;
+            margin-bottom: 1rem !important;
+          }
+          .card {
+            padding: 0.75rem !important;
+            border-radius: 12px !important;
           }
           .btn {
-            padding: 0.5rem 0.8rem !important;
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.75rem !important;
+            gap: 0.4rem !important;
+            border-radius: 20px !important;
+          }
+          .loc-item {
+            padding: 0.75rem !important;
+            border-radius: 14px !important;
+            gap: 0.6rem !important;
+          }
+          .loc-item-icon {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 1.1rem !important;
+            border-radius: 10px !important;
+          }
+          .loc-item-content strong {
             font-size: 0.85rem !important;
+          }
+          .loc-item-content span {
+            font-size: 0.8rem !important;
+            line-height: 1.35 !important;
+          }
+          .loc-grid {
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .divider {
+            margin: 0.5rem 0 !important;
+          }
+          .actions {
+            gap: 0.5rem !important;
+          }
+          .ur-col {
+            gap: 0.75rem !important;
           }
         }
         

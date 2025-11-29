@@ -26,36 +26,34 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
   const avatarUrl = profile?.avatar_url;
 
-  // Fix para móvil: asegurar que el sticky positioning se calcule correctamente al montar
-  // Esto corrige el bug donde la navbar se ve desalineada/más grande al entrar a la app
-  // El problema es que el navegador móvil necesita "activar" el sticky positioning después del primer scroll
+  // Fix para móvil: asegurar que el sticky positioning se mantenga consistente
+  // El header debe mantener su altura y padding constante, sin cambios al hacer scroll
   React.useEffect(() => {
     if (typeof window === 'undefined' || !navRef.current) return;
     
-    const handleScroll = () => {
-      // Forzar reflow para que el navegador recalcule el sticky positioning
-      // Esto asegura que los estilos se apliquen correctamente
+    // Función para forzar un reflow y asegurar que los estilos se apliquen correctamente
+    const forceReflow = () => {
       if (navRef.current) {
         // Trigger reflow accediendo a propiedades que requieren layout calculation
         void navRef.current.offsetHeight;
       }
     };
 
-    // ✅ CRÍTICO: Llamar al handler inmediatamente al montar para leer window.scrollY
-    // y forzar el cálculo correcto del sticky positioning desde el inicio
-    handleScroll();
+    // Ejecutar inmediatamente al montar
+    forceReflow();
     
-    // También ejecutar después de que el navegador haya pintado el frame
+    // Ejecutar después del primer frame renderizado
     requestAnimationFrame(() => {
-      handleScroll();
+      forceReflow();
     });
     
-    // Escuchar scroll para mantener el layout correcto durante el scroll
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Ejecutar después de que el navegador haya completado el layout
+    setTimeout(() => {
+      forceReflow();
+    }, 0);
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    // No necesitamos escuchar scroll para mantener el tamaño constante
+    // El sticky positioning debe mantener el tamaño sin cambios
   }, []);
 
   const handleLogout = React.useCallback(async () => {
@@ -99,6 +97,11 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       }}
     >
       <style>{`
+        .nav-root {
+          /* Asegurar que el header mantenga su tamaño constante */
+          box-sizing: border-box;
+          will-change: transform;
+        }
         @media (max-width: 768px) {
           .nav-root {
             position: sticky !important;
@@ -106,7 +109,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             padding: .55rem .7rem !important;
             padding-top: calc(.55rem + env(safe-area-inset-top)) !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
-            min-height: 54px;
+            min-height: 54px !important;
+            max-height: none !important;
+            height: auto !important;
           }
           .nav-left { 
             display: flex !important; 
@@ -154,6 +159,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             padding: 0.45rem 0.5rem !important;
             padding-top: calc(0.45rem + env(safe-area-inset-top)) !important;
             min-height: 48px !important;
+            max-height: none !important;
+            height: auto !important;
           }
           .nav-brand-title {
             font-size: 0.7rem !important;
