@@ -24,6 +24,7 @@ import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
+import { colors } from "../../theme/colors";
 
 // Componente FAQ Accordion
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1421,25 +1422,154 @@ export default function TeacherProfileLive() {
             <TeacherRatingComponent teacherId={teacherIdNum} />
           )}
 
-          {/* Galería de Fotos Mejorada */}
-          {carouselPhotos.length > 0 && (
+          {/* Slot Video */}
+          {getMediaBySlot(media as unknown as MediaSlotItem[], 'v1') && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
+              transition={{ delay: 0.4 }}
+              className="glass-card-container"
+              style={{
+                marginBottom: '1.5rem',
+                padding: '1.25rem',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header con gradiente superior */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(255, 209, 102, 0.6), rgba(240, 147, 251, 0.6))',
+                borderRadius: '20px 20px 0 0'
+              }} />
+              
+              {/* Header compacto */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                marginBottom: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  flexShrink: 0
+                }}>
+                  🎥
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                    Video Principal
+                  </h3>
+                  <p style={{
+                    margin: '0.15rem 0 0 0',
+                    fontSize: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontWeight: 400,
+                    lineHeight: 1.2
+                  }}>
+                    Contenido multimedia destacado
+                  </p>
+                </div>
+              </div>
+
+              {/* Contenedor del video compacto */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '480px',
+                margin: '0 auto',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                border: '2px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                padding: '3px'
+              }}>
+                {/* Borde interno con gradiente */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '3px',
+                  borderRadius: '13px',
+                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }} />
+                
+                {/* Video */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  borderRadius: '13px',
+                  overflow: 'hidden',
+                  background: '#000',
+                  zIndex: 2
+                }}>
+                  <video
+                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url}
+                    controls
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '4 / 5',
+                      display: 'block',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                    }}
+                  />
+                </div>
+
+                {/* Efecto de brillo en las esquinas */}
+                <div style={{
+                  position: 'absolute',
+                  top: '5px',
+                  left: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '5px',
+                  right: '5px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  zIndex: 3
+                }} />
+              </div>
+            </motion.section>
+          )}
+
+          {/* Galería de Fotos Mejorada */}
+          {carouselPhotos.length > 0 && (
+            <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"
               data-test-id="user-profile-photo-gallery"
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                opacity: 1,
-                transform: 'none'
-              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="gallery-section glass-card-container"
             >
               <div style={{
                 display: 'flex',
@@ -1447,16 +1577,7 @@ export default function TeacherProfileLive() {
                 justifyContent: 'space-between',
                 marginBottom: '1.5rem'
               }}>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-                  WebkitBackgroundClip: 'text',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  margin: 0
-                }}>
+                <h3 className="section-title">
                   📷 Galería de Fotos
                 </h3>
                 <div style={{
@@ -1465,65 +1586,13 @@ export default function TeacherProfileLive() {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: 'rgba(245, 245, 245, 0.9)'
+                  color: colors.light
                 }}>
-                  {carouselPhotos.length} fotos
+                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                 </div>
               </div>
-              <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
-          )}
 
-          {/* Videos */}
-          {videos.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="academy-section"
-              style={{
-                marginBottom: '2rem',
-                padding: '2rem',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <h3 className="section-title">🎥 Videos</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '1.5rem'
-              }}
-                className="academy-videos-grid"
-              >
-                {videos.map((video, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '16/9',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      background: 'rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <video
-                      src={video}
-                      controls
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+              <CarouselComponent photos={carouselPhotos} />
             </motion.section>
           )}
 

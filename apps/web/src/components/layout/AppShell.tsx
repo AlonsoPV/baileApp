@@ -185,10 +185,15 @@ export default function AppShell() {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 2rem;
+          gap: 1rem;
           flex-wrap: nowrap;
           position: relative;
           z-index: 1;
+          padding: 0 0.5rem;
+        }
+        
+        .app-footer-content > * {
+          flex-shrink: 0;
         }
         .app-footer-link {
           color: rgba(255, 255, 255, 0.65);
@@ -202,6 +207,11 @@ export default function AppShell() {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
+          white-space: nowrap;
+        }
+        
+        .footer-link-text {
+          display: inline;
         }
         .app-footer-link::before {
           content: '';
@@ -231,83 +241,139 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding: 1.5rem 1rem;
+            padding: 1rem 0.75rem;
           }
           .app-footer-content {
-            gap: 1rem;
+            gap: 0.75rem;
             flex-wrap: nowrap;
             justify-content: center;
+            padding: 0 0.25rem;
           }
           .app-footer-link {
-            font-size: 0.8125rem;
-            padding: 0.45rem 0.85rem;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.7rem;
+            white-space: nowrap;
+          }
+          .app-footer-link span:last-child {
+            display: inline;
           }
           .footer-separator {
-            height: 20px;
+            height: 18px;
+            flex-shrink: 0;
           }
           .join-cta-button {
-            font-size: 0.8125rem;
-            padding: 0.55rem 1.1rem;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.9rem;
             white-space: nowrap;
           }
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding: 1.25rem 0.75rem;
+            padding: 0.875rem 0.5rem;
           }
           .app-footer-content {
-            gap: 0.75rem;
+            gap: 0.5rem;
+            padding: 0 0.25rem;
           }
           .app-footer-link {
-            font-size: 0.75rem;
-            padding: 0.4rem 0.7rem;
+            font-size: 0.7rem;
+            padding: 0.35rem 0.6rem;
+            white-space: nowrap;
+          }
+          .app-footer-link span:last-child {
+            display: inline;
           }
           .footer-separator {
-            height: 18px;
+            height: 16px;
             opacity: 0.2;
+            flex-shrink: 0;
+            width: 1px;
           }
           .join-cta-button {
-            font-size: 0.75rem;
-            padding: 0.5rem 0.9rem;
+            font-size: 0.7rem;
+            padding: 0.45rem 0.75rem;
+            white-space: nowrap;
           }
         }
 
         @media (max-width: 430px) {
           .app-footer {
-            padding: 1rem 0.5rem !important;
-            padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+            padding: 0.75rem 0.4rem !important;
+            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
           }
           .app-footer-content {
-            gap: 0.4rem !important;
+            gap: 0.35rem !important;
             flex-wrap: nowrap !important;
             justify-content: space-between !important;
             width: 100% !important;
+            padding: 0 0.2rem !important;
           }
           .app-footer-content > * {
-            flex: 1 1 0;
+            flex: 0 1 auto;
             min-width: 0;
+            max-width: 100%;
           }
           .app-footer-link {
-            font-size: 0.7rem !important;
-            padding: 0.35rem 0.6rem !important;
+            font-size: 0.65rem !important;
+            padding: 0.3rem 0.5rem !important;
             border-radius: 6px !important;
             text-align: center !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
           }
           .app-footer-link span:first-child {
-            font-size: 0.75rem !important;
+            font-size: 0.7rem !important;
+            flex-shrink: 0;
+          }
+          .app-footer-link .footer-link-text {
+            display: inline !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 120px;
           }
           .footer-separator {
-            height: 16px !important;
+            height: 14px !important;
             opacity: 0.15 !important;
+            flex-shrink: 0 !important;
+            width: 1px !important;
           }
           .join-cta-button {
-            font-size: 0.68rem !important;
-            padding: 0.4rem 0.7rem !important;
-            border-radius: 16px !important;
-            text-align: center !important;
+            font-size: 0.65rem !important;
+            padding: 0.35rem 0.6rem !important;
+            border-radius: 12px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0;
           }
           .join-cta-button span {
-            font-size: 0.68rem !important;
+            font-size: 0.65rem !important;
+            white-space: nowrap !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .app-footer {
+            padding: 0.65rem 0.3rem !important;
+            padding-bottom: calc(0.65rem + env(safe-area-inset-bottom)) !important;
+          }
+          .app-footer-content {
+            gap: 0.25rem !important;
+            padding: 0 0.15rem !important;
+          }
+          .app-footer-link {
+            font-size: 0.6rem !important;
+            padding: 0.3rem 0.4rem !important;
+          }
+          .app-footer-link .footer-link-text {
+            max-width: 100px !important;
+          }
+          .join-cta-button {
+            font-size: 0.6rem !important;
+            padding: 0.3rem 0.5rem !important;
+          }
+          .join-cta-button span {
+            font-size: 0.6rem !important;
           }
         }
       `}</style>
@@ -330,7 +396,7 @@ export default function AppShell() {
             <div className="footer-separator" />
             <Link to="/app/roles/info" className="app-footer-link">
               <span>🎭</span>
-              <span>Roles en la comunidad</span>
+              <span className="footer-link-text">Roles en la comunidad</span>
             </Link>
           </div>
         </footer>
