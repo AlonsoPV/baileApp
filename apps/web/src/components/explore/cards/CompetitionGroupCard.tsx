@@ -141,21 +141,101 @@ export default function CompetitionGroupCard({ group }: Props) {
   const ownerLabel = ownerData?.type === 'academy' ? 'Academia' : 'Maestro';
 
   return (
-    <LiveLink to={href} asCard={false}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.15 }}
-        style={{
-          ...card,
-          backgroundImage: bg ? `url(${bg})` : undefined,
-          backgroundSize: bg ? 'cover' : undefined,
-          backgroundPosition: bg ? 'center' : undefined,
-          backgroundRepeat: bg ? 'no-repeat' : undefined
-        }}
-      >
+    <>
+      <style>{`
+        .competition-group-card {
+          position: relative;
+          border-radius: 1.25rem;
+          background: linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95));
+          padding: 1.5rem;
+          cursor: pointer;
+          overflow: hidden;
+          border: 1px solid rgba(240, 147, 251, 0.2);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          min-height: 280px;
+          height: 350px;
+          justify-content: flex-end;
+          display: flex;
+          flex-direction: column;
+          color: #fff;
+        }
+        .competition-group-card-title {
+          margin: 0;
+          font-size: 1.375rem;
+          font-weight: 700;
+          line-height: 1.2;
+        }
+        .competition-group-card-title span {
+          display: inline-block;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        @media (max-width: 768px) {
+          .competition-group-card {
+            padding: 1.25rem !important;
+            min-height: 260px !important;
+            height: 320px !important;
+            border-radius: 1rem !important;
+          }
+          .competition-group-card-title {
+            font-size: 1.2rem !important;
+          }
+          .competition-group-card-title span {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .competition-group-card {
+            padding: 1rem !important;
+            min-height: 240px !important;
+            height: 300px !important;
+            border-radius: 0.875rem !important;
+          }
+          .competition-group-card-title {
+            font-size: 1.1rem !important;
+          }
+        }
+        @media (max-width: 430px) {
+          .competition-group-card {
+            padding: 0.875rem !important;
+            min-height: 220px !important;
+            height: 280px !important;
+            border-radius: 0.75rem !important;
+          }
+          .competition-group-card-title {
+            font-size: 1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .competition-group-card-title span {
+            -webkit-line-clamp: 2 !important;
+          }
+        }
+      `}</style>
+      <LiveLink to={href} asCard={false}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
+          className="competition-group-card"
+          style={{
+            backgroundImage: bg ? `url(${bg})` : undefined,
+            backgroundSize: bg ? 'cover' : undefined,
+            backgroundPosition: bg ? 'center' : undefined,
+            backgroundRepeat: bg ? 'no-repeat' : undefined
+          }}
+        >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
         
         {/* Overlay como en ClassCard: solo si no hay background */}
@@ -164,21 +244,8 @@ export default function CompetitionGroupCard({ group }: Props) {
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem', position: 'relative', zIndex: 1 }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: '1.375rem',
-            fontWeight: 700,
-            lineHeight: 1.2
-          }}>
-            <span style={{
-              display: 'inline-block',
-              maxWidth: '100%',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              color: '#fff',
-              textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
-            }}>
+          <h3 className="competition-group-card-title">
+            <span>
               {group.name}
             </span>
           </h3>
@@ -245,7 +312,8 @@ export default function CompetitionGroupCard({ group }: Props) {
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
-    </LiveLink>
+      </LiveLink>
+    </>
   );
 }
 

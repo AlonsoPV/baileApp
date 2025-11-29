@@ -180,6 +180,16 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           .nav-profile-button {
             width: 36px !important;
             height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+          }
+          .nav-profile-button img {
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 100% !important;
+            min-height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
           }
           .nav-login-button {
             padding: 0.35rem 0.7rem !important;
@@ -198,6 +208,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           justify-content: center;
           width: 40px;
           height: 40px;
+          min-width: 40px;
+          min-height: 40px;
           border-radius: 50%;
           border: 1px solid rgba(255,255,255,0.35);
           background: rgba(0,0,0,0.15);
@@ -205,6 +217,20 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s ease;
+          overflow: hidden;
+          box-sizing: border-box;
+          flex-shrink: 0;
+        }
+        
+        .nav-profile-button img {
+          width: 100% !important;
+          height: 100% !important;
+          min-width: 100% !important;
+          min-height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+          display: block !important;
+          border-radius: 50% !important;
         }
 
         .nav-profile-button:hover {

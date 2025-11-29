@@ -32,20 +32,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
 
-    // Timeout de seguridad: si getSession() tarda más de 10 segundos, forzar loading = false
+    // Timeout de seguridad: si getSession() tarda más de 8 segundos, forzar loading = false
+    // Reducido de 10s a 8s para mejor UX
     timeoutId = setTimeout(() => {
       if (mounted) {
         console.warn('[AuthProvider] Timeout en getSession(), forzando loading = false');
         setLoading(false);
+        // Intentar obtener sesión del localStorage como fallback
+        try {
+          const storedSession = localStorage.getItem('sb-' + supabase.supabaseUrl.split('//')[1]?.split('.')[0] + '-auth-token');
+          if (!storedSession) {
+            setSession(null);
+            setUser(null);
+            useProfileMode.getState().setMode("usuario");
+          }
+        } catch (e) {
+          // Si falla, asumir que no hay sesión
+          setSession(null);
+          setUser(null);
+          useProfileMode.getState().setMode("usuario");
+        }
       }
-    }, 10000);
+    }, 8000);
 
     (async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        // Intentar obtener sesión con timeout más corto
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout')), 7000)
+        );
+        
+        const { data, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        
         if (!mounted) return;
         
         if (error) {
+          // Si es un error de red bloqueado, intentar continuar sin sesión
+          if (error.message?.includes('blocked') || error.message?.includes('ERR_BLOCKED')) {
+            console.warn('[AuthProvider] Solicitud bloqueada por cliente (probablemente bloqueador de anuncios), continuando sin sesión');
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            useProfileMode.getState().setMode("usuario");
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+            return;
+          }
           console.error('[AuthProvider] Error en getSession():', error);
         }
         
@@ -62,13 +100,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!data?.session?.user) {
           useProfileMode.getState().setMode("usuario");
         }
-      } catch (err) {
-        console.error('[AuthProvider] Excepción en getSession():', err);
-        if (mounted) {
+      } catch (err: any) {
+        if (!mounted) return;
+        
+        // Si es un timeout o error de red bloqueado, continuar sin sesión
+        if (err?.message?.includes('timeout') || err?.message?.includes('blocked') || err?.message?.includes('ERR_BLOCKED')) {
+          console.warn('[AuthProvider] Timeout o bloqueo en getSession(), continuando sin sesión:', err.message);
+          setLoading(false);
+          setSession(null);
+          setUser(null);
+          useProfileMode.getState().setMode("usuario");
+        } else {
+          console.error('[AuthProvider] Excepción en getSession():', err);
           setLoading(false);
           setSession(null);
           setUser(null);
         }
+        
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;

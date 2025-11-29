@@ -21,6 +21,7 @@ import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1221,6 +1222,24 @@ export function OrganizerProfileLive() {
             width: 52px !important;
             height: 52px !important;
           }
+          /* Competition Groups Grid Responsivo */
+          .competition-groups-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+        }
+        /* Responsive para Competition Groups */
+        @media (max-width: 768px) {
+          .competition-groups-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+            gap: 1.25rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .competition-groups-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
         }
       `}</style>
 
@@ -1614,6 +1633,63 @@ export function OrganizerProfileLive() {
               isEditable={false}
             />
           </div>
+
+          {/* Grupos de Competencia */}
+          {/* Nota: Los organizers no tienen grupos de competencia directamente asociados,
+              pero mantenemos la sección por consistencia con otros perfiles */}
+          {false && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              className="glass-card"
+              style={{
+                marginBottom: spacing[8],
+                padding: spacing[8],
+                borderRadius: borderRadius['2xl']
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing[4],
+                marginBottom: spacing[6]
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: typography.fontSize['2xl'],
+                  boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)'
+                }}>
+                  🏆
+                </div>
+                <div>
+                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
+                  <p style={{
+                    fontSize: typography.fontSize.sm,
+                    opacity: 0.8,
+                    margin: 0,
+                    fontWeight: 500,
+                    color: colors.light
+                  }}>
+                    Grupos de entrenamiento y competencia
+                  </p>
+                </div>
+              </div>
+              <div className="competition-groups-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {/* Los grupos se renderizarían aquí */}
+              </div>
+            </motion.section>
+          )}
 
           {/* Próximas Fechas */}
           {inviteItems.length > 0 && (
