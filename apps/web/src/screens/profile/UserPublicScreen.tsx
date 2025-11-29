@@ -768,6 +768,54 @@ export const UserProfileLive: React.FC = () => {
             margin-bottom: 1rem !important;
           }
         }
+
+        /* Ajustes finos solo para pantallas muy pequeñas (móviles ≤ 430px) */
+        @media (max-width: 430px) {
+          .profile-container {
+            padding: 0 1rem !important;
+          }
+          .profile-banner {
+            max-width: 100% !important;
+          }
+          .banner-grid h1 {
+            font-size: 1.9rem !important;
+            line-height: 1.2 !important;
+          }
+          .banner-avatar {
+            width: 150px !important;
+            height: 150px !important;
+          }
+          .section-title {
+            font-size: 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .question-section {
+            gap: 0.75rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem 0.9rem !important;
+            margin-bottom: 0.85rem !important;
+            border-radius: 12px !important;
+          }
+          .events-section {
+            padding: 0.85rem !important;
+          }
+          .events-section .section-title {
+            font-size: 1rem !important;
+          }
+          .events-grid {
+            gap: 0.7rem !important;
+          }
+          .events-section > div:first-child {
+            margin-bottom: 0.9rem !important;
+          }
+          /* Botones dentro de Eventos de Interés más compactos y sin pegarse a los bordes */
+          .events-section button {
+            padding: 0.6rem 1.1rem !important;
+            border-radius: 10px !important;
+            font-size: 0.85rem !important;
+          }
+        }
       `}</style>
       <div className="page-shell" style={{
         position: 'relative',

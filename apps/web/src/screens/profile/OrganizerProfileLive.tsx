@@ -1193,6 +1193,36 @@ export function OrganizerProfileLive() {
           }
         }
       `}</style>
+      <style>{`
+        /* Extra compact layout for very small screens */
+        @media (max-width: 430px) {
+          .org-container {
+            padding: 0.75rem 0.75rem 1.5rem !important;
+          }
+          .glass-card-container {
+            padding: 0.85rem !important;
+            border-radius: 14px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .org-banner h1 {
+            font-size: 2.1rem !important;
+          }
+          .glass-card {
+            padding: 1rem !important;
+            border-radius: 16px !important;
+          }
+          .glass-card h3.section-title {
+            font-size: 1.25rem !important;
+          }
+          .org-social-events-header {
+            margin-bottom: 1rem !important;
+          }
+          .org-social-events-header-icon {
+            width: 52px !important;
+            height: 52px !important;
+          }
+        }
+      `}</style>
 
       <div style={{
         minHeight: '100vh',

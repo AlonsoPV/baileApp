@@ -726,6 +726,39 @@ export function OrganizerPublicScreen() {
           }
         }
       `}</style>
+      <style>{`
+        /* Compact layout for very small screens */
+        @media (max-width: 430px) {
+          .org-container {
+            padding: 0.75rem 0.75rem 1.5rem !important;
+          }
+          .glass-card-container {
+            padding: 0.85rem !important;
+            border-radius: 14px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .org-banner h1 {
+            font-size: 2.1rem !important;
+          }
+          .org-social-card {
+            padding: 1rem !important;
+            border-radius: 16px !important;
+          }
+          .org-social-card-title {
+            font-size: 1.3rem !important;
+          }
+          .org-social-card-description {
+            font-size: 0.9rem !important;
+          }
+          .org-social-events-header {
+            margin-bottom: 1rem !important;
+          }
+          .org-social-events-header-icon {
+            width: 52px !important;
+            height: 52px !important;
+          }
+        }
+      `}</style>
 
       <div className="org-root" style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], width: '100%', position: 'relative' }}>
         {/* Elementos flotantes */}

@@ -577,6 +577,55 @@ export default function EventDatePublicScreen() {
           }
         }
       `}</style>
+        <style>{`
+        /* Extra compact layout for very small screens */
+        @media (max-width: 430px) {
+          .date-public-inner {
+            padding: 0 10px !important;
+          }
+          .social-header-card {
+            padding: 0.75rem !important;
+            border-radius: 14px !important;
+          }
+          .event-title {
+            font-size: 1.4rem !important;
+            margin-bottom: 0.4rem !important;
+          }
+          .chip {
+            font-size: 0.78rem !important;
+            padding: 0.3rem 0.55rem !important;
+          }
+          .event-card {
+            padding: 6px 10px 8px !important;
+            border-radius: 16px !important;
+          }
+          .event-card__body {
+            padding: 5px 7px !important;
+            border-radius: 12px !important;
+          }
+          .rsvp-section {
+            padding: 0.9rem !important;
+            margin-bottom: 0.9rem !important;
+            border-radius: 14px !important;
+          }
+          .headline {
+            font-size: 0.95rem !important;
+          }
+          .ubicacion-requisitos-section {
+            padding: 0.9rem !important;
+            margin-bottom: 0.9rem !important;
+            border-radius: 14px !important;
+          }
+          .card.loc,
+          .card.req {
+            padding: 0.85rem !important;
+            border-radius: 12px !important;
+          }
+          .event-section-dance {
+            gap: 10px !important;
+          }
+        }
+        `}</style>
         <div className="date-public-inner">
 
 

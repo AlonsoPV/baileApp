@@ -1164,6 +1164,40 @@ export default function ExploreHomeScreen() {
           }
         }
       `}</style>
+      <style>{`
+        /* Extra compact tweaks for very small screens */
+        @media (max-width: 430px) {
+          .wrap {
+            padding: 0 0.75rem 1.5rem !important;
+          }
+          .section-container {
+            margin-bottom: 2.25rem !important;
+          }
+          .section-container h2 {
+            font-size: 1.4rem !important;
+          }
+          .filters-panel {
+            padding: 10px 9px 12px !important;
+            border-radius: 16px !important;
+          }
+          .panel {
+            margin: 0.5rem 0 !important;
+            padding: 0.75rem 0.8rem !important;
+            border-radius: 12px !important;
+          }
+          .cards-grid {
+            gap: 0.9rem !important;
+            padding: 0.5rem 0 !important;
+          }
+          .card-skeleton {
+            height: 210px !important;
+            border-radius: 12px !important;
+          }
+          .section-container > .explore-slider {
+            margin: 0 -0.15rem !important;
+          }
+        }
+      `}</style>
 
       <div className="explore-container">
         {/* Hero removido para una vista más directa al contenido */}

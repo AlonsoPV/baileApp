@@ -21,9 +21,42 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const { profile } = useUserProfile();
   const { getDefaultRoute } = useDefaultProfile();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const navRef = React.useRef<HTMLElement>(null);
 
   const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
   const avatarUrl = profile?.avatar_url;
+
+  // Fix para móvil: asegurar que el sticky positioning se calcule correctamente al montar
+  // Esto corrige el bug donde la navbar se ve desalineada/más grande al entrar a la app
+  // El problema es que el navegador móvil necesita "activar" el sticky positioning después del primer scroll
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !navRef.current) return;
+    
+    const handleScroll = () => {
+      // Forzar reflow para que el navegador recalcule el sticky positioning
+      // Esto asegura que los estilos se apliquen correctamente
+      if (navRef.current) {
+        // Trigger reflow accediendo a propiedades que requieren layout calculation
+        void navRef.current.offsetHeight;
+      }
+    };
+
+    // ✅ CRÍTICO: Llamar al handler inmediatamente al montar para leer window.scrollY
+    // y forzar el cálculo correcto del sticky positioning desde el inicio
+    handleScroll();
+    
+    // También ejecutar después de que el navegador haya pintado el frame
+    requestAnimationFrame(() => {
+      handleScroll();
+    });
+    
+    // Escuchar scroll para mantener el layout correcto durante el scroll
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleLogout = React.useCallback(async () => {
     // ✅ Prevenir múltiples clicks
@@ -48,6 +81,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   return (
     <nav
+      ref={navRef}
       className="nav-root"
       style={{
         background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
