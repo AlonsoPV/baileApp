@@ -473,74 +473,146 @@ export default function ClassPublicScreen() {
         }
         
         @media (max-width: 430px) {
-          .date-public-root { padding: 8px 0 !important; }
-          .date-public-inner { padding: 0 10px !important; }
+          .date-public-root { 
+            padding: 4px 0 !important; 
+          }
+          .date-public-inner { 
+            padding: 0 2px !important; 
+          }
           .class-hero-banner { 
-            padding: 1rem 0.75rem !important;
-            border-radius: 16px !important;
-            margin-bottom: 1rem !important;
+            padding: 1rem 0.5rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 0.75rem !important;
             min-height: auto !important;
+            border-width: 1px !important;
           }
           .class-hero-content { 
-            gap: 0.75rem !important;
+            gap: 1rem !important;
             padding: 0.5rem 0 !important;
           }
+          .class-hero-content > div:first-child {
+            gap: 0.75rem !important;
+          }
           .class-title { 
-            font-size: 1.5rem !important; 
+            font-size: 1.4rem !important; 
             margin-bottom: 0.75rem !important;
-            line-height: 1.2 !important;
+            line-height: 1.25 !important;
+            letter-spacing: -0.02em !important;
           }
           .chip {
-            padding: 0.4rem 0.65rem !important;
-            font-size: 0.75rem !important;
+            padding: 0.35rem 0.6rem !important;
+            font-size: 0.7rem !important;
             border-radius: 8px !important;
-            gap: 0.35rem !important;
+            gap: 0.3rem !important;
+            border-width: 1px !important;
           }
           .glass-card-container {
-            padding: 1rem !important;
-            border-radius: 14px !important;
-            margin-bottom: 1rem !important;
+            padding: 0.875rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 0.75rem !important;
           }
           .card {
-            padding: 0.75rem !important;
-            border-radius: 12px !important;
-          }
-          .btn {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.75rem !important;
-            gap: 0.4rem !important;
-            border-radius: 20px !important;
-          }
-          .loc-item {
-            padding: 0.75rem !important;
-            border-radius: 14px !important;
-            gap: 0.6rem !important;
-          }
-          .loc-item-icon {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 1.1rem !important;
+            padding: 0.65rem !important;
             border-radius: 10px !important;
           }
+          .btn {
+            padding: 0.5rem 0.85rem !important;
+            font-size: 0.75rem !important;
+            gap: 0.4rem !important;
+            border-radius: 18px !important;
+            font-weight: 700 !important;
+          }
+          .loc-item {
+            padding: 0.65rem !important;
+            border-radius: 12px !important;
+            gap: 0.5rem !important;
+          }
+          .loc-item-icon {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 1rem !important;
+            border-radius: 8px !important;
+          }
           .loc-item-content strong {
-            font-size: 0.85rem !important;
+            font-size: 0.8rem !important;
           }
           .loc-item-content span {
-            font-size: 0.8rem !important;
-            line-height: 1.35 !important;
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
           }
           .loc-grid {
-            gap: 0.75rem !important;
-            margin-bottom: 1rem !important;
+            gap: 0.6rem !important;
+            margin-bottom: 0.75rem !important;
+            grid-template-columns: 1fr !important;
           }
           .divider {
-            margin: 0.5rem 0 !important;
+            margin: 0.4rem 0 !important;
           }
           .actions {
             gap: 0.5rem !important;
+            flex-direction: column !important;
+          }
+          .actions .btn {
+            width: 100% !important;
+            justify-content: center !important;
           }
           .ur-col {
+            gap: 0.6rem !important;
+          }
+          /* Botón Volver optimizado para móvil */
+          .class-back-button-container {
+            margin-bottom: 0.75rem !important;
+          }
+          .class-back-button {
+            padding: 0.5rem 0.9rem !important;
+            font-size: 0.8rem !important;
+            border-radius: 16px !important;
+          }
+          /* Botones de acción en columna en móvil */
+          .class-action-buttons {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .class-action-buttons a,
+          .class-action-buttons > div {
+            width: 100% !important;
+          }
+          .btn-maps-inline {
+            justify-content: center !important;
+            padding: 0.5rem 0.85rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 18px !important;
+          }
+          .class-action-buttons > div {
+            width: 100% !important;
+          }
+          .class-action-buttons > div > div {
+            width: 100% !important;
+          }
+          /* Chips en mejor distribución */
+          .class-chips-container {
+            gap: 0.5rem !important;
+            margin-bottom: 1rem !important;
+          }
+          /* Columna 2 (creador) optimizada */
+          .class-creator-section {
             gap: 0.75rem !important;
+            margin-top: 0.5rem !important;
+            width: 100% !important;
+          }
+          .class-creator-info {
+            padding: 0.75rem 0.9rem !important;
+            border-radius: 12px !important;
+            max-width: 100% !important;
+          }
+          .class-creator-info a {
+            font-size: 0.9rem !important;
+          }
+          .class-creator-section > div:last-child {
+            width: 100% !important;
+            max-width: 100% !important;
           }
         }
         
@@ -629,8 +701,9 @@ export default function ClassPublicScreen() {
           <div className="class-hero-content">
             {/* Columna 1: Info de la clase */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              <div className="class-back-button-container" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                 <motion.button
+                  className="class-back-button"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => navigate(creatorLink)}
@@ -655,7 +728,7 @@ export default function ClassPublicScreen() {
               </h1>
 
               {/* Chips de fecha/día, horario, costo, ubicación y nivel */}
-              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="class-chips-container" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
                 {/* Chip de fecha o día */}
                 {(() => {
                   if (selectedClass?.fecha) {
@@ -758,7 +831,7 @@ export default function ClassPublicScreen() {
               </div>
 
               {/* Botones de acción */}
-              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+              <div className="class-action-buttons" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                 {/* Botón Ver en Maps */}
                 {ubicacion && (ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
                   <motion.a
@@ -767,6 +840,7 @@ export default function ClassPublicScreen() {
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.97 }}
+                    className="btn-maps-inline"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1084,8 +1158,8 @@ export default function ClassPublicScreen() {
             </div>
             
             {/* Columna 2: Creada por + Card del creador */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ 
+            <div className="class-creator-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+              <div className="class-creator-info" style={{ 
                 padding: '1rem 1.25rem',
                 borderRadius: 16,
                 border: '1px solid rgba(255,255,255,.12)',
