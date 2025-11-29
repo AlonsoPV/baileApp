@@ -85,8 +85,8 @@ export default function AppShell() {
         .app-shell-content {
           flex: 1;
           /* Espacio mínimo bajo el header fijo (sin duplicar safe-area) */
-          padding-top: 1.5rem;
-          padding-bottom: 2rem;
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
           padding-left: 1rem;
           padding-right: 1rem;
           min-height: calc(100vh - 200px);
@@ -95,8 +95,8 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: 1.25rem;
-            padding-bottom: calc(1.75rem + 100px);
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
             min-height: calc(100vh - 180px);
@@ -105,7 +105,7 @@ export default function AppShell() {
         @media (max-width: 480px) {
           .app-shell-content {
             padding-top: 1rem;
-            padding-bottom: calc(1.5rem + 90px);
+            padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
             min-height: calc(100vh - 160px);
@@ -118,7 +118,7 @@ export default function AppShell() {
         }
         .app-footer {
           margin-top: auto;
-          padding: 2rem 1.5rem;
+          padding: 1rem 1.5rem;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
           background: linear-gradient(180deg, rgba(11, 13, 16, 0.95) 0%, rgba(8, 10, 14, 0.98) 100%);
           backdrop-filter: blur(20px);
