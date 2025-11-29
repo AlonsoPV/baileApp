@@ -375,9 +375,11 @@ export default function ClassPublicScreen() {
     return parts.length ? parts.join(' · ') : undefined;
   })();
 
+  // Ritmos de la clase: preferir los IDs numéricos más nuevos (ritmoIds),
+  // pero mantener compatibilidad con datos antiguos que usan "ritmos"
   const ritmosRaw =
-    (selectedClass?.ritmos && Array.isArray(selectedClass.ritmos) && selectedClass.ritmos) ||
     (selectedClass?.ritmoIds && Array.isArray(selectedClass.ritmoIds) && selectedClass.ritmoIds) ||
+    (selectedClass?.ritmos && Array.isArray(selectedClass.ritmos) && selectedClass.ritmos) ||
     [];
   const ritmosLabel = Array.isArray(ritmosRaw) ? ritmosRaw.slice(0, 3).join(', ') : '';
   const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || 'México';

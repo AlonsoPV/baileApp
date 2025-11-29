@@ -1735,9 +1735,11 @@ export default function AcademyProfileEditor() {
                               ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                             }
 
-                            const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                            // Usar siempre los ritmos seleccionados en el formulario.
+                            // Si el usuario quitó todos los chips, ritmoIds será [] y debemos respetarlo
+                            const ritmoIds = Array.isArray(c.ritmoIds)
                               ? c.ritmoIds
-                              : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
+                              : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
                             const classId = ensureClassId(prev); // Obtener ID de la clase (preservar existente o generar nuevo)
 
                             // Buscar el costo por ID de clase (más confiable que por nombre)
@@ -1794,6 +1796,8 @@ export default function AcademyProfileEditor() {
                               costo: updatedCosto, // Incluir costo directamente en el item del cronograma
                               ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
                               ritmoIds,
+                              // Mantener campo legado "ritmos" sincronizado con ritmoIds
+                              ritmos: ritmoIds,
                               zonaId: c.zonaId,
                               ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
                               ubicacionId: c.ubicacionId || (match?.id || null)
@@ -1820,7 +1824,8 @@ export default function AcademyProfileEditor() {
                               ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
                             }
 
-                            const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                            // Para nuevas clases, usar directamente los ritmos seleccionados (puede ser [] si no eligió ninguno)
+                            const ritmoIds = Array.isArray(c.ritmoIds)
                               ? c.ritmoIds
                               : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
                             const newClassId = generateClassId(); // Generar ID único para la nueva clase
@@ -1863,6 +1868,8 @@ export default function AcademyProfileEditor() {
                               costo: newCosto, // Incluir costo directamente en el item del cronograma
                               ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
                               ritmoIds,
+                              // Mantener campo legado "ritmos" sincronizado con ritmoIds
+                              ritmos: ritmoIds,
                               zonaId: c.zonaId,
                               ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
                               ubicacionId: c.ubicacionId || (match?.id || null)
