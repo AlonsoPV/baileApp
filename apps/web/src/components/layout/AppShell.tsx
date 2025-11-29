@@ -84,8 +84,8 @@ export default function AppShell() {
         }
         .app-shell-content {
           flex: 1;
-          /* Dejar espacio suficiente para el header fijo */
-          padding-top: calc(4.5rem + env(safe-area-inset-top));
+          /* Dejar espacio suficiente para el header fijo, pero con menos espacio en blanco */
+          padding-top: calc(4rem + env(safe-area-inset-top));
           padding-bottom: 2rem;
           padding-left: 1rem;
           padding-right: 1rem;
@@ -95,6 +95,7 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-shell-content {
+            padding-top: calc(3.5rem + env(safe-area-inset-top));
             padding-bottom: calc(1.75rem + 100px);
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -103,6 +104,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
+            padding-top: calc(3.25rem + env(safe-area-inset-top));
             padding-bottom: calc(1.5rem + 90px);
             padding-left: 0.5rem;
             padding-right: 0.5rem;
@@ -120,11 +122,8 @@ export default function AppShell() {
           border-top: 1px solid rgba(255, 255, 255, 0.08);
           background: linear-gradient(180deg, rgba(11, 13, 16, 0.95) 0%, rgba(8, 10, 14, 0.98) 100%);
           backdrop-filter: blur(20px);
-          /* Footer fijo en la parte inferior, siempre visible */
-          position: fixed;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          /* Footer dentro del flujo normal: solo aparece cuando haces scroll hasta él */
+          position: relative;
           overflow: hidden;
           /* Safe area bottom support */
           padding-bottom: calc(2rem + env(safe-area-inset-bottom));
