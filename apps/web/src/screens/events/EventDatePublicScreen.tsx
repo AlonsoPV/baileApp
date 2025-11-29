@@ -306,6 +306,21 @@ export default function EventDatePublicScreen() {
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
 
+  // Evitar loops infinitos de "cargando" en caso de problemas de red o Supabase
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  React.useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      const timeoutId = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000); // 15s de espera máxima
+      return () => clearTimeout(timeoutId);
+    }
+    // Si deja de estar cargando, resetear timeout
+    setLoadingTimedOut(false);
+  }, [isLoading, dateIdNum]);
+
   // Verificar si el usuario es propietario
   const isOwner = React.useMemo(() => {
     if (!user || !myOrganizer || !parent) return false;
@@ -336,7 +351,7 @@ export default function EventDatePublicScreen() {
     }
   })();
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -349,6 +364,48 @@ export default function EventDatePublicScreen() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
           <p>Cargando fecha...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback si la carga tarda demasiado (casos de red inestable en WebView)
+  if (isLoading && loadingTimedOut) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: 320, padding: '0 1.5rem' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⚠️</div>
+          <p style={{ marginBottom: '8px' }}>No se pudo cargar la fecha.</p>
+          <p style={{ marginBottom: '16px', opacity: 0.7, fontSize: '0.9rem' }}>
+            Revisa tu conexión a internet e inténtalo de nuevo.
+          </p>
+          <button
+            onClick={() => {
+              // Forzar recarga de la página actual
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 999,
+              border: 'none',
+              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              color: colors.light,
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );

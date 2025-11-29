@@ -231,6 +231,20 @@ export const UserProfileLive: React.FC = () => {
     }
   });
 
+  // Evitar loops infinitos de "Cargando perfil..." en WebView
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      const timeoutId = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000); // 15s máximo
+      return () => clearTimeout(timeoutId);
+    }
+    setLoadingTimedOut(false);
+  }, [isLoading, userId]);
+
   // Fetch RSVPs for this user
   const { data: rsvpEvents } = useQuery({
     queryKey: ['user-rsvps', userId],
@@ -381,12 +395,45 @@ export const UserProfileLive: React.FC = () => {
     if (id) navigate(`/u/${id}`);
   };
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return (
       <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div>
           <div style={{ fontSize: '2rem', marginBottom: 16 }}>⏳</div>
           <p>Cargando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading && loadingTimedOut) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ maxWidth: 360 }}>
+          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
+          <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil.</p>
+          <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
+            Revisa tu conexión a internet e inténtalo de nuevo.
+          </p>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 999,
+              border: 'none',
+              background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+              color: '#fff',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );

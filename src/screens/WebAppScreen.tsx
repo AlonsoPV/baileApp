@@ -42,18 +42,41 @@ export default function WebAppScreen() {
         originWhitelist={["*"]}
         // Mostrar loader inicial
         startInLoadingState
+        onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
-        onError={() => {
+        onError={(e) => {
+          console.log("WebView error:", e.nativeEvent);
           setLoading(false);
           setHasError(true);
+        }}
+        onHttpError={(e) => {
+          console.log(
+            "HTTP error:",
+            e.nativeEvent.statusCode,
+            e.nativeEvent.description
+          );
         }}
         // Permitir JS y almacenamiento para que la web funcione igual que en el navegador
         javaScriptEnabled
         domStorageEnabled
+        // Habilitar cookies compartidas para mejor funcionamiento de autenticación (Supabase, Google, etc.)
+        sharedCookiesEnabled
+        thirdPartyCookiesEnabled
+        // Deshabilitar caché para evitar problemas con actualizaciones
+        cacheEnabled={false}
         // En Android: permitir contenido mixto (por si hay recursos http)
         mixedContentMode="always"
         // Evitar que target="_blank" intente abrir una nueva "ventana" nativa
         setSupportMultipleWindows={false}
+        // Inyectar JavaScript para forzar que window.open abra en la misma pestaña
+        injectedJavaScript={`
+          (function() {
+            // Forzar que window.open abra en la misma pestaña
+            window.open = function(url) {
+              window.location.href = url;
+            };
+          })();
+        `}
         // Control de navegación:
         // - Dentro del WebView: sólo nuestro dominio
         // - Fuera: redes, maps, calendarios (Apple Calendar), etc. con Linking

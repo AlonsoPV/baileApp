@@ -113,7 +113,7 @@ export default function AppShell() {
         }
         @media (max-width: 430px) {
           .app-shell-content {
-            padding-bottom: calc(1.5rem + 80px) !important;
+            padding-bottom: calc(1.5rem) !important;
           }
         }
         .app-footer {

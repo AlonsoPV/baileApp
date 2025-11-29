@@ -385,6 +385,20 @@ export default function TeacherProfileLive() {
     }
   });
 
+  // Evitar loops infinitos de "Cargando maestro..." en WebView si hay problemas de red
+  const [loadingTimedOut, setLoadingTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      const timeoutId = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000); // 15s máximo
+      return () => clearTimeout(timeoutId);
+    }
+    setLoadingTimedOut(false);
+  }, [isLoading, teacherId]);
+
   const media = teacher?.media || [];
   const teacherIdNum = teacherId ? Number(teacherId) : undefined;
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
@@ -436,7 +450,7 @@ export default function TeacherProfileLive() {
     return names;
   };
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return (
       <div style={{
         padding: '48px 24px',
@@ -445,6 +459,43 @@ export default function TeacherProfileLive() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
         <p>Cargando maestro...</p>
+      </div>
+    );
+  }
+
+  if (isLoading && loadingTimedOut) {
+    return (
+      <div style={{
+        padding: '48px 24px',
+        textAlign: 'center',
+        color: colors.light,
+      }}>
+        <div style={{ maxWidth: 360, margin: '0 auto' }}>
+          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
+          <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil del maestro.</p>
+          <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
+            Revisa tu conexión a internet e inténtalo de nuevo.
+          </p>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 999,
+              border: 'none',
+              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              color: colors.light,
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

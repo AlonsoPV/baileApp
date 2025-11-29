@@ -121,6 +121,20 @@ export function OrganizerPublicScreen() {
     }
   });
 
+  // Evitar loops infinitos de "Cargando organizador..." en WebView
+  const [loadingTimedOut, setLoadingTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      const timeoutId = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000); // 15s máximo
+      return () => clearTimeout(timeoutId);
+    }
+    setLoadingTimedOut(false);
+  }, [isLoading, routeId]);
+
   const { data: parents = [] } = useEventParentsByOrganizer((org as any)?.id);
   const { data: eventDates = [] } = useEventDatesByOrganizer((org as any)?.id);
 
@@ -383,11 +397,43 @@ export function OrganizerPublicScreen() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return (
       <div style={{ padding: spacing[12], textAlign: 'center', color: colors.gray[50], background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
         <p style={{ fontSize: typography.fontSize.lg }}>Cargando organizador...</p>
+      </div>
+    );
+  }
+  if (isLoading && loadingTimedOut) {
+    return (
+      <div style={{ padding: spacing[12], textAlign: 'center', color: colors.gray[50], background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ maxWidth: 360 }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⚠️</div>
+          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>No se pudo cargar el organizador.</p>
+          <p style={{ fontSize: typography.fontSize.sm, opacity: 0.75, marginBottom: spacing[4] }}>
+            Revisa tu conexión a internet e inténtalo de nuevo.
+          </p>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 999,
+              border: 'none',
+              background: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.secondary[500]})`,
+              color: colors.light,
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.bold,
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }
