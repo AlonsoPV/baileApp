@@ -85,13 +85,13 @@ export default function AppShell() {
         .app-shell-content {
           flex: 1;
           /* Espacio mínimo bajo el header fijo (sin duplicar safe-area) */
-          padding-top: 0.5rem;
+          padding-top: 4.5rem;
           padding-bottom: 0.5rem;
           padding-left: 1rem;
           padding-right: 1rem;
           min-height: calc(100vh - 200px);
           /* Asegurar padding-bottom suficiente para que el footer no tape contenido */
-          padding-bottom: calc(2rem + 120px);
+          padding-bottom: calc(2rem);
         }
         @media (max-width: 768px) {
           .app-shell-content {
@@ -132,6 +132,27 @@ export default function AppShell() {
           padding-bottom: calc(2rem + env(safe-area-inset-bottom));
           /* Asegurar que el footer esté por encima del contenido pero debajo de modales */
           z-index: 10;
+        }
+        /* Estilos para escritorio: footer más compacto */
+        @media (min-width: 769px) {
+          .app-footer {
+            padding: 0.75rem 1.5rem;
+            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+          }
+          .app-footer-content {
+            gap: 1.5rem;
+          }
+          .app-footer-link {
+            font-size: 0.8125rem;
+            padding: 0.4rem 0.85rem;
+          }
+          .footer-separator {
+            height: 20px;
+          }
+          .join-cta-button {
+            font-size: 0.8125rem;
+            padding: 0.5rem 1rem;
+          }
         }
         @media (max-width: 768px) {
           .app-footer {
