@@ -88,8 +88,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         alignItems: 'center',
         justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        position: 'sticky',
-        top: 0,
+        // En WebView móvil el scroll puede afectar a los elementos sticky,
+        // así que dejamos el header en flujo normal para evitar saltos visuales.
+        position: 'relative',
         zIndex: 100,
         minHeight: '64px',
         /* Safe area top support */
@@ -100,12 +101,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         .nav-root {
           /* Asegurar que el header mantenga su tamaño constante */
           box-sizing: border-box;
-          will-change: transform;
         }
         @media (max-width: 768px) {
           .nav-root {
-            position: sticky !important;
-            top: 0 !important; bottom: auto; left: 0; right: 0;
+            /* En móvil dejamos de usar sticky para evitar glitches con el scroll en WebView */
+            position: relative !important;
+            top: auto !important;
             padding: .55rem .7rem !important;
             padding-top: calc(.55rem + env(safe-area-inset-top)) !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
