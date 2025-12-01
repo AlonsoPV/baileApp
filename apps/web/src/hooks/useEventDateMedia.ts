@@ -1,21 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
+import { resizeImageIfNeeded } from "../lib/imageResize";
 
 const BUCKET = "org-media";
 
 // Helper to upload to org-media bucket
 async function uploadEventDateFile(dateId: number, file: File): Promise<MediaItem> {
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const type: "image" | "video" = file.type.startsWith("image/") ? "image" : "video";
+  // Redimensionar imagen si es necesario (máximo 800px de ancho)
+  const processedFile = await resizeImageIfNeeded(file, 800);
+  
+  const ext = processedFile.name.split(".").pop()?.toLowerCase() || "bin";
+  const type: "image" | "video" = processedFile.type.startsWith("image/") ? "image" : "video";
   const path = `event-dates/${dateId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
-  console.log('[EventDateMedia] Uploading file:', { dateId, fileName: file.name, type, path });
+  console.log('[EventDateMedia] Uploading file:', { dateId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 
-  const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, {
+  const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
     cacheControl: "3600",
     upsert: false,
-    contentType: file.type || undefined,
+    contentType: processedFile.type || undefined,
   });
 
   if (error) {

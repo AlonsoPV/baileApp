@@ -6,6 +6,7 @@ export function useUnreadNotifications(userId?: string) {
   // Refs para trackear logs y evitar spam
   const hasLoggedPollingStart = React.useRef(false);
   const hasLoggedWarnings = React.useRef<Set<string>>(new Set());
+  const isInProduction = import.meta.env.MODE === 'production';
 
   // Exponer acción para marcar como leídas desde UI
   const markAllAsRead = async () => {
@@ -76,8 +77,9 @@ export function useUnreadNotifications(userId?: string) {
         }
       }, POLLING_INTERVAL);
       // Log solo la primera vez que se inicia polling (reducir spam)
-      if (import.meta.env.MODE === 'development' && !hasLoggedPollingStart.current) {
-        console.log('[useUnreadNotifications] Started polling fallback');
+      // Solo en desarrollo y solo una vez por sesión
+      if (!isInProduction && !hasLoggedPollingStart.current) {
+        console.log('[useUnreadNotifications] Started polling fallback (Realtime unavailable)');
         hasLoggedPollingStart.current = true;
       }
     };
@@ -144,16 +146,12 @@ export function useUnreadNotifications(userId?: string) {
               stopPolling();
               retryCount = 0;
               hasLoggedWarnings.current.clear(); // Reset warnings al reconectar exitosamente
-              // Log solo en desarrollo y solo la primera vez (reducir spam)
-              if (import.meta.env.MODE === 'development' && !hasLoggedWarnings.current.has('SUBSCRIBED')) {
-                console.log('[useUnreadNotifications] Realtime subscribed successfully');
-                hasLoggedWarnings.current.add('SUBSCRIBED');
-              }
+              // No loggear en producción para reducir ruido
             } else if (status === 'CHANNEL_ERROR') {
               // Error en el canal - usar polling como fallback
-              // Solo loggear una vez por tipo de error (reducir spam)
-              if (import.meta.env.MODE === 'development' && !hasLoggedWarnings.current.has('CHANNEL_ERROR')) {
-                console.warn('[useUnreadNotifications] Realtime CHANNEL_ERROR - falling back to polling');
+              // Solo loggear una vez por tipo de error y solo en desarrollo
+              if (!isInProduction && !hasLoggedWarnings.current.has('CHANNEL_ERROR')) {
+                console.warn('[useUnreadNotifications] Realtime connection error - using polling fallback');
                 hasLoggedWarnings.current.add('CHANNEL_ERROR');
               }
               startPolling();
@@ -166,12 +164,18 @@ export function useUnreadNotifications(userId?: string) {
                     subscribeToRealtime();
                   }
                 }, RETRY_DELAY * retryCount); // Backoff exponencial
+              } else {
+                // Después de MAX_RETRIES, dejar de intentar y usar solo polling
+                if (!isInProduction && !hasLoggedWarnings.current.has('CHANNEL_ERROR_MAX_RETRIES')) {
+                  console.warn('[useUnreadNotifications] Max retries reached for Realtime - using polling only');
+                  hasLoggedWarnings.current.add('CHANNEL_ERROR_MAX_RETRIES');
+                }
               }
             } else if (status === 'TIMED_OUT') {
               // Timeout - usar polling como fallback
-              // Solo loggear una vez por tipo de error (reducir spam)
-              if (import.meta.env.MODE === 'development' && !hasLoggedWarnings.current.has('TIMED_OUT')) {
-                console.warn('[useUnreadNotifications] Realtime TIMED_OUT - falling back to polling');
+              // Solo loggear una vez por tipo de error y solo en desarrollo
+              if (!isInProduction && !hasLoggedWarnings.current.has('TIMED_OUT')) {
+                console.warn('[useUnreadNotifications] Realtime timeout - using polling fallback');
                 hasLoggedWarnings.current.add('TIMED_OUT');
               }
               startPolling();
@@ -184,21 +188,40 @@ export function useUnreadNotifications(userId?: string) {
                     subscribeToRealtime();
                   }
                 }, RETRY_DELAY * retryCount);
+              } else {
+                // Después de MAX_RETRIES, dejar de intentar y usar solo polling
+                if (!isInProduction && !hasLoggedWarnings.current.has('TIMED_OUT_MAX_RETRIES')) {
+                  console.warn('[useUnreadNotifications] Max retries reached for Realtime - using polling only');
+                  hasLoggedWarnings.current.add('TIMED_OUT_MAX_RETRIES');
+                }
               }
             } else if (status === 'CLOSED') {
               // Canal cerrado - usar polling como fallback
-              // Solo loggear una vez por tipo de error (reducir spam)
-              if (import.meta.env.MODE === 'development' && !hasLoggedWarnings.current.has('CLOSED')) {
-                console.log('[useUnreadNotifications] Realtime CLOSED - falling back to polling');
+              // Solo loggear una vez por tipo de error y solo en desarrollo
+              // CLOSED puede ser normal cuando el componente se desmonta, así que solo loggear si no es esperado
+              if (!isInProduction && !hasLoggedWarnings.current.has('CLOSED') && active) {
+                console.log('[useUnreadNotifications] Realtime connection closed - using polling fallback');
                 hasLoggedWarnings.current.add('CLOSED');
               }
               startPolling();
+              
+              // Intentar reconectar solo si el componente sigue activo
+              if (active && retryCount < MAX_RETRIES) {
+                retryCount++;
+                retryTimeout = setTimeout(() => {
+                  if (active) {
+                    subscribeToRealtime();
+                  }
+                }, RETRY_DELAY * retryCount);
+              }
             }
           });
       } catch (error) {
         // Si falla la suscripción, usar polling como fallback
-        if (import.meta.env.MODE === 'development') {
-          console.warn('[useUnreadNotifications] Failed to subscribe to Realtime - falling back to polling:', error);
+        // Solo loggear en desarrollo y solo una vez
+        if (!isInProduction && !hasLoggedWarnings.current.has('SUBSCRIBE_ERROR')) {
+          console.warn('[useUnreadNotifications] Failed to subscribe to Realtime - using polling fallback');
+          hasLoggedWarnings.current.add('SUBSCRIBE_ERROR');
         }
         startPolling();
       }
@@ -224,10 +247,8 @@ export function useUnreadNotifications(userId?: string) {
         try {
           supabase.removeChannel(channel);
         } catch (error) {
-          // Ignorar errores al remover el canal
-          if (import.meta.env.MODE === 'development') {
-            console.warn('[useUnreadNotifications] Error removing channel:', error);
-          }
+          // Ignorar errores al remover el canal (puede ser normal si ya fue removido)
+          // No loggear para reducir ruido
         }
         channel = null;
       }

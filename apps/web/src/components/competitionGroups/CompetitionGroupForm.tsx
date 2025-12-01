@@ -667,7 +667,7 @@ export default function CompetitionGroupForm() {
                 Horarios de Entrenamiento
               </label>
               <textarea
-                value={formData.training_schedule}
+                value={formData.training_schedule || ''}
                 onChange={(e) => handleChange('training_schedule', e.target.value)}
                 rows={3}
                 className="form-textarea"

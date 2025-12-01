@@ -420,11 +420,13 @@ async function fetchPage(params: QueryParams, page: number) {
   };
 }
 
-export function useExploreQuery(params: QueryParams) {
+export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
+  const { enabled = true, ...queryParams } = params;
   return useInfiniteQuery({
-    queryKey: ["explore", params],
-    queryFn: ({ pageParam = 0 }) => fetchPage(params, pageParam as number),
+    queryKey: ["explore", queryParams],
+    queryFn: ({ pageParam = 0 }) => fetchPage(queryParams, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
+    enabled, // Solo ejecutar la query si enabled es true
   });
 }

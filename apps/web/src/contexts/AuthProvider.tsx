@@ -59,16 +59,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Intentar obtener sesión con timeout más corto
         const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('getSession timeout')), 7000)
-        );
+        let timeoutTriggered = false;
         
-        const { data, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            timeoutTriggered = true;
+            reject(new Error('getSession timeout'));
+          }, 7000);
+        });
+        
+        let result: Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        
+        try {
+          result = await Promise.race([
+            sessionPromise,
+            timeoutPromise
+          ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        } catch (raceError: any) {
+          // Si el timeout se disparó, continuar sin sesión
+          if (timeoutTriggered || raceError?.message?.includes('timeout')) {
+            if (!mounted) return;
+            console.warn('[AuthProvider] Timeout en getSession() (7s), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
+            setLoading(false);
+            setSession(null);
+            setUser(null);
+            useProfileMode.getState().setMode("usuario");
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+            return;
+          }
+          throw raceError;
+        }
         
         if (!mounted) return;
+        
+        const { data, error } = result;
         
         if (error) {
           // Si es un error de red bloqueado, intentar continuar sin sesión
@@ -105,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Si es un timeout o error de red bloqueado, continuar sin sesión
         if (err?.message?.includes('timeout') || err?.message?.includes('blocked') || err?.message?.includes('ERR_BLOCKED')) {
-          console.warn('[AuthProvider] Timeout o bloqueo en getSession(), continuando sin sesión:', err.message);
+          console.warn('[AuthProvider] Timeout o bloqueo en getSession(), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
           setLoading(false);
           setSession(null);
           setUser(null);

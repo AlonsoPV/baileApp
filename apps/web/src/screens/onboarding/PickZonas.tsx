@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, Chip } from '@ui/index';
 import { colors, typography, spacing, borderRadius } from '../../theme/colors';
 import { useTags } from '../../hooks/useTags';
@@ -26,25 +26,7 @@ export function PickZonas() {
   const qc = useQueryClient();
   const { groups: zonaGroups } = useZonaCatalogGroups(allTags);
 
-  // Mutación para marcar onboarding como completo (validación directa en DB)
-  const finishOnboarding = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error("Usuario no autenticado");
-      const { error } = await supabase
-        .from("profiles_user")
-        .update({ onboarding_complete: true, onboarding_completed: true })
-        .eq("user_id", user.id);
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      // 🔁 Asegura que el guard y el perfil vean el cambio actualizado
-      qc.setQueryData(["onboarding-status", user?.id], { onboarding_complete: true });
-      await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
-      await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      // Después de completar onboarding, ir a Explorar (sin pedir PIN)
-      navigate(routes.app.explore, { replace: true });
-    }
-  });
+  // Ya no necesitamos finishOnboarding separado, se hace en handleSubmit
 
   const toggleZona = (id: number) => {
     // Para usuarios con rol "usuario", solo permitir una zona
@@ -69,15 +51,37 @@ export function PickZonas() {
     setIsLoading(true);
 
     try {
+      // 1. Guardar zonas primero
       const updates = mergeProfile(profile as any, {
         zonas: selectedIds,
       });
-
       await updateProfileFields(updates);
-      showToast('Zonas guardadas exitosamente 📍', 'success');
+      
+      // 2. Marcar onboarding como completo (operación rápida y directa)
+      if (user?.id) {
+        const { error: completeError } = await supabase
+          .from("profiles_user")
+          .update({ onboarding_complete: true })
+          .eq("user_id", user.id)
+          .select()
+          .single();
+        
+        if (completeError) {
+          console.warn("[PickZonas] Error marking onboarding complete:", completeError);
+          // No fallar si esto falla, las zonas ya se guardaron
+        } else {
+          // Actualizar cache local inmediatamente para mejor UX
+          qc.setQueryData(["onboarding-status", user.id], { onboarding_complete: true });
+          qc.invalidateQueries({ queryKey: ["profile", "me", user.id] });
+        }
+      }
+      
+      showToast('¡Onboarding completado! 🎉', 'success');
 
-      // Validar y marcar onboarding como completo directamente en la tabla
-      await finishOnboarding.mutateAsync();
+      // Navegar después de un breve delay para que el usuario vea el mensaje
+      setTimeout(() => {
+        navigate(routes.app.explore, { replace: true });
+      }, 500);
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');
@@ -134,14 +138,25 @@ export function PickZonas() {
               marginBottom: spacing[2],
             }}>
               <span>3 / 3</span>
-              <span>Zonas donde bailas</span>
+              <span>Zona donde vives</span>
             </div>
             <h2 style={{ fontSize: 'clamp(1.6rem, 2vw, 2.1rem)', fontWeight: 800, marginBottom: spacing[1] }}>
-              ¿Dónde vives tu baile? 📍
+              ¿Dónde vives? 📍
             </h2>
             <p style={{ color: colors.gray[400], fontSize: '0.95rem' }}>
-              Selecciona la zona donde sueles bailar o te interesa descubrir. Esto personaliza tus recomendaciones.
+              Elige una zona única de donde vives. Esto nos ayuda a personalizar tus recomendaciones y conectarte con eventos y clases cercanos a ti.
             </p>
+            <div style={{
+              marginTop: spacing[2],
+              padding: spacing[2],
+              background: 'rgba(234, 179, 8, 0.15)',
+              border: '1px solid rgba(234, 179, 8, 0.3)',
+              borderRadius: borderRadius.md,
+              fontSize: '0.875rem',
+              color: '#fde047',
+            }}>
+              ⚠️ Solo puedes elegir una zona. Puedes cambiarla después desde tu perfil.
+            </div>
           </header>
 
           {loadingTags ? (
@@ -161,8 +176,8 @@ export function PickZonas() {
               </div>
 
               <div style={{ color: colors.gray[400], fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <span>{selectedIds.length > 0 ? '1 zona seleccionada' : 'Ninguna zona seleccionada'}</span>
-                <span style={{ color: colors.gray[500] }}>Puedes editarla después desde tu perfil</span>
+                <span>{selectedIds.length > 0 ? '✅ Zona seleccionada' : '⚠️ Debes seleccionar una zona para continuar'}</span>
+                <span style={{ color: colors.gray[500] }}>Puedes cambiarla después desde tu perfil</span>
               </div>
 
               {error && (

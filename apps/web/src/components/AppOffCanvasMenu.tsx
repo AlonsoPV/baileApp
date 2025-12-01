@@ -17,7 +17,7 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/');
+      navigate('/auth/login');
       onClose();
     } catch (error) {
       console.error('[AppOffCanvasMenu] Error al cerrar sesión:', error);

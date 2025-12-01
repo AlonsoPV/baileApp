@@ -18,7 +18,7 @@ export default function BasicInfoForm({ value, onChange }: { value: BasicInfo; o
         <textarea
           placeholder="Biografía"
           rows={3}
-          value={value.bio}
+          value={value.bio || ''}
           onChange={(e)=>onChange({ bio: e.target.value })}
           style={{
             width: '100%', padding: '10px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)',

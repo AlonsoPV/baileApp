@@ -102,10 +102,13 @@ export default function BrandProfileLive() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
           <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-            Cargando perfil...
+            Estamos cargando tu perfil...
           </h2>
-          <p style={{ opacity: 0.7 }}>
+          <p style={{ opacity: 0.7, marginBottom: spacing[2] }}>
             Redirigiendo a edición para crear tu perfil de marca
+          </p>
+          <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
           </p>
         </div>
       </div>

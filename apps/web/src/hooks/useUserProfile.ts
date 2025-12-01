@@ -44,8 +44,10 @@ export function useUserProfile() {
     },
     staleTime: 1000 * 30, // 30 segundos - perfil puede cambiar pero no tan frecuentemente
     gcTime: 1000 * 60 * 5, // 5 minutos en cache
-    retry: 2,
-    retryDelay: 1000,
+    retry: 1, // Reducir retries para onboarding más rápido
+    retryDelay: 500, // Reducir delay entre retries
+    refetchOnWindowFocus: false, // No refetch automático en onboarding
+    refetchOnMount: false, // Usar cache si está disponible
   });
 
   const updateFields = useMutation({
@@ -80,45 +82,44 @@ export function useUserProfile() {
 
         // Diagnóstico en desarrollo
         if (import.meta.env.MODE === "development") {
-          console.log("[useUserProfile] PREV:", prev);
-          console.log("[useUserProfile] NEXT:", normalizedCandidate);
           console.log("[useUserProfile] PATCH:", patch);
         }
 
-        // Usar RPC merge para actualizaciones seguras
-        console.log("[useUserProfile] Llamando a merge_profiles_user con:", {
-          p_user_id: user.id,
-          p_patch: patch
-        });
-        
-        const { error } = await supabase.rpc("merge_profiles_user", {
+        // Usar RPC merge para actualizaciones seguras (ya hace upsert internamente)
+        const { error: rpcError } = await supabase.rpc("merge_profiles_user", {
           p_user_id: user.id,
           p_patch: patch,
         });
         
-        if (error) {
-          console.warn("[useUserProfile] RPC merge_profiles_user failed:", error);
+        if (rpcError) {
+          // Si el RPC falla, intentar upsert directo como fallback
+          if (import.meta.env.MODE === "development") {
+            console.warn("[useUserProfile] RPC failed, trying direct upsert:", rpcError);
+          }
+          const { error: upsertError } = await supabase
+            .from("profiles_user")
+            .upsert({ user_id: user.id, ...(patch as any) }, { onConflict: 'user_id' });
+          if (upsertError) {
+            console.error("[useUserProfile] Upsert fallback failed:", upsertError);
+            throw upsertError;
+          }
         }
-
-        // Garantizar persistencia incluso si no existe la fila o el RPC ignoró campos
-        const { error: upsertError } = await supabase
-          .from("profiles_user")
-          .upsert({ user_id: user.id, ...(patch as any) }, { onConflict: 'user_id' });
-        if (upsertError) {
-          console.error("[useUserProfile] Upsert failed:", upsertError);
-          throw upsertError;
-        }
-        
-        console.log("[useUserProfile] Profile updated successfully");
       } catch (e: any) {
         console.error("[useUserProfile] Caught error:", e);
         throw e;
       }
     },
     onSuccess: async () => {
-      console.log("[useUserProfile] Invalidating profile cache");
-      await qc.invalidateQueries({ queryKey: KEY(user?.id) });
-      await qc.invalidateQueries({ queryKey: ["profile", "media", user?.id] });
+      // Invalidar queries en paralelo para mejor rendimiento (no bloquea la UI)
+      Promise.all([
+        qc.invalidateQueries({ queryKey: KEY(user?.id) }),
+        qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] }),
+        qc.invalidateQueries({ queryKey: ["profile", "media", user?.id] }),
+      ]).catch(err => {
+        if (import.meta.env.MODE === "development") {
+          console.warn("[useUserProfile] Error invalidating queries:", err);
+        }
+      });
     },
   });
 

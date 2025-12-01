@@ -5,6 +5,7 @@ import { useChallengeCreate } from '../../hooks/useChallenges';
 import { useToast } from '../../components/Toast';
 import RitmosChips from '../../components/RitmosChips';
 import { supabase } from '../../lib/supabase';
+import { resizeImageIfNeeded } from '../../lib/imageResize';
 
 // ⬇️ Estilos compartidos
 import '../../styles/event-public.css';
@@ -79,12 +80,14 @@ export default function ChallengeNew() {
       // Paso 2: Subir archivo de portada si existe
       if (pendingCoverFile) {
         console.log('📸 Subiendo imagen de portada...');
-        const ext = pendingCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        // Redimensionar imagen si es necesario (máximo 800px de ancho)
+        const processedCoverFile = await resizeImageIfNeeded(pendingCoverFile, 800);
+        const ext = processedCoverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
         const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('media').upload(path, pendingCoverFile, {
+        const { error: upErr } = await supabase.storage.from('media').upload(path, processedCoverFile, {
           upsert: true,
           cacheControl: '3600',
-          contentType: pendingCoverFile.type || undefined
+          contentType: processedCoverFile.type || undefined
         });
         if (upErr) {
           console.error('❌ Error subiendo portada:', upErr);

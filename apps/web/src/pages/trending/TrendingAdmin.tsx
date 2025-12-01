@@ -20,6 +20,7 @@ import {
   type ListConfig,
 } from "@/lib/trending";
 import { supabase } from "@/lib/supabase";
+import { resizeImageIfNeeded } from "@/lib/imageResize";
 import "@/styles/event-public.css";
 import { useToast } from "@/components/Toast";
 import RitmosChips from "@/components/RitmosChips";
@@ -101,9 +102,11 @@ export default function TrendingAdmin() {
       // Subir portada si aplica
       let coverUrl: string | null = null;
       if (coverFile) {
-        const ext = coverFile.name.split('.')?.pop();
+        // Redimensionar imagen si es necesario (máximo 800px de ancho)
+        const processedCoverFile = await resizeImageIfNeeded(coverFile, 800);
+        const ext = processedCoverFile.name.split('.')?.pop();
         const key = `trending-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('media').upload(key, coverFile, { upsert: true });
+        const { error: upErr } = await supabase.storage.from('media').upload(key, processedCoverFile, { upsert: true });
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
         coverUrl = pub.publicUrl;

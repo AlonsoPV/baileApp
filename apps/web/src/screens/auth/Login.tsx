@@ -244,6 +244,20 @@ export function Login() {
             .login-grid {
               grid-template-columns: 1fr !important;
             }
+            .login-home-button {
+              top: ${spacing[2]} !important;
+              right: ${spacing[2]} !important;
+              padding: ${spacing[1]} ${spacing[2]} !important;
+              font-size: 0.75rem !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .login-home-button {
+              top: ${spacing[1]} !important;
+              right: ${spacing[1]} !important;
+              padding: ${spacing[1]} ${spacing[2]} !important;
+              font-size: 0.7rem !important;
+            }
           }
           .tab-button {
             transition: all 0.3s ease;
@@ -331,8 +345,45 @@ export function Login() {
               borderRadius: borderRadius['2xl'],
               padding: spacing[4],
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
             }}
           >
+            {/* Botón para ir a inicio */}
+            <button
+              type="button"
+              className="login-home-button"
+              onClick={() => navigate('/')}
+              style={{
+                position: 'absolute',
+                top: spacing[3],
+                right: spacing[3],
+                padding: `${spacing[2]} ${spacing[3]}`,
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: borderRadius.md,
+                color: colors.gray[200],
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing[1],
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              🏠 Ir a inicio
+            </button>
           {/* Pestaña: Inicio de Sesión */}
           {activeTab === 'login' && (
             <>

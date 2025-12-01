@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import HorizontalSlider from '../../components/explore/HorizontalSlider';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
+import { resizeImageIfNeeded } from '../../lib/imageResize';
 import RitmosChips from '../../components/RitmosChips';
 import { useUserMeta } from '../../hooks/useUserMeta';
 
@@ -152,10 +153,15 @@ export default function ChallengeDetail() {
   };
 
   const uploadToChallengeBucket = async (file: File, path: string) => {
-    const { error } = await supabase.storage.from('media').upload(path, file, {
+    // Redimensionar imagen si es necesario (máximo 800px de ancho) - solo para imágenes
+    const processedFile = file.type.startsWith('image/') 
+      ? await resizeImageIfNeeded(file, 800)
+      : file;
+    
+    const { error } = await supabase.storage.from('media').upload(path, processedFile, {
       upsert: true,
       cacheControl: '3600',
-      contentType: file.type || undefined
+      contentType: processedFile.type || undefined
     });
     if (error) throw error;
     const { data: pub } = supabase.storage.from('media').getPublicUrl(path);

@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
-import { useAuth } from '@/contexts/AuthProvider';
-import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
+import { PHOTO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
-import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import { colors } from "../../theme/colors";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { BioSection } from "../../components/profile/BioSection";
@@ -19,24 +16,396 @@ import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 
-// Componente de Carrusel
-const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+const STYLES = `
+  .profile-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  @media (max-width: 768px) {
+    .page-shell { padding-top: 64px; }
+  }
+  .profile-banner {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .banner-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .question-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .events-section {
+    width: 100%;
+  }
+  .events-section > div:first-child {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .profile-banner h2,
+  .profile-banner h3,
+  .profile-container h2,
+  .profile-container h3 {
+    color: #fff;
+    text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+  }
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .carousel-container {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .carousel-main {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.2);
+    max-height: 480px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carousel-thumbnails {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .carousel-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+    transition: all 0.2s;
+  }
+  .carousel-thumbnail.active {
+    border: 3px solid #E53935;
+  }
+  .carousel-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+  }
+  .carousel-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: translateY(-50%) scale(1.1);
+  }
+  .carousel-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .carousel-nav-prev {
+    left: 1rem;
+  }
+  .carousel-nav-next {
+    right: 1rem;
+  }
+  .carousel-counter {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  
+  .glass-card-container {
+    opacity: 1;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+    backdrop-filter: blur(10px);
+    transform: none;
+  }
+  
+  .community-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.25) transparent;
+    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  }
+  .community-scroll::-webkit-scrollbar { height: 8px; }
+  .community-scroll::-webkit-scrollbar-track { background: transparent; }
+  .community-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.22);
+    border-radius: 999px;
+  }
+  .community-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,.35);
+  }
+  
+  @media (max-width: 1024px) {
+    .events-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+      gap: 1.25rem !important;
+    }
+  }
+  @media (max-width: 768px) {
+    .profile-container {
+      max-width: 100% !important;
+      padding: 0rem !important;
+    }
+    .profile-banner {
+      border-radius: 0 !important;
+      padding: 1.5rem 1rem !important;
+      margin: 0 !important;
+    }
+    .banner-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+      justify-items: center !important;
+      text-align: center !important;
+    }
+    .banner-grid h1 {
+      font-size: 2.6rem !important;
+      line-height: 1.2 !important;
+    }
+    .banner-avatar {
+      width: 200px !important;
+      height: 200px !important;
+    }
+    .banner-avatar-fallback {
+      font-size: 4.25rem !important;
+    }
+    .question-section {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+    .question-section h3 {
+      font-size: 1.1rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    .events-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+    .events-section > div:first-child {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.75rem !important;
+    }
+    .events-section > div:first-child > div:last-child {
+      align-self: flex-start !important;
+    }
+    .carousel-container {
+      max-width: 100% !important;
+      padding: 0 1rem !important;
+    }
+    .carousel-main {
+      max-height: 400px !important;
+      aspect-ratio: 3 / 4 !important;
+    }
+    .carousel-thumbnails {
+      gap: 0.25rem !important;
+      margin-top: 0.75rem !important;
+    }
+    .carousel-thumbnail {
+      width: 50px !important;
+      height: 50px !important;
+    }
+    .carousel-nav-btn {
+      width: 40px !important;
+      height: 40px !important;
+      font-size: 1rem !important;
+    }
+    .carousel-nav-prev {
+      left: 0.5rem !important;
+    }
+    .carousel-nav-next {
+      right: 0.5rem !important;
+    }
+    .carousel-counter {
+      top: 0.5rem !important;
+      right: 0.5rem !important;
+      padding: 0.25rem 0.75rem !important;
+      font-size: 0.75rem !important;
+    }
+    .section-title {
+      font-size: 1.25rem !important;
+      margin-bottom: 1rem !important;
+    }
+    .section-content {
+      padding: 1rem !important;
+    }
+    .bio-section {
+      padding: 1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .events-section {
+      padding: 1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .gallery-section {
+      padding: 1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .glass-card-container {
+      padding: 1rem !important;
+      margin-bottom: 1rem !important;
+      border-radius: 16px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .banner-grid h1 {
+      font-size: 2.1rem !important;
+    }
+    .banner-avatar {
+      width: 170px !important;
+      height: 170px !important;
+    }
+    .banner-avatar-fallback {
+      font-size: 4rem !important;
+    }
+    .carousel-main {
+      max-height: 350px !important;
+    }
+    .carousel-thumbnail {
+      width: 45px !important;
+      height: 45px !important;
+    }
+    .carousel-nav-btn {
+      width: 36px !important;
+      height: 36px !important;
+      font-size: 0.9rem !important;
+    }
+    .section-title {
+      font-size: 1.1rem !important;
+    }
+    .glass-card-container {
+      padding: 0.75rem !important;
+      border-radius: 12px !important;
+    }
+    .events-grid {
+      gap: 0.75rem !important;
+    }
+    .events-section > div:first-child {
+      margin-bottom: 1rem !important;
+    }
+  }
+
+  /* Ajustes finos solo para pantallas muy pequeñas (móviles ≤ 430px) */
+  @media (max-width: 430px) {
+    .profile-container {
+      padding: 0 1rem !important;
+    }
+    .profile-banner {
+      max-width: 100% !important;
+    }
+    .banner-grid h1 {
+      font-size: 1.9rem !important;
+      line-height: 1.2 !important;
+    }
+    .banner-avatar {
+      width: 150px !important;
+      height: 150px !important;
+    }
+    .section-title {
+      font-size: 1rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    .question-section {
+      gap: 0.75rem !important;
+    }
+    .glass-card-container {
+      padding: 0.75rem 0.9rem !important;
+      margin-bottom: 0.85rem !important;
+      border-radius: 12px !important;
+    }
+    .events-section {
+      padding: 0.85rem !important;
+    }
+    .events-section .section-title {
+      font-size: 1rem !important;
+    }
+    .events-grid {
+      gap: 0.7rem !important;
+    }
+    .events-section > div:first-child {
+      margin-bottom: 0.9rem !important;
+    }
+    /* Botones dentro de Eventos de Interés más compactos y sin pegarse a los bordes */
+    .events-section button {
+      padding: 0.6rem 1.1rem !important;
+      border-radius: 10px !important;
+      font-size: 0.85rem !important;
+    }
+  }
+`;
+
+const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const nextPhoto = () => {
+  const nextPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
-  };
+  }, [photos.length]);
 
-  const prevPhoto = () => {
+  const prevPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
+  }, [photos.length]);
 
-  const goToPhoto = (index: number) => {
+  const goToPhoto = useCallback((index: number) => {
     setCurrentIndex(index);
-  };
+  }, []);
+
+  const handleFullscreenOpen = useCallback(() => {
+    setIsFullscreen(true);
+  }, []);
+
+  const handleFullscreenClose = useCallback(() => {
+    setIsFullscreen(false);
+  }, []);
 
   if (photos.length === 0) return null;
+
+  const hasMultiplePhotos = photos.length > 1;
 
   return (
     <div
@@ -45,7 +414,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       data-test-id="user-profile-carousel"
       className="carousel-container"
     >
-      {/* Carrusel Principal */}
       <div
         id="user-profile-carousel-main"
         data-baile-id="user-profile-carousel-main"
@@ -75,17 +443,15 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               objectFit: 'cover',
               cursor: 'pointer'
             }}
-            onClick={() => setIsFullscreen(true)}
+            onClick={handleFullscreenOpen}
           />
         </motion.div>
 
-        {/* Contador de fotos */}
         <div className="carousel-counter">
           {currentIndex + 1} / {photos.length}
         </div>
 
-        {/* Botones de navegación */}
-        {photos.length > 1 && (
+        {hasMultiplePhotos && (
           <>
             <button
               id="user-profile-carousel-prev"
@@ -93,6 +459,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               data-test-id="user-profile-carousel-prev"
               onClick={prevPhoto}
               className="carousel-nav-btn carousel-nav-prev"
+              disabled={!hasMultiplePhotos}
             >
               ‹
             </button>
@@ -102,6 +469,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               data-test-id="user-profile-carousel-next"
               onClick={nextPhoto}
               className="carousel-nav-btn carousel-nav-next"
+              disabled={!hasMultiplePhotos}
             >
               ›
             </button>
@@ -109,8 +477,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         )}
       </div>
 
-      {/* Miniaturas */}
-      {photos.length > 1 && (
+      {hasMultiplePhotos && (
         <div
           id="user-profile-carousel-thumbnails"
           data-baile-id="user-profile-carousel-thumbnails"
@@ -142,7 +509,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         </div>
       )}
 
-      {/* Modal de pantalla completa */}
       {isFullscreen && (
         <div
           style={{
@@ -158,7 +524,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             justifyContent: 'center',
             padding: '2rem'
           }}
-          onClick={() => setIsFullscreen(false)}
+          onClick={handleFullscreenClose}
         >
           <div style={{
             position: 'relative',
@@ -177,9 +543,8 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               }}
             />
 
-            {/* Botón de cerrar */}
             <button
-              onClick={() => setIsFullscreen(false)}
+              onClick={handleFullscreenClose}
               style={{
                 position: 'absolute',
                 top: '1rem',
@@ -205,9 +570,9 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       )}
     </div>
   );
-};
+});
 
-// Usar el nuevo sistema de colores importado
+CarouselComponent.displayName = 'CarouselComponent';
 
 export const UserProfileLive: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -215,12 +580,10 @@ export const UserProfileLive: React.FC = () => {
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
 
-  // Fetch public user profile
   const { data: profile, isLoading } = useQuery({
     queryKey: ['user-public', userId],
     enabled: !!userId,
     queryFn: async () => {
-      // Usar vista pública para mejor seguridad (solo perfiles completos)
       const { data, error } = await supabase
         .from('v_user_public')
         .select('*')
@@ -231,7 +594,6 @@ export const UserProfileLive: React.FC = () => {
     }
   });
 
-  // Evitar loops infinitos de "Cargando perfil..." en WebView
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   useEffect(() => {
@@ -239,13 +601,12 @@ export const UserProfileLive: React.FC = () => {
       setLoadingTimedOut(false);
       const timeoutId = setTimeout(() => {
         setLoadingTimedOut(true);
-      }, 15000); // 15s máximo
+      }, 15000);
       return () => clearTimeout(timeoutId);
     }
     setLoadingTimedOut(false);
   }, [isLoading, userId]);
 
-  // Fetch RSVPs for this user
   const { data: rsvpEvents } = useQuery({
     queryKey: ['user-rsvps', userId],
     enabled: !!userId,
@@ -260,16 +621,14 @@ export const UserProfileLive: React.FC = () => {
     }
   });
 
-  // Solo mostrar fechas disponibles (no pasadas)
   const today = React.useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
 
-  const isAvailableEventDate = (evento: any) => {
+  const isAvailableEventDate = React.useCallback((evento: any) => {
     if (!evento) return false;
-    // Si es recurrente por día de la semana, considerarlo siempre disponible
     if (typeof (evento as any).dia_semana === 'number') return true;
     const raw = (evento as any).fecha;
     if (!raw) return false;
@@ -283,11 +642,11 @@ export const UserProfileLive: React.FC = () => {
     } catch {
       return true;
     }
-  };
+  }, [today]);
 
-  const availableRsvpEvents = (rsvpEvents || []).filter((r: any) =>
-    isAvailableEventDate(r.events_date)
-  );
+  const availableRsvpEvents = React.useMemo(() => {
+    return (rsvpEvents || []).filter((r: any) => isAvailableEventDate(r.events_date));
+  }, [rsvpEvents, isAvailableEventDate]);
 
   const [session, setSession] = useState<any>(null);
 
@@ -317,8 +676,7 @@ export const UserProfileLive: React.FC = () => {
 
   const safeMedia = profile?.media || [];
 
-  // Helper to convert Supabase storage paths to public URLs
-  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
+  const toSupabasePublicUrl = React.useCallback((maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;
     const v = String(maybePath).trim();
     if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
@@ -333,34 +691,23 @@ export const UserProfileLive: React.FC = () => {
       }
     }
     return v;
-  };
+  }, []);
 
-  // Get avatar URL (prioritize p1 media slot for consistency)
-  const avatarUrl = (() => {
+  const avatarUrl = React.useMemo(() => {
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) return p1.url; // Ya viene como URL pública
+    if (p1?.url) return p1.url;
     if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
     const avatar = getMediaBySlot(safeMedia as any, 'avatar');
     if (avatar?.url) return avatar.url;
     return undefined;
-  })();
+  }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
-  // Get tag names from IDs
-  const getRitmoNombres = () => {
-    if (!allTags || !profile?.ritmos) return [];
-    const ritmos = profile.ritmos
-      .map(id => allTags.find(tag => tag.id === id && tag.tipo === 'ritmo'))
-      .filter(Boolean)
-      .map(tag => tag!.nombre);
-    return ritmos;
-  };
-
-
-  // Get photos for carousel
-  const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(safeMedia as any, slot))
-    .filter(item => item && item.kind === 'photo')
-    .map(item => item!.url);
+  const carouselPhotos = React.useMemo(() => {
+    return PHOTO_SLOTS
+      .map(slot => getMediaBySlot(safeMedia as any, slot))
+      .filter(item => item && item.kind === 'photo')
+      .map(item => item!.url);
+  }, [safeMedia]);
 
   const profileUserId = profile?.user_id || profile?.id;
   const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
@@ -391,62 +738,77 @@ export const UserProfileLive: React.FC = () => {
       accent: "linear-gradient(120deg, rgba(251,113,133,0.7), rgba(168,85,247,0.7))",
     },
   ];
-  const goToProfile = (id?: string) => {
+
+  const goToProfile = useCallback((id?: string) => {
     if (id) navigate(`/u/${id}`);
-  };
+  }, [navigate]);
 
   if (isLoading && !loadingTimedOut) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div>
-          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⏳</div>
-          <p>Cargando perfil...</p>
+      <>
+        <style>{STYLES}</style>
+        <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div>
+            <div style={{ fontSize: '2rem', marginBottom: 16 }}>⏳</div>
+            <div style={{ textAlign: 'center', maxWidth: '400px', padding: '0 16px' }}>
+              <p style={{ marginBottom: '8px' }}>Estamos cargando el perfil...</p>
+              <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                Si tarda mucho, intenta refrescar la página para una carga más rápida.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (isLoading && loadingTimedOut) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ maxWidth: 360 }}>
-          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
-          <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil.</p>
-          <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
-            Revisa tu conexión a internet e inténtalo de nuevo.
-          </p>
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.reload();
-              }
-            }}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 999,
-              border: 'none',
-              background: 'linear-gradient(135deg, #E53935, #FB8C00)',
-              color: '#fff',
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Reintentar
-          </button>
+      <>
+        <style>{STYLES}</style>
+        <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ maxWidth: 360 }}>
+            <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
+            <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil.</p>
+            <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
+              Revisa tu conexión a internet e inténtalo de nuevo.
+            </p>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 999,
+                border: 'none',
+                background: 'linear-gradient(135deg, #E53935, #FB8C00)',
+                color: '#fff',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Reintentar
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!profile) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div>
-          <div style={{ fontSize: '2rem', marginBottom: 16 }}>❌</div>
-          <p>Perfil no encontrado</p>
+      <>
+        <style>{STYLES}</style>
+        <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div>
+            <div style={{ fontSize: '2rem', marginBottom: 16 }}>❌</div>
+            <p>Perfil no encontrado</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -457,24 +819,19 @@ export const UserProfileLive: React.FC = () => {
       const text = `Mira el perfil de ${profile?.display_name || 'usuario'}`;
       const navAny = (navigator as any);
       
-      // Intentar usar Web Share API (móvil)
       if (navAny && typeof navAny.share === 'function') {
         try {
           await navAny.share({ title, text, url });
         } catch (shareError: any) {
-          // Si el usuario cancela el share, no hacer nada
           if (shareError.name === 'AbortError') return;
-          // Si falla, intentar copiar al portapapeles
           throw shareError;
         }
       } else {
-        // Fallback: Copiar al portapapeles (escritorio)
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(url);
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         } else {
-          // Fallback antiguo para navegadores sin clipboard API
           const textArea = document.createElement('textarea');
           textArea.value = url;
           textArea.style.position = 'fixed';
@@ -489,7 +846,6 @@ export const UserProfileLive: React.FC = () => {
       }
     } catch (error) {
       console.error('Error al compartir:', error);
-      // Mostrar mensaje de error al usuario
       alert('No se pudo copiar el enlace. Intenta copiar la URL manualmente desde la barra de direcciones.');
     }
   };
@@ -501,9 +857,7 @@ export const UserProfileLive: React.FC = () => {
       return;
     }
 
-    // Refrescar contadores y listas después de seguir/dejar de seguir
     if (typeof result?.following === 'boolean') {
-      // Actualización optimista local
       setCounts((prev) => ({
         following: prev.following,
         followers: Math.max(
@@ -512,7 +866,6 @@ export const UserProfileLive: React.FC = () => {
         ),
       }));
       
-      // Refrescar datos desde el servidor después de un breve delay
       setTimeout(() => {
         refetchCounts();
         refetchLists();
@@ -522,361 +875,16 @@ export const UserProfileLive: React.FC = () => {
 
   return (
     <>
-      <style>{`
-        .profile-container {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        @media (max-width: 768px) {
-          .page-shell { padding-top: 64px; }
-        }
-        .profile-banner {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        .banner-grid {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 3rem;
-          align-items: center;
-        }
-        .question-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem;
-          align-items: center;
-        }
-        .events-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 1.5rem;
-        }
-        .events-section {
-          width: 100%;
-        }
-        .events-section > div:first-child {
-          flex-wrap: wrap;
-          gap: 0.75rem;
-        }
-        .profile-banner h2,
-        .profile-banner h3,
-        .profile-container h2,
-        .profile-container h3 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .carousel-container {
-          position: relative;
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-        .carousel-main {
-          position: relative;
-          aspect-ratio: 4 / 5;
-          border-radius: 16px;
-          overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          background: rgba(0, 0, 0, 0.2);
-          max-height: 480px;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .carousel-thumbnails {
-          display: flex;
-          gap: 0.5rem;
-          margin-top: 1rem;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-        .carousel-thumbnail {
-          width: 60px;
-          height: 60px;
-          border-radius: 8px;
-          overflow: hidden;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          cursor: pointer;
-          background: transparent;
-          padding: 0;
-          transition: all 0.2s;
-        }
-        .carousel-thumbnail.active {
-          border: 3px solid #E53935;
-        }
-        .carousel-nav-btn {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 1.25rem;
-          transition: all 0.2s;
-        }
-        .carousel-nav-btn:hover {
-          background: rgba(0, 0, 0, 0.9);
-          transform: translateY(-50%) scale(1.1);
-        }
-        .carousel-nav-prev {
-          left: 1rem;
-        }
-        .carousel-nav-next {
-          right: 1rem;
-        }
-        .carousel-counter {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 20px;
-          font-size: 0.875rem;
-          font-weight: 600;
-        }
-        
-        .glass-card-container {
-          opacity: 1;
-          margin-bottom: 2rem;
-          padding: 2rem;
-          text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
-        }
-        
-        @media (max-width: 1024px) {
-          .events-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-            gap: 1.25rem !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .profile-container {
-            max-width: 100% !important;
-            padding: 0rem !important;
-          }
-          .profile-banner {
-            border-radius: 0 !important;
-            padding: 1.5rem 1rem !important;
-            margin: 0 !important;
-          }
-          .banner-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1.5rem !important;
-            justify-items: center !important;
-            text-align: center !important;
-          }
-          .banner-grid h1 {
-            font-size: 2.6rem !important;
-            line-height: 1.2 !important;
-          }
-          .banner-avatar {
-            width: 200px !important;
-            height: 200px !important;
-          }
-          .banner-avatar-fallback {
-            font-size: 4.25rem !important;
-          }
-          .question-section {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .question-section h3 {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .events-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .events-section > div:first-child {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .events-section > div:first-child > div:last-child {
-            align-self: flex-start !important;
-          }
-          .carousel-container {
-            max-width: 100% !important;
-            padding: 0 1rem !important;
-          }
-          .carousel-main {
-            max-height: 400px !important;
-            aspect-ratio: 3 / 4 !important;
-          }
-          .carousel-thumbnails {
-            gap: 0.25rem !important;
-            margin-top: 0.75rem !important;
-          }
-          .carousel-thumbnail {
-            width: 50px !important;
-            height: 50px !important;
-          }
-          .carousel-nav-btn {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1rem !important;
-          }
-          .carousel-nav-prev {
-            left: 0.5rem !important;
-          }
-          .carousel-nav-next {
-            right: 0.5rem !important;
-          }
-          .carousel-counter {
-            top: 0.5rem !important;
-            right: 0.5rem !important;
-            padding: 0.25rem 0.75rem !important;
-            font-size: 0.75rem !important;
-          }
-          .section-title {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .section-content {
-            padding: 1rem !important;
-          }
-          .bio-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          .events-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          .gallery-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          .glass-card-container {
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 16px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .banner-grid h1 {
-            font-size: 2.1rem !important;
-          }
-          .banner-avatar {
-            width: 170px !important;
-            height: 170px !important;
-          }
-          .banner-avatar-fallback {
-            font-size: 4rem !important;
-          }
-          .carousel-main {
-            max-height: 350px !important;
-          }
-          .carousel-thumbnail {
-            width: 45px !important;
-            height: 45px !important;
-          }
-          .carousel-nav-btn {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 0.9rem !important;
-          }
-          .section-title {
-            font-size: 1.1rem !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem !important;
-            border-radius: 12px !important;
-          }
-          .events-grid {
-            gap: 0.75rem !important;
-          }
-          .events-section > div:first-child {
-            margin-bottom: 1rem !important;
-          }
-        }
-
-        /* Ajustes finos solo para pantallas muy pequeñas (móviles ≤ 430px) */
-        @media (max-width: 430px) {
-          .profile-container {
-            padding: 0 1rem !important;
-          }
-          .profile-banner {
-            max-width: 100% !important;
-          }
-          .banner-grid h1 {
-            font-size: 1.9rem !important;
-            line-height: 1.2 !important;
-          }
-          .banner-avatar {
-            width: 150px !important;
-            height: 150px !important;
-          }
-          .section-title {
-            font-size: 1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .question-section {
-            gap: 0.75rem !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem 0.9rem !important;
-            margin-bottom: 0.85rem !important;
-            border-radius: 12px !important;
-          }
-          .events-section {
-            padding: 0.85rem !important;
-          }
-          .events-section .section-title {
-            font-size: 1rem !important;
-          }
-          .events-grid {
-            gap: 0.7rem !important;
-          }
-          .events-section > div:first-child {
-            margin-bottom: 0.9rem !important;
-          }
-          /* Botones dentro de Eventos de Interés más compactos y sin pegarse a los bordes */
-          .events-section button {
-            padding: 0.6rem 1.1rem !important;
-            border-radius: 10px !important;
-            font-size: 0.85rem !important;
-          }
-        }
-      `}</style>
+      <style>{STYLES}</style>
       <div className="page-shell" style={{
         position: 'relative',
         width: '100%',
         minHeight: '100vh',
         background: colors.darkBase,
         color: colors.light,
-        /* Safe areas support */
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
-        {/* Public view: toggle removed */}
-
-        {/* Banner Principal */}
         <div
           id="user-profile-banner"
           data-baile-id="user-profile-banner"
@@ -894,7 +902,6 @@ export const UserProfileLive: React.FC = () => {
             data-test-id="user-profile-banner-grid"
             className="banner-grid"
           >
-            {/* Columna 1: Avatar Grande */}
             <div
               id="user-profile-banner-avatar-container"
               data-baile-id="user-profile-banner-avatar-container"
@@ -949,7 +956,6 @@ export const UserProfileLive: React.FC = () => {
                 )}
               </div>
               
-              {/* Botón mejorado para compartir debajo del avatar */}
               <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -1021,7 +1027,6 @@ export const UserProfileLive: React.FC = () => {
               </div>
             </div>
 
-            {/* Columna 2: Nombre y Chips */}
             <div
               id="user-profile-banner-info"
               data-baile-id="user-profile-banner-info"
@@ -1124,7 +1129,6 @@ export const UserProfileLive: React.FC = () => {
                 )}
               </div>
 
-              {/* Chips de usuario */}
               <div
                 id="user-profile-tags"
                 data-baile-id="user-profile-tags"
@@ -1149,7 +1153,6 @@ export const UserProfileLive: React.FC = () => {
           </div>
         </div>
 
-        {/* Contenido Principal */}
         <div
           id="user-profile-main-content"
           data-baile-id="user-profile-main-content"
@@ -1161,7 +1164,6 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
 
-          {/* Biografía y Redes Sociales */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1173,7 +1175,6 @@ export const UserProfileLive: React.FC = () => {
             />
           </motion.div>
 
-          {/* Comunidad (pública) debajo de Bio */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1259,24 +1260,6 @@ export const UserProfileLive: React.FC = () => {
               </div>
             ) : (
               <div style={{ position: 'relative' }}>
-                {/* Custom scrollbar styles */}
-                <style>{`
-                  .community-scroll {
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(255,255,255,.25) transparent;
-                    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-                    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-                  }
-                  .community-scroll::-webkit-scrollbar { height: 8px; }
-                  .community-scroll::-webkit-scrollbar-track { background: transparent; }
-                  .community-scroll::-webkit-scrollbar-thumb {
-                    background: rgba(255,255,255,.22);
-                    border-radius: 999px;
-                  }
-                  .community-scroll::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255,255,255,.35);
-                  }
-                `}</style>
                 <div
                   className="community-scroll"
                   style={{
@@ -1392,7 +1375,6 @@ export const UserProfileLive: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                {/* Edge fades */}
                 <div aria-hidden style={{ pointerEvents: 'none' }}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to right, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
                   <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to left, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
@@ -1401,7 +1383,6 @@ export const UserProfileLive: React.FC = () => {
             )}
           </motion.section>
 
-          {/* Sección 1: Foto - Pregunta */}
           {(() => {
             const fotoP2 = getMediaBySlot(safeMedia as any, 'p2');
             const datoCurioso = profile?.respuestas?.dato_curioso?.trim();
@@ -1417,7 +1398,6 @@ export const UserProfileLive: React.FC = () => {
             className="section-content glass-card-container"
           >
             <div className="question-section">
-              {/* Foto */}
               <div style={{
                 width: '100%',
                 height: '100%',
@@ -1451,7 +1431,6 @@ export const UserProfileLive: React.FC = () => {
                 )}
               </div>
 
-              {/* Pregunta */}
               <div>
               <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
                 <div style={{
@@ -1472,7 +1451,6 @@ export const UserProfileLive: React.FC = () => {
             );
           })()}
 
-          {/* Sección 2: Pregunta - Foto */}
           {(() => {
             const fotoP3 = getMediaBySlot(safeMedia as any, 'p3');
             const gustaBailar = profile?.respuestas?.gusta_bailar?.trim();
@@ -1488,7 +1466,6 @@ export const UserProfileLive: React.FC = () => {
             className="section-content glass-card-container"
           >
             <div className="question-section">
-              {/* Pregunta */}
               <div>
               <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
                 <div style={{
@@ -1505,7 +1482,6 @@ export const UserProfileLive: React.FC = () => {
                 </div>
               </div>
 
-              {/* Foto */}
               <div style={{
                 width: '100%',
                 height: '100%',
@@ -1543,8 +1519,6 @@ export const UserProfileLive: React.FC = () => {
             );
           })()}
 
-
-          {/* Eventos de Interés */}
           <motion.section
             id="user-profile-interested-events"
             data-baile-id="user-profile-interested-events"
@@ -1643,7 +1617,6 @@ export const UserProfileLive: React.FC = () => {
             )}
           </motion.section>
 
-          {/* Slot Video */}
           {getMediaBySlot(safeMedia as any, 'v1') && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -1657,7 +1630,6 @@ export const UserProfileLive: React.FC = () => {
                 overflow: 'hidden'
               }}
             >
-              {/* Header con gradiente superior */}
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1668,7 +1640,6 @@ export const UserProfileLive: React.FC = () => {
                 borderRadius: '20px 20px 0 0'
               }} />
               
-              {/* Header compacto */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1708,7 +1679,6 @@ export const UserProfileLive: React.FC = () => {
                 </div>
               </div>
 
-              {/* Contenedor del video compacto */}
               <div style={{
                 position: 'relative',
                 width: '100%',
@@ -1721,7 +1691,6 @@ export const UserProfileLive: React.FC = () => {
                 boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
                 padding: '3px'
               }}>
-                {/* Borde interno con gradiente */}
                 <div style={{
                   position: 'absolute',
                   inset: '3px',
@@ -1731,7 +1700,6 @@ export const UserProfileLive: React.FC = () => {
                   zIndex: 1
                 }} />
                 
-                {/* Video */}
                 <div style={{
                   position: 'relative',
                   width: '100%',
@@ -1754,7 +1722,6 @@ export const UserProfileLive: React.FC = () => {
                   />
                 </div>
 
-                {/* Efecto de brillo en las esquinas */}
                 <div style={{
                   position: 'absolute',
                   top: '5px',
@@ -1781,7 +1748,6 @@ export const UserProfileLive: React.FC = () => {
             </motion.section>
           )}
 
-          {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
             <motion.section
               id="user-profile-photo-gallery"

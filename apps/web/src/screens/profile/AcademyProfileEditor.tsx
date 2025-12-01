@@ -120,7 +120,7 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
 export default function AcademyProfileEditor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { data: academy, isLoading } = useAcademyMy();
+  const { data: academy, isLoading, refetch: refetchAcademy } = useAcademyMy();
 
   // 🔍 Debug logs para diagnosticar problemas de carga
   React.useEffect(() => {
@@ -137,6 +137,8 @@ export default function AcademyProfileEditor() {
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
+  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
@@ -168,6 +170,47 @@ export default function AcademyProfileEditor() {
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
+
+  // Detectar cuando el perfil es aprobado y mostrar mensaje de bienvenida
+  React.useEffect(() => {
+    if (!academy) {
+      // Inicializar el estado cuando no hay perfil
+      if (previousApprovalStatus === null) {
+        setPreviousApprovalStatus(null);
+      }
+      return;
+    }
+
+    const currentStatus = (academy as any)?.estado_aprobacion;
+    
+    // Inicializar el estado anterior si es la primera vez que tenemos datos
+    if (previousApprovalStatus === null && currentStatus) {
+      setPreviousApprovalStatus(currentStatus);
+      return;
+    }
+    
+    // Si el estado anterior era "en_revision" o "borrador" y ahora es "aprobado"
+    if (
+      previousApprovalStatus && 
+      (previousApprovalStatus === 'en_revision' || previousApprovalStatus === 'borrador') &&
+      currentStatus === 'aprobado' &&
+      previousApprovalStatus !== currentStatus
+    ) {
+      setStatusMsg({ 
+        type: 'ok', 
+        text: '🎉 ¡Bienvenida, Academia! Tu perfil ha sido aprobado. Ya puedes empezar a compartir tus clases.' 
+      });
+      setShowWelcomeBanner(true); // Mostrar banner de bienvenida
+      setTimeout(() => setStatusMsg(null), 5000);
+      // Ocultar el banner después de 10 segundos
+      setTimeout(() => setShowWelcomeBanner(false), 10000);
+    }
+
+    // Actualizar el estado anterior
+    if (currentStatus && currentStatus !== previousApprovalStatus) {
+      setPreviousApprovalStatus(currentStatus);
+    }
+  }, [academy, previousApprovalStatus]);
 
   // Hook para cambio de rol
   useRoleChange();
@@ -344,11 +387,29 @@ export default function AcademyProfileEditor() {
 
       console.log("[AcademyProfileEditor] 📤 Payload a enviar:", JSON.stringify(payload, null, 2));
 
-      await upsert.mutateAsync(payload);
+      // Detectar si es un perfil nuevo antes de guardar
+      const isNewProfile = !academy;
 
-      // Mostrar mensaje de éxito
-      setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
-      setTimeout(() => setStatusMsg(null), 3000);
+      const savedProfile = await upsert.mutateAsync(payload);
+
+      // Refetch explícito para actualizar el estado inmediatamente
+      await refetchAcademy();
+
+      // Actualizar el form con los datos del perfil guardado
+      if (savedProfile) {
+        setAll(savedProfile as any);
+      }
+
+      // Mostrar mensaje de éxito con mensaje especial para perfiles nuevos
+      if (isNewProfile) {
+        setStatusMsg({ 
+          type: 'ok', 
+          text: '🎉 ¡Bienvenida, Academia! Tu perfil ha sido creado exitosamente. Ya puedes empezar a compartir tus clases.' 
+        });
+      } else {
+        setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
+      }
+      setTimeout(() => setStatusMsg(null), isNewProfile ? 5000 : 3000);
     } catch (error: any) {
       console.error("❌ [AcademyProfileEditor] Error guardando:", error);
       console.error("❌ [AcademyProfileEditor] Detalles del error:", {
@@ -453,7 +514,10 @@ export default function AcademyProfileEditor() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando sesión...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -514,7 +578,10 @@ export default function AcademyProfileEditor() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando academia...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu academia...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -913,6 +980,32 @@ export default function AcademyProfileEditor() {
             padding: 1rem !important;
             margin-bottom: 1.5rem !important;
           }
+          /* Competition groups responsive */
+          .competition-group-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+          }
+          .competition-group-header button {
+            width: 100% !important;
+          }
+          .competition-group-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+          }
+          .competition-group-actions {
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+          }
+          .competition-group-actions button {
+            width: 100% !important;
+            padding: 0.625rem !important;
+            font-size: 0.875rem !important;
+          }
         }
         
         /* Estilos para editor-section y glass-card-container */
@@ -1126,6 +1219,33 @@ export default function AcademyProfileEditor() {
             font-size: 0.85rem !important;
             padding: 0.6rem 0.4rem !important;
           }
+          /* Competition groups responsive */
+          .competition-group-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+          }
+          .competition-group-header button {
+            width: 100% !important;
+          }
+          .competition-group-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+          }
+          .competition-group-actions {
+            width: 100% !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          .competition-group-actions button {
+            flex: 1 1 auto !important;
+            min-width: calc(50% - 0.25rem) !important;
+            padding: 0.625rem !important;
+            font-size: 0.875rem !important;
+          }
         }
         
         @media (max-width: 480px) {
@@ -1270,8 +1390,8 @@ export default function AcademyProfileEditor() {
                 </motion.div>
               )}
 
-              {/* Banner de Bienvenida (solo para perfiles nuevos) */}
-              {!academy && (
+              {/* Banner de Bienvenida (para perfiles nuevos o recién aprobados) */}
+              {(!academy || showWelcomeBanner) && (
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1295,7 +1415,10 @@ export default function AcademyProfileEditor() {
                     ¡Bienvenido, Academia!
                   </h3>
                   <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
-                    Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
+                    {showWelcomeBanner 
+                      ? <>Tu perfil ha sido aprobado. Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para actualizar tu perfil.</>
+                      : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
+                    }
                   </p>
                   <div style={{
                     display: 'inline-block',
@@ -1305,7 +1428,7 @@ export default function AcademyProfileEditor() {
                     fontSize: '0.85rem',
                     fontWeight: '600'
                   }}>
-                    👆 Mínimo requerido: <strong>Nombre de la Academia</strong>
+                    👆 Mínimo requerido: <strong>Nombre de la Academia</strong> y <strong>Ritmos</strong>
                   </div>
                 </motion.div>
               )}
@@ -1343,7 +1466,7 @@ export default function AcademyProfileEditor() {
                         📝 Descripción
                       </label>
                       <textarea
-                        value={form.bio}
+                        value={form.bio || ''}
                         onChange={(e) => setField('bio', e.target.value)}
                         placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
                         rows={3}
@@ -2331,7 +2454,7 @@ export default function AcademyProfileEditor() {
               {/* Grupos de Competencia */}
               {academyId && (
                 <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                  <div className="teacher-invite-header">
+                  <div className="teacher-invite-header competition-group-header">
                     <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
                       🎯 Grupos de Competencia
                     </h2>
@@ -2374,6 +2497,7 @@ export default function AcademyProfileEditor() {
                         .map((group: any) => (
                           <div
                             key={group.id}
+                            className="competition-group-item"
                             style={{
                               padding: '1.5rem',
                               background: 'rgba(255, 255, 255, 0.05)',
@@ -2385,18 +2509,18 @@ export default function AcademyProfileEditor() {
                               gap: '1rem'
                             }}
                           >
-                            <div style={{ flex: 1 }}>
-                              <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem', wordBreak: 'break-word' }}>
                                 {group.name}
                               </h3>
                               {group.description && (
-                                <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem' }}>
+                                <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem', wordBreak: 'break-word' }}>
                                   {group.description.substring(0, 100)}{group.description.length > 100 ? '...' : ''}
                                 </p>
                               )}
                               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                                 {group.training_location && (
-                                  <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff' }}>
+                                  <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff', wordBreak: 'break-word' }}>
                                     📍 {group.training_location}
                                   </span>
                                 )}
@@ -2407,7 +2531,7 @@ export default function AcademyProfileEditor() {
                                 )}
                               </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div className="competition-group-actions" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
                               <button
                                 onClick={() => navigate(`/competition-groups/${group.id}`)}
                                 style={{
@@ -2524,8 +2648,8 @@ export default function AcademyProfileEditor() {
                         📖 Un poco más de nosotros
                       </h2>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                        {/* Carga de sFosso */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
+                        {/* Carga de foto */}
                         <div>
                           <div style={{
                             padding: '1rem',

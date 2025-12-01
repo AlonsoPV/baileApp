@@ -27,35 +27,559 @@ const addDays = (d: Date, n: number) => {
   return x;
 };
 
-/**
- * Obtiene la fecha de hoy en zona horaria de CDMX (America/Mexico_City)
- * Retorna en formato YYYY-MM-DD
- */
 function getTodayCDMX(): string {
-  // Usar Intl.DateTimeFormat para obtener la fecha en zona horaria de CDMX
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Mexico_City',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
   });
-  // Formato retorna YYYY-MM-DD
   return formatter.format(new Date());
-}
-
-function useAutoLoadAllPages(queryResult: UseInfiniteQueryResult<any, unknown>) {
-  React.useEffect(() => {
-    if (!queryResult) return;
-    if (queryResult.hasNextPage && !queryResult.isFetchingNextPage) {
-      queryResult.fetchNextPage();
-    }
-  }, [queryResult?.hasNextPage, queryResult?.isFetchingNextPage, queryResult?.fetchNextPage]);
 }
 
 function flattenQueryData(data?: { pages?: Array<{ data?: any[] }> }) {
   if (!data?.pages?.length) return [];
   return data.pages.flatMap((page) => (page?.data as any[]) || []);
 }
+
+function useDebouncedValue<T>(value: T, delay: number = 300): T {
+  const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+function useStableArray<T>(arr: T[]): T[] {
+  return React.useMemo(() => [...arr], [JSON.stringify(arr)]);
+}
+
+function useLoadMoreOnDemand(query: UseInfiniteQueryResult<any, unknown> | null) {
+  const handleLoadMore = React.useCallback(() => {
+    if (query?.hasNextPage && !query.isFetchingNextPage) {
+      query.fetchNextPage();
+    }
+  }, [query?.hasNextPage, query?.isFetchingNextPage, query?.fetchNextPage]);
+
+  return { handleLoadMore, hasNextPage: query?.hasNextPage ?? false, isFetching: query?.isFetchingNextPage ?? false };
+}
+
+const FechaItem = React.memo(({ fechaEvento, idx, handlePreNavigate }: { fechaEvento: any; idx: number; handlePreNavigate: () => void }) => {
+  const uniqueKey = fechaEvento._recurrence_index !== undefined
+    ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
+    : (fechaEvento.id ?? `fecha_${idx}`);
+  
+  return (
+    <motion.div
+      key={uniqueKey}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.05, duration: 0.3 }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      onClickCapture={handlePreNavigate}
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 16,
+        padding: 0,
+        overflow: 'hidden',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+      }}
+    >
+      <EventCard item={fechaEvento} />
+    </motion.div>
+  );
+});
+
+FechaItem.displayName = 'FechaItem';
+
+const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; idx: number; handlePreNavigate: () => void }) => {
+  const stableKey =
+    `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
+  
+  return (
+    <motion.div
+      key={stableKey}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.05, duration: 0.3 }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      onClickCapture={handlePreNavigate}
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 16,
+        padding: 0,
+        overflow: 'hidden',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+      }}
+    >
+      <ClassCard item={clase} />
+    </motion.div>
+  );
+});
+
+ClaseItem.displayName = 'ClaseItem';
+
+const STYLES = `
+  .explore-container { 
+    min-height: 100vh; 
+    background: #0b0d10; 
+    color: ${colors.gray[50]}; 
+    width: 100%;
+    overflow-x: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .filters { padding: ${spacing[6]}; }
+  .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
+  .cards-grid { 
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 1.5rem;
+    padding: 1rem 0;
+  }
+  @media (min-width: 768px) {
+    .cards-grid { 
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      padding: 1.5rem 0;
+    }
+  }
+  .wrap { 
+    max-width: 1280px; 
+    margin: 0 auto; 
+    padding: 0 ${spacing[6]} ${spacing[10]};
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .panel { 
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: ${spacing[5]};
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166);
+    opacity: 0.9;
+  }
+  .section-container {
+    margin-bottom: 4rem;
+    position: relative;
+  }
+  .explore-slider {
+    width: 100%;
+  }
+  @media (max-width: 768px) {
+    .explore-slider--mobile {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+    }
+    .explore-slider--mobile > button {
+      display: none !important;
+    }
+  }
+  :root {
+    --fp-bg: #15181f;
+    --fp-bg-soft: #101119;
+    --fp-border: #262a36;
+    --fp-border-soft: #343947;
+    --fp-text: #f5f5ff;
+    --fp-muted: #a4a9bd;
+    --fp-radius-lg: 22px;
+    --fp-radius: 16px;
+    --fp-pill: 999px;
+    --fp-speed: 0.16s;
+    --fp-shadow: 0 14px 40px rgba(0,0,0,.55);
+    --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
+  }
+  .filters-panel {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 16px 18px 18px;
+    border-radius: var(--fp-radius-lg);
+    border: 1px solid #20232e;
+    background: radial-gradient(circle at top left,#262a34 0,#14171f 45%,#090b10 100%);
+    box-shadow: var(--fp-shadow);
+    font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
+    color: var(--fp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  @media (min-width: 769px) {
+    .filters-panel {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+  .filters-fav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: var(--fp-radius);
+    background: rgba(0,0,0,.25);
+    border: 1px solid var(--fp-border);
+  }
+  .filters-fav__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .filters-fav__icon {
+    font-size: 20px;
+  }
+  .filters-fav__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .filters-fav__btn {
+    border-radius: var(--fp-pill);
+    border: 1px solid var(--fp-border-soft);
+    background: #1b1f2a;
+    color: var(--fp-text);
+    font-size: 12px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed);
+  }
+  .filters-fav__btn:hover {
+    background: #222735;
+    border-color: #4b5568;
+    transform: translateY(-0.5px);
+  }
+  .filters-box {
+    border-radius: var(--fp-radius);
+    background: var(--fp-bg-soft);
+    border: 1px solid var(--fp-border);
+    padding: 10px 10px 12px;
+  }
+  .filters-box__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .filters-box__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .filters-box__icon {
+    font-size: 16px;
+  }
+  .filters-box__badge {
+    font-size: 11px;
+    color: var(--fp-muted);
+    border-radius: var(--fp-pill);
+    border: 1px solid var(--fp-border-soft);
+    padding: 3px 8px;
+    background: #141722;
+  }
+  .filters-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 2px;
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 transparent;
+  }
+  .filters-chips::-webkit-scrollbar {
+    height: 6px;
+  }
+  .filters-chips::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 10px;
+  }
+  .chip {
+    position: relative;
+    flex: 0 0 auto;
+    border-radius: var(--fp-pill);
+    border: 1px solid var(--fp-border-soft);
+    background: #181b26;
+    color: var(--fp-text);
+    font-size: 12px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
+    font-weight: 600;
+  }
+  .chip__icon {
+    font-size: 14px;
+  }
+  .chip__badge {
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #ec4899;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0 5px;
+  }
+  .chip__label {
+    white-space: nowrap;
+  }
+  .chip--filter:hover {
+    background: #1f2330;
+    border-color: #4b5563;
+    transform: translateY(-1px);
+  }
+  .chip--filter.chip--active {
+    background: #1f2330;
+    border-color: #4b5563;
+    box-shadow: 0 0 0 1px rgba(255,75,139,0.4);
+  }
+  .chip--danger {
+    background: rgba(239,68,68,.14);
+    border-color: #f97373;
+    color: #fecaca;
+  }
+  .chip--danger:hover {
+    background: rgba(239,68,68,.22);
+    box-shadow: 0 0 0 1px rgba(248,113,113,.6);
+  }
+  .filters-tabs {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .tab {
+    flex: 1;
+    border-radius: var(--fp-pill);
+    border: 1px solid var(--fp-border-soft);
+    background: #141722;
+    color: var(--fp-text);
+    font-size: 13px;
+    padding: 9px 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
+  }
+  .tab:hover {
+    background: #1b2130;
+    transform: translateY(-0.5px);
+  }
+  .tab--active {
+    background: var(--fp-grad);
+    border-color: transparent;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+  }
+  .load-more-btn {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--fp-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .load-more-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  .load-more-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @media (max-width: 768px) {
+    .filters-panel {
+      max-width: 100% !important;
+      padding: 14px 12px 16px !important;
+    }
+    .filters-fav {
+      padding: 8px 10px !important;
+      flex-wrap: wrap !important;
+    }
+    .filters-fav__title {
+      font-size: 13px !important;
+    }
+    .filters-fav__btn {
+      font-size: 11px !important;
+      padding: 5px 10px !important;
+    }
+    .filters-box {
+      padding: 8px 8px 10px !important;
+    }
+    .filters-box__title {
+      font-size: 12px !important;
+    }
+    .filters-box__badge {
+      font-size: 10px !important;
+      padding: 2px 6px !important;
+    }
+    .chip {
+      font-size: 10px !important;
+      padding: 4px 8px !important;
+    }
+    .chip__icon {
+      font-size: 12px !important;
+    }
+    .chip__badge {
+      min-width: 14px !important;
+      height: 14px !important;
+      font-size: 9px !important;
+    }
+    .tab {
+      font-size: 11px !important;
+      padding: 6px 4px !important;
+    }
+    .cards-grid {
+      gap: 1.25rem !important;
+      padding: 0.75rem 0 !important;
+    }
+    .wrap {
+      padding: 0 1rem 2rem !important;
+    }
+    .panel {
+      margin: 1rem 0 !important;
+      padding: 1rem !important;
+      border-radius: 16px !important;
+    }
+    .section-container {
+      margin-bottom: 2.5rem !important;
+    }
+  }
+  @media (max-width: 480px) {
+    .filters-panel {
+      padding: 12px 10px 14px !important;
+      border-radius: 18px !important;
+    }
+    .filters-fav {
+      padding: 7px 9px !important;
+    }
+    .filters-fav__icon {
+      font-size: 18px !important;
+    }
+    .filters-fav__title {
+      font-size: 12px !important;
+    }
+    .filters-fav__btn {
+      font-size: 10px !important;
+      padding: 4px 8px !important;
+    }
+    .filters-box {
+      padding: 7px 7px 9px !important;
+    }
+    .filters-box__title {
+      font-size: 11px !important;
+    }
+    .filters-box__icon {
+      font-size: 14px !important;
+    }
+    .filters-box__badge {
+      font-size: 9px !important;
+      padding: 2px 5px !important;
+    }
+    .chip {
+      font-size: 9px !important;
+      padding: 3px 7px !important;
+      gap: 3px !important;
+    }
+    .chip__icon {
+      font-size: 11px !important;
+    }
+    .chip__badge {
+      min-width: 13px !important;
+      height: 13px !important;
+      font-size: 8px !important;
+    }
+    .tab {
+      font-size: 10px !important;
+      padding: 5px 3px !important;
+    }
+    .cards-grid {
+      gap: 1rem !important;
+      padding: 0.5rem 0 !important;
+    }
+    .wrap {
+      padding: 0 0.75rem 1.5rem !important;
+    }
+    .panel {
+      margin: 0.75rem 0 !important;
+      padding: 0.875rem !important;
+      border-radius: 14px !important;
+    }
+    .section-container h2 {
+      font-size: 1.5rem !important;
+    }
+    .section-container > div > div:first-child > div:first-child {
+      width: 48px !important;
+      height: 48px !important;
+      font-size: 1.25rem !important;
+    }
+  }
+  @media (max-width: 430px) {
+    .wrap {
+      padding: 0 0.75rem 1.5rem !important;
+    }
+    .section-container {
+      margin-bottom: 2.25rem !important;
+    }
+    .section-container h2 {
+      font-size: 1.4rem !important;
+    }
+    .filters-panel {
+      padding: 10px 9px 12px !important;
+      border-radius: 16px !important;
+    }
+    .panel {
+      margin: 0.5rem 0 !important;
+      padding: 0.75rem 0.8rem !important;
+      border-radius: 12px !important;
+    }
+    .cards-grid {
+      gap: 0.9rem !important;
+      padding: 0.5rem 0 !important;
+    }
+    .card-skeleton {
+      height: 210px !important;
+      border-radius: 12px !important;
+    }
+    .section-container > .explore-slider {
+      margin: 0 -0.15rem !important;
+    }
+  }
+`;
 
 function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
   return (
@@ -83,7 +607,6 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
           gap: '1rem',
           position: 'relative'
         }}>
-          {/* Icono circular destacado */}
           <div style={{
             width: 56,
             height: 56,
@@ -147,14 +670,14 @@ export default function ExploreHomeScreen() {
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   const { data: allTags } = useTags();
-
-  // Obtener preferencias de filtros del usuario
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
 
-  // Consideramos que los filtros favoritos están configurados solo si existe
-  // un registro en la BD (preferences.id definido)
+  const qDebounced = useDebouncedValue(filters.q || '', 300);
+  const qDeferred = React.useDeferredValue(qDebounced);
+
   const hasConfiguredFavorites = React.useMemo(
     () => !!(preferences && (preferences as any).id),
     [preferences]
@@ -177,9 +700,8 @@ export default function ExploreHomeScreen() {
   }, []);
 
   const computePresetRange = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    // Usar fecha de hoy en zona horaria CDMX
     const todayCDMX = getTodayCDMX();
-    const todayDate = new Date(todayCDMX + 'T12:00:00'); // Usar mediodía para evitar problemas de zona horaria
+    const todayDate = new Date(todayCDMX + 'T12:00:00');
 
     if (preset === 'todos') {
       return { from: undefined, to: undefined };
@@ -207,55 +729,47 @@ export default function ExploreHomeScreen() {
     }
   }, [filters.datePreset, computePresetRange, set, filters.dateFrom, filters.dateTo]);
 
-  // Marcar que ya se verificaron los defaults (sin aplicar automáticamente)
   React.useEffect(() => {
     if (!user || prefsLoading || hasAppliedDefaults) return;
-    // Por defecto, todos los filtros están desactivados
-    // El usuario puede activar sus filtros favoritos manualmente con el botón
     setHasAppliedDefaults(true);
   }, [user, prefsLoading, hasAppliedDefaults]);
 
-  // Detectar cuando el usuario cambia los filtros manualmente (ya no son favoritos)
+  const stableRitmos = useStableArray(filters.ritmos);
+  const stableZonas = useStableArray(filters.zonas);
+
   React.useEffect(() => {
     if (!hasAppliedDefaults) return;
 
-    // Si el usuario aún no ha guardado filtros favoritos en BD,
-    // nunca marcamos que se están usando favoritos.
     if (!hasConfiguredFavorites) {
       setUsingFavoriteFilters(false);
       return;
     }
 
-    // Si no hay preferencias, los filtros favoritos no pueden estar activos
     if (!preferences) {
       setUsingFavoriteFilters(false);
       return;
     }
 
     const defaultFilters = applyDefaultFilters();
+    const defaultRitmos = [...defaultFilters.ritmos];
+    const defaultZonas = [...defaultFilters.zonas];
     
-    // Comparar ritmos y zonas
-    const ritmosMatch = JSON.stringify(filters.ritmos.sort()) === JSON.stringify(defaultFilters.ritmos.sort());
-    const zonasMatch = JSON.stringify(filters.zonas.sort()) === JSON.stringify(defaultFilters.zonas.sort());
+    const ritmosMatch = JSON.stringify([...stableRitmos].sort()) === JSON.stringify([...defaultRitmos].sort());
+    const zonasMatch = JSON.stringify([...stableZonas].sort()) === JSON.stringify([...defaultZonas].sort());
     
-    // Comparar fechas
     let fechasMatch = true;
     if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
       const defaultFrom = defaultFilters.fechaDesde ? defaultFilters.fechaDesde.toISOString().slice(0, 10) : null;
       const defaultTo = defaultFilters.fechaHasta ? defaultFilters.fechaHasta.toISOString().slice(0, 10) : null;
       fechasMatch = filters.dateFrom === defaultFrom && filters.dateTo === defaultTo;
     } else {
-      // Si no hay fechas en favoritos, verificar que tampoco haya fechas activas (excepto si es un preset)
       fechasMatch = !filters.dateFrom && !filters.dateTo;
     }
     
     const matchesDefaults = ritmosMatch && zonasMatch && fechasMatch;
-
-    // Actualizar el estado según si coinciden o no
     setUsingFavoriteFilters(matchesDefaults);
-  }, [filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults, hasConfiguredFavorites]);
+  }, [stableRitmos, stableZonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults, hasConfiguredFavorites]);
 
-  // Función para restablecer a los filtros favoritos
   const resetToFavoriteFilters = React.useCallback(() => {
     if (!preferences) return;
     const defaultFilters = applyDefaultFilters();
@@ -295,73 +809,50 @@ export default function ExploreHomeScreen() {
     setUsingFavoriteFilters(true);
   }, [preferences, applyDefaultFilters, set]);
 
-  // Fecha base (hoy) usando SIEMPRE zona horaria CDMX para evitar desfases
   const todayYmd = React.useMemo(() => getTodayCDMX(), []);
-  
-  // Ref para almacenar el timeout del debounce
-  const datePresetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  
+
   const applyDatePreset = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    // Si es el mismo preset, no hacer nada
     if (filters.datePreset === preset) return;
     
-    // Limpiar timeout anterior si existe
-    if (datePresetTimeoutRef.current) {
-      clearTimeout(datePresetTimeoutRef.current);
-    }
-    
-    // Actualizar preset inmediatamente para feedback visual
-    set({ datePreset: preset });
-    
-    // Aplicar fechas con un pequeño debounce para evitar recálculos innecesarios
-    datePresetTimeoutRef.current = setTimeout(() => {
+    startTransition(() => {
+      set({ datePreset: preset });
       const { from, to } = computePresetRange(preset);
       set({ datePreset: preset, dateFrom: from, dateTo: to });
-      datePresetTimeoutRef.current = null;
-    }, 100); // 100ms de debounce
+    });
   }, [filters.datePreset, computePresetRange, set]);
-  
-  // Limpiar timeout al desmontar
-  React.useEffect(() => {
-    return () => {
-      if (datePresetTimeoutRef.current) {
-        clearTimeout(datePresetTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
     if (filters.q) count += 1;
-    count += filters.ritmos.length;
-    count += filters.zonas.length;
+    count += stableRitmos.length;
+    count += stableZonas.length;
     if (filters.dateFrom || filters.dateTo) count += 1;
     return count;
-  }, [filters.q, filters.ritmos.length, filters.zonas.length, filters.dateFrom, filters.dateTo]);
+  }, [filters.q, stableRitmos.length, stableZonas.length, filters.dateFrom, filters.dateTo]);
 
   const handlePreNavigate = React.useCallback(() => {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
 
+  const shouldLoadFechas = showAll || selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
     type: 'fechas',
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadFechas
   });
-  useAutoLoadAllPages(fechasQuery);
+  const fechasLoadMore = useLoadMoreOnDemand(shouldLoadFechas ? fechasQuery : null);
   const fechasLoading = fechasQuery.isLoading;
   const fechasData = React.useMemo(() => {
-    const flattened = flattenQueryData(fechasQuery.data);
-    // Logs de depuración removidos para reducir spam en consola
-    return flattened;
-  }, [fechasQuery.data]);
+    if (!shouldLoadFechas) return [];
+    return flattenQueryData(fechasQuery.data);
+  }, [fechasQuery.data, shouldLoadFechas]);
 
-  // Fechas filtradas (solo futuras y ordenadas cronológicamente)
   const filteredFechas = React.useMemo(() => {
     const parseYmdToDate = (value?: string | null) => {
       if (!value) return null;
@@ -380,17 +871,12 @@ export default function ExploreHomeScreen() {
 
     const todayBase = parseYmdToDate(todayYmd);
     const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
-
-    // Si hay búsqueda activa, incluir eventos pasados también
-    const includePastEvents = !!filters.q && filters.q.trim().length > 0;
-
-    // Aplicar filtros de rango de fechas si existen
+    const includePastEvents = !!qDeferred && qDeferred.trim().length > 0;
     const dateFrom = filters.dateFrom ? parseYmdToDate(filters.dateFrom) : null;
     const dateTo = filters.dateTo ? parseYmdToDate(filters.dateTo) : null;
     const hasDateRange = dateFrom !== null || dateTo !== null;
 
     const upcoming = allFechas.filter((fecha: any) => {
-      // Si hay búsqueda activa, incluir todos los eventos (pasados y futuros)
       if (includePastEvents) return true;
       
       const fechaDate = parseYmdToDate(fecha?.fecha);
@@ -409,31 +895,22 @@ export default function ExploreHomeScreen() {
         0, 0, 0
       ));
       
-      // Si es una ocurrencia expandida de un evento recurrente
-      // Siempre incluirla (igual que en EventParentPublicScreenModern)
-      // El filtrado por rango se aplica después si es necesario
       if (fecha._recurrence_index !== undefined) {
-        // Si hay un rango de fechas específico, verificar que la fecha caiga dentro del rango
         if (hasDateRange) {
           if (dateFrom && fechaDateOnly < dateFrom) return false;
           if (dateTo && fechaDateOnly > dateTo) return false;
         }
-        // Si no hay rango, siempre incluir (las 4 ocurrencias futuras)
         return true;
       }
       
-      // Para eventos sin dia_semana, filtrar por fecha específica
-      // Si hay rango, verificar que caiga dentro del rango
       if (hasDateRange) {
         if (dateFrom && fechaDateOnly < dateFrom) return false;
         if (dateTo && fechaDateOnly > dateTo) return false;
       }
-      // Si no hay rango, solo verificar que sea futura
       return fechaDateOnly >= todayDateOnly;
     });
 
-    // Ordenar por fecha cronológica
-    const sorted = upcoming.sort((a: any, b: any) => {
+    const sorted = [...upcoming].sort((a: any, b: any) => {
       const parseYmd = (value?: string | null) => parseYmdToDate(value);
       const dateA = parseYmd(a?.fecha);
       const dateB = parseYmd(b?.fecha);
@@ -443,67 +920,89 @@ export default function ExploreHomeScreen() {
       return dateA.getTime() - dateB.getTime();
     });
 
-    // Logs de depuración removidos para reducir spam en consola
-
     return sorted;
-  }, [fechasData, todayYmd, filters.q, filters.dateFrom, filters.dateTo]);
+  }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo]);
 
+  const shouldLoadMaestros = showAll || selectedType === 'maestros' || selectedType === 'clases';
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadMaestros
   });
-  useAutoLoadAllPages(maestrosQuery);
+  const maestrosLoadMore = useLoadMoreOnDemand(shouldLoadMaestros ? maestrosQuery : null);
   const maestrosLoading = maestrosQuery.isLoading;
-  const maestrosData = React.useMemo(() => flattenQueryData(maestrosQuery.data), [maestrosQuery.data]);
+  const maestrosData = React.useMemo(() => {
+    if (!shouldLoadMaestros) return [];
+    return flattenQueryData(maestrosQuery.data);
+  }, [maestrosQuery.data, shouldLoadMaestros]);
 
+  const shouldLoadOrganizadores = showAll || selectedType === 'organizadores';
   const organizadoresQuery = useExploreQuery({
     type: 'organizadores',
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadOrganizadores
   });
-  useAutoLoadAllPages(organizadoresQuery);
+  const organizadoresLoadMore = useLoadMoreOnDemand(shouldLoadOrganizadores ? organizadoresQuery : null);
   const organizadoresLoading = organizadoresQuery.isLoading;
-  const organizadoresData = React.useMemo(() => flattenQueryData(organizadoresQuery.data), [organizadoresQuery.data]);
+  const organizadoresData = React.useMemo(() => {
+    if (!shouldLoadOrganizadores) return [];
+    return flattenQueryData(organizadoresQuery.data);
+  }, [organizadoresQuery.data, shouldLoadOrganizadores]);
 
+  const shouldLoadAcademias = showAll || selectedType === 'academias' || selectedType === 'clases';
   const academiasQuery = useExploreQuery({
     type: 'academias',
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadAcademias
   });
-  useAutoLoadAllPages(academiasQuery);
+  const academiasLoadMore = useLoadMoreOnDemand(shouldLoadAcademias ? academiasQuery : null);
   const academiasLoading = academiasQuery.isLoading;
-  const academiasData = React.useMemo(() => flattenQueryData(academiasQuery.data), [academiasQuery.data]);
+  const academiasData = React.useMemo(() => {
+    if (!shouldLoadAcademias) return [];
+    return flattenQueryData(academiasQuery.data);
+  }, [academiasQuery.data, shouldLoadAcademias]);
 
+  const shouldLoadMarcas = showAll || selectedType === 'marcas';
   const marcasQuery = useExploreQuery({
     type: 'marcas',
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadMarcas
   });
-  useAutoLoadAllPages(marcasQuery);
+  const marcasLoadMore = useLoadMoreOnDemand(shouldLoadMarcas ? marcasQuery : null);
   const marcasLoading = marcasQuery.isLoading;
-  const marcasData = React.useMemo(() => flattenQueryData(marcasQuery.data), [marcasQuery.data]);
+  const marcasData = React.useMemo(() => {
+    if (!shouldLoadMarcas) return [];
+    return flattenQueryData(marcasQuery.data);
+  }, [marcasQuery.data, shouldLoadMarcas]);
 
+  const shouldLoadUsuarios = showAll || selectedType === 'usuarios';
   const usuariosQuery = useExploreQuery({
     type: 'usuarios' as any,
-    q: filters.q,
+    q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 500
+    pageSize: 48,
+    enabled: shouldLoadUsuarios
   });
-  useAutoLoadAllPages(usuariosQuery);
+  const usuariosLoadMore = useLoadMoreOnDemand(shouldLoadUsuarios ? usuariosQuery : null);
   const usuariosLoading = usuariosQuery.isLoading;
-  const usuariosData = React.useMemo(() => flattenQueryData(usuariosQuery.data), [usuariosQuery.data]);
+  const usuariosData = React.useMemo(() => {
+    if (!shouldLoadUsuarios) return [];
+    return flattenQueryData(usuariosQuery.data);
+  }, [usuariosQuery.data, shouldLoadUsuarios]);
 
-  // Construir clases desde academias y maestros (todas las páginas disponibles)
   const classesList = React.useMemo(() => {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const allA = academiasData;
@@ -543,7 +1042,6 @@ export default function ExploreHomeScreen() {
       return undefined as unknown as string | undefined;
     };
 
-    // Función auxiliar para convertir nombre de día a número
     const dayNameToNumber = (dayName: string | number): number | null => {
       if (typeof dayName === 'number' && dayName >= 0 && dayName <= 6) {
         return dayName;
@@ -573,10 +1071,9 @@ export default function ExploreHomeScreen() {
         ownerId: owner?.id,
         ownerName: owner?.nombre_publico,
         ownerCoverUrl: resolveOwnerCover(owner),
-        cronogramaIndex // Índice original en el cronograma
+        cronogramaIndex
       };
 
-      // Si tiene múltiples días, expandir en múltiples copias (una por cada día)
       if (baseClase.diasSemana && Array.isArray(baseClase.diasSemana) && baseClase.diasSemana.length > 1) {
         const expanded: any[] = [];
         for (const dayStr of baseClase.diasSemana) {
@@ -584,19 +1081,17 @@ export default function ExploreHomeScreen() {
           if (dayNum !== null) {
             expanded.push({
               ...baseClase,
-              diaSemana: dayNum, // Añadir el día específico para esta copia
-              diasSemana: [dayStr], // Mantener solo este día en el array para esta copia
+              diaSemana: dayNum,
+              diasSemana: [dayStr],
             });
           }
         }
         return expanded.length > 0 ? expanded : [baseClase];
       }
 
-      // Si tiene un solo día o no tiene diasSemana, retornar una sola entrada
       return [baseClase];
     };
 
-    // Usar cronograma como fuente principal, con horarios como fallback
     const fromAcademies = allA.flatMap((ac: any) => {
       const cronogramaData = ac?.cronograma || ac?.horarios || [];
       return Array.isArray(cronogramaData) 
@@ -611,7 +1106,6 @@ export default function ExploreHomeScreen() {
     });
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
-    // Filtro por preset de fechas
     const weekdayIndex = (name: string) => dayNames.findIndex(d => d.toLowerCase() === String(name).toLowerCase());
     const nextOccurrence = (c: any): Date | null => {
       try {
@@ -621,16 +1115,14 @@ export default function ExploreHomeScreen() {
         const days: string[] = Array.isArray(c.diasSemana) ? c.diasSemana : [];
         if (!days.length) return null;
         const today = new Date();
-        const todayIdx = today.getDay(); // 0..6
+        const todayIdx = today.getDay();
         let minDelta: number | null = null;
         for (const dn of days) {
           const idx = weekdayIndex(dn);
           if (idx < 0) continue;
-          // Si el día ya pasó esta semana (idx < todayIdx), calcular para la próxima semana
-          // Si el día es hoy o futuro (idx >= todayIdx), calcular para esta semana
           const delta = idx >= todayIdx
-            ? idx - todayIdx  // Esta semana
-            : (idx - todayIdx + 7) % 7; // Próxima semana (si ya pasó, sumar 7 días)
+            ? idx - todayIdx
+            : (idx - todayIdx + 7) % 7;
           if (minDelta === null || delta < minDelta) minDelta = delta;
         }
         if (minDelta === null) return null;
@@ -644,14 +1136,10 @@ export default function ExploreHomeScreen() {
       } catch { return null; }
     };
     const preset = filters.datePreset || 'todos';
-
-    // Si hay búsqueda activa, incluir clases pasadas también
-    const includePastClasses = !!filters.q && filters.q.trim().length > 0;
+    const includePastClasses = !!qDeferred && qDeferred.trim().length > 0;
 
     const matchesPresetAndRange = (item: any) => {
       const occurrence = nextOccurrence(item);
-      // Filtrar fechas pasadas: si la ocurrencia es anterior a hoy (sin hora), eliminar
-      // EXCEPTO si hay búsqueda activa, en cuyo caso incluir también clases pasadas
       if (occurrence && todayBase && !includePastClasses) {
         const occurrenceDate = new Date(Date.UTC(
           occurrence.getUTCFullYear(),
@@ -686,19 +1174,16 @@ export default function ExploreHomeScreen() {
     };
 
     const filtered = merged.filter(matchesPresetAndRange);
-
-    // Ordenar por fecha cronológica (próxima ocurrencia)
-    const sorted = filtered.sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const dateA = nextOccurrence(a);
       const dateB = nextOccurrence(b);
       if (!dateA && !dateB) return 0;
-      if (!dateA) return 1; // Sin fecha al final
-      if (!dateB) return -1; // Sin fecha al final
+      if (!dateA) return 1;
+      if (!dateB) return -1;
       return dateA.getTime() - dateB.getTime();
     });
-    // Sin límite: devolver todas las clases encontradas en orden cronológico
     return sorted;
-  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, filters.q, todayYmd]);
+  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred, todayYmd]);
 
   const validUsuarios = React.useMemo(
     () =>
@@ -706,7 +1191,6 @@ export default function ExploreHomeScreen() {
     [usuariosData]
   );
 
-  // Flags de resultados por sección
   const hasFechas = filteredFechas.length > 0;
   const hasClases = classesList.length > 0;
   const hasAcademias = academiasData.length > 0;
@@ -721,7 +1205,6 @@ export default function ExploreHomeScreen() {
     usuariosLoading ||
     marcasLoading;
 
-  // Estado global sin resultados (solo cuando estamos mostrando todo)
   const noResultsAllTypes =
     showAll &&
     !anyLoading &&
@@ -750,6 +1233,7 @@ export default function ExploreHomeScreen() {
             key={p.id}
             onClick={() => applyDatePreset(p.id)}
             className={active ? 'tab tab--active' : 'tab'}
+            disabled={isPending}
           >
             {p.label}
           </button>
@@ -761,451 +1245,11 @@ export default function ExploreHomeScreen() {
   return (
     <>
       <SeoHead section="explore" />
-      <style>{`
-        .explore-container { 
-          min-height: 100vh; 
-          background: #0b0d10; 
-          color: ${colors.gray[50]}; 
-          width: 100%;
-          overflow-x: hidden;
-          /* Safe areas support */
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-        }
-        .filters { padding: ${spacing[6]}; }
-        .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
-        .cards-grid { 
-          display: grid; 
-          grid-template-columns: 1fr; 
-          gap: 1.5rem;
-          padding: 1rem 0;
-        }
-        @media (min-width: 768px) {
-          .cards-grid { 
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            padding: 1.5rem 0;
-          }
-        }
-        .wrap { 
-          max-width: 1280px; 
-          margin: 0 auto; 
-          padding: 0 ${spacing[6]} ${spacing[10]};
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .panel { 
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border: 2px solid rgba(255, 255, 255, 0.15);
-          border-radius: 20px;
-          padding: ${spacing[5]};
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-          backdrop-filter: blur(10px);
-          position: relative;
-          overflow: hidden;
-        }
-        .panel::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166);
-          opacity: 0.9;
-        }
-        .section-container {
-          margin-bottom: 4rem;
-          position: relative;
-        }
-        .explore-slider {
-          width: 100%;
-        }
-        @media (max-width: 768px) {
-          .explore-slider--mobile {
-            grid-template-columns: 1fr !important;
-            gap: 0 !important;
-          }
-          .explore-slider--mobile > button {
-            display: none !important;
-          }
-        }
-        /* Nuevo diseño de filtros */
-        :root {
-          --fp-bg: #15181f;
-          --fp-bg-soft: #101119;
-          --fp-border: #262a36;
-          --fp-border-soft: #343947;
-          --fp-text: #f5f5ff;
-          --fp-muted: #a4a9bd;
-          --fp-radius-lg: 22px;
-          --fp-radius: 16px;
-          --fp-pill: 999px;
-          --fp-speed: 0.16s;
-          --fp-shadow: 0 14px 40px rgba(0,0,0,.55);
-          --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
-        }
-        /* CONTENEDOR GENERAL */
-        .filters-panel {
-          max-width: 100%;
-          margin: 0 auto;
-          padding: 16px 18px 18px;
-          border-radius: var(--fp-radius-lg);
-          border: 1px solid #20232e;
-          background: radial-gradient(circle at top left,#262a34 0,#14171f 45%,#090b10 100%);
-          box-shadow: var(--fp-shadow);
-          font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
-          color: var(--fp-text);
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        @media (min-width: 769px) {
-          .filters-panel {
-            max-width: 100%;
-            width: 100%;
-          }
-        }
-        /* BANNER FAVORITOS */
-        .filters-fav {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 10px 12px;
-          border-radius: var(--fp-radius);
-          background: rgba(0,0,0,.25);
-          border: 1px solid var(--fp-border);
-        }
-        .filters-fav__left {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .filters-fav__icon {
-          font-size: 20px;
-        }
-        .filters-fav__title {
-          margin: 0;
-          font-size: 14px;
-          font-weight: 600;
-        }
-        .filters-fav__btn {
-          border-radius: var(--fp-pill);
-          border: 1px solid var(--fp-border-soft);
-          background: #1b1f2a;
-          color: var(--fp-text);
-          font-size: 12px;
-          padding: 6px 12px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed);
-        }
-        .filters-fav__btn:hover {
-          background: #222735;
-          border-color: #4b5568;
-          transform: translateY(-0.5px);
-        }
-        /* BOX FILTROS */
-        .filters-box {
-          border-radius: var(--fp-radius);
-          background: var(--fp-bg-soft);
-          border: 1px solid var(--fp-border);
-          padding: 10px 10px 12px;
-        }
-        .filters-box__header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 8px;
-        }
-        .filters-box__title {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 13px;
-          font-weight: 600;
-        }
-        .filters-box__icon {
-          font-size: 16px;
-        }
-        .filters-box__badge {
-          font-size: 11px;
-          color: var(--fp-muted);
-          border-radius: var(--fp-pill);
-          border: 1px solid var(--fp-border-soft);
-          padding: 3px 8px;
-          background: #141722;
-        }
-        /* CHIPS SCROLLABLES */
-        .filters-chips {
-          display: flex;
-          gap: 8px;
-          overflow-x: auto;
-          padding: 4px 2px 2px;
-          scrollbar-width: thin;
-          scrollbar-color: #4b5563 transparent;
-        }
-        .filters-chips::-webkit-scrollbar {
-          height: 6px;
-        }
-        .filters-chips::-webkit-scrollbar-thumb {
-          background: #4b5563;
-          border-radius: 10px;
-        }
-        .chip {
-          position: relative;
-          flex: 0 0 auto;
-          border-radius: var(--fp-pill);
-          border: 1px solid var(--fp-border-soft);
-          background: #181b26;
-          color: var(--fp-text);
-          font-size: 12px;
-          padding: 8px 14px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
-          font-weight: 600;
-        }
-        .chip__icon {
-          font-size: 14px;
-        }
-        .chip__badge {
-          min-width: 18px;
-          height: 18px;
-          border-radius: 999px;
-          background: #ec4899;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 700;
-          padding: 0 5px;
-        }
-        .chip__label {
-          white-space: nowrap;
-        }
-        .chip--filter:hover {
-          background: #1f2330;
-          border-color: #4b5563;
-          transform: translateY(-1px);
-        }
-        .chip--filter.chip--active {
-          background: #1f2330;
-          border-color: #4b5563;
-          box-shadow: 0 0 0 1px rgba(255,75,139,0.4);
-        }
-        .chip--danger {
-          background: rgba(239,68,68,.14);
-          border-color: #f97373;
-          color: #fecaca;
-        }
-        .chip--danger:hover {
-          background: rgba(239,68,68,.22);
-          box-shadow: 0 0 0 1px rgba(248,113,113,.6);
-        }
-        /* TABS */
-        .filters-tabs {
-          display: flex;
-          justify-content: space-between;
-          gap: 8px;
-          margin-top: 4px;
-        }
-        .tab {
-          flex: 1;
-          border-radius: var(--fp-pill);
-          border: 1px solid var(--fp-border-soft);
-          background: #141722;
-          color: var(--fp-text);
-          font-size: 13px;
-          padding: 9px 8px;
-          cursor: pointer;
-          font-weight: 600;
-          transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
-        }
-        .tab:hover {
-          background: #1b2130;
-          transform: translateY(-0.5px);
-        }
-        .tab--active {
-          background: var(--fp-grad);
-          border-color: transparent;
-          box-shadow: 0 0 0 1px rgba(0,0,0,.35);
-        }
-        @media (max-width: 768px) {
-          .filters-panel {
-            max-width: 100% !important;
-            padding: 14px 12px 16px !important;
-          }
-          .filters-fav {
-            padding: 8px 10px !important;
-            flex-wrap: wrap !important;
-          }
-          .filters-fav__title {
-            font-size: 13px !important;
-          }
-          .filters-fav__btn {
-            font-size: 11px !important;
-            padding: 5px 10px !important;
-          }
-          .filters-box {
-            padding: 8px 8px 10px !important;
-          }
-          .filters-box__title {
-            font-size: 12px !important;
-          }
-          .filters-box__badge {
-            font-size: 10px !important;
-            padding: 2px 6px !important;
-          }
-          .chip {
-            font-size: 10px !important;
-            padding: 4px 8px !important;
-          }
-          .chip__icon {
-            font-size: 12px !important;
-          }
-          .chip__badge {
-            min-width: 14px !important;
-            height: 14px !important;
-            font-size: 9px !important;
-          }
-          .tab {
-            font-size: 11px !important;
-            padding: 6px 4px !important;
-          }
-          .cards-grid {
-            gap: 1.25rem !important;
-            padding: 0.75rem 0 !important;
-          }
-          .wrap {
-            padding: 0 1rem 2rem !important;
-          }
-          .panel {
-            margin: 1rem 0 !important;
-            padding: 1rem !important;
-            border-radius: 16px !important;
-          }
-          .section-container {
-            margin-bottom: 2.5rem !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .filters-panel {
-            padding: 12px 10px 14px !important;
-            border-radius: 18px !important;
-          }
-          .filters-fav {
-            padding: 7px 9px !important;
-          }
-          .filters-fav__icon {
-            font-size: 18px !important;
-          }
-          .filters-fav__title {
-            font-size: 12px !important;
-          }
-          .filters-fav__btn {
-            font-size: 10px !important;
-            padding: 4px 8px !important;
-          }
-          .filters-box {
-            padding: 7px 7px 9px !important;
-          }
-          .filters-box__title {
-            font-size: 11px !important;
-          }
-          .filters-box__icon {
-            font-size: 14px !important;
-          }
-          .filters-box__badge {
-            font-size: 9px !important;
-            padding: 2px 5px !important;
-          }
-          .chip {
-            font-size: 9px !important;
-            padding: 3px 7px !important;
-            gap: 3px !important;
-          }
-          .chip__icon {
-            font-size: 11px !important;
-          }
-          .chip__badge {
-            min-width: 13px !important;
-            height: 13px !important;
-            font-size: 8px !important;
-          }
-          .tab {
-            font-size: 10px !important;
-            padding: 5px 3px !important;
-          }
-          .cards-grid {
-            gap: 1rem !important;
-            padding: 0.5rem 0 !important;
-          }
-          .wrap {
-            padding: 0 0.75rem 1.5rem !important;
-          }
-          .panel {
-            margin: 0.75rem 0 !important;
-            padding: 0.875rem !important;
-            border-radius: 14px !important;
-          }
-          .section-container h2 {
-            font-size: 1.5rem !important;
-          }
-          .section-container > div > div:first-child > div:first-child {
-            width: 48px !important;
-            height: 48px !important;
-            font-size: 1.25rem !important;
-          }
-        }
-      `}</style>
-      <style>{`
-        /* Extra compact tweaks for very small screens */
-        @media (max-width: 430px) {
-          .wrap {
-            padding: 0 0.75rem 1.5rem !important;
-          }
-          .section-container {
-            margin-bottom: 2.25rem !important;
-          }
-          .section-container h2 {
-            font-size: 1.4rem !important;
-          }
-          .filters-panel {
-            padding: 10px 9px 12px !important;
-            border-radius: 16px !important;
-          }
-          .panel {
-            margin: 0.5rem 0 !important;
-            padding: 0.75rem 0.8rem !important;
-            border-radius: 12px !important;
-          }
-          .cards-grid {
-            gap: 0.9rem !important;
-            padding: 0.5rem 0 !important;
-          }
-          .card-skeleton {
-            height: 210px !important;
-            border-radius: 12px !important;
-          }
-          .section-container > .explore-slider {
-            margin: 0 -0.15rem !important;
-          }
-        }
-      `}</style>
+      <style>{STYLES}</style>
 
       <div className="explore-container">
-        {/* Hero removido para una vista más directa al contenido */}
-
         <div className="wrap">
-
           <section className="filters-panel" style={{ margin: `${spacing[4]} 0 ${spacing[6]} 0` }}>
-            {/* BANNER FAVORITOS */}
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -1243,7 +1287,6 @@ export default function ExploreHomeScreen() {
               </motion.div>
             )}
 
-            {/* BLOQUE FILTROS */}
             <div className="filters-box">
               <header className="filters-box__header">
                 <div className="filters-box__title">
@@ -1251,7 +1294,6 @@ export default function ExploreHomeScreen() {
                   <span>Filtros</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {/* Botón discreto para activar filtros favoritos */}
                   {!usingFavoriteFilters && user && preferences && (
                     (preferences.ritmos && preferences.ritmos.length > 0) ||
                     (preferences.zonas && preferences.zonas.length > 0) ||
@@ -1298,15 +1340,14 @@ export default function ExploreHomeScreen() {
                 </div>
               </header>
 
-              {/* CHIPS SCROLLEABLES */}
               <div className="filters-chips">
                 <button
                   className={`chip chip--filter ${openFilterDropdown === 'ritmos' ? 'chip--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'ritmos' ? null : 'ritmos')}
                 >
                   <span className="chip__icon">🎵</span>
-                  {filters.ritmos.length > 0 && (
-                    <span className="chip__badge">{filters.ritmos.length}</span>
+                  {stableRitmos.length > 0 && (
+                    <span className="chip__badge">{stableRitmos.length}</span>
                   )}
                   <span className="chip__label">Ritmos</span>
                 </button>
@@ -1315,8 +1356,8 @@ export default function ExploreHomeScreen() {
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'zonas' ? null : 'zonas')}
                 >
                   <span className="chip__icon">📍</span>
-                  {filters.zonas.length > 0 && (
-                    <span className="chip__badge">{filters.zonas.length}</span>
+                  {stableZonas.length > 0 && (
+                    <span className="chip__badge">{stableZonas.length}</span>
                   )}
                   <span className="chip__label">Zona</span>
                 </button>
@@ -1330,7 +1371,6 @@ export default function ExploreHomeScreen() {
                   )}
                   <span className="chip__label">Fechas</span>
                 </button>
-                {/* Barra de búsqueda colapsada */}
                 {isSearchExpanded ? (
                   <div style={{ 
                     position: 'relative', 
@@ -1428,7 +1468,7 @@ export default function ExploreHomeScreen() {
                   </button>
                 )}
                 {activeFiltersCount > 0 && (
-                  <button className="chip chip--danger"                   onClick={() => {
+                  <button className="chip chip--danger" onClick={() => {
                     handleFilterChange({
                       ...filters,
                       type: 'all',
@@ -1449,7 +1489,6 @@ export default function ExploreHomeScreen() {
                 )}
               </div>
 
-              {/* FilterBar integrado - solo dropdowns */}
               <div style={{ marginTop: '8px', position: 'relative' }}>
                 <FilterBar
                   filters={filters}
@@ -1463,7 +1502,6 @@ export default function ExploreHomeScreen() {
               </div>
             </div>
 
-            {/* TABS DE RANGO DE FECHA */}
             <div className="filters-tabs">
               {renderDatePresetButtons(false)}
             </div>
@@ -1473,57 +1511,30 @@ export default function ExploreHomeScreen() {
             <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (() => {
-                const list = filteredFechas;
-                
-                // Log para verificar qué se está pasando al slider
-                const recurrentInList = list.filter((f: any) => f._recurrence_index !== undefined);
-                if (recurrentInList.length > 0) {
-                  const grupos = recurrentInList.reduce((acc: any, f: any) => {
-                    const key = f._original_id || f.id;
-                    if (!acc[key]) acc[key] = [];
-                    acc[key].push({ fecha: f.fecha, index: f._recurrence_index, id: f.id });
-                    return acc;
-                  }, {} as Record<string, any[]>);
-                  // Log de depuración removido para reducir spam en consola
-                }
-                
-                return list.length ? (
-                  <HorizontalSlider
-                    {...sliderProps}
-                    items={list}
-                    renderItem={(fechaEvento: any, idx: number) => {
-                      // Usar un key único que incluya el índice de recurrencia si existe
-                      const uniqueKey = fechaEvento._recurrence_index !== undefined
-                        ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
-                        : (fechaEvento.id ?? `fecha_${idx}`);
-                      
-                      return (
-                        <motion.div
-                          key={uniqueKey}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                          }}
-                        >
-                          <EventCard item={fechaEvento} />
-                        </motion.div>
-                      );
-                    }}
-                  />
-                ) : (
-                  <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
-                );
-              })()}
+              ) : (
+                <>
+                  {filteredFechas.length > 0 ? (
+                    <HorizontalSlider
+                      {...sliderProps}
+                      items={filteredFechas}
+                      renderItem={(fechaEvento: any, idx: number) => (
+                        <FechaItem key={fechaEvento._recurrence_index !== undefined ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}` : (fechaEvento.id ?? `fecha_${idx}`)} fechaEvento={fechaEvento} idx={idx} handlePreNavigate={handlePreNavigate} />
+                      )}
+                    />
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+                  )}
+                  {fechasLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={fechasLoadMore.handleLoadMore}
+                      disabled={fechasLoadMore.isFetching}
+                    >
+                      {fechasLoadMore.isFetching ? 'Cargando...' : 'Cargar más fechas'}
+                    </button>
+                  )}
+                </>
+              )}
             </Section>
           )}
 
@@ -1533,152 +1544,44 @@ export default function ExploreHomeScreen() {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
                 return (
-                  <HorizontalSlider
-                    {...sliderProps}
-                    items={classesList}
-                    renderItem={(clase: any, idx: number) => {
-                      const stableKey =
-                        `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
-                      return (
-                        <motion.div
-                          key={stableKey}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                          }}
-                        >
-                          <ClassCard item={clase} />
-                        </motion.div>
-                      );
-                    }}
-                  />
+                  <>
+                    <HorizontalSlider
+                      {...sliderProps}
+                      items={classesList}
+                      renderItem={(clase: any, idx: number) => (
+                        <ClaseItem key={`${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`} clase={clase} idx={idx} handlePreNavigate={handlePreNavigate} />
+                      )}
+                    />
+                    {(academiasLoadMore.hasNextPage || maestrosLoadMore.hasNextPage) && (
+                      <button
+                        className="load-more-btn"
+                        onClick={() => {
+                          if (academiasLoadMore.hasNextPage) academiasLoadMore.handleLoadMore();
+                          if (maestrosLoadMore.hasNextPage) maestrosLoadMore.handleLoadMore();
+                        }}
+                        disabled={academiasLoadMore.isFetching || maestrosLoadMore.isFetching}
+                      >
+                        {(academiasLoadMore.isFetching || maestrosLoadMore.isFetching) ? 'Cargando...' : 'Cargar más clases'}
+                      </button>
+                    )}
+                  </>
                 );
               })()}
             </Section>
           )}
-
-          {/* {(showAll || selectedType === 'sociales') && (
-            <Section title="Sociales" toAll="/explore/list?type=sociales">
-              {socialesLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (() => {
-                const list = sociales?.pages?.[0]?.data || [];
-                return list.length ? (
-                  <HorizontalSlider
-                    items={list}
-                    renderItem={(social: any, idx: number) => (
-                      <motion.div 
-                        key={social.id ?? idx} 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        whileHover={{ y: -4, scale: 1.02 }} 
-                        onClickCapture={handlePreNavigate}
-                        style={{ 
-                          background: 'rgba(255,255,255,0.04)', 
-                          border: '1px solid rgba(255,255,255,0.08)', 
-                          borderRadius: 16, 
-                          padding: 0,
-                          overflow: 'hidden',
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                        }}
-                      >
-                        <SocialCard item={social} />
-                      </motion.div>
-                    )}
-                  />
-                ) : (<div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>);
-              })()}
-            </Section>
-          )} */}
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
             <Section title="Academias" toAll="/explore/list?type=academias">
               {academiasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={academiasData}
-                  renderItem={(academia: any, idx: number) => (
-                    <motion.div
-                      key={academia.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <AcademyCard item={academia} />
-                    </motion.div>
-                  )}
-                />
-              )}
-            </Section>
-          )}
-
-          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title="Maestros" toAll="/explore/list?type=teacher">
-              {maestrosLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={maestrosData}
-                  renderItem={(maestro: any, idx: number) => (
-                    <motion.div
-                      key={maestro.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <TeacherCard item={maestro} />
-                    </motion.div>
-                  )}
-                />
-              )}
-            </Section>
-          )}
-
-          {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
-            <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
-              {usuariosLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (() => {
-                return validUsuarios.length > 0 ? (
+                <>
                   <HorizontalSlider
                     {...sliderProps}
-                    items={validUsuarios}
-                    renderItem={(u: any, idx: number) => (
+                    items={academiasData}
+                    renderItem={(academia: any, idx: number) => (
                       <motion.div
-                        key={u.user_id ?? idx}
+                        key={academia.id ?? idx}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05, duration: 0.3 }}
@@ -1693,23 +1596,122 @@ export default function ExploreHomeScreen() {
                           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                         }}
                       >
-                        <DancerCard item={{
-                          id: u.user_id,
-                          display_name: u.display_name,
-                          bio: u.bio,
-                          avatar_url: u.avatar_url,
-                          banner_url: u.banner_url,
-                          portada_url: u.portada_url,
-                          media: u.media,
-                          ritmos: u.ritmos,
-                          ritmosSeleccionados: u.ritmos_seleccionados,
-                          zonas: u.zonas
-                        }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                        <AcademyCard item={academia} />
                       </motion.div>
                     )}
                   />
-                ) : null;
-              })()}
+                  {academiasLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={academiasLoadMore.handleLoadMore}
+                      disabled={academiasLoadMore.isFetching}
+                    >
+                      {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
+                    </button>
+                  )}
+                </>
+              )}
+            </Section>
+          )}
+
+          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
+            <Section title="Maestros" toAll="/explore/list?type=teacher">
+              {maestrosLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (
+                <>
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={maestrosData}
+                    renderItem={(maestro: any, idx: number) => (
+                      <motion.div
+                        key={maestro.id ?? idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        onClickCapture={handlePreNavigate}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 16,
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <TeacherCard item={maestro} />
+                      </motion.div>
+                    )}
+                  />
+                  {maestrosLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={maestrosLoadMore.handleLoadMore}
+                      disabled={maestrosLoadMore.isFetching}
+                    >
+                      {maestrosLoadMore.isFetching ? 'Cargando...' : 'Cargar más maestros'}
+                    </button>
+                  )}
+                </>
+              )}
+            </Section>
+          )}
+
+          {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
+            <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
+              {usuariosLoading ? (
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+              ) : (
+                <>
+                  {validUsuarios.length > 0 ? (
+                    <HorizontalSlider
+                      {...sliderProps}
+                      items={validUsuarios}
+                      renderItem={(u: any, idx: number) => (
+                        <motion.div
+                          key={u.user_id ?? idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <DancerCard item={{
+                            id: u.user_id,
+                            display_name: u.display_name,
+                            bio: u.bio,
+                            avatar_url: u.avatar_url,
+                            banner_url: u.banner_url,
+                            portada_url: u.portada_url,
+                            media: u.media,
+                            ritmos: u.ritmos,
+                            ritmosSeleccionados: u.ritmos_seleccionados,
+                            zonas: u.zonas
+                          }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                        </motion.div>
+                      )}
+                    />
+                  ) : null}
+                  {usuariosLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={usuariosLoadMore.handleLoadMore}
+                      disabled={usuariosLoadMore.isFetching}
+                    >
+                      {usuariosLoadMore.isFetching ? 'Cargando...' : 'Cargar más usuarios'}
+                    </button>
+                  )}
+                </>
+              )}
             </Section>
           )}
 
@@ -1724,30 +1726,41 @@ export default function ExploreHomeScreen() {
                   ))}
                 </div>
               ) : organizadoresData.length > 0 ? (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={organizadoresData}
-                  renderItem={(organizador: any, idx: number) => (
-                    <motion.div
-                      key={organizador.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
+                <>
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={organizadoresData}
+                    renderItem={(organizador: any, idx: number) => (
+                      <motion.div
+                        key={organizador.id ?? idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        onClickCapture={handlePreNavigate}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 16,
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <OrganizerCard item={organizador} />
+                      </motion.div>
+                    )}
+                  />
+                  {organizadoresLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={organizadoresLoadMore.handleLoadMore}
+                      disabled={organizadoresLoadMore.isFetching}
                     >
-                      <OrganizerCard item={organizador} />
-                    </motion.div>
+                      {organizadoresLoadMore.isFetching ? 'Cargando...' : 'Cargar más organizadores'}
+                    </button>
                   )}
-                />
+                </>
               ) : (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
               )}
@@ -1759,30 +1772,41 @@ export default function ExploreHomeScreen() {
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
-                <HorizontalSlider
-                  {...sliderProps}
-                  items={marcasData}
-                  renderItem={(brand: any, idx: number) => (
-                    <motion.div
-                      key={brand.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
+                <>
+                  <HorizontalSlider
+                    {...sliderProps}
+                    items={marcasData}
+                    renderItem={(brand: any, idx: number) => (
+                      <motion.div
+                        key={brand.id ?? idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        onClickCapture={handlePreNavigate}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: 16,
+                          padding: 0,
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        <BrandCard item={brand} />
+                      </motion.div>
+                    )}
+                  />
+                  {marcasLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={marcasLoadMore.handleLoadMore}
+                      disabled={marcasLoadMore.isFetching}
                     >
-                      <BrandCard item={brand} />
-                    </motion.div>
+                      {marcasLoadMore.isFetching ? 'Cargando...' : 'Cargar más marcas'}
+                    </button>
                   )}
-                />
+                </>
               )}
             </Section>
           )}

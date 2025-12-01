@@ -10,6 +10,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { MediaUploader } from "../../components/MediaUploader";
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
+import { resizeImageIfNeeded } from "../../lib/imageResize";
 
 /* Por qué: Tipos fuertes + reducer = menos bugs al mutar estructuras anidadas. */
 type Category = "calzado" | "ropa" | "accesorios";
@@ -194,13 +195,15 @@ function formReducer(state: BrandForm, action: Action): BrandForm {
 export default function BrandProfileEditor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { data: brand, isLoading: brandLoading } = useMyBrand();
+  const { data: brand, isLoading: brandLoading, refetch: refetchBrand } = useMyBrand();
   const upsert = useUpsertBrand();
   const { showToast } = useToast();
 
   const [form, dispatch] = React.useReducer(formReducer, initialForm);
   const [tab, setTab] = React.useState<'info'|'products'|'policies'>('info');
   const [catFilter, setCatFilter] = React.useState<Category | 'all'>('all');
+  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
@@ -232,6 +235,43 @@ export default function BrandProfileEditor() {
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tab]);
+
+  // Detectar cuando el perfil es aprobado y mostrar mensaje de bienvenida
+  React.useEffect(() => {
+    if (!brand) {
+      // Inicializar el estado cuando no hay perfil
+      if (previousApprovalStatus === null) {
+        setPreviousApprovalStatus(null);
+      }
+      return;
+    }
+
+    const currentStatus = (brand as any)?.estado_aprobacion;
+    
+    // Inicializar el estado anterior si es la primera vez que tenemos datos
+    if (previousApprovalStatus === null && currentStatus) {
+      setPreviousApprovalStatus(currentStatus);
+      return;
+    }
+    
+    // Si el estado anterior era "en_revision" o "borrador" y ahora es "aprobado"
+    if (
+      previousApprovalStatus && 
+      (previousApprovalStatus === 'en_revision' || previousApprovalStatus === 'borrador') &&
+      currentStatus === 'aprobado' &&
+      previousApprovalStatus !== currentStatus
+    ) {
+      showToast('🎉 ¡Bienvenida, Marca! Tu perfil ha sido aprobado. Ya puedes empezar a compartir tus productos.', 'success');
+      setShowWelcomeBanner(true); // Mostrar banner de bienvenida
+      // Ocultar el banner después de 10 segundos
+      setTimeout(() => setShowWelcomeBanner(false), 10000);
+    }
+
+    // Actualizar el estado anterior
+    if (currentStatus && currentStatus !== previousApprovalStatus) {
+      setPreviousApprovalStatus(currentStatus);
+    }
+  }, [brand, previousApprovalStatus, showToast]);
 
   React.useEffect(() => {
     if (brand) {
@@ -318,8 +358,44 @@ export default function BrandProfileEditor() {
       console.log('✅ [BrandProfileEditor] Estado de aprobación:', payload.estado_aprobacion);
       console.log('💬 [BrandProfileEditor] WhatsApp number:', payload.whatsapp_number);
       console.log('💬 [BrandProfileEditor] WhatsApp template:', payload.whatsapp_message_template);
-      await upsert.mutateAsync(payload);
-      showToast('✅ Perfil guardado exitosamente', 'success');
+      
+      // Detectar si es un perfil nuevo antes de guardar
+      const isNewProfile = !brand;
+      
+      const savedProfile = await upsert.mutateAsync(payload);
+      
+      // Refetch explícito para actualizar el estado inmediatamente
+      await refetchBrand();
+      
+      // Actualizar el form con los datos del perfil guardado
+      if (savedProfile) {
+        dispatch({
+          type: 'SET_ALL',
+          payload: {
+            nombre_publico: (savedProfile as any).nombre_publico || '',
+            bio: (savedProfile as any).bio || '',
+            redes_sociales: (savedProfile as any).redes_sociales || {},
+            productos: Array.isArray((savedProfile as any).productos) ? (savedProfile as any).productos : [],
+            avatar_url: (savedProfile as any).avatar_url || null,
+            size_guide: Array.isArray((savedProfile as any).size_guide) ? (savedProfile as any).size_guide : [],
+            fit_tips: Array.isArray((savedProfile as any).fit_tips) ? (savedProfile as any).fit_tips : [],
+            policies: (savedProfile as any).policies || {},
+            conversion: (savedProfile as any).conversion || {},
+            reviews: Array.isArray((savedProfile as any).reviews) ? (savedProfile as any).reviews : [],
+            faqs: Array.isArray((savedProfile as any).faqs) ? (savedProfile as any).faqs : [],
+            commitment: Array.isArray((savedProfile as any).commitment) ? (savedProfile as any).commitment : [],
+            whatsapp_number: (savedProfile as any).whatsapp_number || '',
+            whatsapp_message_template: (savedProfile as any).whatsapp_message_template || 'me interesa el producto: {nombre}',
+          }
+        });
+      }
+      
+      // Mostrar mensaje de éxito con mensaje especial para perfiles nuevos
+      if (isNewProfile) {
+        showToast('🎉 ¡Bienvenida, Marca! Tu perfil ha sido creado exitosamente. Ya puedes empezar a compartir tus productos.', 'success');
+      } else {
+        showToast('✅ Perfil guardado exitosamente', 'success');
+      }
     } catch (error: any) {
       console.error('❌ [BrandProfileEditor] Error guardando:', error);
       showToast(`❌ Error al guardar: ${error.message || 'Intenta nuevamente'}`, 'error');
@@ -342,12 +418,15 @@ export default function BrandProfileEditor() {
     showToast('📤 Subiendo imágenes...', 'info');
     const uploaded: ProductItem[] = [];
     for (const file of onlyImages) {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      // Redimensionar imagen si es necesario (máximo 800px de ancho)
+      const processedFile = await resizeImageIfNeeded(file, 800);
+      
+      const ext = processedFile.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `brand/${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from('media').upload(path, file, {
+      const { error } = await supabase.storage.from('media').upload(path, processedFile, {
         cacheControl: '3600', 
         upsert: false, 
-        contentType: file.type || undefined,
+        contentType: processedFile.type || undefined,
       });
       if (error) { 
         console.error('[BrandCatalogUpload] Error:', error); 
@@ -381,9 +460,13 @@ export default function BrandProfileEditor() {
   const onUploadLogo = async (file: File) => {
     if (!(brand as any)?.id) { alert('Primero guarda la información básica para habilitar el logo.'); return; }
     const brandId = (brand as any).id as number;
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    
+    // Redimensionar imagen si es necesario (máximo 800px de ancho)
+    const processedFile = await resizeImageIfNeeded(file, 800);
+    
+    const ext = processedFile.name.split('.').pop()?.toLowerCase() || 'png';
     const path = `${brandId}/logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('media').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
+    const { error } = await supabase.storage.from('media').upload(path, processedFile, { upsert: true, cacheControl: '3600', contentType: processedFile.type || undefined });
     if (error) { alert(error.message); return; }
     const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
     dispatch({ type:'SET_AVATAR', url: pub.publicUrl });
@@ -419,7 +502,10 @@ export default function BrandProfileEditor() {
         color: '#F5F5F5',
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando sesión...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -480,7 +566,10 @@ export default function BrandProfileEditor() {
         color: '#F5F5F5',
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando marca...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu marca...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -781,8 +870,8 @@ export default function BrandProfileEditor() {
             <button onClick={()=>setTab('policies')} className="editor-back-btn" style={{ background: tab==='policies'?'linear-gradient(135deg, rgba(30,136,229,.9), rgba(0,188,212,.9))':'rgba(255,255,255,0.1)' }}>Políticas</button>
           </div>
 
-          {/* Banner de Bienvenida (solo para perfiles nuevos) */}
-          {!brand && (
+          {/* Banner de Bienvenida (para perfiles nuevos o recién aprobados) */}
+          {(!brand || showWelcomeBanner) && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -807,7 +896,10 @@ export default function BrandProfileEditor() {
                 ¡Bienvenido, Marca!
               </h3>
               <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
-                Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
+                {showWelcomeBanner 
+                  ? <>Tu perfil ha sido aprobado. Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para actualizar tu perfil.</>
+                  : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
+                }
               </p>
               <div style={{
                 display: 'inline-block',

@@ -17,15 +17,16 @@ export function ProfileBasics() {
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [profileInitialized, setProfileInitialized] = useState(false);
   
-  const { user } = useAuth();
-  const { profile, updateProfileFields } = useUserProfile();
+  const { user, loading: authLoading } = useAuth();
+  const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  // Inicializar valores desde el perfil existente
+  // Inicializar valores desde el perfil existente (solo una vez)
   useEffect(() => {
-    if (profile) {
+    if (profile && !profileInitialized) {
       if (profile.display_name) setDisplayName(profile.display_name);
       if (profile.bio) setBio(profile.bio);
       if ((profile as any).rol_baile) {
@@ -34,8 +35,9 @@ export function ProfileBasics() {
       if (profile.avatar_url) {
         setAvatarPreview(profile.avatar_url);
       }
+      setProfileInitialized(true);
     }
-  }, [profile]);
+  }, [profile, profileInitialized]);
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,6 +104,8 @@ export function ProfileBasics() {
       await updateProfileFields(updates);
 
       showToast('Perfil guardado exitosamente ✅', 'success');
+      
+      // Navegar inmediatamente sin esperar
       navigate('/onboarding/ritmos');
     } catch (err: any) {
       setError(err.message);
@@ -133,6 +137,60 @@ export function ProfileBasics() {
     follow: { label: 'Follow (Seguidor/a)', desc: 'Interpretas y fluís con la guía.', emoji: '🎧' },
     ambos: { label: 'Ambos', desc: 'Te adaptas a ambos roles según el momento.', emoji: '♻️' },
   };
+
+  // Mostrar loading solo si auth está cargando (no esperar perfil)
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          backgroundImage: `
+            radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.25), transparent 45%),
+            radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.25), transparent 50%),
+            linear-gradient(135deg, ${colors.dark[600]} 0%, ${colors.dark[300]} 100%)
+          `,
+          padding: 'clamp(1.5rem, 4vw, 4rem)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{
+          textAlign: 'center',
+          color: '#fff',
+        }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(255,255,255,0.2)',
+            borderTop: '4px solid #f472b6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p style={{ margin: 0, fontSize: '1rem', opacity: 0.9 }}>
+            Estamos cargando tu sesión...
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: '0.85rem', opacity: 0.7 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario, redirigir a login
+  if (!user) {
+    navigate('/auth/login', { replace: true });
+    return null;
+  }
 
   return (
     <div

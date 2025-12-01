@@ -340,7 +340,7 @@ export default function EventCreateWizard({
                 Descripción
               </label>
               <textarea
-                value={descripcion}
+                value={descripcion || ''}
                 onChange={(e) => setDescripcion(e.target.value)}
                 rows={4}
                 placeholder="Describe tu evento..."
@@ -552,7 +552,7 @@ export default function EventCreateWizard({
                   Descripción
                 </label>
                 <textarea
-                  value={newPrice.descripcion}
+                  value={newPrice.descripcion || ''}
                   onChange={(e) => setNewPrice({...newPrice, descripcion: e.target.value})}
                   placeholder="Descripción del precio..."
                   rows={2}

@@ -45,12 +45,12 @@ export default function AppShell() {
       // ✅ Cerrar sesión (actualiza el estado inmediatamente)
       await signOut();
       
-      // ✅ Navegar inmediatamente
-      navigate('/', { replace: true });
+      // ✅ Navegar inmediatamente a login
+      navigate('/auth/login', { replace: true });
     } catch (error) {
       console.error('[AppShell] Error al cerrar sesión:', error);
-      // ✅ Aún así navegar
-      navigate('/', { replace: true });
+      // ✅ Aún así navegar a login
+      navigate('/auth/login', { replace: true });
     } finally {
       setIsLoggingOut(false);
     }

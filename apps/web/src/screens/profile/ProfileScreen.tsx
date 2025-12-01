@@ -65,7 +65,12 @@ export function ProfileScreen() {
           color: colors.light,
         }}
       >
-        <p>Cargando datos de perfil…</p>
+        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '0 16px' }}>
+          <p style={{ marginBottom: '8px' }}>Estamos cargando tu perfil...</p>
+          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
       </div>
     );
   }

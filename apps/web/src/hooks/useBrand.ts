@@ -24,7 +24,10 @@ export function useMyBrand() {
         .maybeSingle();
       if (error) throw error;
       return data as BrandProfile | null;
-    }
+    },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana para detectar aprobaciones
+    refetchInterval: 30000, // Refrescar cada 30 segundos para detectar cambios de aprobación
   });
 }
 

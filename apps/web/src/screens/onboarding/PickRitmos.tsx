@@ -34,6 +34,8 @@ export function PickRitmos() {
       
       await updateProfileFields(updates);
       showToast('Ritmos guardados exitosamente 🎵', 'success');
+      
+      // Navegar inmediatamente sin esperar
       navigate('/onboarding/zonas');
     } catch (err: any) {
       setError(err.message);

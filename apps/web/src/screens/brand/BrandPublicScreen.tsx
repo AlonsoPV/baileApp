@@ -92,7 +92,10 @@ export default function BrandProfileLive() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-          <p style={{ fontSize: typography.fontSize.lg }}>Cargando marca…</p>
+          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>Estamos cargando la marca…</p>
+          <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
         </div>
       </div>
     );

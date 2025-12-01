@@ -507,10 +507,13 @@ export default function TeacherProfileLive() {
         <div>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
           <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-            Cargando perfil...
+            Estamos cargando tu perfil...
           </h2>
-          <p style={{ opacity: 0.7 }}>
+          <p style={{ opacity: 0.7, marginBottom: '8px' }}>
             Redirigiendo a edición para crear tu perfil de maestro
+          </p>
+          <p style={{ opacity: 0.6, fontSize: '0.9rem' }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
           </p>
         </div>
       </div>

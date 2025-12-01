@@ -120,7 +120,7 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
 export default function TeacherProfileEditor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { data: teacher, isLoading } = useTeacherMy();
+  const { data: teacher, isLoading, refetch: refetchTeacher } = useTeacherMy();
   const { data: allTags } = useTags();
   const { media, add, remove } = useTeacherMedia();
   const upsert = useUpsertTeacher();
@@ -128,6 +128,9 @@ export default function TeacherProfileEditor() {
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
+  const [wasNewProfile, setWasNewProfile] = React.useState(false);
+  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
@@ -159,6 +162,47 @@ export default function TeacherProfileEditor() {
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
+
+  // Detectar cuando el perfil es aprobado y mostrar mensaje de bienvenida
+  React.useEffect(() => {
+    if (!teacher) {
+      // Inicializar el estado cuando no hay perfil
+      if (previousApprovalStatus === null) {
+        setPreviousApprovalStatus(null);
+      }
+      return;
+    }
+
+    const currentStatus = (teacher as any)?.estado_aprobacion;
+    
+    // Inicializar el estado anterior si es la primera vez que tenemos datos
+    if (previousApprovalStatus === null && currentStatus) {
+      setPreviousApprovalStatus(currentStatus);
+      return;
+    }
+    
+    // Si el estado anterior era "en_revision" o "borrador" y ahora es "aprobado"
+    if (
+      previousApprovalStatus && 
+      (previousApprovalStatus === 'en_revision' || previousApprovalStatus === 'borrador') &&
+      currentStatus === 'aprobado' &&
+      previousApprovalStatus !== currentStatus
+    ) {
+      setStatusMsg({ 
+        type: 'ok', 
+        text: '🎉 ¡Bienvenido, Maestro! Tu perfil ha sido aprobado. Ya puedes empezar a compartir tus clases.' 
+      });
+      setShowWelcomeBanner(true); // Mostrar banner de bienvenida
+      setTimeout(() => setStatusMsg(null), 5000);
+      // Ocultar el banner después de 10 segundos
+      setTimeout(() => setShowWelcomeBanner(false), 10000);
+    }
+
+    // Actualizar el estado anterior
+    if (currentStatus && currentStatus !== previousApprovalStatus) {
+      setPreviousApprovalStatus(currentStatus);
+    }
+  }, [teacher, previousApprovalStatus]);
 
   // Hooks para invitaciones
   const teacherId = (teacher as any)?.id;
@@ -266,6 +310,10 @@ export default function TeacherProfileEditor() {
 
   const handleSave = async () => {
     try {
+      // Detectar si es un perfil nuevo antes de guardar
+      const isNewProfile = !teacher;
+      setWasNewProfile(isNewProfile);
+      
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
       // Validar zonas contra el catálogo
@@ -299,11 +347,26 @@ export default function TeacherProfileEditor() {
         payload.id = profileId;
       }
 
-      await upsert.mutateAsync(payload);
+      const savedProfile = await upsert.mutateAsync(payload);
       
-      // Mostrar mensaje de éxito
-      setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
-      setTimeout(() => setStatusMsg(null), 3000);
+      // Refetch explícito para actualizar el estado inmediatamente
+      await refetchTeacher();
+      
+      // Actualizar el form con los datos del perfil guardado
+      if (savedProfile) {
+        setAll(savedProfile as any);
+      }
+      
+      // Mostrar mensaje de éxito con mensaje especial para perfiles nuevos
+      if (isNewProfile) {
+        setStatusMsg({ 
+          type: 'ok', 
+          text: '🎉 ¡Bienvenido, Maestro! Tu perfil ha sido creado exitosamente. Ya puedes empezar a compartir tus clases.' 
+        });
+      } else {
+        setStatusMsg({ type: 'ok', text: '✅ Perfil guardado exitosamente' });
+      }
+      setTimeout(() => setStatusMsg(null), 5000);
     } catch (error) {
       console.error("❌ [teacherProfileEditor] Error guardando:", error);
       setStatusMsg({ type: 'err', text: '❌ Error al guardar el perfil' });
@@ -398,7 +461,10 @@ export default function TeacherProfileEditor() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando sesión...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -459,7 +525,10 @@ export default function TeacherProfileEditor() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando Maestro...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando tu perfil de maestro...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }
@@ -721,6 +790,32 @@ export default function TeacherProfileEditor() {
           padding: 1rem !important;
           margin-bottom: 1.5rem !important;
         }
+        /* Competition groups responsive */
+        .competition-group-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+        }
+        .competition-group-header button {
+          width: 100% !important;
+        }
+        .competition-group-item {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+          padding: 1rem !important;
+        }
+        .competition-group-actions {
+          width: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 0.5rem !important;
+        }
+        .competition-group-actions button {
+          width: 100% !important;
+          padding: 0.625rem !important;
+          font-size: 0.875rem !important;
+        }
       }
       
       /* Estilos para editor-section y glass-card-container */
@@ -919,6 +1014,33 @@ export default function TeacherProfileEditor() {
           font-size: 0.85rem !important;
           padding: 0.6rem 0.4rem !important;
         }
+        /* Competition groups responsive */
+        .competition-group-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+        }
+        .competition-group-header button {
+          width: 100% !important;
+        }
+        .competition-group-item {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+          padding: 1rem !important;
+        }
+        .competition-group-actions {
+          width: 100% !important;
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 0.5rem !important;
+        }
+        .competition-group-actions button {
+          flex: 1 1 auto !important;
+          min-width: calc(50% - 0.25rem) !important;
+          padding: 0.625rem !important;
+          font-size: 0.875rem !important;
+        }
       }
       
       @media (max-width: 480px) {
@@ -1055,8 +1177,8 @@ export default function TeacherProfileEditor() {
           </motion.div>
         )}
 
-        {/* Banner de Bienvenida (solo para perfiles nuevos, no mientras carga) */}
-        {!isLoading && !teacher && (
+        {/* Banner de Bienvenida (para perfiles nuevos o recién aprobados) */}
+        {!isLoading && (!teacher || showWelcomeBanner) && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1080,7 +1202,10 @@ export default function TeacherProfileEditor() {
               ¡Bienvenido, Maestro!
             </h3>
             <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
-              Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil
+              {showWelcomeBanner 
+                ? <>Tu perfil ha sido aprobado. Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para actualizar tu perfil.</>
+                : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
+              }
             </p>
             <div style={{
               display: 'inline-block',
@@ -1090,7 +1215,7 @@ export default function TeacherProfileEditor() {
               fontSize: '0.85rem',
               fontWeight: '600'
             }}>
-              👆 Mínimo requerido: <strong>Nombre del Maestro</strong>
+              👆 Mínimo requerido: <strong>Nombre del Maestro</strong> y <strong>Ritmos</strong>
             </div>
           </motion.div>
         )}
@@ -1128,7 +1253,7 @@ export default function TeacherProfileEditor() {
                   📝 Descripción
                 </label>
                 <textarea
-                  value={form.bio}
+                  value={form.bio || ''}
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Cuéntanos sobre tus inicios dando clases, su historia, metodología y lo que la hace especial..."
                   rows={3}
@@ -2019,7 +2144,7 @@ export default function TeacherProfileEditor() {
         {/* Grupos de Competencia */}
         {teacherId && (
           <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div className="competition-group-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
                 🎯 Grupos de Competencia
               </h2>
@@ -2062,6 +2187,7 @@ export default function TeacherProfileEditor() {
                   .map((group: any) => (
                     <div
                       key={group.id}
+                      className="competition-group-item"
                       style={{
                         padding: '1.5rem',
                         background: 'rgba(255, 255, 255, 0.05)',
@@ -2073,18 +2199,18 @@ export default function TeacherProfileEditor() {
                         gap: '1rem'
                       }}
                     >
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem', wordBreak: 'break-word' }}>
                           {group.name}
                         </h3>
                         {group.description && (
-                          <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem' }}>
+                          <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem', wordBreak: 'break-word' }}>
                             {group.description.substring(0, 100)}{group.description.length > 100 ? '...' : ''}
                           </p>
                         )}
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                           {group.training_location && (
-                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff' }}>
+                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff', wordBreak: 'break-word' }}>
                               📍 {group.training_location}
                             </span>
                           )}
@@ -2095,7 +2221,7 @@ export default function TeacherProfileEditor() {
                           )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className="competition-group-actions" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
                         <button
                           onClick={() => navigate(`/competition-groups/${group.id}`)}
                           style={{

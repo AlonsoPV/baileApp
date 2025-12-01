@@ -414,7 +414,7 @@ export default function OrganizerProfileEditor() {
     if (typeof window === 'undefined') return false;
     return window.innerWidth <= 768;
   });
-  const { data: org, isLoading } = useMyOrganizer();
+  const { data: org, isLoading, refetch: refetchOrganizer } = useMyOrganizer();
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
   const { data: parents } = useParentsByOrganizer((org as any)?.id);
@@ -440,6 +440,43 @@ export default function OrganizerProfileEditor() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
+
+  // Detectar cuando el perfil es aprobado y mostrar mensaje de bienvenida
+  useEffect(() => {
+    if (!org) {
+      // Inicializar el estado cuando no hay perfil
+      if (previousApprovalStatus === null) {
+        setPreviousApprovalStatus(null);
+      }
+      return;
+    }
+
+    const currentStatus = (org as any)?.estado_aprobacion;
+    
+    // Inicializar el estado anterior si es la primera vez que tenemos datos
+    if (previousApprovalStatus === null && currentStatus) {
+      setPreviousApprovalStatus(currentStatus);
+      return;
+    }
+    
+    // Si el estado anterior era "en_revision" o "borrador" y ahora es "aprobado"
+    if (
+      previousApprovalStatus && 
+      (previousApprovalStatus === 'en_revision' || previousApprovalStatus === 'borrador') &&
+      currentStatus === 'aprobado' &&
+      previousApprovalStatus !== currentStatus
+    ) {
+      showToast('🎉 ¡Bienvenido, Organizador! Tu perfil ha sido aprobado. Ya puedes empezar a crear tus eventos.', 'success');
+      setShowWelcomeBanner(true); // Mostrar banner de bienvenida
+      // Ocultar el banner después de 10 segundos
+      setTimeout(() => setShowWelcomeBanner(false), 10000);
+    }
+
+    // Actualizar el estado anterior
+    if (currentStatus && currentStatus !== previousApprovalStatus) {
+      setPreviousApprovalStatus(currentStatus);
+    }
+  }, [org, previousApprovalStatus, showToast]);
 
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
@@ -682,14 +719,18 @@ export default function OrganizerProfileEditor() {
       // Validar zonas contra el catálogo
       const validatedZonas = validateZonasAgainstCatalog(form.zonas || [], allTags);
 
-      const profileId = await upsert.mutateAsync({ 
+      const savedProfile = await upsert.mutateAsync({ 
         ...(form as any), 
         ritmos_seleccionados: outSelected,
         zonas: validatedZonas,
         cuenta_bancaria: (form as any).cuenta_bancaria || {}
       } as any);
 
+      // Refetch explícito para actualizar el estado inmediatamente
+      await refetchOrganizer();
+
       // Si es un perfil nuevo, crear evento y fecha por defecto
+      const profileId = (savedProfile as any)?.id;
       if (wasNewProfile && profileId) {
         try {
           // Crear evento padre por defecto
@@ -747,7 +788,7 @@ export default function OrganizerProfileEditor() {
 
       // Toast final basado en si es nuevo o actualización
       if (wasNewProfile) {
-        showToast('✅ Perfil de organizador creado con evento de ejemplo', 'success');
+        showToast('🎉 ¡Bienvenido, Organizador! Tu perfil ha sido creado exitosamente. Ya puedes empezar a crear tus eventos.', 'success');
       } else {
         showToast('✅ Organizador actualizado', 'success');
       }
@@ -1050,7 +1091,10 @@ export default function OrganizerProfileEditor() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <div>Cargando sesión...</div>
+          <div style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</div>
+          <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </div>
         </div>
       </div>
     );
@@ -1126,7 +1170,10 @@ export default function OrganizerProfileEditor() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <div>Cargando perfil del organizador...</div>
+          <div style={{ marginBottom: '8px' }}>Estamos cargando tu perfil del organizador...</div>
+          <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </div>
         </div>
       </div>
     );
@@ -1172,6 +1219,8 @@ export default function OrganizerProfileEditor() {
 
   // Si no hay perfil, mostrar el formulario vacío (no bloquear)
   const isNewProfile = !org;
+  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   const estadoBadge = getEstadoBadge();
 
@@ -3045,8 +3094,8 @@ export default function OrganizerProfileEditor() {
           {/* Vista de edición de perfil */}
           {activeTab === "perfil" && (
             <>
-              {/* Banner de Bienvenida (solo para perfiles nuevos) */}
-              {isNewProfile && (
+              {/* Banner de Bienvenida (para perfiles nuevos o recién aprobados) */}
+              {(isNewProfile || showWelcomeBanner) && (
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -3085,8 +3134,10 @@ export default function OrganizerProfileEditor() {
                       marginBottom: "1rem",
                     }}
                   >
-                    Completa tu información básica y haz clic en{" "}
-                    <strong>💾 Guardar</strong> arriba para crear tu perfil
+                    {showWelcomeBanner 
+                      ? <>Tu perfil ha sido aprobado. Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para actualizar tu perfil.</>
+                      : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
+                    }
                   </p>
                   <div
                     style={{
@@ -3098,7 +3149,7 @@ export default function OrganizerProfileEditor() {
                       fontWeight: "600",
                     }}
                   >
-                    👆 Mínimo requerido: <strong>Nombre Público</strong>
+                    👆 Mínimo requerido: <strong>Nombre Público</strong> y <strong>Ritmos</strong>
                   </div>
                 </motion.div>
               )}
@@ -3147,7 +3198,7 @@ export default function OrganizerProfileEditor() {
                       <textarea
                         id="organizer-bio-input"
                         data-test-id="organizer-bio-input"
-                        value={form.bio}
+                        value={form.bio || ''}
                         onChange={(e) => setField("bio", e.target.value)}
                         placeholder="Cuéntanos sobre tu organización..."
                         rows={3}
@@ -3414,7 +3465,7 @@ export default function OrganizerProfileEditor() {
                           Biografía
                         </label>
                         <textarea
-                          value={dateForm.biografia}
+                          value={dateForm.biografia || ''}
                           onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
                           placeholder="Describe el evento, su propósito, qué esperar..."
                           rows={2}
@@ -3426,7 +3477,7 @@ export default function OrganizerProfileEditor() {
                           DJs presentes
                         </label>
                         <textarea
-                          value={dateForm.djs}
+                          value={dateForm.djs || ''}
                           onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
                           placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
                           rows={2}

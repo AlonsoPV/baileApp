@@ -79,9 +79,22 @@ export function useAdminRoleRequests(status?: 'pendiente' | 'aprobado' | 'rechaz
 
 export function useApproveRoleRequest() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, approve, note }: { id: number; approve: boolean; note?: string }) => {
       console.log('[useApproveRoleRequest] Approving request:', { id, approve, note });
+      
+      // Obtener el user_id y role_slug de la solicitud antes de aprobarla
+      const { data: requestData, error: fetchError } = await supabase
+        .from("role_requests")
+        .select("user_id, role_slug")
+        .eq("id", id)
+        .single();
+      
+      if (fetchError) {
+        console.warn('[useApproveRoleRequest] Error fetching request data:', fetchError);
+      }
+      
       const { error } = await supabase.rpc("approve_role_request", {
         p_request_id: id,
         p_approve: approve,
@@ -92,14 +105,50 @@ export function useApproveRoleRequest() {
         throw error;
       }
       console.log('[useApproveRoleRequest] Success');
+      
+      return { requestData: requestData || null, approved: approve };
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      const { requestData, approved } = data;
+      
       // Invalidar queries de admin
       qc.invalidateQueries({ queryKey: ["admin-role-requests"] });
       // Invalidar queries de roles aprobados (para que el switch se actualice)
       qc.invalidateQueries({ queryKey: ["my-approved-roles"] });
       // Invalidar queries de role requests del usuario
       qc.invalidateQueries({ queryKey: ["role-requests"] });
+      qc.invalidateQueries({ queryKey: ["role-requests-me"] });
+      
+      // Si se aprobó, invalidar también las queries de los perfiles específicos
+      if (approved && requestData) {
+        const userId = requestData.user_id;
+        const roleSlug = requestData.role_slug;
+        
+        // Invalidar queries de perfiles según el rol aprobado
+        switch (roleSlug) {
+          case 'organizador':
+            qc.invalidateQueries({ queryKey: ["organizer", "me", userId] });
+            qc.invalidateQueries({ queryKey: ["organizer"] });
+            break;
+          case 'academia':
+            qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+            qc.invalidateQueries({ queryKey: ["academy"] });
+            break;
+          case 'maestro':
+            qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+            qc.invalidateQueries({ queryKey: ["teacher"] });
+            break;
+          case 'marca':
+            qc.invalidateQueries({ queryKey: ["brand", "mine"] });
+            qc.invalidateQueries({ queryKey: ["brand"] });
+            break;
+        }
+        
+        // Invalidar también las queries del usuario aprobado (si es diferente del admin)
+        if (userId && userId !== user?.id) {
+          qc.invalidateQueries({ queryKey: ["my-approved-roles", userId] });
+        }
+      }
     }
   });
 }

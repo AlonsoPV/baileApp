@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { resizeImageIfNeeded } from "../../lib/imageResize";
 
 type Props = {
   value?: string | null;
@@ -35,19 +36,22 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("No hay sesión.");
 
+      // Redimensionar imagen si es necesario (máximo 800px de ancho)
+      const processedFile = await resizeImageIfNeeded(file, 800);
+
       // Ruta: media/event-flyers/USERID/{parentId}/{dateId}_flyer.ext
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const ext = processedFile.name.split(".").pop()?.toLowerCase() || "jpg";
       const safeParent = parentId ? String(parentId) : "no-parent";
       const safeDate = dateId ? String(dateId) : String(Date.now());
       const path = `media/event-flyers/${user.id}/${safeParent}/${safeDate}_flyer.${ext}`;
 
       console.log('[DateFlyerUploader] Uploading to path:', path);
-      console.log('[DateFlyerUploader] File type:', file.type);
-      console.log('[DateFlyerUploader] File size:', file.size);
+      console.log('[DateFlyerUploader] File type:', processedFile.type);
+      console.log('[DateFlyerUploader] Original size:', file.size, 'Processed size:', processedFile.size);
 
       const { data: up, error: upErr } = await supabase.storage
         .from("media")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, processedFile, { upsert: true, contentType: processedFile.type });
 
       if (upErr) {
         console.error('[DateFlyerUploader] Upload error:', upErr);

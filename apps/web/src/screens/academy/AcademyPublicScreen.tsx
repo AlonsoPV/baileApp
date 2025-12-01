@@ -767,7 +767,10 @@ export default function AcademyPublicScreen() {
     return (
       <div style={{ padding: '48px 24px', textAlign: 'center', color: colors.light }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando academia...</p>
+        <p style={{ marginBottom: '8px' }}>Estamos cargando la academia...</p>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+          Si tarda mucho, intenta refrescar la página para una carga más rápida.
+        </p>
       </div>
     );
   }

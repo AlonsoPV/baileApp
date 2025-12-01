@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { resizeImageIfNeeded } from "./imageResize";
 
 export type MediaItem = {
   id: string;           // filename
@@ -15,17 +16,20 @@ export function publicUrl(path: string) {
 }
 
 export async function uploadUserFile(userId: string, file: File) {
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+  // Redimensionar imagen si es necesario (máximo 800px de ancho)
+  const processedFile = await resizeImageIfNeeded(file, 800);
+  
+  const ext = processedFile.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" =
-    file.type.startsWith("image/") ? "image" : "video";
+    processedFile.type.startsWith("image/") ? "image" : "video";
   const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
-  console.log('[Storage] Uploading file:', { userId, fileName: file.name, type, path });
+  console.log('[Storage] Uploading file:', { userId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 
-  const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, {
+  const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
     cacheControl: "3600",
     upsert: false,
-    contentType: file.type || undefined,
+    contentType: processedFile.type || undefined,
   });
   
   if (error) {

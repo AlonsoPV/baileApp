@@ -323,7 +323,7 @@ export function EventParentEditScreen() {
           Descripción
         </label>
         <textarea
-          value={form.descripcion}
+          value={form.descripcion || ''}
           onChange={e => setForm({...form, descripcion: e.target.value})}
           rows={4}
           placeholder="Describe tu evento..."
