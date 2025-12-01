@@ -2190,7 +2190,8 @@ export default function AcademyPublicScreen() {
                 marginBottom: '1.5rem',
                 padding: '1.25rem',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'visible',
+                textAlign: 'left'
               }}
             >
               {/* Header con gradiente superior */}
@@ -2233,7 +2234,7 @@ export default function AcademyPublicScreen() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                      {videos.length > 1 ? 'Videos' : 'Video Principal'}
+                      Videos
                     </h3>
                     <p style={{
                       margin: '0.15rem 0 0 0',
@@ -2242,98 +2243,26 @@ export default function AcademyPublicScreen() {
                       fontWeight: 400,
                       lineHeight: 1.2
                     }}>
-                      Contenido multimedia destacado
+                      {videos.length === 1 ? 'Video promocional' : 'Contenido multimedia destacado'}
                     </p>
                   </div>
                 </div>
-                {videos.length > 1 && (
-                  <div style={{
-                    padding: '0.5rem 1rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: colors.light
-                  }}>
-                    {videos.length} video{videos.length !== 1 ? 's' : ''}
-                  </div>
-                )}
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '20px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: colors.light
+                }}>
+                  {videos.length} video{videos.length !== 1 ? 's' : ''}
+                </div>
               </div>
 
-              {/* Carrusel de Videos o Video Individual */}
-              {videos.length > 1 ? (
+              {/* Carrusel de Videos - Siempre usar carrusel para mostrar todos los videos */}
+              <div style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
                 <VideoCarouselComponent videos={videos} />
-              ) : (
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '480px',
-                  margin: '0 auto',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
-                  border: '2px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-                  padding: '3px'
-                }}>
-                  {/* Borde interno con gradiente */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: '3px',
-                    borderRadius: '13px',
-                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }} />
-                  
-                  {/* Video */}
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    borderRadius: '13px',
-                    overflow: 'hidden',
-                    background: '#000',
-                    zIndex: 2
-                  }}>
-                    <video
-                      src={videos[0]}
-                      controls
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        aspectRatio: '4 / 5',
-                        display: 'block',
-                        objectFit: 'contain',
-                        objectPosition: 'center',
-                      }}
-                    />
-                  </div>
-
-                  {/* Efecto de brillo en las esquinas */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '5px',
-                    left: '5px',
-                    width: '40px',
-                    height: '40px',
-                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none',
-                    zIndex: 3
-                  }} />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '5px',
-                    right: '5px',
-                    width: '40px',
-                    height: '40px',
-                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none',
-                    zIndex: 3
-                  }} />
-                </div>
-              )}
+              </div>
             </motion.section>
           )}
 

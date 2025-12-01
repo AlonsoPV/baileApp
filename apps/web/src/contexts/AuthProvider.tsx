@@ -32,11 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
 
-    // Timeout de seguridad: si getSession() tarda más de 8 segundos, forzar loading = false
-    // Reducido de 10s a 8s para mejor UX
+    // Timeout de seguridad: si getSession() tarda más de 10 segundos, forzar loading = false
     timeoutId = setTimeout(() => {
       if (mounted) {
-        console.warn('[AuthProvider] Timeout en getSession(), forzando loading = false');
+        if (import.meta.env.DEV) {
+          console.warn('[AuthProvider] Timeout de seguridad (10s) en getSession(), forzando loading = false');
+        }
         setLoading(false);
         // Intentar obtener sesión del localStorage como fallback
         try {
@@ -53,11 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           useProfileMode.getState().setMode("usuario");
         }
       }
-    }, 8000);
+    }, 10000);
 
     (async () => {
       try {
-        // Intentar obtener sesión con timeout más corto
+        // Intentar obtener sesión con timeout más generoso para conexiones lentas
         const sessionPromise = supabase.auth.getSession();
         let timeoutTriggered = false;
         
@@ -65,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setTimeout(() => {
             timeoutTriggered = true;
             reject(new Error('getSession timeout'));
-          }, 7000);
+          }, 8000); // Aumentado de 7s a 8s para dar más tiempo en conexiones lentas
         });
         
         let result: Awaited<ReturnType<typeof supabase.auth.getSession>>;
@@ -79,7 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Si el timeout se disparó, continuar sin sesión
           if (timeoutTriggered || raceError?.message?.includes('timeout')) {
             if (!mounted) return;
-            console.warn('[AuthProvider] Timeout en getSession() (7s), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
+            // Solo mostrar warning en desarrollo para no alarmar a usuarios
+            if (import.meta.env.DEV) {
+              console.warn('[AuthProvider] Timeout en getSession() (8s), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
+            }
             setLoading(false);
             setSession(null);
             setUser(null);
@@ -100,7 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           // Si es un error de red bloqueado, intentar continuar sin sesión
           if (error.message?.includes('blocked') || error.message?.includes('ERR_BLOCKED')) {
-            console.warn('[AuthProvider] Solicitud bloqueada por cliente (probablemente bloqueador de anuncios), continuando sin sesión');
+            if (import.meta.env.DEV) {
+              console.warn('[AuthProvider] Solicitud bloqueada por cliente (probablemente bloqueador de anuncios), continuando sin sesión');
+            }
             setSession(null);
             setUser(null);
             setLoading(false);
@@ -111,7 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return;
           }
-          console.error('[AuthProvider] Error en getSession():', error);
+          if (import.meta.env.DEV) {
+            console.error('[AuthProvider] Error en getSession():', error);
+          }
         }
         
         setSession(data?.session ?? null);
@@ -132,13 +140,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Si es un timeout o error de red bloqueado, continuar sin sesión
         if (err?.message?.includes('timeout') || err?.message?.includes('blocked') || err?.message?.includes('ERR_BLOCKED')) {
-          console.warn('[AuthProvider] Timeout o bloqueo en getSession(), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
+          if (import.meta.env.DEV) {
+            console.warn('[AuthProvider] Timeout o bloqueo en getSession(), continuando sin sesión. Esto puede ocurrir por conexión lenta o bloqueadores de red.');
+          }
           setLoading(false);
           setSession(null);
           setUser(null);
           useProfileMode.getState().setMode("usuario");
         } else {
-          console.error('[AuthProvider] Excepción en getSession():', err);
+          if (import.meta.env.DEV) {
+            console.error('[AuthProvider] Excepción en getSession():', err);
+          }
           setLoading(false);
           setSession(null);
           setUser(null);
