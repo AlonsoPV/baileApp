@@ -104,6 +104,239 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   );
 };
 
+// Componente Carousel para videos
+const VideoCarouselComponent: React.FC<{ videos: string[] }> = ({ videos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (videos.length === 0) return null;
+
+  const nextVideo = () => {
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  };
+
+  const prevVideo = () => {
+    setCurrentIndex((prev) => (prev - 1 + videos.length) % videos.length);
+  };
+
+  const goToVideo = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  return (
+    <>
+      <style>{`
+        .video-gallery-main {
+          position: relative;
+          aspect-ratio: 16/9;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .video-gallery-main:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+        .video-gallery-video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          cursor: pointer;
+        }
+        .video-gallery-counter {
+          position: absolute;
+          top: 1.25rem;
+          right: 1.25rem;
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+          backdrop-filter: blur(10px);
+          color: white;
+          padding: 0.6rem 1.2rem;
+          border-radius: 24px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        .video-gallery-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(10px);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 50%;
+          width: 52px;
+          height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1.5rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+          z-index: 10;
+        }
+        .video-gallery-nav-btn:hover {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .video-gallery-nav-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+        .video-gallery-nav-btn--prev {
+          left: 1.25rem;
+        }
+        .video-gallery-nav-btn--next {
+          right: 1.25rem;
+        }
+        .video-gallery-thumbnails {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+          max-width: 100%;
+        }
+        .video-gallery-thumb {
+          position: relative;
+          aspect-ratio: 16/9;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 3px solid transparent;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .video-gallery-thumb:hover {
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .video-gallery-thumb.active {
+          border-color: #E53935;
+          box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
+        }
+        .video-gallery-thumb video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        @media (max-width: 768px) {
+          .video-gallery-main {
+            border-radius: 16px;
+          }
+          .video-gallery-counter {
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+          }
+          .video-gallery-nav-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.25rem;
+          }
+          .video-gallery-nav-btn--prev {
+            left: 1rem;
+          }
+          .video-gallery-nav-btn--next {
+            right: 1rem;
+          }
+          .video-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .video-gallery-main {
+            border-radius: 12px;
+          }
+          .video-gallery-counter {
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+          }
+          .video-gallery-nav-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+          }
+          .video-gallery-nav-btn--prev {
+            left: 0.75rem;
+          }
+          .video-gallery-nav-btn--next {
+            right: 0.75rem;
+          }
+          .video-gallery-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+          }
+        }
+      `}</style>
+      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
+        {/* Video principal */}
+        <div className="video-gallery-main">
+          <video
+            src={videos[currentIndex]}
+            controls
+            className="video-gallery-video"
+          />
+
+          {/* Contador */}
+          <div className="video-gallery-counter">
+            {currentIndex + 1} / {videos.length}
+          </div>
+
+          {/* Botones de navegación */}
+          {videos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevVideo(); }}
+                className="video-gallery-nav-btn video-gallery-nav-btn--prev"
+                aria-label="Video anterior"
+              >
+                ‹
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextVideo(); }}
+                className="video-gallery-nav-btn video-gallery-nav-btn--next"
+                aria-label="Video siguiente"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Miniaturas */}
+        {videos.length > 1 && (
+          <div className="video-gallery-thumbnails">
+            {videos.map((video, index) => (
+              <button
+                key={index}
+                onClick={() => goToVideo(index)}
+                className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
+                aria-label={`Ver video ${index + 1}`}
+              >
+                <video src={video} muted />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
 // Componente de Carrusel Moderno
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1743,8 +1976,8 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
-          {/* Slot Video */}
-          {getMediaBySlot(media as any, 'v1') && (
+          {/* Sección de Videos */}
+          {videos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1772,112 +2005,132 @@ export function OrganizerProfileLive() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.6rem',
-                marginBottom: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                justifyContent: 'space-between',
+                marginBottom: '1.5rem'
               }}>
                 <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  flexShrink: 0
+                  gap: '0.6rem'
                 }}>
-                  🎥
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                    Video Principal
-                  </h3>
-                  <p style={{
-                    margin: '0.15rem 0 0 0',
-                    fontSize: '0.75rem',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    fontWeight: 400,
-                    lineHeight: 1.2
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                    flexShrink: 0
                   }}>
-                    Contenido multimedia destacado
-                  </p>
+                    🎥
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                      {videos.length > 1 ? 'Videos' : 'Video Principal'}
+                    </h3>
+                    <p style={{
+                      margin: '0.15rem 0 0 0',
+                      fontSize: '0.75rem',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontWeight: 400,
+                      lineHeight: 1.2
+                    }}>
+                      Contenido multimedia destacado
+                    </p>
+                  </div>
                 </div>
+                {videos.length > 1 && (
+                  <div style={{
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '20px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: colors.light
+                  }}>
+                    {videos.length} video{videos.length !== 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
 
-              {/* Contenedor del video compacto */}
-              <div style={{
-                position: 'relative',
-                width: '100%',
-                maxWidth: '480px',
-                margin: '0 auto',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
-                border: '2px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-                padding: '3px'
-              }}>
-                {/* Borde interno con gradiente */}
-                <div style={{
-                  position: 'absolute',
-                  inset: '3px',
-                  borderRadius: '13px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
-                  pointerEvents: 'none',
-                  zIndex: 1
-                }} />
-                
-                {/* Video */}
+              {/* Carrusel de Videos o Video Individual */}
+              {videos.length > 1 ? (
+                <VideoCarouselComponent videos={videos} />
+              ) : (
                 <div style={{
                   position: 'relative',
                   width: '100%',
-                  borderRadius: '13px',
+                  maxWidth: '480px',
+                  margin: '0 auto',
+                  borderRadius: '16px',
                   overflow: 'hidden',
-                  background: '#000',
-                  zIndex: 2
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                  border: '2px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                  padding: '3px'
                 }}>
-                  <video
-                    src={getMediaBySlot(media as any, 'v1')!.url}
-                    controls
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '4 / 5',
-                      display: 'block',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                    }}
-                  />
-                </div>
+                  {/* Borde interno con gradiente */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: '3px',
+                    borderRadius: '13px',
+                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                    pointerEvents: 'none',
+                    zIndex: 1
+                  }} />
+                  
+                  {/* Video */}
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    borderRadius: '13px',
+                    overflow: 'hidden',
+                    background: '#000',
+                    zIndex: 2
+                  }}>
+                    <video
+                      src={videos[0]}
+                      controls
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        aspectRatio: '4 / 5',
+                        display: 'block',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                      }}
+                    />
+                  </div>
 
-                {/* Efecto de brillo en las esquinas */}
-                <div style={{
-                  position: 'absolute',
-                  top: '5px',
-                  left: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
-                <div style={{
-                  position: 'absolute',
-                  bottom: '5px',
-                  right: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
-              </div>
+                  {/* Efecto de brillo en las esquinas */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '5px',
+                    left: '5px',
+                    width: '40px',
+                    height: '40px',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                    borderRadius: '50%',
+                    pointerEvents: 'none',
+                    zIndex: 3
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '5px',
+                    right: '5px',
+                    width: '40px',
+                    height: '40px',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                    borderRadius: '50%',
+                    pointerEvents: 'none',
+                    zIndex: 3
+                  }} />
+                </div>
+              )}
             </motion.section>
           )}
 

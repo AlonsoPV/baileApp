@@ -427,6 +427,8 @@ export default function OrganizerProfileEditor() {
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
+  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1219,8 +1221,6 @@ export default function OrganizerProfileEditor() {
 
   // Si no hay perfil, mostrar el formulario vacío (no bloquear)
   const isNewProfile = !org;
-  const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
-  const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
 
   const estadoBadge = getEstadoBadge();
 
