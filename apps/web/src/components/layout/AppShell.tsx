@@ -378,7 +378,7 @@ export default function AppShell() {
         }
       `}</style>
       <div className="app-shell-root">
-        <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} />
+        <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} isMenuOpen={menuOpen} />
         <div className="app-shell-content">
           <AppBootstrap>
             <Outlet />

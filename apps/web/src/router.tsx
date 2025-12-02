@@ -42,7 +42,6 @@ import BrandEditorScreen from './screens/brand/BrandEditorScreen';
 import BrandPublicScreen from './screens/brand/BrandPublicScreen';
 
 // Academy screens
-import AcademyEditorScreen from './screens/academy/AcademyEditorScreen';
 import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
 
 // New Social/Event Flow Screens

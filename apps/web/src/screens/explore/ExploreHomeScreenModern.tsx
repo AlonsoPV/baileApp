@@ -1508,7 +1508,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
-            <Section title="Próximas Fechas" toAll="/explore/list?type=fechas">
+            <Section title="Lo que viene en la escena" toAll="/explore/list?type=fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -1539,7 +1539,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
-            <Section title="Encuentra tus clases" toAll="/explore/list?type=clases">
+            <Section title="Clases recomendadas para ti" toAll="/explore/list?type=clases">
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
@@ -1571,7 +1571,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
-            <Section title="Academias" toAll="/explore/list?type=academias">
+            <Section title="Las mejores academias de tu zona" toAll="/explore/list?type=academias">
               {academiasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -1615,7 +1615,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title="Maestros" toAll="/explore/list?type=teacher">
+            <Section title="Maestros destacados" toAll="/explore/list?type=teacher">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -1659,7 +1659,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
-            <Section title={`¿Con quién bailar?${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
+            <Section title={`Parejas de baile cerca de ti${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -1716,7 +1716,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
-            <Section title="Organizadores" toAll="/explore/list?type=organizadores">
+            <Section title="Productores de eventos" toAll="/explore/list?type=organizadores">
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -1768,7 +1768,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
-            <Section title="Marcas" toAll="/explore/list?type=marcas">
+            <Section title="Marcas especializadas en baile" toAll="/explore/list?type=marcas">
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (

@@ -7,6 +7,18 @@ import type { ExploreFilters } from "../state/exploreFilters";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
 
+// Debounce simple (sin dependencias externas)
+function useDebouncedCallback<T extends any[]>(
+  fn: (...args: T) => void,
+  delay = 250
+) {
+  const timer = React.useRef<number | null>(null);
+  return React.useCallback((...args: T) => {
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => fn(...args), delay);
+  }, [fn, delay]);
+}
+
 interface FilterBarProps {
   filters: ExploreFilters;
   onFiltersChange: (filters: ExploreFilters) => void;
@@ -31,15 +43,15 @@ const PERFIL_OPTIONS = [
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true, initialOpenDropdown = null, hideButtons = false }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(initialOpenDropdown || null);
   
-  // Sincronizar con prop externo cuando cambia
+  // Sincroniza con prop externa, sin depender de openDropdown
   React.useEffect(() => {
-    if (initialOpenDropdown !== null && initialOpenDropdown !== openDropdown) {
+    if (initialOpenDropdown !== null) {
       setOpenDropdown(initialOpenDropdown);
-    } else if (initialOpenDropdown === null && openDropdown !== null && hideButtons) {
-      // Si se cierra desde fuera, cerrar también internamente
+    } else if (hideButtons) {
       setOpenDropdown(null);
     }
   }, [initialOpenDropdown, hideButtons]);
+
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
   const [expandedZonaGroup, setExpandedZonaGroup] = useState<string | null>(null);
@@ -50,10 +62,12 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       setIsSearchExpanded(false);
     }
   }, [hideButtons]);
+
   const [isDesktop, setIsDesktop] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
   });
+
   const { ritmos: allRitmos, zonas: allZonas } = useTags();
   const { usedRitmoIds, usedZonaIds, isLoading: loadingUsed, error: usedError } = useUsedFilterTags();
 
@@ -75,6 +89,25 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
   const { groups: zonaGroups } = useZonaCatalogGroups(zonas);
 
+  // Grupos de catálogo de ritmos ya filtrados a los ids usados
+  const catalogGroups = React.useMemo(() => {
+    const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
+    const groups = RITMOS_CATALOG
+      .map(group => ({ ...group, items: group.items.filter(i => tagIdByName.has(i.label)) }))
+      .filter(g => g.items.length > 0);
+    return { groups, tagIdByName };
+  }, [ritmos]);
+
+  const activeFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (filters.q) count++;
+    if (showTypeFilter && filters.type !== 'all') count++;
+    count += filters.ritmos.length;
+    count += filters.zonas.length;
+    if (filters.dateFrom || filters.dateTo) count++;
+    return count;
+  }, [filters, showTypeFilter]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = () => {
@@ -83,50 +116,52 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       if (!desktop) setIsSearchExpanded(false);
     };
     handler();
-    window.addEventListener('resize', handler);
+    window.addEventListener('resize', handler, { passive: true });
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const toggleDropdown = (dropdown: string) => {
-    setOpenDropdown(openDropdown === dropdown ? null : dropdown);
-  };
-  
-  // Cerrar dropdown cuando se hace clic fuera o se selecciona algo
-  const handleCloseDropdown = () => {
-    setOpenDropdown(null);
-  };
+  const toggleDropdown = React.useCallback((dropdown: string) => {
+    setOpenDropdown(prev => (prev === dropdown ? null : dropdown));
+  }, []);
 
-  const handleSearchChange = (value: string) => {
+  const onCloseDropdown = React.useCallback(() => setOpenDropdown(null), []);
+
+  // Debounced search
+  const debouncedSearch = useDebouncedCallback((value: string) => {
     onFiltersChange({ ...filters, q: value });
-  };
+  }, 250);
 
-  const handleTypeChange = (type: string) => {
+  const handleSearchChange = React.useCallback((value: string) => {
+    debouncedSearch(value);
+  }, [debouncedSearch]);
+
+  const handleTypeChange = React.useCallback((type: string) => {
     onFiltersChange({ ...filters, type: type as any });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleRitmoToggle = (ritmoId: number) => {
+  const handleRitmoToggle = React.useCallback((ritmoId: number) => {
     const newRitmos = filters.ritmos.includes(ritmoId)
       ? filters.ritmos.filter(r => r !== ritmoId)
       : [...filters.ritmos, ritmoId];
     onFiltersChange({ ...filters, ritmos: newRitmos });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleZonaToggle = (zonaId: number) => {
+  const handleZonaToggle = React.useCallback((zonaId: number) => {
     const newZonas = filters.zonas.includes(zonaId)
       ? filters.zonas.filter(z => z !== zonaId)
       : [...filters.zonas, zonaId];
     onFiltersChange({ ...filters, zonas: newZonas });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleDateChange = (type: 'desde' | 'hasta', value: string) => {
+  const handleDateChange = React.useCallback((type: 'desde' | 'hasta', value: string) => {
     if (type === 'desde') {
-      onFiltersChange({ ...filters, dateFrom: value });
+      onFiltersChange({ ...filters, dateFrom: value || undefined });
     } else {
-      onFiltersChange({ ...filters, dateTo: value });
+      onFiltersChange({ ...filters, dateTo: value || undefined });
     }
-  };
+  }, [filters, onFiltersChange]);
 
-  const clearFilters = () => {
+  const clearFilters = React.useCallback(() => {
     onFiltersChange({
       type: 'all' as any,
       q: '',
@@ -138,30 +173,20 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       pageSize: filters.pageSize ?? 12
     });
     setOpenDropdown(null);
-  };
+  }, [filters, onFiltersChange]);
 
-  const hasActiveFilters = () => {
+  const hasActiveFilters = React.useMemo(() => {
     return filters.q !== '' || 
            (showTypeFilter && filters.type !== 'all') ||
            filters.ritmos.length > 0 || 
            filters.zonas.length > 0 || 
            filters.dateFrom || 
            filters.dateTo;
-  };
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filters.q) count++;
-    if (showTypeFilter && filters.type !== 'all') count++;
-    count += filters.ritmos.length;
-    count += filters.zonas.length;
-    if (filters.dateFrom || filters.dateTo) count++;
-    return count;
-  };
+  }, [filters, showTypeFilter]);
 
   return (
     <div className={`sticky top-16 z-40 ${className}`}>
-      <style>{`
+        <style>{`
         ${hideButtons ? `
           .filters-row {
             display: none !important;
@@ -224,7 +249,8 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           maxWidth: '1280px',
           margin: '0 auto',
           padding: '0',
-          position: 'relative'
+          position: 'relative',
+          zIndex: openDropdown ? 2001 : 'auto'
         }} className="filters-wrap">
           {/* Barra Principal de Filtros */}
           {!hideButtons && (
@@ -242,6 +268,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                 isOpen={openDropdown === 'tipos'}
                 onClick={() => toggleDropdown('tipos')}
                 activeCount={filters.type !== 'all' ? 1 : 0}
+                ariaControlsId="dropdown-tipos"
               />
             )}
 
@@ -254,6 +281,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               activeCount={filters.ritmos.length}
               iconOnly
               ariaLabel="Filtrar por ritmos"
+              ariaControlsId="dropdown-ritmos"
             />
 
             {/* Botón Zonas */}
@@ -265,6 +293,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               activeCount={filters.zonas.length}
               iconOnly
               ariaLabel="Filtrar por zonas"
+              ariaControlsId="dropdown-zonas"
             />
 
             {/* Botón Fechas */}
@@ -276,10 +305,11 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               activeCount={filters.dateFrom || filters.dateTo ? 1 : 0}
               iconOnly
               ariaLabel="Filtrar por fechas"
+              ariaControlsId="dropdown-fechas"
             />
 
             {/* Botón Limpiar Filtros */}
-            {hasActiveFilters() && (
+            {hasActiveFilters && (
               <motion.button
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -306,7 +336,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                 }}
               >
                 <span>🗑️</span>
-                <span>Limpiar ({getActiveFilterCount()})</span>
+                <span>Limpiar ({activeFilterCount})</span>
               </motion.button>
             )}
 
@@ -395,7 +425,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           <AnimatePresence>
             {/* Dropdown Tipos */}
             {showTypeFilter && openDropdown === 'tipos' && (
-              <DropdownPanel onClose={() => setOpenDropdown(null)}>
+              <DropdownPanel id="dropdown-tipos" onClose={onCloseDropdown}>
                 <div style={{
                   display: 'flex',
                   flexWrap: 'wrap',
@@ -417,23 +447,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
             {/* Dropdown Ritmos */}
             {openDropdown === 'ritmos' && (
-              <DropdownPanel onClose={() => setOpenDropdown(null)}>
+              <DropdownPanel id="dropdown-ritmos" onClose={onCloseDropdown}>
                 {(() => {
-                  // Mapeos nombre<->id para enlazar catálogo a tags (ya filtrados por uso)
-                  const tagNameById = new Map<number, string>((ritmos || []).map(r => [r.id, r.nombre]));
-                  const tagIdByName = new Map<string, number>((ritmos || []).map(r => [r.nombre, r.id]));
+                  const { groups: groupsMemo, tagIdByName } = catalogGroups;
 
                   // UI estado: chip padre expandida
                   const expandedGroup = expandedRitmoGroup;
                   const toggleGroup = (gid: string) => setExpandedRitmoGroup(prev => prev === gid ? null : gid);
-
-                  // Construir grupos de catálogo SOLO con hijos que existan en tags (ritmos filtrados)
-                  const catalogGroups = RITMOS_CATALOG
-                    .map(group => {
-                      const items = group.items.filter(item => tagIdByName.has(item.label));
-                      return { ...group, items };
-                    })
-                    .filter(group => group.items.length > 0);
 
                   // Helpers para activar/desactivar ritmos hijos
                   const isTagActive = (name: string) => {
@@ -453,7 +473,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                     <div style={{ display: 'grid', gap: 12 }}>
                       {/* Chips padres (solo grupos con algún hijo mapeado) */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {catalogGroups.map(group => {
+                        {groupsMemo.map(group => {
                           const activeInGroup = group.items.some(i => isTagActive(i.label));
                           const isOpen = expandedGroup === group.id;
                           const isActive = isOpen || activeInGroup;
@@ -487,7 +507,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                           display: 'flex', flexWrap: 'wrap', gap: '0.5rem',
                           borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12
                         }}>
-                          {catalogGroups.find(g => g.id === expandedGroup)?.items.map(child => {
+                          {groupsMemo.find(g => g.id === expandedGroup)?.items.map(child => {
                             const active = isTagActive(child.label);
                             return (
                               <button
@@ -521,7 +541,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
             {/* Dropdown Zonas */}
             {openDropdown === 'zonas' && (
-              <DropdownPanel onClose={() => setOpenDropdown(null)}>
+              <DropdownPanel id="dropdown-zonas" onClose={onCloseDropdown}>
                 {zonaGroups.length ? (
                   <div
                     style={{
@@ -612,13 +632,17 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
             {/* Dropdown Fechas */}
             {openDropdown === 'fechas' && (
-              <DropdownPanel onClose={() => setOpenDropdown(null)}>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '1.5rem',
-                  maxWidth: '500px'
-                }}>
+              <DropdownPanel id="dropdown-fechas" onClose={onCloseDropdown}>
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1.5rem',
+                    maxWidth: '500px'
+                  }}
+                >
                   <div>
                     <label style={{
                       display: 'block',
@@ -632,7 +656,12 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                     <input
                       type="date"
                       value={filters.dateFrom || ''}
-                      onChange={(e) => handleDateChange('desde', e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleDateChange('desde', e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
@@ -658,7 +687,12 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                     <input
                       type="date"
                       value={filters.dateTo || ''}
-                      onChange={(e) => handleDateChange('hasta', e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleDateChange('hasta', e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
@@ -685,13 +719,16 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setOpenDropdown(null)}
+            onClick={onCloseDropdown}
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(0, 0, 0, 0.3)',
-              zIndex: -1
+              zIndex: 2000,
+              cursor: 'pointer',
+              pointerEvents: 'auto'
             }}
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
@@ -707,7 +744,8 @@ function FilterButton({
   onClick, 
   activeCount,
   iconOnly = false,
-  ariaLabel
+  ariaLabel,
+  ariaControlsId
 }: { 
   label: string; 
   icon: string; 
@@ -716,6 +754,7 @@ function FilterButton({
   activeCount: number;
   iconOnly?: boolean;
   ariaLabel?: string;
+  ariaControlsId?: string;
 }) {
   return (
     <motion.button
@@ -723,6 +762,8 @@ function FilterButton({
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       aria-label={iconOnly ? ariaLabel || label : undefined}
+      aria-expanded={isOpen}
+      aria-controls={ariaControlsId}
       style={{
         position: 'relative',
         display: 'flex',
@@ -792,9 +833,28 @@ function FilterButton({
 }
 
 // Componente auxiliar: Panel desplegable
-function DropdownPanel({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+function DropdownPanel({ id, children, onClose }: { id?: string; children: React.ReactNode; onClose: () => void }) {
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { 
+      if (e.key === 'Escape') onClose(); 
+    };
+    document.addEventListener('keydown', onKey);
+    // enfocar al abrir
+    panelRef.current?.focus?.();
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
     <motion.div
+      id={id}
+      ref={panelRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -808,7 +868,10 @@ function DropdownPanel({ children, onClose }: { children: React.ReactNode; onClo
         boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(240, 147, 251, 0.1)',
         backdropFilter: 'blur(20px)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        outline: 'none',
+        zIndex: 2001,
+        pointerEvents: 'auto'
       }}
       className="dropdown-panel"
     >

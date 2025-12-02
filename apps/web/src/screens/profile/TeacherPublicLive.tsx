@@ -1,34 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
-import { Chip } from "../../components/profile/Chip";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
-import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
-import ClasesLive from '../../components/events/ClasesLive';
-import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
-import UbicacionesLive from "../../components/locations/UbicacionesLive";
-import RitmosChips from "../../components/RitmosChips";
 import { supabase } from "../../lib/supabase";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
-import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
-import AcademyCard from "../../components/explore/cards/AcademyCard";
-import HorizontalSlider from "../../components/explore/HorizontalSlider";
-import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
-import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
 import { colors } from "../../theme/colors";
+import "./TeacherPublicLive.css";
 
-// Componente FAQ Accordion
-const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+// Lazy load heavy components
+const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
+const ClasesLiveTabs = lazy(() => import("../../components/classes/ClasesLiveTabs"));
+const ClasesLive = lazy(() => import("../../components/events/ClasesLive"));
+const UbicacionesLive = lazy(() => import("../../components/locations/UbicacionesLive"));
+const RitmosChips = lazy(() => import("../../components/RitmosChips"));
+const HorizontalSlider = lazy(() => import("../../components/explore/HorizontalSlider"));
+const TeacherRatingComponent = lazy(() => import("../../components/teacher/TeacherRatingComponent"));
+const CompetitionGroupCard = lazy(() => import("../../components/explore/cards/CompetitionGroupCard"));
+const AcademyCard = lazy(() => import("../../components/explore/cards/AcademyCard"));
+
+// Type for public teacher profile
+type PublicTeacher = Partial<{
+  id: number | string;
+  user_id: string;
+  media: any[];
+  zonas: number[];
+  ritmos: number[];
+  ritmos_seleccionados: string[];
+  ubicaciones: any[];
+  cronograma: any[];
+  costos: any[];
+  promociones: any[];
+  faq: Array<{ id?: string; q: string; a: string }>;
+  reseñas: any[];
+  nombre_publico: string;
+  estado_aprobacion: string;
+  bio: string;
+  redes_sociales: any;
+  respuestas?: { redes?: any };
+}>;
+
+// Componente FAQ Accordion (memoizado con a11y)
+const FAQAccordion = React.memo(function FAQAccordion({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const toggleOpen = useCallback(() => setIsOpen(prev => !prev), []);
+  const panelId = useMemo(() => `faq-${question.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 60)}`, [question]);
 
   return (
     <div style={{
@@ -39,7 +63,9 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       background: 'rgba(255, 255, 255, 0.02)'
     }}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
         style={{
           width: '100%',
           padding: '1rem 1.5rem',
@@ -67,6 +93,9 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       </button>
       {isOpen && (
         <motion.div
+          id={panelId}
+          role="region"
+          aria-label={question}
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -82,26 +111,29 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       )}
     </div>
   );
-};
-{/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */ }
-// Componente Carousel para fotos
-const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+});
+
+// Componente Carousel para fotos (memoizado)
+const CarouselComponent = React.memo(function CarouselComponent({ photos }: { photos: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  if (photos.length === 0) return null;
-
-  const nextPhoto = () => {
+  const nextPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
-  };
+  }, [photos.length]);
 
-  const prevPhoto = () => {
+  const prevPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
+  }, [photos.length]);
 
-  const goToPhoto = (index: number) => {
+  const goToPhoto = useCallback((index: number) => {
     setCurrentIndex(index);
-  };
+  }, []);
+
+  const openFullscreen = useCallback(() => setIsFullscreen(true), []);
+  const closeFullscreen = useCallback(() => setIsFullscreen(false), []);
+
+  if (photos.length === 0) return null;
 
   return (
     <>
@@ -138,7 +170,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 objectPosition: 'center',
                 cursor: 'pointer'
               }}
-              onClick={() => setIsFullscreen(true)}
+              onClick={openFullscreen}
             />
           </div>
 
@@ -158,52 +190,62 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           </div>
 
           {/* Botones de navegación */}
-          <button
-            onClick={prevPhoto}
-            style={{
-              position: 'absolute',
-              left: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={nextPhoto}
-            style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ›
-          </button>
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={prevPhoto}
+                disabled={photos.length <= 1}
+                aria-label="Foto anterior"
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: photos.length <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '1.25rem',
+                  transition: '0.2s',
+                  opacity: photos.length <= 1 ? 0.5 : 1
+                }}
+              >
+                ‹
+              </button>
+              <button
+                onClick={nextPhoto}
+                disabled={photos.length <= 1}
+                aria-label="Foto siguiente"
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: photos.length <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '1.25rem',
+                  transition: '0.2s',
+                  opacity: photos.length <= 1 ? 0.5 : 1
+                }}
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
 
         {/* Miniaturas */}
@@ -216,7 +258,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         }}>
           {photos.map((photo, index) => (
             <button
-              key={index}
+              key={`photo-${index}-${photo.slice(-20)}`}
               onClick={() => goToPhoto(index)}
               style={{
                 width: '60px',
@@ -261,7 +303,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             zIndex: 1000,
             cursor: 'pointer'
           }}
-          onClick={() => setIsFullscreen(false)}
+          onClick={closeFullscreen}
         >
           <div style={{
             maxWidth: '90vw',
@@ -283,7 +325,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       )}
     </>
   );
-};
+});
 
 const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
   promocion: { icon: '✨', label: 'Promoción' },
@@ -364,6 +406,9 @@ export default function TeacherProfileLive() {
   const { data: teacher, isLoading } = useQuery({
     queryKey: ['teacher-public', teacherId],
     enabled: !!teacherId,
+    staleTime: 60_000,
+    gcTime: 300_000,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles_teacher')
@@ -389,46 +434,60 @@ export default function TeacherProfileLive() {
     setLoadingTimedOut(false);
   }, [isLoading, teacherId]);
 
-  const media = teacher?.media || [];
-  const teacherIdNum = teacherId ? Number(teacherId) : undefined;
+  const media = (teacher as PublicTeacher)?.media || [];
+  const teacherIdNum = useMemo(() => {
+    if (!teacherId) return undefined;
+    const num = Number(teacherId);
+    return Number.isNaN(num) ? undefined : num;
+  }, [teacherId]);
+  
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
     teacherIdNum ? { teacherId: teacherIdNum } : undefined
   );
-  const promotions = Array.isArray((teacher as any)?.promociones) ? (teacher as any).promociones : [];
+  
+  // Memoizar promociones
+  const promotions = useMemo(() => 
+    Array.isArray((teacher as PublicTeacher)?.promociones) ? (teacher as PublicTeacher).promociones : []
+  , [(teacher as PublicTeacher)?.promociones]);
   
   // Obtener academias donde el maestro enseña
   const { data: academies } = useTeacherAcademies(teacherIdNum);
   
   // Obtener grupos de competencia del maestro (solo los que no están asociados a una academia)
-  const teacherUserId = (teacher as any)?.user_id;
+  const teacherUserId = (teacher as PublicTeacher)?.user_id;
   const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
-  // Obtener fotos del carrusel usando los media slots
-  const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[];
+  // Memoizar fotos del carrusel usando los media slots
+  const carouselPhotos = useMemo(() => (
+    PHOTO_SLOTS
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
+      .filter(Boolean) as string[]
+  ), [media]);
 
-  // Obtener videos
-  const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[];
+  // Memoizar videos
+  const videos = useMemo(() => (
+    VIDEO_SLOTS
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
+      .filter(Boolean) as string[]
+  ), [media]);
 
-  // Get rhythm names from numeric tag IDs or fallback to catalog IDs (ritmos_seleccionados)
-  const getRitmoNombres = () => {
+  // Memoizar ritmo nombres
+  const ritmoNombres = useMemo(() => {
     const names: string[] = [];
+    const teacherData = teacher as PublicTeacher;
     // 1) Priorizar ritmos_seleccionados (IDs del catálogo) ya que es lo que edita el usuario con RitmosChips
-    if (Array.isArray((teacher as any)?.ritmos_seleccionados) && (teacher as any).ritmos_seleccionados.length > 0) {
+    if (Array.isArray(teacherData?.ritmos_seleccionados) && teacherData.ritmos_seleccionados.length > 0) {
       const labelById = new Map<string, string>();
       RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
       names.push(
-        ...((teacher as any).ritmos_seleccionados as string[])
+        ...teacherData.ritmos_seleccionados
           .map(id => labelById.get(id))
           .filter(Boolean) as string[]
       );
     }
     // 2) Si no hay ritmos_seleccionados, usar ritmos (IDs numéricos de tags)
     if (names.length === 0) {
-      const ritmos = (teacher as any)?.ritmos || [];
+      const ritmos = teacherData?.ritmos || [];
       if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
         names.push(
           ...ritmos
@@ -438,7 +497,7 @@ export default function TeacherProfileLive() {
       }
     }
     return names;
-  };
+  }, [teacher, allTags]);
 
   if (isLoading && !loadingTimedOut) {
     return (
@@ -532,324 +591,6 @@ export default function TeacherProfileLive() {
 
   return (
     <>
-      <style>{`
-        .teacher-container {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        @media (max-width: 768px) { .teacher-container { padding-top: 64px !important; } }
-        .teacher-banner {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-          position: relative;
-        }
-        .glass-card-container {
-          opacity: 1;
-          margin-bottom: 2rem;
-          padding: 2rem;
-          text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
-        }
-        .teacher-container h2,
-        .teacher-container h3 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .teacher-banner-grid {
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 2rem;
-          align-items: center;
-        }
-        .teacher-banner-avatar {
-          width: 200px;
-          height: 200px;
-          border-radius: 50%;
-          overflow: hidden;
-          border: 6px solid rgba(255, 255, 255, 0.9);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-          background: linear-gradient(135deg, #1E88E5, #FF7043);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 4rem;
-          font-weight: 700;
-          color: white;
-        }
-        .teacher-banner-avatar-fallback {
-          font-size: 6rem;
-        }
-        @media (max-width: 768px) {
-          .teacher-container {
-            max-width: 100% !important;
-            padding: 1rem !important;
-          }
-          .teacher-banner {
-            border-radius: 16px !important;
-            padding: 1.5rem 1rem !important;
-            margin: 0 !important;
-          }
-          .teacher-banner-grid {
-            grid-template-columns: 1fr !important;
-            text-align: center;
-            gap: 1.5rem !important;
-            justify-items: center !important;
-          }
-          .teacher-banner h1 {
-            font-size: 2.6rem !important;
-            line-height: 1.2 !important;
-          }
-          .teacher-banner-avatar {
-            width: 220px !important;
-            height: 220px !important;
-          }
-          .teacher-banner-avatar-fallback {
-            font-size: 4.6rem !important;
-          }
-          .glass-card-container {
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 16px !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .teacher-banner h1 {
-            font-size: 2.2rem !important;
-          }
-          .teacher-banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
-          }
-          .teacher-banner-avatar-fallback {
-            font-size: 4.1rem !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem !important;
-            border-radius: 12px !important;
-          }
-        }
-        
-        /* Responsive styles for sections */
-        .teacher-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-        }
-        .teacher-videos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 1.5rem;
-        }
-        .promo-section {
-          background: radial-gradient(circle at top, #161929, #05060c);
-          border-radius: 32px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          padding: 24px 24px 28px;
-          max-width: 1000px;
-          margin: 0 auto 2rem;
-        }
-        .promo-header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 20px;
-        }
-        .promo-icon {
-          width: 52px;
-          height: 52px;
-          border-radius: 20px;
-          background: radial-gradient(circle at 20% 20%, #4ade80, #22c55e, #16a34a);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 26px;
-        }
-        .promo-header h2, .promo-header h3 {
-          font-size: 1.7rem;
-          color: #fff;
-          margin: 0;
-          font-weight: 900;
-        }
-        .promo-header p {
-          color: #a9b1c8;
-          font-size: 0.95rem;
-          margin: 0.5rem 0 0 0;
-        }
-        .promo-list {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-        .promo-card {
-          background: linear-gradient(135deg, #111522, #101321);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 16px 18px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 18px;
-          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-          transition: transform 0.16s ease-out, box-shadow 0.16s ease-out, border-color 0.16s ease-out, background 0.16s ease-out;
-        }
-        .promo-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 26px 55px rgba(0, 0, 0, 0.7);
-          border-color: rgba(148, 163, 255, 0.4);
-          background: linear-gradient(145deg, #14182a, #101320);
-        }
-        .promo-info {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          flex: 1;
-        }
-        .promo-chip {
-          align-self: flex-start;
-          border-radius: 999px;
-          padding: 4px 10px;
-          font-size: 0.78rem;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          background: rgba(37, 99, 235, 0.15);
-          color: #bfdbfe;
-          border: 1px solid rgba(59, 130, 246, 0.5);
-        }
-        .promo-chip--destacado {
-          background: rgba(249, 115, 22, 0.18);
-          color: #fed7aa;
-          border-color: rgba(249, 115, 22, 0.7);
-        }
-        .promo-info h3 {
-          font-size: 1.1rem;
-          color: #fff;
-          margin: 0;
-          font-weight: 800;
-        }
-        .promo-desc {
-          color: #a9b1c8;
-          font-size: 0.9rem;
-          margin: 0;
-        }
-        .promo-price-box {
-          min-width: 120px;
-          padding: 10px 16px;
-          border-radius: 18px;
-          background: radial-gradient(circle at top, #0b3b74, #0b1220);
-          border: 1px solid rgba(56, 189, 248, 0.7);
-          box-shadow: 0 12px 35px rgba(56, 189, 248, 0.45);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .promo-price-box--destacado {
-          background: radial-gradient(circle at top, #f97316, #b45309);
-          border-color: rgba(251, 191, 36, 0.9);
-          box-shadow: 0 14px 40px rgba(251, 146, 60, 0.65);
-        }
-        .promo-price {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-        .promo-unit {
-          font-size: 0.75rem;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          color: rgba(191, 219, 254, 0.85);
-          margin: 0;
-        }
-        @media (max-width: 768px) {
-          .teacher-container {
-            padding: 1rem !important;
-          }
-          .teacher-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .teacher-videos-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .promo-section { padding: 18px 14px 22px !important; }
-          .promo-card { flex-direction: column; align-items: flex-start !important; }
-          .promo-price-box { align-self: stretch; text-align: right !important; }
-        }
-        @media (max-width: 480px) {
-          .teacher-section {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 12px !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1.1rem !important;
-          }
-          .teacher-videos-grid {
-            grid-template-columns: 1fr !important;
-            gap: 0.75rem !important;
-          }
-          .promo-section { padding: 18px 14px 22px !important; }
-          .promo-card { padding: 14px 16px !important; }
-        }
-        @media (max-width: 430px) {
-          .teacher-container { padding: 0.75rem !important; }
-          .teacher-banner { padding: 1.25rem 0.875rem !important; border-radius: 14px !important; }
-          .teacher-banner h1 { font-size: 1.9rem !important; }
-          .teacher-banner-avatar { width: 160px !important; height: 160px !important; }
-          .teacher-banner-avatar-fallback { font-size: 3.8rem !important; }
-          .glass-card-container { 
-            padding: 0.625rem !important; 
-            border-radius: 10px !important;
-            margin-bottom: 0.875rem !important;
-          }
-          .section-title { font-size: 1rem !important; margin-bottom: 0.75rem !important; }
-          .teacher-section {
-            padding: 0.625rem !important;
-            margin-bottom: 0.875rem !important;
-            border-radius: 10px !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .promo-section { 
-            padding: 14px 12px 18px !important;
-            border-radius: 20px !important;
-          }
-          .promo-header h2, .promo-header h3 { font-size: 1.4rem !important; }
-          .promo-icon { width: 44px !important; height: 44px !important; font-size: 22px !important; }
-          .promo-card { 
-            padding: 12px 14px !important;
-            border-radius: 18px !important;
-          }
-          .promo-info h3 { font-size: 1rem !important; }
-          .promo-price-box { 
-            padding: 8px 12px !important;
-            border-radius: 14px !important;
-            min-width: 100px !important;
-          }
-        }
-      `}</style>
 
       <div className="teacher-container">
         {/* Banner Principal */}
@@ -878,6 +619,8 @@ export default function TeacherProfileLive() {
                   <img
                     src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
                     alt="Foto del maestro"
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -895,7 +638,7 @@ export default function TeacherProfileLive() {
                     fontWeight: '700',
                     color: 'white'
                   }}>
-                    {(teacher as any)?.nombre_publico?.[0]?.toUpperCase() || '🎓'}
+                    {((teacher as PublicTeacher)?.nombre_publico?.[0]?.toUpperCase()) || '🎓'}
                   </div>
                 )}
               </div>
@@ -907,7 +650,7 @@ export default function TeacherProfileLive() {
                 gap: '0.75rem',
                 flexWrap: 'wrap'
               }}>
-                {((teacher as any)?.estado_aprobacion === 'aprobado') && (
+                {((teacher as PublicTeacher)?.estado_aprobacion === 'aprobado') && (
                   <div className="badge" style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -941,7 +684,7 @@ export default function TeacherProfileLive() {
                   onClick={() => {
                     try {
                       const url = typeof window !== 'undefined' ? window.location.href : '';
-                      const title = (teacher as any)?.nombre_publico || 'Maestro';
+                      const title = (teacher as PublicTeacher)?.nombre_publico || 'Maestro';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
@@ -981,7 +724,7 @@ export default function TeacherProfileLive() {
                 margin: '0 0 0.5rem 0',
                 textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
               }}>
-                {(teacher as any)?.nombre_publico}
+                {(teacher as PublicTeacher)?.nombre_publico}
               </h1>
              {/*  {(teacher as any)?.estado_aprobacion === 'aprobado' && (
                 <span style={{
@@ -1013,11 +756,13 @@ export default function TeacherProfileLive() {
                 {(() => {
                   const slugs = normalizeRitmosToSlugs(teacher, allTags);
                   return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+                    <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                      <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+                    </Suspense>
                   ) : null;
                 })()}
                 <ZonaGroupedChips
-                  selectedIds={(teacher as any)?.zonas}
+                  selectedIds={(teacher as PublicTeacher)?.zonas}
                   allTags={allTags}
                   mode="display"
                 />
@@ -1034,10 +779,12 @@ export default function TeacherProfileLive() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <BioSection 
-              bio={(teacher as any)?.bio}
-              redes={(teacher as any)?.redes_sociales || (teacher as any)?.respuestas?.redes}
-            />
+            <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+              <BioSection 
+                bio={(teacher as PublicTeacher)?.bio}
+                redes={(teacher as PublicTeacher)?.redes_sociales || (teacher as PublicTeacher)?.respuestas?.redes}
+              />
+            </Suspense>
           </motion.div>
 
           {/* Ritmos de Baile */}
@@ -1095,7 +842,7 @@ export default function TeacherProfileLive() {
           {(() => {
             // Verificar si hay clases para mostrar
             const hasClassesFromTables = classesFromTables && classesFromTables.length > 0;
-            const hasCronograma = Array.isArray((teacher as any)?.cronograma) && (teacher as any).cronograma.length > 0;
+            const hasCronograma = Array.isArray((teacher as PublicTeacher)?.cronograma) && (teacher as PublicTeacher).cronograma.length > 0;
             const hasClasses = hasClassesFromTables || hasCronograma;
             
             // Solo mostrar la sección si hay clases o si está cargando
@@ -1173,27 +920,31 @@ export default function TeacherProfileLive() {
                   Cargando clases...
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
-                <ClasesLiveTabs
-                  classes={classesFromTables}
-                  title=""
-                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
-                  sourceType="teacher"
-                  sourceId={teacherIdNum}
-                  isClickable={true}
-                />
+                <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                  <ClasesLiveTabs
+                    classes={classesFromTables}
+                    title=""
+                    subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                    sourceType="teacher"
+                    sourceId={teacherIdNum}
+                    isClickable={true}
+                  />
+                </Suspense>
               ) : (
-                <ClasesLive
-                  title=""
-                  cronograma={(teacher as any)?.cronograma || []}
-                  costos={(teacher as any)?.costos || []}
-                  ubicacion={{
-                    nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
-                    direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
-                    ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
-                    referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
-                  }}
-                  showCalendarButton={true}
-                />
+                <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                  <ClasesLive
+                    title=""
+                    cronograma={(teacher as PublicTeacher)?.cronograma || []}
+                    costos={(teacher as PublicTeacher)?.costos || []}
+                    ubicacion={{
+                      nombre: (teacher as PublicTeacher)?.ubicaciones?.[0]?.nombre,
+                      direccion: (teacher as PublicTeacher)?.ubicaciones?.[0]?.direccion,
+                      ciudad: (teacher as PublicTeacher)?.ubicaciones?.[0]?.ciudad,
+                      referencias: (teacher as PublicTeacher)?.ubicaciones?.[0]?.referencias
+                    }}
+                    showCalendarButton={true}
+                  />
+                </Suspense>
               )}
             </div>
           </motion.section>
@@ -1233,7 +984,7 @@ export default function TeacherProfileLive() {
 
                   return (
                     <motion.article
-                      key={`${promo?.nombre || 'promo'}-${index}`}
+                      key={promo?.id ?? promo?.nombre ?? `promo-${index}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -1287,14 +1038,16 @@ export default function TeacherProfileLive() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {competitionGroups.map((group: any) => (
-                  <CompetitionGroupCard key={group.id} group={group} />
+                  <Suspense key={group.id} fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                    <CompetitionGroupCard group={group} />
+                  </Suspense>
                 ))}
               </div>
             </motion.section>
           )}
 
           {/* Ubicaciones (live) */}
-          {Array.isArray((teacher as any)?.ubicaciones) && (teacher as any).ubicaciones.length > 0 && (
+          {Array.isArray((teacher as PublicTeacher)?.ubicaciones) && (teacher as PublicTeacher).ubicaciones.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1308,7 +1061,9 @@ export default function TeacherProfileLive() {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
               }}
             >
-              <UbicacionesLive ubicaciones={(teacher as any).ubicaciones} />
+              <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                <UbicacionesLive ubicaciones={(teacher as PublicTeacher).ubicaciones} />
+              </Suspense>
             </motion.section>
           )}
 
@@ -1337,33 +1092,39 @@ export default function TeacherProfileLive() {
                   <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
                 </div>
               </div>
-              <HorizontalSlider
-                items={academies}
-                renderItem={(academy: any) => {
-                  const academyData = {
-                    id: academy.academy_id,
-                    nombre_publico: academy.academy_name,
-                    bio: academy.academy_bio || '',
-                    avatar_url: academy.academy_avatar || null,
-                    portada_url: academy.academy_portada || null,
-                    ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
-                    zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-                    media: academy.academy_portada 
-                      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
-                      : academy.academy_avatar 
-                      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-                      : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
-                  };
-                  return <AcademyCard key={academy.academy_id} item={academyData} />;
-                }}
-                gap={24}
-                autoColumns="280px"
-              />
+              <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                <HorizontalSlider
+                  items={academies}
+                  renderItem={(academy: any) => {
+                    const academyData = {
+                      id: academy.academy_id,
+                      nombre_publico: academy.academy_name,
+                      bio: academy.academy_bio || '',
+                      avatar_url: academy.academy_avatar || null,
+                      portada_url: academy.academy_portada || null,
+                      ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+                      zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+                      media: academy.academy_portada 
+                        ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
+                        : academy.academy_avatar 
+                        ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
+                        : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
+                    };
+                    return (
+                      <Suspense key={academy.academy_id} fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                        <AcademyCard item={academyData} />
+                      </Suspense>
+                    );
+                  }}
+                  gap={24}
+                  autoColumns="280px"
+                />
+              </Suspense>
             </motion.section>
           )}
 
           {/* FAQ estilo Organizer (si hay FAQ en el perfil) */}
-          {Array.isArray((teacher as any)?.faq) && (teacher as any).faq.length > 0 && (
+          {Array.isArray((teacher as PublicTeacher)?.faq) && (teacher as PublicTeacher).faq.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1387,18 +1148,19 @@ export default function TeacherProfileLive() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {(teacher as any).faq.map((faq: any, index: number) => (
-                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
-                    <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
-                  </motion.div>
+                {(teacher as PublicTeacher).faq.map((faq, index: number) => (
+                  <FAQAccordion 
+                    key={faq.id ?? `${faq.q}-${index}`} 
+                    question={faq.q} 
+                    answer={faq.a} 
+                  />
                 ))}
               </div>
             </motion.section>
           )}
 
           {/* Reseñas de Alumnos */}
-          {Array.isArray((teacher as any)?.reseñas) && (teacher as any).reseñas.length > 0 && (
+          {Array.isArray((teacher as PublicTeacher)?.reseñas) && (teacher as PublicTeacher).reseñas.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1422,7 +1184,7 @@ export default function TeacherProfileLive() {
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-                {(teacher as any).reseñas.map((review: any, index: number) => (
+                {(teacher as PublicTeacher).reseñas.map((review: any, index: number) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
@@ -1460,7 +1222,9 @@ export default function TeacherProfileLive() {
 
           {/* Componente de Calificaciones */}
           {teacherIdNum && (
-            <TeacherRatingComponent teacherId={teacherIdNum} />
+            <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+              <TeacherRatingComponent teacherId={teacherIdNum} />
+            </Suspense>
           )}
 
           {/* Slot Video */}
@@ -1563,6 +1327,8 @@ export default function TeacherProfileLive() {
                   <video
                     src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url}
                     controls
+                    preload="metadata"
+                    controlsList="nodownload noplaybackrate"
                     style={{
                       width: '100%',
                       height: 'auto',

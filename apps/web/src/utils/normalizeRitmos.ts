@@ -34,6 +34,8 @@ const TAG_ID_TO_SLUG: Record<number, string> = {
   66: 'yoga',
   67: 'pilates',
   68: 'cumbia_sonidera',
+  69: 'jumping',
+  70: 'box',
 };
 
 /**
@@ -68,6 +70,8 @@ export const TAG_NAME_TO_SLUG: Record<string, string> = {
   'Yoga': 'yoga',
   'Pilates': 'pilates',
   'Cumbia Sonidera': 'cumbia_sonidera',
+  'Box': 'box',
+  'Jumping': 'jumping',
 };
 
 /**

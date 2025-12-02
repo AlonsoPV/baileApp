@@ -1,27 +1,680 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
-import { fmtDate, fmtTime } from "../../utils/format";
-import { Chip } from "../../components/profile/Chip";
+import { fmtDate } from "../../utils/format";
 import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
-import EventInfoGrid from "../../components/events/EventInfoGrid";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
-import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
+
+// CSS constante a nivel de módulo para evitar reinserción en cada render
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+  
+  * {
+    font-family: ${typography.fontFamily.primary};
+  }
+  
+  .org-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .org-banner {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .org-banner-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  
+  .glass-card {
+    background: ${colors.glass.light};
+    backdrop-filter: blur(20px);
+    border: 1px solid ${colors.glass.medium};
+    box-shadow: ${colors.shadows.glass};
+  }
+  
+  .gradient-text {
+    background: ${colors.gradients.primary};
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  
+  .floating-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .shimmer-effect {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .glass-card-container {
+    opacity: 1;
+    margin: 0 auto 2rem auto;
+    margin-top: 0;
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+    backdrop-filter: blur(10px);
+    transform: none;
+  }
+  .org-banner h2,
+  .org-banner h3,
+  .org-container h2,
+  .org-container h3 {
+    color: #fff;
+    text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+  }
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .org-social-events-section {
+    margin-bottom: 2rem;
+  }
+  
+  .org-social-events-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .org-social-events-header-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  .org-social-events-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .org-social-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .org-social-card {
+    padding: clamp(1.5rem, 2.5vw, 2.5rem);
+    border-radius: clamp(16px, 2.5vw, 28px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(30, 30, 30, 0.6);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .org-social-card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 2;
+    padding-top: 0.5rem;
+  }
+  
+  .org-social-card-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    flex-shrink: 0;
+  }
+  
+  .org-social-card-content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .org-social-card-title {
+    font-size: clamp(1.5rem, 2vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 0.75rem 0;
+    background: linear-gradient(135deg, #1E88E5, #FF3D57);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  
+  .org-social-card-description {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .org-social-card-button {
+    flex-shrink: 0;
+  }
+  
+  .org-social-card-button button {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #1E88E5, #00BCD4);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  
+  .video-gallery-main {
+    position: relative;
+    aspect-ratio: 16/9;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .video-gallery-main:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .video-gallery-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    cursor: pointer;
+  }
+  .video-gallery-counter {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 24px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  .video-gallery-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+  }
+  .video-gallery-nav-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+  .video-gallery-nav-btn:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+  .video-gallery-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .video-gallery-nav-btn--prev {
+    left: 1.25rem;
+  }
+  .video-gallery-nav-btn--next {
+    right: 1.25rem;
+  }
+  .video-gallery-thumbnails {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    max-width: 100%;
+  }
+  .video-gallery-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid transparent;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .video-gallery-thumb:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+  .video-gallery-thumb.active {
+    border-color: #E53935;
+    box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
+  }
+  .video-gallery-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  @media (max-width: 768px) {
+    .org-container {
+      max-width: 100% !important;
+      padding: 1rem !important;
+    }
+    .org-banner {
+      border-radius: 0 !important;
+      padding: 2rem 1rem !important;
+      margin: 0 auto !important;
+    }
+    .org-banner-grid {
+      grid-template-columns: 1fr !important;
+      gap: 2rem !important;
+      justify-items: center !important;
+      text-align: center !important;
+    }
+    .org-banner-avatar {
+      width: 220px !important;
+      height: 220px !important;
+    }
+    .org-banner-avatar-fallback {
+      font-size: 5rem !important;
+    }
+    .org-banner h1 {
+      font-size: 3rem !important;
+      line-height: 1.2 !important;
+    }
+    .org-banner .org-chips {
+      justify-content: center !important;
+      margin-bottom: 1rem !important;
+    }
+    .glass-card {
+      margin-bottom: 1.5rem !important;
+      padding: 1.5rem !important;
+    }
+    .glass-card h3 {
+      font-size: 1.5rem !important;
+    }
+    .glass-card p {
+      font-size: 1rem !important;
+    }
+    .carousel-main {
+      aspect-ratio: 16/9 !important;
+      max-width: 100% !important;
+    }
+    .carousel-thumbnails {
+      gap: 0.5rem !important;
+      margin-top: 1rem !important;
+    }
+    .carousel-thumbnail {
+      width: 50px !important;
+      height: 50px !important;
+    }
+    .carousel-nav-btn {
+      width: 40px !important;
+      height: 40px !important;
+      font-size: 1rem !important;
+    }
+    .carousel-counter {
+      font-size: 0.8rem !important;
+      padding: 0.25rem 0.75rem !important;
+    }
+    .dfs-wrap {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .dfs-controls {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .glass-card-container {
+      padding: 1rem !important;
+      margin-bottom: 1rem !important;
+      border-radius: 16px !important;
+    }
+    
+    .org-social-events-section {
+      margin-bottom: 1.5rem !important;
+    }
+    
+    .org-social-events-header {
+      flex-direction: column !important;
+      align-items: center !important;
+      text-align: center !important;
+      gap: 1rem !important;
+      margin-bottom: 1.25rem !important;
+    }
+    
+    .org-social-events-header-icon {
+      width: 56px !important;
+      height: 56px !important;
+      font-size: 1.4rem !important;
+    }
+    
+    .org-social-events-header-text {
+      width: 100% !important;
+    }
+    
+    .org-social-events-header-text h3 {
+      font-size: 1.4rem !important;
+      margin-bottom: 0.5rem !important;
+    }
+    
+    .org-social-events-header-text p {
+      font-size: 0.9rem !important;
+    }
+    
+    .org-social-events-list {
+      gap: 1.25rem !important;
+    }
+    
+    .org-social-card {
+      padding: 1.25rem !important;
+      border-radius: 18px !important;
+      gap: 1.25rem !important;
+    }
+    
+    .org-social-card-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+      padding-top: 0.75rem !important;
+    }
+    
+    .org-social-card-icon {
+      width: 60px !important;
+      height: 60px !important;
+      font-size: 2.1rem !important;
+      align-self: center !important;
+    }
+    
+    .org-social-card-content {
+      text-align: center !important;
+    }
+    
+    .org-social-card-title {
+      font-size: 1.4rem !important;
+      margin-bottom: 0.75rem !important;
+      text-align: center !important;
+    }
+    
+    .org-social-card-description {
+      font-size: 0.95rem !important;
+      text-align: center !important;
+      margin-bottom: 1rem !important;
+    }
+    
+    .org-social-card-button {
+      width: 100% !important;
+    }
+    
+    .org-social-card-button button {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 0.7rem 1.25rem !important;
+      font-size: 0.85rem !important;
+    }
+    
+    .video-gallery-main {
+      border-radius: 16px;
+    }
+    .video-gallery-counter {
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+    }
+    .video-gallery-nav-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 1.25rem;
+    }
+    .video-gallery-nav-btn--prev {
+      left: 1rem;
+    }
+    .video-gallery-nav-btn--next {
+      right: 1rem;
+    }
+    .video-gallery-thumbnails {
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+    }
+    
+    .competition-groups-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+      gap: 1.25rem !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .org-banner {
+      padding: 1.5rem 1rem !important;
+    }
+    .org-banner-avatar {
+      width: 180px !important;
+      height: 180px !important;
+    }
+    .org-banner-avatar-fallback {
+      font-size: 4.2rem !important;
+    }
+    .org-banner h1 {
+      font-size: 2.6rem !important;
+    }
+    .glass-card {
+      padding: 1rem !important;
+      margin-bottom: 1rem !important;
+    }
+    .glass-card h3 {
+      font-size: 1.25rem !important;
+    }
+    .carousel-thumbnail {
+      width: 40px !important;
+      height: 40px !important;
+    }
+    .carousel-nav-btn {
+      width: 36px !important;
+      height: 36px !important;
+    }
+    .glass-card-container {
+      padding: 0.75rem !important;
+      border-radius: 12px !important;
+    }
+    
+    .org-social-events-section {
+      margin-bottom: 1rem !important;
+    }
+    
+    .org-social-events-header {
+      gap: 0.75rem !important;
+      margin-bottom: 1rem !important;
+    }
+    
+    .org-social-events-header-icon {
+      width: 52px !important;
+      height: 52px !important;
+      font-size: 1.3rem !important;
+    }
+    
+    .org-social-events-header-text h3 {
+      font-size: 1.25rem !important;
+    }
+    
+    .org-social-events-header-text p {
+      font-size: 0.85rem !important;
+    }
+    
+    .org-social-events-list {
+      gap: 1rem !important;
+    }
+    
+    .org-social-card {
+      padding: 1rem !important;
+      border-radius: 16px !important;
+      gap: 1rem !important;
+    }
+    
+    .org-social-card-row {
+      gap: 0.85rem !important;
+      padding-top: 0.5rem !important;
+    }
+    
+    .org-social-card-icon {
+      width: 52px !important;
+      height: 52px !important;
+      font-size: 1.9rem !important;
+    }
+    
+    .org-social-card-title {
+      font-size: 1.3rem !important;
+      margin-bottom: 0.6rem !important;
+    }
+    
+    .org-social-card-description {
+      font-size: 0.9rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    
+    .org-social-card-button button {
+      padding: 0.65rem 1.1rem !important;
+      font-size: 0.8rem !important;
+    }
+    
+    .video-gallery-main {
+      border-radius: 12px;
+    }
+    .video-gallery-counter {
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+    }
+    .video-gallery-nav-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+    }
+    .video-gallery-nav-btn--prev {
+      left: 0.75rem;
+    }
+    .video-gallery-nav-btn--next {
+      right: 0.75rem;
+    }
+    .video-gallery-thumbnails {
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .competition-groups-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+  }
+  
+  @media (max-width: 430px) {
+    .org-container {
+      padding: 0.75rem 0.75rem 1.5rem !important;
+    }
+    .glass-card-container {
+      padding: 0.85rem !important;
+      border-radius: 14px !important;
+      margin-bottom: 1.25rem !important;
+    }
+    .org-banner h1 {
+      font-size: 2.1rem !important;
+    }
+    .glass-card {
+      padding: 1rem !important;
+      border-radius: 16px !important;
+    }
+    .glass-card h3.section-title {
+      font-size: 1.25rem !important;
+    }
+    .org-social-events-header {
+      margin-bottom: 1rem !important;
+    }
+    .org-social-events-header-icon {
+      width: 52px !important;
+      height: 52px !important;
+    }
+    .competition-groups-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+  }
+`;
 
 // Componente FAQ Accordion Moderno
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -104,261 +757,104 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   );
 };
 
-// Componente Carousel para videos
-const VideoCarouselComponent: React.FC<{ videos: string[] }> = ({ videos }) => {
+// Componente Carousel para videos - memoizado y con callbacks
+const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextVideo = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  }, [videos.length]);
+
+  const prevVideo = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + videos.length) % videos.length);
+  }, [videos.length]);
+
+  const goToVideo = useCallback((index: number) => {
+    setCurrentIndex(index);
+  }, []);
 
   if (videos.length === 0) return null;
 
-  const nextVideo = () => {
-    setCurrentIndex((prev) => (prev + 1) % videos.length);
-  };
-
-  const prevVideo = () => {
-    setCurrentIndex((prev) => (prev - 1 + videos.length) % videos.length);
-  };
-
-  const goToVideo = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  return (
-    <>
-      <style>{`
-        .video-gallery-main {
-          position: relative;
-          aspect-ratio: 16/9;
-          border-radius: 20px;
-          overflow: hidden;
-          border: 2px solid rgba(255, 255, 255, 0.15);
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .video-gallery-main:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
-          border-color: rgba(255, 255, 255, 0.25);
-        }
-        .video-gallery-video {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          object-position: center;
-          cursor: pointer;
-        }
-        .video-gallery-counter {
-          position: absolute;
-          top: 1.25rem;
-          right: 1.25rem;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
-          backdrop-filter: blur(10px);
-          color: white;
-          padding: 0.6rem 1.2rem;
-          border-radius: 24px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        .video-gallery-nav-btn {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-          backdrop-filter: blur(10px);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          border-radius: 50%;
-          width: 52px;
-          height: 52px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 1.5rem;
-          font-weight: 700;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-          z-index: 10;
-        }
-        .video-gallery-nav-btn:hover {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
-          transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-        }
-        .video-gallery-nav-btn:active {
-          transform: translateY(-50%) scale(0.95);
-        }
-        .video-gallery-nav-btn--prev {
-          left: 1.25rem;
-        }
-        .video-gallery-nav-btn--next {
-          right: 1.25rem;
-        }
-        .video-gallery-thumbnails {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-          gap: 0.75rem;
-          margin-top: 1.5rem;
-          max-width: 100%;
-        }
-        .video-gallery-thumb {
-          position: relative;
-          aspect-ratio: 16/9;
-          border-radius: 12px;
-          overflow: hidden;
-          border: 3px solid transparent;
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.05);
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .video-gallery-thumb:hover {
-          transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-        .video-gallery-thumb.active {
-          border-color: #E53935;
-          box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
-        }
-        .video-gallery-thumb video {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        @media (max-width: 768px) {
-          .video-gallery-main {
-            border-radius: 16px;
-          }
-          .video-gallery-counter {
-            top: 1rem;
-            right: 1rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-          }
-          .video-gallery-nav-btn {
-            width: 44px;
-            height: 44px;
-            font-size: 1.25rem;
-          }
-          .video-gallery-nav-btn--prev {
-            left: 1rem;
-          }
-          .video-gallery-nav-btn--next {
-            right: 1rem;
-          }
-          .video-gallery-thumbnails {
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 0.6rem;
-            margin-top: 1.25rem;
-          }
-        }
-        @media (max-width: 480px) {
-          .video-gallery-main {
-            border-radius: 12px;
-          }
-          .video-gallery-counter {
-            top: 0.75rem;
-            right: 0.75rem;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
-          }
-          .video-gallery-nav-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 1.1rem;
-          }
-          .video-gallery-nav-btn--prev {
-            left: 0.75rem;
-          }
-          .video-gallery-nav-btn--next {
-            right: 0.75rem;
-          }
-          .video-gallery-thumbnails {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 0.5rem;
-            margin-top: 1rem;
-          }
-        }
-      `}</style>
-      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Video principal */}
-        <div className="video-gallery-main">
-          <video
-            src={videos[currentIndex]}
-            controls
-            className="video-gallery-video"
-          />
-
-          {/* Contador */}
-          <div className="video-gallery-counter">
-            {currentIndex + 1} / {videos.length}
-          </div>
-
-          {/* Botones de navegación */}
-          {videos.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); prevVideo(); }}
-                className="video-gallery-nav-btn video-gallery-nav-btn--prev"
-                aria-label="Video anterior"
-              >
-                ‹
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); nextVideo(); }}
-                className="video-gallery-nav-btn video-gallery-nav-btn--next"
-                aria-label="Video siguiente"
-              >
-                ›
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Miniaturas */}
-        {videos.length > 1 && (
-          <div className="video-gallery-thumbnails">
-            {videos.map((video, index) => (
-              <button
-                key={index}
-                onClick={() => goToVideo(index)}
-                className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-                aria-label={`Ver video ${index + 1}`}
-              >
-                <video src={video} muted />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-// Componente de Carrusel Moderno
-const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const nextPhoto = () => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
-  };
-
-  const prevPhoto = () => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
-
-  const goToPhoto = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  if (photos.length === 0) return null;
+  const hasMultipleVideos = videos.length > 1;
 
   return (
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Carrusel Principal */}
+      <div className="video-gallery-main">
+        <video
+          src={videos[currentIndex]}
+          controls
+          className="video-gallery-video"
+        />
+
+        <div className="video-gallery-counter">
+          {currentIndex + 1} / {videos.length}
+        </div>
+
+        {hasMultipleVideos && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); prevVideo(); }}
+              className="video-gallery-nav-btn video-gallery-nav-btn--prev"
+              aria-label="Video anterior"
+              disabled={!hasMultipleVideos}
+            >
+              ‹
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); nextVideo(); }}
+              className="video-gallery-nav-btn video-gallery-nav-btn--next"
+              aria-label="Video siguiente"
+              disabled={!hasMultipleVideos}
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
+
+      {hasMultipleVideos && (
+        <div className="video-gallery-thumbnails">
+          {videos.map((video, index) => (
+            <button
+              key={index}
+              onClick={() => goToVideo(index)}
+              className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
+              aria-label={`Ver video ${index + 1}`}
+            >
+              <video src={video} muted />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+VideoCarouselComponent.displayName = 'VideoCarouselComponent';
+
+// Componente de Carrusel Moderno - memoizado y con callbacks
+const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const nextPhoto = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % photos.length);
+  }, [photos.length]);
+
+  const prevPhoto = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  }, [photos.length]);
+
+  const goToPhoto = useCallback((index: number) => {
+    setCurrentIndex(index);
+  }, []);
+
+  if (photos.length === 0) return null;
+
+  const hasMultiplePhotos = photos.length > 1;
+
+  return (
+    <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{
         position: 'relative',
         aspectRatio: '16/9',
@@ -395,7 +891,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           />
         </motion.div>
 
-        {/* Contador de fotos */}
         <div style={{
           position: 'absolute',
           top: spacing[4],
@@ -411,13 +906,13 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           {currentIndex + 1} / {photos.length}
         </div>
 
-        {/* Botones de navegación */}
-        {photos.length > 1 && (
+        {hasMultiplePhotos && (
           <>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={prevPhoto}
+              disabled={!hasMultiplePhotos}
               style={{
                 position: 'absolute',
                 left: spacing[4],
@@ -432,10 +927,11 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: hasMultiplePhotos ? 'pointer' : 'not-allowed',
                 fontSize: typography.fontSize.xl,
                 transition: transitions.normal,
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(10px)',
+                opacity: hasMultiplePhotos ? 1 : 0.5
               }}
             >
               ‹
@@ -444,6 +940,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={nextPhoto}
+              disabled={!hasMultiplePhotos}
               style={{
                 position: 'absolute',
                 right: spacing[4],
@@ -458,10 +955,11 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: hasMultiplePhotos ? 'pointer' : 'not-allowed',
                 fontSize: typography.fontSize.xl,
                 transition: transitions.normal,
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(10px)',
+                opacity: hasMultiplePhotos ? 1 : 0.5
               }}
             >
               ›
@@ -470,8 +968,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         )}
       </div>
 
-      {/* Miniaturas */}
-      {photos.length > 1 && (
+      {hasMultiplePhotos && (
         <div style={{
           display: 'flex',
           gap: spacing[2],
@@ -513,7 +1010,6 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
         </div>
       )}
 
-      {/* Modal de pantalla completa */}
       {isFullscreen && (
         <div
           style={{
@@ -578,19 +1074,19 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       )}
     </div>
   );
-};
+});
+
+CarouselComponent.displayName = 'CarouselComponent';
 
 export function OrganizerProfileLive() {
   const navigate = useNavigate();
   const { data: org, isLoading, error, isError } = useMyOrganizer();
-  const { data: parents } = useEventParentsByOrganizer(org?.id);
-  const { data: eventDates } = useEventDatesByOrganizer(org?.id);
+  const { data: parents } = useEventParentsByOrganizer((org as any)?.id);
+  const { data: eventDates } = useEventDatesByOrganizer((org as any)?.id);
   const { media } = useOrganizerMedia();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
 
-  // Auto-redirigir a Edit si no tiene perfil de organizador (solo si no hay error)
-  // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
     if (!isLoading && !org && !isError) {
       console.log('[OrganizerProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
@@ -598,48 +1094,25 @@ export function OrganizerProfileLive() {
     }
   }, [isLoading, org, isError, navigate]);
 
-  // Obtener fotos del carrusel usando los media slots
-  const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media as any, slot)?.url)
-    .filter(Boolean) as string[];
+  // Memoizar datos derivados
+  const safeMedia = useMemo(() => media || [], [media]);
+  
+  const carouselPhotos = useMemo(() => {
+    return PHOTO_SLOTS
+      .map(slot => getMediaBySlot(safeMedia as any, slot)?.url)
+      .filter(Boolean) as string[];
+  }, [safeMedia]);
 
-  // Obtener videos
-  const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media as any, slot)?.url)
-    .filter(Boolean) as string[];
-
-  // Get tag names from IDs
-  const getRitmoNombres = () => {
-    const names: string[] = [];
-    // 1) Priorizar ritmos_seleccionados (IDs del catálogo) ya que es lo que edita el usuario con RitmosChips
-    if (Array.isArray((org as any)?.ritmos_seleccionados) && (org as any).ritmos_seleccionados.length > 0) {
-      const labelById = new Map<string, string>();
-      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
-      names.push(
-        ...((org as any).ritmos_seleccionados as string[])
-          .map(id => labelById.get(id))
-          .filter(Boolean) as string[]
-      );
-    }
-    // 2) Si no hay ritmos_seleccionados, usar ritmos/estilos (IDs numéricos de tags)
-    if (names.length === 0) {
-      const ritmos = (org as any)?.ritmos || (org as any)?.estilos || [];
-      if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
-        names.push(
-          ...ritmos
-            .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === 'ritmo')?.nombre)
-            .filter(Boolean) as string[]
-        );
-      }
-    }
-    return names;
-  };
+  const videos = useMemo(() => {
+    return VIDEO_SLOTS
+      .map(slot => getMediaBySlot(safeMedia as any, slot)?.url)
+      .filter(Boolean) as string[];
+  }, [safeMedia]);
 
   // Agregar agregación de ubicaciones desde los sociales (events_parent)
-  const aggregatedLocations = (() => {
+  const aggregatedLocations = useMemo(() => {
     try {
       const items = (parents || []).flatMap((p: any) => Array.isArray(p?.ubicaciones) ? p.ubicaciones : []);
-      // Deduplicar por nombre+direccion
       const key = (u: any) => `${(u?.nombre || '').trim()}|${(u?.direccion || '').trim()}`;
       const map = new Map<string, any>();
       items.forEach((u: any) => map.set(key(u), u));
@@ -647,105 +1120,12 @@ export function OrganizerProfileLive() {
     } catch {
       return [];
     }
-  })();
-
-  if (isLoading) {
-    return (
-      <div style={{
-        padding: spacing[12],
-        textAlign: 'center',
-        color: colors.gray[50],
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-        <p style={{ fontSize: typography.fontSize.lg }}>Cargando organizador...</p>
-      </div>
-    );
-  }
-
-  // Mostrar error si hay un problema de carga (no redirigir automáticamente)
-  if (isError && error) {
-    const errorMessage = (error as any)?.message || 'Error desconocido al cargar el perfil';
-    const errorCode = (error as any)?.code;
-    
-    return (
-      <div style={{
-        padding: spacing[12],
-        textAlign: 'center',
-        color: colors.gray[50],
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⚠️</div>
-          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-            Error al cargar perfil
-          </h2>
-          <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[6] }}>
-            {errorMessage}
-            {errorCode && ` (Código: ${errorCode})`}
-          </p>
-          <button
-            onClick={() => {
-              // Intentar recargar la página
-              window.location.reload();
-            }}
-            style={{
-              padding: `${spacing[3]} ${spacing[6]}`,
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-              color: colors.gray[50],
-              cursor: 'pointer',
-              fontSize: typography.fontSize.base,
-              fontWeight: 600,
-            }}
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!org) {
-    return (
-      <div style={{
-        padding: spacing[12],
-        textAlign: 'center',
-        color: colors.gray[50],
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-        <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-          Estamos cargando tu perfil...
-        </h2>
-        <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>
-          Redirigiendo a edición para crear tu perfil
-        </p>
-        <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
-          Si tarda mucho, intenta refrescar la página para una carga más rápida.
-        </p>
-      </div>
-    );
-  }
+  }, [parents]);
 
   // Preparar items de "Fechas" (fechas publicadas)
-  const getUpcomingDates = () => {
+  const inviteItems = useMemo(() => {
     const upcomingItems: any[] = [];
 
-    // Obtener fecha y hora actual en CDMX
     const getTodayCDMX = () => {
       const formatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Mexico_City',
@@ -779,7 +1159,6 @@ export function OrganizerProfileLive() {
     const todayCDMX = getTodayCDMX();
     const nowCDMX = getNowCDMX();
 
-    // Filtrar solo fechas futuras (incluyendo hoy si la hora no ha pasado)
     const parseLocalYmd = (value: string) => {
       const plain = String(value).split('T')[0];
       const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
@@ -796,10 +1175,9 @@ export function OrganizerProfileLive() {
         const dateObj = parseLocalYmd(d.fecha);
         if (!dateObj) return false;
         
-        // Si la fecha es hoy, verificar la hora
         if (fechaStr === todayCDMX) {
           const horaStr = d.hora_inicio as string | null | undefined;
-          if (!horaStr) return true; // Si no hay hora, mostrar todo el día
+          if (!horaStr) return true;
           
           const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
           if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
@@ -812,7 +1190,6 @@ export function OrganizerProfileLive() {
           return eventDateTime.getTime() >= nowCDMX.getTime();
         }
         
-        // Para fechas futuras, solo verificar que sea >= hoy
         dateObj.setHours(0, 0, 0, 0);
         const todayObj = parseLocalYmd(todayCDMX);
         if (!todayObj) return false;
@@ -823,7 +1200,7 @@ export function OrganizerProfileLive() {
       }
     });
 
-    futureDates.forEach((date, index) => {
+    futureDates.forEach((date) => {
       const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
 
       const horaFormateada = date.hora_inicio && date.hora_fin
@@ -866,15 +1243,13 @@ export function OrganizerProfileLive() {
     });
 
     return upcomingItems;
-  };
+  }, [eventDates]);
 
-  const inviteItems = getUpcomingDates();
   const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
     const [idx, setIdx] = React.useState(0);
     if (!items?.length) return null;
     const ev = items[idx % items.length];
     
-    // Construir fechas para el calendario
     const calendarStart = (() => {
       try {
         if (!ev.fecha) return new Date();
@@ -945,7 +1320,6 @@ export function OrganizerProfileLive() {
                   {ev.place && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
                   {ev.price && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
                 </div>
-                {/* Botón de calendario */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2], position: 'relative', zIndex: 5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
                   <RequireLogin>
                     <AddToCalendarWithStats
@@ -973,511 +1347,115 @@ export function OrganizerProfileLive() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: spacing[12],
+          textAlign: 'center',
+          color: colors.gray[50],
+          background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
+          <p style={{ fontSize: typography.fontSize.lg }}>Cargando organizador...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (isError && error) {
+    const errorMessage = (error as any)?.message || 'Error desconocido al cargar el perfil';
+    const errorCode = (error as any)?.code;
+    
+    return (
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: spacing[12],
+          textAlign: 'center',
+          color: colors.gray[50],
+          background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div>
+            <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⚠️</div>
+            <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
+              Error al cargar perfil
+            </h2>
+            <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[6] }}>
+              {errorMessage}
+              {errorCode && ` (Código: ${errorCode})`}
+            </p>
+            <button
+              onClick={() => {
+                window.location.reload();
+              }}
+              style={{
+                padding: `${spacing[3]} ${spacing[6]}`,
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+                color: colors.gray[50],
+                cursor: 'pointer',
+                fontSize: typography.fontSize.base,
+                fontWeight: 600,
+              }}
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!org) {
+    return (
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: spacing[12],
+          textAlign: 'center',
+          color: colors.gray[50],
+          background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
+            Estamos cargando tu perfil...
+          </h2>
+          <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>
+            Redirigiendo a edición para crear tu perfil
+          </p>
+          <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </>
+    );
+  }
+
+  // Resolver avatar URL con null checks
+  const avatarUrl = (() => {
+    const cover = getMediaBySlot(safeMedia as any, 'cover');
+    const p1 = getMediaBySlot(safeMedia as any, 'p1');
+    return cover?.url || p1?.url || undefined;
+  })();
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
-        
-        * {
-          font-family: ${typography.fontFamily.primary};
-        }
-        
-        .org-container {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        
-        .org-banner {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .org-banner-grid {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 3rem;
-          align-items: center;
-        }
-        
-        .glass-card {
-          background: ${colors.glass.light};
-          backdrop-filter: blur(20px);
-          border: 1px solid ${colors.glass.medium};
-          box-shadow: ${colors.shadows.glass};
-        }
-        
-        .gradient-text {
-          background: ${colors.gradients.primary};
-          -webkit-background-clip: text;
-          background-clip: text;
-        }
-        
-        .floating-animation {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        
-        .shimmer-effect {
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          background-size: 200% 100%;
-          animation: shimmer 2s infinite;
-        }
-        
-        .glass-card-container {
-          opacity: 1;
-          margin: 0 auto 2rem auto;
-          margin-top: 0;
-          padding: 2rem;
-          text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
-        }
-        .org-banner h2,
-        .org-banner h3,
-        .org-container h2,
-        .org-container h3 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        
-        .org-social-events-section {
-          margin-bottom: 2rem;
-        }
-        
-        .org-social-events-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        
-        .org-social-events-header-icon {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.5rem;
-          flex-shrink: 0;
-        }
-        
-        .org-social-events-header-text {
-          flex: 1;
-          min-width: 0;
-        }
-        
-        .org-social-events-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-        
-        .org-social-card {
-          padding: clamp(1.5rem, 2.5vw, 2.5rem);
-          border-radius: clamp(16px, 2.5vw, 28px);
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          background: rgba(30, 30, 30, 0.6);
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-        
-        .org-social-card-row {
-          display: flex;
-          align-items: flex-start;
-          gap: 1.5rem;
-          position: relative;
-          z-index: 2;
-          padding-top: 0.5rem;
-        }
-        
-        .org-social-card-icon {
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2.5rem;
-          flex-shrink: 0;
-        }
-        
-        .org-social-card-content {
-          flex: 1;
-          min-width: 0;
-        }
-        
-        .org-social-card-title {
-          font-size: clamp(1.5rem, 2vw, 2rem);
-          font-weight: 800;
-          margin: 0 0 0.75rem 0;
-          background: linear-gradient(135deg, #1E88E5, #FF3D57);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: #FFFFFF;
-          letter-spacing: -0.02em;
-          line-height: 1.2;
-        }
-        
-        .org-social-card-description {
-          font-size: 1rem;
-          opacity: 0.9;
-          margin: 0;
-          font-weight: 400;
-          line-height: 1.6;
-          color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .org-social-card-button {
-          flex-shrink: 0;
-        }
-        
-        .org-social-card-button button {
-          padding: 0.75rem 1.5rem;
-          background: linear-gradient(135deg, #1E88E5, #00BCD4);
-          color: #FFFFFF;
-          border: none;
-          border-radius: 12px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          white-space: nowrap;
-        }
-        
-        @media (max-width: 768px) {
-          .org-container {
-            max-width: 100% !important;
-            padding: 1rem !important;
-          }
-          .org-banner {
-            border-radius: 0 !important;
-            padding: 2rem 1rem !important;
-            margin: 0 auto !important;
-          }
-          .org-banner-grid {
-            grid-template-columns: 1fr !important;
-            gap: 2rem !important;
-            justify-items: center !important;
-            text-align: center !important;
-          }
-          .org-banner-avatar {
-            width: 220px !important;
-            height: 220px !important;
-          }
-          .org-banner-avatar-fallback {
-            font-size: 5rem !important;
-          }
-          .org-banner h1 {
-            font-size: 3rem !important;
-            line-height: 1.2 !important;
-          }
-          .org-banner .org-chips {
-            justify-content: center !important;
-            margin-bottom: 1rem !important;
-          }
-          .glass-card {
-            margin-bottom: 1.5rem !important;
-            padding: 1.5rem !important;
-          }
-          .glass-card h3 {
-            font-size: 1.5rem !important;
-          }
-          .glass-card p {
-            font-size: 1rem !important;
-          }
-          .carousel-main {
-            aspect-ratio: 16/9 !important;
-            max-width: 100% !important;
-          }
-          .carousel-thumbnails {
-            gap: 0.5rem !important;
-            margin-top: 1rem !important;
-          }
-          .carousel-thumbnail {
-            width: 50px !important;
-            height: 50px !important;
-          }
-          .carousel-nav-btn {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1rem !important;
-          }
-          .carousel-counter {
-            font-size: 0.8rem !important;
-            padding: 0.25rem 0.75rem !important;
-          }
-          .dfs-wrap {
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .dfs-controls {
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .glass-card-container {
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 16px !important;
-          }
-          
-          .org-social-events-section {
-            margin-bottom: 1.5rem !important;
-          }
-          
-          .org-social-events-header {
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            gap: 1rem !important;
-            margin-bottom: 1.25rem !important;
-          }
-          
-          .org-social-events-header-icon {
-            width: 56px !important;
-            height: 56px !important;
-            font-size: 1.4rem !important;
-          }
-          
-          .org-social-events-header-text {
-            width: 100% !important;
-          }
-          
-          .org-social-events-header-text h3 {
-            font-size: 1.4rem !important;
-            margin-bottom: 0.5rem !important;
-          }
-          
-          .org-social-events-header-text p {
-            font-size: 0.9rem !important;
-          }
-          
-          .org-social-events-list {
-            gap: 1.25rem !important;
-          }
-          
-          .org-social-card {
-            padding: 1.25rem !important;
-            border-radius: 18px !important;
-            gap: 1.25rem !important;
-          }
-          
-          .org-social-card-row {
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 1rem !important;
-            padding-top: 0.75rem !important;
-          }
-          
-          .org-social-card-icon {
-            width: 60px !important;
-            height: 60px !important;
-            font-size: 2.1rem !important;
-            align-self: center !important;
-          }
-          
-          .org-social-card-content {
-            text-align: center !important;
-          }
-          
-          .org-social-card-title {
-            font-size: 1.4rem !important;
-            margin-bottom: 0.75rem !important;
-            text-align: center !important;
-          }
-          
-          .org-social-card-description {
-            font-size: 0.95rem !important;
-            text-align: center !important;
-            margin-bottom: 1rem !important;
-          }
-          
-          .org-social-card-button {
-            width: 100% !important;
-          }
-          
-          .org-social-card-button button {
-            width: 100% !important;
-            justify-content: center !important;
-            padding: 0.7rem 1.25rem !important;
-            font-size: 0.85rem !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .org-banner {
-            padding: 1.5rem 1rem !important;
-          }
-          .org-banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
-          }
-          .org-banner-avatar-fallback {
-            font-size: 4.2rem !important;
-          }
-          .org-banner h1 {
-            font-size: 2.6rem !important;
-          }
-          .glass-card {
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .glass-card h3 {
-            font-size: 1.25rem !important;
-          }
-          .carousel-thumbnail {
-            width: 40px !important;
-            height: 40px !important;
-          }
-          .carousel-nav-btn {
-            width: 36px !important;
-            height: 36px !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem !important;
-            border-radius: 12px !important;
-          }
-          
-          .org-social-events-section {
-            margin-bottom: 1rem !important;
-          }
-          
-          .org-social-events-header {
-            gap: 0.75rem !important;
-            margin-bottom: 1rem !important;
-          }
-          
-          .org-social-events-header-icon {
-            width: 52px !important;
-            height: 52px !important;
-            font-size: 1.3rem !important;
-          }
-          
-          .org-social-events-header-text h3 {
-            font-size: 1.25rem !important;
-          }
-          
-          .org-social-events-header-text p {
-            font-size: 0.85rem !important;
-          }
-          
-          .org-social-events-list {
-            gap: 1rem !important;
-          }
-          
-          .org-social-card {
-            padding: 1rem !important;
-            border-radius: 16px !important;
-            gap: 1rem !important;
-          }
-          
-          .org-social-card-row {
-            gap: 0.85rem !important;
-            padding-top: 0.5rem !important;
-          }
-          
-          .org-social-card-icon {
-            width: 52px !important;
-            height: 52px !important;
-            font-size: 1.9rem !important;
-          }
-          
-          .org-social-card-title {
-            font-size: 1.3rem !important;
-            margin-bottom: 0.6rem !important;
-          }
-          
-          .org-social-card-description {
-            font-size: 0.9rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          
-          .org-social-card-button button {
-            padding: 0.65rem 1.1rem !important;
-            font-size: 0.8rem !important;
-          }
-        }
-      `}</style>
-      <style>{`
-        /* Extra compact layout for very small screens */
-        @media (max-width: 430px) {
-          .org-container {
-            padding: 0.75rem 0.75rem 1.5rem !important;
-          }
-          .glass-card-container {
-            padding: 0.85rem !important;
-            border-radius: 14px !important;
-            margin-bottom: 1.25rem !important;
-          }
-          .org-banner h1 {
-            font-size: 2.1rem !important;
-          }
-          .glass-card {
-            padding: 1rem !important;
-            border-radius: 16px !important;
-          }
-          .glass-card h3.section-title {
-            font-size: 1.25rem !important;
-          }
-          .org-social-events-header {
-            margin-bottom: 1rem !important;
-          }
-          .org-social-events-header-icon {
-            width: 52px !important;
-            height: 52px !important;
-          }
-          /* Competition Groups Grid Responsivo */
-          .competition-groups-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-        }
-        /* Responsive para Competition Groups */
-        @media (max-width: 768px) {
-          .competition-groups-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-            gap: 1.25rem !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .competition-groups-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-        }
-      `}</style>
+      <style>{STYLES}</style>
 
       <div style={{
         minHeight: '100vh',
@@ -1486,7 +1464,6 @@ export function OrganizerProfileLive() {
         width: '100%',
         position: 'relative'
       }}>
-        {/* Elementos flotantes de fondo */}
         <div style={{
           position: 'absolute',
           top: '10%',
@@ -1526,7 +1503,6 @@ export function OrganizerProfileLive() {
           zIndex: 0
         }} />
 
-        {/* Profile Toolbar - Toggle y Edición (Fixed) */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <ProfileNavigationToggle
             currentView="live"
@@ -1536,7 +1512,6 @@ export function OrganizerProfileLive() {
           />
         </div>
 
-        {/* Banner Principal */}
         <motion.div
           id="organizer-banner"
           data-test-id="organizer-banner"
@@ -1555,7 +1530,6 @@ export function OrganizerProfileLive() {
           }}
         >
           <div className="org-banner-grid">
-            {/* Columna 1: Logo del Organizador */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1583,9 +1557,9 @@ export function OrganizerProfileLive() {
                   position: 'relative'
                 }}
               >
-                {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
+                {avatarUrl ? (
                   <img
-                    src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''}
+                    src={avatarUrl}
                     alt="Logo del organizador"
                     style={{
                       width: '100%',
@@ -1604,11 +1578,10 @@ export function OrganizerProfileLive() {
                     fontWeight: typography.fontWeight.black,
                     color: colors.light
                   }}>
-                    {org.nombre_publico?.[0]?.toUpperCase() || '🎤'}
+                    {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
                   </div>
                 )}
 
-                {/* Efecto de brillo */}
                 <div className="shimmer-effect" style={{
                   position: 'absolute',
                   top: 0,
@@ -1618,7 +1591,6 @@ export function OrganizerProfileLive() {
                   borderRadius: '50%'
                 }} />
               </div>
-              {/* Badge de verificación y botón de compartir inline debajo del avatar */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1626,7 +1598,7 @@ export function OrganizerProfileLive() {
                 gap: '0.75rem',
                 flexWrap: 'wrap'
               }}>
-                {org.estado_aprobacion === 'aprobado' && (
+                {(org as any)?.estado_aprobacion === 'aprobado' && (
                   <div className="badge" style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1659,8 +1631,8 @@ export function OrganizerProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const publicUrl = org?.id ? `${window.location.origin}/organizer/${org.id}` : '';
-                      const title = org.nombre_publico || 'Organizador';
+                      const publicUrl = (org as any)?.id ? `${window.location.origin}/organizer/${(org as any).id}` : '';
+                      const title = (org as any)?.nombre_publico || 'Organizador';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
@@ -1715,7 +1687,6 @@ export function OrganizerProfileLive() {
               </div>
             </motion.div>
 
-            {/* Columna 2: Nombre, Chips y Estado */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1739,10 +1710,9 @@ export function OrganizerProfileLive() {
                   textShadow: `0 4px 20px ${colors.primary[500]}40`
                 }}
               >
-                {org.nombre_publico}
+                {(org as any)?.nombre_publico}
               </h1>
 
-              {/* Chips de ritmos y zonas */}
               <div
                 id="organizer-chips"
                 data-test-id="organizer-chips"
@@ -1771,7 +1741,6 @@ export function OrganizerProfileLive() {
           </div>
         </motion.div>
 
-        {/* Contenido Principal */}
         <div className="org-container" style={{
           padding: spacing[8],
           position: 'relative',
@@ -1780,19 +1749,17 @@ export function OrganizerProfileLive() {
           margin: '0 auto',
           width: '100%'
         }}>
-          {/* Biografía y Redes Sociales */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
             <BioSection 
-              bio={org.bio}
+              bio={(org as any)?.bio}
               redes={(org as any)?.redes_sociales || (org as any)?.respuestas?.redes}
             />
           </motion.div>
 
-          {/* Ubicaciones de los Sociales (agregadas) */}
           {aggregatedLocations.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -1857,77 +1824,18 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
-          {/* Maestros Invitados */}
           <div
             id="organizer-invited-masters"
             data-test-id="organizer-invited-masters"
           >
             <InvitedMastersSection
-              masters={[]} // TODO: Conectar con datos reales en el siguiente sprint
+              masters={[]}
               title="🎭 Maestros Invitados"
               showTitle={true}
               isEditable={false}
             />
           </div>
 
-          {/* Grupos de Competencia */}
-          {/* Nota: Los organizers no tienen grupos de competencia directamente asociados,
-              pero mantenemos la sección por consistencia con otros perfiles */}
-          {false && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.55 }}
-              className="glass-card"
-              style={{
-                marginBottom: spacing[8],
-                padding: spacing[8],
-                borderRadius: borderRadius['2xl']
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[4],
-                marginBottom: spacing[6]
-              }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: typography.fontSize['2xl'],
-                  boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)'
-                }}>
-                  🏆
-                </div>
-                <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
-                  <p style={{
-                    fontSize: typography.fontSize.sm,
-                    opacity: 0.8,
-                    margin: 0,
-                    fontWeight: 500,
-                    color: colors.light
-                  }}>
-                    Grupos de entrenamiento y competencia
-                  </p>
-                </div>
-              </div>
-              <div className="competition-groups-grid" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '1.5rem'
-              }}>
-                {/* Los grupos se renderizarían aquí */}
-              </div>
-            </motion.section>
-          )}
-
-          {/* Próximas Fechas */}
           {inviteItems.length > 0 && (
             <motion.section
               id="organizer-upcoming-dates"
@@ -1976,7 +1884,6 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
-          {/* Sección de Videos */}
           {videos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -1987,10 +1894,10 @@ export function OrganizerProfileLive() {
                 marginBottom: '1.5rem',
                 padding: '1.25rem',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'visible',
+                textAlign: 'left'
               }}
             >
-              {/* Header con gradiente superior */}
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -2001,7 +1908,6 @@ export function OrganizerProfileLive() {
                 borderRadius: '20px 20px 0 0'
               }} />
               
-              {/* Header compacto */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -2030,7 +1936,7 @@ export function OrganizerProfileLive() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                      {videos.length > 1 ? 'Videos' : 'Video Principal'}
+                      Videos
                     </h3>
                     <p style={{
                       margin: '0.15rem 0 0 0',
@@ -2039,102 +1945,28 @@ export function OrganizerProfileLive() {
                       fontWeight: 400,
                       lineHeight: 1.2
                     }}>
-                      Contenido multimedia destacado
+                      {videos.length === 1 ? 'Video promocional' : 'Contenido multimedia destacado'}
                     </p>
                   </div>
                 </div>
-                {videos.length > 1 && (
-                  <div style={{
-                    padding: '0.5rem 1rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '20px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: colors.light
-                  }}>
-                    {videos.length} video{videos.length !== 1 ? 's' : ''}
-                  </div>
-                )}
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '20px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: colors.light
+                }}>
+                  {videos.length} video{videos.length !== 1 ? 's' : ''}
+                </div>
               </div>
 
-              {/* Carrusel de Videos o Video Individual */}
-              {videos.length > 1 ? (
+              <div style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
                 <VideoCarouselComponent videos={videos} />
-              ) : (
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '480px',
-                  margin: '0 auto',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
-                  border: '2px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-                  padding: '3px'
-                }}>
-                  {/* Borde interno con gradiente */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: '3px',
-                    borderRadius: '13px',
-                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }} />
-                  
-                  {/* Video */}
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    borderRadius: '13px',
-                    overflow: 'hidden',
-                    background: '#000',
-                    zIndex: 2
-                  }}>
-                    <video
-                      src={videos[0]}
-                      controls
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        aspectRatio: '4 / 5',
-                        display: 'block',
-                        objectFit: 'contain',
-                        objectPosition: 'center',
-                      }}
-                    />
-                  </div>
-
-                  {/* Efecto de brillo en las esquinas */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '5px',
-                    left: '5px',
-                    width: '40px',
-                    height: '40px',
-                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none',
-                    zIndex: 3
-                  }} />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '5px',
-                    right: '5px',
-                    width: '40px',
-                    height: '40px',
-                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none',
-                    zIndex: 3
-                  }} />
-                </div>
-              )}
+              </div>
             </motion.section>
           )}
 
-          {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (
             <motion.section
               id="organizer-profile-photo-gallery"
@@ -2170,7 +2002,6 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
-          {/* Información para Asistentes - FAQ */}
           {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -2216,7 +2047,6 @@ export function OrganizerProfileLive() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
-                {/* FAQ Item: Música */}
                 {(org as any)?.respuestas?.musica_tocaran && (
                   <FAQAccordion
                     question="🎵 ¿Qué música tocarán?"
@@ -2224,7 +2054,6 @@ export function OrganizerProfileLive() {
                   />
                 )}
 
-                {/* FAQ Item: Estacionamiento */}
                 {(org as any)?.respuestas?.hay_estacionamiento && (
                   <FAQAccordion
                     question="🅿️ ¿Hay estacionamiento?"
@@ -2239,4 +2068,3 @@ export function OrganizerProfileLive() {
     </>
   );
 }
-

@@ -50,10 +50,18 @@ export const RITMOS_CATALOG: RitmoGroup[] = [
       { id: 'zumba', label: 'Zumba', parent: 'urbanos' },
       { id: 'heels', label: 'Heels', parent: 'urbanos' },
       { id: 'pole_dance', label: 'Pole Dance', parent: 'urbanos' },
-      { id: 'acrobacia', label: 'Acrobacia', parent: 'urbanos' },
-      { id: 'elasticidad', label: 'Elasticidad', parent: 'urbanos' },
-      { id: 'yoga', label: 'Yoga', parent: 'urbanos' },
-      { id: 'pilates', label: 'Pilates', parent: 'urbanos' },
+    ],
+  },
+  {
+    id: 'fit',
+    label: 'Fit',
+    items: [
+      { id: 'box', label: 'Box', parent: 'fit' },
+      { id: 'pilates', label: 'Pilates', parent: 'fit' },
+      { id: 'jumping', label: 'Jumping', parent: 'fit' },
+      { id: 'elasticidad', label: 'Elasticidad', parent: 'fit' },
+      { id: 'acrobacia', label: 'Acrobacia', parent: 'fit' },
+      { id: 'yoga', label: 'Yoga', parent: 'fit' },
     ],
   },
   {

@@ -4,83 +4,54 @@ import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
+import { borderRadius } from '../theme/colors';
 import { SEO_ICON_URL } from '@/lib/seoConfig';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
+  isMenuOpen?: boolean;
 }
 
-export function Navbar({ onMenuToggle }: NavbarProps) {
-  const { user, signOut } = useAuth();
+export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { data: isAdmin } = useIsAdmin();
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
   const { profile } = useUserProfile();
   const { getDefaultRoute } = useDefaultProfile();
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  const navRef = React.useRef<HTMLElement>(null);
 
-  const profileInitial = user?.email?.[0]?.toUpperCase() ?? '👤';
-  const avatarUrl = profile?.avatar_url;
+  const profileInitial = React.useMemo(
+    () => user?.email?.[0]?.toUpperCase() ?? '👤',
+    [user?.email]
+  );
 
-  // Fix para móvil: asegurar que el sticky positioning se mantenga consistente
-  // El header debe mantener su altura y padding constante, sin cambios al hacer scroll
-  React.useEffect(() => {
-    if (typeof window === 'undefined' || !navRef.current) return;
-    
-    // Función para forzar un reflow y asegurar que los estilos se apliquen correctamente
-    const forceReflow = () => {
-      if (navRef.current) {
-        // Trigger reflow accediendo a propiedades que requieren layout calculation
-        void navRef.current.offsetHeight;
-      }
-    };
+  const avatarUrl = React.useMemo(() => profile?.avatar_url, [profile?.avatar_url]);
 
-    // Ejecutar inmediatamente al montar
-    forceReflow();
-    
-    // Ejecutar después del primer frame renderizado
-    requestAnimationFrame(() => {
-      forceReflow();
-    });
-    
-    // Ejecutar después de que el navegador haya completado el layout
-    setTimeout(() => {
-      forceReflow();
-    }, 0);
+  const profileAriaLabel = React.useMemo(
+    () => hasUnread ? 'Ir a mi perfil — tienes notificaciones nuevas' : 'Ir a mi perfil',
+    [hasUnread]
+  );
 
-    // No necesitamos escuchar scroll para mantener el tamaño constante
-    // El sticky positioning debe mantener el tamaño sin cambios
-  }, []);
-
-  const handleLogout = React.useCallback(async () => {
-    // ✅ Prevenir múltiples clicks
-    if (isLoggingOut) return;
-    
-    try {
-      setIsLoggingOut(true);
-      
-      // ✅ Cerrar sesión (actualiza el estado inmediatamente)
-      await signOut();
-      
-      // ✅ Navegar inmediatamente (el estado ya está actualizado en signOut)
-      navigate(routes.auth.login, { replace: true });
-    } catch (error) {
-      console.error('[Navbar] Error en logout:', error);
-      // ✅ Aún así navegar al login
-      navigate(routes.auth.login, { replace: true });
-    } finally {
-      setIsLoggingOut(false);
+  const handleAvatarClick = React.useCallback(() => {
+    const target = getDefaultRoute();
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Navbar] Navegando al perfil por defecto desde avatar', { target });
     }
-  }, [signOut, navigate, isLoggingOut]);
+    navigate(target);
+    markAllAsRead().catch(err => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Navbar] Error al marcar notificaciones como leídas:', err);
+      }
+    });
+  }, [getDefaultRoute, navigate, markAllAsRead]);
 
   return (
     <nav
-      ref={navRef}
       className="nav-root"
+      role="navigation"
+      aria-label="Barra de navegación"
       style={{
         background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
         padding: '1rem 1.5rem',
@@ -88,30 +59,35 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         alignItems: 'center',
         justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        // Header fijo en la parte superior, no debe moverse ni cambiar con el scroll
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        minHeight: '64px',
-        /* Safe area top support */
+        height: '64px',
         paddingTop: 'calc(1rem + env(safe-area-inset-top))',
       }}
     >
       <style>{`
         .nav-root {
-          /* Asegurar que el header mantenga su tamaño constante */
           box-sizing: border-box;
+          height: 64px;
         }
+
+        .nav-icon {
+          transition: background 0.2s ease;
+        }
+
+        .nav-icon:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
         @media (max-width: 768px) {
           .nav-root {
             padding: .55rem .7rem !important;
             padding-top: calc(.55rem + env(safe-area-inset-top)) !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
-            min-height: 54px !important;
-            max-height: none !important;
-            height: auto !important;
+            height: 54px !important;
           }
           .nav-left { 
             display: flex !important; 
@@ -158,9 +134,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           .nav-root {
             padding: 0.45rem 0.5rem !important;
             padding-top: calc(0.45rem + env(safe-area-inset-top)) !important;
-            min-height: 48px !important;
-            max-height: none !important;
-            height: auto !important;
+            height: 48px !important;
           }
           .nav-brand-title {
             font-size: 0.7rem !important;
@@ -283,12 +257,25 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             border-radius: 16px !important;
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .nav-root,
+          .nav-icon,
+          .nav-profile-button,
+          .nav-login-button {
+            transition: none !important;
+          }
+        }
       `}</style>
       <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
         {/* Hamburger Button (only when logged in) */}
         {user && onMenuToggle && (
           <button
+            type="button"
             onClick={onMenuToggle}
+            aria-label="Abrir menú"
+            aria-expanded={isMenuOpen ?? false}
+            aria-controls="app-drawer"
             style={{
               background: 'transparent',
               border: 'none',
@@ -335,6 +322,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             src={SEO_ICON_URL}
             alt="Logo Dónde Bailar"
             className="nav-logo-img"
+            loading="eager"
+            decoding="async"
             style={{
               width: 34,
               height: 34,
@@ -383,8 +372,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           title="Inicio"
           className="nav-icon"
           style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           🏠
         </Link>
@@ -397,8 +384,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             title="Trending Admin"
             className="nav-icon"
             style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
             ⚙️
           </Link>
@@ -408,22 +393,15 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           <button
             type="button"
             className="nav-profile-button"
-            aria-label="Ir a mi perfil"
-            onClick={() => {
-              // Navegar inmediatamente sin esperar
-              const target = getDefaultRoute();
-              console.log('[Navbar] Navegando al perfil por defecto desde avatar', { target });
-              navigate(target);
-              // Marcar como leído en segundo plano (no bloquea la navegación)
-              markAllAsRead().catch(err => {
-                console.error('[Navbar] Error al marcar notificaciones como leídas:', err);
-              });
-            }}
+            aria-label={profileAriaLabel}
+            onClick={handleAvatarClick}
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Avatar"
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -434,7 +412,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             ) : (
               <span>{profileInitial}</span>
             )}
-            {hasUnread && <span className="badge-dot" />}
+            {hasUnread && <span className="badge-dot" aria-hidden="true" />}
           </button>
         ) : (
           <Link

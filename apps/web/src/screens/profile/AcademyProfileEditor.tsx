@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAcademyMy, useUpsertAcademy } from "../../hooks/useAcademy";
@@ -7,20 +7,14 @@ import { useTags } from "../../hooks/useTags";
 import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
-import { Chip } from "../../components/profile/Chip";
-import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
-import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import FAQEditor from "../../components/common/FAQEditor";
 import ReviewsEditor from "../../components/common/ReviewsEditor";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
-// import CostosyHorarios from './CostosyHorarios';
-import ClasesLive from '../../components/events/ClasesLive';
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import CrearClase from "../../components/events/CrearClase";
@@ -116,6 +110,674 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
   }
   return null;
 };
+
+// CSS constante a nivel de módulo para evitar reinserción en cada render
+const STYLES = `
+        .academy-editor-container {
+          min-height: 100vh;
+          padding: 2rem 1rem;
+        }
+        .academy-editor-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .academy-editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .academy-editor-inner h2,
+        .academy-editor-inner h3,
+        .academy-editor-card h2,
+        .org-editor__card h2 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .media-management-section {
+          min-height: 400px;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          position: relative;
+          overflow: hidden;
+        }
+        .media-management-section::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166);
+          opacity: 0.9;
+          border-radius: 24px 24px 0 0;
+        }
+        .media-management-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 2rem;
+          position: relative;
+          z-index: 1;
+        }
+        .media-management-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #E53935, #FB8C00);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2rem;
+          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+          flex-shrink: 0;
+        }
+        .media-management-content {
+          position: relative;
+          z-index: 1;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .academy-editor-card {
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 3rem;
+        }
+        .academy-editor-grid {
+          display: grid;
+          gap: 1.5rem;
+        }
+        .academy-social-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        .academy-tabs {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+          border-bottom: 2px solid rgba(255,255,255,0.1);
+          padding-bottom: 0.5rem;
+        }
+        .academy-tab-button {
+          padding: 0.75rem 1.5rem;
+          border-radius: 12px 12px 0 0;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .teachers-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .teacher-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 1rem;
+        }
+        .teacher-modal-content {
+    background: #1A1A1A;
+          border-radius: 20px;
+          padding: 2rem;
+          max-width: 600px;
+          width: 100%;
+          max-height: 80vh;
+          overflow: auto;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .teacher-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .teacher-list-item {
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        .teacher-invite-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .teacher-card-wrapper {
+          position: relative;
+        }
+        .teacher-delete-button {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          padding: 0.5rem;
+          background: rgba(239, 68, 68, 0.9);
+          border: 1px solid #EF4444;
+          border-radius: 8px;
+          color: white;
+          cursor: pointer;
+          font-size: 0.875rem;
+          z-index: 10;
+        }
+        @media (max-width: 768px) {
+          .media-management-section {
+            min-height: auto;
+            padding: 1.5rem !important;
+            border-radius: 20px !important;
+          }
+          .media-management-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+          }
+          .media-management-icon {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 1.75rem !important;
+            border-radius: 16px !important;
+          }
+          .photos-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rhythms-zones-two-columns {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .academy-editor-container {
+            padding: 1rem 0.75rem !important;
+          }
+          .academy-editor-inner {
+            max-width: 100% !important;
+            padding: 0 0.5rem !important;
+          }
+          .academy-editor-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+          }
+          .academy-editor-card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .academy-editor-card h2 {
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .academy-editor-grid {
+            gap: 1rem !important;
+          }
+          .academy-social-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .org-editor__header {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            text-align: center !important;
+          }
+          .org-editor__back {
+            align-self: flex-start !important;
+          }
+          .org-editor__title {
+            font-size: 1.5rem !important;
+          }
+          .academy-tabs {
+            flex-wrap: wrap !important;
+            gap: 0.4rem !important;
+          }
+          .academy-tab-button {
+            flex: 1 1 auto !important;
+            min-width: 120px !important;
+            padding: 0.6rem 1rem !important;
+            font-size: 0.9rem !important;
+          }
+          .teachers-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .teacher-modal {
+            padding: 0.5rem !important;
+          }
+          .teacher-modal-content {
+            padding: 1.5rem !important;
+            border-radius: 16px !important;
+            max-height: 90vh !important;
+          }
+          .teacher-modal-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .teacher-list-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .teacher-invite-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+          }
+          .teacher-invite-header button {
+            width: 100% !important;
+          }
+    .competition-group-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+    }
+    .competition-group-header button {
+      width: 100% !important;
+    }
+    .competition-group-item {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+      padding: 1rem !important;
+    }
+    .competition-group-actions {
+      width: 100% !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+    .competition-group-actions button {
+      flex: 1 1 auto !important;
+      min-width: calc(50% - 0.25rem) !important;
+      padding: 0.625rem !important;
+      font-size: 0.875rem !important;
+    }
+  }
+        @media (max-width: 480px) {
+          .academy-editor-container {
+            padding: 0.75rem 0.5rem !important;
+          }
+          .academy-editor-inner {
+            padding: 0 0.25rem !important;
+          }
+          .academy-editor-card {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .academy-editor-card h2 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .org-editor__title {
+            font-size: 1.25rem !important;
+          }
+          input, textarea {
+            font-size: 0.9rem !important;
+            padding: 0.625rem !important;
+          }
+          label {
+            font-size: 0.875rem !important;
+            margin-bottom: 0.375rem !important;
+          }
+          .academy-chips-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          .academy-class-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .academy-class-buttons {
+            width: 100% !important;
+            display: flex !important;
+            gap: 0.5rem !important;
+          }
+          .academy-class-buttons button {
+            flex: 1 !important;
+            padding: 0.5rem !important;
+            font-size: 0.875rem !important;
+          }
+          .academy-tabs {
+            gap: 0.3rem !important;
+          }
+          .academy-tab-button {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+          }
+          .teachers-grid {
+            gap: 0.75rem !important;
+          }
+          .teacher-modal-content {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .teacher-list-item {
+            gap: 0.5rem !important;
+            padding: 0.75rem !important;
+          }
+          .teacher-list-item button {
+            width: 100% !important;
+          }
+          .org-editor__card {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+          }
+    .competition-group-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+    }
+    .competition-group-header button {
+      width: 100% !important;
+    }
+    .competition-group-item {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+      padding: 1rem !important;
+    }
+    .competition-group-actions {
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+    }
+    .competition-group-actions button {
+      width: 100% !important;
+      padding: 0.625rem !important;
+      font-size: 0.875rem !important;
+    }
+  }
+        .editor-section {
+          margin-bottom: 3rem;
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .editor-section-title {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+    color: #F5F5F5;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .editor-field {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+    color: #F5F5F5;
+        }
+        .editor-input {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+    color: #F5F5F5;
+          font-size: 1rem;
+        }
+        .editor-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+    color: #F5F5F5;
+          font-size: 1rem;
+          resize: vertical;
+          font-family: inherit;
+        }
+        .glass-card-container {
+          opacity: 1;
+          margin-bottom: 2rem;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+          backdrop-filter: blur(10px);
+          transform: none;
+        }
+        .section-content {
+          padding: 2rem;
+        }
+        .question-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: center;
+        }
+        .section-title {
+          font-size: 1.25rem;
+          margin-bottom: 1rem;
+    color: #F5F5F5;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .info-redes-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: start;
+        }
+        .profile-section-compact {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 1.5rem;
+          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .row-bottom {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .row-bottom-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .subtitle {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+    color: #F5F5F5;
+        }
+        .tag {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .social-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .field {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 1rem;
+        }
+        .field-icon {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.9;
+    color: #F5F5F5;
+        }
+        .input-group {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+        .input-group:focus-within {
+          border-color: rgba(76, 173, 255, 0.6);
+          background: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
+        }
+        .prefix {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
+          border-right: 1px solid rgba(255, 255, 255, 0.15);
+          white-space: nowrap;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .input-group input {
+          border: none;
+          outline: none;
+          background: transparent;
+    color: #F5F5F5;
+          font-size: 1rem;
+          padding: 0.75rem;
+          flex: 1;
+          min-width: 0;
+        }
+        .input-group input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+        @media (max-width: 768px) {
+          .info-redes-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .editor-section {
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+          .editor-section-title {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .glass-card-container {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 12px !important;
+          }
+          .profile-section-compact {
+            padding: 1rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.95rem !important;
+          }
+          .field-icon {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          .field {
+            font-size: 0.9rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.9rem !important;
+            padding: 0.6rem !important;
+          }
+          .prefix {
+            font-size: 0.85rem !important;
+            padding: 0.6rem 0.4rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .editor-section {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            border-radius: 10px !important;
+          }
+          .editor-section-title {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .editor-input,
+          .editor-textarea {
+            padding: 0.6rem !important;
+            font-size: 0.9rem !important;
+          }
+          .glass-card-container {
+            padding: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-radius: 10px !important;
+          }
+          .profile-section-compact {
+            padding: 0.75rem !important;
+            gap: 1rem !important;
+          }
+          .subtitle {
+            font-size: 0.9rem !important;
+          }
+          .tag {
+            font-size: 0.7rem !important;
+          }
+          .field-icon {
+            width: 22px !important;
+            height: 22px !important;
+          }
+          .social-list {
+            gap: 0.5rem !important;
+          }
+          .field {
+            font-size: 0.85rem !important;
+            gap: 0.5rem !important;
+          }
+          .input-group input {
+            font-size: 0.85rem !important;
+            padding: 0.5rem !important;
+          }
+          .prefix {
+            font-size: 0.8rem !important;
+            padding: 0.5rem 0.4rem !important;
+          }
+          .question-section {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .section-content {
+            padding: 1rem !important;
+          }
+        }
+`;
 
 export default function AcademyProfileEditor() {
   const navigate = useNavigate();
@@ -325,7 +987,7 @@ export default function AcademyProfileEditor() {
     }
   }, [academy, (form as any)?.cronograma, (form as any)?.id, setField, upsert]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
 
@@ -423,7 +1085,7 @@ export default function AcademyProfileEditor() {
       setStatusMsg({ type: 'err', text: `❌ Error al guardar: ${errorMessage}` });
       setTimeout(() => setStatusMsg(null), 5000);
     }
-  };
+  }, [form, allTags, supportsPromotions, academy, upsert, refetchAcademy, setAll, setStatusMsg]);
 
   // Ya no se usa toggleEstilo, ahora se maneja directamente en RitmosChips
   // const toggleEstilo = (estiloId: number) => {
@@ -434,13 +1096,13 @@ export default function AcademyProfileEditor() {
   //   setField('estilos', newEstilos);
   // };
 
-  const toggleZona = (zonaId: number) => {
+  const toggleZona = useCallback((zonaId: number) => {
     const currentZonas = (form as any).zonas || [];
     const newZonas = currentZonas.includes(zonaId)
       ? currentZonas.filter((id: number) => id !== zonaId)
       : [...currentZonas, zonaId];
     setField('zonas' as any, newZonas as any);
-  };
+  }, [(form as any).zonas, setField]);
 
   const autoSavePromociones = React.useCallback(async (items: any[]) => {
     setField('promociones' as any, items as any);
@@ -486,15 +1148,15 @@ export default function AcademyProfileEditor() {
     [profileId, setStatusMsg, upsert],
   );
 
-  const uploadFile = async (file: File, slot: string) => {
+  const uploadFile = useCallback(async (file: File, slot: string) => {
     try {
       await add.mutateAsync({ file, slot });
     } catch (error) {
       console.error('Error uploading file:', error);
     }
-  };
+  }, [add]);
 
-  const removeFile = async (slot: string) => {
+  const removeFile = useCallback(async (slot: string) => {
     try {
       const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot);
       if (mediaItem && 'id' in mediaItem) {
@@ -503,809 +1165,174 @@ export default function AcademyProfileEditor() {
     } catch (error) {
       console.error('Error removing file:', error);
     }
-  };
+  }, [media, remove]);
+
+  // Memoizar datos derivados de ritmos y zonas
+  const ritmoTags = useMemo(() => (allTags || []).filter((t: any) => t.tipo === 'ritmo'), [allTags]);
+  const zonaTags = useMemo(() => (allTags || []).filter((t: any) => t.tipo === 'zona'), [allTags]);
+  const zonasForCrearClase = useMemo(() => zonaTags.map((t: any) => ({ id: t.id, nombre: t.nombre })), [zonaTags]);
+  
+  // Memoizar ritmos para CrearClase
+  const ritmosForCrearClase = useMemo(() => {
+    const labelByCatalogId = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+
+    const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
+    const savedSelected: string[] = ((academy as any)?.ritmos_seleccionados || []) as string[];
+    const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
+
+    if (combinedSelected.length > 0) {
+      const selectedLabels = combinedSelected
+        .map(slug => labelByCatalogId.get(slug))
+        .filter(Boolean);
+
+      const filtered = ritmoTags.filter((t: any) =>
+        selectedLabels.some(label =>
+          label && t.nombre &&
+          label.toLowerCase().trim() === t.nombre.toLowerCase().trim()
+        )
+      );
+
+      if (filtered.length > 0) {
+        return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+      }
+    }
+
+    return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+  }, [ritmoTags, (form as any)?.ritmos_seleccionados, (academy as any)?.ritmos_seleccionados]);
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
   if (authLoading && !authTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
-        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-          Si tarda mucho, intenta refrescar la página para una carga más rápida.
-        </p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+          <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </>
     );
   }
 
   // ⛔ Si la sesión nunca termina de cargar
   if (authLoading && authTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
-        <p style={{ marginBottom: '12px' }}>
-          No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '4px',
-            padding: '0.5rem 1.25rem',
-            borderRadius: '999px',
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'transparent',
-            color: colors.light,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-          }}
-        >
-          Reintentar
-        </button>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
+          <p style={{ marginBottom: '12px' }}>
+            No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '4px',
+              padding: '0.5rem 1.25rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.35)',
+              background: 'transparent',
+              color: colors.light,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </>
     );
   }
 
   // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
   if (!user) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
-        <p>No has iniciado sesión</p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
+          <p>No has iniciado sesión</p>
+        </div>
+      </>
     );
   }
 
   // ✅ Esperar a que el perfil cargue
   if (isLoading && !profileTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p style={{ marginBottom: '8px' }}>Estamos cargando tu academia...</p>
-        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-          Si tarda mucho, intenta refrescar la página para una carga más rápida.
-        </p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+          <p style={{ marginBottom: '8px' }}>Estamos cargando tu academia...</p>
+          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </>
     );
   }
 
   // ⛔ Si el perfil nunca termina de cargar
   if (isLoading && profileTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
-        <p style={{ marginBottom: '12px' }}>
-          No pudimos cargar el perfil de la academia. Revisa tu conexión e inténtalo de nuevo.
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '4px',
-            padding: '0.5rem 1.25rem',
-            borderRadius: '999px',
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'transparent',
-            color: colors.light,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-          }}
-        >
-          Reintentar
-        </button>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div style={{
+          padding: '48px 24px',
+          textAlign: 'center',
+          color: colors.light,
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
+          <p style={{ marginBottom: '12px' }}>
+            No pudimos cargar el perfil de la academia. Revisa tu conexión e inténtalo de nuevo.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '4px',
+              padding: '0.5rem 1.25rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.35)',
+              background: 'transparent',
+              color: colors.light,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      <style>{`
-        .academy-editor-container {
-          min-height: 100vh;
-          padding: 2rem 1rem;
-        }
-        .academy-editor-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .academy-editor-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-        .academy-editor-inner h2,
-        .academy-editor-inner h3,
-        .academy-editor-card h2,
-        .org-editor__card h2 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .photos-two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-        }
-        .media-management-section {
-          min-height: 400px;
-          padding: 2.5rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          position: relative;
-          overflow: hidden;
-        }
-        .media-management-section::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166);
-          opacity: 0.9;
-          border-radius: 24px 24px 0 0;
-        }
-        .media-management-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 2rem;
-          position: relative;
-          z-index: 1;
-        }
-        .media-management-icon {
-          width: 60px;
-          height: 60px;
-          border-radius: 20px;
-          background: linear-gradient(135deg, #E53935, #FB8C00);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2rem;
-          box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
-          flex-shrink: 0;
-        }
-        .media-management-content {
-          position: relative;
-          z-index: 1;
-        }
-        .rhythms-zones-two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-        }
-        .academy-editor-card {
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          margin-bottom: 3rem;
-        }
-        .academy-editor-grid {
-          display: grid;
-          gap: 1.5rem;
-        }
-        .academy-social-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-        }
-        .academy-tabs {
-          display: flex;
-          gap: 0.5rem;
-          margin-bottom: 2rem;
-          border-bottom: 2px solid rgba(255,255,255,0.1);
-          padding-bottom: 0.5rem;
-        }
-        .academy-tab-button {
-          padding: 0.75rem 1.5rem;
-          border-radius: 12px 12px 0 0;
-          border: none;
-          color: #fff;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .teachers-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-        .teacher-modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 1rem;
-        }
-        .teacher-modal-content {
-          background: ${colors.dark};
-          border-radius: 20px;
-          padding: 2rem;
-          max-width: 600px;
-          width: 100%;
-          max-height: 80vh;
-          overflow: auto;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .teacher-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-        }
-        .teacher-list-item {
-          padding: 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        .teacher-invite-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-        }
-        .teacher-card-wrapper {
-          position: relative;
-        }
-        .teacher-delete-button {
-          position: absolute;
-          top: 0.5rem;
-          right: 0.5rem;
-          padding: 0.5rem;
-          background: rgba(239, 68, 68, 0.9);
-          border: 1px solid #EF4444;
-          border-radius: 8px;
-          color: white;
-          cursor: pointer;
-          font-size: 0.875rem;
-          z-index: 10;
-        }
-        
-        @media (max-width: 768px) {
-          .media-management-section {
-            min-height: auto;
-            padding: 1.5rem !important;
-            border-radius: 20px !important;
-          }
-          .media-management-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-          }
-          .media-management-icon {
-            width: 56px !important;
-            height: 56px !important;
-            font-size: 1.75rem !important;
-            border-radius: 16px !important;
-          }
-          .photos-two-columns {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .rhythms-zones-two-columns {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          
-          .academy-editor-container {
-            padding: 1rem 0.75rem !important;
-          }
-          .academy-editor-inner {
-            max-width: 100% !important;
-            padding: 0 0.5rem !important;
-          }
-          .academy-editor-header {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-          }
-          .academy-editor-card {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-            border-radius: 12px !important;
-          }
-          .academy-editor-card h2 {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .academy-editor-grid {
-            gap: 1rem !important;
-          }
-          .academy-social-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .org-editor__header {
-            flex-direction: column !important;
-            gap: 0.75rem !important;
-            text-align: center !important;
-          }
-          .org-editor__back {
-            align-self: flex-start !important;
-          }
-          .org-editor__title {
-            font-size: 1.5rem !important;
-          }
-          .academy-tabs {
-            flex-wrap: wrap !important;
-            gap: 0.4rem !important;
-          }
-          .academy-tab-button {
-            flex: 1 1 auto !important;
-            min-width: 120px !important;
-            padding: 0.6rem 1rem !important;
-            font-size: 0.9rem !important;
-          }
-          .teachers-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .teacher-modal {
-            padding: 0.5rem !important;
-          }
-          .teacher-modal-content {
-            padding: 1.5rem !important;
-            border-radius: 16px !important;
-            max-height: 90vh !important;
-          }
-          .teacher-modal-header {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .teacher-list-item {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .teacher-invite-header {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 1rem !important;
-          }
-          .teacher-invite-header button {
-            width: 100% !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .academy-editor-container {
-            padding: 0.75rem 0.5rem !important;
-          }
-          .academy-editor-inner {
-            padding: 0 0.25rem !important;
-          }
-          .academy-editor-card {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 10px !important;
-          }
-          .academy-editor-card h2 {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .org-editor__title {
-            font-size: 1.25rem !important;
-          }
-          input, textarea {
-            font-size: 0.9rem !important;
-            padding: 0.625rem !important;
-          }
-          label {
-            font-size: 0.875rem !important;
-            margin-bottom: 0.375rem !important;
-          }
-          /* Chips responsive */
-          .academy-chips-container {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 0.5rem !important;
-          }
-          /* Class buttons responsive */
-          .academy-class-item {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .academy-class-buttons {
-            width: 100% !important;
-            display: flex !important;
-            gap: 0.5rem !important;
-          }
-          .academy-class-buttons button {
-            flex: 1 !important;
-            padding: 0.5rem !important;
-            font-size: 0.875rem !important;
-          }
-          .academy-tabs {
-            gap: 0.3rem !important;
-          }
-          .academy-tab-button {
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            padding: 0.5rem 0.75rem !important;
-            font-size: 0.85rem !important;
-          }
-          .teachers-grid {
-            gap: 0.75rem !important;
-          }
-          .teacher-modal-content {
-            padding: 1rem !important;
-            border-radius: 12px !important;
-          }
-          .teacher-list-item {
-            gap: 0.5rem !important;
-            padding: 0.75rem !important;
-          }
-          .teacher-list-item button {
-            width: 100% !important;
-          }
-          .org-editor__card {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          /* Competition groups responsive */
-          .competition-group-header {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 1rem !important;
-          }
-          .competition-group-header button {
-            width: 100% !important;
-          }
-          .competition-group-item {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 1rem !important;
-            padding: 1rem !important;
-          }
-          .competition-group-actions {
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 0.5rem !important;
-          }
-          .competition-group-actions button {
-            width: 100% !important;
-            padding: 0.625rem !important;
-            font-size: 0.875rem !important;
-          }
-        }
-        
-        /* Estilos para editor-section y glass-card-container */
-        .editor-section {
-          margin-bottom: 3rem;
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .editor-section-title {
-          font-size: 1.5rem;
-          margin-bottom: 1.5rem;
-          color: ${colors.light};
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .editor-field {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 600;
-          color: ${colors.light};
-        }
-        .editor-input {
-          width: 100%;
-          padding: 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 8px;
-          color: ${colors.light};
-          font-size: 1rem;
-        }
-        .editor-textarea {
-          width: 100%;
-          padding: 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 8px;
-          color: ${colors.light};
-          font-size: 1rem;
-          resize: vertical;
-          font-family: inherit;
-        }
-        .glass-card-container {
-          opacity: 1;
-          margin-bottom: 2rem;
-          padding: 2rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
-        }
-        .section-content {
-          padding: 2rem;
-        }
-        .question-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem;
-          align-items: center;
-        }
-        .section-title {
-          font-size: 1.25rem;
-          margin-bottom: 1rem;
-          color: ${colors.light};
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .info-redes-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem;
-          align-items: start;
-        }
-        
-        /* PROFILE SECTION COMPACT */
-        .profile-section-compact {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          padding: 1.5rem;
-          max-width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-        
-        /* ABAJO: REDES */
-        .row-bottom {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        .row-bottom-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .subtitle {
-          font-size: 1rem;
-          font-weight: 600;
-          margin: 0;
-          color: ${colors.light};
-        }
-        .tag {
-          font-size: 0.75rem;
-          color: rgba(255, 255, 255, 0.6);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-        
-        /* LISTA DE REDES */
-        .social-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        .field {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          font-size: 1rem;
-        }
-        .field-icon {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0.9;
-          color: ${colors.light};
-        }
-        
-        /* INPUTS COMPACTOS */
-        .input-group {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: rgba(255, 255, 255, 0.1);
-          overflow: hidden;
-          transition: all 0.2s ease;
-        }
-        .input-group:focus-within {
-          border-color: rgba(76, 173, 255, 0.6);
-          background: rgba(255, 255, 255, 0.12);
-          box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
-        }
-        .prefix {
-          padding: 0.75rem 0.5rem;
-          font-size: 0.9rem;
-          color: rgba(255, 255, 255, 0.7);
-          border-right: 1px solid rgba(255, 255, 255, 0.15);
-          white-space: nowrap;
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .input-group input {
-          border: none;
-          outline: none;
-          background: transparent;
-          color: ${colors.light};
-          font-size: 1rem;
-          padding: 0.75rem;
-          flex: 1;
-          min-width: 0;
-        }
-        .input-group input::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-        
-        @media (max-width: 768px) {
-          .info-redes-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .editor-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-            border-radius: 12px !important;
-          }
-          .editor-section-title {
-            font-size: 1.2rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 12px !important;
-          }
-          .profile-section-compact {
-            padding: 1rem !important;
-            gap: 1rem !important;
-          }
-          .subtitle {
-            font-size: 0.95rem !important;
-          }
-          .field-icon {
-            width: 24px !important;
-            height: 24px !important;
-          }
-          .field {
-            font-size: 0.9rem !important;
-            gap: 0.5rem !important;
-          }
-          .input-group input {
-            font-size: 0.9rem !important;
-            padding: 0.6rem !important;
-          }
-          .prefix {
-            font-size: 0.85rem !important;
-            padding: 0.6rem 0.4rem !important;
-          }
-          /* Competition groups responsive */
-          .competition-group-header {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 1rem !important;
-          }
-          .competition-group-header button {
-            width: 100% !important;
-          }
-          .competition-group-item {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 1rem !important;
-            padding: 1rem !important;
-          }
-          .competition-group-actions {
-            width: 100% !important;
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 0.5rem !important;
-          }
-          .competition-group-actions button {
-            flex: 1 1 auto !important;
-            min-width: calc(50% - 0.25rem) !important;
-            padding: 0.625rem !important;
-            font-size: 0.875rem !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .editor-section {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 10px !important;
-          }
-          .editor-section-title {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.5rem !important;
-          }
-          .editor-input,
-          .editor-textarea {
-            padding: 0.6rem !important;
-            font-size: 0.9rem !important;
-          }
-          .glass-card-container {
-            padding: 0.5rem !important;
-            margin-bottom: 0.75rem !important;
-            border-radius: 10px !important;
-          }
-          .profile-section-compact {
-            padding: 0.75rem !important;
-            gap: 1rem !important;
-          }
-          .subtitle {
-            font-size: 0.9rem !important;
-          }
-          .tag {
-            font-size: 0.7rem !important;
-          }
-          .field-icon {
-            width: 22px !important;
-            height: 22px !important;
-          }
-          .social-list {
-            gap: 0.5rem !important;
-          }
-          .field {
-            font-size: 0.85rem !important;
-            gap: 0.5rem !important;
-          }
-          .input-group input {
-            font-size: 0.85rem !important;
-            padding: 0.5rem !important;
-          }
-          .prefix {
-            font-size: 0.8rem !important;
-            padding: 0.5rem 0.4rem !important;
-          }
-          .question-section {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .section-content {
-            padding: 1rem !important;
-          }
-        }
-      `}</style>
+      <style>{STYLES}</style>
       <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
         <div className="academy-editor-inner">
           {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
@@ -1786,48 +1813,9 @@ export default function AcademyProfileEditor() {
 
                     {academy && (
                       <CrearClase
-                        ritmos={(() => {
-                          const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
-
-                          // Crear mapeo de slug → label del catálogo
-                          const labelByCatalogId = new Map<string, string>();
-                          RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-
-                          // Obtener ritmos seleccionados (slugs)
-                          const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-                          const savedSelected: string[] = ((academy as any)?.ritmos_seleccionados || []) as string[];
-                          const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
-
-                          if (combinedSelected.length > 0) {
-                            // Mapear slugs → labels del catálogo
-                            const selectedLabels = combinedSelected
-                              .map(slug => labelByCatalogId.get(slug))
-                              .filter(Boolean);
-
-                            // Filtrar tags que coincidan con los labels (case-insensitive)
-                            const filtered = ritmoTags.filter((t: any) =>
-                              selectedLabels.some(label =>
-                                label && t.nombre &&
-                                label.toLowerCase().trim() === t.nombre.toLowerCase().trim()
-                              )
-                            );
-
-                            // Mostrar labels que NO se encontraron
-                            const foundLabels = new Set(filtered.map((t: any) => t.nombre.toLowerCase().trim()));
-                            const notFound = selectedLabels.filter(label =>
-                              !foundLabels.has(label.toLowerCase().trim())
-                            );
-
-                            if (filtered.length > 0) {
-                              return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                            }
-                          }
-
-                          // Fallback: todos los ritmos
-                          return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                        })()}
-                        zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-                        zonaTags={(allTags || []).filter((t: any) => t.tipo === 'zona')}
+                        ritmos={ritmosForCrearClase}
+                        zonas={zonasForCrearClase}
+                        zonaTags={zonaTags}
                         selectedZonaIds={((form as any).zonas || []) as number[]}
                         locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({
                           id: u?.id || String(i),

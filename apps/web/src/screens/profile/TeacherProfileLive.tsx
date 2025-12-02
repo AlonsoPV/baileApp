@@ -1,39 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, Suspense, lazy, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useTeacherMy } from "../../hooks/useTeacher";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
-import ClasesLiveTabs from "@/components/classes/ClasesLiveTabs";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import { useTeacherMedia } from "../../hooks/useTeacherMedia";
 import { useTags } from "../../hooks/useTags";
-import { fmtDate, fmtTime } from "../../utils/format";
-import { Chip } from "../../components/profile/Chip";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
-import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
-import CostosyHorarios from './CostosyHorarios';
-import ClasesLive from '../../components/events/ClasesLive';
-import CrearClase from "../../components/events/CrearClase";
-// import { useUpsertTeacher } from "../../hooks/useTeacher";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
-import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
-import HorizontalSlider from "../../components/explore/HorizontalSlider";
-import TeacherRatingComponent from "../../components/teacher/TeacherRatingComponent";
-import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import { colors } from "../../theme/colors";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
+import "./TeacherProfileLive.css";
 
-// Componente FAQ Accordion
-const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+// Lazy load heavy components
+const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
+const ClasesLiveTabs = lazy(() => import("@/components/classes/ClasesLiveTabs"));
+const ClasesLive = lazy(() => import("../../components/events/ClasesLive"));
+const UbicacionesLiveLazy = lazy(() => import("../../components/locations/UbicacionesLive"));
+const HorizontalSlider = lazy(() => import("../../components/explore/HorizontalSlider"));
+const TeacherRatingComponent = lazy(() => import("../../components/teacher/TeacherRatingComponent"));
+const CompetitionGroupCard = lazy(() => import("../../components/explore/cards/CompetitionGroupCard"));
+
+// Componente FAQ Accordion (memoizado)
+const FAQAccordion = React.memo(function FAQAccordion({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const toggleOpen = useCallback(() => setIsOpen(prev => !prev), []);
+  const slugifiedQuestion = useMemo(() => question.toLowerCase().replace(/\s+/g, '-').slice(0, 60), [question]);
+  const panelId = `faq-panel-${slugifiedQuestion}`;
 
   return (
     <div style={{
@@ -44,7 +45,9 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       background: 'rgba(255, 255, 255, 0.02)'
     }}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
         style={{
           width: '100%',
           padding: '1rem 1.5rem',
@@ -72,6 +75,8 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       </button>
       {isOpen && (
         <motion.div
+          id={panelId}
+          role="region"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -87,26 +92,28 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
       )}
     </div>
   );
-};
-{/* sección eliminada: contenía referencias a variables no definidas (parents, spacing, typography) y no pertenece a Academy */ }
-// Componente Carousel para fotos
-const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+});
+// Componente Carousel para fotos (memoizado)
+const CarouselComponent = React.memo(function CarouselComponent({ photos }: { photos: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  if (photos.length === 0) return null;
-
-  const nextPhoto = () => {
+  const nextPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
-  };
+  }, [photos.length]);
 
-  const prevPhoto = () => {
+  const prevPhoto = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
+  }, [photos.length]);
 
-  const goToPhoto = (index: number) => {
+  const goToPhoto = useCallback((index: number) => {
     setCurrentIndex(index);
-  };
+  }, []);
+
+  const openFullscreen = useCallback(() => setIsFullscreen(true), []);
+  const closeFullscreen = useCallback(() => setIsFullscreen(false), []);
+
+  if (photos.length === 0) return null;
 
   return (
     <>
@@ -133,9 +140,11 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             opacity: 1,
             transform: 'none'
           }}>
-            <ImageWithFallback
+            <img
               src={photos[currentIndex]}
               alt={`Foto ${currentIndex + 1}`}
+              loading="lazy"
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',
@@ -143,7 +152,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
                 objectPosition: 'center',
                 cursor: 'pointer'
               }}
-              onClick={() => setIsFullscreen(true)}
+              onClick={openFullscreen}
             />
           </div>
 
@@ -163,52 +172,62 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           </div>
 
           {/* Botones de navegación */}
-          <button
-            onClick={prevPhoto}
-            style={{
-              position: 'absolute',
-              left: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={nextPhoto}
-            style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              transition: '0.2s'
-            }}
-          >
-            ›
-          </button>
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={prevPhoto}
+                disabled={photos.length <= 1}
+                aria-label="Foto anterior"
+                style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: photos.length <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '1.25rem',
+                  transition: '0.2s',
+                  opacity: photos.length <= 1 ? 0.5 : 1
+                }}
+              >
+                ‹
+              </button>
+              <button
+                onClick={nextPhoto}
+                disabled={photos.length <= 1}
+                aria-label="Foto siguiente"
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: photos.length <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '1.25rem',
+                  transition: '0.2s',
+                  opacity: photos.length <= 1 ? 0.5 : 1
+                }}
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
 
         {/* Miniaturas */}
@@ -219,34 +238,36 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           justifyContent: 'center',
           flexWrap: 'wrap'
         }}>
-          {photos.map((photo, index) => (
-            <button
-              key={index}
-              onClick={() => goToPhoto(index)}
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                border: index === currentIndex ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
-                cursor: 'pointer',
-                background: 'transparent',
-                padding: 0,
-                transition: '0.2s'
-              }}
-            >
-              <ImageWithFallback
-                src={photo}
-                alt={`Miniatura ${index + 1}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  objectPosition: 'center'
-                }}
-              />
-            </button>
-          ))}
+                {photos.map((photo, index) => (
+                  <button
+                    key={`photo-${index}-${photo.slice(-20)}`}
+                    onClick={() => goToPhoto(index)}
+                    style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: index === currentIndex ? '3px solid #E53935' : '2px solid rgba(255, 255, 255, 0.3)',
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      padding: 0,
+                      transition: '0.2s'
+                    }}
+                  >
+                    <img
+                      src={photo}
+                      alt={`Miniatura ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center'
+                      }}
+                    />
+                  </button>
+                ))}
         </div>
       </div>
 
@@ -266,7 +287,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             zIndex: 1000,
             cursor: 'pointer'
           }}
-          onClick={() => setIsFullscreen(false)}
+          onClick={closeFullscreen}
         >
           <div style={{
             maxWidth: '90vw',
@@ -274,9 +295,11 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             borderRadius: '12px',
             overflow: 'hidden'
           }}>
-            <ImageWithFallback
+            <img
               src={photos[currentIndex]}
               alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              loading="lazy"
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',
@@ -288,7 +311,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
       )}
     </>
   );
-};
+});
 
 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -321,7 +344,9 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
         }
       }
     } catch (e) {
-      console.error('[TeacherProfileLive] Error formatting date:', e);
+      if (import.meta.env.DEV) {
+        console.error('[TeacherProfileLive] Error formatting date:', e);
+      }
     }
   }
   if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
@@ -369,57 +394,64 @@ export default function TeacherProfileLive() {
   const { media } = useTeacherMedia();
   const { data: allTags } = useTags();
   const [copied, setCopied] = useState(false);
-  // const upsert = useUpsertTeacher();
+  const hasNavigatedRef = useRef(false);
 
   // Obtener academias donde el maestro enseña
-  const teacherId = (teacher as any)?.id;
+  const teacherId = teacher?.id;
   const { data: academies } = useTeacherAcademies(teacherId);
   
   // Obtener grupos de competencia del maestro (solo los que no están asociados a una academia)
-  const teacherUserId = (teacher as any)?.user_id;
+  const teacherUserId = teacher?.user_id;
   const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (solo si no hay error)
   // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
-    if (!isLoading && !teacher && !isError) {
-      console.log('[TeacherProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
+    if (!isLoading && !teacher && !isError && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      if (import.meta.env.DEV) {
+        console.log('[TeacherProfileLive] No hay perfil y no hay error, redirigiendo a /edit');
+      }
       navigate('/profile/teacher/edit', { replace: true });
     }
   }, [isLoading, teacher, isError, navigate]);
 
   // Obtener clases desde las tablas / cronograma
-  const teacherNumericId = (teacher as any)?.id as number | undefined;
+  const teacherNumericId = teacher?.id as number | undefined;
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
     teacherNumericId ? { teacherId: teacherNumericId } : undefined
   );
 
-  // Obtener fotos del carrusel usando los media slots
-  const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[];
+  // Memoizar fotos del carrusel usando los media slots
+  const carouselPhotos = useMemo(() => (
+    PHOTO_SLOTS
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
+      .filter(Boolean) as string[]
+  ), [media]);
 
-  // Obtener videos
-  const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[];
+  // Memoizar videos
+  const videos = useMemo(() => (
+    VIDEO_SLOTS
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
+      .filter(Boolean) as string[]
+  ), [media]);
 
-  // Get rhythm names from numeric tag IDs or fallback to catalog IDs (ritmos_seleccionados)
-  const getRitmoNombres = () => {
+  // Memoizar ritmo nombres
+  const ritmoNombres = useMemo(() => {
     const names: string[] = [];
     // 1) Priorizar ritmos_seleccionados (IDs del catálogo) ya que es lo que edita el usuario con RitmosChips
-    if (Array.isArray((teacher as any)?.ritmos_seleccionados) && (teacher as any).ritmos_seleccionados.length > 0) {
+    if (teacher && Array.isArray(teacher.ritmos_seleccionados) && teacher.ritmos_seleccionados.length > 0) {
       const labelById = new Map<string, string>();
       RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelById.set(i.id, i.label)));
       names.push(
-        ...((teacher as any).ritmos_seleccionados as string[])
+        ...teacher.ritmos_seleccionados
           .map(id => labelById.get(id))
           .filter(Boolean) as string[]
       );
     }
     // 2) Si no hay ritmos_seleccionados, usar ritmos (IDs numéricos de tags)
-    if (names.length === 0) {
-      const ritmos = (teacher as any)?.ritmos || [];
+    if (names.length === 0 && teacher) {
+      const ritmos = teacher.ritmos || [];
       if (allTags && Array.isArray(ritmos) && ritmos.length > 0) {
         names.push(
           ...ritmos
@@ -429,9 +461,12 @@ export default function TeacherProfileLive() {
       }
     }
     return names;
-  };
+  }, [teacher, allTags]);
 
-  const promotions = Array.isArray((teacher as any)?.promociones) ? (teacher as any).promociones : [];
+  // Memoizar promociones
+  const promotions = useMemo(() => 
+    Array.isArray(teacher?.promociones) ? teacher.promociones : []
+  , [teacher?.promociones]);
 
   if (isLoading) {
     return (
@@ -522,328 +557,26 @@ export default function TeacherProfileLive() {
 
 
 
+  // Handler para compartir
+  const handleShare = useCallback(() => {
+    try {
+      const publicUrl = teacherId ? `${window.location.origin}/maestro/${teacherId}` : '';
+      const title = teacher?.nombre_publico || 'Maestro';
+      const text = `Mira el perfil de ${title}`;
+      const navAny = (navigator as any);
+      if (navAny && typeof navAny.share === 'function') {
+        navAny.share({ title, text, url: publicUrl }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(publicUrl).then(() => { 
+          setCopied(true); 
+          setTimeout(() => setCopied(false), 1500); 
+        }).catch(() => {});
+      }
+    } catch {}
+  }, [teacherId, teacher?.nombre_publico]);
+
   return (
     <>
-      <style>{`
-        .teacher-container {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-        .teacher-banner {
-          width: 100%;
-          max-width: 900px;
-          margin: 0 auto;
-          position: relative;
-        }
-        .glass-card-container {
-          opacity: 1;
-          margin-bottom: 2rem;
-          padding: 2rem;
-          text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-          backdrop-filter: blur(10px);
-          transform: none;
-        }
-        .teacher-container h2,
-        .teacher-container h3 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          margin: 0 0 1rem 0;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .teacher-banner-grid {
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 2rem;
-          align-items: center;
-        }
-        .teacher-banner-avatar {
-          width: 200px;
-          height: 200px;
-          border-radius: 50%;
-          overflow: hidden;
-          border: 6px solid rgba(255, 255, 255, 0.9);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-          background: linear-gradient(135deg, #1E88E5, #FF7043);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 4rem;
-          font-weight: 700;
-          color: white;
-        }
-        .teacher-banner-avatar-fallback {
-          font-size: 6rem;
-        }
-        .promo-section {
-          background: radial-gradient(circle at top, #161929, #05060c);
-          border-radius: 32px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          padding: 24px 24px 28px;
-          max-width: 1000px;
-          margin: 0 auto 2rem;
-        }
-        .promo-header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 20px;
-        }
-        .promo-icon {
-          width: 52px;
-          height: 52px;
-          border-radius: 20px;
-          background: radial-gradient(circle at 20% 20%, #4ade80, #22c55e, #16a34a);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 26px;
-        }
-        .promo-header h2, .promo-header h3 {
-          font-size: 1.7rem;
-          color: #fff;
-          margin: 0;
-          font-weight: 900;
-        }
-        .promo-header p {
-          color: #a9b1c8;
-          font-size: 0.95rem;
-          margin: 0.5rem 0 0 0;
-        }
-        .promo-list {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-        .promo-card {
-          background: linear-gradient(135deg, #111522, #101321);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 16px 18px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 18px;
-          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-          transition: transform 0.16s ease-out, box-shadow 0.16s ease-out, border-color 0.16s ease-out, background 0.16s ease-out;
-        }
-        .promo-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 26px 55px rgba(0, 0, 0, 0.7);
-          border-color: rgba(148, 163, 255, 0.4);
-          background: linear-gradient(145deg, #14182a, #101320);
-        }
-        .promo-info {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          flex: 1;
-        }
-        .promo-chip {
-          align-self: flex-start;
-          border-radius: 999px;
-          padding: 4px 10px;
-          font-size: 0.78rem;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          background: rgba(37, 99, 235, 0.15);
-          color: #bfdbfe;
-          border: 1px solid rgba(59, 130, 246, 0.5);
-        }
-        .promo-chip--destacado {
-          background: rgba(249, 115, 22, 0.18);
-          color: #fed7aa;
-          border-color: rgba(249, 115, 22, 0.7);
-        }
-        .promo-info h3 {
-          font-size: 1.1rem;
-          color: #fff;
-          margin: 0;
-          font-weight: 800;
-        }
-        .promo-desc {
-          color: #a9b1c8;
-          font-size: 0.9rem;
-          margin: 0;
-        }
-        .promo-price-box {
-          min-width: 120px;
-          padding: 10px 16px;
-          border-radius: 18px;
-          background: radial-gradient(circle at top, #0b3b74, #0b1220);
-          border: 1px solid rgba(56, 189, 248, 0.7);
-          box-shadow: 0 12px 35px rgba(56, 189, 248, 0.45);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .promo-price-box--destacado {
-          background: radial-gradient(circle at top, #f97316, #b45309);
-          border-color: rgba(251, 191, 36, 0.9);
-          box-shadow: 0 14px 40px rgba(251, 146, 60, 0.65);
-        }
-        .promo-price {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-        }
-        .promo-unit {
-          font-size: 0.75rem;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          color: rgba(191, 219, 254, 0.85);
-          margin: 0;
-        }
-
-        @media (max-width: 768px) {
-          .teacher-container {
-            max-width: 100% !important;
-            padding: 1rem !important;
-          }
-          .teacher-banner {
-            border-radius: 16px !important;
-            padding: 1.5rem 1rem !important;
-            margin: 0 !important;
-          }
-          .teacher-banner-grid {
-            grid-template-columns: 1fr !important;
-            text-align: center;
-            gap: 1.5rem !important;
-            justify-items: center !important;
-          }
-          .teacher-banner h1 {
-            font-size: 2.6rem !important;
-            line-height: 1.2 !important;
-          }
-          .teacher-banner-avatar {
-            width: 220px !important;
-            height: 220px !important;
-          }
-          .teacher-banner-avatar-fallback {
-            font-size: 4.6rem !important;
-          }
-          .glass-card-container {
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 16px !important;
-          }
-          .promo-section { padding: 18px 14px 22px !important; }
-          .promo-card { flex-direction: column; align-items: flex-start !important; }
-          .promo-price-box { align-self: stretch; text-align: right !important; }
-        }
-        @media (max-width: 480px) {
-          .teacher-banner h1 {
-            font-size: 2.2rem !important;
-          }
-          .teacher-banner-avatar {
-            width: 180px !important;
-            height: 180px !important;
-          }
-          .teacher-banner-avatar-fallback {
-            font-size: 4.1rem !important;
-          }
-          .glass-card-container {
-            padding: 0.75rem !important;
-            border-radius: 12px !important;
-          }
-          .promo-section { padding: 18px 14px 22px !important; }
-          .promo-card { padding: 14px 16px !important; }
-        }
-        
-        /* Responsive styles for sections */
-        .teacher-section {
-          margin-bottom: 2rem;
-          padding: 2rem;
-        }
-        .teacher-videos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 1.5rem;
-        }
-        @media (max-width: 768px) {
-          .teacher-container {
-            padding: 1rem !important;
-          }
-          .teacher-section {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .teacher-videos-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .teacher-section {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 12px !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1.1rem !important;
-          }
-          .teacher-videos-grid {
-            grid-template-columns: 1fr !important;
-            gap: 0.75rem !important;
-          }
-        }
-        @media (max-width: 430px) {
-          .teacher-container { padding: 0.75rem !important; }
-          .teacher-banner { padding: 1.25rem 0.875rem !important; border-radius: 14px !important; }
-          .teacher-banner h1 { font-size: 1.9rem !important; }
-          .teacher-banner-avatar { width: 160px !important; height: 160px !important; }
-          .teacher-banner-avatar-fallback { font-size: 3.8rem !important; }
-          .glass-card-container { 
-            padding: 0.625rem !important; 
-            border-radius: 10px !important;
-            margin-bottom: 0.875rem !important;
-          }
-          .section-title { font-size: 1rem !important; margin-bottom: 0.75rem !important; }
-          .teacher-section {
-            padding: 0.625rem !important;
-            margin-bottom: 0.875rem !important;
-            border-radius: 10px !important;
-          }
-          .teacher-section h2, .teacher-section h3 {
-            font-size: 1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .teacher-videos-grid { gap: 0.625rem !important; }
-          .promo-section { 
-            padding: 14px 12px 18px !important;
-            border-radius: 20px !important;
-          }
-          .promo-header h2, .promo-header h3 { font-size: 1.4rem !important; }
-          .promo-icon { width: 44px !important; height: 44px !important; font-size: 22px !important; }
-          .promo-card { 
-            padding: 12px 14px !important;
-            border-radius: 18px !important;
-          }
-          .promo-info h3 { font-size: 1rem !important; }
-          .promo-price-box { 
-            padding: 8px 12px !important;
-            border-radius: 14px !important;
-            min-width: 100px !important;
-          }
-        }
-      `}</style>
-
       <div className="teacher-container">
         {/* Navigation Toggle */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
@@ -941,19 +674,7 @@ export default function TeacherProfileLive() {
                 <button
                   aria-label="Compartir perfil"
                   title="Compartir"
-                  onClick={() => {
-                    try {
-                      const publicUrl = teacherId ? `${window.location.origin}/maestro/${teacherId}` : '';
-                      const title = (teacher as any)?.nombre_publico || 'Maestro';
-                      const text = `Mira el perfil de ${title}`;
-                      const navAny = (navigator as any);
-                      if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
-                      } else {
-                        navigator.clipboard?.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
-                      }
-                    } catch {}
-                  }}
+                  onClick={handleShare}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1037,10 +758,12 @@ export default function TeacherProfileLive() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <BioSection 
-              bio={(teacher as any)?.bio}
-              redes={(teacher as any)?.redes_sociales || (teacher as any)?.respuestas?.redes}
-            />
+            <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+              <BioSection 
+                bio={teacher?.bio}
+                redes={teacher?.redes_sociales || (teacher as any)?.respuestas?.redes}
+              />
+            </Suspense>
           </motion.div>
 
           {/* Ritmos de Baile */}
@@ -1176,27 +899,31 @@ export default function TeacherProfileLive() {
                   Cargando clases...
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
-                <ClasesLiveTabs
-                  classes={classesFromTables}
-                  title=""
-                  subtitle="Filtra por día — solo verás los días que sí tienen clases"
-                  sourceType="teacher"
-                  sourceId={teacherNumericId}
-                  isClickable={false}
-                />
+                <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                  <ClasesLiveTabs
+                    classes={classesFromTables}
+                    title=""
+                    subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                    sourceType="teacher"
+                    sourceId={teacherNumericId}
+                    isClickable={false}
+                  />
+                </Suspense>
               ) : (
-                <ClasesLive
-                  title=""
-                  cronograma={(teacher as any)?.cronograma || []}
-                  costos={(teacher as any)?.costos || []}
-                  ubicacion={{
-                    nombre: (teacher as any)?.ubicaciones?.[0]?.nombre,
-                    direccion: (teacher as any)?.ubicaciones?.[0]?.direccion,
-                    ciudad: (teacher as any)?.ubicaciones?.[0]?.ciudad,
-                    referencias: (teacher as any)?.ubicaciones?.[0]?.referencias
-                  }}
-                  showCalendarButton={true}
-                />
+                <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                  <ClasesLive
+                    title=""
+                    cronograma={teacher?.cronograma || []}
+                    costos={teacher?.costos || []}
+                    ubicacion={{
+                      nombre: teacher?.ubicaciones?.[0]?.nombre,
+                      direccion: teacher?.ubicaciones?.[0]?.direccion,
+                      ciudad: teacher?.ubicaciones?.[0]?.ciudad,
+                      referencias: teacher?.ubicaciones?.[0]?.referencias
+                    }}
+                    showCalendarButton={true}
+                  />
+                </Suspense>
               )}
             </div>
           </motion.section>
@@ -1236,7 +963,7 @@ export default function TeacherProfileLive() {
 
                   return (
                     <motion.article
-                      key={`${promo?.nombre || 'promo'}-${index}`}
+                      key={promo?.id ?? promo?.nombre ?? `promo-${index}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -1290,14 +1017,16 @@ export default function TeacherProfileLive() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {competitionGroups.map((group: any) => (
-                  <CompetitionGroupCard key={group.id} group={group} />
+                  <Suspense key={group.id} fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                    <CompetitionGroupCard group={group} />
+                  </Suspense>
                 ))}
               </div>
             </motion.section>
           )}
 
           {/* Ubicaciones (live) */}
-          {Array.isArray((teacher as any)?.ubicaciones) && (teacher as any).ubicaciones.length > 0 && (
+          {Array.isArray(teacher?.ubicaciones) && teacher.ubicaciones.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1311,7 +1040,9 @@ export default function TeacherProfileLive() {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
               }}
             >
-              <UbicacionesLive ubicaciones={(teacher as any).ubicaciones} />
+              <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                <UbicacionesLiveLazy ubicaciones={teacher.ubicaciones} />
+              </Suspense>
             </motion.section>
           )}
 
@@ -1340,28 +1071,30 @@ export default function TeacherProfileLive() {
                   <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
                 </div>
               </div>
-              <HorizontalSlider
-                items={academies}
-                renderItem={(academy: any) => {
-                  const academyData = {
-                    id: academy.academy_id,
-                    nombre_publico: academy.academy_name,
-                    bio: academy.academy_bio || '',
-                    avatar_url: academy.academy_avatar || null,
-                    portada_url: academy.academy_portada || null,
-                    ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
-                    zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-                    media: academy.academy_portada 
-                      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
-                      : academy.academy_avatar 
-                      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-                      : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
-                  };
-                  return <AcademyCard key={academy.academy_id} item={academyData} />;
-                }}
-                gap={24}
-                autoColumns="280px"
-              />
+              <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                <HorizontalSlider
+                  items={academies}
+                  renderItem={(academy: any) => {
+                    const academyData = {
+                      id: academy.academy_id,
+                      nombre_publico: academy.academy_name,
+                      bio: academy.academy_bio || '',
+                      avatar_url: academy.academy_avatar || null,
+                      portada_url: academy.academy_portada || null,
+                      ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+                      zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+                      media: academy.academy_portada 
+                        ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
+                        : academy.academy_avatar 
+                        ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
+                        : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
+                    };
+                    return <AcademyCard key={academy.academy_id} item={academyData} />;
+                  }}
+                  gap={24}
+                  autoColumns="280px"
+                />
+              </Suspense>
             </motion.section>
           )}
 
@@ -1390,11 +1123,12 @@ export default function TeacherProfileLive() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {(teacher as any).faq.map((faq: any, index: number) => (
-                  <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, marginBottom: '0.5rem' }}>{faq.q}</h4>
-                    <p style={{ fontSize: '1rem', opacity: 0.85, margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
-                  </motion.div>
+                {teacher?.faq?.map((faq: any, index: number) => (
+                  <FAQAccordion 
+                    key={faq?.id ?? `${faq.q}-${index}`} 
+                    question={faq.q} 
+                    answer={faq.a} 
+                  />
                 ))}
               </div>
             </motion.section>
@@ -1463,7 +1197,9 @@ export default function TeacherProfileLive() {
 
           {/* Componente de Calificaciones */}
           {teacherNumericId && (
-            <TeacherRatingComponent teacherId={teacherNumericId} />
+            <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+              <TeacherRatingComponent teacherId={teacherNumericId} />
+            </Suspense>
           )}
 
           {/* Slot Video */}
@@ -1566,6 +1302,8 @@ export default function TeacherProfileLive() {
                   <video
                     src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url}
                     controls
+                    preload="metadata"
+                    controlsList="nodownload noplaybackrate"
                     style={{
                       width: '100%',
                       height: 'auto',

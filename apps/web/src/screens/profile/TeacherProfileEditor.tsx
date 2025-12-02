@@ -12,32 +12,29 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
-import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
-import FAQEditor from "../../components/common/FAQEditor";
-import ReviewsEditor from "../../components/common/ReviewsEditor";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
-// import CostosyHorarios from './CostosyHorarios';
-import ClasesLive from '../../components/events/ClasesLive';
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
-import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
-import { useLiveClasses } from "@/hooks/useLiveClasses";
-import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
-import CrearClase from "../../components/events/CrearClase";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
-import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies, useRemoveInvitation } from "../../hooks/useAcademyTeacherInvitations";
-import AcademyCard from "../../components/explore/cards/AcademyCard";
+import { useLiveClasses } from "@/hooks/useLiveClasses";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
-import { TeacherMetricsPanel } from "../../components/profile/TeacherMetricsPanel";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
+
+// Lazy load heavy components
+const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/TeacherMetricsPanel").then(m => ({ default: m.TeacherMetricsPanel })));
+const UbicacionesEditor = React.lazy(() => import("../../components/locations/UbicacionesEditor"));
+const CrearClase = React.lazy(() => import("../../components/events/CrearClase"));
+const CostsPromotionsEditor = React.lazy(() => import("../../components/events/CostsPromotionsEditor"));
+const FAQEditor = React.lazy(() => import("../../components/common/FAQEditor"));
+const PhotoManagementSection = React.lazy(() => import("../../components/profile/PhotoManagementSection").then(m => ({ default: m.PhotoManagementSection })));
+const VideoManagementSection = React.lazy(() => import("../../components/profile/VideoManagementSection").then(m => ({ default: m.VideoManagementSection })));
+const AcademyCard = React.lazy(() => import("../../components/explore/cards/AcademyCard"));
 
 const colors = {
   primary: '#E53935',
@@ -71,6 +68,1015 @@ const formatCurrency = (value?: number | string | null) => {
   }
 };
 
+// CSS constante a nivel de módulo para evitar reinserción en cada render
+const STYLES = `
+        .academy-editor-container {
+          min-height: 100vh;
+          padding: 2rem 1rem;
+        }
+        .academy-editor-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .academy-editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .academy-editor-inner h2,
+        .academy-editor-inner h3,
+        .academy-editor-card h2,
+        .org-editor__card h2 {
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .photos-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .rhythms-zones-two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .academy-editor-card {
+          padding: 2rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 3rem;
+        }
+        .academy-editor-grid {
+          display: grid;
+          gap: 1.5rem;
+        }
+        .academy-social-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+        .teacher-tabs {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .teacher-tab-button {
+          padding: 0.75rem 1.5rem;
+          border-radius: 12px 12px 0 0;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s ease;
+    background: transparent;
+    font-weight: 600;
+  }
+  .teacher-tab-button:hover {
+    opacity: 0.9;
+  }
+  .teacher-tab-button[aria-selected="true"] {
+    background: linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2));
+    font-weight: 800;
+    border-bottom: 2px solid rgba(240,147,251,0.5);
+  }
+  .teacher-tab-button:focus-visible {
+    outline: 2px solid rgba(240,147,251,0.5);
+    outline-offset: 2px;
+        }
+        .academies-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .invitation-card {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        .invitation-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+      .editor-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .editor-section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    color: #F5F5F5;
+        text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+      }
+      .editor-field {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    color: #F5F5F5;
+      }
+      .editor-input {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+    color: #F5F5F5;
+        font-size: 1rem;
+      }
+      .editor-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+    color: #F5F5F5;
+        font-size: 1rem;
+        resize: vertical;
+        font-family: inherit;
+      }
+      .glass-card-container {
+        opacity: 1;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
+        backdrop-filter: blur(10px);
+        transform: none;
+      }
+      .info-redes-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+      }
+      .profile-section-compact {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .row-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .row-bottom-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .subtitle {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    color: #F5F5F5;
+      }
+      .tag {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .social-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1rem;
+      }
+      .field-icon {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.9;
+    color: #F5F5F5;
+      }
+      .input-group {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+      .input-group:focus-within {
+        border-color: rgba(76, 173, 255, 0.6);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
+      }
+      .prefix {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        border-right: 1px solid rgba(255, 255, 255, 0.15);
+        white-space: nowrap;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .input-group input {
+        border: none;
+        outline: none;
+        background: transparent;
+    color: #F5F5F5;
+        font-size: 1rem;
+        padding: 0.75rem;
+        flex: 1;
+        min-width: 0;
+      }
+      .input-group input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+  .academy-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .academy-class-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .academy-class-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .competition-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .competition-group-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .competition-group-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .status-banner {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .status-banner--ok {
+    border: 1px solid rgba(16,185,129,0.4);
+    background: rgba(16,185,129,0.15);
+    box-shadow: 0 4px 12px rgba(16,185,129,0.2);
+  }
+  .status-banner--err {
+    border: 1px solid rgba(239,68,68,0.4);
+    background: rgba(239,68,68,0.15);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.2);
+  }
+  .welcome-banner {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%);
+    border: 2px solid rgba(229, 57, 53, 0.4);
+    border-radius: 16px;
+    text-align: center;
+  }
+  .welcome-banner-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .welcome-banner-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #E53935 0%, #FB8C00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .welcome-banner-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .loading-screen {
+    padding: 48px 24px;
+    text-align: center;
+    color: #F5F5F5;
+  }
+  .loading-icon {
+    font-size: 2rem;
+    margin-bottom: 16px;
+  }
+  .error-screen {
+    padding: 48px 24px;
+    text-align: center;
+    color: #F5F5F5;
+  }
+  .error-icon {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+  }
+  .retry-button {
+    margin-top: 4px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: transparent;
+    color: #F5F5F5;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .retry-button:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .retry-button:focus-visible {
+    outline: 2px solid rgba(255,255,255,0.5);
+    outline-offset: 2px;
+  }
+  .class-edit-button, .class-delete-button {
+    padding: 8px 12px;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+  .class-edit-button {
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+  }
+  .class-edit-button:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .class-delete-button {
+    border: 1px solid rgba(229,57,53,0.35);
+    background: rgba(229,57,53,0.12);
+  }
+  .class-delete-button:hover {
+    background: rgba(229,57,53,0.2);
+  }
+  .invitation-accept-button, .invitation-reject-button, .invitation-remove-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .invitation-accept-button {
+    background: linear-gradient(135deg, #10B981, #059669);
+  }
+  .invitation-accept-button:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  .invitation-reject-button, .invitation-remove-button {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #EF4444;
+    color: #EF4444;
+  }
+  .invitation-reject-button:hover:not(:disabled), .invitation-remove-button:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.3);
+  }
+  .invitation-accept-button:disabled, .invitation-reject-button:disabled, .invitation-remove-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .competition-group-view-button, .competition-group-edit-button, .competition-group-delete-button {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .competition-group-view-button {
+    background: rgba(30,136,229,0.2);
+    border: 1px solid #1E88E5;
+  }
+  .competition-group-view-button:hover {
+    background: rgba(30,136,229,0.3);
+  }
+  .competition-group-edit-button {
+    background: rgba(255,193,7,0.2);
+    border: 1px solid #FFC107;
+  }
+  .competition-group-edit-button:hover {
+    background: rgba(255,193,7,0.3);
+  }
+  .competition-group-delete-button {
+    background: rgba(239,68,68,0.2);
+    border: 1px solid #EF4444;
+  }
+  .competition-group-delete-button:hover:not(:disabled) {
+    background: rgba(239,68,68,0.3);
+  }
+  .competition-group-delete-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .create-group-button {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #10B981, #059669);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  .create-group-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  .create-group-button:focus-visible {
+    outline: 2px solid rgba(16,185,129,0.5);
+    outline-offset: 2px;
+  }
+      @media (max-width: 768px) {
+    .photos-two-columns {
+          grid-template-columns: 1fr !important;
+          gap: 1rem !important;
+        }
+    .rhythms-zones-two-columns {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+    .academy-editor-container {
+      padding: 1rem 0.75rem !important;
+    }
+    .academy-editor-inner {
+      max-width: 100% !important;
+      padding: 0 0.5rem !important;
+    }
+    .academy-editor-header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+    .academy-editor-card {
+      padding: 1rem !important;
+      margin-bottom: 1.5rem !important;
+      border-radius: 12px !important;
+    }
+    .academy-editor-card h2 {
+      font-size: 1.25rem !important;
+      margin-bottom: 1rem !important;
+    }
+    .academy-editor-grid {
+      gap: 1rem !important;
+    }
+    .academy-social-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+    .org-editor__header {
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+      text-align: center !important;
+    }
+    .org-editor__back {
+      align-self: flex-start !important;
+    }
+    .org-editor__title {
+      font-size: 1.5rem !important;
+    }
+    .teacher-tabs {
+      flex-wrap: wrap !important;
+      gap: 0.4rem !important;
+    }
+    .teacher-tab-button {
+      flex: 1 1 auto !important;
+      min-width: 120px !important;
+      padding: 0.6rem 1rem !important;
+      font-size: 0.9rem !important;
+    }
+    .academies-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+    .invitation-card {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.75rem !important;
+    }
+    .invitation-actions {
+      width: 100% !important;
+      flex-direction: column !important;
+    }
+    .invitation-actions button {
+      width: 100% !important;
+    }
+        .editor-section {
+          padding: 1rem !important;
+          margin-bottom: 1.5rem !important;
+          border-radius: 12px !important;
+        }
+        .editor-section-title {
+          font-size: 1.2rem !important;
+          margin-bottom: 0.75rem !important;
+        }
+        .glass-card-container {
+          padding: 0.75rem !important;
+          margin-bottom: 1rem !important;
+          border-radius: 12px !important;
+        }
+        .profile-section-compact {
+          padding: 1rem !important;
+          gap: 1rem !important;
+        }
+        .subtitle {
+          font-size: 0.95rem !important;
+        }
+        .field-icon {
+          width: 24px !important;
+          height: 24px !important;
+        }
+        .field {
+          font-size: 0.9rem !important;
+          gap: 0.5rem !important;
+        }
+        .input-group input {
+          font-size: 0.9rem !important;
+          padding: 0.6rem !important;
+        }
+        .prefix {
+          font-size: 0.85rem !important;
+          padding: 0.6rem 0.4rem !important;
+        }
+    .competition-group-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+    }
+    .competition-group-header button {
+      width: 100% !important;
+    }
+    .competition-group-item {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+      padding: 1rem !important;
+    }
+    .competition-group-actions {
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+    }
+    .competition-group-actions button {
+      width: 100% !important;
+      padding: 0.625rem !important;
+      font-size: 0.875rem !important;
+    }
+  }
+      @media (max-width: 480px) {
+    .academy-editor-container {
+      padding: 0.75rem 0.5rem !important;
+    }
+    .academy-editor-inner {
+      padding: 0 0.25rem !important;
+    }
+    .academy-editor-card {
+      padding: 0.75rem !important;
+      margin-bottom: 1rem !important;
+      border-radius: 10px !important;
+    }
+    .academy-editor-card h2 {
+      font-size: 1.1rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    .org-editor__title {
+      font-size: 1.25rem !important;
+    }
+    input, textarea {
+      font-size: 0.9rem !important;
+      padding: 0.625rem !important;
+    }
+    label {
+      font-size: 0.875rem !important;
+      margin-bottom: 0.375rem !important;
+    }
+    .academy-chips-container {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+    .academy-class-item {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.75rem !important;
+    }
+    .academy-class-buttons {
+      width: 100% !important;
+      display: flex !important;
+      gap: 0.5rem !important;
+    }
+    .academy-class-buttons button {
+      flex: 1 !important;
+      padding: 0.5rem !important;
+      font-size: 0.875rem !important;
+    }
+    .teacher-tabs {
+      gap: 0.3rem !important;
+    }
+    .teacher-tab-button {
+      flex: 1 1 100% !important;
+      min-width: 100% !important;
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.85rem !important;
+    }
+    .academies-grid {
+      gap: 0.75rem !important;
+    }
+    .invitation-card {
+      gap: 0.5rem !important;
+    }
+    .org-editor__card {
+      padding: 1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .competition-group-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+    }
+    .competition-group-header button {
+      width: 100% !important;
+    }
+    .competition-group-item {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 1rem !important;
+      padding: 1rem !important;
+    }
+    .competition-group-actions {
+      width: 100% !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+    .competition-group-actions button {
+      flex: 1 1 auto !important;
+      min-width: calc(50% - 0.25rem) !important;
+      padding: 0.625rem !important;
+      font-size: 0.875rem !important;
+    }
+        .editor-section {
+          padding: 0.75rem !important;
+          margin-bottom: 1rem !important;
+          border-radius: 10px !important;
+        }
+        .editor-section-title {
+          font-size: 1.1rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+        .editor-input,
+        .editor-textarea {
+          padding: 0.6rem !important;
+          font-size: 0.9rem !important;
+        }
+        .glass-card-container {
+          padding: 0.5rem !important;
+          margin-bottom: 0.75rem !important;
+          border-radius: 10px !important;
+        }
+        .profile-section-compact {
+          padding: 0.75rem !important;
+          gap: 1rem !important;
+        }
+        .subtitle {
+          font-size: 0.9rem !important;
+        }
+        .tag {
+          font-size: 0.7rem !important;
+        }
+        .field-icon {
+          width: 22px !important;
+          height: 22px !important;
+        }
+        .social-list {
+          gap: 0.5rem !important;
+        }
+        .field {
+          font-size: 0.85rem !important;
+          gap: 0.5rem !important;
+        }
+        .input-group input {
+          font-size: 0.85rem !important;
+          padding: 0.5rem !important;
+        }
+        .prefix {
+          font-size: 0.8rem !important;
+          padding: 0.5rem 0.4rem !important;
+        }
+      }
+`;
+
+// Memoized subcomponents
+const SocialFieldRow = React.memo<{
+  icon: React.ReactNode;
+  prefix: string;
+  name: string;
+  value: string;
+  placeholder: string;
+  type?: string;
+  onChange: (value: string) => void;
+}>(({ icon, prefix, name, value, placeholder, type = 'text', onChange }) => (
+  <label className="field">
+    <span className="field-icon">{icon}</span>
+    <div className="input-group">
+      <span className="prefix">{prefix}</span>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+  </label>
+));
+SocialFieldRow.displayName = 'SocialFieldRow';
+
+const ClassListItem = React.memo<{
+  item: any;
+  costo: any;
+  fechaLabel: string | null;
+  costoLabel: string | null;
+  onEdit: () => void;
+  onDelete: () => void;
+}>(({ item, costo, fechaLabel, costoLabel, onEdit, onDelete }) => (
+  <div className="academy-class-item">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <strong style={{ color: '#fff' }}>{item.titulo || 'Clase'}</strong>
+      <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {item.inicio || '—'} – {item.fin || '—'}</span>
+      {(fechaLabel || costoLabel) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {fechaLabel && (
+            <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(240,147,251,0.15)', border: '1px solid rgba(240,147,251,0.28)' }}>
+              📅 {fechaLabel}
+            </span>
+          )}
+          {costoLabel && (
+            <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.28)' }}>
+              💰 {costoLabel === 'Gratis' ? 'Gratis' : costoLabel}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+    <div className="academy-class-buttons">
+      <button type="button" onClick={onEdit} className="class-edit-button">
+        Editar
+      </button>
+      <button type="button" onClick={onDelete} className="class-delete-button">
+        Eliminar
+      </button>
+    </div>
+  </div>
+));
+ClassListItem.displayName = 'ClassListItem';
+
+const InvitationItem = React.memo<{
+  invitation: any;
+  colors: typeof colors;
+  onAccept: () => void;
+  onReject: () => void;
+  onRemove: () => void;
+  isAccepting: boolean;
+  isRemoving: boolean;
+}>(({ invitation, colors, onAccept, onReject, onRemove, isAccepting, isRemoving }) => {
+  const academy = invitation.academy;
+  if (!academy) return null;
+
+  return (
+    <div
+      key={invitation.id}
+      className="invitation-card"
+      style={{
+        padding: '1.5rem',
+        background: invitation.status === 'pending' 
+          ? 'rgba(255, 193, 7, 0.1)' 
+          : invitation.status === 'accepted'
+          ? 'rgba(16, 185, 129, 0.1)'
+          : 'rgba(239, 68, 68, 0.1)',
+        borderRadius: '12px',
+        border: `1px solid ${
+          invitation.status === 'pending' 
+            ? 'rgba(255, 193, 7, 0.3)' 
+            : invitation.status === 'accepted'
+            ? 'rgba(16, 185, 129, 0.3)'
+            : 'rgba(239, 68, 68, 0.3)'
+        }`
+      }}
+    >
+      <div style={{
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        background: academy.avatar_url 
+          ? `url(${academy.avatar_url}) center/cover`
+          : 'linear-gradient(135deg, #E53935, #FB8C00)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: '700',
+        fontSize: '1.25rem',
+        flexShrink: 0
+      }}>
+        {!academy.avatar_url && (academy.nombre_publico?.[0]?.toUpperCase() || '🎓')}
+      </div>
+      <div style={{ flex: 1 }}>
+        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem' }}>
+          {academy.nombre_publico}
+        </h3>
+        {academy.bio && (
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', opacity: 0.7, color: colors.light }}>
+            {academy.bio.substring(0, 100)}{academy.bio.length > 100 ? '...' : ''}
+          </p>
+        )}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{
+            padding: '0.25rem 0.5rem',
+            background: invitation.status === 'pending' 
+              ? 'rgba(255, 193, 7, 0.2)' 
+              : invitation.status === 'accepted'
+              ? 'rgba(16, 185, 129, 0.2)'
+              : 'rgba(239, 68, 68, 0.2)',
+            border: `1px solid ${
+              invitation.status === 'pending' 
+                ? '#FFC107' 
+                : invitation.status === 'accepted'
+                ? '#10B981'
+                : '#EF4444'
+            }`,
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            color: invitation.status === 'pending' 
+              ? '#FFC107' 
+              : invitation.status === 'accepted'
+              ? '#10B981'
+              : '#EF4444'
+          }}>
+            {invitation.status === 'pending' && '⏳ Pendiente'}
+            {invitation.status === 'accepted' && '✅ Aceptada'}
+            {invitation.status === 'rejected' && '❌ Rechazada'}
+            {invitation.status === 'cancelled' && '🚫 Cancelada'}
+          </span>
+          {invitation.invited_at && (
+            <span style={{ fontSize: '0.75rem', opacity: 0.6, color: colors.light }}>
+              {new Date(invitation.invited_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+            </span>
+          )}
+        </div>
+      </div>
+      {invitation.status === 'pending' && (
+        <div className="invitation-actions">
+          <button
+            onClick={onAccept}
+            disabled={isAccepting}
+            className="invitation-accept-button"
+          >
+            ✅ Aceptar
+          </button>
+          <button
+            onClick={onReject}
+            disabled={isAccepting}
+            className="invitation-reject-button"
+          >
+            ❌ Rechazar
+          </button>
+        </div>
+      )}
+      {invitation.status === 'accepted' && (
+        <div className="invitation-actions">
+          <button
+            onClick={onRemove}
+            disabled={isRemoving}
+            className="invitation-remove-button"
+          >
+            🚫 Quitar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+InvitationItem.displayName = 'InvitationItem';
+
+const CompetitionGroupItem = React.memo<{
+  group: any;
+  colors: typeof colors;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}>(({ group, colors, onView, onEdit, onDelete, isDeleting }) => (
+  <div className="competition-group-item">
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem', wordBreak: 'break-word' }}>
+        {group.name}
+      </h3>
+      {group.description && (
+        <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem', wordBreak: 'break-word' }}>
+          {group.description.substring(0, 100)}{group.description.length > 100 ? '...' : ''}
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+        {group.training_location && (
+          <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff', wordBreak: 'break-word' }}>
+            📍 {group.training_location}
+          </span>
+        )}
+        {group.cost_amount && (
+          <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#fff' }}>
+            💰 ${group.cost_amount} {group.cost_type === 'monthly' ? '/mes' : group.cost_type === 'per_session' ? '/sesión' : '/paquete'}
+          </span>
+        )}
+      </div>
+    </div>
+    <div className="competition-group-actions">
+      <button onClick={onView} className="competition-group-view-button">
+        Ver
+      </button>
+      <button onClick={onEdit} className="competition-group-edit-button">
+        Editar
+      </button>
+      <button onClick={onDelete} disabled={isDeleting} className="competition-group-delete-button">
+        Eliminar
+      </button>
+    </div>
+  </div>
+));
+CompetitionGroupItem.displayName = 'CompetitionGroupItem';
+
+const AcademyItem = React.memo<{ academy: any }>(({ academy }) => {
+  const academyData = React.useMemo(() => ({
+    id: academy.academy_id,
+    nombre_publico: academy.academy_name,
+    bio: academy.academy_bio || '',
+    avatar_url: academy.academy_avatar || null,
+    portada_url: academy.academy_portada || null,
+    ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+    zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+    media: academy.academy_portada 
+      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
+      : academy.academy_avatar 
+      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
+      : []
+  }), [academy]);
+  
+  return (
+    <React.Suspense fallback={<div role="status">Cargando...</div>}>
+      <AcademyCard item={academyData} />
+    </React.Suspense>
+  );
+});
+AcademyItem.displayName = 'AcademyItem';
+
 const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?: Array<string | number> | null) => {
   if (fecha) {
     try {
@@ -84,7 +1090,9 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
         }
       }
     } catch (e) {
-      console.error('[TeacherProfileEditor] Error formatting date:', e);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[TeacherProfileEditor] Error formatting date:', e);
+      }
     }
   }
   // Si tiene múltiples días (diasSemana), formatear todos
@@ -204,8 +1212,11 @@ export default function TeacherProfileEditor() {
     }
   }, [teacher, previousApprovalStatus]);
 
+  // Memoize derived values early (before use in hooks)
+  // Note: form is declared later, so we'll memoize profileId after form is available
+  const teacherId = React.useMemo(() => (teacher as any)?.id, [teacher]);
+
   // Hooks para invitaciones
-  const teacherId = (teacher as any)?.id;
   const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useTeacherInvitations(teacherId);
   const { data: academies, refetch: refetchAcademies } = useTeacherAcademies(teacherId);
   const respondToInvitation = useRespondToInvitation();
@@ -283,7 +1294,9 @@ export default function TeacherProfileEditor() {
         // Actualizar también en la base de datos silenciosamente
         const payload: any = { id: (form as any)?.id, cronograma: updatedCrono };
         upsert.mutateAsync(payload).catch((e) => {
-          console.error('[TeacherProfileEditor] Error actualizando IDs de clases', e);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[TeacherProfileEditor] Error actualizando IDs de clases', e);
+          }
           hasEnsuredIds.current = false; // Reset si falla para intentar de nuevo
         });
       } else {
@@ -291,6 +1304,9 @@ export default function TeacherProfileEditor() {
       }
     }
   }, [teacher, (form as any)?.cronograma, (form as any)?.id, setField, upsert]);
+
+  // Memoize profileId after form is available
+  const profileId = React.useMemo(() => (form as any)?.id, [form]);
 
   const supportsPromotions = React.useMemo(() => {
     if (typeof (form as any)?.promociones !== 'undefined') return true;
@@ -300,15 +1316,13 @@ export default function TeacherProfileEditor() {
     return false;
   }, [teacher, (form as any)?.promociones]);
 
-  const profileId = (form as any)?.id;
-
   // Clases desde useLiveClasses para tabs (solo si ya existe perfil)
-  const teacherNumericId = (teacher as any)?.id as number | undefined;
+  const teacherNumericId = React.useMemo(() => (teacher as any)?.id as number | undefined, [teacher]);
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
     teacherNumericId ? { teacherId: teacherNumericId } : undefined
   );
 
-  const handleSave = async () => {
+  const handleSave = React.useCallback(async () => {
     try {
       // Detectar si es un perfil nuevo antes de guardar
       const isNewProfile = !teacher;
@@ -368,27 +1382,29 @@ export default function TeacherProfileEditor() {
       }
       setTimeout(() => setStatusMsg(null), 5000);
     } catch (error) {
-      console.error("❌ [teacherProfileEditor] Error guardando:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("❌ [teacherProfileEditor] Error guardando:", error);
+      }
       setStatusMsg({ type: 'err', text: '❌ Error al guardar el perfil' });
       setTimeout(() => setStatusMsg(null), 3000);
     }
-  };
+  }, [form, teacher, allTags, profileId, supportsPromotions, upsert, refetchTeacher, setAll]);
 
-  const toggleRitmo = (ritmoId: number) => {
+  const toggleRitmo = React.useCallback((ritmoId: number) => {
     const current = (form as any).ritmos || [];
     const next = current.includes(ritmoId)
       ? current.filter((id: number) => id !== ritmoId)
       : [...current, ritmoId];
     setField('ritmos' as any, next as any);
-  };
+  }, [form, setField]);
 
-  const toggleZona = (zonaId: number) => {
+  const toggleZona = React.useCallback((zonaId: number) => {
     const currentZonas = (form as any).zonas || [];
     const newZonas = currentZonas.includes(zonaId)
       ? currentZonas.filter((id: number) => id !== zonaId)
       : [...currentZonas, zonaId];
     setField('zonas' as any, newZonas as any);
-  };
+  }, [form, setField]);
 
   const autoSavePromociones = React.useCallback(async (items: any[]) => {
     setField('promociones' as any, items as any);
@@ -402,7 +1418,9 @@ export default function TeacherProfileEditor() {
       setStatusMsg({ type: 'ok', text: '✅ Promociones guardadas automáticamente' });
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (error) {
-      console.error('[TeacherProfileEditor] Error al guardar promociones auto', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[TeacherProfileEditor] Error al guardar promociones auto', error);
+      }
       setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las promociones' });
       setTimeout(() => setStatusMsg(null), 3200);
     }
@@ -424,681 +1442,180 @@ export default function TeacherProfileEditor() {
         setStatusMsg({ type: 'ok', text: successText });
         setTimeout(() => setStatusMsg(null), 2400);
       } catch (error) {
-        console.error('[TeacherProfileEditor] Error guardando clases', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[TeacherProfileEditor] Error guardando clases', error);
+        }
         setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las clases' });
         setTimeout(() => setStatusMsg(null), 3200);
         throw error;
       }
     },
-    [profileId, setStatusMsg, upsert],
+    [profileId, upsert],
   );
 
-  const uploadFile = async (file: File, slot: string) => {
+  const uploadFile = React.useCallback(async (file: File, slot: string) => {
     try {
       await add.mutateAsync({ file, slot });
     } catch (error) {
-      console.error('Error uploading file:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error uploading file:', error);
+      }
     }
-  };
+  }, [add]);
 
-  const removeFile = async (slot: string) => {
+  const removeFile = React.useCallback(async (slot: string) => {
     try {
       const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot);
       if (mediaItem && 'id' in mediaItem) {
         await remove.mutateAsync((mediaItem as any).id);
       }
     } catch (error) {
-      console.error('Error removing file:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error removing file:', error);
+      }
     }
-  };
+  }, [media, remove]);
+
+  // Memoize ritmos/zonas for CrearClase
+  const ritmosForCrearClase = React.useMemo(() => {
+    const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
+    const labelByCatalogId = new Map<string, string>();
+    RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+    const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
+    if (Array.isArray(localSelected) && localSelected.length > 0) {
+      const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
+      const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
+      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+    }
+    return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+  }, [allTags, form]);
+
+  const zonasForCrearClase = React.useMemo(() => 
+    (allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre })),
+    [allTags]
+  );
+
+  const zonaTagsForCrearClase = React.useMemo(() => 
+    (allTags || []).filter((t: any) => t.tipo === 'zona'),
+    [allTags]
+  );
+
+  const locationsForCrearClase = React.useMemo(() => 
+    ((form as any).ubicaciones || []).map((u: any, i: number) => ({
+      id: u?.id || String(i),
+      nombre: u?.nombre,
+      direccion: u?.direccion,
+      referencias: u?.referencias,
+      zonas: u?.zonaIds || u?.zonas || (typeof u?.zona_id === 'number' ? [u.zona_id] : []),
+    })),
+    [(form as any).ubicaciones]
+  );
+
+  // Callbacks for handlers
+  const handleTabChange = React.useCallback((tab: "perfil" | "metricas") => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleBack = React.useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  const handleCreateGroup = React.useCallback(() => {
+    navigate('/competition-groups/new');
+  }, [navigate]);
+
+  // Memoize derived values (moved here to avoid duplicate declarations)
+  // Note: teacherId and profileId are already memoized above before hooks
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
   if (authLoading && !authTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
-        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-          Si tarda mucho, intenta refrescar la página para una carga más rápida.
-        </p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div className="loading-screen">
+          <div className="loading-icon">⏳</div>
+          <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </>
     );
   }
 
   // ⛔ Si la sesión nunca termina de cargar
   if (authLoading && authTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
-        <p style={{ marginBottom: '12px' }}>
-          No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '4px',
-            padding: '0.5rem 1.25rem',
-            borderRadius: '999px',
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'transparent',
-            color: colors.light,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-          }}
-        >
-          Reintentar
-        </button>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div className="error-screen">
+          <div className="error-icon">⚠️</div>
+          <p style={{ marginBottom: '12px' }}>
+            No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+          </p>
+          <button type="button" onClick={() => window.location.reload()} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </>
     );
   }
 
   // ✅ Si no hay usuario después de que auth termine, mostrar mensaje
   if (!user) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔒</div>
-        <p>No has iniciado sesión</p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div className="error-screen">
+          <div className="loading-icon">🔒</div>
+          <p>No has iniciado sesión</p>
+        </div>
+      </>
     );
   }
 
   // ✅ Esperar a que el perfil cargue
   if (isLoading && !profileTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p style={{ marginBottom: '8px' }}>Estamos cargando tu perfil de maestro...</p>
-        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-          Si tarda mucho, intenta refrescar la página para una carga más rápida.
-        </p>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div className="loading-screen">
+          <div className="loading-icon">⏳</div>
+          <p style={{ marginBottom: '8px' }}>Estamos cargando tu perfil de maestro...</p>
+          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </>
     );
   }
 
   // ⛔ Si el perfil nunca termina de cargar
   if (isLoading && profileTimeoutReached) {
     return (
-      <div style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ fontSize: '2.2rem', marginBottom: '16px' }}>⚠️</div>
-        <p style={{ marginBottom: '12px' }}>
-          No pudimos cargar el perfil del maestro. Revisa tu conexión e inténtalo de nuevo.
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '4px',
-            padding: '0.5rem 1.25rem',
-            borderRadius: '999px',
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'transparent',
-            color: colors.light,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-          }}
-        >
-          Reintentar
-        </button>
-      </div>
+      <>
+        <style>{STYLES}</style>
+        <div className="error-screen">
+          <div className="error-icon">⚠️</div>
+          <p style={{ marginBottom: '12px' }}>
+            No pudimos cargar el perfil del maestro. Revisa tu conexión e inténtalo de nuevo.
+          </p>
+          <button type="button" onClick={() => window.location.reload()} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      <style>{`
-        .academy-editor-container {
-          min-height: 100vh;
-          padding: 2rem 1rem;
-        }
-        .academy-editor-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .academy-editor-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-        .academy-editor-inner h2,
-        .academy-editor-inner h3,
-        .academy-editor-card h2,
-        .org-editor__card h2 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .photos-two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-        }
-        .rhythms-zones-two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-        }
-        .academy-editor-card {
-          padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          margin-bottom: 3rem;
-        }
-        .academy-editor-grid {
-          display: grid;
-          gap: 1.5rem;
-        }
-        .academy-social-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-        }
-        .teacher-tabs {
-          display: flex;
-          gap: 0.5rem;
-          margin-bottom: 1.5rem;
-          border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .teacher-tab-button {
-          padding: 0.75rem 1.5rem;
-          border-radius: 12px 12px 0 0;
-          border: none;
-          color: #fff;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .academies-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-        .invitation-card {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        .invitation-actions {
-          display: flex;
-          gap: 0.5rem;
-        }
-        
-        @media (max-width: 768px) {
-          .photos-two-columns {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .rhythms-zones-two-columns {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          
-          .academy-editor-container {
-            padding: 1rem 0.75rem !important;
-          }
-          .academy-editor-inner {
-            max-width: 100% !important;
-            padding: 0 0.5rem !important;
-          }
-          .academy-editor-header {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-          }
-          .academy-editor-card {
-            padding: 1rem !important;
-            margin-bottom: 1.5rem !important;
-            border-radius: 12px !important;
-          }
-          .academy-editor-card h2 {
-            font-size: 1.25rem !important;
-            margin-bottom: 1rem !important;
-          }
-          .academy-editor-grid {
-            gap: 1rem !important;
-          }
-          .academy-social-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .org-editor__header {
-            flex-direction: column !important;
-            gap: 0.75rem !important;
-            text-align: center !important;
-          }
-          .org-editor__back {
-            align-self: flex-start !important;
-          }
-          .org-editor__title {
-            font-size: 1.5rem !important;
-          }
-          .teacher-tabs {
-            flex-wrap: wrap !important;
-            gap: 0.4rem !important;
-          }
-          .teacher-tab-button {
-            flex: 1 1 auto !important;
-            min-width: 120px !important;
-            padding: 0.6rem 1rem !important;
-            font-size: 0.9rem !important;
-          }
-          .academies-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .invitation-card {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .invitation-actions {
-            width: 100% !important;
-            flex-direction: column !important;
-          }
-          .invitation-actions button {
-            width: 100% !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .academy-editor-container {
-            padding: 0.75rem 0.5rem !important;
-          }
-          .academy-editor-inner {
-            padding: 0 0.25rem !important;
-          }
-          .academy-editor-card {
-            padding: 0.75rem !important;
-            margin-bottom: 1rem !important;
-            border-radius: 10px !important;
-          }
-          .academy-editor-card h2 {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          .org-editor__title {
-            font-size: 1.25rem !important;
-          }
-          input, textarea {
-            font-size: 0.9rem !important;
-            padding: 0.625rem !important;
-          }
-          label {
-            font-size: 0.875rem !important;
-            margin-bottom: 0.375rem !important;
-          }
-          /* Chips responsive */
-        .academy-chips-container {
-          display: flex !important;
-          flex-wrap: wrap !important;
-          gap: 0.5rem !important;
-        }
-        /* Class buttons responsive */
-        .academy-class-item {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 0.75rem !important;
-        }
-        .academy-class-buttons {
-          width: 100% !important;
-          display: flex !important;
-          gap: 0.5rem !important;
-        }
-        .academy-class-buttons button {
-          flex: 1 !important;
-          padding: 0.5rem !important;
-          font-size: 0.875rem !important;
-        }
-        .teacher-tabs {
-          gap: 0.3rem !important;
-        }
-        .teacher-tab-button {
-          flex: 1 1 100% !important;
-          min-width: 100% !important;
-          padding: 0.5rem 0.75rem !important;
-          font-size: 0.85rem !important;
-        }
-        .academies-grid {
-          gap: 0.75rem !important;
-        }
-        .invitation-card {
-          gap: 0.5rem !important;
-        }
-        .org-editor__card {
-          padding: 1rem !important;
-          margin-bottom: 1.5rem !important;
-        }
-        /* Competition groups responsive */
-        .competition-group-header {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 1rem !important;
-        }
-        .competition-group-header button {
-          width: 100% !important;
-        }
-        .competition-group-item {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 1rem !important;
-          padding: 1rem !important;
-        }
-        .competition-group-actions {
-          width: 100% !important;
-          display: flex !important;
-          flex-direction: column !important;
-          gap: 0.5rem !important;
-        }
-        .competition-group-actions button {
-          width: 100% !important;
-          padding: 0.625rem !important;
-          font-size: 0.875rem !important;
-        }
-      }
-      
-      /* Estilos para editor-section y glass-card-container */
-      .editor-section {
-        margin-bottom: 3rem;
-        padding: 2rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .editor-section-title {
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
-        color: ${colors.light};
-        text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-      }
-      .editor-field {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: ${colors.light};
-      }
-      .editor-input {
-        width: 100%;
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: ${colors.light};
-        font-size: 1rem;
-      }
-      .editor-textarea {
-        width: 100%;
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: ${colors.light};
-        font-size: 1rem;
-        resize: vertical;
-        font-family: inherit;
-      }
-      .glass-card-container {
-        opacity: 1;
-        margin-bottom: 2rem;
-        padding: 2rem;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
-        backdrop-filter: blur(10px);
-        transform: none;
-      }
-      .info-redes-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        align-items: start;
-      }
-      
-      /* PROFILE SECTION COMPACT */
-      .profile-section-compact {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 1.5rem;
-        max-width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-      
-      /* ABAJO: REDES */
-      .row-bottom {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .row-bottom-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .subtitle {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0;
-        color: ${colors.light};
-      }
-      .tag {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.6);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-      
-      /* LISTA DE REDES */
-      .social-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .field {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 1rem;
-      }
-      .field-icon {
-        width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.9;
-        color: ${colors.light};
-      }
-      
-      /* INPUTS COMPACTOS */
-      .input-group {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.1);
-        overflow: hidden;
-        transition: all 0.2s ease;
-      }
-      .input-group:focus-within {
-        border-color: rgba(76, 173, 255, 0.6);
-        background: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 0 0 2px rgba(76, 173, 255, 0.2);
-      }
-      .prefix {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
-        border-right: 1px solid rgba(255, 255, 255, 0.15);
-        white-space: nowrap;
-        background: rgba(255, 255, 255, 0.05);
-      }
-      .input-group input {
-        border: none;
-        outline: none;
-        background: transparent;
-        color: ${colors.light};
-        font-size: 1rem;
-        padding: 0.75rem;
-        flex: 1;
-        min-width: 0;
-      }
-      .input-group input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-      }
-      
-      @media (max-width: 768px) {
-        .info-redes-grid {
-          grid-template-columns: 1fr !important;
-          gap: 1rem !important;
-        }
-        .editor-section {
-          padding: 1rem !important;
-          margin-bottom: 1.5rem !important;
-          border-radius: 12px !important;
-        }
-        .editor-section-title {
-          font-size: 1.2rem !important;
-          margin-bottom: 0.75rem !important;
-        }
-        .glass-card-container {
-          padding: 0.75rem !important;
-          margin-bottom: 1rem !important;
-          border-radius: 12px !important;
-        }
-        .profile-section-compact {
-          padding: 1rem !important;
-          gap: 1rem !important;
-        }
-        .subtitle {
-          font-size: 0.95rem !important;
-        }
-        .field-icon {
-          width: 24px !important;
-          height: 24px !important;
-        }
-        .field {
-          font-size: 0.9rem !important;
-          gap: 0.5rem !important;
-        }
-        .input-group input {
-          font-size: 0.9rem !important;
-          padding: 0.6rem !important;
-        }
-        .prefix {
-          font-size: 0.85rem !important;
-          padding: 0.6rem 0.4rem !important;
-        }
-        /* Competition groups responsive */
-        .competition-group-header {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 1rem !important;
-        }
-        .competition-group-header button {
-          width: 100% !important;
-        }
-        .competition-group-item {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 1rem !important;
-          padding: 1rem !important;
-        }
-        .competition-group-actions {
-          width: 100% !important;
-          display: flex !important;
-          flex-wrap: wrap !important;
-          gap: 0.5rem !important;
-        }
-        .competition-group-actions button {
-          flex: 1 1 auto !important;
-          min-width: calc(50% - 0.25rem) !important;
-          padding: 0.625rem !important;
-          font-size: 0.875rem !important;
-        }
-      }
-      
-      @media (max-width: 480px) {
-        .editor-section {
-          padding: 0.75rem !important;
-          margin-bottom: 1rem !important;
-          border-radius: 10px !important;
-        }
-        .editor-section-title {
-          font-size: 1.1rem !important;
-          margin-bottom: 0.5rem !important;
-        }
-        .editor-input,
-        .editor-textarea {
-          padding: 0.6rem !important;
-          font-size: 0.9rem !important;
-        }
-        .glass-card-container {
-          padding: 0.5rem !important;
-          margin-bottom: 0.75rem !important;
-          border-radius: 10px !important;
-        }
-        .profile-section-compact {
-          padding: 0.75rem !important;
-          gap: 1rem !important;
-        }
-        .subtitle {
-          font-size: 0.9rem !important;
-        }
-        .tag {
-          font-size: 0.7rem !important;
-        }
-        .field-icon {
-          width: 22px !important;
-          height: 22px !important;
-        }
-        .social-list {
-          gap: 0.5rem !important;
-        }
-        .field {
-          font-size: 0.85rem !important;
-          gap: 0.5rem !important;
-        }
-        .input-group input {
-          font-size: 0.85rem !important;
-          padding: 0.5rem !important;
-        }
-        .prefix {
-          font-size: 0.8rem !important;
-          padding: 0.5rem 0.4rem !important;
-        }
-      }
-    `}</style>
+      <style>{STYLES}</style>
       <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
       <div className="academy-editor-inner">
         {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
         <div className="org-editor__header">
-          <button className="org-editor__back" onClick={() => navigate(-1)}>← Volver</button>
+          <button className="org-editor__back" onClick={handleBack} aria-label="Volver">← Volver</button>
           <h1 className="org-editor__title">✏️ Editar Maestro</h1>
           <div style={{ width: 100 }} />
         </div>
@@ -1116,62 +1633,49 @@ export default function TeacherProfileEditor() {
         </div>
 
         {/* Tabs Perfil / Métricas */}
-        <div className="teacher-tabs">
+        <div className="teacher-tabs" role="tablist" aria-label="Secciones del editor">
           <button
             className="teacher-tab-button"
-            onClick={() => setActiveTab("perfil")}
-            style={{
-              background: activeTab === "perfil" 
-                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
-                : 'transparent',
-              fontWeight: activeTab === "perfil" ? 800 : 600,
-              borderBottom: activeTab === "perfil" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
-            }}
+            role="tab"
+            aria-selected={activeTab === "perfil"}
+            aria-controls="tabpanel-perfil"
+            id="tab-perfil"
+            onClick={() => handleTabChange("perfil")}
           >
             📝 Perfil
           </button>
           <button
             className="teacher-tab-button"
-            onClick={() => setActiveTab("metricas")}
-            style={{
-              background: activeTab === "metricas" 
-                ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
-                : 'transparent',
-              fontWeight: activeTab === "metricas" ? 800 : 600,
-              borderBottom: activeTab === "metricas" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
-            }}
+            role="tab"
+            aria-selected={activeTab === "metricas"}
+            aria-controls="tabpanel-metricas"
+            id="tab-metricas"
+            onClick={() => handleTabChange("metricas")}
           >
             📊 Métricas clases
           </button>
         </div>
 
         {activeTab === "metricas" && teacherId && (
+          <div role="tabpanel" id="tabpanel-metricas" aria-labelledby="tab-metricas">
+            <React.Suspense fallback={<div role="status" aria-live="polite">Cargando métricas...</div>}>
           <TeacherMetricsPanel teacherId={teacherId} />
+            </React.Suspense>
+          </div>
         )}
 
         {activeTab === "perfil" && (
-          <>
+          <div role="tabpanel" id="tabpanel-perfil" aria-labelledby="tab-perfil">
 
         {/* Mensaje de estado global */}
         {statusMsg && (
           <motion.div
+            role="status"
+            aria-live="polite"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            style={{
-              marginBottom: '1.5rem',
-              padding: '1rem 1.5rem',
-              borderRadius: '12px',
-              border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
-              background: statusMsg.type === 'ok' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-              color: '#fff',
-              fontSize: '1rem',
-              fontWeight: '600',
-              textAlign: 'center',
-              boxShadow: statusMsg.type === 'ok' 
-                ? '0 4px 12px rgba(16,185,129,0.2)' 
-                : '0 4px 12px rgba(239,68,68,0.2)'
-            }}
+            className={`status-banner status-banner--${statusMsg.type}`}
           >
             {statusMsg.text}
           </motion.div>
@@ -1182,23 +1686,10 @@ export default function TeacherProfileEditor() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding: '1.5rem',
-              marginBottom: '2rem',
-              background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)',
-              border: '2px solid rgba(229, 57, 53, 0.4)',
-              borderRadius: '16px',
-              textAlign: 'center'
-            }}
+            className="welcome-banner"
           >
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎓</div>
-            <h3 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: '700',
-              marginBottom: '0.5rem',
-              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-              WebkitBackgroundClip: 'text',
-            }}>
+            <div className="welcome-banner-icon">🎓</div>
+            <h3 className="welcome-banner-title">
               ¡Bienvenido, Maestro!
             </h3>
             <p style={{ fontSize: '1rem', opacity: 0.9, marginBottom: '1rem' }}>
@@ -1207,14 +1698,7 @@ export default function TeacherProfileEditor() {
                 : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
               }
             </p>
-            <div style={{
-              display: 'inline-block',
-              padding: '0.5rem 1rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              fontWeight: '600'
-            }}>
+            <div className="welcome-banner-badge">
               👆 Mínimo requerido: <strong>Nombre del Maestro</strong> y <strong>Ritmos</strong>
             </div>
           </motion.div>
@@ -1272,141 +1756,72 @@ export default function TeacherProfileEditor() {
                 </div>
 
                 <div className="social-list">
-                  {/* Instagram */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaInstagram size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">ig/</span>
-                      <input
-                        type="text"
+                  <SocialFieldRow
+                    icon={<FaInstagram size={18} />}
+                    prefix="ig/"
                         name="instagram"
                         value={form.redes_sociales.instagram || ''}
-                        onChange={(e) => setNested('redes_sociales.instagram', e.target.value)}
                         placeholder="usuario"
-                      />
-                    </div>
-                  </label>
-
-                  {/* TikTok */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaTiktok size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">@</span>
-                      <input
-                        type="text"
+                    onChange={(v) => setNested('redes_sociales.instagram', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaTiktok size={18} />}
+                    prefix="@"
                         name="tiktok"
                         value={form.redes_sociales.tiktok || ''}
-                        onChange={(e) => setNested('redes_sociales.tiktok', e.target.value)}
                         placeholder="usuario"
-                      />
-                    </div>
-                  </label>
-
-                  {/* YouTube */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaYoutube size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">yt/</span>
-                      <input
-                        type="text"
+                    onChange={(v) => setNested('redes_sociales.tiktok', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaYoutube size={18} />}
+                    prefix="yt/"
                         name="youtube"
                         value={form.redes_sociales.youtube || ''}
-                        onChange={(e) => setNested('redes_sociales.youtube', e.target.value)}
                         placeholder="canal o handle"
-                      />
-                    </div>
-                  </label>
-
-                  {/* Facebook */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaFacebookF size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">fb/</span>
-                      <input
-                        type="text"
+                    onChange={(v) => setNested('redes_sociales.youtube', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaFacebookF size={18} />}
+                    prefix="fb/"
                         name="facebook"
                         value={form.redes_sociales.facebook || ''}
-                        onChange={(e) => setNested('redes_sociales.facebook', e.target.value)}
                         placeholder="usuario o página"
-                      />
-                    </div>
-                  </label>
-
-                  {/* WhatsApp */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaWhatsapp size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">+52</span>
-                      <input
-                        type="tel"
+                    onChange={(v) => setNested('redes_sociales.facebook', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaWhatsapp size={18} />}
+                    prefix="+52"
                         name="whatsapp"
                         value={form.redes_sociales.whatsapp || ''}
-                        onChange={(e) => setNested('redes_sociales.whatsapp', e.target.value)}
                         placeholder="55 1234 5678"
-                      />
-                    </div>
-                  </label>
-
-                  {/* Email */}
-                  <label className="field">
-                    <span className="field-icon">
-                      📧
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">@</span>
-                      <input
-                        type="email"
+                    type="tel"
+                    onChange={(v) => setNested('redes_sociales.whatsapp', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<span>📧</span>}
+                    prefix="@"
                         name="email"
                         value={form.redes_sociales.email || ''}
-                        onChange={(e) => setNested('redes_sociales.email', e.target.value)}
                         placeholder="correo@ejemplo.com"
-                      />
-                    </div>
-                  </label>
-
-                  {/* Sitio Web */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaGlobe size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">https://</span>
-                      <input
-                        type="text"
+                    type="email"
+                    onChange={(v) => setNested('redes_sociales.email', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaGlobe size={18} />}
+                    prefix="https://"
                         name="web"
                         value={form.redes_sociales.web || ''}
-                        onChange={(e) => setNested('redes_sociales.web', e.target.value)}
                         placeholder="tusitio.com"
-                      />
-                    </div>
-                  </label>
-
-                  {/* Telegram */}
-                  <label className="field">
-                    <span className="field-icon">
-                      <FaTelegram size={18} />
-                    </span>
-                    <div className="input-group">
-                      <span className="prefix">@</span>
-                      <input
-                        type="text"
+                    onChange={(v) => setNested('redes_sociales.web', v)}
+                  />
+                  <SocialFieldRow
+                    icon={<FaTelegram size={18} />}
+                    prefix="@"
                         name="telegram"
                         value={form.redes_sociales.telegram || ''}
-                        onChange={(e) => setNested('redes_sociales.telegram', e.target.value)}
                         placeholder="usuario o canal"
+                    onChange={(v) => setNested('redes_sociales.telegram', v)}
                       />
-                    </div>
-                  </label>
                 </div>
               </div>
             </div>
@@ -1509,12 +1924,14 @@ export default function TeacherProfileEditor() {
 
           <div style={{ display: 'grid', gap: '1.5rem' }}>
             {/* Ubicaciones */}
+            <React.Suspense fallback={<div role="status" aria-live="polite">Cargando editor de ubicaciones...</div>}>
             <UbicacionesEditor
               value={(form as any).ubicaciones || []}
               onChange={(v) => setField('ubicaciones' as any, v as any)}
               title="Ubicaciones"
               allowedZoneIds={((form as any).zonas || []) as number[]}
             />
+            </React.Suspense>
             {/* Crear Clase rápida */}
             <div>
               {statusMsg && (
@@ -1552,238 +1969,181 @@ export default function TeacherProfileEditor() {
               )}
 
               {teacher && (
+                <React.Suspense fallback={<div role="status" aria-live="polite">Cargando editor de clases...</div>}>
                 <CrearClase
-                ritmos={(() => {
-                  const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
-                  const labelByCatalogId = new Map<string, string>();
-                  RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-                  // 1) Priorizar selección local del formulario (sin guardar)
-                  const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-                  if (Array.isArray(localSelected) && localSelected.length > 0) {
-                    const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
-                    const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
-                    if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                  }
-                  // 2) Fallback: todos
-                  return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-                })()}
-                zonas={(allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre }))}
-                zonaTags={(allTags || []).filter((t: any) => t.tipo === 'zona')}
+                    ritmos={ritmosForCrearClase}
+                    zonas={zonasForCrearClase}
+                    zonaTags={zonaTagsForCrearClase}
                 selectedZonaIds={((form as any).zonas || []) as number[]}
-                locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({
-                  id: u?.id || String(i),
-                  nombre: u?.nombre,
-                  direccion: u?.direccion,
-                  referencias: u?.referencias,
-                  zonas: u?.zonaIds || u?.zonas || (typeof u?.zona_id === 'number' ? [u.zona_id] : []),
-                }))}
+                    locations={locationsForCrearClase}
                 editIndex={editingIndex}
                 editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
-                onCancel={() => { setEditingIndex(null); setEditInitial(undefined); setStatusMsg(null); }}
-                onSubmit={(c) => {
-                  const currentCrono = ([...((form as any).cronograma || [])] as any[]);
-                  const currentCostos = ([...((form as any).costos || [])] as any[]);
+                    onCancel={React.useCallback(() => { 
+                      setEditingIndex(null); 
+                      setEditInitial(undefined); 
+                      setStatusMsg(null); 
+                    }, [])}
+                    onSubmit={React.useCallback((c) => {
+                      const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+                      const currentCostos = ([...((form as any).costos || [])] as any[]);
 
-                  if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
-                    const prev = currentCrono[editingIndex];
-                    const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
+                      if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+                        const prev = currentCrono[editingIndex];
+                        const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
 
-                    let ubicacionStr = (
-                      [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                    ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                    const match = c?.ubicacionId
-                      ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                      : undefined;
-                    if (!ubicacionStr.trim() && match) {
-                      ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                    }
+                        let ubicacionStr = (
+                          [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+                        ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+                        const match = c?.ubicacionId
+                          ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+                          : undefined;
+                        if (!ubicacionStr.trim() && match) {
+                          ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+                        }
 
-                    const ritmoIds = c.ritmoIds && c.ritmoIds.length
-                      ? c.ritmoIds
-                      : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
-                    const classId = ensureClassId(prev); // Obtener ID de la clase (preservar existente o generar nuevo)
-                    
-                    // Buscar el costo por ID de clase (más confiable que por nombre)
-                    const costoIdx = currentCostos.findIndex((x: any) => {
-                      // Buscar por ID de clase (más confiable - no cambia aunque cambie el nombre)
-                      if (x?.classId && classId && String(x.classId) === String(classId)) return true;
-                      // Buscar por referenciaCosto que sea el ID (para compatibilidad)
-                      if (x?.referenciaCosto && String(x.referenciaCosto) === String(classId)) return true;
-                      // Buscar por índice del cronograma (fallback)
-                      if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
-                      // Buscar por nombre anterior (último fallback para costos antiguos)
-                      return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
-                    });
-                    
-                    const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id 
-                      ? currentCostos[costoIdx].id 
-                      : Date.now(); // Generar ID único si no existe
-                    const updatedCosto = {
-                      id: costoId, // ID único del costo
-                      nombre: c.nombre, // Mantener nombre para visualización
-                      tipo: c.tipo,
-                      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                      regla: c.regla || '',
-                      classId: classId, // ID de la clase (referencia principal)
-                      referenciaCosto: String(classId), // También guardar como referenciaCosto para compatibilidad
-                      cronogramaIndex: editingIndex // Guardar índice para búsqueda futura
-                    } as any;
-                    if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
-                    
-                    const updatedItem = {
-                      ...prev,
-                      id: classId,
-                      tipo: 'clase',
-                      titulo: c.nombre,
-                      descripcion: c.descripcion || undefined,
-                      fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                      fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                      diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                      diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                        // Convertir números a nombres de días
-                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                        return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                      })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                        return [dayNames[c.diaSemana]] as string[];
-                      })() : undefined),
-                      recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                      horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                      inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                      fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                      duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                      nivel: c.nivel || undefined,
-                      referenciaCosto: String(classId), // Usar ID de clase en lugar del nombre
-                      costo: updatedCosto, // Incluir costo directamente en el item del cronograma
-                      ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                      ritmoIds,
-                      zonaId: c.zonaId,
-                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                      ubicacionId: c.ubicacionId || (match?.id || null)
-                    };
-                    currentCrono[editingIndex] = updatedItem;
+                        const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                          ? c.ritmoIds
+                          : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
+                        const classId = ensureClassId(prev);
+                        
+                        const costoIdx = currentCostos.findIndex((x: any) => {
+                          if (x?.classId && x.classId === classId) return true;
+                          if (x?.referenciaCosto && Number(x.referenciaCosto) === classId) return true;
+                          if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
+                          return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
+                        });
+                        
+                        const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id 
+                          ? currentCostos[costoIdx].id 
+                          : Date.now();
+                        const updatedCosto = {
+                          id: costoId,
+                          nombre: c.nombre,
+                          tipo: c.tipo,
+                          precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+                          regla: c.regla || '',
+                          classId: classId,
+                          referenciaCosto: String(classId),
+                          cronogramaIndex: editingIndex
+                        } as any;
+                        if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
+                        
+                        const updatedItem = {
+                          ...prev,
+                          id: classId,
+                          tipo: 'clase',
+                          titulo: c.nombre,
+                          descripcion: c.descripcion || undefined,
+                          fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+                          fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+                          diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+                          diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                            return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+                          })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                            return [dayNames[c.diaSemana]] as string[];
+                          })() : undefined),
+                          recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+                          horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+                          inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+                          fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+                          duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+                          nivel: c.nivel || undefined,
+                          referenciaCosto: String(classId),
+                          costo: updatedCosto,
+                          ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+                          ritmoIds,
+                          zonaId: c.zonaId,
+                          ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+                          ubicacionId: c.ubicacionId || (match?.id || null)
+                        };
+                        currentCrono[editingIndex] = updatedItem;
 
-                    setField('cronograma' as any, currentCrono as any);
-                    setField('costos' as any, currentCostos as any);
+                        setField('cronograma' as any, currentCrono as any);
+                        setField('costos' as any, currentCostos as any);
 
-                    return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
-                      .then(() => {
-                        setEditingIndex(null);
-                        setEditInitial(undefined);
-                      });
-                  } else {
-                    let ubicacionStr = (
-                      [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                    ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                    const match = c?.ubicacionId
-                      ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                      : undefined;
-                    if (!ubicacionStr.trim() && match) {
-                      ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                    }
+                        return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
+                          .then(() => {
+                            setEditingIndex(null);
+                            setEditInitial(undefined);
+                          });
+                      } else {
+                        let ubicacionStr = (
+                          [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+                        ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+                        const match = c?.ubicacionId
+                          ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+                          : undefined;
+                        if (!ubicacionStr.trim() && match) {
+                          ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+                        }
 
-                    const ritmoIds = c.ritmoIds && c.ritmoIds.length
-                      ? c.ritmoIds
-                      : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
-                    const newClassId = generateClassId(); // Generar ID único para la nueva clase
-                    const newClassIndex = currentCrono.length; // Índice de la nueva clase en el cronograma
-                    
-                    const newCosto = {
-                      id: Date.now(), // ID único del costo
-                      nombre: c.nombre, // Mantener nombre para visualización
-                      tipo: c.tipo,
-                      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                      regla: c.regla || '',
-                      classId: newClassId, // ID de la clase (referencia principal)
-                      referenciaCosto: String(newClassId), // También guardar como referenciaCosto para compatibilidad
-                      cronogramaIndex: newClassIndex // Guardar índice para búsqueda futura
-                    } as any;
-                    
-                    const nextCrono = ([...currentCrono, {
-                      id: newClassId,
-                      tipo: 'clase',
-                      titulo: c.nombre,
-                      descripcion: c.descripcion || undefined,
-                      fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                      fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                      diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                      diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                        // Convertir números a nombres de días
-                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                        return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                      })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                        return [dayNames[c.diaSemana]] as string[];
-                      })() : undefined),
-                      recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                      horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                      inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                      fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                      duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                      nivel: c.nivel || undefined,
-                      referenciaCosto: String(newClassId), // Usar ID de clase en lugar del nombre
-                      costo: newCosto, // Incluir costo directamente en el item del cronograma
-                      ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                      ritmoIds,
-                      zonaId: c.zonaId,
-                      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                      ubicacionId: c.ubicacionId || (match?.id || null)
-                    }] as any);
-                    const nextCostos = ([...currentCostos, newCosto] as any);
-                    setField('cronograma' as any, nextCrono as any);
-                    setField('costos' as any, nextCostos as any);
+                        const ritmoIds = c.ritmoIds && c.ritmoIds.length
+                          ? c.ritmoIds
+                          : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
+                        const newClassId = generateClassId();
+                        const newClassIndex = currentCrono.length;
+                        
+                        const newCosto = {
+                          id: Date.now(),
+                          nombre: c.nombre,
+                          tipo: c.tipo,
+                          precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+                          regla: c.regla || '',
+                          classId: newClassId,
+                          referenciaCosto: String(newClassId),
+                          cronogramaIndex: newClassIndex
+                        } as any;
+                        
+                        const nextCrono = ([...currentCrono, {
+                          id: newClassId,
+                          tipo: 'clase',
+                          titulo: c.nombre,
+                          descripcion: c.descripcion || undefined,
+                          fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+                          fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+                          diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+                          diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                            return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+                          })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                            return [dayNames[c.diaSemana]] as string[];
+                          })() : undefined),
+                          recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+                          horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+                          inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+                          fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+                          duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+                          nivel: c.nivel || undefined,
+                          referenciaCosto: String(newClassId),
+                          costo: newCosto,
+                          ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+                          ritmoIds,
+                          zonaId: c.zonaId,
+                          ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+                          ubicacionId: c.ubicacionId || (match?.id || null)
+                        }] as any);
+                        const nextCostos = ([...currentCostos, newCosto] as any);
+                        setField('cronograma' as any, nextCrono as any);
+                        setField('costos' as any, nextCostos as any);
 
-                    return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
-                  }
-                }}
-              />
+                        return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
+                      }
+                    }, [form, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId])}
+                  />
+                </React.Suspense>
               )}
 
-              {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
-                <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
-                  {(form as any).cronograma.map((it: any, idx: number) => {
-                    const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
-                    const costo = ((form as any)?.costos || []).find((c: any) => (c?.nombre || '').trim().toLowerCase() === refKey);
-                    const costoLabel = costo ? formatCurrency(costo.precio) : null;
-                    const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null, (it as any)?.diasSemana ?? null);
-                    return (
-                      <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
-                          <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'}</span>
-                          {(fechaLabel || costoLabel) && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                              {fechaLabel && (
-                                <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(240,147,251,0.15)', border: '1px solid rgba(240,147,251,0.28)' }}>
-                                  📅 {fechaLabel}
-                                </span>
-                              )}
-                              {costoLabel && (
-                                <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.28)' }}>
-                                  💰 {costoLabel === 'Gratis' ? 'Gratis' : costoLabel}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => {
+              {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (() => {
+                const cronograma = (form as any).cronograma;
+                const costos = (form as any)?.costos || [];
+                
+                // Memoize handlers for class edit/delete
+                const handleClassEdit = React.useCallback((idx: number, it: any, costo: any) => {
                             setEditingIndex(idx);
-                            setEditInitial({
-                              nombre: it.titulo || '',
-                              tipo: (costo?.tipo as any) || 'clases sueltas',
-                              precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
-                              regla: costo?.regla || '',
-                              nivel: (it as any)?.nivel ?? null,
-                              descripcion: (it as any)?.descripcion || '',
-                              fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
-                              fecha: it.fecha || '',
-                              diaSemana: (it as any)?.diaSemana ?? null,
-                              diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? (() => {
-                                // Convertir strings o números a números
                                 const dayNameToNumber = (dayName: string | number): number | null => {
                                   if (typeof dayName === 'number') return dayName;
                                   const normalized = String(dayName).toLowerCase().trim();
@@ -1794,8 +2154,19 @@ export default function TeacherProfileEditor() {
                                   };
                                   return map[normalized] ?? null;
                                 };
-                                return (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
-                              })() : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
+                  setEditInitial({
+                    nombre: it.titulo || '',
+                    tipo: (costo?.tipo as any) || 'clases sueltas',
+                    precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
+                    regla: costo?.regla || '',
+                    nivel: (it as any)?.nivel ?? null,
+                    descripcion: (it as any)?.descripcion || '',
+                    fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
+                    fecha: it.fecha || '',
+                    diaSemana: (it as any)?.diaSemana ?? null,
+                    diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) 
+                      ? (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[]
+                      : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
                               horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
                               inicio: it.inicio || '',
                               fin: it.fin || '',
@@ -1807,61 +2178,70 @@ export default function TeacherProfileEditor() {
                               ubicacionId: (it as any)?.ubicacionId || null
                             });
                             setStatusMsg(null);
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: 10,
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Editar
-                        </button>
+                }, []);
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
-                            if (!ok) return;
+                const handleClassDelete = React.useCallback((classId: number, refKey: string) => {
+                  const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
+                  if (!ok) return;
 
-                            const currentCrono = ([...((form as any).cronograma || [])] as any[]);
-                            const currentCostos = ([...((form as any).costos || [])] as any[]);
+                  const currentCrono = ([...cronograma] as any[]);
+                  const currentCostos = ([...costos] as any[]);
 
-                            const nextCrono = currentCrono.filter((_: any, i: number) => i !== idx);
-                            const nextCostos = refKey
-                              ? currentCostos.filter((c: any) => (c?.nombre || '').trim().toLowerCase() !== refKey)
-                              : currentCostos;
+                  const nextCrono = currentCrono.filter((it: any) => {
+                    const itId = ensureClassId(it);
+                    return itId !== classId;
+                  });
+                  const nextCostos = refKey
+                    ? currentCostos.filter((c: any) => {
+                        const cRef = (c?.referenciaCosto || c?.nombre || '').trim().toLowerCase();
+                        return cRef !== refKey;
+                      })
+                    : currentCostos;
 
-                            setField('cronograma' as any, nextCrono as any);
-                            setField('costos' as any, nextCostos as any);
+                  setField('cronograma' as any, nextCrono as any);
+                  setField('costos' as any, nextCostos as any);
 
-                            autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
-                              .then(() => {
-                                if (editingIndex !== null && editingIndex === idx) {
-                                  setEditingIndex(null);
-                                  setEditInitial(undefined);
-                                }
-                              });
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: 10,
-                            border: '1px solid rgba(229,57,53,0.35)',
-                            background: 'rgba(229,57,53,0.12)',
-                            color: '#fff',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                      </div>
-                    );
-                  })}
+                  autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
+                    .then(() => {
+                      if (editingIndex !== null) {
+                        const editingClassId = ensureClassId(cronograma[editingIndex]);
+                        if (editingClassId === classId) {
+                          setEditingIndex(null);
+                          setEditInitial(undefined);
+                        }
+                      }
+                    });
+                }, [cronograma, costos, setField, autoSaveClasses, editingIndex]);
+
+                return (
+                  <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+                    {cronograma.map((it: any) => {
+                      const classId = ensureClassId(it);
+                      const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
+                      const costo = costos.find((c: any) => {
+                        if (c?.classId && c.classId === classId) return true;
+                        if (c?.referenciaCosto && Number(c.referenciaCosto) === classId) return true;
+                        return (c?.nombre || '').trim().toLowerCase() === refKey;
+                      });
+                      const costoLabel = costo ? formatCurrency(costo.precio) : null;
+                      const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null, (it as any)?.diasSemana ?? null);
+                      const idx = cronograma.findIndex((item: any) => ensureClassId(item) === classId);
+                      
+                      return (
+                        <ClassListItem
+                          key={classId}
+                          item={it}
+                          costo={costo}
+                          fechaLabel={fechaLabel}
+                          costoLabel={costoLabel}
+                          onEdit={() => handleClassEdit(idx, it, costo)}
+                          onDelete={() => handleClassDelete(classId, refKey)}
+                        />
+                      );
+                    })}
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Vista previa dentro del mismo contenedor */}
@@ -1886,12 +2266,14 @@ export default function TeacherProfileEditor() {
         {/* Promociones y paquetes */}
         {supportsPromotions && (
           <div style={{ marginBottom: '3rem' }}>
+            <React.Suspense fallback={<div role="status" aria-live="polite">Cargando editor de promociones...</div>}>
             <CostsPromotionsEditor
               value={(form as any).promociones || []}
               onChange={autoSavePromociones}
               label="💸 Promociones y Paquetes"
               helperText="Crea promociones especiales, paquetes de clases o descuentos con fecha de vigencia para tus estudiantes."
             />
+            </React.Suspense>
           </div>
         )}
 
@@ -1902,24 +2284,9 @@ export default function TeacherProfileEditor() {
               🎓 Doy clases en
             </h2>
             <div className="academies-grid">
-              {academies.map((academy: any) => {
-                // Mapear datos de la vista a formato de AcademyCard
-                const academyData = {
-                  id: academy.academy_id,
-                  nombre_publico: academy.academy_name,
-                  bio: academy.academy_bio || '',
-                  avatar_url: academy.academy_avatar || null,
-                  portada_url: academy.academy_portada || null,
-                  ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
-                  zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-                  media: academy.academy_portada 
-                    ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
-                    : academy.academy_avatar 
-                    ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-                    : []
-                };
-                return <AcademyCard key={academy.academy_id} item={academyData} />;
-              })}
+              {academies.map((academy: any) => (
+                <AcademyItem key={academy.academy_id} academy={academy} />
+              ))}
             </div>
           </div>
         )}
@@ -1942,107 +2309,15 @@ export default function TeacherProfileEditor() {
                   Las academias pueden invitarte a colaborar con ellas
                 </p>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {invitations.map((inv: any) => {
-                  const academy = inv.academy;
-                  if (!academy) return null;
-
-                  return (
-                    <div
-                      key={inv.id}
-                      className="invitation-card"
-                      style={{
-                        padding: '1.5rem',
-                        background: inv.status === 'pending' 
-                          ? 'rgba(255, 193, 7, 0.1)' 
-                          : inv.status === 'accepted'
-                          ? 'rgba(16, 185, 129, 0.1)'
-                          : 'rgba(239, 68, 68, 0.1)',
-                        borderRadius: '12px',
-                        border: `1px solid ${
-                          inv.status === 'pending' 
-                            ? 'rgba(255, 193, 7, 0.3)' 
-                            : inv.status === 'accepted'
-                            ? 'rgba(16, 185, 129, 0.3)'
-                            : 'rgba(239, 68, 68, 0.3)'
-                        }`
-                      }}
-                    >
-                      <div style={{
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '50%',
-                        background: academy.avatar_url 
-                          ? `url(${academy.avatar_url}) center/cover`
-                          : 'linear-gradient(135deg, #E53935, #FB8C00)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: '700',
-                        fontSize: '1.25rem',
-                        flexShrink: 0
-                      }}>
-                        {!academy.avatar_url && (academy.nombre_publico?.[0]?.toUpperCase() || '🎓')}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem' }}>
-                          {academy.nombre_publico}
-                        </h3>
-                        {academy.bio && (
-                          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', opacity: 0.7, color: colors.light }}>
-                            {academy.bio.substring(0, 100)}{academy.bio.length > 100 ? '...' : ''}
-                          </p>
-                        )}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            padding: '0.25rem 0.5rem',
-                            background: inv.status === 'pending' 
-                              ? 'rgba(255, 193, 7, 0.2)' 
-                              : inv.status === 'accepted'
-                              ? 'rgba(16, 185, 129, 0.2)'
-                              : 'rgba(239, 68, 68, 0.2)',
-                            border: `1px solid ${
-                              inv.status === 'pending' 
-                                ? '#FFC107' 
-                                : inv.status === 'accepted'
-                                ? '#10B981'
-                                : '#EF4444'
-                            }`,
-                            borderRadius: '8px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            color: inv.status === 'pending' 
-                              ? '#FFC107' 
-                              : inv.status === 'accepted'
-                              ? '#10B981'
-                              : '#EF4444'
-                          }}>
-                            {inv.status === 'pending' && '⏳ Pendiente'}
-                            {inv.status === 'accepted' && '✅ Aceptada'}
-                            {inv.status === 'rejected' && '❌ Rechazada'}
-                            {inv.status === 'cancelled' && '🚫 Cancelada'}
-                          </span>
-                          {inv.invited_at && (
-                            <span style={{ fontSize: '0.75rem', opacity: 0.6, color: colors.light }}>
-                              {new Date(inv.invited_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {inv.status === 'pending' && (
-                        <div className="invitation-actions">
-                          <button
-                            onClick={async () => {
+            ) : (() => {
+              const handleAcceptInvitation = React.useCallback(async (invitationId: number) => {
                               try {
                                 await respondToInvitation.mutateAsync({
-                                  invitationId: inv.id,
+                                  invitationId,
                                   status: 'accepted'
                                 });
                                 setStatusMsg({ type: 'ok', text: '✅ Invitación aceptada' });
                                 setTimeout(() => setStatusMsg(null), 3000);
-                                // Forzar refetch de las queries
                                 setTimeout(async () => {
                                   await refetchInvitations();
                                   await refetchAcademies();
@@ -2051,26 +2326,12 @@ export default function TeacherProfileEditor() {
                                 setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
                                 setTimeout(() => setStatusMsg(null), 3000);
                               }
-                            }}
-                            disabled={respondToInvitation.isPending}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              background: 'linear-gradient(135deg, #10B981, #059669)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              color: 'white',
-                              fontWeight: '600',
-                              cursor: respondToInvitation.isPending ? 'not-allowed' : 'pointer',
-                              opacity: respondToInvitation.isPending ? 0.6 : 1
-                            }}
-                          >
-                            ✅ Aceptar
-                          </button>
-                          <button
-                            onClick={async () => {
+              }, [respondToInvitation, refetchInvitations, refetchAcademies]);
+
+              const handleRejectInvitation = React.useCallback(async (invitationId: number) => {
                               try {
                                 await respondToInvitation.mutateAsync({
-                                  invitationId: inv.id,
+                                  invitationId,
                                   status: 'rejected'
                                 });
                                 setStatusMsg({ type: 'ok', text: 'Invitación rechazada' });
@@ -2079,35 +2340,16 @@ export default function TeacherProfileEditor() {
                                 setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
                                 setTimeout(() => setStatusMsg(null), 3000);
                               }
-                            }}
-                            disabled={respondToInvitation.isPending}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              background: 'rgba(239, 68, 68, 0.2)',
-                              border: '1px solid #EF4444',
-                              borderRadius: '8px',
-                              color: '#EF4444',
-                              fontWeight: '600',
-                              cursor: respondToInvitation.isPending ? 'not-allowed' : 'pointer',
-                              opacity: respondToInvitation.isPending ? 0.6 : 1
-                            }}
-                          >
-                            ❌ Rechazar
-                          </button>
-                        </div>
-                      )}
-                      {inv.status === 'accepted' && (
-                        <div className="invitation-actions">
-                          <button
-                            onClick={async () => {
+              }, [respondToInvitation]);
+
+              const handleRemoveInvitation = React.useCallback(async (invitationId: number) => {
                               if (!confirm('¿Estás seguro de que quieres dejar de aparecer en esta academia?')) {
                                 return;
                               }
                               try {
-                                await removeInvitation.mutateAsync(inv.id);
+                                await removeInvitation.mutateAsync(invitationId);
                                 setStatusMsg({ type: 'ok', text: '✅ Ya no apareces en esta academia' });
                                 setTimeout(() => setStatusMsg(null), 3000);
-                                // Forzar refetch de las queries
                                 setTimeout(async () => {
                                   await refetchInvitations();
                                   await refetchAcademies();
@@ -2116,28 +2358,25 @@ export default function TeacherProfileEditor() {
                                 setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
                                 setTimeout(() => setStatusMsg(null), 3000);
                               }
-                            }}
-                            disabled={removeInvitation.isPending}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              background: 'rgba(239, 68, 68, 0.2)',
-                              border: '1px solid #EF4444',
-                              borderRadius: '8px',
-                              color: '#EF4444',
-                              fontWeight: '600',
-                              cursor: removeInvitation.isPending ? 'not-allowed' : 'pointer',
-                              opacity: removeInvitation.isPending ? 0.6 : 1
-                            }}
-                          >
-                            🚫 Quitar
-                          </button>
-                        </div>
-                      )}
+              }, [removeInvitation, refetchInvitations, refetchAcademies]);
+
+              return (
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {invitations.map((inv: any) => (
+                    <InvitationItem
+                      key={inv.id}
+                      invitation={inv}
+                      colors={colors}
+                      onAccept={() => handleAcceptInvitation(Number(inv.id))}
+                      onReject={() => handleRejectInvitation(Number(inv.id))}
+                      onRemove={() => handleRemoveInvitation(Number(inv.id))}
+                      isAccepting={respondToInvitation.isPending}
+                      isRemoving={removeInvitation.isPending}
+                    />
+                  ))}
                     </div>
                   );
-                })}
-              </div>
-            )}
+            })()}
           </div>
         )}
 
@@ -2149,20 +2388,9 @@ export default function TeacherProfileEditor() {
                 🎯 Grupos de Competencia
               </h2>
               <button
-                onClick={() => navigate('/competition-groups/new')}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
+                onClick={handleCreateGroup}
+                className="create-group-button"
+                aria-label="Crear nuevo grupo de competencia"
               >
                 ➕ Crear Grupo
               </button>
@@ -2180,113 +2408,51 @@ export default function TeacherProfileEditor() {
                   Crea un grupo para organizar entrenamientos y competencias
                 </p>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {myCompetitionGroups
-                  .filter((g: any) => g.owner_id === user?.id)
-                  .map((group: any) => (
-                    <div
+            ) : (() => {
+              const handleViewGroup = React.useCallback((groupId: string) => {
+                navigate(`/competition-groups/${groupId}`);
+              }, [navigate]);
+
+              const handleEditGroup = React.useCallback((groupId: string) => {
+                navigate(`/competition-groups/${groupId}/edit`);
+              }, [navigate]);
+
+              const handleDeleteGroup = React.useCallback(async (groupId: string) => {
+                if (!window.confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
+                  return;
+                }
+                try {
+                  await deleteGroup.mutateAsync(groupId);
+                  setStatusMsg({ type: 'ok', text: '✅ Grupo eliminado exitosamente' });
+                  setTimeout(() => setStatusMsg(null), 3000);
+                  await refetchGroups();
+                } catch (error: any) {
+                  setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
+                  setTimeout(() => setStatusMsg(null), 3000);
+                }
+              }, [deleteGroup, refetchGroups]);
+
+              const ownedGroups = React.useMemo(() => 
+                (myCompetitionGroups || []).filter((g: any) => g.owner_id === user?.id),
+                [myCompetitionGroups, user?.id]
+              );
+
+              return (
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {ownedGroups.map((group: any) => (
+                    <CompetitionGroupItem
                       key={group.id}
-                      className="competition-group-item"
-                      style={{
-                        padding: '1.5rem',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '1rem'
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ margin: 0, color: colors.light, fontSize: '1.1rem', marginBottom: '0.5rem', wordBreak: 'break-word' }}>
-                          {group.name}
-                        </h3>
-                        {group.description && (
-                          <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.7, color: colors.light, marginBottom: '0.5rem', wordBreak: 'break-word' }}>
-                            {group.description.substring(0, 100)}{group.description.length > 100 ? '...' : ''}
-                          </p>
-                        )}
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                          {group.training_location && (
-                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.3)', borderRadius: '8px', color: '#fff', wordBreak: 'break-word' }}>
-                              📍 {group.training_location}
-                            </span>
-                          )}
-                          {group.cost_amount && (
-                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#fff' }}>
-                              💰 ${group.cost_amount} {group.cost_type === 'monthly' ? '/mes' : group.cost_type === 'per_session' ? '/sesión' : '/paquete'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="competition-group-actions" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                        <button
-                          onClick={() => navigate(`/competition-groups/${group.id}`)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: 'rgba(30,136,229,0.2)',
-                            border: '1px solid #1E88E5',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            fontSize: '0.875rem',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Ver
-                        </button>
-                        <button
-                          onClick={() => navigate(`/competition-groups/${group.id}/edit`)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: 'rgba(255,193,7,0.2)',
-                            border: '1px solid #FFC107',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            fontSize: '0.875rem',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!window.confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
-                              return;
-                            }
-                            try {
-                              await deleteGroup.mutateAsync(group.id);
-                              setStatusMsg({ type: 'ok', text: '✅ Grupo eliminado exitosamente' });
-                              setTimeout(() => setStatusMsg(null), 3000);
-                              await refetchGroups();
-                            } catch (error: any) {
-                              setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
-                              setTimeout(() => setStatusMsg(null), 3000);
-                            }
-                          }}
-                          disabled={deleteGroup.isPending}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: 'rgba(239,68,68,0.2)',
-                            border: '1px solid #EF4444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            fontSize: '0.875rem',
-                            fontWeight: '600',
-                            cursor: deleteGroup.isPending ? 'not-allowed' : 'pointer',
-                            opacity: deleteGroup.isPending ? 0.6 : 1
-                          }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
+                      group={group}
+                      colors={colors}
+                      onView={() => handleViewGroup(group.id)}
+                      onEdit={() => handleEditGroup(group.id)}
+                      onDelete={() => handleDeleteGroup(group.id)}
+                      isDeleting={deleteGroup.isPending}
+                    />
                   ))}
-              </div>
-            )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -2296,7 +2462,9 @@ export default function TeacherProfileEditor() {
             💬 Información para Estudiantes
           </h2>
 
-          <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
+          <React.Suspense fallback={<div role="status" aria-live="polite">Cargando editor de FAQ...</div>}>
+            <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
+          </React.Suspense>
         </div>
 
         {/* Reseñas de Alumnos */}
@@ -2324,53 +2492,61 @@ export default function TeacherProfileEditor() {
         {/* Gestión de Fotos - Dos Columnas */}
         <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
           {/* Columna 1: Avatar / Foto Principal */}
-          <PhotoManagementSection
-            media={media}
-            uploading={{ p1: add.isPending }}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Gestión de Fotos"
-            description="👤 Avatar / Foto Principal (p1)"
-            slots={['p1']}
-            isMainPhoto={true}
-          />
+          <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
+            <PhotoManagementSection
+              media={media}
+              uploading={{ p1: add.isPending }}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Gestión de Fotos"
+              description="👤 Avatar / Foto Principal (p1)"
+              slots={['p1']}
+              isMainPhoto={true}
+            />
+          </React.Suspense>
 
           {/* Columna 2: Fotos Destacadas */}
-          <PhotoManagementSection
-            media={media}
-            uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Fotos Destacadas (p2 - p3)"
-            description="Estas fotos se usan en las secciones destacadas de tu perfil"
-            slots={['p2', 'p3']}
-            isMainPhoto={false}
-            verticalLayout={true}
-          />
+          <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
+            <PhotoManagementSection
+              media={media}
+              uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
+              uploadFile={uploadFile}
+              removeFile={removeFile}
+              title="📷 Fotos Destacadas (p2 - p3)"
+              description="Estas fotos se usan en las secciones destacadas de tu perfil"
+              slots={['p2', 'p3']}
+              isMainPhoto={false}
+              verticalLayout={true}
+            />
+          </React.Suspense>
         </div>
 
         {/* Fotos Adicionales */}
-        <PhotoManagementSection
-          media={media}
-          uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="📷 Fotos Adicionales (p4-p10)"
-          description="Más fotos para mostrar diferentes aspectos de tu Maestro"
-          slots={PHOTO_SLOTS.slice(3)} // p4-p10
-        />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
+          <PhotoManagementSection
+            media={media}
+            uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="📷 Fotos Adicionales (p4-p10)"
+            description="Más fotos para mostrar diferentes aspectos de tu Maestro"
+            slots={PHOTO_SLOTS.slice(3)} // p4-p10
+          />
+        </React.Suspense>
 
         {/* Gestión de Videos */}
-        <VideoManagementSection
-          media={media}
-          uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
-          uploadFile={uploadFile}
-          removeFile={removeFile}
-          title="🎥 Gestión de Videos"
-          description="Videos promocionales, clases de muestra, testimonios"
-          slots={[...VIDEO_SLOTS]}
-        />
-          </>
+        <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de videos...</div>}>
+          <VideoManagementSection
+            media={media}
+            uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
+            uploadFile={uploadFile}
+            removeFile={removeFile}
+            title="🎥 Gestión de Videos"
+            description="Videos promocionales, clases de muestra, testimonios"
+            slots={[...VIDEO_SLOTS]}
+          />
+        </React.Suspense>
+          </div>
         )}
       </div>
     </div>

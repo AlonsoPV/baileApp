@@ -1,11 +1,7 @@
-import React from "react";
+import React, { useMemo, useCallback, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
-import ImageWithFallback from "../../components/ImageWithFallback";
-import SocialMediaSection from "../../components/profile/SocialMediaSection";
-import { BioSection } from "../../components/profile/BioSection";
-import { colors, typography, spacing, borderRadius } from "../../theme/colors";
+import { colors, typography, spacing } from "../../theme/colors";
 import { useMyBrand } from "../../hooks/useBrand";
 import { 
   FaInstagram, 
@@ -15,6 +11,56 @@ import {
   FaWhatsapp,
   FaGlobe
 } from 'react-icons/fa';
+import "./BrandProfileLive.css";
+
+// Lazy load components
+const ProfileNavigationToggle = lazy(() => import("../../components/profile/ProfileNavigationToggle").then(m => ({ default: m.ProfileNavigationToggle })));
+const ImageWithFallback = lazy(() => import("../../components/ImageWithFallback"));
+
+// Type for brand profile
+type Brand = Partial<{
+  id: string | number;
+  nombre_publico: string;
+  nombre: string;
+  bio: string;
+  avatar_url: string;
+  portada_url: string;
+  media: Array<string | { url?: string }>;
+  productos: Array<{
+    id?: string | number;
+    titulo?: string;
+    descripcion?: string;
+    price?: number | string;
+    precio?: number | string;
+    imagen_url?: string;
+    categoria?: 'calzado' | 'ropa' | 'accesorios';
+    category?: string;
+    gender?: 'caballero' | 'dama' | 'unisex';
+    sizes?: string[];
+  }>;
+  policies?: { shipping?: string; returns?: string; warranty?: string };
+  size_guide?: Array<{ mx: string; us: string; eu: string }>;
+  fit_tips?: Array<{ style: string; tip: string }>;
+  conversion?: { 
+    headline?: string; 
+    subtitle?: string; 
+    coupons?: string[]; 
+    calzadoLabel?: string; 
+    ropaLabel?: string; 
+    accesoriosLabel?: string;
+  };
+  redes_sociales?: { 
+    instagram?: string; 
+    tiktok?: string; 
+    youtube?: string; 
+    facebook?: string; 
+    whatsapp?: string; 
+    web?: string;
+  };
+  estado_aprobacion?: string;
+  whatsapp_number?: string;
+  whatsapp_message_template?: string;
+}>;
 
 // Helper para formatear precios
 function formatPrice(price: string | number | undefined): string {
@@ -31,6 +77,20 @@ function formatPrice(price: string | number | undefined): string {
   
   // Formatear con comas y decimales
   return `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
+}
+
+// Helper para normalizar URLs externas (evita javascript: por error)
+function safeExternalUrl(href?: string): string | undefined {
+  if (!href) return undefined;
+  const trimmed = href.trim();
+  if (!trimmed) return undefined;
+  const hasProtocol = /^https?:\/\//i.test(trimmed);
+  const url = hasProtocol ? trimmed : `https://${trimmed}`;
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.toString();
+  } catch {}
+  return undefined;
 }
 
 // Helper para construir URL de WhatsApp con mensaje personalizado
@@ -66,13 +126,15 @@ function buildProductWhatsAppUrl(
 
 export default function BrandProfileLive() {
   const navigate = useNavigate();
-  const { data: brand, isLoading } = useMyBrand();
+  const { data: brand, isLoading } = useMyBrand() as { data: Brand | undefined; isLoading: boolean };
   const [copied, setCopied] = React.useState(false);
 
   // ✅ Auto-redirigir a Edit si no tiene perfil de marca (DEBE estar ANTES de cualquier return)
   React.useEffect(() => {
     if (!isLoading && !brand) {
-      console.log('[BrandProfileLive] No profile found, redirecting to edit...');
+      if (import.meta.env.DEV) {
+        console.log('[BrandProfileLive] No profile found, redirecting to edit...');
+      }
       navigate('/profile/brand/edit', { replace: true });
     }
   }, [isLoading, brand, navigate]);
@@ -115,141 +177,99 @@ export default function BrandProfileLive() {
     );
   }
 
-  // Prioriza el logo guardado; luego primer media normalizado
-  const media: string[] = Array.isArray((brand as any).media)
-    ? (brand as any).media.map((m: any) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
-    : [];
-  const avatarUrl = (brand as any).avatar_url || media[0] || undefined;
-  const portadaUrl = (brand as any).portada_url as string | undefined;
+  // Memoizar media
+  const media = useMemo(() => {
+    const arr = Array.isArray(brand?.media)
+      ? brand.media.map((m) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
+      : [];
+    return arr as string[];
+  }, [brand]);
 
-  // Normalizaciones para catálogo
-  const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];
-  const featured = productos.map((p: any) => ({
-    id: p.id || Math.random().toString(36).slice(2),
-    name: p.titulo || 'Producto',
-    description: p.descripcion || '',
-    price: formatPrice(p.price || p.precio),
-    image: p.imagen_url,
-    category: (p.categoria || p.category || 'ropa') as 'calzado'|'ropa'|'accesorios',
-    gender: (p.gender || 'unisex') as 'caballero'|'dama'|'unisex',
-    sizes: Array.isArray(p.sizes) ? p.sizes : [],
-  }));
-  const policies = (brand as any)?.policies || { shipping: undefined as any, returns: undefined as any, warranty: undefined as any };
-  const sizeGuideRows = Array.isArray((brand as any)?.size_guide) ? (brand as any).size_guide : [];
-  const fitTipsRows = Array.isArray((brand as any)?.fit_tips) ? (brand as any).fit_tips : [];
-  const conversion = (brand as any)?.conversion || {};
+  // Memoizar avatar y portada
+  const avatarUrl = useMemo(() => brand?.avatar_url || media[0] || undefined, [brand, media]);
+  const portadaUrl = useMemo(() => brand?.portada_url as string | undefined, [brand]);
+
+  // Memoizar productos normalizados
+  const productos = useMemo(() => {
+    const list = Array.isArray(brand?.productos) ? brand.productos : [];
+    return list.map((p) => ({
+      id: p.id ?? `p-${p.titulo ?? 'producto'}-${p.price ?? p.precio ?? '0'}`,
+      name: p.titulo || 'Producto',
+      description: p.descripcion || '',
+      price: formatPrice(p.price || p.precio),
+      image: p.imagen_url,
+      category: (p.categoria || p.category || 'ropa') as 'calzado' | 'ropa' | 'accesorios',
+      gender: (p.gender || 'unisex') as 'caballero' | 'dama' | 'unisex',
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+    }));
+  }, [brand]);
+
+  const featured = productos; // alias semántico
+
+  // Memoizar políticas y guías
+  const policies = useMemo(() => brand?.policies || { shipping: undefined, returns: undefined, warranty: undefined }, [brand?.policies]);
+  const sizeGuideRows = useMemo(() => Array.isArray(brand?.size_guide) ? brand.size_guide : [], [brand?.size_guide]);
+  const fitTipsRows = useMemo(() => Array.isArray(brand?.fit_tips) ? brand.fit_tips : [], [brand?.fit_tips]);
+  const conversion = useMemo(() => brand?.conversion || {}, [brand?.conversion]);
   const partners: any[] = [];
   
-  // Configuración WhatsApp para productos
-  const whatsappNumber = (brand as any)?.whatsapp_number || (brand as any)?.redes_sociales?.whatsapp || null;
-  const whatsappMessageTemplate = (brand as any)?.whatsapp_message_template || 'me interesa el producto: {nombre}';
+  // Memoizar configuración WhatsApp para productos
+  const whatsappNumber = useMemo(() => brand?.whatsapp_number || brand?.redes_sociales?.whatsapp || null, [brand]);
+  const whatsappMessageTemplate = useMemo(() => brand?.whatsapp_message_template || 'me interesa el producto: {nombre}', [brand?.whatsapp_message_template]);
+
+  // Handler para compartir con useCallback
+  const onShare = useCallback(() => {
+    try {
+      const brandId = brand?.id;
+      if (!brandId || typeof window === 'undefined') return;
+      const publicUrl = `${window.location.origin}/marca/${brandId}`;
+      const title = brand?.nombre_publico || 'Marca';
+      const text = `Mira el perfil de ${title}`;
+      const navAny = navigator as any;
+      if (navAny?.share) {
+        navAny.share({ title, text, url: publicUrl }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(publicUrl)
+          .then(() => { 
+            setCopied(true); 
+            setTimeout(() => setCopied(false), 1500); 
+          })
+          .catch(() => {});
+      }
+    } catch {}
+  }, [brand]);
+
+  // Memoizar URLs de redes sociales con safeExternalUrl
+  const redes = useMemo(() => {
+    if (!brand?.redes_sociales) return null;
+    const rs = brand.redes_sociales;
+    const hasAnyRed = rs.instagram || rs.tiktok || rs.youtube || rs.facebook || rs.whatsapp || rs.web;
+    if (!hasAnyRed) return null;
+    
+    return {
+      instagram: rs.instagram ? safeExternalUrl(
+        rs.instagram.startsWith('http') ? rs.instagram : `https://instagram.com/${rs.instagram.replace('@', '')}`
+      ) : undefined,
+      tiktok: rs.tiktok ? safeExternalUrl(
+        rs.tiktok.startsWith('http') ? rs.tiktok : `https://tiktok.com/@${rs.tiktok.replace('@', '')}`
+      ) : undefined,
+      youtube: rs.youtube ? safeExternalUrl(rs.youtube) : undefined,
+      facebook: rs.facebook ? safeExternalUrl(
+        rs.facebook.startsWith('http') ? rs.facebook : `https://facebook.com/${rs.facebook}`
+      ) : undefined,
+      whatsapp: rs.whatsapp ? `https://wa.me/${String(rs.whatsapp).replace(/\D+/g, '')}` : undefined,
+      web: rs.web ? safeExternalUrl(rs.web) : undefined,
+    };
+  }, [brand?.redes_sociales]);
 
   return (
     <>
-      <style>{`
-        .profile-container h2,
-        .profile-container h3 {
-          color: #fff;
-          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
-        }
-        .section-title {
-          font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
-          display: flex; align-items: center; gap: .5rem;
-        }
-        .profile-container { width: 100%; max-width: 900px; margin: 0 auto; }
-        .profile-banner { width: 100%; max-width: 900px; margin: 0 auto; }
-        .banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
-        .glass-card-container {
-          opacity: 1; margin-bottom: 2rem; padding: 2rem; text-align: center;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px; backdrop-filter: blur(10px);
-        }
-        /* Novedades - scroll-snap */
-        .brand-novedades-wrap {
-          overflow-x: auto;
-          display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(260px, 350px);
-          gap: 1rem;
-          padding-bottom: .5rem;
-          scroll-snap-type: x mandatory;
-          justify-content: center;
-        }
-        .brand-novedad-card {
-          scroll-snap-align: start;
-          border-radius: 24px;
-          border: 1px solid rgba(148,163,184,0.35);
-          background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(17,24,39,0.98));
-          box-shadow: 0 18px 40px rgba(0,0,0,0.55);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-        .brand-novedad-media {
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          overflow: visible;
-          background: #020617;
-          padding: 12px;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .brand-novedad-body {
-          flex: 1;
-          text-align: left;
-          padding: 0.9rem 1rem 1rem;
-          background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .brand-novedad-price {
-          font-size: 1.05rem;
-          font-weight: 900;
-          margin-top: .25rem;
-          color: #e5e7eb;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-        }
-        @media (max-width: 768px) {
-          .profile-container { max-width: 100% !important; padding: 1rem !important; }
-          .profile-banner { border-radius: 0 !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
-          .banner-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; justify-items: center !important; text-align: center !important; }
-          .banner-grid h1 { font-size: 2.6rem !important; }
-          .banner-avatar { width: 220px !important; height: 220px !important; }
-          .glass-card-container { padding: 1rem !important; margin-bottom: 1rem !important; border-radius: 16px !important; }
-          .section-title { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
-          img, [style*="objectFit"] { max-width: 100% !important; height: auto !important; object-fit: contain !important; }
-          .brand-novedades-wrap { grid-auto-columns: 86%; }
-        }
-        @media (max-width: 480px) {
-          .banner-grid h1 { font-size: 2.2rem !important; }
-          .banner-avatar { width: 180px !important; height: 180px !important; }
-          .section-title { font-size: 1.1rem !important; }
-          .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
-        }
-        @media (max-width: 430px) {
-          .profile-container { padding: 0.75rem !important; }
-          .profile-banner { padding: 1.25rem 0.875rem !important; }
-          .banner-grid h1 { font-size: 1.9rem !important; }
-          .banner-avatar { width: 160px !important; height: 160px !important; }
-          .section-title { font-size: 1rem !important; margin-bottom: 0.75rem !important; }
-          .glass-card-container { 
-            padding: 0.625rem !important; 
-            border-radius: 10px !important;
-            margin-bottom: 0.875rem !important;
-          }
-          .brand-novedades-wrap { grid-auto-columns: 82% !important; }
-          .brand-novedad-card { border-radius: 18px !important; }
-          .brand-novedad-body { padding: 0.75rem 0.875rem 0.875rem !important; }
-        }
-      `}</style>
 
       <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <ProfileNavigationToggle currentView="live" profileType="brand" />
+          <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+            <ProfileNavigationToggle currentView="live" profileType="brand" />
+          </Suspense>
         </div>
 
         {/* Banner */}
@@ -263,14 +283,16 @@ export default function BrandProfileLive() {
           {portadaUrl && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
               {/* Banner: slot flexible — ideal subir imagen horizontal (ej. 1920×600px o 1600×500px) para que se vea completa */}
-              <ImageWithFallback
-                src={portadaUrl}
-                alt="portada"
-                width={1200}
-                height={500}
-                sizes="(max-width: 768px) 100vw, 1200px"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.25)' }}
-              />
+              <Suspense fallback={<div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.25)' }} />}>
+                <ImageWithFallback
+                  src={portadaUrl}
+                  alt="portada"
+                  width={1200}
+                  height={500}
+                  sizes="(max-width: 768px) 100vw, 1200px"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'rgba(0,0,0,0.25)' }}
+                />
+              </Suspense>
             </div>
           )}
 
@@ -280,29 +302,31 @@ export default function BrandProfileLive() {
               <div className="banner-avatar" style={{ width: '250px', height: '250px', borderRadius: '24px', overflow: 'visible', border: '6px solid rgba(255,255,255,0.9)', boxShadow: '0 12px 40px rgba(0,0,0,0.8)', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', boxSizing: 'border-box' }}>
                 {avatarUrl ? (
                   <div style={{ width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                    <ImageWithFallback
-                      src={avatarUrl}
-                      alt="avatar marca"
-                      sizes="(max-width: 768px) 50vw, 300px"
-                      style={{ 
-                        width: '100%',
-                        height: '100%',
-                        minWidth: 0,
-                        minHeight: 0,
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                        objectPosition: 'center',
-                        display: 'block'
-                      }}
-                    />
+                    <Suspense fallback={<div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.25)' }} />}>
+                      <ImageWithFallback
+                        src={avatarUrl}
+                        alt="avatar marca"
+                        sizes="(max-width: 768px) 50vw, 300px"
+                        style={{ 
+                          width: '100%',
+                          height: '100%',
+                          minWidth: 0,
+                          minHeight: 0,
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'contain',
+                          objectPosition: 'center',
+                          display: 'block'
+                        }}
+                      />
+                    </Suspense>
                   </div>
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '3rem' }}>🏷️</div>
                 )}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                {(brand as any)?.estado_aprobacion === 'aprobado' && (
+                {brand?.estado_aprobacion === 'aprobado' && (
                   <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -336,26 +360,7 @@ export default function BrandProfileLive() {
                 <button
                   aria-label="Compartir perfil"
                   title="Compartir"
-                  onClick={() => {
-                    try {
-                      const brandId = (brand as any)?.id;
-                      const publicUrl = brandId ? `${window.location.origin}/marca/${brandId}` : '';
-                      const title = (brand as any)?.nombre_publico || 'Marca';
-                      const text = `Mira el perfil de ${title}`;
-                      const navAny = (navigator as any);
-                      if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url: publicUrl }).catch(() => {});
-                      } else {
-                        navigator.clipboard
-                          ?.writeText(publicUrl)
-                          .then(() => {
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 1500);
-                          })
-                          .catch(() => {});
-                      }
-                    } catch {}
-                  }}
+                  onClick={onShare}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -404,11 +409,11 @@ export default function BrandProfileLive() {
                   lineHeight: 1.1,
                 }}
               >
-                {(brand as any).nombre_publico || (brand as any).nombre || 'Marca'}
+                {brand?.nombre_publico || brand?.nombre || 'Marca'}
               </h1>
               
               {/* Biografía integrada en el banner */}
-              {(brand as any)?.bio && (
+              {brand?.bio && (
                 <p style={{ 
                   opacity: 0.9, 
                   lineHeight: 1.6, 
@@ -416,215 +421,112 @@ export default function BrandProfileLive() {
                   fontSize: '1rem',
                   color: 'rgba(255, 255, 255, 0.95)'
                 }}>
-                  {(brand as any).bio}
+                  {brand.bio}
                 </p>
               )}
 
               {/* Redes sociales integradas en el banner */}
-              {((brand as any)?.redes_sociales) && (() => {
-                const redes = (brand as any).redes_sociales;
-                const hasAnyRed = redes.instagram || redes.tiktok || redes.youtube || redes.facebook || redes.whatsapp || redes.web;
-                
-                if (!hasAnyRed) return null;
-                
-                return (
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '0.75rem', 
-                    flexWrap: 'wrap', 
-                    marginTop: '0.5rem',
-                    alignItems: 'center'
-                  }}>
-                    {redes.instagram && (
-                      <a 
-                        href={redes.instagram.startsWith('http') ? redes.instagram : `https://instagram.com/${redes.instagram.replace('@', '')}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`Instagram: ${redes.instagram}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaInstagram size={20} />
-                      </a>
-                    )}
-                    {redes.tiktok && (
-                      <a 
-                        href={redes.tiktok.startsWith('http') ? redes.tiktok : `https://tiktok.com/@${redes.tiktok.replace('@', '')}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`TikTok: ${redes.tiktok}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: '#000000',
-                          border: '2px solid #fff',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaTiktok size={20} />
-                      </a>
-                    )}
-                    {redes.youtube && (
-                      <a 
-                        href={redes.youtube} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`YouTube: ${redes.youtube}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: '#FF0000',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaYoutube size={20} />
-                      </a>
-                    )}
-                    {redes.facebook && (
-                      <a 
-                        href={redes.facebook.startsWith('http') ? redes.facebook : `https://facebook.com/${redes.facebook}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`Facebook: ${redes.facebook}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: '#1877F2',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaFacebookF size={20} />
-                      </a>
-                    )}
-                    {redes.whatsapp && (
-                      <a 
-                        href={`https://wa.me/${String(redes.whatsapp).replace(/\D+/g,'')}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`WhatsApp: ${redes.whatsapp}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: '#25D366',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaWhatsapp size={20} />
-                      </a>
-                    )}
-                    {redes.web && (
-                      <a 
-                        href={redes.web} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        title={`Sitio Web: ${redes.web}`}
-                        style={{ 
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '44px',
-                          height: '44px',
-                          background: '#6C757D',
-                          borderRadius: '50%',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.15)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = '';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                        }}
-                      >
-                        <FaGlobe size={20} />
-                      </a>
-                    )}
-                  </div>
-                );
-              })()}
+              {redes && (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '0.75rem', 
+                  flexWrap: 'wrap', 
+                  marginTop: '0.5rem',
+                  alignItems: 'center'
+                }}>
+                  {redes.instagram && (
+                    <a 
+                      href={redes.instagram} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`Instagram: ${brand?.redes_sociales?.instagram}`}
+                      title={`Instagram: ${brand?.redes_sociales?.instagram}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)'
+                      }}
+                    >
+                      <FaInstagram size={20} />
+                    </a>
+                  )}
+                  {redes.tiktok && (
+                    <a 
+                      href={redes.tiktok} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`TikTok: ${brand?.redes_sociales?.tiktok}`}
+                      title={`TikTok: ${brand?.redes_sociales?.tiktok}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: '#000000',
+                        border: '2px solid #fff'
+                      }}
+                    >
+                      <FaTiktok size={20} />
+                    </a>
+                  )}
+                  {redes.youtube && (
+                    <a 
+                      href={redes.youtube} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`YouTube: ${brand?.redes_sociales?.youtube}`}
+                      title={`YouTube: ${brand?.redes_sociales?.youtube}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: '#FF0000'
+                      }}
+                    >
+                      <FaYoutube size={20} />
+                    </a>
+                  )}
+                  {redes.facebook && (
+                    <a 
+                      href={redes.facebook} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`Facebook: ${brand?.redes_sociales?.facebook}`}
+                      title={`Facebook: ${brand?.redes_sociales?.facebook}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: '#1877F2'
+                      }}
+                    >
+                      <FaFacebookF size={20} />
+                    </a>
+                  )}
+                  {redes.whatsapp && (
+                    <a 
+                      href={redes.whatsapp} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`WhatsApp: ${brand?.redes_sociales?.whatsapp}`}
+                      title={`WhatsApp: ${brand?.redes_sociales?.whatsapp}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: '#25D366'
+                      }}
+                    >
+                      <FaWhatsapp size={20} />
+                    </a>
+                  )}
+                  {redes.web && (
+                    <a 
+                      href={redes.web} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`Sitio Web: ${brand?.redes_sociales?.web}`}
+                      title={`Sitio Web: ${brand?.redes_sociales?.web}`}
+                      className="social-icon-link"
+                      style={{ 
+                        background: '#6C757D'
+                      }}
+                    >
+                      <FaGlobe size={20} />
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </motion.section>
@@ -656,28 +558,30 @@ export default function BrandProfileLive() {
                 </div>
                 <h3 className="section-title" style={{ margin: 0 }}>Novedades</h3>
               </div>
-              <div className="brand-novedades-wrap" aria-label="Carrusel de novedades de productos">
+              <div className="brand-novedades-wrap" aria-label="Carrusel de novedades de productos" role="region" aria-roledescription="carrusel">
                 {featured.slice(0, 6).map((item) => (
                   <article key={item.id} className="brand-novedad-card" style={{ maxWidth: 350, width: '100%' }}>
                     <div className="brand-novedad-media">
                       {item.image ? (
                         <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                          <ImageWithFallback
-                            src={item.image}
-                            alt={item.name}
-                            sizes="(max-width: 768px) 100vw, 400px"
-                            style={{ 
-                              width: '100%',
-                              height: '100%',
-                              minWidth: 0,
-                              minHeight: 0,
-                              maxWidth: '100%',
-                              maxHeight: '100%',
-                              objectFit: 'contain',
-                              objectPosition: 'center',
-                              display: 'block'
-                            }}
-                          />
+                          <Suspense fallback={<div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.25)' }} />}>
+                            <ImageWithFallback
+                              src={item.image}
+                              alt={item.name}
+                              sizes="(max-width: 768px) 100vw, 400px"
+                              style={{ 
+                                width: '100%',
+                                height: '100%',
+                                minWidth: 0,
+                                minHeight: 0,
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                objectPosition: 'center',
+                                display: 'block'
+                              }}
+                            />
+                          </Suspense>
                         </div>
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: '2rem', opacity: 0.4 }}>
@@ -1135,12 +1039,13 @@ export default function BrandProfileLive() {
               )}
 
               {/* Botón de contacto */}
-              {((brand as any)?.redes_sociales?.whatsapp) && (
+              {redes?.whatsapp && (
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <a 
-                    href={`https://wa.me/${String((brand as any).redes_sociales.whatsapp).replace(/\D+/g,'')}`} 
+                    href={redes.whatsapp} 
                     target="_blank" 
-                    rel="noreferrer" 
+                    rel="noopener noreferrer"
+                    aria-label="Contactar por WhatsApp"
                     style={{ 
                       padding: '0.875rem 1.75rem', 
                       borderRadius: 999, 
@@ -1171,7 +1076,7 @@ export default function BrandProfileLive() {
 }
 
 // Subcomponentes para catálogo y guía de tallas
-function CatalogTabs({
+const CatalogTabs = React.memo(function CatalogTabs({
   items = [] as any[],
   labels,
   whatsappNumber,
@@ -1185,9 +1090,9 @@ function CatalogTabs({
   const allTabs = ['calzado', 'ropa', 'accesorios'] as const;
   type Tab = (typeof allTabs)[number];
 
-  const availableTabs: Tab[] = allTabs.filter((t) =>
-    (items || []).some((i: any) => i && i.category === t)
-  );
+  const availableTabs = useMemo(() => {
+    return allTabs.filter((t) => (items || []).some((i: any) => i && i.category === t));
+  }, [items]);
 
   const [tab, setTab] = React.useState<Tab>(() => availableTabs[0] ?? 'calzado');
 
@@ -1197,9 +1102,9 @@ function CatalogTabs({
     if (!availableTabs.includes(tab)) {
       setTab(availableTabs[0]);
     }
-  }, [availableTabs.join(','), tab]);
+  }, [availableTabs, tab]);
 
-  const filtered = items.filter((i: any) => i.category === tab);
+  const filtered = useMemo(() => items.filter((i: any) => i.category === tab), [items, tab]);
 
   const textMuted = '#b4b8cc';
   const accent = '#ff2fb3';
@@ -1221,20 +1126,6 @@ function CatalogTabs({
     gap: 8,
     cursor: 'pointer',
     transition: 'all 0.18s ease-out',
-  };
-
-  const card: React.CSSProperties = {
-    borderRadius: 24,
-    overflow: 'hidden',
-    background: 'radial-gradient(circle at top, #151520, #070711)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-    boxShadow: '0 18px 45px rgba(0,0,0,0.55)',
-    display: 'flex',
-    flexDirection: 'column',
-    maxWidth: 350,
-    width: '100%',
-    margin: '0 auto',
-    transition: 'transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out',
   };
 
   const imageShell: React.CSSProperties = {
@@ -1284,14 +1175,14 @@ function CatalogTabs({
     padding: '2rem',
   };
 
-  const getTabLabel = (t: Tab) => {
+  const getTabLabel = useCallback((t: Tab) => {
     if (t === 'calzado') return labels?.calzado || 'Calzado';
     if (t === 'ropa') return labels?.ropa || 'Ropa';
     return labels?.accesorios || 'Accesorios';
-  };
+  }, [labels]);
 
-  const getTabIcon = (t: Tab) =>
-    t === 'calzado' ? '👠' : t === 'ropa' ? '👕' : '💍';
+  const getTabIcon = useCallback((t: Tab) =>
+    t === 'calzado' ? '👠' : t === 'ropa' ? '👕' : '💍', []);
 
   return (
     <div>
@@ -1342,40 +1233,28 @@ function CatalogTabs({
           {filtered.map((p: any) => (
             <article
               key={p.id}
-              style={card}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-6px)';
-                e.currentTarget.style.boxShadow =
-                  '0 26px 60px rgba(0,0,0,0.75)';
-                (e.currentTarget as HTMLElement).style.borderColor =
-                  'rgba(255,255,255,0.16)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = '';
-                e.currentTarget.style.boxShadow =
-                  '0 18px 45px rgba(0,0,0,0.55)';
-                (e.currentTarget as HTMLElement).style.borderColor =
-                  'rgba(255,255,255,0.06)';
-              }}
+              className="catalog-card"
             >
               <div style={imageShell}>
                 <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)', minHeight: 210 }}>
-                  <ImageWithFallback
-                    src={p.image}
-                    alt={p.name}
-                    sizes="(max-width: 768px) 100vw, 360px"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      minWidth: 0,
-                      minHeight: 0,
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                      display: 'block'
-                    }}
-                  />
+                  <Suspense fallback={<div style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.25)' }} />}>
+                    <ImageWithFallback
+                      src={p.image}
+                      alt={p.name}
+                      sizes="(max-width: 768px) 100vw, 360px"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        minWidth: 0,
+                        minHeight: 0,
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        display: 'block'
+                      }}
+                    />
+                  </Suspense>
                 </div>
               </div>
               <div style={bodyShell}>
@@ -1475,32 +1354,8 @@ function CatalogTabs({
                       href={buildProductWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, p.name) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                        color: '#fff',
-                        borderRadius: '12px',
-                        textDecoration: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.95rem',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                        border: 'none',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = '';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-                      }}
+                      aria-label={`Consultar por WhatsApp sobre ${p.name}`}
+                      className="whatsapp-button"
                     >
                       <FaWhatsapp size={20} />
                       <span>Consultar por WhatsApp</span>
@@ -1514,46 +1369,48 @@ function CatalogTabs({
       )}
     </div>
   );
-}
+});
 
-function SizeGuide({ rows = [] as { mx:string; us:string; eu:string }[] }){
-  const data = rows.length > 0 ? rows : [
-    { mx:'22', us:'5', eu:'35' },
-    { mx:'23', us:'6', eu:'36-37' },
-    { mx:'24', us:'7', eu:'38' },
-    { mx:'25', us:'8', eu:'39-40' },
-    { mx:'26', us:'9', eu:'41-42' },
-  ];
+const SizeGuide = React.memo(function SizeGuide({ rows = [] as { mx: string; us: string; eu: string }[] }) {
+  const data = useMemo(() => rows.length > 0 ? rows : [
+    { mx: '22', us: '5', eu: '35' },
+    { mx: '23', us: '6', eu: '36-37' },
+    { mx: '24', us: '7', eu: '38' },
+    { mx: '25', us: '8', eu: '39-40' },
+    { mx: '26', us: '9', eu: '41-42' },
+  ], [rows]);
+  
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Equivalencias (Calzado)</b>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.35rem', marginTop: '.5rem', fontSize: '.92rem' }}>
         <div>MX</div><div>US</div><div>EU</div>
         {data.map((r, i) => (
-          <React.Fragment key={i}>
+          <React.Fragment key={`${r.mx}-${r.us}-${r.eu}-${i}`}>
             <div>{r.mx}</div><div>{r.us}</div><div>{r.eu}</div>
           </React.Fragment>
         ))}
       </div>
     </div>
   );
-}
+});
 
-function FitTips({ tips = [] as { style:string; tip:string }[] }){
-  const data = tips.length > 0 ? tips : [
+const FitTips = React.memo(function FitTips({ tips = [] as { style: string; tip: string }[] }) {
+  const data = useMemo(() => tips.length > 0 ? tips : [
     { style: 'Bachata', tip: 'Tacón estable, suela flexible, punta reforzada.' },
     { style: 'Salsa', tip: 'Mayor soporte lateral, giro suave (suela gamuza).' },
     { style: 'Kizomba', tip: 'Confort prolongado, amortiguación talón.' },
-  ];
+  ], [tips]);
+  
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
       <b>Fit recomendado por estilo</b>
       <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
         {data.map((it, i) => (
-          <li key={i}><b>{it.style}:</b> {it.tip}</li>
+          <li key={`${it.style}-${i}`}><b>{it.style}:</b> {it.tip}</li>
         ))}
       </ul>
     </div>
   );
-}
+});
 
