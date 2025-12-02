@@ -146,7 +146,18 @@ export function useUpsertMyOrganizer() {
         console.log("📊 [useOrganizer] Claves del patch:", Object.keys(patch));
 
         const hasRespuestasColumn = Object.prototype.hasOwnProperty.call(prev, "respuestas");
-        if (!hasRespuestasColumn && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
+        const hasRedesSocialesColumn = Object.prototype.hasOwnProperty.call(prev, "redes_sociales");
+        
+        // Agregar respuestas al patch si la columna existe y hay cambios
+        if (hasRespuestasColumn && nextRespuestas !== undefined) {
+          const prevRespuestas = (prev as any).respuestas || {};
+          const nextRespuestasObj = nextRespuestas || {};
+          // Solo agregar si hay cambios
+          if (JSON.stringify(prevRespuestas) !== JSON.stringify(nextRespuestasObj)) {
+            (patch as any).respuestas = nextRespuestasObj;
+            console.log("✅ [useOrganizer] Agregando 'respuestas' al patch:", nextRespuestasObj);
+          }
+        } else if (!hasRespuestasColumn && Object.prototype.hasOwnProperty.call(patch, "respuestas")) {
           console.log("⚠️ [useOrganizer] Removiendo 'respuestas' del patch porque la columna no existe en este entorno.");
           delete (patch as any).respuestas;
         }
@@ -156,7 +167,16 @@ export function useUpsertMyOrganizer() {
           delete (patch as any).ubicaciones;
         }
 
-        if (!Object.prototype.hasOwnProperty.call(prev, "redes_sociales") && Object.prototype.hasOwnProperty.call(patch, "redes_sociales")) {
+        // Agregar redes_sociales al patch si la columna existe y hay cambios
+        if (hasRedesSocialesColumn && nextRedes !== undefined) {
+          const prevRedes = (prev as any).redes_sociales || {};
+          const nextRedesObj = nextRedes || {};
+          // Solo agregar si hay cambios
+          if (JSON.stringify(prevRedes) !== JSON.stringify(nextRedesObj)) {
+            (patch as any).redes_sociales = nextRedesObj;
+            console.log("✅ [useOrganizer] Agregando 'redes_sociales' al patch:", nextRedesObj);
+          }
+        } else if (!hasRedesSocialesColumn && Object.prototype.hasOwnProperty.call(patch, "redes_sociales")) {
           console.log("⚠️ [useOrganizer] Removiendo 'redes_sociales' del patch porque la columna no existe.");
           delete (patch as any).redes_sociales;
         }
@@ -191,12 +211,19 @@ export function useUpsertMyOrganizer() {
               throw updError;
             }
           } else {
-            // Refuerzo: si el RPC ignoró columnas nuevas como ritmos_seleccionados, aplica update directo de esas claves
+            // Refuerzo: si el RPC ignoró columnas nuevas como ritmos_seleccionados, redes_sociales o respuestas, aplica update directo de esas claves
             const needsDirect: any = {};
             if (Object.prototype.hasOwnProperty.call(patch, 'ritmos_seleccionados')) {
               (needsDirect as any).ritmos_seleccionados = (patch as any).ritmos_seleccionados;
             }
+            if (Object.prototype.hasOwnProperty.call(patch, 'redes_sociales')) {
+              (needsDirect as any).redes_sociales = (patch as any).redes_sociales;
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'respuestas')) {
+              (needsDirect as any).respuestas = (patch as any).respuestas;
+            }
             if (Object.keys(needsDirect).length > 0) {
+              console.log("🔧 [useOrganizer] Aplicando refuerzo para campos:", Object.keys(needsDirect));
               await supabase.from("profiles_organizer").update(needsDirect).eq("id", existing.id);
             }
             console.log("✅ [useOrganizer] merge_profiles_organizer ejecutado (con refuerzo si fue necesario)");
@@ -217,15 +244,23 @@ export function useUpsertMyOrganizer() {
         console.log("🆕 [useOrganizer] Creando nuevo organizador...");
         
         // Primera vez: crear directamente
-        // Filtrar campos que no existen en profiles_organizer (como ubicaciones o respuestas/redes_sociales)
-        const { media, ubicaciones, respuestas, redes_sociales, ...cleanNext } = next as any;
+        // Filtrar campos que no existen en profiles_organizer (como ubicaciones o media)
+        const { media, ubicaciones, ...cleanNext } = next as any;
         
-        const payload = { 
+        const payload: any = { 
           user_id: user.id, 
           nombre_publico: next.nombre_publico || "Mi Organizador",
           estado_aprobacion: 'borrador', // Estado inicial por defecto
           ...cleanNext 
         };
+        
+        // Incluir redes_sociales y respuestas si están presentes
+        if ((next as any).redes_sociales !== undefined) {
+          payload.redes_sociales = (next as any).redes_sociales;
+        }
+        if ((next as any).respuestas !== undefined) {
+          payload.respuestas = (next as any).respuestas;
+        }
         
         console.log("📦 [useOrganizer] Payload para insertar:", payload);
         

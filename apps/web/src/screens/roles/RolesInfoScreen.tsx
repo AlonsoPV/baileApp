@@ -12,6 +12,7 @@ export default function RolesInfoScreen() {
       icon: '👤',
       tag: 'Para quienes quieren descubrir dónde bailar',
       highlight: false,
+      isFree: true,
       color: '#22c55e',
       gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
       bgGradient: 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08))',
@@ -342,8 +343,19 @@ export default function RolesInfoScreen() {
               }}>
                 Lanzamiento
               </div>
-              <div style={{ fontWeight: 600, color: '#fbbf24' }}>
+              <div style={{ fontWeight: 600, color: '#fbbf24', marginBottom: '8px' }}>
                 Primeros 3 meses con acceso completo a todos los roles. Te apoyamos con la creación de tu perfil.
+              </div>
+              <div style={{ 
+                fontSize: '0.9rem', 
+                color: '#22c55e', 
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span>💚</span>
+                <span>El rol de Usuario / Bailarín es <strong>siempre gratis</strong> para todos.</span>
               </div>
             </div>
           </motion.div>
@@ -471,6 +483,23 @@ export default function RolesInfoScreen() {
                         marginTop: '4px'
                       }}>
                         ⭐ Destacado
+                      </div>
+                    )}
+                    {(role as any).isFree && (
+                      <div style={{
+                        fontSize: '11px',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        border: '1px solid rgba(34,197,94,0.5)',
+                        color: '#22c55e',
+                        background: 'rgba(34,197,94,0.2)',
+                        display: 'inline-block',
+                        fontWeight: 700,
+                        marginTop: '4px',
+                        marginLeft: role.highlight ? '6px' : '0',
+                        boxShadow: '0 0 12px rgba(34,197,94,0.3)'
+                      }}>
+                        💚 Siempre Gratis
                       </div>
                     )}
                   </div>
