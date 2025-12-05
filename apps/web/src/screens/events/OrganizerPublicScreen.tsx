@@ -826,6 +826,48 @@ export function OrganizerPublicScreen() {
       `}</style>
 
       <div className="org-root" style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`, color: colors.gray[50], width: '100%', position: 'relative' }}>
+        {/* Botón Volver a inicio */}
+        <motion.button
+          onClick={() => navigate('/explore')}
+          whileHover={{ scale: 1.15, x: -4 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Volver a inicio"
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            left: '1rem',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            border: '2px solid rgba(240,147,251,0.4)',
+            background: 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.2))',
+            color: '#f093fb',
+            fontWeight: 900,
+            cursor: 'pointer',
+            fontSize: '1.75rem',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 24px rgba(240,147,251,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 2px 8px rgba(0,0,0,0.3)',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.4), rgba(255,209,102,0.3))';
+            e.currentTarget.style.borderColor = 'rgba(240,147,251,0.6)';
+            e.currentTarget.style.boxShadow = '0 12px 32px rgba(240,147,251,0.5), 0 0 0 1px rgba(255,255,255,0.2) inset, 0 4px 12px rgba(0,0,0,0.4)';
+            e.currentTarget.style.transform = 'translateX(-4px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.2))';
+            e.currentTarget.style.borderColor = 'rgba(240,147,251,0.4)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(240,147,251,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 2px 8px rgba(0,0,0,0.3)';
+            e.currentTarget.style.transform = '';
+          }}
+        >
+          ←
+        </motion.button>
         {/* Elementos flotantes */}
         <div style={{ position: 'absolute', top: '10%', left: '5%', width: 100, height: 100, background: colors.gradients.primary, borderRadius: '50%', opacity: 0.1, animation: 'float 8s ease-in-out infinite', zIndex: 0 }} />
         <div style={{ position: 'absolute', top: '20%', right: '10%', width: 60, height: 60, background: colors.gradients.secondary, borderRadius: '50%', opacity: 0.15, animation: 'float 6s ease-in-out infinite reverse', zIndex: 0 }} />
@@ -833,46 +875,6 @@ export function OrganizerPublicScreen() {
 
         {/* Banner */}
         <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `0.5rem auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
-          {/* Botón Volver a inicio */}
-          <motion.button
-            onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              border: '1px solid rgba(240,147,251,0.35)',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))',
-              color: '#f093fb',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontSize: '1.5rem',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.18))';
-              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.5)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))';
-              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.35)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
-            }}
-          >
-            ←
-          </motion.button>
           <div className="org-banner-grid">
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>
