@@ -555,7 +555,7 @@ export default function EventDatePublicScreen() {
         }
         
         @media (max-width: 480px) {
-          .date-public-root { padding: 12px 0 !important; }
+          .date-public-root { padding: 3px 0 !important; }
           .date-public-inner { padding: 0 12px !important; }
         }
         
@@ -734,7 +734,7 @@ export default function EventDatePublicScreen() {
     }
     .event-title {
       margin: 0;
-      font-size: clamp(2.1rem, 4vw, 3rem);
+      font-size: clamp(2.5rem, 5vw, 4rem);
       line-height: 1.2;
       font-weight: 900;
       letter-spacing: -0.01em;
