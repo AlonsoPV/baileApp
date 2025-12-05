@@ -84,10 +84,12 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         @media (max-width: 768px) {
           .nav-root {
-            padding: .75rem .7rem !important;
-            padding-top: calc(.75rem + env(safe-area-inset-top)) !important;
+            padding: .85rem .7rem !important;
+            padding-top: calc(.85rem + env(safe-area-inset-top)) !important;
+            padding-bottom: .85rem !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
-            height: 60px !important;
+            min-height: 64px !important;
+            height: auto !important;
           }
           .nav-left { 
             display: flex !important; 
@@ -132,9 +134,11 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         @media (max-width: 430px) {
           .nav-root {
-            padding: 0.65rem 0.5rem !important;
-            padding-top: calc(0.65rem + env(safe-area-inset-top)) !important;
-            height: 56px !important;
+            padding: 0.8rem 0.5rem !important;
+            padding-top: calc(0.8rem + env(safe-area-inset-top)) !important;
+            padding-bottom: 0.8rem !important;
+            min-height: 60px !important;
+            height: auto !important;
           }
           .nav-brand-title {
             font-size: 0.7rem !important;
@@ -327,11 +331,11 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             style={{
               width: 34,
               height: 34,
-              borderRadius: '999px',
-              objectFit: 'cover',
+              /* borderRadius: '999px', */
+             /*  objectFit: 'cover', */
               boxShadow: '0 4px 10px rgba(0,0,0,0.45)',
-              border: '2px solid rgba(255,255,255,0.9)',
-              background: 'rgba(0,0,0,0.35)',
+          /*     border: '2px solid rgba(255,255,255,0.9)',
+              background: 'rgba(0,0,0,0.35)', */
             }}
           />
           <div
