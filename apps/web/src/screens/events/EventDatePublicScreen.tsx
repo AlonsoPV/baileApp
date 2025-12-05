@@ -622,7 +622,7 @@ export default function EventDatePublicScreen() {
           }
           
           h1 {
-            font-size: 1.5rem !important;
+            font-size: 2rem !important;
           }
           
           .chip {
@@ -662,7 +662,7 @@ export default function EventDatePublicScreen() {
             border-radius: 14px !important;
           }
           .event-title {
-            font-size: 1.4rem !important;
+            font-size: 1.8rem !important;
             margin-bottom: 0.4rem !important;
           }
           .chip {
