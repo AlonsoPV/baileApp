@@ -51,6 +51,9 @@ type Props = {
   isClickable?: boolean;
   whatsappNumber?: string | null;
   whatsappMessageTemplate?: string | null;
+  stripeAccountId?: string | null;
+  stripeChargesEnabled?: boolean | null;
+  creatorName?: string | null;
 };
 
 const chipStyle: React.CSSProperties = {
@@ -73,7 +76,10 @@ export default function ClasesLiveTabs({
   sourceId,
   isClickable = false,
   whatsappNumber,
-  whatsappMessageTemplate
+  whatsappMessageTemplate,
+  stripeAccountId,
+  stripeChargesEnabled,
+  creatorName
 }: Props) {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = React.useState(false);

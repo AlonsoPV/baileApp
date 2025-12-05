@@ -715,7 +715,68 @@ const STYLES = `
     .academy-banner-avatar-fallback { font-size: 4.1rem !important; }
     .glass-card-container { padding: 0.75rem !important; border-radius: 12px !important; }
   }
-  .academy-section { margin-bottom: 2rem; padding: 2rem; }
+  .academy-section { 
+    margin-bottom: 2rem; 
+    padding: 2.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  .academy-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #E53935, #FB8C00, #FFD166);
+    opacity: 0.9;
+    border-radius: 24px 24px 0 0;
+  }
+  .academy-section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+  .academy-section-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #E53935, #FB8C00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4);
+    flex-shrink: 0;
+  }
+  .academy-section-title-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+  .academy-section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .academy-section-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 0.25rem 0 0 0;
+    fontWeight: 500;
+    color: rgba(255, 255, 255, 0.9);
+  }
   .academy-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
   .promo-section {
     background: radial-gradient(circle at top, #161929, #05060c);
@@ -840,7 +901,26 @@ const STYLES = `
   }
   @media (max-width: 768px) {
     .academy-container { padding: 1rem !important; }
-    .academy-section { padding: 1rem !important; margin-bottom: 1.5rem !important; }
+    .academy-section { 
+      padding: 1.5rem !important; 
+      margin-bottom: 1.5rem !important;
+      border-radius: 20px !important;
+    }
+    .academy-section-header {
+      gap: 0.875rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .academy-section-icon {
+      width: 52px !important;
+      height: 52px !important;
+      font-size: 1.5rem !important;
+    }
+    .academy-section-title {
+      font-size: 1.25rem !important;
+    }
+    .academy-section-subtitle {
+      font-size: 0.85rem !important;
+    }
     .academy-section h2, .academy-section h3 { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
     .academy-videos-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
     .promo-section { padding: 18px 14px 22px !important; }
@@ -848,7 +928,27 @@ const STYLES = `
     .promo-price-box { align-self: stretch; text-align: right !important; }
   }
   @media (max-width: 480px) {
-    .academy-section { padding: 0.75rem !important; margin-bottom: 1rem !important; border-radius: 12px !important; }
+    .academy-section { 
+      padding: 1.25rem !important; 
+      margin-bottom: 1rem !important; 
+      border-radius: 16px !important;
+    }
+    .academy-section-header {
+      gap: 0.75rem !important;
+      margin-bottom: 1.25rem !important;
+    }
+    .academy-section-icon {
+      width: 48px !important;
+      height: 48px !important;
+      font-size: 1.35rem !important;
+    }
+    .academy-section-title {
+      font-size: 1.1rem !important;
+    }
+    .academy-section-subtitle {
+      font-size: 0.8rem !important;
+      margin-top: 0.2rem !important;
+    }
     .academy-section h2, .academy-section h3 { font-size: 1.1rem !important; }
     .academy-videos-grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
     .promo-section { padding: 18px 14px 22px !important; }
@@ -1491,30 +1591,18 @@ export default function AcademyPublicScreen() {
             
             return (
           <motion.section
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="academy-section"
-            style={{
-              marginBottom: '2rem', padding: '2.5rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '24px', border: '2px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(10px)'
-            }}
           >
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
-              background: 'linear-gradient(90deg, #E53935, #FB8C00, #FFD166)', opacity: 0.9 }} />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>
-              <div style={{
-                width: '60px', height: '60px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #E53935, #FB8C00)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.75rem', boxShadow: '0 8px 24px rgba(229, 57, 53, 0.4)'
-              }}>🎓</div>
-              <div>
-                <h2 className="section-title" style={{ margin: 0 }}>
+            <div className="academy-section-header">
+              <div className="academy-section-icon">🎓</div>
+              <div className="academy-section-title-wrapper">
+                <h2 className="academy-section-title">
                   Nuestras clases
                 </h2>
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>
+                <p className="academy-section-subtitle">
                   Horarios, costos y ubicaciones
                 </p>
               </div>

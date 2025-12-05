@@ -65,7 +65,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         right: 0,
         zIndex: 100,
         height: '64px',
-        paddingTop: 'calc(1rem + env(safe-area-inset-top))',
+        paddingTop: 'calc(1rem + max(env(safe-area-inset-top), 0px))',
       }}
     >
       <style>{`
@@ -85,7 +85,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         @media (max-width: 768px) {
           .nav-root {
             padding: .85rem .7rem !important;
-            padding-top: calc(.85rem + env(safe-area-inset-top)) !important;
+            padding-top: calc(.85rem + max(env(safe-area-inset-top), 0px)) !important;
             padding-bottom: .85rem !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
             min-height: 64px !important;
@@ -125,7 +125,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         @media (max-width: 480px) {
           .nav-root {
             padding: .5rem .6rem !important;
-            padding-top: calc(.5rem + env(safe-area-inset-top)) !important;
+            padding-top: calc(.5rem + max(env(safe-area-inset-top), 0px)) !important;
           }
           .nav-brand-tagline {
             display: none !important;
@@ -135,7 +135,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         @media (max-width: 430px) {
           .nav-root {
             padding: 0.8rem 0.5rem !important;
-            padding-top: calc(0.8rem + env(safe-area-inset-top)) !important;
+            padding-top: calc(0.8rem + max(env(safe-area-inset-top), 0px)) !important;
             padding-bottom: 0.8rem !important;
             min-height: 60px !important;
             height: auto !important;
@@ -329,11 +329,11 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             loading="eager"
             decoding="async"
             style={{
-              width: 34,
-              height: 34,
+              width: 40,
+              height: 40,
               /* borderRadius: '999px', */
              /*  objectFit: 'cover', */
-              boxShadow: '0 4px 10px rgba(0,0,0,0.45)',
+           /*    boxShadow: '0 4px 10px rgba(0,0,0,0.45)', */
           /*     border: '2px solid rgba(255,255,255,0.9)',
               background: 'rgba(0,0,0,0.35)', */
             }}

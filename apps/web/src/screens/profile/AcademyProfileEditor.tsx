@@ -117,7 +117,7 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
 const STYLES = `
         .academy-editor-container {
           min-height: 100vh;
-          padding: 2rem 1rem;
+          padding: 1rem 1rem;
         }
         .academy-editor-inner {
           max-width: 1200px;

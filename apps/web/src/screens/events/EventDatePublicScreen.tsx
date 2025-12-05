@@ -509,6 +509,7 @@ export default function EventDatePublicScreen() {
   const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
   const formattedDate = formatDate(date.fecha || date.fecha_inicio || '');
   const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
+  const hasLocation = !!(date.lugar || date.direccion || date.ciudad);
   const ritmosList = Array.isArray(date.ritmos)
     ? date.ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
     : '';
@@ -1030,34 +1031,44 @@ export default function EventDatePublicScreen() {
                     )}
                   </div>
 
-                  {/* Botones de acción: WhatsApp y Maps */}
-                  {(date.telefono_contacto || (date.lugar || date.direccion || date.ciudad)) && (
-                    <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1rem', width: '100%' }}>
+                  {/* Botones de acción: Maps, WhatsApp y Compartir (layout vertical tipo "call-to-action") */}
+                  {(hasLocation || date.telefono_contacto) && (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '.75rem',
+                        marginTop: '1rem',
+                        width: '100%',
+                      }}
+                    >
                       {/* Botón Ver en Maps */}
-                      {(date.lugar || date.direccion || date.ciudad) && (
+                      {hasLocation && (
                         <motion.a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                             `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
+                          whileHover={{ scale: 1.02, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
                           style={{
-                            display: 'inline-flex',
+                            display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             gap: '.55rem',
-                            padding: '.6rem 1.1rem',
+                            padding: '.8rem 1.2rem',
                             borderRadius: 999,
                             border: '1px solid rgba(240,147,251,.4)',
                             color: '#f7d9ff',
-                            background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
+                            background:
+                              'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
                             boxShadow: '0 6px 18px rgba(240,147,251,.20)',
                             fontWeight: 800,
-                            fontSize: '.9rem',
+                            fontSize: '.95rem',
                             textDecoration: 'none',
                             cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            width: '100%',
                           }}
                         >
                           <span>📍</span>
@@ -1076,29 +1087,45 @@ export default function EventDatePublicScreen() {
                           )}
                           target="_blank"
                           rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
+                          whileHover={{ scale: 1.02, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
                           style={{
-                            display: 'inline-flex',
+                            display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             gap: '.55rem',
-                            padding: '.6rem 1.1rem',
+                            padding: '.8rem 1.2rem',
                             borderRadius: 999,
                             border: '1px solid rgba(37, 211, 102, 0.5)',
                             color: '#fff',
                             background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
                             boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
                             fontWeight: 800,
-                            fontSize: '.9rem',
+                            fontSize: '.95rem',
                             textDecoration: 'none',
                             cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            width: '100%',
                           }}
                         >
                           <FaWhatsapp size={18} />
                           <span>Consultar por WhatsApp</span>
                         </motion.a>
                       )}
+
+                      {/* Botón Compartir */}
+                      <ShareButton
+                        url={typeof window !== 'undefined' ? window.location.href : dateUrl}
+                        title={dateName}
+                        text={`Checa este evento: ${dateName}`}
+                        style={{
+                          width: '100%',
+                          justifyContent: 'center',
+                          padding: '.8rem 1.2rem',
+                          borderRadius: 999,
+                          fontSize: '.95rem',
+                        }}
+                      />
                     </div>
                   )}
 
@@ -1152,11 +1179,6 @@ export default function EventDatePublicScreen() {
                         ✏️ Editar
                       </motion.button>
                     )}
-                    <ShareButton
-                      url={typeof window !== 'undefined' ? window.location.href : ''}
-                      title={date.nombre || `Fecha: ${formatDate(date.fecha)}`}
-                      text={`¡Mira esta fecha: ${date.nombre || formatDate(date.fecha)}!`}
-                    />
                   </div>
 
                   <div className="event-section-dance">
