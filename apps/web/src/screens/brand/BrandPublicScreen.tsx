@@ -269,21 +269,40 @@ export default function BrandProfileLive() {
       <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
         {/* Botón Volver a inicio */}
         <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '2rem 2rem 1rem 2rem', position: 'relative', zIndex: 1 }}>
-          <button
+          <motion.button
             onClick={() => navigate('/explore')}
+            whileHover={{ scale: 1.05, x: -2 }}
+            whileTap={{ scale: 0.98 }}
             style={{
-              padding: '8px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.625rem 1.25rem',
               borderRadius: 999,
-              border: '1px solid rgba(240,147,251,0.28)',
-              background: 'rgba(240,147,251,0.10)',
+              border: '1px solid rgba(240,147,251,0.35)',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))',
               color: '#f093fb',
               fontWeight: 700,
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.9rem',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.18))';
+              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.5)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))';
+              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.35)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
             }}
           >
-            ← Volver a inicio
-          </button>
+            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
+            <span>Volver a inicio</span>
+          </motion.button>
         </div>
 
         {/* Banner */}

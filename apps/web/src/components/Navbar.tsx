@@ -329,8 +329,8 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             loading="eager"
             decoding="async"
             style={{
-              width: 40,
-              height: 40,
+              width: 60,
+              height: 60,
               /* borderRadius: '999px', */
              /*  objectFit: 'cover', */
            /*    boxShadow: '0 4px 10px rgba(0,0,0,0.45)', */
@@ -350,7 +350,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               style={{
                 textTransform: 'uppercase',
                 letterSpacing: 1.4,
-                fontSize: '0.9rem',
+                fontSize: '1.5rem',
               }}
             >
               Dónde Bailar MX

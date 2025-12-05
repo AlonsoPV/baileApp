@@ -23,7 +23,7 @@ const STYLES = `
     margin: 0 auto;
   }
   @media (max-width: 768px) {
-    .page-shell { padding-top: 64px; }
+    .page-shell { padding-top: 0; }
   }
   .profile-banner {
     width: 100%;
@@ -883,7 +883,7 @@ export const UserProfileLive: React.FC = () => {
         minHeight: '100vh',
         background: colors.darkBase,
         color: colors.light,
-        paddingTop: 'env(safe-area-inset-top)',
+        paddingTop: '0',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
         <div
