@@ -549,7 +549,7 @@ export default function EventDatePublicScreen() {
         
         /* Responsividad general */
         @media (max-width: 768px) {
-          .date-public-root { padding: 16px 0 !important; }
+          .date-public-root { padding: 4px 0 !important; }
           .date-public-inner { padding: 0 16px !important; }
           .two-col-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
         }
@@ -1029,6 +1029,15 @@ export default function EventDatePublicScreen() {
                         📍 {date.lugar}
                       </a>
                     )}
+                    {/* Chip de Zona - después de ubicación */}
+                    {Array.isArray(date.zonas) && date.zonas.length > 0 && zonas && (
+                      <ZonaGroupedChips
+                        mode="display"
+                        selectedIds={date.zonas as number[]}
+                        allTags={zonas as any}
+                        autoExpandSelectedParents={false}
+                      />
+                    )}
                   </div>
 
                   {/* Botones de acción: Maps, WhatsApp y Compartir (layout vertical tipo "call-to-action") */}
@@ -1129,28 +1138,16 @@ export default function EventDatePublicScreen() {
                     </div>
                   )}
 
-                  {/* Ritmos & Zonas (zonas agrupadas en chips padres colapsables) */}
-                  {(Array.isArray(date.ritmos) && date.ritmos.length > 0) || (Array.isArray(date.zonas) && date.zonas.length > 0) ? (
+                  {/* Ritmos (solo ritmos, zonas ya están arriba) */}
+                  {Array.isArray(date.ritmos) && date.ritmos.length > 0 && (
                     <div style={{ marginTop: '.75rem' }}>
-                      {Array.isArray(date.ritmos) && date.ritmos.length > 0 && (
-                        <div style={{ marginBottom: '.5rem' }}>
-                          <RitmosChips
-                            selected={date.ritmos.map((id: number) => String(id))}
-                            onChange={() => { }}
-                            readOnly
-                          />
-                        </div>
-                      )}
-                      {Array.isArray(date.zonas) && date.zonas.length > 0 && zonas && (
-                        <ZonaGroupedChips
-                          mode="display"
-                          selectedIds={date.zonas as number[]}
-                          allTags={zonas as any}
-                          autoExpandSelectedParents={false}
-                        />
-                      )}
+                      <RitmosChips
+                        selected={date.ritmos.map((id: number) => String(id))}
+                        onChange={() => { }}
+                        readOnly
+                      />
                     </div>
-                  ) : null}
+                  )}
                 </div>
 
                 {/* Columna derecha */}
