@@ -265,7 +265,7 @@ export default function BrandProfileLive() {
   return (
     <>
 
-      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
+      <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
             <ProfileNavigationToggle currentView="live" profileType="brand" />
@@ -278,7 +278,7 @@ export default function BrandProfileLive() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          style={{ position: 'relative', margin: '0 auto', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
+          style={{ position: 'relative', margin: '0 auto', marginTop: '0', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
         >
           {portadaUrl && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>

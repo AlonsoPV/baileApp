@@ -145,7 +145,13 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
 }
+.brand-root {
+  padding-top: 0;
+}
 @media (max-width: 768px) {
+  .brand-root {
+    padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px) !important;
+  }
   .profile-container {
     max-width: 100% !important;
     padding: 1rem !important;
@@ -154,6 +160,7 @@
     border-radius: 0 !important;
     padding: 1.5rem 1rem !important;
     margin: 0 !important;
+    margin-top: 0 !important;
   }
   .banner-grid {
     grid-template-columns: 1fr !important;
@@ -188,6 +195,9 @@
   }
 }
 @media (max-width: 480px) {
+  .brand-root {
+    padding-top: calc(60px + max(env(safe-area-inset-top), 0px) + 0px) !important;
+  }
   .banner-grid h1 {
     font-size: 2.2rem !important;
   }

@@ -174,7 +174,8 @@ export default function BrandProfileLive() {
           font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
           display: flex; align-items: center; gap: .5rem;
         }
-        @media (max-width: 768px) { .brand-root { padding-top: 64px; } }
+        @media (max-width: 768px) { .brand-root { padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px); } }
+        @media (max-width: 480px) { .brand-root { padding-top: calc(60px + max(env(safe-area-inset-top), 0px) + 0px); } }
         .profile-container { width: 100%; max-width: 900px; margin: 0 auto; }
         .profile-banner { width: 100%; max-width: 900px; margin: 0 auto; }
         .banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
@@ -273,7 +274,7 @@ export default function BrandProfileLive() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          style={{ position: 'relative', margin: '0.5rem auto 0 auto', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
+          style={{ position: 'relative', margin: '0 auto', marginTop: '0', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
         >
           {/* Botón Volver a inicio */}
           <motion.button
