@@ -630,7 +630,7 @@ export default function ClassPublicScreen() {
         }
         
         .class-title {
-          font-size: clamp(2.5rem, 5vw, 4.5rem);
+          font-size: clamp(3rem, 6vw, 5rem);
           font-weight: 900;
           margin-bottom: 1.25rem;
           letter-spacing: -0.04em;
@@ -666,7 +666,7 @@ export default function ClassPublicScreen() {
             padding: 1rem 0 !important;
           }
           .class-title {
-            font-size: 2rem !important;
+            font-size: 2.2rem !important;
             margin-bottom: 1rem !important;
           }
           .chip {
@@ -697,7 +697,7 @@ export default function ClassPublicScreen() {
             padding: 0.75rem 0 !important;
           }
           .class-title { 
-            font-size: 1.75rem !important;
+            font-size: 1.9rem !important;
             margin-bottom: 0.875rem !important;
           }
           .chip {
@@ -729,7 +729,7 @@ export default function ClassPublicScreen() {
             gap: 0.625rem !important;
           }
           .class-title { 
-            font-size: 1.35rem !important; 
+            font-size: 1.5rem !important; 
             margin-bottom: 0.625rem !important;
             line-height: 1.3 !important;
             letter-spacing: -0.02em !important;
@@ -871,7 +871,7 @@ export default function ClassPublicScreen() {
         
         @media (max-width: 360px) {
           .class-title {
-            font-size: 1.2rem !important;
+            font-size: 1.35rem !important;
           }
           .chip {
             padding: 0.3rem 0.5rem !important;
@@ -1135,8 +1135,8 @@ export default function ClassPublicScreen() {
                   </motion.a>
                 )}
 
-                {/* Botón WhatsApp (solo para academias con WhatsApp configurado) */}
-                {whatsappNumber && (
+                {/* Botón WhatsApp (solo para academias con WhatsApp configurado y usuarios logueados) */}
+                {user && whatsappNumber && (
                   <motion.a
                     href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle) || '#'}
                     target="_blank"
