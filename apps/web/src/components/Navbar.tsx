@@ -329,8 +329,8 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             loading="eager"
             decoding="async"
             style={{
-              width: 75,
-              height: 75,
+              width: 55,
+              height: 55,
               /* borderRadius: '999px', */
              /*  objectFit: 'cover',  */
            /*    boxShadow: '0 4px 10px rgba(0,0,0,0.45)', */

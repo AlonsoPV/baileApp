@@ -23,7 +23,13 @@ const ClasesLive = lazy(() => import("../../components/events/ClasesLive"));
 const UbicacionesLive = lazy(() => import("../../components/locations/UbicacionesLive"));
 const RitmosChips = lazy(() => import("../../components/RitmosChips"));
 const HorizontalSlider = lazy(() => import("../../components/explore/HorizontalSlider"));
-const TeacherRatingComponent = lazy(() => import("../../components/teacher/TeacherRatingComponent"));
+const TeacherRatingComponent = lazy(() => 
+  import("../../components/teacher/TeacherRatingComponent").catch((err) => {
+    console.error('Error loading TeacherRatingComponent:', err);
+    // Retornar un componente de fallback
+    return { default: () => null };
+  })
+);
 const CompetitionGroupCard = lazy(() => import("../../components/explore/cards/CompetitionGroupCard"));
 const AcademyCard = lazy(() => import("../../components/explore/cards/AcademyCard"));
 

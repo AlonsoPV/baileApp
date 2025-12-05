@@ -19,7 +19,13 @@ import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
-import type { UseInfiniteQueryResult } from "@tanstack/react-query";
+
+// Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos
+type InfiniteQueryLike<TData = any, TError = unknown> = {
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage: () => void | Promise<void>;
+};
 
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
@@ -62,7 +68,7 @@ function useStableArray<T>(arr: T[]): T[] {
   return React.useMemo(() => [...arr], [JSON.stringify(arr)]);
 }
 
-function useLoadMoreOnDemand(query: UseInfiniteQueryResult<any, unknown> | null) {
+function useLoadMoreOnDemand(query: InfiniteQueryLike<any, unknown> | null) {
   const handleLoadMore = React.useCallback(() => {
     if (query?.hasNextPage && !query.isFetchingNextPage) {
       query.fetchNextPage();

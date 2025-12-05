@@ -26,7 +26,13 @@ const ClasesLiveTabs = lazy(() => import("@/components/classes/ClasesLiveTabs"))
 const ClasesLive = lazy(() => import("../../components/events/ClasesLive"));
 const UbicacionesLiveLazy = lazy(() => import("../../components/locations/UbicacionesLive"));
 const HorizontalSlider = lazy(() => import("../../components/explore/HorizontalSlider"));
-const TeacherRatingComponent = lazy(() => import("../../components/teacher/TeacherRatingComponent"));
+const TeacherRatingComponent = lazy(() => 
+  import("../../components/teacher/TeacherRatingComponent").catch((err) => {
+    console.error('Error loading TeacherRatingComponent:', err);
+    // Retornar un componente de fallback
+    return { default: () => null };
+  })
+);
 const CompetitionGroupCard = lazy(() => import("../../components/explore/cards/CompetitionGroupCard"));
 
 // Componente FAQ Accordion (memoizado)
