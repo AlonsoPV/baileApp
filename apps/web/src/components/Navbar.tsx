@@ -350,7 +350,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               style={{
                 textTransform: 'uppercase',
                 letterSpacing: 1.4,
-                fontSize: '2.5rem',
+                fontSize: '2rem',
               }}
             >
               Dónde Bailar MX
