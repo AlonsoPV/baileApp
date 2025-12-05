@@ -900,24 +900,26 @@ export const UserProfileLive: React.FC = () => {
           {/* Botón Volver a inicio */}
           <motion.button
             onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.1, x: -3 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Volver a inicio"
             style={{
               position: 'absolute',
               top: '1rem',
-              left: '1rem',
+              right: '1rem',
               zIndex: 10,
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.625rem 1.25rem',
-              borderRadius: 999,
+              justifyContent: 'center',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
               border: '1px solid rgba(240,147,251,0.35)',
               background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))',
               color: '#f093fb',
               fontWeight: 700,
               cursor: 'pointer',
-              fontSize: '0.9rem',
+              fontSize: '1.5rem',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
               transition: 'all 0.2s ease',
@@ -933,8 +935,7 @@ export const UserProfileLive: React.FC = () => {
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
             }}
           >
-            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
-            <span>Volver a inicio</span>
+            ←
           </motion.button>
           <div
             id="user-profile-banner-grid"
