@@ -1186,6 +1186,9 @@ export default function EventDatePublicScreen() {
                             <span className="event-card__icon">🗓️</span>
                             <div>
                               <span>Cronograma</span>
+                              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(166,162,194,0.8)', fontWeight: 500 }}>
+                                Horarios y actividades clave de la noche
+                              </p>
                             </div>
                           </div>
                         </header>
@@ -1211,8 +1214,8 @@ export default function EventDatePublicScreen() {
                                 </div>
                               </div>
                               <div className="event-row__right">
-                                <span className="event-row__time">
-                                  {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
+                                <span className="event-row__time" aria-label="Horario">
+                                  ⏱️ {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
                                 </span>
                               </div>
                             </div>
@@ -1228,6 +1231,9 @@ export default function EventDatePublicScreen() {
                             <span className="event-card__icon">💰</span>
                             <div>
                               <span>Costos</span>
+                              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(166,162,194,0.8)', fontWeight: 500 }}>
+                                Revisa preventas y precios en puerta antes de llegar
+                              </p>
                             </div>
                           </div>
                         </header>
@@ -1235,6 +1241,16 @@ export default function EventDatePublicScreen() {
                           {date.costos.slice(0, 4).map((c: any, i: number) => {
                             const isFree = c.precio === 0 || c.precio === null || c.precio === undefined;
                             const isHighlight = c.tipo === 'taquilla' || c.tipo === 'puerta' || c.nombre?.toLowerCase().includes('puerta');
+
+                            const numericPrice = typeof c.precio === 'number' ? c.precio : Number(c.precio);
+                            const formattedPrice = !isFree && Number.isFinite(numericPrice)
+                              ? new Intl.NumberFormat('es-MX', {
+                                  style: 'currency',
+                                  currency: 'MXN',
+                                  maximumFractionDigits: 0,
+                                }).format(numericPrice)
+                              : c.precio;
+
                             return (
                               <div key={i} className={`cost-row ${isFree ? 'cost-row--free' : ''}`}>
                                 <span className="cost-row__label">{c.nombre || c.tipo}</span>
@@ -1246,7 +1262,9 @@ export default function EventDatePublicScreen() {
                                       {c.tipo === 'preventa' || c.tipo === 'online' ? 'Online' : c.tipo === 'taquilla' || c.tipo === 'puerta' ? 'En puerta' : c.tipo || 'General'}
                                     </span>
                                     <span className="cost-row__pill-price">
-                                      ${c.precio.toLocaleString()}
+                                      {typeof formattedPrice === 'string'
+                                        ? formattedPrice
+                                        : `$${String(formattedPrice ?? '').toLocaleString()}`}
                                     </span>
                                   </span>
                                 )}
@@ -1254,6 +1272,9 @@ export default function EventDatePublicScreen() {
                             );
                           })}
                         </div>
+                        <p style={{ margin: '0.5rem 0 0', fontSize: 11, color: 'rgba(166,162,194,0.9)', textAlign: 'right' }}>
+                          *Los precios pueden cambiar sin previo aviso. Verifica en la puerta del evento.
+                        </p>
                       </article>
                     )}
                   </div>
