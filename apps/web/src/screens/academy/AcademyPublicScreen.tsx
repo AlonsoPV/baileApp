@@ -1417,49 +1417,6 @@ export default function AcademyPublicScreen() {
       <div className="academy-container" style={{ position: 'relative' }}>
         {/* ❌ Toggle eliminado */}
 
-        {/* Botón Volver a inicio */}
-        <motion.button
-          onClick={() => navigate('/explore')}
-          whileHover={{ scale: 1.15, x: -4 }}
-          whileTap={{ scale: 0.9 }}
-          aria-label="Volver a inicio"
-          style={{
-            position: 'fixed',
-            top: '1rem',
-            left: '1rem',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            border: '2px solid rgba(240,147,251,0.4)',
-            background: 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.2))',
-            color: '#f093fb',
-            fontWeight: 900,
-            cursor: 'pointer',
-            fontSize: '1.75rem',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 24px rgba(240,147,251,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 2px 8px rgba(0,0,0,0.3)',
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.4), rgba(255,209,102,0.3))';
-            e.currentTarget.style.borderColor = 'rgba(240,147,251,0.6)';
-            e.currentTarget.style.boxShadow = '0 12px 32px rgba(240,147,251,0.5), 0 0 0 1px rgba(255,255,255,0.2) inset, 0 4px 12px rgba(0,0,0,0.4)';
-            e.currentTarget.style.transform = 'translateX(-4px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.2))';
-            e.currentTarget.style.borderColor = 'rgba(240,147,251,0.4)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(240,147,251,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 2px 8px rgba(0,0,0,0.3)';
-            e.currentTarget.style.transform = '';
-          }}
-        >
-          ←
-        </motion.button>
-
         {/* Banner Principal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1468,6 +1425,53 @@ export default function AcademyPublicScreen() {
           className="academy-banner glass-card-container"
           style={{ position: 'relative', margin: '0.5rem auto 0 auto', overflow: 'hidden' }}
         >
+          {/* Botón Volver a inicio */}
+          <motion.button
+            onClick={() => navigate('/explore')}
+            whileHover={{ scale: 1.1, x: -3 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Volver a inicio"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              border: 'none',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: '#f093fb' }}
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </motion.button>
           {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="academy-banner-grid">
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>

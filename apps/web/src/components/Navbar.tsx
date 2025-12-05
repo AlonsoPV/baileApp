@@ -102,7 +102,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             gap: 0.45rem !important;
           }
           .nav-brand-title {
-            font-size: 0.8rem !important;
+            font-size: 2rem !important;
             letter-spacing: 1.2px !important;
           }
           .nav-brand-tagline {
@@ -117,7 +117,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             padding: .4rem !important; 
           }
           .nav-logo-img {
-            width: 30px !important;
+            width: 40px !important;
             height: 30px !important;
           }
         }
@@ -141,12 +141,12 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             height: auto !important;
           }
           .nav-brand-title {
-            font-size: 0.7rem !important;
+            font-size: 1.5rem !important;
             letter-spacing: 0.8px !important;
           }
           .nav-logo-img {
-            width: 26px !important;
-            height: 26px !important;
+            width: 35px !important;
+            height: 35px !important;
           }
           .nav-center-brand {
             gap: 0.35rem !important;
@@ -332,7 +332,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               width: 75,
               height: 75,
               /* borderRadius: '999px', */
-             /*  objectFit: 'cover', */
+             /*  objectFit: 'cover',  */
            /*    boxShadow: '0 4px 10px rgba(0,0,0,0.45)', */
           /*     border: '2px solid rgba(255,255,255,0.9)',
               background: 'rgba(0,0,0,0.35)', */
@@ -350,7 +350,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               style={{
                 textTransform: 'uppercase',
                 letterSpacing: 1.4,
-                fontSize: '3rem',
+                fontSize: '2.5rem',
               }}
             >
               Dónde Bailar MX
