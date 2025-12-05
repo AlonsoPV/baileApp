@@ -288,8 +288,10 @@ const STYLES = `
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* padding-top: env(safe-area-inset-top); */
+  /*   padding-bottom: env(safe-area-inset-bottom); */
+  padding-top: 5px;
+  padding-bottom: 5px;
   }
   .filters { padding: ${spacing[6]}; }
   .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }

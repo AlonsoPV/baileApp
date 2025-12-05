@@ -562,7 +562,7 @@ export default function EventDatePublicScreen() {
         /* Responsividad de secciones */
         @media (max-width: 768px) {
           .social-header-card {
-            padding: 1rem !important;
+            padding: 0.5rem !important;
           }
           
           .social-header-grid {
@@ -618,7 +618,7 @@ export default function EventDatePublicScreen() {
         
         @media (max-width: 480px) {
           .social-header-card {
-            padding: 0.85rem !important;
+            padding: 0.5rem !important;
           }
           
           h1 {
@@ -658,7 +658,7 @@ export default function EventDatePublicScreen() {
             padding: 0 10px !important;
           }
           .social-header-card {
-            padding: 0.75rem !important;
+            padding: 0.5rem !important;
             border-radius: 14px !important;
           }
           .event-title {
