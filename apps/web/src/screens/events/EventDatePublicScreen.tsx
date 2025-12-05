@@ -385,7 +385,7 @@ export default function EventDatePublicScreen() {
     );
   }
 
-  // Fallback si la carga tarda demasiado (casos de red inestable en WebView)
+  // Fallback si la car ga tarda demasiado (casos de red inestable en WebView)
   if (isLoading && loadingTimedOut) {
     return (
       <div style={{
@@ -541,21 +541,21 @@ export default function EventDatePublicScreen() {
       <div className="date-public-root" style={{
         minHeight: '100vh',
         background: `linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)`,
-        padding: '24px 0',
+        padding: '8px 0 24px 0',
       }}>
         <style>{`
-        .date-public-root { padding: 24px 0; }
+        .date-public-root { padding: 8px 0 24px 0; }
         .date-public-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
         
         /* Responsividad general */
         @media (max-width: 768px) {
-          .date-public-root { padding: 4px 0 !important; }
+          .date-public-root { padding: 4px 0 16px 0 !important; }
           .date-public-inner { padding: 0 16px !important; }
           .two-col-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
         }
         
         @media (max-width: 480px) {
-          .date-public-root { padding: 3px 0 !important; }
+          .date-public-root { padding: 3px 0 12px 0 !important; }
           .date-public-inner { padding: 0 12px !important; }
         }
         

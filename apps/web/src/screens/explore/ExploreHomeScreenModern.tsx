@@ -76,7 +76,7 @@ const FechaItem = React.memo(({ fechaEvento, idx, handlePreNavigate }: { fechaEv
   const uniqueKey = fechaEvento._recurrence_index !== undefined
     ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
     : (fechaEvento.id ?? `fecha_${idx}`);
-  
+
   return (
     <motion.div
       key={uniqueKey}
@@ -104,7 +104,7 @@ FechaItem.displayName = 'FechaItem';
 const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; idx: number; handlePreNavigate: () => void }) => {
   const stableKey =
     `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
-  
+
   return (
     <motion.div
       key={stableKey}
@@ -134,17 +134,17 @@ function useStableRandomIndex(length: number, sectionId: string): number {
   return React.useMemo(() => {
     if (length === 0) return 0; // Si no hay items, insertar al inicio (aunque no se usará)
     if (length < 5) return length; // Si hay menos de 5 items, insertar al final
-    
+
     // Generar un índice aleatorio entre 5 y 15 (o hasta length si es menor)
     // Usar sectionId como seed para que sea estable por sección
     const seed = sectionId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const random = (seed * 9301 + 49297) % 233280; // Generador pseudoaleatorio simple
     const normalized = random / 233280;
-    
+
     const minIndex = 5;
     const maxIndex = Math.min(15, length); // No exceder la longitud del array
     const range = maxIndex - minIndex + 1;
-    
+
     return Math.floor(minIndex + normalized * range); // Entre 5 y 15 (o hasta length)
   }, [length, sectionId]);
 }
@@ -162,12 +162,12 @@ function createArrayWithCTA<T>(
 }
 
 // Componente CTA Card
-const CTACard = React.memo(({ 
-  text, 
+const CTACard = React.memo(({
+  text,
   sectionType,
-  idx 
-}: { 
-  text: string; 
+  idx
+}: {
+  text: string;
   sectionType: 'clases' | 'academias' | 'maestros' | 'organizadores' | 'marcas';
   idx: number;
 }) => {
@@ -210,7 +210,7 @@ const CTACard = React.memo(({
         background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
         zIndex: 1
       }} />
-      
+
       {/* Contenido */}
       <div style={{
         position: 'relative',
@@ -241,19 +241,19 @@ const CTACard = React.memo(({
         }}>
           Únete
         </div>
-        
+
         {/* Icono */}
         <div style={{
           fontSize: '3rem',
           marginBottom: '0.5rem'
         }}>
           {sectionType === 'clases' ? '🎓' :
-           sectionType === 'academias' ? '🏫' :
-           sectionType === 'maestros' ? '👨‍🏫' :
-           sectionType === 'organizadores' ? '📅' :
-           '🏷️'}
+            sectionType === 'academias' ? '🏫' :
+              sectionType === 'maestros' ? '👨‍🏫' :
+                sectionType === 'organizadores' ? '📅' :
+                  '🏷️'}
         </div>
-        
+
         {/* Texto */}
         <p style={{
           color: '#fff',
@@ -265,7 +265,7 @@ const CTACard = React.memo(({
         }}>
           {text}
         </p>
-        
+
         {/* Flecha indicativa */}
         <div style={{
           marginTop: '0.5rem',
@@ -288,10 +288,9 @@ const STYLES = `
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
-    /* padding-top: env(safe-area-inset-top); */
-  /*   padding-bottom: env(safe-area-inset-bottom); */
-  padding-top: 5px;
-  padding-bottom: 5px;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom); 
+
   }
   .filters { padding: ${spacing[6]}; }
   .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
@@ -907,10 +906,10 @@ export default function ExploreHomeScreen() {
     const defaultFilters = applyDefaultFilters();
     const defaultRitmos = [...defaultFilters.ritmos];
     const defaultZonas = [...defaultFilters.zonas];
-    
+
     const ritmosMatch = JSON.stringify([...stableRitmos].sort()) === JSON.stringify([...defaultRitmos].sort());
     const zonasMatch = JSON.stringify([...stableZonas].sort()) === JSON.stringify([...defaultZonas].sort());
-    
+
     let fechasMatch = true;
     if (defaultFilters.fechaDesde || defaultFilters.fechaHasta) {
       const defaultFrom = defaultFilters.fechaDesde ? defaultFilters.fechaDesde.toISOString().slice(0, 10) : null;
@@ -919,7 +918,7 @@ export default function ExploreHomeScreen() {
     } else {
       fechasMatch = !filters.dateFrom && !filters.dateTo;
     }
-    
+
     const matchesDefaults = ritmosMatch && zonasMatch && fechasMatch;
     setUsingFavoriteFilters(matchesDefaults);
   }, [stableRitmos, stableZonas, filters.dateFrom, filters.dateTo, preferences, applyDefaultFilters, hasAppliedDefaults, hasConfiguredFavorites]);
@@ -967,11 +966,11 @@ export default function ExploreHomeScreen() {
 
   const applyDatePreset = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
     if (filters.datePreset === preset) return;
-    
+
     startTransition(() => {
       set({ datePreset: preset });
-    const { from, to } = computePresetRange(preset);
-    set({ datePreset: preset, dateFrom: from, dateTo: to });
+      const { from, to } = computePresetRange(preset);
+      set({ datePreset: preset, dateFrom: from, dateTo: to });
     });
   }, [filters.datePreset, computePresetRange, set]);
 
@@ -1032,10 +1031,10 @@ export default function ExploreHomeScreen() {
 
     const upcoming = allFechas.filter((fecha: any) => {
       if (includePastEvents) return true;
-      
+
       const fechaDate = parseYmdToDate(fecha?.fecha);
       if (!fechaDate || !todayBase) return true;
-      
+
       const fechaDateOnly = new Date(Date.UTC(
         fechaDate.getUTCFullYear(),
         fechaDate.getUTCMonth(),
@@ -1048,7 +1047,7 @@ export default function ExploreHomeScreen() {
         todayBase.getUTCDate(),
         0, 0, 0
       ));
-      
+
       if (fecha._recurrence_index !== undefined) {
         if (hasDateRange) {
           if (dateFrom && fechaDateOnly < dateFrom) return false;
@@ -1056,7 +1055,7 @@ export default function ExploreHomeScreen() {
         }
         return true;
       }
-      
+
       if (hasDateRange) {
         if (dateFrom && fechaDateOnly < dateFrom) return false;
         if (dateTo && fechaDateOnly > dateTo) return false;
@@ -1248,13 +1247,13 @@ export default function ExploreHomeScreen() {
 
     const fromAcademies = allA.flatMap((ac: any) => {
       const cronogramaData = ac?.cronograma || ac?.horarios || [];
-      return Array.isArray(cronogramaData) 
+      return Array.isArray(cronogramaData)
         ? cronogramaData.flatMap((c: any, idx: number) => mapClase(ac, c, 'academy', idx))
         : [];
     });
     const fromTeachers = allM.flatMap((tc: any) => {
       const cronogramaData = tc?.cronograma || tc?.horarios || [];
-      return Array.isArray(cronogramaData) 
+      return Array.isArray(cronogramaData)
         ? cronogramaData.flatMap((c: any, idx: number) => mapClase(tc, c, 'teacher', idx))
         : [];
     });
@@ -1360,23 +1359,23 @@ export default function ExploreHomeScreen() {
   const marcasCTIndex = useStableRandomIndex(marcasData.length, 'marcas');
 
   // Crear arrays con CTAs insertadas (solo si hay items)
-  const classesListWithCTA = React.useMemo(() => 
+  const classesListWithCTA = React.useMemo(() =>
     classesList.length > 0 ? createArrayWithCTA(classesList, clasesCTIndex, 'clases') : classesList,
     [classesList, clasesCTIndex]
   );
-  const academiasDataWithCTA = React.useMemo(() => 
+  const academiasDataWithCTA = React.useMemo(() =>
     academiasData.length > 0 ? createArrayWithCTA(academiasData, academiasCTIndex, 'academias') : academiasData,
     [academiasData, academiasCTIndex]
   );
-  const maestrosDataWithCTA = React.useMemo(() => 
+  const maestrosDataWithCTA = React.useMemo(() =>
     maestrosData.length > 0 ? createArrayWithCTA(maestrosData, maestrosCTIndex, 'maestros') : maestrosData,
     [maestrosData, maestrosCTIndex]
   );
-  const organizadoresDataWithCTA = React.useMemo(() => 
+  const organizadoresDataWithCTA = React.useMemo(() =>
     organizadoresData.length > 0 ? createArrayWithCTA(organizadoresData, organizadoresCTIndex, 'organizadores') : organizadoresData,
     [organizadoresData, organizadoresCTIndex]
   );
-  const marcasDataWithCTA = React.useMemo(() => 
+  const marcasDataWithCTA = React.useMemo(() =>
     marcasData.length > 0 ? createArrayWithCTA(marcasData, marcasCTIndex, 'marcas') : marcasData,
     [marcasData, marcasCTIndex]
   );
@@ -1432,7 +1431,7 @@ export default function ExploreHomeScreen() {
 
       <div className="explore-container">
         <div className="wrap">
-          <section className="filters-panel" style={{ margin: `${spacing[4]} 0 ${spacing[6]} 0` }}>
+          <section className="filters-panel" style={{ margin: `0 0 ${spacing[6]} 0` }}>
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -1482,39 +1481,39 @@ export default function ExploreHomeScreen() {
                     (preferences.zonas && preferences.zonas.length > 0) ||
                     (preferences.date_range && preferences.date_range !== 'none')
                   ) && (
-                    <button
-                      type="button"
-                      onClick={resetToFavoriteFilters}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.35rem 0.7rem',
-                        borderRadius: '999px',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        color: 'rgba(255, 255, 255, 0.75)',
-                        fontSize: '0.7rem',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        whiteSpace: 'nowrap'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.1)';
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.9)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.05)';
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.75)';
-                      }}
-                    >
-                      <span style={{ fontSize: '0.75rem' }}>⭐</span>
-                      <span>Activar favoritos</span>
-                    </button>
-                  )}
+                      <button
+                        type="button"
+                        onClick={resetToFavoriteFilters}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.35rem 0.7rem',
+                          borderRadius: '999px',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          color: 'rgba(255, 255, 255, 0.75)',
+                          fontSize: '0.7rem',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.1)';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.05)';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.75)';
+                        }}
+                      >
+                        <span style={{ fontSize: '0.75rem' }}>⭐</span>
+                        <span>Activar favoritos</span>
+                      </button>
+                    )}
                   <span className="filters-box__badge">
                     {activeFiltersCount > 0
                       ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
@@ -1555,9 +1554,9 @@ export default function ExploreHomeScreen() {
                   <span className="chip__label">Fechas</span>
                 </button>
                 {isSearchExpanded ? (
-                  <div style={{ 
-                    position: 'relative', 
-                    display: 'flex', 
+                  <div style={{
+                    position: 'relative',
+                    display: 'flex',
                     alignItems: 'center',
                     flex: '1 1 auto',
                     minWidth: '200px',
@@ -1726,39 +1725,39 @@ export default function ExploreHomeScreen() {
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
-                
+
                 return (
                   <>
-                  <HorizontalSlider
-                    {...sliderProps}
+                    <HorizontalSlider
+                      {...sliderProps}
                       items={classesListWithCTA}
-                    renderItem={(item: any, idx: number) => {
-                      if (item?.__isCTA) {
-                      return (
-                        <motion.div
-                            key="cta-clases"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                          }}
-                        >
-                            <CTACard text="¿Eres maestro o academia? Publica tus clases aquí." sectionType="clases" idx={idx} />
-                        </motion.div>
+                      renderItem={(item: any, idx: number) => {
+                        if (item?.__isCTA) {
+                          return (
+                            <motion.div
+                              key="cta-clases"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: idx * 0.05, duration: 0.3 }}
+                              whileHover={{ y: -4, scale: 1.02 }}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: 16,
+                                padding: 0,
+                                overflow: 'hidden',
+                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                              }}
+                            >
+                              <CTACard text="¿Eres maestro o academia? Publica tus clases aquí." sectionType="clases" idx={idx} />
+                            </motion.div>
+                          );
+                        }
+                        return (
+                          <ClaseItem key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} clase={item} idx={idx} handlePreNavigate={handlePreNavigate} />
                         );
-                      }
-                      return (
-                        <ClaseItem key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} clase={item} idx={idx} handlePreNavigate={handlePreNavigate} />
-                      );
-                    }}
-                  />
+                      }}
+                    />
                     {(academiasLoadMore.hasNextPage || maestrosLoadMore.hasNextPage) && (
                       <button
                         className="load-more-btn"
@@ -1788,13 +1787,34 @@ export default function ExploreHomeScreen() {
                     items={academiasDataWithCTA}
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
+                        return (
+                          <motion.div
+                            key="cta-academias"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05, duration: 0.3 }}
+                            whileHover={{ y: -4, scale: 1.02 }}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: 16,
+                              padding: 0,
+                              overflow: 'hidden',
+                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
+                            <CTACard text="¿Tienes una academia? Crea tu perfil gratis por 3 meses." sectionType="academias" idx={idx} />
+                          </motion.div>
+                        );
+                      }
                       return (
                         <motion.div
-                            key="cta-academias"
+                          key={item.id ?? idx}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05, duration: 0.3 }}
                           whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
                           style={{
                             background: 'rgba(255,255,255,0.04)',
                             border: '1px solid rgba(255,255,255,0.08)',
@@ -1804,29 +1824,8 @@ export default function ExploreHomeScreen() {
                             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                           }}
                         >
-                            <CTACard text="¿Tienes una academia? Crea tu perfil gratis por 3 meses." sectionType="academias" idx={idx} />
-                        </motion.div>
-                      );
-                      }
-                      return (
-                      <motion.div 
-                          key={item.id ?? idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        whileHover={{ y: -4, scale: 1.02 }} 
-                        onClickCapture={handlePreNavigate}
-                        style={{ 
-                          background: 'rgba(255,255,255,0.04)', 
-                          border: '1px solid rgba(255,255,255,0.08)', 
-                          borderRadius: 16, 
-                          padding: 0,
-                          overflow: 'hidden',
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                        }}
-                      >
                           <AcademyCard item={item} />
-                      </motion.div>
+                        </motion.div>
                       );
                     }}
                   />
@@ -1850,50 +1849,50 @@ export default function ExploreHomeScreen() {
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
                 <>
-                <HorizontalSlider
-                  {...sliderProps}
+                  <HorizontalSlider
+                    {...sliderProps}
                     items={maestrosDataWithCTA}
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                    <motion.div
+                          <motion.div
                             key="cta-maestros"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05, duration: 0.3 }}
+                            whileHover={{ y: -4, scale: 1.02 }}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: 16,
+                              padding: 0,
+                              overflow: 'hidden',
+                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
                             <CTACard text="¿Eres maestro? Comparte tus clases y muestra tu trayectoria." sectionType="maestros" idx={idx} />
-                    </motion.div>
+                          </motion.div>
                         );
                       }
                       return (
-                    <motion.div
+                        <motion.div
                           key={item.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
                           <TeacherCard item={item} />
-                    </motion.div>
+                        </motion.div>
                       );
                     }}
                   />
@@ -1918,41 +1917,41 @@ export default function ExploreHomeScreen() {
               ) : (
                 <>
                   {validUsuarios.length > 0 ? (
-                  <HorizontalSlider
-                    {...sliderProps}
-                    items={validUsuarios}
-                    renderItem={(u: any, idx: number) => (
-                      <motion.div
-                        key={u.user_id ?? idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        whileHover={{ y: -4, scale: 1.02 }}
-                        onClickCapture={handlePreNavigate}
-                        style={{
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: 16,
-                          padding: 0,
-                          overflow: 'hidden',
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                        }}
-                      >
-                        <DancerCard item={{
-                          id: u.user_id,
-                          display_name: u.display_name,
-                          bio: u.bio,
-                          avatar_url: u.avatar_url,
-                          banner_url: u.banner_url,
-                          portada_url: u.portada_url,
-                          media: u.media,
-                          ritmos: u.ritmos,
-                          ritmosSeleccionados: u.ritmos_seleccionados,
-                          zonas: u.zonas
-                        }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                      </motion.div>
-                    )}
-                  />
+                    <HorizontalSlider
+                      {...sliderProps}
+                      items={validUsuarios}
+                      renderItem={(u: any, idx: number) => (
+                        <motion.div
+                          key={u.user_id ?? idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <DancerCard item={{
+                            id: u.user_id,
+                            display_name: u.display_name,
+                            bio: u.bio,
+                            avatar_url: u.avatar_url,
+                            banner_url: u.banner_url,
+                            portada_url: u.portada_url,
+                            media: u.media,
+                            ritmos: u.ritmos,
+                            ritmosSeleccionados: u.ritmos_seleccionados,
+                            zonas: u.zonas
+                          }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                        </motion.div>
+                      )}
+                    />
                   ) : null}
                   {usuariosLoadMore.hasNextPage && (
                     <button
@@ -1980,13 +1979,13 @@ export default function ExploreHomeScreen() {
                 </div>
               ) : organizadoresData.length > 0 ? (
                 <>
-                <HorizontalSlider
-                  {...sliderProps}
+                  <HorizontalSlider
+                    {...sliderProps}
                     items={organizadoresDataWithCTA}
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                    <motion.div
+                          <motion.div
                             key="cta-organizadores"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -2008,22 +2007,22 @@ export default function ExploreHomeScreen() {
                       return (
                         <motion.div
                           key={item.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
                           <OrganizerCard item={item} />
-                    </motion.div>
+                        </motion.div>
                       );
                     }}
                   />
@@ -2049,13 +2048,13 @@ export default function ExploreHomeScreen() {
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
                 <>
-                <HorizontalSlider
-                  {...sliderProps}
+                  <HorizontalSlider
+                    {...sliderProps}
                     items={marcasDataWithCTA}
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                    <motion.div
+                          <motion.div
                             key="cta-marcas"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -2077,22 +2076,22 @@ export default function ExploreHomeScreen() {
                       return (
                         <motion.div
                           key={item.id ?? idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, duration: 0.3 }}
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      onClickCapture={handlePreNavigate}
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 16,
-                        padding: 0,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
                           <BrandCard item={item} />
-                    </motion.div>
+                        </motion.div>
                       );
                     }}
                   />
