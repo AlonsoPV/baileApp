@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useAuth } from '@/contexts/AuthProvider';
@@ -25,8 +25,10 @@ const colors = {
 export function DateLiveScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const dateId = parseInt(id || '0');
+  const fromParam = searchParams.get('from');
   
   const { data: date, isLoading, error } = useEventDate(dateId);
   const { data: social } = useEventParent(date?.parent_id);
@@ -270,6 +272,38 @@ export function DateLiveScreen() {
         position: 'relative',
         overflow: 'hidden'
       }}>
+        {/* Botón de volver si viene de /me/rsvps */}
+        {fromParam === '/me/rsvps' && (
+          <div style={{
+            position: 'absolute',
+            top: '1rem',
+            left: '1rem',
+            zIndex: 100,
+          }}>
+            <button
+              onClick={() => navigate('/me/rsvps')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: colors.light,
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              ← Volver a RSVPs
+            </button>
+          </div>
+        )}
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

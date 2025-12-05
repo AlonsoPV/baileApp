@@ -445,6 +445,16 @@ export default function TeacherProfileLive() {
     teacherIdNum ? { teacherId: teacherIdNum } : undefined
   );
   
+  // Configuración de WhatsApp para clases (público)
+  const whatsappNumber = useMemo(
+    () => (teacher as any)?.whatsapp_number || (teacher as any)?.redes_sociales?.whatsapp || null,
+    [teacher],
+  );
+  const whatsappMessageTemplate = useMemo(
+    () => (teacher as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}',
+    [(teacher as any)?.whatsapp_message_template],
+  );
+  
   // Memoizar promociones
   const promotions = useMemo(() => 
     Array.isArray((teacher as PublicTeacher)?.promociones) ? (teacher as PublicTeacher).promociones : []
@@ -593,6 +603,25 @@ export default function TeacherProfileLive() {
     <>
 
       <div className="teacher-container">
+        {/* Botón Volver a inicio */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '0 2rem', marginBottom: '1rem', marginTop: '2rem' }}>
+          <button
+            onClick={() => navigate('/explore')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)',
+              color: '#f093fb',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Volver a inicio
+          </button>
+        </div>
+
         {/* Banner Principal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -928,6 +957,11 @@ export default function TeacherProfileLive() {
                     sourceType="teacher"
                     sourceId={teacherIdNum}
                     isClickable={true}
+                    whatsappNumber={whatsappNumber}
+                    whatsappMessageTemplate={whatsappMessageTemplate}
+                    stripeAccountId={(teacher as any)?.stripe_account_id}
+                    stripeChargesEnabled={(teacher as any)?.stripe_charges_enabled}
+                    creatorName={(teacher as any)?.nombre_publico || (teacher as any)?.display_name}
                   />
                 </Suspense>
               ) : (
@@ -943,6 +977,8 @@ export default function TeacherProfileLive() {
                       referencias: (teacher as PublicTeacher)?.ubicaciones?.[0]?.referencias
                     }}
                     showCalendarButton={true}
+                    whatsappNumber={whatsappNumber}
+                    whatsappMessageTemplate={whatsappMessageTemplate}
                   />
                 </Suspense>
               )}
@@ -1074,6 +1110,7 @@ export default function TeacherProfileLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.65 }}
+              className="teachers-invited-section"
               style={{
                 marginBottom: '2rem',
                 marginTop: '2rem',

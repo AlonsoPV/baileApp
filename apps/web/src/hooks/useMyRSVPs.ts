@@ -11,9 +11,9 @@ export function useMyRSVPs() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // 1) Obtener mis RSVPs
+      // 1) Obtener mis RSVPs (tabla event_rsvp)
       const { data: rsvp, error } = await supabase
-        .from("rsvp")
+        .from("event_rsvp")
         .select("*")
         .eq("user_id", user.id)
         .order('created_at', { ascending: false });
@@ -32,7 +32,21 @@ export function useMyRSVPs() {
       if (e2) throw e2;
       if (!dates?.length) return [];
 
-      const parentIds = Array.from(new Set(dates.map((d) => d.parent_id)));
+      // Filtrar para quedarnos solo con fechas estrictamente posteriores a hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const upcomingDates = dates.filter((d: any) => {
+        if (!d.fecha) return false;
+        const fd = new Date(d.fecha);
+        if (Number.isNaN(fd.getTime())) return false;
+        fd.setHours(0, 0, 0, 0);
+        return fd > today;
+      });
+
+      if (!upcomingDates.length) return [];
+
+      const parentIds = Array.from(new Set(upcomingDates.map((d: any) => d.parent_id)));
       
       // 3) Obtener eventos padre
       const { data: parents, error: e3 } = await supabase
@@ -43,7 +57,7 @@ export function useMyRSVPs() {
       if (e3) throw e3;
 
       // 4) Combinar datos
-      return dates.map((d) => ({
+      return upcomingDates.map((d: any) => ({
         date: d,
         parent: parents?.find((p) => p.id === d.parent_id),
         my: rsvp.find((r) => r.event_date_id === d.id),

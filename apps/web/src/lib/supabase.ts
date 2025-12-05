@@ -1,4 +1,5 @@
 export { supabase } from './supabaseClient';
+import { supabase } from './supabaseClient';
 
 /**
  * Helper to get public URL for a file in a Supabase Storage bucket

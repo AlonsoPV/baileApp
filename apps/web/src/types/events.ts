@@ -14,6 +14,10 @@ export type Organizer = {
   estilos?: number[]; // IDs numéricos de tags (legacy)
   zonas?: number[];
   ubicaciones?: any[]; // Ubicaciones del organizador
+  stripe_account_id?: string | null;
+  stripe_onboarding_status?: string | null;
+  stripe_charges_enabled?: boolean | null;
+  stripe_payouts_enabled?: boolean | null;
   created_at: string;
 };
 

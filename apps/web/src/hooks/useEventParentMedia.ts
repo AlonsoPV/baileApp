@@ -3,6 +3,8 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { resizeImageIfNeeded } from "../lib/imageResize";
 
+type MediaItemWithSlot = MediaItem & { slot?: string };
+
 const BUCKET = "media"; // ✅ Bucket unificado
 
 // Helper to upload to media bucket (event media)
@@ -91,7 +93,7 @@ export function useEventParentMedia(eventId?: number) {
         console.log('[useEventParentMedia] Item with slot:', itemWithSlot);
         
         // Reemplazar cualquier item existente en el mismo slot
-        const existingMedia = q.data || [];
+        const existingMedia = (q.data || []) as MediaItemWithSlot[];
         const filteredMedia = existingMedia.filter(m => m.slot !== slot);
         const next = [itemWithSlot, ...filteredMedia];
         

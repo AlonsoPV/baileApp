@@ -15,11 +15,13 @@ type ClaseMetric = {
   precio: number | null;
   totalTentativos: number;
   porRol: RolCounts;
+  totalPagados: number;
 };
 
 type GlobalMetrics = {
   totalTentativos: number;
   porRol: RolCounts;
+  totalPagados: number;
 };
 
 export function useTeacherClassMetrics(teacherId?: number) {
@@ -69,12 +71,13 @@ export function useTeacherClassMetrics(teacherId?: number) {
         const g: GlobalMetrics = {
           totalTentativos: 0,
           porRol: { ...rolEmpty },
+          totalPagados: 0,
         };
         const mapPorClase = new Map<number, ClaseMetric>();
 
         (data ?? []).forEach((row: any) => {
           const classId = row.class_id as number;
-          const rol = (row.role_baile ?? "otros") as keyof RolCounts;
+          const rol = (row.role_baile ?? "otros") as string;
           let normalizedRol: keyof RolCounts = "otros";
           if (rol === "lead" || rol === "leader") normalizedRol = "leader";
           else if (rol === "follow" || rol === "follower") normalizedRol = "follower";
@@ -92,6 +95,7 @@ export function useTeacherClassMetrics(teacherId?: number) {
             precio: null,
             totalTentativos: 0,
             porRol: { ...rolEmpty },
+            totalPagados: 0,
           };
 
           base.totalTentativos += 1;
@@ -100,6 +104,33 @@ export function useTeacherClassMetrics(teacherId?: number) {
 
           mapPorClase.set(classId, base);
         });
+
+        // Métricas de compras (status = 'pagado')
+        try {
+          const { data: purchaseRows, error: purchaseError } = await supabase
+            .from("clase_asistencias")
+            .select("class_id")
+            .eq("teacher_id", teacherId!)
+            .eq("status", "pagado");
+
+          if (purchaseError) {
+            console.error("[useTeacherClassMetrics] ❌ Error obteniendo compras (fallback):", purchaseError);
+          } else {
+            const mapPagosPorClase = new Map<number, number>();
+            (purchaseRows ?? []).forEach((row: any) => {
+              const classId = row.class_id as number;
+              if (!classId) return;
+              g.totalPagados += 1;
+              mapPagosPorClase.set(classId, (mapPagosPorClase.get(classId) || 0) + 1);
+            });
+
+            mapPorClase.forEach((metric) => {
+              metric.totalPagados = mapPagosPorClase.get(metric.class_id) || 0;
+            });
+          }
+        } catch (purchaseErr) {
+          console.error("[useTeacherClassMetrics] ❌ Excepción obteniendo compras (fallback):", purchaseErr);
+        }
 
         return {
           global: g,
@@ -143,6 +174,7 @@ export function useTeacherClassMetrics(teacherId?: number) {
       const g: GlobalMetrics = {
         totalTentativos: 0,
         porRol: { ...rolEmpty },
+        totalPagados: 0,
       };
       const mapPorClase = new Map<number, ClaseMetric>();
 
@@ -180,8 +212,36 @@ export function useTeacherClassMetrics(teacherId?: number) {
             ambos: Number(porRol.ambos) || 0,
             otros: Number(porRol.otros) || 0,
           },
+          totalPagados: 0,
         });
       });
+
+      // Métricas de compras (status = 'pagado')
+      try {
+        const { data: purchaseRows, error: purchaseError } = await supabase
+          .from("clase_asistencias")
+          .select("class_id")
+          .eq("teacher_id", teacherId!)
+          .eq("status", "pagado");
+
+        if (purchaseError) {
+          console.error("[useTeacherClassMetrics] ❌ Error obteniendo compras:", purchaseError);
+        } else {
+          const mapPagosPorClase = new Map<number, number>();
+          (purchaseRows ?? []).forEach((row: any) => {
+            const classId = row.class_id as number;
+            if (!classId) return;
+            g.totalPagados += 1;
+            mapPagosPorClase.set(classId, (mapPagosPorClase.get(classId) || 0) + 1);
+          });
+
+          mapPorClase.forEach((metric) => {
+            metric.totalPagados = mapPagosPorClase.get(metric.class_id) || 0;
+          });
+        }
+      } catch (purchaseErr) {
+        console.error("[useTeacherClassMetrics] ❌ Excepción obteniendo compras:", purchaseErr);
+      }
 
       return {
         global: g,

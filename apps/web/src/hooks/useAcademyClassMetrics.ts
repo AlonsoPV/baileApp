@@ -81,7 +81,7 @@ export function useAcademyClassMetrics(academyId?: number) {
 
         (data ?? []).forEach((row: any) => {
           const classId = row.class_id as number;
-          const rol = (row.role_baile ?? "otros") as keyof RolCounts;
+          const rol = (row.role_baile ?? "otros") as string;
           let normalizedRol: keyof RolCounts = "otros";
           if (rol === "lead" || rol === "leader") normalizedRol = "leader";
           else if (rol === "follow" || rol === "follower") normalizedRol = "follower";

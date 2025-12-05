@@ -59,7 +59,7 @@ export function useMyApprovedRoles() {
       
       if (approved.has("academia")) {
         const { data } = await supabase
-          .from("profiles_school")
+          .from("profiles_academy")
           .select("id")
           .eq("user_id", user!.id)
           .limit(1);

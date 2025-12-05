@@ -14,6 +14,10 @@ import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
 import { FaWhatsapp } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useToast } from '@/components/Toast';
+import { supabase } from '@/lib/supabase';
+import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -52,6 +56,9 @@ export default function ClassPublicScreen() {
   const [sp] = useSearchParams();
   const params = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const createCheckout = useCreateCheckoutSession();
 
   // Permitir /clase?type=teacher&id=123 o /clase/:type/:id
   const sourceType = (params as any)?.type || (sp.get('type') as SourceType) || 'teacher';
@@ -59,6 +66,7 @@ export default function ClassPublicScreen() {
   const classIdParam = sp.get('classId') || sp.get('claseId') || '';
   const classIndexParam = sp.get('i') || sp.get('index') || '';
   const diaParam = sp.get('dia'); // Día específico para clases con múltiples días
+  const fromParam = sp.get('from');
   const idNum = Number(rawId);
 
   const isTeacher = sourceType === 'teacher';
@@ -135,6 +143,48 @@ export default function ClassPublicScreen() {
     nombre: selectedClass?.nombre,
     referenciaCosto: selectedClass?.referenciaCosto
   });
+
+  // Precio numérico de la clase (para Stripe)
+  const classPrice: number | null = (() => {
+    try {
+      // 1) Modelo nuevo: c.costo es un número
+      if (typeof (selectedClass as any)?.costo === 'number') {
+        const val = (selectedClass as any).costo as number;
+        if (val > 0) return val;
+      }
+
+      // 2) Modelo con objeto: c.costo.precio
+      if ((selectedClass as any)?.costo && typeof (selectedClass as any).costo?.precio === 'number') {
+        const val = (selectedClass as any).costo.precio as number;
+        if (val > 0) return val;
+      }
+
+      // 3) Buscar en el array de costos (modelo viejo)
+      if (Array.isArray(costos) && costos.length) {
+        const byClassId = (costos as any[]).find((c: any) => {
+          if ((selectedClass as any)?.id && c?.classId && String(c.classId) === String((selectedClass as any).id)) {
+            return true;
+          }
+          if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === selectedClassIndex) {
+            return true;
+          }
+          return false;
+        });
+        if (byClassId && typeof byClassId.precio === 'number' && byClassId.precio > 0) {
+          return byClassId.precio as number;
+        }
+      }
+    } catch (e) {
+      console.warn('[ClassPublicScreen] Error calculando classPrice:', e);
+    }
+    return null;
+  })();
+
+  console.log('[ClassPublicScreen] 💳 Debug pago:', {
+    classPrice,
+    hasStripeAccount: !!profile?.stripe_account_id,
+    stripeAccountId: profile?.stripe_account_id,
+  });
   
   // Generar un ID único para la clase basado en el índice (similar a useLiveClasses)
   // Si la clase tiene diasSemana, usar el primer día; si tiene fecha, usar 0
@@ -178,6 +228,65 @@ export default function ClassPublicScreen() {
     if (ini) return `${ini}`;
     return undefined;
   })();
+
+  const handlePayClick = async () => {
+    if (!user) {
+      showToast('Debes iniciar sesión para pagar', 'error');
+      navigate('/auth/login');
+      return;
+    }
+    if (!profile?.stripe_account_id) {
+      showToast('Esta academia/maestro todavía no tiene Stripe listo para cobrar.', 'error');
+      return;
+    }
+    if (!classPrice || classPrice <= 0) {
+      showToast('Esta clase no tiene un precio válido para pago.', 'error');
+      return;
+    }
+
+    try {
+      const { data: booking, error: bookingError } = await supabase
+        .from('clase_asistencias')
+        .insert({
+          user_id: user.id,
+          class_id: selectedClass?.id,
+          academy_id: !isTeacher ? profile?.id : null,
+          teacher_id: isTeacher ? profile?.id : null,
+          role_baile: (userProfile as any)?.rol_baile || null,
+          status: 'tentative',
+        })
+        .select('id')
+        .single();
+
+      let bookingId: string | number;
+      if (bookingError) {
+        const { data: existing } = await supabase
+          .from('clase_asistencias')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('class_id', selectedClass?.id)
+          .maybeSingle();
+
+        if (!existing) {
+          throw bookingError;
+        }
+        bookingId = existing.id;
+      } else {
+        bookingId = booking.id;
+      }
+
+      await createCheckout.mutateAsync({
+        price: classPrice,
+        description: `Clase: ${classTitle} con ${creatorName}`,
+        connectedAccountId: profile.stripe_account_id,
+        origin: 'clase',
+        bookingId,
+      });
+    } catch (error: any) {
+      console.error('[ClassPublicScreen] Error al procesar pago:', error);
+      showToast(error?.message || 'Error al iniciar el pago', 'error');
+    }
+  };
 
   const costLabel = (() => {
     try {
@@ -411,7 +520,39 @@ export default function ClassPublicScreen() {
           'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
-      <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0' }}>
+      <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0', position: 'relative' }}>
+      {/* Botón de volver si viene de /me/compras o /me/rsvps */}
+      {(fromParam === '/me/compras' || fromParam === '/me/rsvps') && (
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 100,
+        }}>
+          <button
+            onClick={() => navigate(fromParam)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            }}
+          >
+            ← Volver {fromParam === '/me/compras' ? 'a Compras' : 'a RSVPs'}
+          </button>
+        </div>
+      )}
       <style>{`
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
@@ -1022,6 +1163,41 @@ export default function ClassPublicScreen() {
                     <FaWhatsapp size={18} />
                     <span>Consultar por WhatsApp</span>
                   </motion.a>
+                )}
+
+                {/* Botón de Pago (Stripe) - solo requiere precio > 0 y stripe_account_id */}
+                {typeof classPrice === 'number' && classPrice > 0 && !!profile?.stripe_account_id && (
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handlePayClick}
+                    disabled={createCheckout.isPending}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '.55rem',
+                      padding: '.6rem 1.1rem',
+                      borderRadius: 999,
+                      border: '1px solid rgba(34, 197, 94, 0.5)',
+                      color: '#fff',
+                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      boxShadow: '0 6px 18px rgba(34, 197, 94, 0.3)',
+                      fontWeight: 800,
+                      fontSize: '.9rem',
+                      cursor: createCheckout.isPending ? 'not-allowed' : 'pointer',
+                      opacity: createCheckout.isPending ? 0.7 : 1,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span>💳</span>
+                    <span>
+                      {createCheckout.isPending
+                        ? 'Procesando...'
+                        : `Pagar ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
+                            classPrice,
+                          )}`}
+                    </span>
+                  </motion.button>
                 )}
 
                 {/* Botón de Agregar a Calendario */}

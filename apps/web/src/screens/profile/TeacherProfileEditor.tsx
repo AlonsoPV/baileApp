@@ -25,6 +25,8 @@ import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
+import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
+import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 
 // Lazy load heavy components
 const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/TeacherMetricsPanel").then(m => ({ default: m.TeacherMetricsPanel })));
@@ -1129,6 +1131,7 @@ export default function TeacherProfileEditor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { data: teacher, isLoading, refetch: refetchTeacher } = useTeacherMy();
+  const { data: approvedRoles } = useMyApprovedRoles();
   const { data: allTags } = useTags();
   const { media, add, remove } = useTeacherMedia();
   const upsert = useUpsertTeacher();
@@ -1226,6 +1229,95 @@ export default function TeacherProfileEditor() {
   const { data: myCompetitionGroups, isLoading: loadingGroups, refetch: refetchGroups } = useMyCompetitionGroups();
   const deleteGroup = useDeleteCompetitionGroup();
 
+  // Handlers para invitaciones (movidos fuera de función condicional)
+  const handleAcceptInvitation = React.useCallback(
+    async (invitationId: number) => {
+      try {
+        await respondToInvitation.mutateAsync({
+          invitationId,
+          status: 'accepted'
+        });
+        setStatusMsg({ type: 'ok', text: '✅ Invitación aceptada' });
+        setTimeout(() => setStatusMsg(null), 3000);
+        setTimeout(async () => {
+          await refetchInvitations();
+          await refetchAcademies();
+        }, 500);
+      } catch (error: any) {
+        setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+        setTimeout(() => setStatusMsg(null), 3000);
+      }
+    },
+    [respondToInvitation, refetchInvitations, refetchAcademies, setStatusMsg],
+  );
+
+  const handleRejectInvitation = React.useCallback(
+    async (invitationId: number) => {
+      try {
+        await respondToInvitation.mutateAsync({
+          invitationId,
+          status: 'rejected'
+        });
+        setStatusMsg({ type: 'ok', text: 'Invitación rechazada' });
+        setTimeout(() => setStatusMsg(null), 3000);
+      } catch (error: any) {
+        setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+        setTimeout(() => setStatusMsg(null), 3000);
+      }
+    },
+    [respondToInvitation, setStatusMsg],
+  );
+
+  const handleRemoveInvitation = React.useCallback(
+    async (invitationId: number) => {
+      if (!confirm('¿Estás seguro de que quieres dejar de aparecer en esta academia?')) {
+        return;
+      }
+      try {
+        await removeInvitation.mutateAsync(invitationId);
+        setStatusMsg({ type: 'ok', text: '✅ Ya no apareces en esta academia' });
+        setTimeout(() => setStatusMsg(null), 3000);
+        setTimeout(async () => {
+          await refetchInvitations();
+          await refetchAcademies();
+        }, 500);
+      } catch (error: any) {
+        setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
+        setTimeout(() => setStatusMsg(null), 3000);
+      }
+    },
+    [removeInvitation, refetchInvitations, refetchAcademies, setStatusMsg],
+  );
+
+  // Handlers para grupos de competencia (movidos fuera de función condicional)
+  const handleViewGroup = React.useCallback((groupId: string) => {
+    navigate(`/competition-groups/${groupId}`);
+  }, [navigate]);
+
+  const handleEditGroup = React.useCallback((groupId: string) => {
+    navigate(`/competition-groups/${groupId}/edit`);
+  }, [navigate]);
+
+  const handleDeleteGroup = React.useCallback(async (groupId: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
+      return;
+    }
+    try {
+      await deleteGroup.mutateAsync(groupId);
+      setStatusMsg({ type: 'ok', text: '✅ Grupo eliminado exitosamente' });
+      setTimeout(() => setStatusMsg(null), 3000);
+      await refetchGroups();
+    } catch (error: any) {
+      setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
+      setTimeout(() => setStatusMsg(null), 3000);
+    }
+  }, [deleteGroup, refetchGroups, setStatusMsg]);
+
+  const ownedGroups = React.useMemo(() => 
+    (myCompetitionGroups || []).filter((g: any) => g.owner_id === user?.id),
+    [myCompetitionGroups, user?.id]
+  );
+
   // Hook para cambio de rol
   useRoleChange();
 
@@ -1240,6 +1332,8 @@ export default function TeacherProfileEditor() {
     defaults: {
       nombre_publico: "",
       bio: "",
+      whatsapp_number: "",
+      whatsapp_message_template: "me interesa la clase: {nombre}",
       ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
@@ -1338,6 +1432,8 @@ export default function TeacherProfileEditor() {
         nombre_publico: form.nombre_publico,
         bio: form.bio,
         zonas: validatedZonas,
+        whatsapp_number: (form as any).whatsapp_number || null,
+        whatsapp_message_template: (form as any).whatsapp_message_template || 'me interesa la clase: {nombre}',
         ubicaciones: (form as any).ubicaciones || [],
         cronograma: (form as any).cronograma || [],
         costos: (form as any).costos || [],
@@ -1452,6 +1548,235 @@ export default function TeacherProfileEditor() {
     },
     [profileId, upsert],
   );
+
+  // Handlers para editar/eliminar clases (movidos fuera de función condicional)
+  const handleClassEdit = React.useCallback((idx: number, it: any, costo: any) => {
+    setEditingIndex(idx);
+    const dayNameToNumber = (dayName: string | number): number | null => {
+      if (typeof dayName === 'number') return dayName;
+      const normalized = String(dayName).toLowerCase().trim();
+      const map: Record<string, number> = {
+        'domingo': 0, 'dom': 0, 'lunes': 1, 'lun': 1, 'martes': 2, 'mar': 2,
+        'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3, 'jueves': 4, 'jue': 4,
+        'viernes': 5, 'vie': 5, 'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+      };
+      return map[normalized] ?? null;
+    };
+    setEditInitial({
+      nombre: it.titulo || '',
+      tipo: (costo?.tipo as any) || 'clases sueltas',
+      precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
+      regla: costo?.regla || '',
+      nivel: (it as any)?.nivel ?? null,
+      descripcion: (it as any)?.descripcion || '',
+      fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
+      fecha: it.fecha || '',
+      diaSemana: (it as any)?.diaSemana ?? null,
+      diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) 
+        ? (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[]
+        : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
+      horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
+      inicio: it.inicio || '',
+      fin: it.fin || '',
+      duracionHoras: (it as any)?.duracionHoras ?? null,
+      ritmoId: it.ritmoId ?? null,
+      ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
+      zonaId: it.zonaId ?? null,
+      ubicacion: it.ubicacion || '',
+      ubicacionId: (it as any)?.ubicacionId || null
+    });
+    setStatusMsg(null);
+  }, [setEditingIndex, setEditInitial, setStatusMsg]);
+
+  const handleClassDelete = React.useCallback((classId: number, refKey: string, cronograma: any[], costos: any[]) => {
+    const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
+    if (!ok) return;
+
+    const currentCrono = ([...cronograma] as any[]);
+    const currentCostos = ([...costos] as any[]);
+
+    const nextCrono = currentCrono.filter((it: any) => {
+      const itId = ensureClassId(it);
+      return itId !== classId;
+    });
+    const nextCostos = refKey
+      ? currentCostos.filter((c: any) => {
+          const cRef = (c?.referenciaCosto || c?.nombre || '').trim().toLowerCase();
+          return cRef !== refKey;
+        })
+      : currentCostos;
+
+    setField('cronograma' as any, nextCrono as any);
+    setField('costos' as any, nextCostos as any);
+
+    autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
+      .then(() => {
+        if (editingIndex !== null) {
+          const editingClassId = ensureClassId(cronograma[editingIndex]);
+          if (editingClassId === classId) {
+            setEditingIndex(null);
+            setEditInitial(undefined);
+          }
+        }
+      });
+  }, [setField, autoSaveClasses, editingIndex, setEditingIndex, setEditInitial]);
+
+  // Handlers para CrearClase component
+  const handleClassCancel = React.useCallback(() => {
+    setEditingIndex(null);
+    setEditInitial(undefined);
+    setStatusMsg(null);
+  }, [setEditingIndex, setEditInitial, setStatusMsg]);
+
+  const handleClassSubmit = React.useCallback((c: any) => {
+    const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+    const currentCostos = ([...((form as any).costos || [])] as any[]);
+
+    if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+      const prev = currentCrono[editingIndex];
+      const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
+
+      let ubicacionStr = (
+        [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+      ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+      const match = c?.ubicacionId
+        ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+        : undefined;
+      if (!ubicacionStr.trim() && match) {
+        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+      }
+
+      const ritmoIds = c.ritmoIds && c.ritmoIds.length
+        ? c.ritmoIds
+        : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
+      const classId = ensureClassId(prev);
+      
+      const costoIdx = currentCostos.findIndex((x: any) => {
+        if (x?.classId && x.classId === classId) return true;
+        if (x?.referenciaCosto && Number(x.referenciaCosto) === classId) return true;
+        if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
+        return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
+      });
+      
+      const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id 
+        ? currentCostos[costoIdx].id 
+        : Date.now();
+      const updatedCosto = {
+        id: costoId,
+        nombre: c.nombre,
+        tipo: c.tipo,
+        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        regla: c.regla || '',
+        classId: classId,
+        referenciaCosto: String(classId),
+        cronogramaIndex: editingIndex
+      } as any;
+      if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
+      
+      const updatedItem = {
+        ...prev,
+        id: classId,
+        tipo: 'clase',
+        titulo: c.nombre,
+        descripcion: c.descripcion || undefined,
+        fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+        fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+        diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+        diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+        })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return [dayNames[c.diaSemana]] as string[];
+        })() : undefined),
+        recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+        horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+        inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+        fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+        duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+        nivel: c.nivel || undefined,
+        referenciaCosto: String(classId),
+        costo: updatedCosto,
+        ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+        ritmoIds,
+        zonaId: c.zonaId,
+        ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+        ubicacionId: c.ubicacionId || (match?.id || null)
+      };
+      currentCrono[editingIndex] = updatedItem;
+
+      setField('cronograma' as any, currentCrono as any);
+      setField('costos' as any, currentCostos as any);
+
+      return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
+        .then(() => {
+          setEditingIndex(null);
+          setEditInitial(undefined);
+        });
+    } else {
+      let ubicacionStr = (
+        [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+      ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+      const match = c?.ubicacionId
+        ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+        : undefined;
+      if (!ubicacionStr.trim() && match) {
+        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+      }
+
+      const ritmoIds = c.ritmoIds && c.ritmoIds.length
+        ? c.ritmoIds
+        : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
+      const newClassId = generateClassId();
+      const newClassIndex = currentCrono.length;
+      
+      const newCosto = {
+        id: Date.now(),
+        nombre: c.nombre,
+        tipo: c.tipo,
+        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        regla: c.regla || '',
+        classId: newClassId,
+        referenciaCosto: String(newClassId),
+        cronogramaIndex: newClassIndex
+      } as any;
+      
+      const nextCrono = ([...currentCrono, {
+        id: newClassId,
+        tipo: 'clase',
+        titulo: c.nombre,
+        descripcion: c.descripcion || undefined,
+        fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+        fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+        diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+        diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+        })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return [dayNames[c.diaSemana]] as string[];
+        })() : undefined),
+        recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+        horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+        inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+        fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+        duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+        nivel: c.nivel || undefined,
+        referenciaCosto: String(newClassId),
+        costo: newCosto,
+        ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+        ritmoIds,
+        zonaId: c.zonaId,
+        ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+        ubicacionId: c.ubicacionId || (match?.id || null)
+      }] as any);
+      const nextCostos = ([...currentCostos, newCosto] as any);
+      setField('cronograma' as any, nextCrono as any);
+      setField('costos' as any, nextCostos as any);
+
+      return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
+    }
+  }, [form, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId, setEditingIndex, setEditInitial]);
 
   const uploadFile = React.useCallback(async (file: File, slot: string) => {
     try {
@@ -1828,6 +2153,94 @@ export default function TeacherProfileEditor() {
           </div>
         </div>
 
+        {/* Configuración de WhatsApp para Clases */}
+        <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ 
+              width: 48, 
+              height: 48, 
+              borderRadius: '12px', 
+              background: 'linear-gradient(135deg, #25D366, #128C7E)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+            }}>
+              💬
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 className="editor-section-title" style={{ marginBottom: '0.5rem', fontSize: '1.35rem' }}>
+                WhatsApp para Clases
+              </h2>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                Configura el número y mensaje de WhatsApp que aparecerán en los botones de contacto de tus clases. 
+                Usa <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{nombre}'}</code> o{" "}
+                <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{clase}'}</code> para insertar automáticamente el nombre de la clase.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1.5rem', alignItems: 'start' }}>
+            {/* Número de WhatsApp */}
+            <div>
+              <label className="editor-field" style={{ fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+                📱 Número de WhatsApp
+              </label>
+              <div className="input-group" style={{ marginTop: 0 }}>
+                <span className="prefix">+52</span>
+                <input
+                  type="tel"
+                  value={(form as any).whatsapp_number || ''}
+                  onChange={(e) => setField('whatsapp_number' as any, e.target.value)}
+                  placeholder="55 1234 5678"
+                  className="editor-input"
+                  style={{ border: 'none', background: 'transparent', padding: '0.75rem', fontSize: '0.95rem' }}
+                />
+              </div>
+              <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.65, color: 'rgba(255,255,255,0.75)', lineHeight: '1.3' }}>
+                Este número se usará para los botones de WhatsApp en tus clases
+              </p>
+            </div>
+
+            {/* Mensaje Personalizado */}
+            <div>
+              <label className="editor-field" style={{ fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+                ✉️ Mensaje Personalizado
+              </label>
+              <textarea
+                value={(form as any).whatsapp_message_template || 'me interesa la clase: {nombre}'}
+                onChange={(e) => setField('whatsapp_message_template' as any, e.target.value)}
+                placeholder="me interesa la clase: {nombre}"
+                className="editor-textarea"
+                rows={2}
+                style={{ marginTop: 0, fontSize: '0.95rem', padding: '0.75rem', minHeight: '60px' }}
+              />
+              <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.65, color: 'rgba(255,255,255,0.75)', lineHeight: '1.3' }}>
+                Se enviará como: "Hola vengo de Donde Bailar MX, [tu mensaje]"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pagos / Stripe Payouts */}
+        {approvedRoles?.approved?.includes('maestro') && user?.id && teacher && (
+          <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+              💸 Pagos y Cobros
+            </h2>
+            <StripePayoutSettings
+              userId={user.id}
+              roleType="maestro"
+              stripeAccountId={teacher.stripe_account_id}
+              stripeOnboardingStatus={teacher.stripe_onboarding_status}
+              stripeChargesEnabled={teacher.stripe_charges_enabled}
+              stripePayoutsEnabled={teacher.stripe_payouts_enabled}
+            />
+          </div>
+        )}
+
         {/* Estilos & Zonas - tarjeta mejorada */}
         <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
@@ -1979,160 +2392,8 @@ export default function TeacherProfileEditor() {
                 editIndex={editingIndex}
                 editValue={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
-                    onCancel={React.useCallback(() => { 
-                      setEditingIndex(null); 
-                      setEditInitial(undefined); 
-                      setStatusMsg(null); 
-                    }, [])}
-                    onSubmit={React.useCallback((c) => {
-                      const currentCrono = ([...((form as any).cronograma || [])] as any[]);
-                      const currentCostos = ([...((form as any).costos || [])] as any[]);
-
-                      if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
-                        const prev = currentCrono[editingIndex];
-                        const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
-
-                        let ubicacionStr = (
-                          [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                        ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                        const match = c?.ubicacionId
-                          ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                          : undefined;
-                        if (!ubicacionStr.trim() && match) {
-                          ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                        }
-
-                        const ritmoIds = c.ritmoIds && c.ritmoIds.length
-                          ? c.ritmoIds
-                          : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
-                        const classId = ensureClassId(prev);
-                        
-                        const costoIdx = currentCostos.findIndex((x: any) => {
-                          if (x?.classId && x.classId === classId) return true;
-                          if (x?.referenciaCosto && Number(x.referenciaCosto) === classId) return true;
-                          if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
-                          return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
-                        });
-                        
-                        const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id 
-                          ? currentCostos[costoIdx].id 
-                          : Date.now();
-                        const updatedCosto = {
-                          id: costoId,
-                          nombre: c.nombre,
-                          tipo: c.tipo,
-                          precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                          regla: c.regla || '',
-                          classId: classId,
-                          referenciaCosto: String(classId),
-                          cronogramaIndex: editingIndex
-                        } as any;
-                        if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
-                        
-                        const updatedItem = {
-                          ...prev,
-                          id: classId,
-                          tipo: 'clase',
-                          titulo: c.nombre,
-                          descripcion: c.descripcion || undefined,
-                          fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                          fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                          diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                          diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                            return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                          })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                            return [dayNames[c.diaSemana]] as string[];
-                          })() : undefined),
-                          recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                          horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                          inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                          fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                          duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                          nivel: c.nivel || undefined,
-                          referenciaCosto: String(classId),
-                          costo: updatedCosto,
-                          ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                          ritmoIds,
-                          zonaId: c.zonaId,
-                          ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                          ubicacionId: c.ubicacionId || (match?.id || null)
-                        };
-                        currentCrono[editingIndex] = updatedItem;
-
-                        setField('cronograma' as any, currentCrono as any);
-                        setField('costos' as any, currentCostos as any);
-
-                        return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
-                          .then(() => {
-                            setEditingIndex(null);
-                            setEditInitial(undefined);
-                          });
-                      } else {
-                        let ubicacionStr = (
-                          [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                        ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                        const match = c?.ubicacionId
-                          ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                          : undefined;
-                        if (!ubicacionStr.trim() && match) {
-                          ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                        }
-
-                        const ritmoIds = c.ritmoIds && c.ritmoIds.length
-                          ? c.ritmoIds
-                          : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
-                        const newClassId = generateClassId();
-                        const newClassIndex = currentCrono.length;
-                        
-                        const newCosto = {
-                          id: Date.now(),
-                          nombre: c.nombre,
-                          tipo: c.tipo,
-                          precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                          regla: c.regla || '',
-                          classId: newClassId,
-                          referenciaCosto: String(newClassId),
-                          cronogramaIndex: newClassIndex
-                        } as any;
-                        
-                        const nextCrono = ([...currentCrono, {
-                          id: newClassId,
-                          tipo: 'clase',
-                          titulo: c.nombre,
-                          descripcion: c.descripcion || undefined,
-                          fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                          fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                          diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                          diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                            return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                          })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                            return [dayNames[c.diaSemana]] as string[];
-                          })() : undefined),
-                          recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                          horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                          inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                          fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                          duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                          nivel: c.nivel || undefined,
-                          referenciaCosto: String(newClassId),
-                          costo: newCosto,
-                          ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                          ritmoIds,
-                          zonaId: c.zonaId,
-                          ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                          ubicacionId: c.ubicacionId || (match?.id || null)
-                        }] as any);
-                        const nextCostos = ([...currentCostos, newCosto] as any);
-                        setField('cronograma' as any, nextCrono as any);
-                        setField('costos' as any, nextCostos as any);
-
-                        return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
-                      }
-                    }, [form, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId])}
+                onCancel={handleClassCancel}
+                onSubmit={handleClassSubmit}
                   />
                 </React.Suspense>
               )}
@@ -2140,78 +2401,6 @@ export default function TeacherProfileEditor() {
               {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (() => {
                 const cronograma = (form as any).cronograma;
                 const costos = (form as any)?.costos || [];
-                
-                // Memoize handlers for class edit/delete
-                const handleClassEdit = React.useCallback((idx: number, it: any, costo: any) => {
-                            setEditingIndex(idx);
-                                const dayNameToNumber = (dayName: string | number): number | null => {
-                                  if (typeof dayName === 'number') return dayName;
-                                  const normalized = String(dayName).toLowerCase().trim();
-                                  const map: Record<string, number> = {
-                                    'domingo': 0, 'dom': 0, 'lunes': 1, 'lun': 1, 'martes': 2, 'mar': 2,
-                                    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3, 'jueves': 4, 'jue': 4,
-                                    'viernes': 5, 'vie': 5, 'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                                  };
-                                  return map[normalized] ?? null;
-                                };
-                  setEditInitial({
-                    nombre: it.titulo || '',
-                    tipo: (costo?.tipo as any) || 'clases sueltas',
-                    precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
-                    regla: costo?.regla || '',
-                    nivel: (it as any)?.nivel ?? null,
-                    descripcion: (it as any)?.descripcion || '',
-                    fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
-                    fecha: it.fecha || '',
-                    diaSemana: (it as any)?.diaSemana ?? null,
-                    diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) 
-                      ? (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[]
-                      : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
-                              horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
-                              inicio: it.inicio || '',
-                              fin: it.fin || '',
-                              duracionHoras: (it as any)?.duracionHoras ?? null,
-                              ritmoId: it.ritmoId ?? null,
-                              ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
-                              zonaId: it.zonaId ?? null,
-                              ubicacion: it.ubicacion || '',
-                              ubicacionId: (it as any)?.ubicacionId || null
-                            });
-                            setStatusMsg(null);
-                }, []);
-
-                const handleClassDelete = React.useCallback((classId: number, refKey: string) => {
-                  const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
-                  if (!ok) return;
-
-                  const currentCrono = ([...cronograma] as any[]);
-                  const currentCostos = ([...costos] as any[]);
-
-                  const nextCrono = currentCrono.filter((it: any) => {
-                    const itId = ensureClassId(it);
-                    return itId !== classId;
-                  });
-                  const nextCostos = refKey
-                    ? currentCostos.filter((c: any) => {
-                        const cRef = (c?.referenciaCosto || c?.nombre || '').trim().toLowerCase();
-                        return cRef !== refKey;
-                      })
-                    : currentCostos;
-
-                  setField('cronograma' as any, nextCrono as any);
-                  setField('costos' as any, nextCostos as any);
-
-                  autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
-                    .then(() => {
-                      if (editingIndex !== null) {
-                        const editingClassId = ensureClassId(cronograma[editingIndex]);
-                        if (editingClassId === classId) {
-                          setEditingIndex(null);
-                          setEditInitial(undefined);
-                        }
-                      }
-                    });
-                }, [cronograma, costos, setField, autoSaveClasses, editingIndex]);
 
                 return (
                   <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
@@ -2235,7 +2424,7 @@ export default function TeacherProfileEditor() {
                           fechaLabel={fechaLabel}
                           costoLabel={costoLabel}
                           onEdit={() => handleClassEdit(idx, it, costo)}
-                          onDelete={() => handleClassDelete(classId, refKey)}
+                          onDelete={() => handleClassDelete(classId, refKey, cronograma, costos)}
                         />
                       );
                     })}
@@ -2309,74 +2498,22 @@ export default function TeacherProfileEditor() {
                   Las academias pueden invitarte a colaborar con ellas
                 </p>
               </div>
-            ) : (() => {
-              const handleAcceptInvitation = React.useCallback(async (invitationId: number) => {
-                              try {
-                                await respondToInvitation.mutateAsync({
-                                  invitationId,
-                                  status: 'accepted'
-                                });
-                                setStatusMsg({ type: 'ok', text: '✅ Invitación aceptada' });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                                setTimeout(async () => {
-                                  await refetchInvitations();
-                                  await refetchAcademies();
-                                }, 500);
-                              } catch (error: any) {
-                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                              }
-              }, [respondToInvitation, refetchInvitations, refetchAcademies]);
-
-              const handleRejectInvitation = React.useCallback(async (invitationId: number) => {
-                              try {
-                                await respondToInvitation.mutateAsync({
-                                  invitationId,
-                                  status: 'rejected'
-                                });
-                                setStatusMsg({ type: 'ok', text: 'Invitación rechazada' });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                              } catch (error: any) {
-                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                              }
-              }, [respondToInvitation]);
-
-              const handleRemoveInvitation = React.useCallback(async (invitationId: number) => {
-                              if (!confirm('¿Estás seguro de que quieres dejar de aparecer en esta academia?')) {
-                                return;
-                              }
-                              try {
-                                await removeInvitation.mutateAsync(invitationId);
-                                setStatusMsg({ type: 'ok', text: '✅ Ya no apareces en esta academia' });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                                setTimeout(async () => {
-                                  await refetchInvitations();
-                                  await refetchAcademies();
-                                }, 500);
-                              } catch (error: any) {
-                                setStatusMsg({ type: 'err', text: `❌ ${error.message}` });
-                                setTimeout(() => setStatusMsg(null), 3000);
-                              }
-              }, [removeInvitation, refetchInvitations, refetchAcademies]);
-
-              return (
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {invitations.map((inv: any) => (
-                    <InvitationItem
-                      key={inv.id}
-                      invitation={inv}
-                      colors={colors}
-                      onAccept={() => handleAcceptInvitation(Number(inv.id))}
-                      onReject={() => handleRejectInvitation(Number(inv.id))}
-                      onRemove={() => handleRemoveInvitation(Number(inv.id))}
-                      isAccepting={respondToInvitation.isPending}
-                      isRemoving={removeInvitation.isPending}
-                    />
-                  ))}
-                    </div>
-                  );
-            })()}
+          ) : (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {invitations.map((inv: any) => (
+                <InvitationItem
+                  key={inv.id}
+                  invitation={inv}
+                  colors={colors}
+                  onAccept={() => handleAcceptInvitation(Number(inv.id))}
+                  onReject={() => handleRejectInvitation(Number(inv.id))}
+                  onRemove={() => handleRemoveInvitation(Number(inv.id))}
+                  isAccepting={respondToInvitation.isPending}
+                  isRemoving={removeInvitation.isPending}
+                />
+              ))}
+            </div>
+          )}
           </div>
         )}
 
@@ -2408,51 +2545,21 @@ export default function TeacherProfileEditor() {
                   Crea un grupo para organizar entrenamientos y competencias
                 </p>
               </div>
-            ) : (() => {
-              const handleViewGroup = React.useCallback((groupId: string) => {
-                navigate(`/competition-groups/${groupId}`);
-              }, [navigate]);
-
-              const handleEditGroup = React.useCallback((groupId: string) => {
-                navigate(`/competition-groups/${groupId}/edit`);
-              }, [navigate]);
-
-              const handleDeleteGroup = React.useCallback(async (groupId: string) => {
-                if (!window.confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
-                  return;
-                }
-                try {
-                  await deleteGroup.mutateAsync(groupId);
-                  setStatusMsg({ type: 'ok', text: '✅ Grupo eliminado exitosamente' });
-                  setTimeout(() => setStatusMsg(null), 3000);
-                  await refetchGroups();
-                } catch (error: any) {
-                  setStatusMsg({ type: 'err', text: `❌ Error: ${error.message}` });
-                  setTimeout(() => setStatusMsg(null), 3000);
-                }
-              }, [deleteGroup, refetchGroups]);
-
-              const ownedGroups = React.useMemo(() => 
-                (myCompetitionGroups || []).filter((g: any) => g.owner_id === user?.id),
-                [myCompetitionGroups, user?.id]
-              );
-
-              return (
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {ownedGroups.map((group: any) => (
-                    <CompetitionGroupItem
-                      key={group.id}
-                      group={group}
-                      colors={colors}
-                      onView={() => handleViewGroup(group.id)}
-                      onEdit={() => handleEditGroup(group.id)}
-                      onDelete={() => handleDeleteGroup(group.id)}
-                      isDeleting={deleteGroup.isPending}
-                    />
-                  ))}
-                </div>
-              );
-            })()}
+            ) : (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {ownedGroups.map((group: any) => (
+                  <CompetitionGroupItem
+                    key={group.id}
+                    group={group}
+                    colors={colors}
+                    onView={() => handleViewGroup(group.id)}
+                    onEdit={() => handleEditGroup(group.id)}
+                    onDelete={() => handleDeleteGroup(group.id)}
+                    isDeleting={deleteGroup.isPending}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -4,6 +4,8 @@ import { MediaItem } from "../lib/storage";
 import { useAcademyMy } from "./useAcademy";
 import { resizeImageIfNeeded } from "../lib/imageResize";
 
+type MediaItemWithSlot = MediaItem & { slot?: string };
+
 // Usar el bucket 'media' existente con prefijo 'academy/'
 const BUCKET = "media";
 
@@ -104,7 +106,7 @@ export function useAcademyMedia() {
         console.log('[useAcademyMedia] Item with slot:', itemWithSlot);
         
         // Reemplazar cualquier item existente en el mismo slot
-        const existingMedia = q.data || [];
+        const existingMedia = (q.data || []) as MediaItemWithSlot[];
         const filteredMedia = existingMedia.filter(m => m.slot !== slot);
         const next = [itemWithSlot, ...filteredMedia];
         

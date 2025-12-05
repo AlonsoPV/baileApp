@@ -162,6 +162,22 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
               </div>
             </div>
 
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgba(76,175,80,0.12)",
+                borderRadius: 12,
+                border: "1px solid rgba(76,175,80,0.25)",
+              }}
+            >
+              <div style={{ fontSize: "0.875rem", opacity: 0.9, marginBottom: "0.5rem", color: "#fff" }}>
+                Compras (pagado)
+              </div>
+              <div style={{ fontSize: "2rem", fontWeight: 900, color: "#4CAF50" }}>
+                {global.totalPagados ?? 0}
+              </div>
+            </div>
+
             <div>
               <div style={{ fontSize: "0.875rem", opacity: 0.9, marginBottom: "0.75rem", color: "#fff" }}>
                 Por rol
@@ -315,10 +331,13 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
                   </div>
                   <div className="metrics-class-total">
                     <div style={{ fontSize: "0.75rem", opacity: 0.9, marginBottom: "0.25rem", color: "#fff" }}>
-                      Total
+                      Tentativos
                     </div>
                     <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#f093fb" }}>
                       {cl.totalTentativos}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", opacity: 0.9, marginTop: "0.25rem", color: "#A5D6A7" }}>
+                      💳 Compras: {cl.totalPagados ?? 0}
                     </div>
                   </div>
                 </div>

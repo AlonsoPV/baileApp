@@ -42,6 +42,8 @@ import { OrganizerEventMetricsPanel } from "../../components/profile/OrganizerEv
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import { FaInstagram, FaFacebookF, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
+import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
+import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 
 const colors = {
   coral: '#FF3D57',
@@ -626,6 +628,7 @@ export default function OrganizerProfileEditor() {
 
   // Obtener usuario autenticado
   const { user, loading: authLoading } = useAuth();
+  const { data: approvedRoles } = useMyApprovedRoles();
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = useState(false);
@@ -3371,6 +3374,23 @@ export default function OrganizerProfileEditor() {
 
           {activeTab === "perfil" && (
             <>
+          {/* Pagos / Stripe Payouts */}
+          {approvedRoles?.approved?.includes('organizador') && user?.id && org && (
+            <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+                💸 Pagos y Cobros
+              </h2>
+              <StripePayoutSettings
+                userId={user.id}
+                roleType="organizador"
+                stripeAccountId={(org as any).stripe_account_id}
+                stripeOnboardingStatus={(org as any).stripe_onboarding_status}
+                stripeChargesEnabled={(org as any).stripe_charges_enabled}
+                stripePayoutsEnabled={(org as any).stripe_payouts_enabled}
+              />
+            </div>
+          )}
+
           {/* Mis ubicaciones reutilizables (editor independiente para organizador con misma UX que academia) */}
           <div className="org-editor-card">
             <OrganizerUbicacionesEditor organizerId={(org as any)?.id} />

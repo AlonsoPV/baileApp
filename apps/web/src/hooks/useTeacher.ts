@@ -21,6 +21,10 @@ export type TeacherProfile = {
   media: { type: 'image'|'video'; url: string; slot?: string }[];
   faq?: { q: string; a: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
+  stripe_account_id?: string | null;
+  stripe_onboarding_status?: string | null;
+  stripe_charges_enabled?: boolean | null;
+  stripe_payouts_enabled?: boolean | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -74,7 +78,8 @@ export function useTeacherMy() {
           return null;
         }
         // Error 406 = Not Acceptable (posible problema de RLS o tabla no existe)
-        if (error.code === '406' || error.status === 406) {
+        const errAny = error as any;
+        if (error.code === '406' || errAny.status === 406) {
           console.warn('[useTeacherMy] Error 406 al cargar perfil (posible problema de RLS):', error);
           return null;
         }
@@ -89,7 +94,8 @@ export function useTeacherMy() {
     refetchInterval: 30000, // Refrescar cada 30 segundos para detectar cambios de aprobación
     retry: (failureCount, error: any) => {
       // No reintentar si es error 406 o PGRST116
-      if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {
+      const errAny = error as any;
+      if (error?.code === '406' || error?.code === 'PGRST116' || errAny?.status === 406) {
         return false;
       }
       // Reintentar hasta 2 veces para otros errores

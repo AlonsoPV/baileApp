@@ -52,31 +52,49 @@ export function useAcademyPublic(id: number) {
         }
       }
       
-      // Obtener respuestas si no están en la vista
-      if (typeof result.respuestas === 'undefined') {
-        const { data: respuestasData, error: respuestasError } = await supabase
-          .from('profiles_academy')
-          .select('respuestas')
-          .eq('id', id)
-          .maybeSingle();
-        if (!respuestasError && respuestasData && typeof respuestasData.respuestas !== 'undefined') {
-          result.respuestas = respuestasData.respuestas;
-        }
-      }
+      // Obtener extras (respuestas, WhatsApp, Stripe) si no están en la vista
+      const needsRespuestas = typeof result.respuestas === 'undefined';
+      const needsWhatsapp =
+        typeof result.whatsapp_number === 'undefined' ||
+        typeof result.whatsapp_message_template === 'undefined';
+      const needsStripe =
+        typeof (result as any).stripe_account_id === 'undefined' ||
+        typeof (result as any).stripe_onboarding_status === 'undefined' ||
+        typeof (result as any).stripe_charges_enabled === 'undefined' ||
+        typeof (result as any).stripe_payouts_enabled === 'undefined';
 
-      // Obtener WhatsApp si no está en la vista
-      if (typeof result.whatsapp_number === 'undefined' || typeof result.whatsapp_message_template === 'undefined') {
-        const { data: whatsappData, error: whatsappError } = await supabase
+      if (needsRespuestas || needsWhatsapp || needsStripe) {
+        const { data: extraData, error: extraError } = await supabase
           .from('profiles_academy')
-          .select('whatsapp_number, whatsapp_message_template')
+          .select('respuestas, whatsapp_number, whatsapp_message_template, stripe_account_id, stripe_onboarding_status, stripe_charges_enabled, stripe_payouts_enabled')
           .eq('id', id)
           .maybeSingle();
-        if (!whatsappError && whatsappData) {
-          if (typeof whatsappData.whatsapp_number !== 'undefined') {
-            result.whatsapp_number = whatsappData.whatsapp_number;
+
+        if (!extraError && extraData) {
+          if (needsRespuestas && typeof extraData.respuestas !== 'undefined') {
+            result.respuestas = extraData.respuestas;
           }
-          if (typeof whatsappData.whatsapp_message_template !== 'undefined') {
-            result.whatsapp_message_template = whatsappData.whatsapp_message_template;
+          if (needsWhatsapp) {
+            if (typeof extraData.whatsapp_number !== 'undefined') {
+              result.whatsapp_number = extraData.whatsapp_number;
+            }
+            if (typeof extraData.whatsapp_message_template !== 'undefined') {
+              result.whatsapp_message_template = extraData.whatsapp_message_template;
+            }
+          }
+          if (needsStripe) {
+            if (typeof extraData.stripe_account_id !== 'undefined') {
+              (result as any).stripe_account_id = extraData.stripe_account_id;
+            }
+            if (typeof extraData.stripe_onboarding_status !== 'undefined') {
+              (result as any).stripe_onboarding_status = extraData.stripe_onboarding_status;
+            }
+            if (typeof extraData.stripe_charges_enabled !== 'undefined') {
+              (result as any).stripe_charges_enabled = extraData.stripe_charges_enabled;
+            }
+            if (typeof extraData.stripe_payouts_enabled !== 'undefined') {
+              (result as any).stripe_payouts_enabled = extraData.stripe_payouts_enabled;
+            }
           }
         }
       }

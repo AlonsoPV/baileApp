@@ -72,6 +72,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           gap: 1.25rem;
           flex: 1;
           height: 100%;
+          min-height: 0;
         }
         .photo-item {
           padding: 0.875rem;
@@ -82,8 +83,10 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           flex-direction: column;
         }
         .photo-item-vertical {
-          flex: 1;
+          flex: 1 1 0;
           min-height: 0;
+          display: flex;
+          flex-direction: column;
         }
         .photo-item-main {
           padding: 1.25rem;
@@ -114,8 +117,14 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
         .photo-container-vertical {
           flex: 1;
           min-height: 0;
-          aspect-ratio: auto;
-          height: auto;
+          aspect-ratio: unset;
+          width: 100%;
+          height: 100%;
+          margin-bottom: 0.875rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
         }
         .photo-container-main {
           aspect-ratio: 1/1;
@@ -154,6 +163,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             gap: 1.5rem;
             flex: 1;
             height: 100%;
+            min-height: 0;
           }
           .photo-item {
             padding: 1rem;
@@ -196,6 +206,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             gap: 1rem !important;
             flex: 1 !important;
             height: 100% !important;
+            min-height: 0 !important;
           }
           .photo-item {
             padding: 0.75rem !important;
@@ -289,8 +300,10 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: isMainPhoto ? 'cover' : 'contain',
-                    objectPosition: isMainPhoto ? 'center top' : 'center'
+                    objectFit: isMainPhoto ? 'cover' : (verticalLayout ? 'contain' : 'contain'),
+                    objectPosition: isMainPhoto ? 'center top' : 'center',
+                    maxWidth: verticalLayout ? '100%' : 'none',
+                    maxHeight: verticalLayout ? '100%' : 'none'
                   }}
                 />
               ) : (

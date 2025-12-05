@@ -1083,13 +1083,13 @@ export function Profile() {
             borderRadius: borderRadius.lg,
             border: `1px solid ${theme.bg.border}`,
           }}>
-            <h3 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: '700', 
+            <h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
               marginBottom: spacing(3),
               color: colors.light,
             }}>
-              📅 Eventos
+              📅 Eventos y compras
             </h3>
 
             <div style={{ display: 'grid', gap: spacing(2) }}>
@@ -1124,6 +1124,42 @@ export function Profile() {
                   </div>
                   <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
                     Ver eventos a los que voy a asistir
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.5rem' }}>→</div>
+              </button>
+
+              {/* My Purchases */}
+              <button
+                onClick={() => navigate('/me/compras')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: spacing(3),
+                  background: colors.glass.strong,
+                  border: `1px solid ${theme.bg.border}`,
+                  borderRadius: borderRadius.md,
+                  cursor: 'pointer',
+                  color: colors.light,
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = colors.primary[500];
+                  e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = theme.bg.border;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                    🧾 Mis compras
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
+                    Ver clases, boletos y eventos que he pagado
                   </div>
                 </div>
                 <div style={{ fontSize: '1.5rem' }}>→</div>

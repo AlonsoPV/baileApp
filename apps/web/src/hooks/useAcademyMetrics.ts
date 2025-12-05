@@ -15,6 +15,7 @@ export interface GlobalMetrics {
   totalTentative: number;
   byRole: Record<string, number>; // 'leader', 'follower', 'ambos', 'otro'
   byZone: Record<string, number>; // key = zone chip/nombre
+  totalPurchases: number; // número de compras (status = 'pagado')
 }
 
 export interface ClassReservationMetric {
@@ -39,6 +40,7 @@ export interface ClassSummary {
   byRole: Record<string, number>; // 'leader', 'follower', 'ambos', 'otro'
   reservations: ClassReservationMetric[]; // Lista de usuarios
   reservationsByDate: Map<string, ClassReservationMetric[]>; // Agrupado por fecha específica
+  totalPurchases?: number; // compras (status = 'pagado') asociadas a esta clase
 }
 
 export interface AcademyMetricsResult {
@@ -307,7 +309,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             if (!classInfoMap.has(event.id)) {
               classInfoMap.set(event.id, {
                 nombre: event.titulo || event.nombre || `Clase #${event.id}`,
-                fecha: null
+                fecha: null,
+                diaSemana: null,
+                diaSemanaNombre: null
               });
             }
           });
@@ -318,7 +322,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           if (!classInfoMap.has(id)) {
             classInfoMap.set(id, {
               nombre: `Clase #${id}`,
-              fecha: null
+              fecha: null,
+              diaSemana: null,
+              diaSemanaNombre: null
             });
           }
         });
@@ -376,7 +382,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       const global: GlobalMetrics = {
         totalTentative: 0,
         byRole: { leader: 0, follower: 0, ambos: 0, otro: 0 },
-        byZone: {}
+        byZone: {},
+        totalPurchases: 0,
       };
       
       const perClass: ClassReservationMetric[] = [];
@@ -533,10 +540,40 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               otro: reservation.roleType === 'otro' || !reservation.roleType ? 1 : 0,
             },
             reservations: [reservation],
-            reservationsByDate
+            reservationsByDate,
+            totalPurchases: 0,
           });
         }
       });
+
+      // Métricas de compras (status = 'pagado')
+      try {
+        const { data: purchaseRows, error: purchaseError } = await supabase
+          .from("clase_asistencias")
+          .select("class_id, created_at")
+          .eq("academy_id", academyIdNum!)
+          .eq("status", "pagado");
+
+        if (purchaseError) {
+          console.error("[useAcademyMetrics] ❌ Error obteniendo compras (clase_asistencias):", purchaseError);
+        } else {
+          const purchasesByClassId = new Map<number, number>();
+          (purchaseRows || []).forEach((row: any) => {
+            const classId = row.class_id as number;
+            if (!classId) return;
+            global.totalPurchases += 1;
+            purchasesByClassId.set(classId, (purchasesByClassId.get(classId) || 0) + 1);
+          });
+
+          // Asignar compras a cada resumen de clase
+          byClassMap.forEach((summary) => {
+            const count = purchasesByClassId.get(summary.classId) || 0;
+            summary.totalPurchases = count;
+          });
+        }
+      } catch (purchaseErr) {
+        console.error("[useAcademyMetrics] ❌ Excepción obteniendo compras:", purchaseErr);
+      }
       
       // Post-procesamiento: asegurar que todas las clases tengan classDate si alguna reserva tiene fecha
       byClassMap.forEach((classSummary) => {

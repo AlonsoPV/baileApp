@@ -312,6 +312,10 @@ const STYLES = `
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    align-items: stretch;
+  }
+  .photos-two-columns > * {
+    height: 100%;
   }
   .rhythms-zones-two-columns {
     display: grid;
@@ -861,13 +865,15 @@ export default function UserProfileEditor() {
               👤 Información Personal
             </h2>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '2rem',
-              alignItems: 'start'
-            }}
-              className="info-redes-grid">
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '2rem',
+                alignItems: 'start',
+              }}
+              className="info-redes-grid"
+            >
               <div>
                 <div style={{ marginBottom: '1rem' }}>
                   <label className="editor-field">
@@ -1018,6 +1024,128 @@ export default function UserProfileEditor() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="editor-section glass-card-container">
+            <h2 className="editor-section-title">
+              📅 Eventos y compras
+            </h2>
+            <p
+              style={{
+                marginBottom: '1.5rem',
+                color: 'rgba(255,255,255,0.75)',
+                fontSize: '0.95rem',
+              }}
+            >
+              Desde aquí puedes revisar a qué eventos te has apuntado y ver las clases,
+              boletos o eventos que has pagado dentro de Donde Bailar MX.
+            </p>
+
+            <div
+              style={{
+                display: 'grid',
+                gap: '0.75rem',
+              }}
+            >
+              {/* Mis RSVPs */}
+              <button
+                type="button"
+                onClick={() => navigate('/me/rsvps')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.85rem 1.25rem',
+                  background:
+                    'linear-gradient(135deg, rgba(240,147,251,0.35), rgba(245,87,108,0.35))',
+                  border: '1px solid rgba(240,147,251,0.6)',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  color: colors.light,
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(240,147,251,0.45)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      marginBottom: '0.15rem',
+                    }}
+                  >
+                    🎫 Mis RSVPs
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.85rem',
+                      color: 'rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    Ver eventos a los que te has apuntado
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.4rem' }}>→</div>
+              </button>
+
+              {/* Mis compras */}
+              <button
+                type="button"
+                onClick={() => navigate('/me/compras')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.85rem 1.25rem',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  color: colors.light,
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(96,165,250,0.8)';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(96,165,250,0.45)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      marginBottom: '0.15rem',
+                    }}
+                  >
+                    🧾 Mis compras
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.85rem',
+                      color: 'rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    Ver clases, boletos y eventos que has pagado
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.4rem' }}>→</div>
+              </button>
             </div>
           </div>
 

@@ -438,6 +438,11 @@ export function OrganizerEventMetricsPanel({ organizerId }: PanelProps) {
                 <div className="metrics-stat-label">Fechas con RSVPs</div>
                 <div className="metrics-stat-value">{byDate.length}</div>
               </div>
+
+              <div className="metrics-stat-card">
+                <div className="metrics-stat-label">Total Compras (pagado)</div>
+                <div className="metrics-stat-value">{global.totalPurchases ?? 0}</div>
+              </div>
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>

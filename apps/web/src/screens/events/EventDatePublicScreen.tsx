@@ -995,7 +995,7 @@ export default function EventDatePublicScreen() {
                         cursor: 'pointer'
                       }}
                     >
-                      ← Volver
+                      ← Volver a inicio
                     </button>
                   </div>
 

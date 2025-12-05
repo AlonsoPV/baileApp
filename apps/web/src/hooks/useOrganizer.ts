@@ -27,7 +27,8 @@ export function useMyOrganizer() {
           return null;
         }
         // Error 406 = Not Acceptable (posible problema de RLS o tabla no existe)
-        if (error.code === '406' || error.status === 406) {
+        const errAny = error as any;
+        if (error.code === '406' || errAny.status === 406) {
           console.warn('[useMyOrganizer] Error 406 al cargar perfil (posible problema de RLS):', error);
           return null;
         }
@@ -39,7 +40,6 @@ export function useMyOrganizer() {
       return data || null;
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
-    cacheTime: 0, // No cachear los datos
     refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana para detectar aprobaciones
     refetchInterval: 30000, // Refrescar cada 30 segundos para detectar cambios de aprobación
     retry: (failureCount, error: any) => {
@@ -119,13 +119,13 @@ export function useUpsertMyOrganizer() {
         });
         console.log("  💬 respuestas:", {
           prev: prev.respuestas,
-          next: next.respuestas,
-          changed: JSON.stringify(prev.respuestas) !== JSON.stringify(next.respuestas)
+          next: nextRespuestas,
+          changed: JSON.stringify(prev.respuestas) !== JSON.stringify(nextRespuestas)
         });
         console.log("  📱 redes_sociales:", {
           prev: prev.redes_sociales,
-          next: next.redes_sociales,
-          changed: JSON.stringify(prev.redes_sociales) !== JSON.stringify(next.redes_sociales)
+          next: nextRedes,
+          changed: JSON.stringify(prev.redes_sociales) !== JSON.stringify(nextRedes)
         });
         console.log("  🖼️ media:", {
           prev: prev.media,

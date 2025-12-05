@@ -32,6 +32,8 @@ import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPane
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
+import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
+import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 
 const colors = {
   primary: '#E53935',
@@ -677,6 +679,18 @@ const STYLES = `
         .input-group input::placeholder {
           color: rgba(255, 255, 255, 0.5);
         }
+        .whatsapp-section-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.5fr;
+          gap: 1.5rem;
+          align-items: start;
+        }
+        @media (max-width: 768px) {
+          .whatsapp-section-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+        }
         @media (max-width: 768px) {
           .info-redes-grid {
             grid-template-columns: 1fr !important;
@@ -783,14 +797,28 @@ export default function AcademyProfileEditor() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { data: academy, isLoading, refetch: refetchAcademy } = useAcademyMy();
+  const { data: approvedRoles } = useMyApprovedRoles();
 
   // 🔍 Debug logs para diagnosticar problemas de carga
   React.useEffect(() => {
     if (import.meta.env.DEV) {
       console.log('[AcademyProfileEditor] Auth state:', { user: user?.id, authLoading });
       console.log('[AcademyProfileEditor] Profile state:', { academy: academy?.id, isLoading });
+      console.log('[AcademyProfileEditor] Approved roles:', approvedRoles);
+      
+      // Log específico para la sección de Stripe
+      const hasApprovedRole = approvedRoles?.approved?.includes('academia');
+      const hasUser = !!user?.id;
+      const hasAcademy = !!academy;
+      console.log('[AcademyProfileEditor] Stripe section conditions:', {
+        hasApprovedRole,
+        hasUser,
+        hasAcademy,
+        willShow: hasApprovedRole && hasUser && hasAcademy,
+        approvedRolesArray: approvedRoles?.approved,
+      });
     }
-  }, [user?.id, authLoading, academy?.id, isLoading]);
+  }, [user?.id, authLoading, academy?.id, isLoading, approvedRoles]);
   const { data: allTags } = useTags();
   const { allowedIds, isLoading: allowedLoading } = useAllowedRitmos();
   const { media, add, remove } = useAcademyMedia();
@@ -1655,19 +1683,38 @@ export default function AcademyProfileEditor() {
 
               {/* Configuración de WhatsApp para Clases */}
               <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
-                <h2 className="editor-section-title">
-                  💬 WhatsApp para Clases
-                </h2>
-                <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
-                  Configura un número de WhatsApp y un mensaje personalizado que aparecerá en cada clase. Usa <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>{'{clase}'}</code> para que se reemplace automáticamente con el nombre de la clase.
-                </p>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div style={{ 
+                    width: 48, 
+                    height: 48, 
+                    borderRadius: '12px', 
+                    background: 'linear-gradient(135deg, #25D366, #128C7E)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                  }}>
+                    💬
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2 className="editor-section-title" style={{ marginBottom: '0.5rem', fontSize: '1.35rem' }}>
+                      WhatsApp para Clases
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                      Configura el contacto y mensaje que aparecerá en cada clase. Usa <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{clase}'}</code> para variables.
+                    </p>
+                  </div>
+                </div>
                 
-                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div className="whatsapp-section-grid">
+                  {/* Número de WhatsApp */}
                   <div>
-                    <label className="editor-field">
-                      📱 Número de WhatsApp para Clases
+                    <label className="editor-field" style={{ fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+                      📱 Número de WhatsApp
                     </label>
-                    <div className="input-group" style={{ marginTop: '0.5rem' }}>
+                    <div className="input-group" style={{ marginTop: 0 }}>
                       <span className="prefix">+52</span>
                       <input
                         type="tel"
@@ -1675,16 +1722,17 @@ export default function AcademyProfileEditor() {
                         onChange={(e) => setField('whatsapp_number' as any, e.target.value)}
                         placeholder="55 1234 5678"
                         className="editor-input"
-                        style={{ border: 'none', background: 'transparent', padding: '0.75rem' }}
+                        style={{ border: 'none', background: 'transparent', padding: '0.75rem', fontSize: '0.95rem' }}
                       />
                     </div>
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7, color: 'rgba(255,255,255,0.8)' }}>
-                      Este número aparecerá en cada clase para que los estudiantes puedan contactarte directamente
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.65, color: 'rgba(255,255,255,0.75)', lineHeight: '1.3' }}>
+                      Aparecerá en cada clase para contacto directo
                     </p>
                   </div>
 
+                  {/* Mensaje Personalizado */}
                   <div>
-                    <label className="editor-field">
+                    <label className="editor-field" style={{ fontSize: '0.95rem', marginBottom: '0.5rem' }}>
                       ✉️ Mensaje Personalizado
                     </label>
                     <textarea
@@ -1692,15 +1740,32 @@ export default function AcademyProfileEditor() {
                       onChange={(e) => setField('whatsapp_message_template' as any, e.target.value)}
                       placeholder="me interesa la clase: {nombre}"
                       className="editor-textarea"
-                      rows={3}
-                      style={{ marginTop: '0.5rem' }}
+                      rows={2}
+                      style={{ marginTop: 0, fontSize: '0.95rem', padding: '0.75rem', minHeight: '60px' }}
                     />
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7, color: 'rgba(255,255,255,0.8)' }}>
-                      El mensaje se enviará como: "Hola vengo de Donde Bailar MX, [tu mensaje]". Ejemplo: "Hola vengo de Donde Bailar MX, me interesa la clase: {'{nombre}'}. ¿Podrías darme más información?"
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.65, color: 'rgba(255,255,255,0.75)', lineHeight: '1.3' }}>
+                      Se enviará como: "Hola vengo de Donde Bailar MX, [tu mensaje]"
                     </p>
                   </div>
                 </div>
               </div>
+
+              {/* Pagos / Stripe Payouts */}
+              {approvedRoles?.approved?.includes('academia') && user?.id && academy && (
+                <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+                    💸 Pagos y Cobros
+                  </h2>
+                  <StripePayoutSettings
+                    userId={user.id}
+                    roleType="academia"
+                    stripeAccountId={(academy as any).stripe_account_id}
+                    stripeOnboardingStatus={(academy as any).stripe_onboarding_status}
+                    stripeChargesEnabled={(academy as any).stripe_charges_enabled}
+                    stripePayoutsEnabled={(academy as any).stripe_payouts_enabled}
+                  />
+                </div>
+              )}
 
               {/* Estilos & Zonas - tarjeta mejorada */}
               <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
@@ -2618,6 +2683,44 @@ export default function AcademyProfileEditor() {
                   onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
                 />
               </div>
+
+              {/* Stripe Payout Settings */}
+              {(() => {
+                const hasApprovedRole = approvedRoles?.approved?.includes('academia');
+                const hasUser = !!user?.id;
+                const hasAcademy = !!academy;
+                // En desarrollo, mostrar si hay user y academy (independientemente del rol aprobado)
+                // En producción, requerir rol aprobado
+                const shouldShow = hasUser && hasAcademy && (
+                  import.meta.env.DEV || hasApprovedRole
+                );
+                
+                if (import.meta.env.DEV) {
+                  console.log('[AcademyProfileEditor] Stripe section debug:', {
+                    hasApprovedRole,
+                    hasUser,
+                    hasAcademy,
+                    shouldShow,
+                    isDev: import.meta.env.DEV,
+                    approvedRoles: approvedRoles?.approved,
+                    user: user?.id,
+                    academy: academy?.id,
+                  });
+                }
+                
+                return shouldShow ? (
+                  <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+                    <StripePayoutSettings
+                      userId={user!.id}
+                      roleType="academia"
+                      stripeAccountId={(academy as any).stripe_account_id}
+                      stripeOnboardingStatus={(academy as any).stripe_onboarding_status}
+                      stripeChargesEnabled={(academy as any).stripe_charges_enabled}
+                      stripePayoutsEnabled={(academy as any).stripe_payouts_enabled}
+                    />
+                  </div>
+                ) : null;
+              })()}
 
               {/* Sección: Un poco más de nosotros */}
               <div className="section-content glass-card-container" style={{ marginBottom: '3rem' }}>

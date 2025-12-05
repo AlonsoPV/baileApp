@@ -79,15 +79,12 @@ export function useSessionEnrollments(sessionId: number) {
     queryFn: async (): Promise<ClassEnrollment[]> => {
       const { data, error } = await supabase
         .from("class_enrollments")
-        .select(`
-          *,
-          auth.users!inner(display_name, avatar_url)
-        `)
+        .select("*")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as ClassEnrollment[];
     },
   });
 }

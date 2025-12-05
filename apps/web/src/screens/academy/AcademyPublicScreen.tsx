@@ -1,7 +1,7 @@
 // Public Academy Screen (replica visual de AcademyProfileLi  ve)
 import React, { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
@@ -1191,6 +1191,7 @@ const STYLES = `
 
 export default function AcademyPublicScreen() {
   const { academyId } = useParams();
+  const navigate = useNavigate();
   const id = Number(academyId);
   const { data: academy, isLoading } = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
   const { data: allTags } = useTags();
@@ -1315,6 +1316,25 @@ export default function AcademyPublicScreen() {
 
       <div className="academy-container">
         {/* ❌ Toggle eliminado */}
+
+        {/* Botón Volver a inicio */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '0 2rem', marginBottom: '1rem', marginTop: '2rem' }}>
+          <button
+            onClick={() => navigate('/explore')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)',
+              color: '#f093fb',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Volver a inicio
+          </button>
+        </div>
 
         {/* Banner Principal */}
         <motion.div
@@ -1516,6 +1536,9 @@ export default function AcademyPublicScreen() {
                     isClickable={true}
                     whatsappNumber={(academy as any)?.whatsapp_number}
                     whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
+                    stripeAccountId={(academy as any)?.stripe_account_id}
+                    stripeChargesEnabled={(academy as any)?.stripe_charges_enabled}
+                    creatorName={(academy as any)?.nombre_publico || (academy as any)?.display_name}
                   />
                 </>
               ) : (

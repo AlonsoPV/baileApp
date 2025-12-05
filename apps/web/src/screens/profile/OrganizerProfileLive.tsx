@@ -35,7 +35,7 @@ const STYLES = `
   .org-banner {
     width: 100%;
     max-width: 900px;
-    margin: 0 auto;
+    margin: auto !important;
     position: relative;
     overflow: hidden;
   }
@@ -884,7 +884,8 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
+              objectPosition: 'center',
               cursor: 'pointer'
             }}
             onClick={() => setIsFullscreen(true)}

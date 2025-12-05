@@ -41,6 +41,10 @@ export type AcademyProfile = {
   horarios: AcademyHorario[];
   media: { type: 'image'|'video'; url: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
+  stripe_account_id?: string | null;
+  stripe_onboarding_status?: string | null;
+  stripe_charges_enabled?: boolean | null;
+  stripe_payouts_enabled?: boolean | null;
   created_at?: string;
   updated_at?: string;
 };

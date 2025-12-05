@@ -67,6 +67,7 @@ export type GlobalFechaMetrics = {
   zonas: ZonaMetric[];
   ritmos: RitmoMetric[];
   byZone: Record<string, number>;
+  totalPurchases: number;
 };
 
 function getDateRange(filter: DateFilter, from?: string, to?: string): { from: string | null; to: string | null } {
@@ -211,6 +212,25 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
       const rsvpData = rsvps || [];
       console.log("[useOrganizerEventMetrics] 📊 RSVPs encontrados:", rsvpData.length);
 
+      // Obtener compras (status = 'pagado') para las mismas fechas
+      let purchasesQuery = supabase
+        .from("event_rsvp")
+        .select("id, event_date_id, created_at")
+        .in("event_date_id", eventDateIds)
+        .eq("status", "pagado");
+
+      if (dateRange.from) {
+        purchasesQuery = purchasesQuery.gte("created_at", `${dateRange.from}T00:00:00.000Z`);
+      }
+      if (dateRange.to) {
+        purchasesQuery = purchasesQuery.lte("created_at", `${dateRange.to}T23:59:59.999Z`);
+      }
+
+      const { data: purchaseRows, error: purchaseError } = await purchasesQuery;
+      if (purchaseError) {
+        console.error("[useOrganizerEventMetrics] Error obteniendo compras (event_rsvp):", purchaseError);
+      }
+
       // Obtener información de usuarios
       const userIds = [...new Set(rsvpData.map((r: any) => r.user_id))];
       const userInfoMap = new Map<string, { name: string; role: string; zones: string[] }>();
@@ -273,6 +293,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         zonas: [],
         ritmos: [],
         byZone: {},
+        totalPurchases: 0,
       };
 
       const perRSVP: EventRSVPMetric[] = [];
@@ -358,6 +379,15 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
       });
 
       const byDate = Array.from(byDateMap.values()).sort((a, b) => b.totalRsvps - a.totalRsvps);
+
+      // Procesar compras por fecha (status = 'pagado')
+      const purchasesByDateId = new Map<number, number>();
+      (purchaseRows || []).forEach((row: any) => {
+        const dateId = row.event_date_id as number;
+        if (!dateId) return;
+        global.totalPurchases += 1;
+        purchasesByDateId.set(dateId, (purchasesByDateId.get(dateId) || 0) + 1);
+      });
 
       // Agregar zonas y ritmos globales (simplificado por ahora)
       global.zonas = Object.entries(global.byZone)

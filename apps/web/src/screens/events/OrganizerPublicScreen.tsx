@@ -58,7 +58,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: borderRadius['2xl'], overflow: 'hidden', border: `2px solid ${colors.glass.medium}`, background: colors.dark[400], boxShadow: colors.shadows.glass }}>
         <motion.div key={currentIndex} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-          <ImageWithFallback src={photos[currentIndex]} alt={`Foto ${currentIndex + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }} onClick={() => setIsFullscreen(true)} />
+          <ImageWithFallback src={photos[currentIndex]} alt={`Foto ${currentIndex + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', cursor: 'pointer' }} onClick={() => setIsFullscreen(true)} />
         </motion.div>
         <div style={{ position: 'absolute', top: spacing[4], right: spacing[4], background: colors.glass.darker, color: colors.gray[50], padding: `${spacing[2]} ${spacing[4]}`, borderRadius: borderRadius.full, fontSize: typography.fontSize.sm, fontWeight: typography.fontWeight.semibold, backdropFilter: 'blur(10px)' }}>{currentIndex + 1} / {photos.length}</div>
         {photos.length > 1 && (
@@ -482,7 +482,7 @@ export function OrganizerPublicScreen() {
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }
         .org-container { width: 100%; max-width: 900px; margin: 0 auto; }
-        .org-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; overflow: hidden; }
+        .org-banner { width: 100%; max-width: 900px; margin: auto !important; position: relative; overflow: hidden; }
         .org-banner-grid { display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center; }
         .glass-card { background: ${colors.glass.light}; backdrop-filter: blur(20px); border: 1px solid ${colors.glass.medium}; box-shadow: ${colors.shadows.glass}; }
         .gradient-text { background: ${colors.gradients.primary}; -webkit-background-clip: text; background-clip: text; }
@@ -830,6 +830,25 @@ export function OrganizerPublicScreen() {
         <div style={{ position: 'absolute', top: '10%', left: '5%', width: 100, height: 100, background: colors.gradients.primary, borderRadius: '50%', opacity: 0.1, animation: 'float 8s ease-in-out infinite', zIndex: 0 }} />
         <div style={{ position: 'absolute', top: '20%', right: '10%', width: 60, height: 60, background: colors.gradients.secondary, borderRadius: '50%', opacity: 0.15, animation: 'float 6s ease-in-out infinite reverse', zIndex: 0 }} />
         <div style={{ position: 'absolute', bottom: '20%', left: '15%', width: 80, height: 80, background: colors.gradients.deep, borderRadius: '50%', opacity: 0.1, animation: 'float 7s ease-in-out infinite', zIndex: 0 }} />
+
+        {/* Botón Volver a inicio */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '2rem 2rem 1rem 2rem', position: 'relative', zIndex: 1 }}>
+          <button
+            onClick={() => navigate('/explore')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)',
+              color: '#f093fb',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Volver a inicio
+          </button>
+        </div>
 
         {/* Banner */}
         <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `2rem auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>

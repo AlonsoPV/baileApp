@@ -25,6 +25,10 @@ export interface AcademyProfile {
     gusta_bailar?: string;
   };
   estado_aprobacion: 'borrador' | 'en_revision' | 'aprobado' | 'rechazado';
+  stripe_account_id?: string | null;
+  stripe_onboarding_status?: string | null;
+  stripe_charges_enabled?: boolean | null;
+  stripe_payouts_enabled?: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,7 +57,8 @@ export function useAcademyMy() {
           return null;
         }
         // Error 406 = Not Acceptable (posible problema de RLS o tabla no existe)
-        if (error.code === '406' || error.status === 406) {
+        const errAny = error as any;
+        if (error.code === '406' || errAny.status === 406) {
           console.warn('[useAcademyMy] Error 406 al cargar perfil (posible problema de RLS):', error);
           // Retornar null en lugar de lanzar error para evitar bloqueo de UI
           return null;

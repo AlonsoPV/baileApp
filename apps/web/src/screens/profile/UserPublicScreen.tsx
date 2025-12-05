@@ -440,7 +440,8 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
+              objectPosition: 'center',
               cursor: 'pointer'
             }}
             onClick={handleFullscreenOpen}

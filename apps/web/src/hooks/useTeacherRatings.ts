@@ -102,6 +102,11 @@ export function useTeacherRatingStats(teacherId?: number) {
           return await calculateStatsManually(teacherId);
         }
 
+        // Si data es null o undefined, calcular manualmente
+        if (!data) {
+          return await calculateStatsManually(teacherId);
+        }
+
         return data as TeacherRatingStats;
       } catch (err: any) {
         // Capturar errores de red o otros errores inesperados
@@ -155,41 +160,59 @@ async function calculateStatsManually(teacherId: number): Promise<TeacherRatingS
     ambiente_seguro: { excelente: 0, muy_bueno: 0, bueno: 0, regular: 0, no_tome_clase: 0, total: 0 },
   };
 
-  ratings.forEach((rating) => {
+  ratings.forEach((rating: any) => {
     // Overall
-    if (rating.overall_rating) {
-      stats.overall[rating.overall_rating as TeacherRatingValue]++;
-      stats.overall.total++;
+    if (rating.overall_rating && typeof rating.overall_rating === 'string') {
+      const ratingValue = rating.overall_rating as TeacherRatingValue;
+      if (stats.overall.hasOwnProperty(ratingValue)) {
+        stats.overall[ratingValue]++;
+        stats.overall.total++;
+      }
     }
 
     // Claridad
-    if (rating.claridad) {
-      stats.claridad[rating.claridad as TeacherRatingValue]++;
-      stats.claridad.total++;
+    if (rating.claridad && typeof rating.claridad === 'string') {
+      const ratingValue = rating.claridad as TeacherRatingValue;
+      if (stats.claridad.hasOwnProperty(ratingValue)) {
+        stats.claridad[ratingValue]++;
+        stats.claridad.total++;
+      }
     }
 
     // Dominio técnico
-    if (rating.dominio_tecnico) {
-      stats.dominio_tecnico[rating.dominio_tecnico as TeacherRatingValue]++;
-      stats.dominio_tecnico.total++;
+    if (rating.dominio_tecnico && typeof rating.dominio_tecnico === 'string') {
+      const ratingValue = rating.dominio_tecnico as TeacherRatingValue;
+      if (stats.dominio_tecnico.hasOwnProperty(ratingValue)) {
+        stats.dominio_tecnico[ratingValue]++;
+        stats.dominio_tecnico.total++;
+      }
     }
 
     // Puntualidad
-    if (rating.puntualidad) {
-      stats.puntualidad[rating.puntualidad as TeacherRatingValue]++;
-      stats.puntualidad.total++;
+    if (rating.puntualidad && typeof rating.puntualidad === 'string') {
+      const ratingValue = rating.puntualidad as TeacherRatingValue;
+      if (stats.puntualidad.hasOwnProperty(ratingValue)) {
+        stats.puntualidad[ratingValue]++;
+        stats.puntualidad.total++;
+      }
     }
 
     // Actitud y energía
-    if (rating.actitud_energia) {
-      stats.actitud_energia[rating.actitud_energia as TeacherRatingValue]++;
-      stats.actitud_energia.total++;
+    if (rating.actitud_energia && typeof rating.actitud_energia === 'string') {
+      const ratingValue = rating.actitud_energia as TeacherRatingValue;
+      if (stats.actitud_energia.hasOwnProperty(ratingValue)) {
+        stats.actitud_energia[ratingValue]++;
+        stats.actitud_energia.total++;
+      }
     }
 
     // Ambiente seguro
-    if (rating.ambiente_seguro) {
-      stats.ambiente_seguro[rating.ambiente_seguro as TeacherRatingValue]++;
-      stats.ambiente_seguro.total++;
+    if (rating.ambiente_seguro && typeof rating.ambiente_seguro === 'string') {
+      const ratingValue = rating.ambiente_seguro as TeacherRatingValue;
+      if (stats.ambiente_seguro.hasOwnProperty(ratingValue)) {
+        stats.ambiente_seguro[ratingValue]++;
+        stats.ambiente_seguro.total++;
+      }
     }
   });
 

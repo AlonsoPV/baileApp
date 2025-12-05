@@ -438,6 +438,11 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                 <div className="metrics-stat-label">Clases con Reservas</div>
                 <div className="metrics-stat-value">{byClass.length}</div>
               </div>
+
+              <div className="metrics-stat-card">
+                <div className="metrics-stat-label">Total Compras (pagado)</div>
+                <div className="metrics-stat-value">{global.totalPurchases ?? 0}</div>
+              </div>
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>
@@ -627,9 +632,12 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                       </div>
                       <div className="metrics-class-total">
                         <div style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '0.25rem', color: '#fff' }}>
-                          Total
+                          Tentativos
                         </div>
                         <div className="metrics-class-total-value">{classSummary.totalAsistentes}</div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '0.35rem', color: '#A5D6A7' }}>
+                          💳 Compras: {classSummary.totalPurchases ?? 0}
+                        </div>
                         <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem' }}>
                           {isExpanded ? '▲' : '▼'}
                         </div>

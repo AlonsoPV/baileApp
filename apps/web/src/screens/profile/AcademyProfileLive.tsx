@@ -2055,6 +2055,9 @@ export default function AcademyProfileLive() {
                     isClickable={false}
                     whatsappNumber={(academy as any)?.whatsapp_number}
                     whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
+                    stripeAccountId={(academy as any)?.stripe_account_id}
+                    stripeChargesEnabled={(academy as any)?.stripe_charges_enabled}
+                    creatorName={(academy as any)?.nombre_publico || (academy as any)?.display_name}
                   />
                 </Suspense>
               ) : (

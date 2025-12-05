@@ -404,6 +404,16 @@ export default function TeacherProfileLive() {
   const teacherUserId = teacher?.user_id;
   const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByTeacher(teacherUserId);
 
+  // Configuración de WhatsApp para clases
+  const whatsappNumber = useMemo(
+    () => teacher?.whatsapp_number || teacher?.redes_sociales?.whatsapp || null,
+    [teacher],
+  );
+  const whatsappMessageTemplate = useMemo(
+    () => teacher?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}',
+    [teacher?.whatsapp_message_template],
+  );
+
   // ✅ Auto-redirigir a Edit si no tiene perfil de maestro (solo si no hay error)
   // Si hay error, no redirigir para evitar perder el mensaje de error
   React.useEffect(() => {
@@ -907,6 +917,11 @@ export default function TeacherProfileLive() {
                     sourceType="teacher"
                     sourceId={teacherNumericId}
                     isClickable={false}
+                    whatsappNumber={whatsappNumber}
+                    whatsappMessageTemplate={whatsappMessageTemplate}
+                    stripeAccountId={(teacher as any)?.stripe_account_id}
+                    stripeChargesEnabled={(teacher as any)?.stripe_charges_enabled}
+                    creatorName={(teacher as any)?.nombre_publico || (teacher as any)?.display_name}
                   />
                 </Suspense>
               ) : (
@@ -922,6 +937,8 @@ export default function TeacherProfileLive() {
                       referencias: teacher?.ubicaciones?.[0]?.referencias
                     }}
                     showCalendarButton={true}
+                    whatsappNumber={whatsappNumber}
+                    whatsappMessageTemplate={whatsappMessageTemplate}
                   />
                 </Suspense>
               )}

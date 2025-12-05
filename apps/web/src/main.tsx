@@ -9,6 +9,13 @@ import { ToastProvider } from './components/Toast';
 import App from './App';
 import './index.css';
 
+// Normalizar URLs con dobles barras ANTES de que React Router las procese
+if (window.location.pathname.includes('//')) {
+  const normalizedPath = window.location.pathname.replace(/\/+/g, '/');
+  const normalizedUrl = normalizedPath + window.location.search + window.location.hash;
+  window.history.replaceState({}, '', normalizedUrl);
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

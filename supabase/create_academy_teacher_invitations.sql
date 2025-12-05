@@ -74,6 +74,16 @@ USING (
   )
 );
 
+-- Cualquier usuario (anon o authenticated) puede ver invitaciones aceptadas
+-- Esto permite que las vistas públicas muestren relaciones maestro-academia
+-- sin exponer invitaciones pendientes/rechazadas/canceladas.
+CREATE POLICY "academy_teacher_invitations_select_public_accepted"
+ON public.academy_teacher_invitations
+FOR SELECT
+USING (
+  status = 'accepted'
+);
+
 -- Los dueños de academias pueden crear invitaciones
 CREATE POLICY "academy_teacher_invitations_insert_academy_owner"
 ON public.academy_teacher_invitations
@@ -171,8 +181,8 @@ INNER JOIN public.profiles_academy pa ON pa.id = ati.academy_id
 WHERE ati.status = 'accepted';
 
 -- 8. Otorgar permisos
-GRANT SELECT ON public.v_academy_accepted_teachers TO authenticated;
-GRANT SELECT ON public.v_teacher_academies TO authenticated;
+GRANT SELECT ON public.v_academy_accepted_teachers TO anon, authenticated;
+GRANT SELECT ON public.v_teacher_academies TO anon, authenticated;
 
 -- 9. Comentarios
 COMMENT ON TABLE public.academy_teacher_invitations IS 'Invitaciones entre academias y maestros';

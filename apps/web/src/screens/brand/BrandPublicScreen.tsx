@@ -267,6 +267,25 @@ export default function BrandProfileLive() {
       `}</style>
 
       <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
+        {/* Botón Volver a inicio */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '2rem 2rem 1rem 2rem', position: 'relative', zIndex: 1 }}>
+          <button
+            onClick={() => navigate('/explore')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)',
+              color: '#f093fb',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Volver a inicio
+          </button>
+        </div>
+
         {/* Banner */}
         <motion.section
           className="profile-banner glass-card-container"

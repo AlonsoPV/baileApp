@@ -387,7 +387,8 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
+              objectPosition: 'center',
               cursor: 'pointer'
             }}
             onClick={handleFullscreenOpen}
@@ -742,6 +743,24 @@ export const UserProfileLive: React.FC = () => {
             currentView="live"
             profileType="user"
           />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '0 2rem', marginBottom: '1rem' }}>
+          <button
+            onClick={() => navigate('/explore')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(240,147,251,0.28)',
+              background: 'rgba(240,147,251,0.10)',
+              color: '#f093fb',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Volver a inicio
+          </button>
         </div>
 
         <div

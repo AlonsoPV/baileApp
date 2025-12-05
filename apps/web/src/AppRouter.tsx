@@ -97,6 +97,11 @@ import TrendingList from './pages/trending/TrendingList';
 import CompetitionGroupList from './components/competitionGroups/CompetitionGroupList';
 import CompetitionGroupDetail from './components/competitionGroups/CompetitionGroupDetail';
 import CompetitionGroupForm from './components/competitionGroups/CompetitionGroupForm';
+import StripeOnboardingSuccess from './screens/payments/StripeOnboardingSuccess';
+import StripeOnboardingRefresh from './screens/payments/StripeOnboardingRefresh';
+import PaymentSuccess from './screens/payments/PaymentSuccess';
+import PaymentCanceled from './screens/payments/PaymentCanceled';
+import MyPurchasesScreen from './screens/payments/MyPurchasesScreen';
 
 export default function AppRouter() {
   return (
@@ -113,6 +118,17 @@ export default function AppRouter() {
       <Route path={routes.onboarding.basics} element={<ProfileBasics />} />
       <Route path={routes.onboarding.ritmos} element={<PickRitmos />} />
       <Route path={routes.onboarding.zonas} element={<PickZonas />} />
+
+      {/* Stripe Onboarding Routes - Public (no auth needed) */}
+      <Route path="/stripe/onboarding/success" element={<StripeOnboardingSuccess />} />
+      <Route path="/stripe/onboarding/refresh" element={<StripeOnboardingRefresh />} />
+      
+      {/* Payment Success/Cancel Routes - Public (no auth needed) */}
+      <Route path="/pago/exitoso" element={<PaymentSuccess />} />
+      <Route path="/pago/cancelado" element={<PaymentCanceled />} />
+      {/* Redirect for double slashes in payment routes */}
+      <Route path="//pago/exitoso" element={<Navigate to="/pago/exitoso" replace />} />
+      <Route path="//pago/cancelado" element={<Navigate to="/pago/cancelado" replace />} />
 
       {/* AppShell layout */}
       <Route element={<AppShell />}>
@@ -179,6 +195,7 @@ export default function AppRouter() {
           <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
           <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
           <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
+          <Route path="/me/compras" element={<MyPurchasesScreen />} />
           <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
           <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
           <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
@@ -192,6 +209,10 @@ export default function AppRouter() {
           <Route path="/challenges/new" element={<ChallengeNew />} />
           <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
         </Route>
+
+        {/* Redirect for double slashes in Stripe routes */}
+        <Route path="//stripe/onboarding/success" element={<Navigate to="/stripe/onboarding/success" replace />} />
+        <Route path="//stripe/onboarding/refresh" element={<Navigate to="/stripe/onboarding/refresh" replace />} />
 
         {/* Default and 404 */}
         <Route path="/" element={<Navigate to="/explore" replace />} />
