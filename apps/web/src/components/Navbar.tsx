@@ -84,10 +84,10 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         @media (max-width: 768px) {
           .nav-root {
-            padding: .55rem .7rem !important;
-            padding-top: calc(.55rem + env(safe-area-inset-top)) !important;
+            padding: .75rem .7rem !important;
+            padding-top: calc(.75rem + env(safe-area-inset-top)) !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
-            height: 54px !important;
+            height: 60px !important;
           }
           .nav-left { 
             display: flex !important; 
@@ -132,9 +132,9 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         @media (max-width: 430px) {
           .nav-root {
-            padding: 0.45rem 0.5rem !important;
-            padding-top: calc(0.45rem + env(safe-area-inset-top)) !important;
-            height: 48px !important;
+            padding: 0.65rem 0.5rem !important;
+            padding-top: calc(0.65rem + env(safe-area-inset-top)) !important;
+            height: 56px !important;
           }
           .nav-brand-title {
             font-size: 0.7rem !important;

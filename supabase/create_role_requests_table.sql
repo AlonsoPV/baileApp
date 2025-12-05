@@ -3,7 +3,6 @@
 -- ========================================
 -- Sistema de solicitudes de roles para usuarios
 
--- 1️⃣ Crear tabla role_requests
 CREATE TABLE IF NOT EXISTS public.role_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -12,7 +11,10 @@ CREATE TABLE IF NOT EXISTS public.role_requests (
   email text NOT NULL,
   phone text NOT NULL,
   socials jsonb DEFAULT '{}'::jsonb,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'aprobado', 'approved', 'rechazado', 'rejected')),
+  -- Usamos español como fuente de verdad, pero aceptamos equivalentes en inglés por compatibilidad
+  status text NOT NULL DEFAULT 'pendiente' CHECK (
+    status IN ('pendiente', 'aprobado', 'rechazado', 'pending', 'approved', 'rejected')
+  ),
   reviewed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   reviewed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -22,6 +24,37 @@ CREATE TABLE IF NOT EXISTS public.role_requests (
   CONSTRAINT role_requests_role_slug_fkey FOREIGN KEY (role_slug) REFERENCES public.roles(slug) ON DELETE CASCADE,
   CONSTRAINT role_requests_user_role_unique UNIQUE (user_id, role_slug)
 );
+
+-- Si la tabla ya existía, ajustar DEFAULT y constraint del status para que acepten 'pendiente'
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'role_requests'
+      AND column_name  = 'status'
+  ) THEN
+    -- Ajustar default a 'pendiente'
+    ALTER TABLE public.role_requests
+      ALTER COLUMN status SET DEFAULT 'pendiente';
+
+    -- Eliminar constraint de status previo si existe y recrearlo con la lista extendida
+    PERFORM 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.role_requests'::regclass
+      AND conname = 'role_requests_status_check';
+
+    IF FOUND THEN
+      ALTER TABLE public.role_requests
+        DROP CONSTRAINT role_requests_status_check;
+    END IF;
+
+    ALTER TABLE public.role_requests
+      ADD CONSTRAINT role_requests_status_check
+      CHECK (status IN ('pendiente', 'aprobado', 'rechazado', 'pending', 'approved', 'rejected'));
+  END IF;
+END $$;
 
 -- 2️⃣ Índices para mejor performance
 CREATE INDEX IF NOT EXISTS idx_role_requests_user_id ON public.role_requests(user_id);
@@ -64,8 +97,8 @@ CREATE POLICY ins_role_requests_own ON public.role_requests
 DROP POLICY IF EXISTS upd_role_requests_own ON public.role_requests;
 CREATE POLICY upd_role_requests_own ON public.role_requests
   FOR UPDATE
-  USING (auth.uid() = user_id AND status = 'pending')
-  WITH CHECK (auth.uid() = user_id AND status = 'pending');
+  USING (auth.uid() = user_id AND status IN ('pending','pendiente'))
+  WITH CHECK (auth.uid() = user_id AND status IN ('pending','pendiente'));
 
 -- Policy: Los superadmins pueden ver todas las solicitudes
 DROP POLICY IF EXISTS sel_role_requests_admin ON public.role_requests;
@@ -113,7 +146,7 @@ BEGIN
   SELECT user_id, role_slug INTO v_user_id, v_role_slug
   FROM public.role_requests
   WHERE id = p_request_id
-  AND status = 'pending';
+  AND status IN ('pending','pendiente');
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Solicitud no encontrada o ya procesada';
