@@ -603,13 +603,28 @@ export default function TeacherProfileLive() {
     <>
 
       <div className="teacher-container">
-        {/* Botón Volver a inicio */}
-        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '0 2rem', marginBottom: '1rem', marginTop: '0' }}>
+        {/* Banner Principal */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="teacher-banner glass-card-container"
+          style={{
+            position: 'relative',
+            margin: '0.5rem auto 0 auto',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Botón Volver a inicio */}
           <motion.button
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.05, x: -2 }}
             whileTap={{ scale: 0.98 }}
             style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -639,20 +654,6 @@ export default function TeacherProfileLive() {
             <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
             <span>Volver a inicio</span>
           </motion.button>
-        </div>
-
-        {/* Banner Principal */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="teacher-banner glass-card-container"
-          style={{
-            position: 'relative',
-            margin: '2rem auto 0 auto',
-            overflow: 'hidden'
-          }}
-        >
           {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="teacher-banner-grid">
             <div style={{

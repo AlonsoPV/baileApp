@@ -267,13 +267,24 @@ export default function BrandProfileLive() {
       `}</style>
 
       <div className="brand-root" style={{ position: 'relative', width: '100%', minHeight: '100vh', background: colors.darkBase, color: colors.light }}>
-        {/* Botón Volver a inicio */}
-        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '2rem 2rem 1rem 2rem', position: 'relative', zIndex: 1 }}>
+        {/* Banner */}
+        <motion.section
+          className="profile-banner glass-card-container"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{ position: 'relative', margin: '0.5rem auto 0 auto', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
+        >
+          {/* Botón Volver a inicio */}
           <motion.button
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.05, x: -2 }}
             whileTap={{ scale: 0.98 }}
             style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -303,16 +314,6 @@ export default function BrandProfileLive() {
             <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
             <span>Volver a inicio</span>
           </motion.button>
-        </div>
-
-        {/* Banner */}
-        <motion.section
-          className="profile-banner glass-card-container"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          style={{ position: 'relative', margin: '2rem auto 0 auto', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(11,13,16,.96), rgba(18,22,27,.9))' }}
-        >
           {portadaUrl && (
             <div style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
               {/* Banner: slot flexible — ideal subir imagen horizontal (ej. 1920×600px o 1600×500px) para que se vea completa */}

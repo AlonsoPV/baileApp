@@ -5,7 +5,7 @@
 }
 @media (max-width: 768px) { 
   .teacher-container { 
-    padding-top: 64px !important; 
+    padding-top: 0 !important; 
   } 
 }
 .teacher-banner {

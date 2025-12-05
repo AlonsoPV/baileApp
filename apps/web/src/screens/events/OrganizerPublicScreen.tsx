@@ -831,13 +831,18 @@ export function OrganizerPublicScreen() {
         <div style={{ position: 'absolute', top: '20%', right: '10%', width: 60, height: 60, background: colors.gradients.secondary, borderRadius: '50%', opacity: 0.15, animation: 'float 6s ease-in-out infinite reverse', zIndex: 0 }} />
         <div style={{ position: 'absolute', bottom: '20%', left: '15%', width: 80, height: 80, background: colors.gradients.deep, borderRadius: '50%', opacity: 0.1, animation: 'float 7s ease-in-out infinite', zIndex: 0 }} />
 
-        {/* Botón Volver a inicio */}
-        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '2rem 2rem 1rem 2rem', position: 'relative', zIndex: 1 }}>
+        {/* Banner */}
+        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `0.5rem auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
+          {/* Botón Volver a inicio */}
           <motion.button
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.05, x: -2 }}
             whileTap={{ scale: 0.98 }}
             style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -867,10 +872,6 @@ export function OrganizerPublicScreen() {
             <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
             <span>Volver a inicio</span>
           </motion.button>
-        </div>
-
-        {/* Banner */}
-        <motion.div className="org-banner glass-card-container" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }} style={{ position: 'relative', overflow: 'visible', margin: `2rem auto 0 auto`, maxWidth: '900px', width: '100%', zIndex: 1 }}>
           <div className="org-banner-grid">
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>
