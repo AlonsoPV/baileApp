@@ -145,29 +145,56 @@ export function useUpsertTeacher() {
         if (allowed.has(k) && base[k] !== undefined) filtered[k] = base[k];
       }
       
-      // Intentar UPSERT por user_id; si falla por conflicto, hacer UPDATE
+      // Intentar UPSERT por user_id; si falla, usar fallback con INSERT/UPDATE
       let { data, error } = await supabase
         .from(TABLE)
         .upsert(filtered, { onConflict: 'user_id', ignoreDuplicates: false })
         .select('*')
         .single();
+      
       if (error) {
-        // Fallback: update directo por user_id
-        const { error: updError } = await supabase
+        // Error 400 puede ser por falta de constraint único o datos inválidos
+        // Intentar fallback: primero verificar si existe el registro
+        const { data: existing } = await supabase
           .from(TABLE)
-          .update(filtered)
-          .eq('user_id', user.id);
-        if (updError) {
-          console.error('❌ [useTeacher] Error en UPDATE:', updError);
-          throw updError;
-        }
-        const { data: refetch, error: refErr } = await supabase
-          .from(TABLE)
-          .select('*')
+          .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
-        if (refErr) throw refErr;
-        return refetch as TeacherProfile;
+        
+        if (existing) {
+          // Existe: hacer UPDATE
+          const { error: updError } = await supabase
+            .from(TABLE)
+            .update(filtered)
+            .eq('user_id', user.id);
+          if (updError) {
+            console.error('❌ [useTeacher] Error en UPDATE:', updError);
+            throw updError;
+          }
+          const { data: refetch, error: refErr } = await supabase
+            .from(TABLE)
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (refErr) throw refErr;
+          return normalizeTeacherProfile(refetch as TeacherProfile) as TeacherProfile;
+        } else {
+          // No existe: hacer INSERT
+          // Asegurar que nombre_publico existe (campo requerido)
+          if (!filtered.nombre_publico) {
+            filtered.nombre_publico = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Maestro';
+          }
+          const { data: inserted, error: insError } = await supabase
+            .from(TABLE)
+            .insert(filtered)
+            .select('*')
+            .single();
+          if (insError) {
+            console.error('❌ [useTeacher] Error en INSERT:', insError);
+            throw insError;
+          }
+          return normalizeTeacherProfile(inserted as TeacherProfile) as TeacherProfile;
+        }
       }
       return normalizeTeacherProfile(data as TeacherProfile) as TeacherProfile;
     },

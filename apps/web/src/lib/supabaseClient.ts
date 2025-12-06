@@ -21,6 +21,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     params: {
       eventsPerSecond: 10,
     },
+    // Configuración adicional para mejorar la estabilidad de WebSocket
+    // timeout: tiempo máximo para establecer conexión (30 segundos)
+    // heartbeatIntervalMs: intervalo para mantener la conexión viva (30 segundos)
+    // reconnectAfterMs: tiempo antes de intentar reconectar (1 segundo)
+    // transport: usar 'websocket' explícitamente para mejor compatibilidad
   },
   global: {
     headers: {

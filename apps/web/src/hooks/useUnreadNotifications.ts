@@ -98,20 +98,45 @@ export function useUnreadNotifications(userId?: string) {
 
     // Función para suscribirse a Realtime
     const subscribeToRealtime = () => {
-      // Limpiar canal anterior si existe
+      // Limpiar canal anterior si existe, pero dar tiempo para que se cierre correctamente
       if (channel) {
         try {
-          supabase.removeChannel(channel);
+          // Esperar un momento antes de remover para evitar cerrar conexiones en proceso
+          const oldChannel = channel;
+          setTimeout(() => {
+            try {
+              supabase.removeChannel(oldChannel);
+            } catch (e) {
+              // Ignorar errores al limpiar (puede que ya fue removido)
+            }
+          }, 100);
         } catch (e) {
           // Ignorar errores al limpiar
         }
         channel = null;
       }
 
+      // Cancelar cualquier retry pendiente antes de crear nueva conexión
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+        retryTimeout = null;
+      }
+
+      // Verificar que el componente sigue activo antes de crear la conexión
+      if (!active) {
+        return;
+      }
+
       try {
         const channelName = `notifications-unread:${userId}`;
-        channel = supabase
-          .channel(channelName)
+        const newChannel = supabase
+          .channel(channelName, {
+            config: {
+              // Configuración para mejorar la estabilidad de la conexión
+              broadcast: { self: false },
+              presence: { key: userId },
+            },
+          })
           .on(
             'postgres_changes',
             {
@@ -143,7 +168,11 @@ export function useUnreadNotifications(userId?: string) {
             }
           )
           .subscribe((status) => {
-            if (!active) return;
+            // Verificar que el componente sigue activo antes de procesar el estado
+            if (!active) {
+              // Si el componente se desmontó, no procesar el estado
+              return;
+            }
 
             if (status === 'SUBSCRIBED') {
               // Suscripción exitosa - detener polling y resetear contador de reintentos
@@ -160,8 +189,13 @@ export function useUnreadNotifications(userId?: string) {
               }
               startPolling();
               
+              // Limpiar canal en error para evitar conexiones huérfanas
+              if (channel === newChannel) {
+                channel = null;
+              }
+              
               // Intentar reconectar después de un delay (con límite de reintentos)
-              if (retryCount < MAX_RETRIES) {
+              if (retryCount < MAX_RETRIES && active) {
                 retryCount++;
                 retryTimeout = setTimeout(() => {
                   if (active) {
@@ -184,8 +218,13 @@ export function useUnreadNotifications(userId?: string) {
               }
               startPolling();
               
+              // Limpiar canal en timeout
+              if (channel === newChannel) {
+                channel = null;
+              }
+              
               // Intentar reconectar
-              if (retryCount < MAX_RETRIES) {
+              if (retryCount < MAX_RETRIES && active) {
                 retryCount++;
                 retryTimeout = setTimeout(() => {
                   if (active) {
@@ -200,34 +239,54 @@ export function useUnreadNotifications(userId?: string) {
                 }
               }
             } else if (status === 'CLOSED') {
-              // Canal cerrado - usar polling como fallback
-              // Solo loggear una vez por tipo de error y solo en desarrollo
-              // CLOSED puede ser normal cuando el componente se desmonta, así que solo loggear si no es esperado
-              if (!isInProduction && !hasLoggedWarnings.current.has('CLOSED') && active) {
-                console.log('[useUnreadNotifications] Realtime connection closed - using polling fallback');
-                hasLoggedWarnings.current.add('CLOSED');
-              }
-              startPolling();
-              
-              // Intentar reconectar solo si el componente sigue activo
-              if (active && retryCount < MAX_RETRIES) {
-                retryCount++;
-                retryTimeout = setTimeout(() => {
-                  if (active) {
-                    subscribeToRealtime();
-                  }
-                }, RETRY_DELAY * retryCount);
+              // Canal cerrado - puede ser normal al desmontar o por error
+              // Solo usar polling si el componente sigue activo (no es un cierre esperado)
+              if (active) {
+                // Solo loggear una vez por tipo de error y solo en desarrollo
+                if (!isInProduction && !hasLoggedWarnings.current.has('CLOSED')) {
+                  console.log('[useUnreadNotifications] Realtime connection closed - using polling fallback');
+                  hasLoggedWarnings.current.add('CLOSED');
+                }
+                startPolling();
+                
+                // Limpiar referencia al canal cerrado
+                if (channel === newChannel) {
+                  channel = null;
+                }
+                
+                // Intentar reconectar solo si el componente sigue activo
+                if (retryCount < MAX_RETRIES) {
+                  retryCount++;
+                  retryTimeout = setTimeout(() => {
+                    if (active) {
+                      subscribeToRealtime();
+                    }
+                  }, RETRY_DELAY * retryCount);
+                }
               }
             }
           });
+        
+        // Guardar referencia al canal solo después de crearlo
+        channel = newChannel;
       } catch (error) {
         // Si falla la suscripción, usar polling como fallback
         // Solo loggear en desarrollo y solo una vez
         if (!isInProduction && !hasLoggedWarnings.current.has('SUBSCRIBE_ERROR')) {
-          console.warn('[useUnreadNotifications] Failed to subscribe to Realtime - using polling fallback');
+          console.warn('[useUnreadNotifications] Failed to subscribe to Realtime - using polling fallback', error);
           hasLoggedWarnings.current.add('SUBSCRIBE_ERROR');
         }
         startPolling();
+        
+        // Intentar reconectar después de un delay
+        if (retryCount < MAX_RETRIES && active) {
+          retryCount++;
+          retryTimeout = setTimeout(() => {
+            if (active) {
+              subscribeToRealtime();
+            }
+          }, RETRY_DELAY * retryCount);
+        }
       }
     };
 
@@ -242,7 +301,7 @@ export function useUnreadNotifications(userId?: string) {
     return () => {
       active = false;
       
-      // Limpiar timeouts
+      // Limpiar timeouts primero para evitar nuevos intentos de conexión
       if (retryTimeout) {
         clearTimeout(retryTimeout);
         retryTimeout = null;
@@ -251,15 +310,20 @@ export function useUnreadNotifications(userId?: string) {
       // Detener polling
       stopPolling();
       
-      // Remover canal
+      // Remover canal con un pequeño delay para dar tiempo a que se cierre correctamente
       if (channel) {
-        try {
-          supabase.removeChannel(channel);
-        } catch (error) {
-          // Ignorar errores al remover el canal (puede ser normal si ya fue removido)
-          // No loggear para reducir ruido
-        }
-        channel = null;
+        const channelToRemove = channel;
+        channel = null; // Limpiar referencia inmediatamente para evitar uso después de desmontar
+        
+        // Usar setTimeout para dar tiempo a que cualquier operación pendiente termine
+        setTimeout(() => {
+          try {
+            supabase.removeChannel(channelToRemove);
+          } catch (error) {
+            // Ignorar errores al remover el canal (puede ser normal si ya fue removido o cerrado)
+            // No loggear para reducir ruido
+          }
+        }, 50); // Pequeño delay para permitir que el WebSocket se cierre correctamente
       }
     };
   }, [userId, disableRealtime]);
