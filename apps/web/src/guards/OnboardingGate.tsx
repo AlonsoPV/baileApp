@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { routes } from '@/routes/registry';
 import { isPinVerified, needsPinVerify } from '@/lib/pin';
 
-// ---------- Constantes / Tipos ----------
+// ---------- Constantes / Tipos (fuera del componente) ----------
 const PROTECTED_PREFIX = [/^\/app\//, /^\/profile(\/|$)/];
 const QUERY_TIMEOUT_MS = 15_000;
 const UI_TIMEOUT_MS = 30_000;
@@ -29,6 +29,7 @@ type OnboardingStatus = OnboardingRow & { onboarding_complete: boolean };
 
 // ---------- Helpers ----------
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  // why: fail-fast para evitar esperas indefinidas
   return new Promise<T>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('Query timeout')), ms);
     promise
@@ -58,6 +59,7 @@ async function fetchOnboardingStatus(userId: string): Promise<OnboardingStatus> 
   const row = (Array.isArray(data) ? data[0] : data) as OnboardingRow | undefined;
   if (!row) return { onboarding_complete: false, pin_hash: null, user_id: userId };
 
+  // Auto-corrección si los datos están completos pero el flag está desmarcado
   const hasName = !!row.display_name;
   const ritmosCount =
     (Array.isArray(row.ritmos) ? row.ritmos.length : 0) +
@@ -68,7 +70,6 @@ async function fetchOnboardingStatus(userId: string): Promise<OnboardingStatus> 
 
   let complete = row.onboarding_complete === true;
 
-  // Auto-corrección si los datos están completos pero el flag está desmarcado
   if (!complete && hasName && hasRitmos && hasZonas && hasRol) {
     try {
       const { error: updError } = await supabase
@@ -89,87 +90,128 @@ async function fetchOnboardingStatus(userId: string): Promise<OnboardingStatus> 
   return { ...row, onboarding_complete: complete };
 }
 
-// ---------- UI ----------
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen grid place-items-center bg-[#0b0d10] text-gray-200 font-sans">
-      <div className="p-4 rounded-xl border border-white/10">Cargando…</div>
-    </div>
-  );
-}
-
-function ConnectionError() {
-  return (
-    <div className="min-h-screen grid place-items-center bg-[#0b0d10] text-gray-200 font-sans">
-      <div className="max-w-[400px] text-center p-6 rounded-xl border border-red-500/30 bg-red-500/10">
-        <div className="text-lg font-semibold mb-2">⚠️ Error de conexión</div>
-        <div className="text-sm opacity-80 mb-4">No se pudo verificar tu estado de onboarding. Por favor, recarga la página.</div>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 rounded-md bg-red-500 text-white font-semibold text-sm cursor-pointer"
-        >
-          Recargar página
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ---------- Main ----------
+// ---------- Componente principal ----------
 export default function OnboardingGate() {
-  // Hooks: siempre antes de cualquier early return
+  // ✅ TODOS LOS HOOKS DEBEN IR ANTES DE CUALQUIER EARLY RETURN
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
-  const pathname = location.pathname;
-  const shouldGuard = React.useMemo(() => PROTECTED_PREFIX.some((r) => r.test(pathname)), [pathname]);
-  const isOnboardingRoute = pathname.startsWith('/onboarding');
+  // Guard only /app/* and /profile/* paths
+  const shouldGuard = React.useMemo(
+    () => PROTECTED_PREFIX.some((r) => r.test(location.pathname)),
+    [location.pathname]
+  );
+  const isOnboardingRoute = location.pathname.startsWith('/onboarding');
 
+  // ✅ useQuery debe llamarse SIEMPRE, sin importar shouldGuard
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['onboarding-status', user?.id],
     enabled: shouldGuard && !!user && !authLoading && !!user?.id,
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuario sin ID');
-      // timeout real de 15s sobre la query
+      // Timeout real de 15s sobre la query
       return withTimeout(fetchOnboardingStatus(user.id), QUERY_TIMEOUT_MS);
     },
-    staleTime: 30_000,
+    staleTime: 30000,
     retry: 2,
-    retryDelay: 1_000,
-    gcTime: 60_000,
+    retryDelay: 1000,
+    gcTime: 60000,
   });
 
+  // ✅ useState debe llamarse SIEMPRE
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
 
+  // ✅ useEffect debe llamarse SIEMPRE
   React.useEffect(() => {
     if (authLoading || isLoading || isFetching) {
-      const t = setTimeout(() => {
+      const timeout = setTimeout(() => {
         console.error('[OnboardingGate] Timeout en carga después de 30 segundos - esto no debería pasar');
         setLoadingTimeout(true);
       }, UI_TIMEOUT_MS);
-      return () => clearTimeout(t);
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimeout(false);
     }
-    setLoadingTimeout(false);
   }, [authLoading, isLoading, isFetching]);
 
-  // Early returns después de los hooks
+  // ---------- Early returns (después de los hooks) ----------
   if (!shouldGuard) {
     return <Outlet />;
   }
 
   const loading = authLoading || isLoading || isFetching;
 
-  // 1) Cargando
+  // 1) Aún autenticando o esperando query
   if (loading) {
-    return loadingTimeout ? <ConnectionError /> : <LoadingScreen />;
+    if (loadingTimeout) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#0b0d10',
+          color: '#e5e7eb',
+          fontFamily: 'system-ui, sans-serif'
+        }}>
+          <div style={{
+            padding: 24,
+            borderRadius: 12,
+            border: '1px solid rgba(239,68,68,0.3)',
+            background: 'rgba(239,68,68,0.1)',
+            maxWidth: 400,
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 8 }}>
+              ⚠️ Error de conexión
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: 16 }}>
+              No se pudo verificar tu estado de onboarding. Por favor, recarga la página.
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: 8,
+                border: 'none',
+                background: '#ef4444',
+                color: '#fff',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Recargar página
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        background: '#0b0d10',
+        color: '#e5e7eb',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{
+          padding: 16,
+          borderRadius: 12,
+          border: '1px solid rgba(255,255,255,.12)'
+        }}>
+          Cargando…
+        </div>
+      </div>
+    );
   }
 
-  // 2) Sin usuario ⇒ login
+  // 2) Sin usuario ⇒ manda a login
   if (!user) {
     return <Navigate to={routes.auth.login} replace />;
   }
 
-  // 3) Error pero con usuario ⇒ deja pasar (fallback)
+  // 3) Error pero con usuario ⇒ deja pasar (fallback seguro)
   if (error) {
     console.warn('[OnboardingGate] Error status:', error);
     return <Outlet />;
@@ -178,10 +220,11 @@ export default function OnboardingGate() {
   const complete = data?.onboarding_complete === true;
   const hasPin = !!data?.pin_hash;
 
-  // 4) Completo ⇒ liberar app (PIN si aplica y no está en onboarding)
+  // 4) Si completo ⇒ libera la app (verificar PIN si no está en onboarding)
   if (complete) {
-    const onPinRoute = pathname.startsWith(routes.auth.pin) || pathname.startsWith(routes.auth.pinSetup);
-    if (!onPinRoute && hasPin && !isOnboardingRoute) {
+    const onPinRoutes =
+      location.pathname.startsWith(routes.auth.pin) || location.pathname.startsWith(routes.auth.pinSetup);
+    if (!onPinRoutes && hasPin && !isOnboardingRoute) {
       if (needsPinVerify(user.id) && !isPinVerified(user.id)) {
         return <Navigate to={routes.auth.pin} replace />;
       }
@@ -189,11 +232,11 @@ export default function OnboardingGate() {
     return <Outlet />;
   }
 
-  // 5) Incompleto y fuera de onboarding ⇒ redirigir a onboarding/basics
+  // 5) Si no completo y NO estás ya en onboarding ⇒ mándalo a onboarding/basics
   if (!isOnboardingRoute) {
     return <Navigate to={routes.onboarding.basics} replace />;
   }
 
-  // 6) En onboarding ⇒ renderizar
+  // 6) Estás en onboarding ⇒ renderiza la ruta de onboarding (sin verificar PIN)
   return <Outlet />;
 }
