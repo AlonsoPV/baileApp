@@ -95,7 +95,8 @@ export default function RolesInfoScreen() {
       minHeight: '100vh',
       background: 'radial-gradient(circle at top, #0f1419, #050608)',
       color: '#fff',
-      padding: '2rem 1rem',
+      padding: '0.5rem 1rem 2rem 1rem',
+      paddingTop: '0.5rem',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -128,6 +129,7 @@ export default function RolesInfoScreen() {
           .roles-wrapper {
             padding: 1.5rem !important;
             border-radius: 20px !important;
+            margin-top: 0.25rem !important;
           }
           .roles-title {
             font-size: 2rem !important;
@@ -152,6 +154,7 @@ export default function RolesInfoScreen() {
           .roles-wrapper {
             padding: 1.25rem !important;
             border-radius: 16px !important;
+            margin-top: 0.25rem !important;
           }
           .roles-title {
             font-size: 1.75rem !important;
@@ -164,6 +167,12 @@ export default function RolesInfoScreen() {
             width: 56px !important;
             height: 56px !important;
             font-size: 1.75rem !important;
+          }
+        }
+        /* Reducir espacio en móviles (Android/iOS) */
+        @media (max-width: 768px) {
+          body > div > div {
+            padding-top: 0.25rem !important;
           }
         }
       `}</style>

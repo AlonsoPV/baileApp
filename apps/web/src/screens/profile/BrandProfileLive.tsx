@@ -1371,14 +1371,16 @@ const CatalogTabs = React.memo(function CatalogTabs({
   );
 });
 
-const SizeGuide = React.memo(function SizeGuide({ rows = [] as { mx: string; us: string; eu: string }[] }) {
-  const data = useMemo(() => rows.length > 0 ? rows : [
+type SizeGuideRow = { mx: string; us: string; eu: string };
+
+const SizeGuide = React.memo(function SizeGuide({ rows = [] }: { rows?: SizeGuideRow[] }) {
+  const data = useMemo<SizeGuideRow[]>(() => (rows && rows.length > 0 ? rows : [
     { mx: '22', us: '5', eu: '35' },
     { mx: '23', us: '6', eu: '36-37' },
     { mx: '24', us: '7', eu: '38' },
     { mx: '25', us: '8', eu: '39-40' },
     { mx: '26', us: '9', eu: '41-42' },
-  ], [rows]);
+  ]), [rows]);
   
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
@@ -1395,12 +1397,14 @@ const SizeGuide = React.memo(function SizeGuide({ rows = [] as { mx: string; us:
   );
 });
 
-const FitTips = React.memo(function FitTips({ tips = [] as { style: string; tip: string }[] }) {
-  const data = useMemo(() => tips.length > 0 ? tips : [
+type FitTip = { style: string; tip: string };
+
+const FitTips = React.memo(function FitTips({ tips = [] }: { tips?: FitTip[] }) {
+  const data = useMemo<FitTip[]>(() => (tips && tips.length > 0 ? tips : [
     { style: 'Bachata', tip: 'Tacón estable, suela flexible, punta reforzada.' },
     { style: 'Salsa', tip: 'Mayor soporte lateral, giro suave (suela gamuza).' },
     { style: 'Kizomba', tip: 'Confort prolongado, amortiguación talón.' },
-  ], [tips]);
+  ]), [tips]);
   
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>

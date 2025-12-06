@@ -14,6 +14,9 @@ export type TeacherProfile = {
   ritmos_seleccionados?: string[]; // IDs de catálogo (RITMOS_CATALOG)
   zonas: number[];
   redes_sociales?: { instagram?: string|null; tiktok?: string|null; youtube?: string|null; facebook?: string|null; whatsapp?: string|null };
+  // Configuración de WhatsApp para clases (número y template de mensaje)
+  whatsapp_number?: string | null;
+  whatsapp_message_template?: string | null;
   ubicaciones?: any[];
   cronograma?: any[];
   costos?: any[];
@@ -134,6 +137,7 @@ export function useUpsertTeacher() {
         'user_id','nombre_publico','bio','avatar_url','portada_url',
         'ritmos','ritmos_seleccionados','zonas',
         'redes_sociales','ubicaciones','cronograma','costos','promociones','faq',
+        'whatsapp_number','whatsapp_message_template',
         'estado_aprobacion','updated_at','created_at'
       ]);
       const filtered: any = {};

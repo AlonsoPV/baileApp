@@ -20,11 +20,13 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
 
-// Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos
+// Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
+// Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
+// pero nosotros lo usamos solo como callback sin esperar su valor.
 type InfiniteQueryLike<TData = any, TError = unknown> = {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
-  fetchNextPage: () => void | Promise<void>;
+  fetchNextPage: (...args: any[]) => any;
 };
 
 const addDays = (d: Date, n: number) => {

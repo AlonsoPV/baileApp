@@ -7,6 +7,10 @@ export function useUnreadNotifications(userId?: string) {
   const hasLoggedPollingStart = React.useRef(false);
   const hasLoggedWarnings = React.useRef<Set<string>>(new Set());
   const isInProduction = import.meta.env.MODE === 'production';
+  // Permite desactivar Realtime (WebSocket) y usar solo polling vía env (ej. en app móvil)
+  const disableRealtime =
+    import.meta.env.VITE_DISABLE_REALTIME_NOTIFICATIONS === 'true' ||
+    import.meta.env.VITE_DISABLE_REALTIME_NOTIFICATIONS === '1';
 
   // Exponer acción para marcar como leídas desde UI
   const markAllAsRead = async () => {
@@ -228,7 +232,12 @@ export function useUnreadNotifications(userId?: string) {
     };
 
     // Intentar suscribirse inicialmente
-    subscribeToRealtime();
+    if (disableRealtime) {
+      // No abrir WebSocket, usar solo polling
+      startPolling();
+    } else {
+      subscribeToRealtime();
+    }
 
     return () => {
       active = false;
@@ -253,7 +262,7 @@ export function useUnreadNotifications(userId?: string) {
         channel = null;
       }
     };
-  }, [userId]);
+  }, [userId, disableRealtime]);
 
   return { unread, hasUnread: unread > 0, markAllAsRead };
 }

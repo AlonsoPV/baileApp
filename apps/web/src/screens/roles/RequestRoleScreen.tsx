@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
 import { useCreateRoleRequest, useRolesCatalog, useMyRoleRequests } from '@/hooks/useRoles';
-import type { RoleSlug } from '@/types/roles';
+import type { RoleSlug, RoleRequestStatus } from '@/types/roles';
 import { useAuth } from '@/contexts/AuthProvider';
 // Estilos compartidos (botones/vidrio)
 import '@/styles/event-public.css';
@@ -51,16 +51,31 @@ export default function RequestRoleScreen() {
   };
 
   // Obtener la solicitud actual para este rol (si existe)
-  const currentRequest = myReqs.find((r: any) => 
+  const currentRequest = myReqs.find((r: any) =>
     (r.role_slug === role || r.role === role)
   );
+
+  // Normalizar el status que viene de la base (puede venir en español o en inglés)
+  const normalizedStatus: RoleRequestStatus | undefined = React.useMemo(() => {
+    const raw = (currentRequest as any)?.status;
+    if (!raw) return undefined;
+    const value = String(raw).toLowerCase();
+    if (value === 'pendiente') return 'pending';
+    if (value === 'aprobado') return 'approved';
+    if (value === 'rechazado') return 'rejected';
+    if (value === 'pending' || value === 'approved' || value === 'rejected' || value === 'needs_review') {
+      return value as RoleRequestStatus;
+    }
+    return undefined;
+  }, [currentRequest]);
 
   // Determinar el paso actual según el estado de la solicitud
   const getCurrentStep = () => {
     if (!currentRequest) return 1; // Sin solicitud = Paso 1 (Datos)
-    if (currentRequest.status === 'pending' || currentRequest.status === 'pendiente') return 2; // En revisión
-    if (currentRequest.status === 'aprobado' || currentRequest.status === 'approved') return 3; // Aprobado
-    if (currentRequest.status === 'rechazado' || currentRequest.status === 'rejected') return 1; // Rechazado, puede volver a aplicar
+    if (!normalizedStatus) return 1;
+    if (normalizedStatus === 'pending' || normalizedStatus === 'needs_review') return 2; // En revisión
+    if (normalizedStatus === 'approved') return 3; // Aprobado
+    if (normalizedStatus === 'rejected') return 1; // Rechazado, puede volver a aplicar
     return 1;
   };
 
@@ -288,8 +303,9 @@ export default function RequestRoleScreen() {
                     onClick={submit} 
                     disabled={
                       createReq.isPending || 
-                      (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
-                      (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                      normalizedStatus === 'pending' ||
+                      normalizedStatus === 'needs_review' ||
+                      normalizedStatus === 'approved'
                     }
                     className="cc-btn cc-btn--primary" 
                     style={{ 
@@ -302,20 +318,22 @@ export default function RequestRoleScreen() {
                         : 'linear-gradient(135deg, #E53935, #FB8C00)',
                       opacity: (
                         createReq.isPending || 
-                        (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
-                        (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                        normalizedStatus === 'pending' ||
+                        normalizedStatus === 'needs_review' ||
+                        normalizedStatus === 'approved'
                       ) ? 0.6 : 1,
                       cursor: (
                         createReq.isPending || 
-                        (currentRequest?.status === 'pending' || currentRequest?.status === 'pendiente') ||
-                        (currentRequest?.status === 'aprobado' || currentRequest?.status === 'approved')
+                        normalizedStatus === 'pending' ||
+                        normalizedStatus === 'needs_review' ||
+                        normalizedStatus === 'approved'
                       ) ? 'not-allowed' : 'pointer'
                     }}
                   >
                     {createReq.isPending ? '⏳ Enviando…' : 
                      currentStep === 3 ? '✅ Solicitud Aprobada' :
                      currentStep === 2 ? '⏳ En Revisión' :
-                     currentRequest?.status === 'rechazado' || currentRequest?.status === 'rejected' ? '🔄 Volver a Solicitar' :
+                     normalizedStatus === 'rejected' ? '🔄 Volver a Solicitar' :
                      '📤 Enviar Solicitud'}
                   </button>
                 </div>
@@ -323,7 +341,7 @@ export default function RequestRoleScreen() {
                   {currentStep === 1 && 'Tiempo estimado de revisión: 24–48h hábiles.'}
                   {currentStep === 2 && 'Tu solicitud está siendo revisada por nuestro equipo.'}
                   {currentStep === 3 && 'Ya puedes acceder a las funcionalidades de este rol.'}
-                  {currentRequest?.status === 'rechazado' && '❌ Tu solicitud fue rechazada. Puedes volver a intentarlo.'}
+                  {normalizedStatus === 'rejected' && '❌ Tu solicitud fue rechazada. Puedes volver a intentarlo.'}
                 </div>
               </div>
             </div>

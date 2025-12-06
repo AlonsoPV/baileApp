@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
-import { colors, spacing, borderRadius } from '../../theme/colors';
+import { colors, borderRadius, theme } from '../../theme/colors';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useTags } from '../../hooks/useTags';
 import { useToast } from '../../components/Toast';
@@ -9,17 +9,17 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useMyOrganizer } from '../../hooks/useOrganizer';
 import { TagChip } from '../../components/TagChip';
 import { isValidDisplayName } from '../../utils/validation';
-import { mergeProfile } from '../../utils/mergeProfile';
 import { supabase } from '../../lib/supabase';
-import { getBucketPublicUrl } from '../../lib/supabase';
+
+const spacing = theme.spacing;
 
 export function Profile() {
   const navigate = useNavigate();
-  const { profile, isLoading, upsert, refetch } = useUserProfile();
+  const { profile, isLoading, updateProfileFields, refetch } = useUserProfile();
   const { data: allTags } = useTags();
   const { showToast } = useToast();
   const { user } = useAuth();
-  const { organizer, isLoading: isLoadingOrganizer } = useMyOrganizer();
+  const { data: organizer, isLoading: isLoadingOrganizer } = useMyOrganizer();
   
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -44,10 +44,15 @@ export function Profile() {
     setSelectedZonas(profile?.zonas || []);
     setAvatarFile(null);
     setAvatarPreview(profile?.avatar_url || ''); // Keep current avatar as preview
-    setRedesSociales(profile?.redes_sociales || {
-      instagram: '',
-      facebook: '',
-      whatsapp: ''
+    const redes = (profile?.redes_sociales || {}) as {
+      instagram?: string;
+      facebook?: string;
+      whatsapp?: string;
+    };
+    setRedesSociales({
+      instagram: redes.instagram || '',
+      facebook: redes.facebook || '',
+      whatsapp: redes.whatsapp || '',
     });
     setIsEditing(true);
   };
@@ -111,17 +116,21 @@ export function Profile() {
         avatarUrl += `?t=${Date.now()}`;
       }
 
-      // Merge with existing profile
-      const updates = mergeProfile(profile, {
+      // Preparar patch para guardar (el hook se encarga de merge y normalización)
+      const respuestas = {
+        ...(profile.respuestas || {}),
+        redes: redesSociales,
+      };
+
+      await updateProfileFields({
         display_name: displayName,
-        bio: bio || undefined,
+        bio: bio || null,
         avatar_url: avatarUrl,
         ritmos: selectedRitmos,
         zonas: selectedZonas,
         redes_sociales: redesSociales,
+        respuestas,
       });
-      
-      await upsert(updates);
       await refetch();
       showToast('Perfil actualizado exitosamente ✅', 'success');
       setIsEditing(false);
@@ -156,7 +165,7 @@ export function Profile() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: colors.gradients.app,
+          background: theme.bg.app,
           color: colors.gray[400],
           fontSize: '1.5rem',
         }}
@@ -170,7 +179,7 @@ export function Profile() {
     <div
       style={{
         minHeight: '100vh',
-        background: colors.gradients.app,
+        background: theme.bg.app,
         padding: spacing(4),
       }}
     >
@@ -340,7 +349,7 @@ export function Profile() {
                   textAlign: 'center', 
                   marginBottom: spacing(4),
                   padding: spacing(3),
-                  background: colors.gradients.app,
+                  background: theme.bg.app,
                   borderRadius: borderRadius.lg,
                   border: `2px dashed ${colors.gray[300]}`
                 }}>
@@ -437,7 +446,7 @@ export function Profile() {
                       style={{
                         width: '100%',
                         padding: spacing(2),
-                        background: colors.gradients.app,
+                        background: theme.bg.app,
                         border: `2px solid ${colors.gray[300]}`,
                         borderRadius: borderRadius.md,
                         color: colors.light,
@@ -510,7 +519,7 @@ export function Profile() {
                     style={{
                       width: '100%',
                       padding: spacing(2),
-                      background: colors.gradients.app,
+                      background: theme.bg.app,
                       border: `2px solid ${colors.gray[300]}`,
                       borderRadius: borderRadius.md,
                       color: colors.light,
@@ -528,7 +537,7 @@ export function Profile() {
                 <div style={{ 
                   marginBottom: spacing(4),
                   padding: spacing(3),
-                  background: colors.gradients.app,
+                  background: theme.bg.app,
                   borderRadius: borderRadius.lg,
                   border: `1px solid ${colors.gray[300]}`
                 }}>
@@ -608,7 +617,7 @@ export function Profile() {
                 <div style={{ 
                   marginBottom: spacing(4),
                   padding: spacing(3),
-                  background: colors.gradients.app,
+                  background: theme.bg.app,
                   borderRadius: borderRadius.lg,
                   border: `1px solid ${colors.gray[300]}`
                 }}>
@@ -688,7 +697,7 @@ export function Profile() {
                 <div style={{ 
                   marginBottom: spacing(4),
                   padding: spacing(3),
-                  background: colors.gradients.app,
+                  background: theme.bg.app,
                   borderRadius: borderRadius.lg,
                   border: `1px solid ${colors.gray[300]}`
                 }}>
@@ -1081,7 +1090,7 @@ export function Profile() {
             padding: spacing(4),
             background: colors.glass.strong,
             borderRadius: borderRadius.lg,
-            border: `1px solid ${theme.bg.border}`,
+            border: `1px solid ${theme.bg.card}`,
           }}>
             <h3 style={{
               fontSize: '1.5rem',
@@ -1101,8 +1110,8 @@ export function Profile() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: spacing(3),
-                  background: colors.gradients.app,
-                  border: `1px solid ${theme.bg.border}`,
+                  background: theme.bg.app,
+                  border: `1px solid ${theme.bg.card}`,
                   borderRadius: borderRadius.md,
                   cursor: 'pointer',
                   color: colors.light,
@@ -1114,7 +1123,7 @@ export function Profile() {
                   e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.bg.border;
+                  e.currentTarget.style.borderColor = theme.bg.card;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
@@ -1138,7 +1147,7 @@ export function Profile() {
                   justifyContent: 'space-between',
                   padding: spacing(3),
                   background: colors.glass.strong,
-                  border: `1px solid ${theme.bg.border}`,
+                  border: `1px solid ${theme.bg.card}`,
                   borderRadius: borderRadius.md,
                   cursor: 'pointer',
                   color: colors.light,
@@ -1150,7 +1159,7 @@ export function Profile() {
                   e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.bg.border;
+                  e.currentTarget.style.borderColor = theme.bg.card;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
@@ -1176,8 +1185,8 @@ export function Profile() {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: spacing(3),
-                        background: colors.gradients.app,
-                        border: `1px solid ${theme.bg.border}`,
+                        background: theme.bg.app,
+                        border: `1px solid ${theme.bg.card}`,
                         borderRadius: borderRadius.md,
                         cursor: 'pointer',
                         color: colors.light,
@@ -1185,11 +1194,11 @@ export function Profile() {
                         transition: 'all 0.2s ease',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = theme.brand.secondary;
+                        e.currentTarget.style.borderColor = colors.secondary[500];
                         e.currentTarget.style.boxShadow = `0 4px 12px rgba(0,0,0,0.1)`;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = theme.bg.border;
+                        e.currentTarget.style.borderColor = theme.bg.card;
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
@@ -1211,8 +1220,8 @@ export function Profile() {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: spacing(3),
-                        background: `${theme.brand.secondary}20`,
-                        border: `2px dashed ${theme.brand.secondary}`,
+                        background: `${colors.secondary[500]}20`,
+                        border: `2px dashed ${colors.secondary[500]}`,
                         borderRadius: borderRadius.md,
                         cursor: 'pointer',
                         color: colors.light,
@@ -1220,10 +1229,10 @@ export function Profile() {
                         transition: 'all 0.2s ease',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = `${theme.brand.secondary}30`;
+                        e.currentTarget.style.background = `${colors.secondary[500]}30`;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = `${theme.brand.secondary}20`;
+                        e.currentTarget.style.background = `${colors.secondary[500]}20`;
                       }}
                     >
                       <div>

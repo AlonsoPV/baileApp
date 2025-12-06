@@ -18,6 +18,7 @@ export type ProfileUser = {
   respuestas?: Record<string, any>;
   redes_sociales?: Record<string, any>;
   updated_at?: string; // Para rehidratación confiable
+  created_at?: string; // Para mostrar "miembro desde" en el perfil
 };
 
 const KEY = (uid?: string) => ["profile", "me", uid];
@@ -36,7 +37,7 @@ export function useUserProfile() {
       
       const { data, error } = await supabase
         .from("profiles_user")
-        .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, updated_at")
+        .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, redes_sociales, updated_at, created_at")
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
