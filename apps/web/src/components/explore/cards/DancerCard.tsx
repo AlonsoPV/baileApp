@@ -110,13 +110,29 @@ export default function DancerCard({ item, to }: Props) {
   const href = to || (item.id ? `/u/${encodeURIComponent(String(item.id))}` : '#');
 
   return (
-    <LiveLink to={href} asCard={false}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
-        style={{
+    <>
+      <style>{`
+        .dancer-card-mobile {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .dancer-card-mobile {
+            aspect-ratio: 9 / 16 !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-width: calc((9 / 16) * 100vh);
+            margin: 0 auto;
+          }
+        }
+      `}</style>
+      <LiveLink to={href} asCard={false}>
+        <motion.div
+          className="dancer-card-mobile"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          style={{
           position: 'relative',
           borderRadius: '1.25rem',
           background: coverUrl
@@ -130,7 +146,7 @@ export default function DancerCard({ item, to }: Props) {
           border: '1px solid rgba(240, 147, 251, 0.2)',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '280px',
+          minHeight: '350px',
           height: '350px',
           display: 'flex',
           flexDirection: 'column',
@@ -184,7 +200,8 @@ export default function DancerCard({ item, to }: Props) {
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
-    </LiveLink>
+      </LiveLink>
+    </>
   );
 }
 

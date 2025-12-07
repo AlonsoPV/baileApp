@@ -21,6 +21,8 @@ export function useUserMediaSlots() {
       if (error) throw error;
       return (data?.media as MediaItem[]) || [];
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana
   });
 
   const setMedia = useMutation({
@@ -35,8 +37,12 @@ export function useUserMediaSlots() {
       if (error) throw error;
     },
     onSuccess: async () => {
+      // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
+      
+      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+      await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },
   });
 
@@ -72,8 +78,12 @@ export function useUserMediaSlots() {
       return next;
     },
     onSuccess: async () => {
+      // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
+      
+      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+      await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },
   });
 
@@ -87,8 +97,12 @@ export function useUserMediaSlots() {
       return next;
     },
     onSuccess: async () => {
+      // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
+      
+      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+      await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },
   });
 

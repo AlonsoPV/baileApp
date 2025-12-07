@@ -62,16 +62,18 @@ export function useEventDatesByOrganizer(organizerId?: number) {
         return [];
       }
       
-      console.log('[useEventDatesByOrganizer] Fetching dates for organizer:', organizerId);
+      console.log('[useEventDatesByOrganizer] Fetching dates for organizer (by organizer_id):', organizerId);
       
       const { data, error } = await supabase
         .from("events_date")
         .select(`
           id,
           parent_id,
+          organizer_id,
           nombre,
           biografia,
           fecha,
+          dia_semana,
           hora_inicio,
           hora_fin,
           lugar,
@@ -89,13 +91,13 @@ export function useEventDatesByOrganizer(organizerId?: number) {
           estado_publicacion,
           created_at,
           updated_at,
-          events_parent!inner(
+          events_parent(
             id,
             nombre,
             organizer_id
           )
         `)
-        .eq("events_parent.organizer_id", organizerId)
+        .eq("organizer_id", organizerId)
         .order("fecha", { ascending: true });
 
       if (error) {

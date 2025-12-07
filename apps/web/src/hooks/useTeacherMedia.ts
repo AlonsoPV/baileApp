@@ -55,6 +55,8 @@ export function useTeacherMedia() {
       if (error) throw error;
       return (data?.media as MediaItem[]) || [];
     },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana
   });
 
   const save = async (list: MediaItem[]) => {
@@ -78,9 +80,15 @@ export function useTeacherMedia() {
       return next;
     },
     onSuccess: (next) => {
+      // Actualizar cache inmediata del listado de media
       qc.setQueryData(["teacher", "media", teacherId], next);
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["teacher", "media", teacherId] });
       qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+      qc.invalidateQueries({ queryKey: ["teacher"] });
+      
+      // Forzar refetch inmediato para que las fotos aparezcan de inmediato
+      qc.refetchQueries({ queryKey: ["teacher", "media", teacherId] });
     },
   });
 
@@ -92,9 +100,15 @@ export function useTeacherMedia() {
       return next;
     },
     onSuccess: (next) => {
+      // Actualizar cache inmediata del listado de media
       qc.setQueryData(["teacher", "media", teacherId], next);
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["teacher", "media", teacherId] });
       qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+      qc.invalidateQueries({ queryKey: ["teacher"] });
+      
+      // Forzar refetch inmediato para que las fotos aparezcan de inmediato
+      qc.refetchQueries({ queryKey: ["teacher", "media", teacherId] });
     },
   });
 

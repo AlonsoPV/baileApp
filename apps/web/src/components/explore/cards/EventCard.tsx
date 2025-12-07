@@ -114,35 +114,51 @@ export default function EventCard({ item }: EventCardProps) {
   }, [item, allTags]);
 
   return (
-    <LiveLink to={linkTo} asCard={false}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
-        style={{
-          position: 'relative',
-          borderRadius: '1.25rem',
-          background: flyer
-            ? `url(${flyer})`
-            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          // Usar cover para que la imagen llene toda la card, sin barras
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
-          padding: '1.5rem',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          border: '1px solid rgba(240, 147, 251, 0.2)',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '280px',
-          height: '350px',
-          justifyContent: 'flex-end',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+    <>
+      <style>{`
+        .event-card-mobile {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .event-card-mobile {
+            aspect-ratio: 9 / 16 !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-width: calc((9 / 16) * 100vh);
+            margin: 0 auto;
+          }
+        }
+      `}</style>
+      <LiveLink to={linkTo} asCard={false}>
+        <motion.div
+          className="event-card-mobile"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          style={{
+            position: 'relative',
+            borderRadius: '1.25rem',
+            background: flyer
+              ? `url(${flyer})`
+              : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+            // Usar cover para que la imagen llene toda la card, sin barras
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            padding: '1.5rem',
+            cursor: 'pointer',
+            overflow: 'hidden',
+            border: '1px solid rgba(240, 147, 251, 0.2)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            minHeight: '350px',
+            height: '350px',
+            justifyContent: 'flex-end',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
         {/* Overlay global solo si NO hay flyer */}
         {!flyer && (
@@ -233,16 +249,6 @@ export default function EventCard({ item }: EventCardProps) {
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
         )}
 
-        {ritmoNames.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-            {ritmoNames.slice(0, 3).map((name, i) => (
-              <span key={`r-${i}`} style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 12, color: 'rgba(255,255,255,0.92)' }}>
-                🎵 {name}
-              </span>
-            ))}
-          </div>
-        )}
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             {fecha && (
@@ -257,10 +263,10 @@ export default function EventCard({ item }: EventCardProps) {
             )}
           </div>
 
-          {(lugar || ciudad) && (
+          {lugar && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.9)', maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                📍 {[lugar, ciudad].filter(Boolean).join(' • ')}
+                📍 {lugar}
               </span>
             </div>
           )}
@@ -305,7 +311,8 @@ export default function EventCard({ item }: EventCardProps) {
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
-    </LiveLink>
+      </LiveLink>
+    </>
   );
 }
 

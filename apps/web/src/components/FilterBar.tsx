@@ -206,33 +206,290 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           }
         ` : ''}
         @media (max-width: 768px) {
-          .filters-wrap { padding: 0 !important; }
+          .filters-wrap { 
+            padding: 0.75rem 0.5rem 0 !important; 
+          }
           .filters-row { 
             flex-wrap: nowrap !important; 
-            overflow-x: auto; 
-            gap: 0.5rem !important; 
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 0.5rem;
+            overflow-x: auto !important; 
+            gap: 0.6rem !important; 
+            -webkit-overflow-scrolling: touch !important;
+            scroll-behavior: smooth !important;
+            padding: 0.5rem 0.5rem 0.75rem !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
           }
-          .filters-row::-webkit-scrollbar { display: none; }
+          .filters-row::-webkit-scrollbar { 
+            height: 4px !important;
+            display: block !important;
+          }
+          .filters-row::-webkit-scrollbar-track {
+            background: transparent !important;
+          }
+          .filters-row::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-radius: 4px !important;
+          }
+          /* Botones de filtros más pequeños en móvil */
+          .filter-button-mobile {
+            padding: 0.7rem 1rem !important;
+            font-size: 0.8125rem !important;
+            min-height: 40px !important;
+            min-width: 40px !important;
+          }
+          .filter-button-icon-only {
+            padding: 0.65rem !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            width: 40px !important;
+            height: 40px !important;
+          }
           .dropdown-panel { 
             width: 100% !important; 
-            padding: 1.25rem !important;
+            padding: 1rem 1.125rem !important;
             margin-top: 0.75rem !important;
+            border-radius: 14px !important;
+            max-height: calc(100vh - 200px) !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          /* Chips de ritmos en móvil */
+          .ritmo-chip-parent {
+            padding: 10px 14px !important;
+            font-size: 0.875rem !important;
+            min-height: 38px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+          }
+          .ritmo-chip-parent.active {
+            padding: 6px 12px !important;
+            font-size: 0.75rem !important;
+          }
+          .ritmo-chip-child {
+            padding: 8px 12px !important;
+            font-size: 0.8125rem !important;
+            min-height: 36px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+          }
+          .ritmo-chip-child.active {
+            padding: 6px 10px !important;
+            font-size: 0.75rem !important;
+          }
+          /* Chips de zonas en móvil */
+          .zona-chip-parent {
+            padding: 10px 14px !important;
+            font-size: 0.875rem !important;
+            min-height: 38px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+          }
+          .zona-chip-child {
+            padding: 8px 12px !important;
+            font-size: 0.8125rem !important;
+            min-height: 36px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+          }
+          /* Gap mejorado para chips */
+          .ritmos-parents-container {
+            gap: 0.5rem !important;
+          }
+          .ritmos-children-container {
+            gap: 0.5rem !important;
+          }
+          .zonas-container {
+            gap: 0.6rem !important;
+          }
+          .zonas-group {
+            gap: 0.4rem !important;
+          }
+          .zonas-children {
+            gap: 0.45rem !important;
+          }
+          /* Botón limpiar filtros */
+          .clear-filters-btn {
+            min-height: 40px !important;
+            padding: 0.7rem 1.25rem !important;
+            font-size: 0.8125rem !important;
           }
           input[type="text"] {
-            padding: 0.75rem 1rem 0.75rem 3rem !important;
-            font-size: 0.875rem !important;
+            padding: 0.875rem 1rem 0.875rem 3.25rem !important;
+            font-size: 0.9375rem !important;
+            min-height: 44px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
           }
           button {
-            padding: 0.75rem 1rem !important;
-            font-size: 0.825rem !important;
+            padding: 0.875rem 1.25rem !important;
+            font-size: 0.875rem !important;
+            min-height: 44px !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+            white-space: nowrap !important;
           }
         }
         @media (max-width: 480px) {
-          .filters-wrap { padding: 0 !important; }
+          .filters-wrap { 
+            padding: 0.5rem 0.25rem 0 !important; 
+          }
+          .filters-row { 
+            gap: 0.5rem !important; 
+            padding: 0.5rem 0.25rem 0.75rem !important;
+          }
+          .filter-button-mobile {
+            padding: 0.625rem 0.875rem !important;
+            font-size: 0.75rem !important;
+            min-height: 38px !important;
+            min-width: 38px !important;
+          }
+          .filter-button-icon-only {
+            padding: 0.6rem !important;
+            min-width: 38px !important;
+            min-height: 38px !important;
+            width: 38px !important;
+            height: 38px !important;
+          }
           .dropdown-panel { 
-            padding: 1rem !important;
+            padding: 0.875rem 1rem !important;
+            margin-top: 0.5rem !important;
+            border-radius: 12px !important;
+          }
+          .ritmo-chip-parent {
+            padding: 8px 12px !important;
+            font-size: 0.8125rem !important;
+            min-height: 36px !important;
+          }
+          .ritmo-chip-parent.active {
+            padding: 5px 10px !important;
+            font-size: 0.7rem !important;
+          }
+          .ritmo-chip-child {
+            padding: 7px 11px !important;
+            font-size: 0.75rem !important;
+            min-height: 34px !important;
+          }
+          .ritmo-chip-child.active {
+            padding: 5px 9px !important;
+            font-size: 0.7rem !important;
+          }
+          .zona-chip-parent {
+            padding: 8px 12px !important;
+            font-size: 0.8125rem !important;
+            min-height: 36px !important;
+          }
+          .zona-chip-child {
+            padding: 7px 11px !important;
+            font-size: 0.75rem !important;
+            min-height: 34px !important;
+          }
+          .ritmos-parents-container {
+            gap: 0.4rem !important;
+          }
+          .ritmos-children-container {
+            gap: 0.4rem !important;
+          }
+          .zonas-container {
+            gap: 0.5rem !important;
+          }
+          .zonas-children {
+            gap: 0.4rem !important;
+          }
+          .clear-filters-btn {
+            min-height: 38px !important;
+            padding: 0.625rem 1rem !important;
+            font-size: 0.75rem !important;
+          }
+          input[type="text"] {
+            padding: 0.75rem 0.875rem 0.75rem 3rem !important;
+            font-size: 0.875rem !important;
+            min-height: 42px !important;
+          }
+          button {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.8125rem !important;
+            min-height: 42px !important;
+          }
+        }
+        @media (max-width: 430px) {
+          .filters-wrap { 
+            padding: 0.5rem 0.125rem 0 !important; 
+          }
+          .filters-row { 
+            gap: 0.4rem !important; 
+            padding: 0.4rem 0.125rem 0.6rem !important;
+          }
+          .filter-button-mobile {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.7rem !important;
+            min-height: 36px !important;
+            min-width: 36px !important;
+          }
+          .filter-button-icon-only {
+            padding: 0.55rem !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .dropdown-panel { 
+            padding: 0.75rem 0.875rem !important;
+            border-radius: 10px !important;
+          }
+          .ritmo-chip-parent {
+            padding: 7px 11px !important;
+            font-size: 0.75rem !important;
+            min-height: 34px !important;
+          }
+          .ritmo-chip-parent.active {
+            padding: 5px 9px !important;
+            font-size: 0.68rem !important;
+          }
+          .ritmo-chip-child {
+            padding: 6px 10px !important;
+            font-size: 0.7rem !important;
+            min-height: 32px !important;
+          }
+          .ritmo-chip-child.active {
+            padding: 4px 8px !important;
+            font-size: 0.68rem !important;
+          }
+          .zona-chip-parent {
+            padding: 7px 11px !important;
+            font-size: 0.75rem !important;
+            min-height: 34px !important;
+          }
+          .zona-chip-child {
+            padding: 6px 10px !important;
+            font-size: 0.7rem !important;
+            min-height: 32px !important;
+          }
+          .ritmos-parents-container {
+            gap: 0.35rem !important;
+          }
+          .ritmos-children-container {
+            gap: 0.35rem !important;
+          }
+          .zonas-container {
+            gap: 0.4rem !important;
+          }
+          .zonas-children {
+            gap: 0.35rem !important;
+          }
+          .clear-filters-btn {
+            min-height: 36px !important;
+            padding: 0.6rem 0.9rem !important;
+            font-size: 0.7rem !important;
+          }
+          input[type="text"] {
+            padding: 0.7rem 0.8rem 0.7rem 2.75rem !important;
+            font-size: 0.8125rem !important;
+            min-height: 40px !important;
+          }
+          button {
+            padding: 0.7rem 0.9rem !important;
+            font-size: 0.75rem !important;
+            min-height: 40px !important;
           }
         }
       `}</style>
@@ -311,6 +568,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {/* Botón Limpiar Filtros */}
             {hasActiveFilters && (
               <motion.button
+                className="clear-filters-btn"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
@@ -472,7 +730,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                   return (
                     <div style={{ display: 'grid', gap: 12 }}>
                       {/* Chips padres (solo grupos con algún hijo mapeado) */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div className="ritmos-parents-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {groupsMemo.map(group => {
                           const activeInGroup = group.items.some(i => isTagActive(i.label));
                           const isOpen = expandedGroup === group.id;
@@ -480,6 +738,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                           return (
                             <button
                               key={group.id}
+                              className={`ritmo-chip-parent ${isActive ? 'active' : ''}`}
                               onClick={() => toggleGroup(group.id)}
                               style={{
                                 padding: isActive ? '5px 10px' : '12px 18px',
@@ -493,6 +752,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                 transition: 'all 0.2s ease',
                                 backdropFilter: isActive ? 'blur(10px)' : 'none',
                                 boxShadow: isActive ? 'rgba(245, 87, 108, 0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset' : 'none',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               🎵 {group.label}
@@ -503,7 +763,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
                       {/* Chips hijas del grupo expandido */}
                       {expandedGroup && (
-                        <div style={{
+                        <div className="ritmos-children-container" style={{
                           display: 'flex', flexWrap: 'wrap', gap: '0.5rem',
                           borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12
                         }}>
@@ -512,6 +772,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                             return (
                               <button
                                 key={child.id}
+                                className={`ritmo-chip-child ${active ? 'active' : ''}`}
                                 onClick={() => toggleChild(child.label)}
                                 style={{
                                   padding: active ? '5px 10px' : '7px 13px',
@@ -525,6 +786,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                   transition: 'all 0.2s ease',
                                   backdropFilter: active ? 'blur(10px)' : 'none',
                                   boxShadow: active ? 'rgba(245, 87, 108, 0.3) 0px 4px 16px, rgba(255,255,255,0.2) 0px 1px 0px inset' : 'none',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
                                 🎵 {child.label}
@@ -544,6 +806,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
               <DropdownPanel id="dropdown-zonas" onClose={onCloseDropdown}>
                 {zonaGroups.length ? (
                   <div
+                    className="zonas-container"
                     style={{
                       display: 'flex',
                       flexWrap: 'wrap',
@@ -557,6 +820,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                       return (
                         <div
                           key={group.id}
+                          className="zonas-group"
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
@@ -571,6 +835,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                             variant="custom"
                             active={isOpen || activeInGroup}
                             onClick={() => setExpandedZonaGroup(prev => (prev === group.id ? null : group.id))}
+                            className="zona-chip-parent"
                             style={{
                               width: 'fit-content',
                               minWidth: 'auto',
@@ -584,11 +849,13 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                 ? '1px solid rgba(76,173,255,0.6)'
                                 : '1px solid rgba(255,255,255,0.12)',
                               borderRadius: 999,
+                              whiteSpace: 'nowrap',
                             }}
                           />
 
                           {isOpen && (
                             <div
+                              className="zonas-children"
                               style={{
                                 display: 'flex',
                                 flexWrap: 'wrap',
@@ -608,10 +875,12 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                                     variant="zona"
                                     active={active}
                                     onClick={() => handleZonaToggle(item.id)}
+                                    className="zona-chip-child"
                                     style={{
                                       fontSize: '0.85rem',
                                       padding: '7px 13px',
                                       fontWeight: 500,
+                                      whiteSpace: 'nowrap',
                                     }}
                                   />
                                 );
@@ -764,6 +1033,7 @@ function FilterButton({
       aria-label={iconOnly ? ariaLabel || label : undefined}
       aria-expanded={isOpen}
       aria-controls={ariaControlsId}
+      className={iconOnly ? 'filter-button-mobile filter-button-icon-only' : 'filter-button-mobile'}
       style={{
         position: 'relative',
         display: 'flex',
@@ -787,7 +1057,9 @@ function FilterButton({
         boxShadow: isOpen 
           ? '0 4px 16px rgba(240, 147, 251, 0.3), 0 0 0 2px rgba(240, 147, 251, 0.2)' 
           : '0 2px 8px rgba(0, 0, 0, 0.2)',
-        backdropFilter: 'blur(10px)'
+        backdropFilter: 'blur(10px)',
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)'
       }}
     >
       <span>{icon}</span>
@@ -879,5 +1151,6 @@ function DropdownPanel({ id, children, onClose }: { id?: string; children: React
     </motion.div>
   );
 }
+
 
 

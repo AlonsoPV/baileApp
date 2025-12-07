@@ -50,13 +50,33 @@ export default function AcademyCard({ item }: AcademyCardProps) {
     .filter(Boolean);
 
   return (
-    <LiveLink to={urls.academyLive(id)} asCard={false}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
-        style={{
+    <>
+      <style>{`
+        .academy-card-mobile {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .academy-card-mobile {
+            aspect-ratio: 9 / 16 !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-width: calc((9 / 16) * 100vh);
+            margin: 0 auto;
+          }
+          .academy-card-mobile[style*="background"] {
+            background-size: contain !important;
+            background-position: center center !important;
+          }
+        }
+      `}</style>
+      <LiveLink to={urls.academyLive(id)} asCard={false}>
+        <motion.div
+          className="academy-card-mobile"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
+          style={{
           position: 'relative',
           borderRadius: '1.25rem',
           background: primaryAvatar
@@ -71,7 +91,7 @@ export default function AcademyCard({ item }: AcademyCardProps) {
           border: '1px solid rgba(240, 147, 251, 0.2)',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '280px',
+          minHeight: '350px',
           height: '350px',
           display: 'flex',
           flexDirection: 'column',
@@ -106,11 +126,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
           </div>
         </div>
 
-        {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
+        {zonaNombres.length > 0 && (
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {ritmoNombres.slice(0, 3).map((name: string, i: number) => (
-              <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
-            ))}
             {zonaNombres.slice(0, 2).map((name: string, i: number) => (
               <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
             ))}
@@ -118,6 +135,7 @@ export default function AcademyCard({ item }: AcademyCardProps) {
         )}
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
-    </LiveLink>
+      </LiveLink>
+    </>
   );
 }

@@ -346,6 +346,22 @@ const STYLES = `
     margin-bottom: 4rem;
     position: relative;
   }
+  .section-header {
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+  }
+  .section-title-text {
+    font-size: 1.875rem;
+    font-weight: 800;
+    margin: 0;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+  .section-title-underline {
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+  }
   .explore-slider {
     width: 100%;
   }
@@ -585,44 +601,91 @@ const STYLES = `
   @media (max-width: 768px) {
     .filters-panel {
       max-width: 100% !important;
-      padding: 14px 12px 16px !important;
+      padding: 12px 14px 14px !important;
+      border-radius: 20px !important;
+      margin: 0 !important;
     }
     .filters-fav {
-      padding: 8px 10px !important;
+      padding: 10px 12px !important;
       flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+    .filters-fav__left {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    .filters-fav__icon {
+      font-size: 18px !important;
     }
     .filters-fav__title {
       font-size: 13px !important;
+      font-weight: 700 !important;
     }
     .filters-fav__btn {
       font-size: 11px !important;
-      padding: 5px 10px !important;
+      padding: 6px 12px !important;
+      min-height: 32px !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
     }
     .filters-box {
-      padding: 8px 8px 10px !important;
+      padding: 10px 10px 12px !important;
+      border-radius: 14px !important;
+    }
+    .filters-box__header {
+      margin-bottom: 10px !important;
     }
     .filters-box__title {
       font-size: 12px !important;
+      font-weight: 700 !important;
+    }
+    .filters-box__icon {
+      font-size: 16px !important;
     }
     .filters-box__badge {
       font-size: 10px !important;
-      padding: 2px 6px !important;
+      padding: 3px 7px !important;
+      min-height: 18px !important;
+    }
+    .filters-chips {
+      gap: 6px !important;
+      padding: 6px 4px 4px !important;
+      -webkit-overflow-scrolling: touch !important;
+      scroll-behavior: smooth !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+    }
+    .filters-chips::-webkit-scrollbar {
+      height: 4px !important;
+    }
+    .filters-chips::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-radius: 4px !important;
     }
     .chip {
-      font-size: 10px !important;
-      padding: 4px 8px !important;
+      font-size: 11px !important;
+      padding: 8px 12px !important;
+      min-height: 36px !important;
+      gap: 6px !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+      white-space: nowrap !important;
     }
     .chip__icon {
-      font-size: 12px !important;
+      font-size: 13px !important;
     }
     .chip__badge {
-      min-width: 14px !important;
-      height: 14px !important;
+      min-width: 16px !important;
+      height: 16px !important;
       font-size: 9px !important;
+      font-weight: 700 !important;
     }
     .tab {
-      font-size: 11px !important;
-      padding: 6px 4px !important;
+      font-size: 12px !important;
+      padding: 8px 6px !important;
+      min-height: 36px !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
     }
     .cards-grid {
       gap: 1.25rem !important;
@@ -639,54 +702,81 @@ const STYLES = `
     .section-container {
       margin-bottom: 2.5rem !important;
     }
+    .section-header {
+      margin-bottom: 1.5rem !important;
+      padding: 0 0.25rem !important;
+    }
+    .section-title-text {
+      font-size: 1.5rem !important;
+      margin-bottom: 0.5rem !important;
+    }
+    .section-title-underline {
+      width: 50px !important;
+      height: 3px !important;
+    }
   }
   @media (max-width: 480px) {
     .filters-panel {
-      padding: 12px 10px 14px !important;
+      padding: 10px 12px 12px !important;
       border-radius: 18px !important;
     }
     .filters-fav {
-      padding: 7px 9px !important;
+      padding: 8px 10px !important;
+      gap: 6px !important;
     }
     .filters-fav__icon {
-      font-size: 18px !important;
+      font-size: 17px !important;
     }
     .filters-fav__title {
       font-size: 12px !important;
+      font-weight: 700 !important;
     }
     .filters-fav__btn {
       font-size: 10px !important;
-      padding: 4px 8px !important;
+      padding: 5px 10px !important;
+      min-height: 30px !important;
     }
     .filters-box {
-      padding: 7px 7px 9px !important;
+      padding: 8px 8px 10px !important;
+      border-radius: 12px !important;
+    }
+    .filters-box__header {
+      margin-bottom: 8px !important;
     }
     .filters-box__title {
       font-size: 11px !important;
+      font-weight: 700 !important;
     }
     .filters-box__icon {
-      font-size: 14px !important;
+      font-size: 15px !important;
     }
     .filters-box__badge {
       font-size: 9px !important;
-      padding: 2px 5px !important;
+      padding: 2px 6px !important;
+      min-height: 16px !important;
+    }
+    .filters-chips {
+      gap: 5px !important;
+      padding: 5px 3px 3px !important;
     }
     .chip {
-      font-size: 9px !important;
-      padding: 3px 7px !important;
-      gap: 3px !important;
+      font-size: 10px !important;
+      padding: 7px 11px !important;
+      min-height: 34px !important;
+      gap: 5px !important;
     }
     .chip__icon {
-      font-size: 11px !important;
+      font-size: 12px !important;
     }
     .chip__badge {
-      min-width: 13px !important;
-      height: 13px !important;
+      min-width: 15px !important;
+      height: 15px !important;
       font-size: 8px !important;
     }
     .tab {
-      font-size: 10px !important;
-      padding: 5px 3px !important;
+      font-size: 11px !important;
+      padding: 7px 5px !important;
+      min-height: 34px !important;
     }
     .cards-grid {
       gap: 1rem !important;
@@ -700,13 +790,17 @@ const STYLES = `
       padding: 0.875rem !important;
       border-radius: 14px !important;
     }
-    .section-container h2 {
-      font-size: 1.5rem !important;
+    .section-header {
+      margin-bottom: 1.25rem !important;
+      padding: 0 0.15rem !important;
     }
-    .section-container > div > div:first-child > div:first-child {
-      width: 48px !important;
-      height: 48px !important;
+    .section-title-text {
       font-size: 1.25rem !important;
+      margin-bottom: 0.4rem !important;
+    }
+    .section-title-underline {
+      width: 45px !important;
+      height: 3px !important;
     }
   }
   @media (max-width: 430px) {
@@ -716,12 +810,62 @@ const STYLES = `
     .section-container {
       margin-bottom: 2.25rem !important;
     }
-    .section-container h2 {
-      font-size: 1.4rem !important;
+    .section-header {
+      margin-bottom: 1.25rem !important;
+      padding: 0 0.1rem !important;
+    }
+    .section-title-text {
+      font-size: 1.15rem !important;
+      margin-bottom: 0.35rem !important;
+    }
+    .section-title-underline {
+      width: 40px !important;
+      height: 2.5px !important;
     }
     .filters-panel {
-      padding: 10px 9px 12px !important;
+      padding: 9px 10px 11px !important;
       border-radius: 16px !important;
+    }
+    .filters-fav {
+      padding: 7px 9px !important;
+    }
+    .filters-fav__icon {
+      font-size: 16px !important;
+    }
+    .filters-fav__title {
+      font-size: 11px !important;
+    }
+    .filters-fav__btn {
+      font-size: 9px !important;
+      padding: 4px 9px !important;
+      min-height: 28px !important;
+    }
+    .filters-box {
+      padding: 7px 7px 9px !important;
+    }
+    .filters-box__title {
+      font-size: 10px !important;
+    }
+    .filters-box__icon {
+      font-size: 14px !important;
+    }
+    .chip {
+      font-size: 9px !important;
+      padding: 6px 10px !important;
+      min-height: 32px !important;
+    }
+    .chip__icon {
+      font-size: 11px !important;
+    }
+    .chip__badge {
+      min-width: 14px !important;
+      height: 14px !important;
+      font-size: 8px !important;
+    }
+    .tab {
+      font-size: 10px !important;
+      padding: 6px 4px !important;
+      min-height: 32px !important;
     }
     .panel {
       margin: 0.5rem 0 !important;
@@ -754,7 +898,7 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
         position: 'relative'
       }}
     >
-      <div style={{
+      <div className="section-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -762,54 +906,27 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
         padding: '0 0.5rem',
         position: 'relative'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          position: 'relative'
-        }}>
-          <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
-            border: '2px solid rgba(240, 147, 251, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem',
-            boxShadow: '0 4px 16px rgba(240, 147, 251, 0.25)',
-            backdropFilter: 'blur(10px)'
+        <div>
+          <h2 className="section-title-text" style={{
+            fontSize: '1.875rem',
+            fontWeight: 800,
+            margin: 0,
+            marginBottom: '0.25rem',
+            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            lineHeight: 1.2
           }}>
-            {title.includes('Sociales') ? '📆' :
-              title.includes('Clases') ? '🎓' :
-                title.includes('Academias') ? '🏫' :
-                  title.includes('Organizadores') ? '👤' :
-                    title.includes('Maestros') ? '🎓' :
-                      title.includes('Marcas') ? '🏷️' : '✨'}
-          </div>
-          <div>
-            <h2 style={{
-              fontSize: '1.875rem',
-              fontWeight: 800,
-              margin: 0,
-              marginBottom: '0.25rem',
-              background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              lineHeight: 1.2
-            }}>
-              {title}
-            </h2>
-            <div style={{
-              width: 60,
-              height: 4,
-              borderRadius: 2,
-              background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
-              opacity: 0.8
-            }} />
-          </div>
+            {title}
+          </h2>
+          <div className="section-title-underline" style={{
+            width: 60,
+            height: 4,
+            borderRadius: 2,
+            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
+            opacity: 0.8
+          }} />
         </div>
       </div>
       {children}

@@ -64,7 +64,9 @@ export function useOrganizerMedia() {
         .maybeSingle();
       if (error) throw error;
       return (data?.media as MediaItem[]) || [];
-    }
+    },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
+    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana
   });
 
   const save = async (list: MediaItem[]) => {
@@ -113,8 +115,13 @@ export function useOrganizerMedia() {
     },
     onSuccess: () => {
       console.log('[useOrganizerMedia] Invalidating queries...');
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] });
       qc.invalidateQueries({ queryKey: ["organizer", "me", organizer?.user_id] });
+      qc.invalidateQueries({ queryKey: ["organizer"] });
+      
+      // Forzar refetch inmediato para que las fotos aparezcan de inmediato
+      qc.refetchQueries({ queryKey: ["organizer", "media", orgId] });
     },
     onError: (error: any) => {
       console.error('[useOrganizerMedia] Error adding media:', error);
@@ -143,8 +150,13 @@ export function useOrganizerMedia() {
     },
     onSuccess: () => {
       console.log('[useOrganizerMedia] Invalidating queries after media removal');
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] });
       qc.invalidateQueries({ queryKey: ["organizer", "me", organizer?.user_id] });
+      qc.invalidateQueries({ queryKey: ["organizer"] });
+      
+      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+      qc.refetchQueries({ queryKey: ["organizer", "media", orgId] });
     },
     onError: (error: any) => {
       console.error('[useOrganizerMedia] Error removing media:', error);

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
-import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate } from "../../hooks/useEvents";
+import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate, useCreateParent } from "../../hooks/useEvents";
+import { useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useCreateEventDate } from "../../hooks/useEventDate";
 import { MediaUploader } from "../../components/MediaUploader";
@@ -21,6 +22,7 @@ import { VideoManagementSection } from "../../components/profile/VideoManagement
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { getDraftKey } from "../../utils/draftKeys";
+import { useDrafts } from "../../state/drafts";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
 import RitmosChips from "@/components/RitmosChips";
@@ -44,6 +46,7 @@ import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import { FaInstagram, FaFacebookF, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
+import { useQueryClient } from "@tanstack/react-query";
 
 const colors = {
   coral: '#FF3D57',
@@ -115,9 +118,30 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
     }
   };
 
+  // Obtener la fecha "efectiva" a usar para clasificación y display (maneja eventos recurrentes)
+  const getDisplayFechaYmd = (d: any): string | null => {
+    try {
+      // Si es recurrente semanal, calcular la próxima ocurrencia desde hoy
+      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+        const horaInicioStr = d.hora_inicio || '20:00';
+        const next = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
+        const year = next.getFullYear();
+        const month = String(next.getMonth() + 1).padStart(2, '0');
+        const day = String(next.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      if (!d.fecha) return null;
+      return String(d.fecha).split('T')[0];
+    } catch {
+      return d?.fecha ? String(d.fecha).split('T')[0] : null;
+    }
+  };
+
   const availableDates = (dates || []).filter((d: any) => {
     try {
-      const dateObj = parseLocalYmd(d.fecha);
+      const displayYmd = getDisplayFechaYmd(d);
+      if (!displayYmd) return false;
+      const dateObj = parseLocalYmd(displayYmd);
       if (!dateObj) return false;
       dateObj.setHours(0, 0, 0, 0);
       return dateObj >= today;
@@ -129,7 +153,14 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
   const pastDates = (dates || [])
     .filter((d: any) => {
       try {
-        const dateObj = parseLocalYmd(d.fecha);
+        // Los eventos recurrentes semanales no se consideran "pasados":
+        // siempre tendrán una próxima ocurrencia futura.
+        if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+          return false;
+        }
+        const displayYmd = getDisplayFechaYmd(d);
+        if (!displayYmd) return false;
+        const dateObj = parseLocalYmd(displayYmd);
         if (!dateObj) return false;
         dateObj.setHours(0, 0, 0, 0);
         return dateObj < today;
@@ -235,7 +266,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                                 </h3>
                                 <div className="date-pill">
                                   <span className="date-pill-icon">📅</span>
-                                  {formatEsDate(date.fecha)}
+                                  {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
                                 </div>
                               </div>
                               <span className="date-status date-status-available">
@@ -273,42 +304,37 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                                   showIcons={true}
                                 />
                               </span>
-                              <div style={{ display: 'flex', gap: 6 }}>
+                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                 <button
                                   type="button"
+                                  className="date-card-button date-card-button--view"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigate(`/social/fecha/${date.id}`);
-                                  }}
-                                  style={{
-                                    padding: '3px 8px',
-                                    borderRadius: 999,
-                                    border: '1px solid rgba(255,255,255,0.18)',
-                                    background: 'transparent',
-                                    color: 'var(--text-main)',
-                                    fontSize: 11,
-                                    cursor: 'pointer'
                                   }}
                                 >
                                   👁 Ver
                                 </button>
                                 <button
                                   type="button"
+                                  className="date-card-button date-card-button--edit"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigate(`/social/fecha/${date.id}/edit`);
                                   }}
-                                  style={{
-                                    padding: '3px 8px',
-                                    borderRadius: 999,
-                                    border: '1px solid rgba(39,195,255,0.6)',
-                                    background: 'rgba(39,195,255,0.12)',
-                                    color: 'var(--accent-blue)',
-                                    fontSize: 11,
-                                    cursor: 'pointer'
-                                  }}
                                 >
                                   ✏️ Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="date-card-button date-card-button--delete"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteDate(date);
+                                  }}
+                                  disabled={deletingDateId === date.id}
+                                >
+                                  {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
                                 </button>
                               </div>
                             </footer>
@@ -350,7 +376,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                                 </h3>
                                 <div className="date-pill">
                                   <span className="date-pill-icon">📅</span>
-                                  {formatEsDate(date.fecha)}
+                                  {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
                                 </div>
                               </div>
                               <span className="date-status date-status-past">
@@ -381,6 +407,39 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                                   showIcons={true}
                                 />
                               </span>
+                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  className="date-card-button date-card-button--view"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/social/fecha/${date.id}`);
+                                  }}
+                                >
+                                  👁 Ver
+                                </button>
+                                <button
+                                  type="button"
+                                  className="date-card-button date-card-button--edit"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/social/fecha/${date.id}/edit`);
+                                  }}
+                                >
+                                  ✏️ Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="date-card-button date-card-button--delete"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteDate(date);
+                                  }}
+                                  disabled={deletingDateId === date.id}
+                                >
+                                  {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
+                                </button>
+                              </div>
                             </footer>
                           </article>
                         ))}
@@ -412,6 +471,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
 
 export default function OrganizerProfileEditor() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth <= 768;
@@ -420,12 +480,14 @@ export default function OrganizerProfileEditor() {
   const upsert = useUpsertMyOrganizer();
   const submit = useSubmitOrganizerForReview();
   const { data: parents } = useParentsByOrganizer((org as any)?.id);
+  const { data: allOrganizerDates = [] } = useEventDatesByOrganizer((org as any)?.id);
   const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const createOrgLoc = useCreateOrganizerLocation();
   const updateOrgLoc = useUpdateOrganizerLocation();
   const deleteOrgLoc = useDeleteOrganizerLocation();
   const deleteParent = useDeleteParent();
   const deleteDate = useDeleteDate();
+  const createParent = useCreateParent();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
@@ -492,6 +554,7 @@ export default function OrganizerProfileEditor() {
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const createEventDate = useCreateEventDate();
   const [deletingDateId, setDeletingDateId] = useState<number | null>(null);
+  const [dateToDelete, setDateToDelete] = useState<{ id: number; nombre: string } | null>(null);
   const [selectedDateLocationId, setSelectedDateLocationId] = useState<string>('');
   const [dateForm, setDateForm] = useState({
     nombre: '',
@@ -662,7 +725,8 @@ export default function OrganizerProfileEditor() {
   const zonaTags = allTags?.filter(tag => tag.tipo === 'zona') || [];
 
   // Usar formulario hidratado con borrador persistente (namespace por usuario y rol)
-  const { form, setField, setNested, hydrated } = useHydratedForm({
+  const { clearDraft } = useDrafts();
+  const { form, setField, setNested, hydrated, setFromServer } = useHydratedForm({
     draftKey: getDraftKey(user?.id, 'organizer'),
     serverData: org as any,
     defaults: {
@@ -732,7 +796,24 @@ export default function OrganizerProfileEditor() {
       } as any);
 
       // Refetch explícito para actualizar el estado inmediatamente
-      await refetchOrganizer();
+      const refetched = await refetchOrganizer();
+      
+      // Sincronizar el formulario con los datos actualizados del servidor
+      if (refetched.data) {
+        const updatedData = refetched.data as any;
+        
+        // Limpiar el borrador después de guardar exitosamente para evitar conflictos
+        const draftKey = getDraftKey(user?.id, 'organizer');
+        clearDraft(draftKey);
+        
+        // Usar setFromServer para sincronizar el form con los datos del servidor
+        // Esto también resetea el estado "dirty"
+        setFromServer(updatedData);
+        
+        // Invalidar también la query de media para asegurar que las fotos se recarguen
+        queryClient.invalidateQueries({ queryKey: ["organizer", "media", updatedData.id] });
+        queryClient.invalidateQueries({ queryKey: ["organizer", "me", user?.id] });
+      }
 
       // Si es un perfil nuevo, crear evento y fecha por defecto
       const profileId = (savedProfile as any)?.id;
@@ -835,8 +916,9 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // parent_id es opcional - usar el seleccionado si existe, sino null
-      const parentIdToUse = selectedParentId || null;
+      // Las fechas pueden ser independientes (parent_id puede ser null)
+      // Solo usar el parent_id si el usuario lo seleccionó explícitamente
+      const parentIdToUse: number | null = selectedParentId ? Number(selectedParentId) : null;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -879,6 +961,7 @@ export default function OrganizerProfileEditor() {
 
       const basePayload = {
         parent_id: parentIdToUse ? Number(parentIdToUse) : null,
+        organizer_id: (org as any)?.id ?? null,
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
@@ -901,40 +984,55 @@ export default function OrganizerProfileEditor() {
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
       };
 
-      // Calcular la fecha a guardar: si tiene repetición semanal, usar la próxima fecha y dia_semana
-      let fechaAGuardar = dateForm.fecha;
-      let diaSemanaAGuardar: number | null = null;
+      // Crear fechas de forma optimizada:
+      // - Si NO es semanal: una sola fila en events_date con la fecha indicada
+      // - Si es semanal: N filas (semanas_repetir) cada 7 días a partir de la fecha seleccionada
+      // OPTIMIZACIÓN: Crear todas las fechas en una sola operación batch
+      let datesToCreate: any[] = [];
       
-      if (dateForm.repetir_semanal && dateForm.fecha) {
-        // Calcular el día de la semana de la fecha inicial
+      if (!dateForm.repetir_semanal) {
+        datesToCreate = [{
+          ...basePayload,
+          fecha: dateForm.fecha,
+          dia_semana: null,
+        }];
+      } else {
+        const semanas = Math.max(1, Math.min(52, dateForm.semanas_repetir || 1));
         const [year, month, day] = dateForm.fecha.split('-').map(Number);
-        const fechaInicio = new Date(year, month - 1, day);
-        const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
-        diaSemanaAGuardar = diaSemanaInicial;
-        
-        // Calcular la próxima fecha basada en el día de la semana
-        try {
-          const horaInicioStr = dateForm.hora_inicio || '20:00';
-          const proximaFecha = calculateNextDateWithTime(diaSemanaInicial, horaInicioStr);
-          const yearStr = proximaFecha.getFullYear();
-          const monthStr = String(proximaFecha.getMonth() + 1).padStart(2, '0');
-          const dayStr = String(proximaFecha.getDate()).padStart(2, '0');
-          fechaAGuardar = `${yearStr}-${monthStr}-${dayStr}`;
-          console.log('[OrganizerProfileEditor] Fecha recurrente - próxima fecha:', fechaAGuardar, 'dia_semana:', diaSemanaAGuardar);
-        } catch (e) {
-          console.error('Error calculando próxima fecha:', e);
-          // Si falla el cálculo, usar la fecha original
-        }
+        const primeraFecha = new Date(year, (month - 1), day);
+
+        datesToCreate = Array.from({ length: semanas }, (_, i) => {
+          const f = new Date(primeraFecha);
+          f.setDate(f.getDate() + 7 * i);
+          const y = f.getFullYear();
+          const m = String(f.getMonth() + 1).padStart(2, '0');
+          const d = String(f.getDate()).padStart(2, '0');
+          const fechaStr = `${y}-${m}-${d}`;
+
+          return {
+            ...basePayload,
+            fecha: fechaStr,
+            dia_semana: null, // cada fila es una fecha concreta; RSVP será por fecha
+          };
+        });
       }
       
-      // Crear una sola fecha (con dia_semana si es recurrente)
-      await createEventDate.mutateAsync({
-        ...basePayload,
-        fecha: fechaAGuardar,
-        dia_semana: diaSemanaAGuardar,
-      });
+      // Crear todas las fechas en una sola operación batch (mucho más rápido)
+      try {
+        const createdDates = await createEventDate.mutateAsync(datesToCreate);
+        const count = Array.isArray(createdDates) ? createdDates.length : 1;
+        
+        showToast(
+          count === 1 
+            ? 'Fecha creada ✅' 
+            : `${count} fechas creadas exitosamente ✅`,
+          'success'
+        );
+      } catch (createError: any) {
+        // El error ya se maneja en el catch general, pero podemos mejorar el mensaje
+        throw createError;
+      }
       
-      showToast('Fecha creada ✅', 'success');
       setShowDateForm(false);
       setDateForm({
         nombre: '',
@@ -966,7 +1064,15 @@ export default function OrganizerProfileEditor() {
       setSelectedParentId(null);
     } catch (err: any) {
       console.error('Error creating date:', err);
-      showToast('Error al crear fecha', 'error');
+      const errorMessage = err?.message || 'Error desconocido';
+      const isMultiple = dateForm.repetir_semanal && (dateForm.semanas_repetir || 1) > 1;
+      
+      showToast(
+        isMultiple 
+          ? `Error al crear fechas: ${errorMessage}` 
+          : `Error al crear fecha: ${errorMessage}`,
+        'error'
+      );
     }
   };
 
@@ -996,7 +1102,8 @@ export default function OrganizerProfileEditor() {
 
     try {
       const payload = {
-        parent_id: Number(date.parent_id),
+        parent_id: typeof date.parent_id === 'number' ? date.parent_id : null,
+        organizer_id: (date as any)?.organizer_id ?? (org as any)?.id ?? null,
         nombre: date.nombre ? `${date.nombre} (copia)` : null,
         biografia: date.biografia || null,
         fecha: computeNextDate(date.fecha),
@@ -1025,21 +1132,36 @@ export default function OrganizerProfileEditor() {
     }
   };
 
-  const handleDeleteDate = async (date: any) => {
+  const handleDeleteDate = (date: any) => {
     if (!date?.id) return;
-    const confirmDelete = window.confirm(`¿Eliminar la fecha "${date.nombre || 'sin nombre'}"? Esta acción no se puede deshacer.`);
-    if (!confirmDelete) return;
+    // Mostrar modal de confirmación en lugar de window.confirm
+    setDateToDelete({ id: date.id, nombre: date.nombre || 'sin nombre' });
+  };
+
+  const confirmDeleteDate = async () => {
+    if (!dateToDelete) return;
+    
+    const dateId = dateToDelete.id;
+    const dateName = dateToDelete.nombre;
+    
     try {
-      setDeletingDateId(date.id);
-      // Intentar limpiar dependencias conocidas (FK) en public.event_rsvp
-      try {
-        await supabase.from('event_rsvp').delete().eq('event_date_id', date.id);
-      } catch (e) {
-        // continuar; si no hay RLS o la tabla no existe/no hay filas, no bloquear
-        console.warn('[OrganizerProfileEditor] Limpieza de RSVPs omitida/ya vacía:', e);
-      }
-      await deleteDate.mutateAsync(date.id);
-      showToast('Fecha eliminada ✅', 'success');
+      setDeletingDateId(dateId);
+      setDateToDelete(null); // Cerrar modal inmediatamente
+      
+      // Optimización: Limpiar RSVPs en paralelo con la eliminación (no bloqueante)
+      const rsvpCleanup = supabase.from('event_rsvp').delete().eq('event_date_id', dateId)
+        .catch((e) => {
+          // No bloquear si falla la limpieza de RSVPs
+          console.warn('[OrganizerProfileEditor] Limpieza de RSVPs omitida:', e);
+        });
+      
+      // Eliminar la fecha (esto es lo importante)
+      await deleteDate.mutateAsync(dateId);
+      
+      // Esperar limpieza de RSVPs en background (no bloquea)
+      await rsvpCleanup;
+      
+      showToast(`Fecha "${dateName}" eliminada ✅`, 'success');
     } catch (error: any) {
       console.error('[OrganizerProfileEditor] Error deleting date:', error);
       const msg = error?.message || 'No se pudo eliminar la fecha. Intenta nuevamente.';
@@ -1047,6 +1169,10 @@ export default function OrganizerProfileEditor() {
     } finally {
       setDeletingDateId(null);
     }
+  };
+
+  const cancelDeleteDate = () => {
+    setDateToDelete(null);
   };
 
   // Función para obtener badge de estado
@@ -1708,19 +1834,28 @@ export default function OrganizerProfileEditor() {
         }
 
         .date-card {
-          min-width: 240px;
-          max-width: 260px;
-          background: radial-gradient(120% 160% at 0% 0%, #20263a 0%, #151927 55%, #0b0d18 100%);
-          border-radius: 16px;
-          border: 1px solid rgba(39, 195, 255, 0.35);
-          padding: 12px 12px 10px;
+          min-width: 280px;
+          max-width: 300px;
+          background: linear-gradient(135deg, rgba(32, 38, 58, 0.95) 0%, rgba(21, 25, 39, 0.98) 50%, rgba(11, 13, 24, 1) 100%);
+          border-radius: 18px;
+          border: 1.5px solid rgba(39, 195, 255, 0.4);
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
           scroll-snap-align: start;
-          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(39, 195, 255, 0.1) inset;
           position: relative;
           overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+        
+        .date-card:hover {
+          transform: translateY(-4px) scale(1.02);
+          border-color: rgba(39, 195, 255, 0.7);
+          box-shadow: 0 12px 32px rgba(39, 195, 255, 0.25), 0 0 0 1px rgba(39, 195, 255, 0.2) inset;
+          background: linear-gradient(135deg, rgba(40, 46, 66, 0.98) 0%, rgba(25, 29, 45, 1) 50%, rgba(15, 17, 28, 1) 100%);
         }
         
         .date-card::before {
@@ -1729,121 +1864,270 @@ export default function OrganizerProfileEditor() {
           top: 0;
           left: 0;
           right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-          opacity: 0.95;
+          height: 4px;
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-blue));
+          opacity: 1;
+          transition: height 0.3s ease;
+        }
+        
+        .date-card:hover::before {
+          height: 5px;
+          opacity: 1;
         }
         
         .date-card.past {
-          opacity: 0.9;
-          border-color: rgba(255, 134, 94, 0.55);
-          background: radial-gradient(130% 180% at 0% 0%, #2a1b24 0%, #171320 55%, #0b0d18 100%);
+          opacity: 0.85;
+          border-color: rgba(255, 134, 94, 0.5);
+          background: linear-gradient(135deg, rgba(42, 27, 36, 0.95) 0%, rgba(23, 19, 32, 0.98) 50%, rgba(11, 13, 24, 1) 100%);
+        }
+        
+        .date-card.past:hover {
+          opacity: 0.95;
+          border-color: rgba(255, 134, 94, 0.7);
+          transform: translateY(-2px) scale(1.01);
         }
         
         .date-card.past::before {
-          background: linear-gradient(90deg, var(--accent-orange), #ff3d57);
+          background: linear-gradient(90deg, var(--accent-orange), #ff3d57, var(--accent-orange));
         }
         
         .date-card-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 8px;
+          gap: 12px;
+          margin-bottom: 4px;
         }
         
         .date-card-title {
-          font-size: 14px;
-          font-weight: 700;
-          margin-bottom: 4px;
+          font-size: 15px;
+          font-weight: 800;
+          margin: 0 0 8px 0;
           color: var(--text-main);
+          line-height: 1.3;
+          letter-spacing: -0.01em;
+          flex: 1;
+          min-width: 0;
+          word-wrap: break-word;
         }
         
         .date-pill {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 3px 8px;
-          border-radius: 999px;
-          background: #0f1524;
-          font-size: 11px;
+          padding: 5px 10px;
+          border-radius: 12px;
+          background: rgba(15, 21, 36, 0.8);
+          font-size: 12px;
+          font-weight: 600;
           color: var(--accent-blue);
-          border: 1px solid rgba(39, 195, 255, 0.45);
+          border: 1px solid rgba(39, 195, 255, 0.5);
+          backdrop-filter: blur(8px);
+          transition: all 0.2s ease;
+        }
+        
+        .date-card:hover .date-pill {
+          background: rgba(15, 21, 36, 1);
+          border-color: rgba(39, 195, 255, 0.7);
+          transform: scale(1.05);
         }
 
         .date-pill-icon {
-          font-size: 12px;
+          font-size: 13px;
+          filter: drop-shadow(0 1px 2px rgba(39, 195, 255, 0.3));
         }
-
+        
         .date-card-body {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
+          flex: 1;
         }
-
+        
         .date-row {
           display: flex;
           flex-wrap: wrap;
           gap: 6px;
+          align-items: center;
         }
-
+        
         .chip {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          padding: 3px 8px;
-          border-radius: 999px;
+          gap: 5px;
+          padding: 5px 10px;
+          border-radius: 10px;
           font-size: 11px;
-          background: #0d1222;
+          font-weight: 500;
+          background: rgba(13, 18, 34, 0.6);
           color: var(--text-main);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          transition: all 0.2s ease;
+          backdrop-filter: blur(4px);
         }
-
+        
+        .chip:hover {
+          background: rgba(13, 18, 34, 0.9);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateY(-1px);
+        }
+        
         .chip-muted {
           color: var(--text-muted);
-          background: #101425;
+          background: rgba(16, 20, 37, 0.6);
         }
-
+        
         .chip-people {
-          background: rgba(139, 108, 255, 0.25);
-          border-color: rgba(139, 108, 255, 0.6);
+          background: rgba(139, 108, 255, 0.2);
+          border-color: rgba(139, 108, 255, 0.5);
+          font-weight: 600;
         }
-
+        
+        .chip-people:hover {
+          background: rgba(139, 108, 255, 0.3);
+          border-color: rgba(139, 108, 255, 0.7);
+        }
+        
         .date-status {
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
-          padding: 3px 8px;
-          border-radius: 999px;
+          letter-spacing: 0.1em;
+          padding: 4px 10px;
+          border-radius: 12px;
           white-space: nowrap;
-          font-weight: 700;
+          font-weight: 800;
+          flex-shrink: 0;
+          transition: all 0.2s ease;
         }
         
         .date-status-available {
-          background: rgba(39, 195, 255, 0.18);
+          background: linear-gradient(135deg, rgba(39, 195, 255, 0.25), rgba(39, 195, 255, 0.15));
           color: var(--accent-blue);
-          border: 1px solid rgba(39, 195, 255, 0.7);
+          border: 1.5px solid rgba(39, 195, 255, 0.6);
+          box-shadow: 0 0 8px rgba(39, 195, 255, 0.2);
         }
         
         .date-status-past {
-          background: rgba(255, 134, 94, 0.18);
+          background: linear-gradient(135deg, rgba(255, 134, 94, 0.25), rgba(255, 134, 94, 0.15));
           color: var(--accent-orange);
-          border: 1px solid rgba(255, 134, 94, 0.8);
+          border: 1.5px solid rgba(255, 134, 94, 0.6);
+          box-shadow: 0 0 8px rgba(255, 134, 94, 0.2);
         }
         
         .date-card-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
+          margin-top: 4px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .date-card-footer button {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          font-weight: 600;
+        }
+        
+        .date-card-footer button:hover:not(:disabled) {
+          transform: translateY(-1px) scale(1.05);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .date-card-footer button:active:not(:disabled) {
+          transform: translateY(0) scale(0.98);
+        }
+        
+        .date-card-button {
+          padding: 6px 12px;
+          border-radius: 10px;
+          border: 1.5px solid;
+          background: transparent;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .date-card-button--view {
+          border-color: rgba(255, 255, 255, 0.25);
+          color: var(--text-main);
+          background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .date-card-button--view:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.4);
+          color: var(--text-main);
+        }
+        
+        .date-card-button--edit {
+          border-color: rgba(39, 195, 255, 0.6);
+          color: var(--accent-blue);
+          background: rgba(39, 195, 255, 0.15);
+        }
+        
+        .date-card-button--edit:hover:not(:disabled) {
+          background: rgba(39, 195, 255, 0.25);
+          border-color: rgba(39, 195, 255, 0.8);
+          color: var(--accent-blue);
+          box-shadow: 0 0 12px rgba(39, 195, 255, 0.3);
+        }
+        
+        .date-card-button--delete {
+          border-color: rgba(255, 61, 87, 0.6);
+          color: #ff3d57;
+          background: rgba(255, 61, 87, 0.15);
+        }
+        
+        .date-card-button--delete:hover:not(:disabled) {
+          background: rgba(255, 61, 87, 0.25);
+          border-color: rgba(255, 61, 87, 0.8);
+          color: #ff3d57;
+          box-shadow: 0 0 12px rgba(255, 61, 87, 0.3);
+        }
+        
+        .date-card-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none !important;
         }
 
         @media (max-width: 600px) {
           .dates-block {
-            padding: 10px;
+            padding: 12px;
           }
 
           .date-card {
-            min-width: 220px;
+            min-width: 260px;
+            max-width: 100%;
+            padding: 14px;
+            gap: 10px;
+          }
+          
+          .date-card-title {
+            font-size: 14px;
+          }
+          
+          .date-pill {
+            font-size: 11px;
+            padding: 4px 8px;
+          }
+          
+          .date-card-footer {
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          
+          .date-card-footer button {
+            font-size: 10px;
+            padding: 4px 10px;
+            flex: 1;
+            min-width: 0;
           }
         }
         
@@ -3930,39 +4214,410 @@ export default function OrganizerProfileEditor() {
                         opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
                       }}
                     >
-                      {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
+                      {createEventDate.isPending 
+                        ? (dateForm.repetir_semanal && dateForm.semanas_repetir 
+                            ? `⏳ Creando ${dateForm.semanas_repetir} fechas...` 
+                            : '⏳ Creando...')
+                        : (dateForm.repetir_semanal && dateForm.semanas_repetir 
+                            ? `✨ Crear ${dateForm.semanas_repetir} fechas` 
+                            : '✨ Crear')}
                     </motion.button>
                   </div>
                 </motion.div>
               )}
 
-              {parents && parents.length > 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="org-events-grid"
-                >
-                  {parents.map((parent: any, index: number) => (
-                    <motion.div
-                      key={parent.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.4 }}
-                    >
-                      <EventParentCard
-                        parent={parent}
-                        onDelete={handleDeleteEvent}
-                        isDeleting={deleteParent.isPending}
-                        onDuplicateDate={handleDuplicateDate}
-                        onDeleteDate={handleDeleteDate}
-                        deletingDateId={deletingDateId}
-                        isMobile={isMobile}
-                      />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              ) : (
+              {(() => {
+                // Filtrar fechas independientes (sin parent_id)
+                const independentDates = (allOrganizerDates || []).filter((d: any) => !d.parent_id);
+                
+                // Clasificar fechas independientes en disponibles y pasadas
+                const today = React.useMemo(() => {
+                  const d = new Date();
+                  d.setHours(0, 0, 0, 0);
+                  return d;
+                }, []);
+                
+                const parseLocalYmd = (value?: string | null) => {
+                  if (!value) return null as Date | null;
+                  try {
+                    const plain = String(value).split('T')[0];
+                    const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+                    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+                      const fallback = new Date(value);
+                      return Number.isNaN(fallback.getTime()) ? null : fallback;
+                    }
+                    return new Date(y, m - 1, d);
+                  } catch {
+                    return null;
+                  }
+                };
+                
+                const getDisplayFechaYmd = (d: any): string | null => {
+                  try {
+                    if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+                      const horaInicioStr = d.hora_inicio || '20:00';
+                      const next = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
+                      const year = next.getFullYear();
+                      const month = String(next.getMonth() + 1).padStart(2, '0');
+                      const day = String(next.getDate()).padStart(2, '0');
+                      return `${year}-${month}-${day}`;
+                    }
+                    if (!d.fecha) return null;
+                    return String(d.fecha).split('T')[0];
+                  } catch {
+                    return d?.fecha ? String(d.fecha).split('T')[0] : null;
+                  }
+                };
+                
+                const formatEsDate = (input?: string) => {
+                  try {
+                    if (!input) return '';
+                    const base = input.includes('T') ? input.split('T')[0] : input;
+                    const [yyyy, mm, dd] = base.split('-').map(n => parseInt(n, 10));
+                    if (!yyyy || !mm || !dd) return base;
+                    const dt = new Date(yyyy, (mm - 1), dd);
+                    return dt.toLocaleDateString('es-ES', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    });
+                  } catch {
+                    return input || '';
+                  }
+                };
+                
+                const independentAvailable = independentDates.filter((d: any) => {
+                  try {
+                    const displayYmd = getDisplayFechaYmd(d);
+                    if (!displayYmd) return false;
+                    const dateObj = parseLocalYmd(displayYmd);
+                    if (!dateObj) return false;
+                    dateObj.setHours(0, 0, 0, 0);
+                    return dateObj >= today;
+                  } catch {
+                    return false;
+                  }
+                });
+                
+                const independentPast = independentDates
+                  .filter((d: any) => {
+                    try {
+                      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+                        return false;
+                      }
+                      const displayYmd = getDisplayFechaYmd(d);
+                      if (!displayYmd) return false;
+                      const dateObj = parseLocalYmd(displayYmd);
+                      if (!dateObj) return false;
+                      dateObj.setHours(0, 0, 0, 0);
+                      return dateObj < today;
+                    } catch {
+                      return false;
+                    }
+                  })
+                  .sort((a: any, b: any) => {
+                    const da = parseLocalYmd(a.fecha);
+                    const db = parseLocalYmd(b.fecha);
+                    if (!da || !db) return 0;
+                    return db.getTime() - da.getTime();
+                  });
+                
+                return (
+                  <>
+                    {parents && parents.length > 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                        className="org-events-grid"
+                      >
+                        {parents.map((parent: any, index: number) => (
+                          <motion.div
+                            key={parent.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1, duration: 0.4 }}
+                          >
+                            <EventParentCard
+                              parent={parent}
+                              onDelete={handleDeleteEvent}
+                              isDeleting={deleteParent.isPending}
+                              onDuplicateDate={handleDuplicateDate}
+                              onDeleteDate={handleDeleteDate}
+                              deletingDateId={deletingDateId}
+                              isMobile={isMobile}
+                            />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    ) : null}
+                    
+                    {/* Fechas independientes (sin parent_id) */}
+                    {independentDates.length > 0 && (
+                      <div style={{ marginTop: parents && parents.length > 0 ? '2rem' : 0 }}>
+                        <div className="dates-block">
+                          {/* Fechas disponibles */}
+                          {independentAvailable.length > 0 && (
+                            <details className="dates-section" open>
+                              <summary>
+                                <span className="dates-section-title">
+                                  <span className="dates-section-icon available">✓</span>
+                                  Fechas disponibles
+                                  <span className="dates-section-count">
+                                    ({independentAvailable.length})
+                                  </span>
+                                </span>
+                                <span className="dates-chevron">▼</span>
+                              </summary>
+                              <div className="dates-strip">
+                                {independentAvailable.map((date: any) => (
+                                  <article
+                                    key={date.id}
+                                    className="date-card"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/social/fecha/${date.id}`);
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <header className="date-card-header">
+                                      <div>
+                                        <h3 className="date-card-title">
+                                          {date.nombre || 'Fecha sin nombre'}
+                                        </h3>
+                                        <div className="date-pill">
+                                          <span className="date-pill-icon">📅</span>
+                                          {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
+                                        </div>
+                                      </div>
+                                      <span className="date-status date-status-available">
+                                        Disponible
+                                      </span>
+                                    </header>
+                                    <div className="date-card-body">
+                                      {date.hora_inicio && date.hora_fin && (
+                                        <div className="date-row">
+                                          <span className="chip">
+                                            🕒 {date.hora_inicio} – {date.hora_fin}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {(date.lugar || date.ciudad) && (
+                                        <div className="date-row">
+                                          {date.lugar && (
+                                            <span className="chip">📍 {date.lugar}</span>
+                                          )}
+                                          {date.ciudad && (
+                                            <span className="chip chip-muted">
+                                              {date.ciudad}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <footer className="date-card-footer">
+                                      <span className="chip chip-people">
+                                        <RSVPCounter
+                                          eventDateId={date.id}
+                                          variant="minimal"
+                                          showIcons={true}
+                                        />
+                                      </span>
+                                      <div style={{ display: 'flex', gap: 6 }}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/social/fecha/${date.id}`);
+                                          }}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(255,255,255,0.18)',
+                                            background: 'transparent',
+                                            color: 'var(--text-main)',
+                                            fontSize: 11,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          👁 Ver
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/social/fecha/${date.id}/edit`);
+                                          }}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(39,195,255,0.6)',
+                                            background: 'rgba(39,195,255,0.12)',
+                                            color: 'var(--accent-blue)',
+                                            fontSize: 11,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          ✏️ Editar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteDate(date);
+                                          }}
+                                          disabled={deletingDateId === date.id}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(255,61,87,0.6)',
+                                            background: 'rgba(255,61,87,0.12)',
+                                            color: '#ff3d57',
+                                            fontSize: 11,
+                                            cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
+                                            opacity: deletingDateId === date.id ? 0.5 : 1
+                                          }}
+                                        >
+                                          {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
+                                        </button>
+                                      </div>
+                                    </footer>
+                                  </article>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                          
+                          {/* Fechas pasadas */}
+                          {independentPast.length > 0 && (
+                            <details className="dates-section">
+                              <summary>
+                                <span className="dates-section-title">
+                                  <span className="dates-section-icon past">⏱</span>
+                                  Fechas pasadas
+                                  <span className="dates-section-count">
+                                    ({independentPast.length})
+                                  </span>
+                                </span>
+                                <span className="dates-chevron">▼</span>
+                              </summary>
+                              <div className="dates-strip">
+                                {independentPast.map((date: any) => (
+                                  <article
+                                    key={date.id}
+                                    className="date-card past"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/social/fecha/${date.id}`);
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <header className="date-card-header">
+                                      <div>
+                                        <h3 className="date-card-title">
+                                          {date.nombre || 'Fecha sin nombre'}
+                                        </h3>
+                                        <div className="date-pill">
+                                          <span className="date-pill-icon">📅</span>
+                                          {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
+                                        </div>
+                                      </div>
+                                      <span className="date-status date-status-past">
+                                        Pasada
+                                      </span>
+                                    </header>
+                                    <div className="date-card-body">
+                                      {(date.lugar || date.ciudad) && (
+                                        <div className="date-row">
+                                          {date.lugar && (
+                                            <span className="chip">{date.lugar}</span>
+                                          )}
+                                          {date.ciudad && (
+                                            <span className="chip chip-muted">
+                                              {date.ciudad}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <footer className="date-card-footer">
+                                      <span className="chip chip-people">
+                                        <RSVPCounter
+                                          eventDateId={date.id}
+                                          variant="minimal"
+                                          showIcons={true}
+                                        />
+                                      </span>
+                                      <div style={{ display: 'flex', gap: 6 }}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/social/fecha/${date.id}`);
+                                          }}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(255,255,255,0.18)',
+                                            background: 'transparent',
+                                            color: 'var(--text-main)',
+                                            fontSize: 11,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          👁 Ver
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/social/fecha/${date.id}/edit`);
+                                          }}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(39,195,255,0.6)',
+                                            background: 'rgba(39,195,255,0.12)',
+                                            color: 'var(--accent-blue)',
+                                            fontSize: 11,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          ✏️ Editar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteDate(date);
+                                          }}
+                                          disabled={deletingDateId === date.id}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: 999,
+                                            border: '1px solid rgba(255,61,87,0.6)',
+                                            background: 'rgba(255,61,87,0.12)',
+                                            color: '#ff3d57',
+                                            fontSize: 11,
+                                            cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
+                                            opacity: deletingDateId === date.id ? 0.5 : 1
+                                          }}
+                                        >
+                                          {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
+                                        </button>
+                                      </div>
+                                    </footer>
+                                  </article>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!parents?.length && independentDates.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -3978,13 +4633,16 @@ export default function OrganizerProfileEditor() {
                     🎭
                   </motion.div>
                   <h3>
-                    No tienes sociales creados
+                    Aún no tienes fechas creadas
                   </h3>
                   <p>
-                    ¡Crea tu primer social!
+                    Usa el botón &quot;Crear Fecha&quot; para publicar tu primer evento.
                   </p>
                 </motion.div>
-              )}
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
           {/* Botón Crear Evento (movido a cabecera, se elimina el flotante) */}
@@ -4125,6 +4783,111 @@ export default function OrganizerProfileEditor() {
 
         </div>
       </div>
+
+      {/* Modal de confirmación para eliminar fecha */}
+      {dateToDelete && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+          }}
+          onClick={cancelDeleteDate}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, rgba(32, 38, 58, 0.98) 0%, rgba(21, 25, 39, 1) 100%)',
+              borderRadius: '20px',
+              border: '1.5px solid rgba(39, 195, 255, 0.4)',
+              padding: '2rem',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: 'var(--text-main)',
+              marginBottom: '0.75rem',
+            }}>
+              🗑️ Eliminar Fecha
+            </h3>
+            <p style={{
+              fontSize: '0.95rem',
+              color: 'var(--text-muted)',
+              marginBottom: '1.5rem',
+              lineHeight: 1.6,
+            }}>
+              ¿Estás seguro de que deseas eliminar la fecha <strong style={{ color: 'var(--text-main)' }}>"{dateToDelete.nombre}"</strong>?
+              <br />
+              <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Esta acción no se puede deshacer.</span>
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'flex-end',
+            }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={cancelDeleteDate}
+                style={{
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={confirmDeleteDate}
+                disabled={deletingDateId === dateToDelete.id}
+                style={{
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid rgba(255, 61, 87, 0.6)',
+                  background: deletingDateId === dateToDelete.id 
+                    ? 'rgba(255, 61, 87, 0.3)' 
+                    : 'rgba(255, 61, 87, 0.2)',
+                  color: '#ff3d57',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  cursor: deletingDateId === dateToDelete.id ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  opacity: deletingDateId === dateToDelete.id ? 0.6 : 1,
+                }}
+              >
+                {deletingDateId === dateToDelete.id ? '⏳ Eliminando...' : '🗑️ Eliminar'}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </>
   );
 }

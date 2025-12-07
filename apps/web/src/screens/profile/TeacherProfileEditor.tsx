@@ -15,8 +15,10 @@ import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigat
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
 import { getDraftKey } from "../../utils/draftKeys";
+import { useDrafts } from "../../state/drafts";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies, useRemoveInvitation } from "../../hooks/useAcademyTeacherInvitations";
@@ -1132,6 +1134,8 @@ export default function TeacherProfileEditor() {
   const { user, loading: authLoading } = useAuth();
   const { data: teacher, isLoading, refetch: refetchTeacher } = useTeacherMy();
   const { data: approvedRoles } = useMyApprovedRoles();
+  const queryClient = useQueryClient();
+  const { clearDraft } = useDrafts();
   const { data: allTags } = useTags();
   const { media, add, remove } = useTeacherMedia();
   const upsert = useUpsertTeacher();
@@ -1460,12 +1464,23 @@ export default function TeacherProfileEditor() {
       const savedProfile = await upsert.mutateAsync(payload);
       
       // Refetch explícito para actualizar el estado inmediatamente
-      await refetchTeacher();
+      const refetched = await refetchTeacher();
       
-      // Actualizar el form con los datos del perfil guardado
-      if (savedProfile) {
-        setAll(savedProfile as any);
+      // Sincronizar el formulario con los datos actualizados del servidor
+      if (refetched.data || savedProfile) {
+        const updatedData = (refetched.data || savedProfile) as any;
+        // Limpiar el borrador después de guardar exitosamente
+        const draftKey = getDraftKey(user?.id, 'teacher');
+        clearDraft(draftKey);
+        
+        // Actualizar el form con los datos del servidor
+        setAll(updatedData);
       }
+
+      // Invalidar queries de media para asegurar que las fotos se recarguen
+      queryClient.invalidateQueries({ queryKey: ["teacher", "media", (savedProfile as any)?.id || teacher?.id] });
+      queryClient.invalidateQueries({ queryKey: ["teacher", "mine"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher"] });
       
       // Mostrar mensaje de éxito con mensaje especial para perfiles nuevos
       if (isNewProfile) {
@@ -1484,7 +1499,7 @@ export default function TeacherProfileEditor() {
       setStatusMsg({ type: 'err', text: '❌ Error al guardar el perfil' });
       setTimeout(() => setStatusMsg(null), 3000);
     }
-  }, [form, teacher, allTags, profileId, supportsPromotions, upsert, refetchTeacher, setAll]);
+  }, [form, teacher, allTags, profileId, supportsPromotions, upsert, refetchTeacher, setAll, user?.id, queryClient, clearDraft]);
 
   const toggleRitmo = React.useCallback((ritmoId: number) => {
     const current = (form as any).ritmos || [];

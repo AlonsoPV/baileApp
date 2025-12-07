@@ -745,43 +745,6 @@ export const UserProfileLive: React.FC = () => {
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '0 2rem', marginBottom: '1rem' }}>
-          <motion.button
-            onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.625rem 1.25rem',
-              borderRadius: 999,
-              border: '1px solid rgba(240,147,251,0.35)',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))',
-              color: '#f093fb',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.25), rgba(255,209,102,0.18))';
-              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.5)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.15), rgba(255,209,102,0.12))';
-              e.currentTarget.style.borderColor = 'rgba(240,147,251,0.35)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
-            }}
-          >
-            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>←</span>
-            <span>Volver a inicio</span>
-          </motion.button>
-        </div>
-
         <div
           id="user-profile-banner"
           data-baile-id="user-profile-banner"
@@ -793,6 +756,53 @@ export const UserProfileLive: React.FC = () => {
             overflow: 'hidden'
           }}
         >
+          {/* Botón Volver a inicio */}
+          <motion.button
+            onClick={() => navigate('/explore')}
+            whileHover={{ scale: 1.1, x: -3 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Volver a inicio"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              border: 'none',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: '#f093fb' }}
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </motion.button>
           {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div
             id="user-profile-banner-grid"

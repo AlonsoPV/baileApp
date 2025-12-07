@@ -10,6 +10,7 @@ import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
@@ -17,6 +18,7 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
@@ -1123,9 +1125,9 @@ export function OrganizerProfileLive() {
     }
   }, [parents]);
 
-  // Preparar items de "Fechas" (fechas publicadas)
+  // Preparar items de "Fechas" (maneja también eventos recurrentes semanales)
   const inviteItems = useMemo(() => {
-    const upcomingItems: any[] = [];
+    const items: any[] = [];
 
     const getTodayCDMX = () => {
       const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -1170,27 +1172,66 @@ export function OrganizerProfileLive() {
       return new Date(y, m - 1, d);
     };
 
-    const futureDates = (eventDates || []).filter((d: any) => {
+    // Expandir eventos recurrentes en múltiples ocurrencias (similar a ExploreHome y OrganizerPublicScreen)
+    const expandedDates: any[] = [];
+    (eventDates as any[] || []).forEach((d: any) => {
+      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+        try {
+          const horaInicioStr = d.hora_inicio || '20:00';
+
+          for (let i = 0; i < 4; i++) {
+            const primeraFecha = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
+            const fechaOcurrencia = new Date(primeraFecha);
+            fechaOcurrencia.setDate(primeraFecha.getDate() + (i * 7));
+
+            const year = fechaOcurrencia.getFullYear();
+            const month = String(fechaOcurrencia.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaOcurrencia.getDate()).padStart(2, '0');
+            const fechaStr = `${year}-${month}-${day}`;
+
+            expandedDates.push({
+              ...d,
+              fecha: fechaStr,
+              _recurrence_index: i,
+              _original_id: d.id,
+              id: `${d.id}_${i}`,
+            });
+          }
+        } catch (e) {
+          console.error('[OrganizerProfileLive] Error calculando ocurrencias para evento recurrente:', e);
+          expandedDates.push(d);
+        }
+      } else {
+        expandedDates.push(d);
+      }
+    });
+
+    const futureDates = expandedDates.filter((d: any) => {
       try {
+        // Si es recurrente expandido, ya sabemos que la fecha es futura
+        if (d._recurrence_index !== undefined && d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+          return true;
+        }
+
         const fechaStr = String(d.fecha).split('T')[0];
         const dateObj = parseLocalYmd(d.fecha);
         if (!dateObj) return false;
-        
+
         if (fechaStr === todayCDMX) {
           const horaStr = d.hora_inicio as string | null | undefined;
           if (!horaStr) return true;
-          
+
           const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
           if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
-          
+
           const [hhRaw, minRaw] = String(horaStr).split(':');
           const hh = parseInt(hhRaw ?? '0', 10);
           const min = parseInt(minRaw ?? '0', 10);
-          
+
           const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
           return eventDateTime.getTime() >= nowCDMX.getTime();
         }
-        
+
         dateObj.setHours(0, 0, 0, 0);
         const todayObj = parseLocalYmd(todayCDMX);
         if (!todayObj) return false;
@@ -1201,6 +1242,14 @@ export function OrganizerProfileLive() {
       }
     });
 
+    // Ordenar por fecha
+    futureDates.sort((a: any, b: any) => {
+      const fechaA = parseLocalYmd(a.fecha);
+      const fechaB = parseLocalYmd(b.fecha);
+      if (!fechaA || !fechaB) return 0;
+      return fechaA.getTime() - fechaB.getTime();
+    });
+
     futureDates.forEach((date) => {
       const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
 
@@ -1208,13 +1257,13 @@ export function OrganizerProfileLive() {
         ? `${date.hora_inicio} - ${date.hora_fin}`
         : date.hora_inicio || '';
 
-      const item = {
-        id: date.id,
+      items.push({
+        id: date._original_id || date.id,
         nombre: fechaNombre,
         date: fmtDate(date.fecha),
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
-        href: `/social/fecha/${date.id}`,
+        href: `/social/fecha/${date._original_id || date.id}`,
         cover: Array.isArray(date.media) && date.media.length > 0
           ? (date.media[0] as any)?.url || date.media[0]
           : undefined,
@@ -1237,13 +1286,12 @@ export function OrganizerProfileLive() {
         hora_inicio: date.hora_inicio,
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
-        biografia: (date as any).biografia
-      };
-
-      upcomingItems.push(item);
+        biografia: (date as any).biografia,
+        dia_semana: (date as any).dia_semana !== null && (date as any).dia_semana !== undefined ? (date as any).dia_semana : null
+      });
     });
 
-    return upcomingItems;
+    return items;
   }, [eventDates]);
 
   const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
@@ -1530,6 +1578,53 @@ export function OrganizerProfileLive() {
             zIndex: 1
           }}
         >
+          {/* Botón Volver a inicio */}
+          <motion.button
+            onClick={() => navigate('/explore')}
+            whileHover={{ scale: 1.1, x: -3 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Volver a inicio"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              border: 'none',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: '#f093fb' }}
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </motion.button>
           <div className="org-banner-grid">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -1825,6 +1920,16 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
+          {/* Datos de Cuenta Bancaria */}
+          {(() => {
+            const bankData = (org as any)?.cuenta_bancaria;
+            // Verificar que existe y no es solo un objeto vacío
+            if (!bankData || typeof bankData !== 'object') return null;
+            const hasBankData = bankData.banco || bankData.nombre || bankData.clabe || bankData.cuenta || bankData.concepto;
+            if (!hasBankData) return null;
+            return <BankAccountDisplay data={bankData} />;
+          })()}
+
           <div
             id="organizer-invited-masters"
             data-test-id="organizer-invited-masters"
@@ -1871,14 +1976,6 @@ export function OrganizerProfileLive() {
                 </div>
                 <div>
                   <h3 className="section-title">Próximas Fechas</h3>
-                  <p style={{
-                    fontSize: typography.fontSize.sm,
-                    opacity: 0.8,
-                    margin: 0,
-                    color: colors.light
-                  }}>
-                    {inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}
-                  </p>
                 </div>
               </div>
               <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />

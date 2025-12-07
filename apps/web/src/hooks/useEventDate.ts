@@ -62,11 +62,18 @@ export function useEventDate(dateId?: number) {
 export function useCreateEventDate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: any) => {
-      console.log('[useCreateEventDate] Payload received:', payload);
+    mutationFn: async (payload: any | any[]) => {
+      // Soporte para crear una fecha o múltiples fechas en batch
+      const isArray = Array.isArray(payload);
+      const payloads = isArray ? payload : [payload];
       
-      const { data, error } = await supabase.from("events_date")
-        .insert(payload).select("*").single();
+      console.log(`[useCreateEventDate] Creating ${payloads.length} date(s)`);
+      
+      // Insertar todas las fechas en una sola operación (más eficiente)
+      const { data, error } = await supabase
+        .from("events_date")
+        .insert(payloads)
+        .select("*");
       
       if (error) {
         console.error('[useCreateEventDate] Supabase error:', error);
@@ -79,20 +86,56 @@ export function useCreateEventDate() {
         throw error;
       }
       
-      console.log('[useCreateEventDate] Success:', data);
-      return data;
+      console.log(`[useCreateEventDate] Success: ${data?.length || 0} date(s) created`);
+      // Retornar array si se insertaron múltiples, o el primer elemento si fue uno solo
+      return isArray ? (data || []) : (data?.[0] || null);
     },
-    onSuccess: (row) => {
-      // Invalidar con las keys correctas que usa useDatesByParent
-      if (row.parent_id) {
-        qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
-        qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
+    onMutate: async (payload) => {
+      // Cancelar queries en progreso para evitar conflictos
+      await qc.cancelQueries({ queryKey: ["event-dates", "by-organizer"] });
+      await qc.cancelQueries({ queryKey: ["event-parents", "by-organizer"] });
+      
+      // Snapshot del estado anterior
+      const previousDates = qc.getQueryData(["event-dates", "by-organizer"]);
+      const previousParents = qc.getQueryData(["event-parents", "by-organizer"]);
+      
+      return { previousDates, previousParents };
+    },
+    onError: (err, payload, context) => {
+      // Revertir en caso de error
+      if (context?.previousDates) {
+        qc.setQueryData(["event-dates", "by-organizer"], context.previousDates);
       }
-      qc.invalidateQueries({ queryKey: ["dates"] }); // Invalidar todas las fechas
-      qc.invalidateQueries({ queryKey: ["event", "date", row.id] });
+      if (context?.previousParents) {
+        qc.setQueryData(["event-parents", "by-organizer"], context.previousParents);
+      }
+    },
+    onSuccess: (data) => {
+      // Invalidar queries de forma optimizada
+      const rows = Array.isArray(data) ? data : [data];
+      const organizerIds = new Set<number>();
+      const parentIds = new Set<number | null>();
+      
+      rows.forEach((row) => {
+        if (row?.organizer_id) organizerIds.add(row.organizer_id);
+        if (row?.parent_id) parentIds.add(row.parent_id);
+      });
+      
+      // Invalidar queries principales (solo una vez)
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
-      qc.invalidateQueries({ queryKey: ["parents"] }); // Refrescar lista de parents
+      
+      // Invalidar queries específicas si existen
+      parentIds.forEach((parentId) => {
+        if (parentId) {
+          qc.invalidateQueries({ queryKey: ["dates", parentId] });
+          qc.invalidateQueries({ queryKey: ["event", "dates", parentId] });
+        }
+      });
+    },
+    onSettled: () => {
+      // Asegurar que las queries se refresquen al final
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
     }
   });
 }

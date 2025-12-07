@@ -714,6 +714,10 @@ export default function UserProfileEditor() {
         setFromServer(fresh as any);
       }
 
+      // Invalidar queries de media para asegurar que las fotos se recarguen
+      queryClient.invalidateQueries({ queryKey: ["profile", "media-slots", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["profile", "me", user?.id] });
+
       showToast('Perfil actualizado ✅', 'success');
     } catch (error) {
       console.error('Error saving profile:', error);

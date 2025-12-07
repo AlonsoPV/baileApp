@@ -20,8 +20,10 @@ import BankAccountEditor, { type BankAccountData } from "../../components/profil
 import CrearClase from "../../components/events/CrearClase";
 import { useAllowedRitmos } from "@/hooks/useAllowedRitmos";
 import { getDraftKey } from "../../utils/draftKeys";
+import { useDrafts } from "../../state/drafts";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
@@ -798,6 +800,8 @@ export default function AcademyProfileEditor() {
   const { user, loading: authLoading } = useAuth();
   const { data: academy, isLoading, refetch: refetchAcademy } = useAcademyMy();
   const { data: approvedRoles } = useMyApprovedRoles();
+  const queryClient = useQueryClient();
+  const { clearDraft } = useDrafts();
 
   // 🔍 Debug logs para diagnosticar problemas de carga
   React.useEffect(() => {
@@ -1083,12 +1087,23 @@ export default function AcademyProfileEditor() {
       const savedProfile = await upsert.mutateAsync(payload);
 
       // Refetch explícito para actualizar el estado inmediatamente
-      await refetchAcademy();
+      const refetched = await refetchAcademy();
 
-      // Actualizar el form con los datos del perfil guardado
-      if (savedProfile) {
-        setAll(savedProfile as any);
+      // Sincronizar el formulario con los datos actualizados del servidor
+      if (refetched.data || savedProfile) {
+        const updatedData = (refetched.data || savedProfile) as any;
+        // Limpiar el borrador después de guardar exitosamente
+        const draftKey = getDraftKey(user?.id, 'academy');
+        clearDraft(draftKey);
+        
+        // Actualizar el form con los datos del servidor
+        setAll(updatedData);
       }
+
+      // Invalidar queries de media para asegurar que las fotos se recarguen
+      queryClient.invalidateQueries({ queryKey: ["academy", "media", (savedProfile as any)?.id || academy?.id] });
+      queryClient.invalidateQueries({ queryKey: ["academy", "mine"] });
+      queryClient.invalidateQueries({ queryKey: ["academy"] });
 
       // Mostrar mensaje de éxito con mensaje especial para perfiles nuevos
       if (isNewProfile) {
@@ -1113,7 +1128,7 @@ export default function AcademyProfileEditor() {
       setStatusMsg({ type: 'err', text: `❌ Error al guardar: ${errorMessage}` });
       setTimeout(() => setStatusMsg(null), 5000);
     }
-  }, [form, allTags, supportsPromotions, academy, upsert, refetchAcademy, setAll, setStatusMsg]);
+  }, [form, allTags, supportsPromotions, academy, upsert, refetchAcademy, setAll, setStatusMsg, user?.id, queryClient, clearDraft]);
 
   // Ya no se usa toggleEstilo, ahora se maneja directamente en RitmosChips
   // const toggleEstilo = (estiloId: number) => {

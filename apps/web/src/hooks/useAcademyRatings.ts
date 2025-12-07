@@ -257,38 +257,31 @@ export function useMyAcademyRating(academyId?: number) {
           .select('*')
           .eq('academy_id', academyId)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Usar maybeSingle() en lugar de single() para evitar errores 406
 
         if (error) {
-          // PGRST116 = No rows found (esperado)
-          if (error.code === 'PGRST116') {
-            return null;
-          }
-          
           // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
-          // Silenciar el error - puede ser que la tabla no exista aún
+          // Silenciar el error - puede ser que la tabla no exista aún o no haya permisos
           if (is406Error(error)) {
+            // No mostrar el error en consola - es esperado si la tabla no existe
             return null;
           }
           
-          // Solo mostrar otros errores inesperados
-          if (error.code && error.code !== 'PGRST116') {
-            console.error('[useMyAcademyRating] Error inesperado:', error);
-          }
+          // Solo mostrar otros errores inesperados (no 406)
+          console.error('[useMyAcademyRating] Error inesperado:', error);
           return null;
         }
 
-        return data as AcademyRating;
+        return data as AcademyRating | null;
       } catch (err: any) {
         // Capturar errores de red o otros errores inesperados
         // Silenciar errores 406 (tabla no existe o problema de RLS)
         if (is406Error(err)) {
+          // No mostrar el error en consola - es esperado si la tabla no existe
           return null;
         }
-        // Solo mostrar otros errores inesperados
-        if (!is406Error(err)) {
-          console.error('[useMyAcademyRating] Error inesperado:', err);
-        }
+        // Solo mostrar otros errores inesperados (no 406)
+        console.error('[useMyAcademyRating] Error inesperado:', err);
         return null;
       }
     },
@@ -296,7 +289,11 @@ export function useMyAcademyRating(academyId?: number) {
     retry: false, // No reintentar para evitar spam de errores
     refetchOnWindowFocus: false, // No refetch al enfocar ventana para evitar errores repetidos
     refetchOnMount: false, // No refetch al montar si ya hay datos
-    throwOnError: false, // Suprimir errores en la consola del navegador para errores 406
+    throwOnError: false, // Suprimir errores en la consola del navegador
+    // Suprimir errores de red en consola para errores 406
+    meta: {
+      suppressErrorLogging: true, // Prevenir que React Query loguee errores 406
+    },
   });
 }
 

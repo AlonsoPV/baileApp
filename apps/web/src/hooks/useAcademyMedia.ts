@@ -74,7 +74,9 @@ export function useAcademyMedia() {
         .maybeSingle();
       if (error) throw error;
       return (data?.media as MediaItem[]) || [];
-    }
+    },
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
+    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana
   });
 
   const save = async (list: MediaItem[]) => {
@@ -125,9 +127,13 @@ export function useAcademyMedia() {
       console.log('[useAcademyMedia] Invalidating queries...');
       // Actualizar cache inmediata del listado de media
       qc.setQueryData(["academy", "media", academyId], next);
-      // Invalidate para sincronizar cualquier consumidor relacionado
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
       qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      qc.invalidateQueries({ queryKey: ["academy"] });
+      
+      // Forzar refetch inmediato para que las fotos aparezcan de inmediato
+      qc.refetchQueries({ queryKey: ["academy", "media", academyId] });
     },
     onError: (error: any) => {
       console.error('[useAcademyMedia] Error adding media:', error);
@@ -158,8 +164,13 @@ export function useAcademyMedia() {
       console.log('[useAcademyMedia] Invalidating queries after media removal');
       // Reflejar cambios inmediatos
       qc.setQueryData(["academy", "media", academyId], next);
+      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
       qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      qc.invalidateQueries({ queryKey: ["academy"] });
+      
+      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+      qc.refetchQueries({ queryKey: ["academy", "media", academyId] });
     },
     onError: (error: any) => {
       console.error('[useAcademyMedia] Error removing media:', error);

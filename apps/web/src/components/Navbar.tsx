@@ -82,6 +82,52 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           background: rgba(255, 255, 255, 0.15);
         }
 
+        /* Escritorio: > 1024px */
+        @media (min-width: 1025px) {
+          .nav-brand-title {
+            font-size: 1.5rem !important;
+          }
+        }
+
+        /* iPad: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+          .nav-root {
+            padding: 0.9rem 1.25rem !important;
+            padding-top: calc(0.9rem + max(env(safe-area-inset-top), 0px)) !important;
+          }
+          .nav-center-brand {
+            gap: 0.5rem !important;
+          }
+          .nav-brand-title {
+            font-size: 1.65rem !important;
+            letter-spacing: 1.3px !important;
+          }
+          .nav-brand-tagline {
+            font-size: 0.75rem !important;
+          }
+          .nav-logo-img {
+            width: 48px !important;
+            height: 48px !important;
+          }
+          .nav-icons { 
+            gap: 0.5rem !important; 
+          }
+          .nav-icon { 
+            font-size: 1.15rem !important; 
+            padding: 0.45rem !important; 
+          }
+          .nav-profile-button {
+            width: 42px !important;
+            height: 42px !important;
+            min-width: 42px !important;
+            min-height: 42px !important;
+          }
+          .nav-login-button {
+            padding: 0.45rem 0.9rem !important;
+            font-size: 0.88rem !important;
+          }
+        }
+
         @media (max-width: 768px) {
           .nav-root {
             padding: .85rem .7rem !important;
@@ -245,6 +291,13 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         .nav-login-button:hover {
           background: #B84A1A;
           border-color: rgba(255,255,255,0.5);
+        }
+
+        @media (min-width: 768px) and (max-width: 1024px) {
+          .nav-login-button {
+            padding: 0.45rem 0.9rem !important;
+            font-size: 0.88rem !important;
+          }
         }
 
         @media (max-width: 768px) {

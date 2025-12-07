@@ -24,6 +24,7 @@ import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
+import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
 const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
@@ -220,9 +221,52 @@ export function OrganizerPublicScreen() {
       return new Date(y, m - 1, d);
     };
 
-    const futureDates = (eventDates as any[])?.filter((d: any) => {
+    // Expandir eventos recurrentes en múltiples ocurrencias
+    const expandedDates: any[] = [];
+    (eventDates as any[] || []).forEach((d: any) => {
+      // Si tiene dia_semana, expandir en 4 ocurrencias
+      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+        try {
+          const horaInicioStr = d.hora_inicio || '20:00';
+
+          // Calcular las próximas 4 ocurrencias
+          for (let i = 0; i < 4; i++) {
+            // Calcular la fecha base (primera ocurrencia)
+            const primeraFecha = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
+
+            // Calcular la fecha de esta ocurrencia (sumar i semanas)
+            const fechaOcurrencia = new Date(primeraFecha);
+            fechaOcurrencia.setDate(primeraFecha.getDate() + (i * 7));
+
+            const year = fechaOcurrencia.getFullYear();
+            const month = String(fechaOcurrencia.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaOcurrencia.getDate()).padStart(2, '0');
+            const fechaStr = `${year}-${month}-${day}`;
+
+            // Crear una copia del evento con la fecha de esta ocurrencia
+            expandedDates.push({
+              ...d,
+              fecha: fechaStr,
+              _recurrence_index: i,
+              _original_id: d.id,
+              id: `${d.id}_${i}`,
+            });
+          }
+        } catch (e) {
+          console.error('Error calculando ocurrencias para evento recurrente:', e);
+          // Si falla, incluir el evento original
+          expandedDates.push(d);
+        }
+      } else {
+        // Si no tiene dia_semana, incluir el evento original
+        expandedDates.push(d);
+      }
+    });
+
+    // Filtrar solo fechas futuras
+    const futureDates = expandedDates.filter((d: any) => {
       try {
-        // Si tiene dia_semana, siempre mostrar (es recurrente)
+        // Si tiene dia_semana (ya expandido), siempre mostrar
         if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
           return true;
         }
@@ -257,34 +301,30 @@ export function OrganizerPublicScreen() {
       } catch {
         return false;
       }
-    }) || [];
+    });
+
+    // Ordenar por fecha
+    futureDates.sort((a: any, b: any) => {
+      const fechaA = parseLocalYmd(a.fecha);
+      const fechaB = parseLocalYmd(b.fecha);
+      if (!fechaA || !fechaB) return 0;
+      return fechaA.getTime() - fechaB.getTime();
+    });
 
     futureDates.forEach((date) => {
       const nombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
       const horaFormateada = date.hora_inicio && date.hora_fin ? `${date.hora_inicio} - ${date.hora_fin}` : (date.hora_inicio || '');
       
-      // Si tiene dia_semana, calcular la próxima fecha para mostrar
-      let fechaParaMostrar = date.fecha;
-      if ((date as any).dia_semana !== null && (date as any).dia_semana !== undefined && typeof (date as any).dia_semana === 'number') {
-        try {
-          const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-          const proximaFecha = calculateNextDateWithTime((date as any).dia_semana, horaInicio);
-          const year = proximaFecha.getFullYear();
-          const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
-          const day = String(proximaFecha.getDate()).padStart(2, '0');
-          fechaParaMostrar = `${year}-${month}-${day}`;
-        } catch (e) {
-          console.error('Error calculando próxima fecha:', e);
-        }
-      }
+      // Usar la fecha calculada (ya expandida si es recurrente)
+      const fechaParaMostrar = date.fecha;
       
       items.push({
-        id: date.id,
+        id: date._original_id || date.id,
         nombre,
         date: fmtDate(fechaParaMostrar),
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
-        href: `/social/fecha/${date.id}`,
+        href: `/social/fecha/${date._original_id || date.id}`,
         cover: Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined,
         flyer: (date as any).flyer_url || (Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined),
         price: (() => {
@@ -295,7 +335,7 @@ export function OrganizerPublicScreen() {
           }
           return undefined;
         })(),
-        fecha: date.fecha,
+        fecha: fechaParaMostrar,
         hora_inicio: date.hora_inicio,
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
@@ -1094,6 +1134,16 @@ export function OrganizerPublicScreen() {
           </motion.section>
         )}
 
+        {/* Datos de Cuenta Bancaria */}
+        {(() => {
+          const bankData = (org as any)?.cuenta_bancaria;
+          // Verificar que existe y no es solo un objeto vacío
+          if (!bankData || typeof bankData !== 'object') return null;
+          const hasBankData = bankData.banco || bankData.nombre || bankData.clabe || bankData.cuenta || bankData.concepto;
+          if (!hasBankData) return null;
+          return <BankAccountDisplay data={bankData} />;
+        })()}
+
           {/* Maestros Invitados */}
           <div id="organizer-invited-masters" data-test-id="organizer-invited-masters">
             <InvitedMastersSection masters={[]} title="🎭 Maestros Invitados" showTitle={true} isEditable={false} />
@@ -1124,18 +1174,38 @@ export function OrganizerPublicScreen() {
           )}
 
           {/* Próximas Fechas */}
-          {inviteItems.length > 0 && (
-            <motion.section id="organizer-upcoming-dates" data-test-id="organizer-upcoming-dates" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'], boxShadow: colors.shadows.glow }}>📅</div>
-                <div>
-                  <h3 className="section-title">Próximas Fechas</h3>
-                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>{inviteItems.length} fecha{inviteItems.length !== 1 ? 's' : ''} programada{inviteItems.length !== 1 ? 's' : ''}</p>
-                </div>
+          <motion.section 
+            id="organizer-upcoming-dates" 
+            data-test-id="organizer-upcoming-dates" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="glass-card" 
+            style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
+              <div style={{ width: 60, height: 60, borderRadius: '50%', background: colors.gradients.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'], boxShadow: colors.shadows.glow }}>📅</div>
+              <div>
+                <h3 className="section-title">Próximas Fechas</h3>
               </div>
+            </div>
+            {inviteItems.length > 0 ? (
               <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />
-            </motion.section>
-          )}
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: spacing[8],
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: borderRadius.xl,
+                border: '2px dashed rgba(255, 255, 255, 0.2)',
+                color: colors.gray[300]
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: spacing[2] }}>📅</div>
+                <p style={{ fontSize: typography.fontSize.base, margin: 0, opacity: 0.8 }}>
+                  Este organizador aún no ha publicado fechas próximas.
+                </p>
+              </div>
+            )}
+          </motion.section>
 
           {/* Slot Video */}
           {getMediaBySlot(media as any, 'v1') && (

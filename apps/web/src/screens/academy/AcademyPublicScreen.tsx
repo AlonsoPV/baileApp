@@ -26,6 +26,7 @@ import AcademyRatingComponent from "../../components/academy/AcademyRatingCompon
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
 import { colors } from "../../theme/colors";
+import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1939,6 +1940,15 @@ export default function AcademyPublicScreen() {
             </motion.section>
           )}
 
+          {/* Datos de Cuenta Bancaria */}
+          {(() => {
+            const bankData = (academy as any)?.cuenta_bancaria;
+            // Verificar que existe y no es solo un objeto vacío
+            if (!bankData || typeof bankData !== 'object') return null;
+            const hasBankData = bankData.banco || bankData.nombre || bankData.clabe || bankData.cuenta || bankData.concepto;
+            if (!hasBankData) return null;
+            return <BankAccountDisplay data={bankData} />;
+          })()}
 
           {/* Sección: Un poco más de nosotros */}
           {hasAboutSection && (

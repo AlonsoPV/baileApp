@@ -36,7 +36,12 @@ export type EventParent = {
 
 export type EventDate = {
   id: number; 
-  parent_id: number; 
+  parent_id: number | null;
+  /**
+   * Organizador dueño de la fecha (puede ser null en datos legacy).
+   * En el front se suele mapear contra `Organizer.id`.
+   */
+  organizer_id?: number | null;
   nombre?: string|null; // Nombre de la fecha
   biografia?: string|null; // Biografía de la fecha
   fecha: string; 
@@ -54,6 +59,22 @@ export type EventDate = {
   flyer_url?: string|null; // URL del flyer del evento
   estilos: number[]; 
   media: any[]; 
+  /**
+   * Día de la semana para eventos recurrentes (0-6, donde 0 = domingo).
+   * Si es null/undefined, la fecha NO es recurrente semanal.
+   */
+  dia_semana?: number | null;
+  /**
+   * Ritmos seleccionados usando IDs de catálogo (RITMOS_CATALOG).
+   * Se usa en filtros de explore.
+   */
+  ritmos_seleccionados?: string[];
+  /**
+   * Campos de contacto opcionales por fecha.
+   */
+  telefono_contacto?: string | null;
+  mensaje_contacto?: string | null;
+  djs?: string | null;
   estado_publicacion: PubEstado;
   created_at: string;
 };

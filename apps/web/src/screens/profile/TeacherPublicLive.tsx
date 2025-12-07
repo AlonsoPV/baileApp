@@ -15,6 +15,7 @@ import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
 import { colors } from "../../theme/colors";
 import "./TeacherPublicLive.css";
+import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -1290,6 +1291,16 @@ export default function TeacherProfileLive() {
               </div>
             </motion.section>
           )}
+
+          {/* Datos de Cuenta Bancaria */}
+          {(() => {
+            const bankData = (teacher as PublicTeacher)?.cuenta_bancaria;
+            // Verificar que existe y no es solo un objeto vacío
+            if (!bankData || typeof bankData !== 'object') return null;
+            const hasBankData = bankData.banco || bankData.nombre || bankData.clabe || bankData.cuenta || bankData.concepto;
+            if (!hasBankData) return null;
+            return <BankAccountDisplay data={bankData} />;
+          })()}
 
           {/* Componente de Calificaciones */}
           {teacherIdNum && (

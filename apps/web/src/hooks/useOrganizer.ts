@@ -239,6 +239,10 @@ export function useUpsertMyOrganizer() {
             throw directErr;
           }
         }
+        // Invalidar queries para forzar actualización
+        qc.invalidateQueries({ queryKey: ["organizer", "me", user.id] });
+        qc.invalidateQueries({ queryKey: ["organizer"] });
+        
         return existing.id;
       } else {
         console.log("🆕 [useOrganizer] Creando nuevo organizador...");

@@ -94,7 +94,7 @@ export function useDatesByParent(parentId?: number, publishedOnly?: boolean) {
       
       let q = supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
+        .select("id, parent_id, nombre, biografia, fecha, dia_semana, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
         .eq("parent_id", parentId!);
       
       if (publishedOnly) q = q.eq("estado_publicacion", "publicado");
@@ -187,23 +187,69 @@ export function useDeleteDate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { data, error } = await supabase
+      // Obtener datos antes de eliminar (necesario para invalidar queries correctamente)
+      const { data: dateData } = await supabase
+        .from("events_date")
+        .select("id,parent_id,organizer_id")
+        .eq("id", id)
+        .single();
+      
+      if (!dateData) {
+        throw new Error('Fecha no encontrada');
+      }
+      
+      // Eliminar la fecha
+      const { error } = await supabase
         .from("events_date")
         .delete()
-        .eq("id", id)
-        .select("id,parent_id")
-        .single();
+        .eq("id", id);
+      
       if (error) throw error; 
-      return data as { id: number; parent_id: number };
+      
+      return { 
+        id: dateData.id, 
+        parent_id: dateData.parent_id, 
+        organizer_id: dateData.organizer_id 
+      };
     },
-    onSuccess: ({ id, parent_id }) => {
-      qc.invalidateQueries({ queryKey: ["dates"] });
-      qc.invalidateQueries({ queryKey: ["date", id] });
-      qc.invalidateQueries({ queryKey: ["dates", parent_id] });
-      qc.invalidateQueries({ queryKey: ["event", "dates", parent_id] });
-      qc.invalidateQueries({ queryKey: ["event", "date", id] });
+    onMutate: async (id) => {
+      // Cancelar queries en progreso para evitar conflictos
+      await qc.cancelQueries({ queryKey: ["event-dates", "by-organizer"] });
+      await qc.cancelQueries({ queryKey: ["event-parents", "by-organizer"] });
+      
+      // Snapshot del estado anterior
+      const previousDates = qc.getQueryData(["event-dates", "by-organizer"]);
+      const previousParents = qc.getQueryData(["event-parents", "by-organizer"]);
+      
+      return { previousDates, previousParents };
+    },
+    onError: (err, id, context) => {
+      // Revertir en caso de error
+      if (context?.previousDates) {
+        qc.setQueryData(["event-dates", "by-organizer"], context.previousDates);
+      }
+      if (context?.previousParents) {
+        qc.setQueryData(["event-parents", "by-organizer"], context.previousParents);
+      }
+    },
+    onSuccess: ({ id, parent_id, organizer_id }) => {
+      // Invalidar queries de forma optimizada (solo las necesarias)
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      
+      // Invalidar queries específicas si existen
+      if (parent_id) {
+        qc.invalidateQueries({ queryKey: ["dates", parent_id] });
+        qc.invalidateQueries({ queryKey: ["event", "dates", parent_id] });
+      }
+      
+      // Invalidar query de la fecha eliminada
+      qc.removeQueries({ queryKey: ["date", id] });
+      qc.removeQueries({ queryKey: ["event", "date", id] });
+    },
+    onSettled: () => {
+      // Asegurar que las queries se refresquen al final
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
     }
   });
 }
