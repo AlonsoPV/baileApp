@@ -148,7 +148,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             gap: 0.45rem !important;
           }
           .nav-brand-title {
-            font-size: 1.5rem !important;
+            font-size: 1rem !important;
             letter-spacing: 1.2px !important;
           }
           .nav-brand-tagline {
@@ -187,7 +187,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             height: auto !important;
           }
           .nav-brand-title {
-            font-size: 1rem !important;
+            font-size: 0.75rem !important;
             letter-spacing: 0.8px !important;
           }
           .nav-logo-img {

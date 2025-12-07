@@ -200,7 +200,7 @@ const CTACard = React.memo(({
         boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
         cursor: 'pointer',
         position: 'relative',
-        minHeight: '280px',
+        minHeight: '350px',
         height: '350px',
         display: 'flex',
         flexDirection: 'column',

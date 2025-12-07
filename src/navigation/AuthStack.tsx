@@ -37,6 +37,9 @@ export function AuthStack() {
         headerTitleStyle: {
           fontWeight: typography.weights.bold,
         },
+        gestureEnabled: true,
+        gestureDirection: "horizontal",
+        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen 
