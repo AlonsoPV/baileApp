@@ -30,8 +30,8 @@ importers:
         specifier: ~3.0.9
         version: 3.0.9(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1)
       expo-updates:
-        specifier: ^29.0.14
-        version: 29.0.14(expo@54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1)
+        specifier: ^29.0.15
+        version: 29.0.15(expo@54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1)
       react:
         specifier: 19.2.1
         version: 19.2.1
@@ -59,7 +59,7 @@ importers:
         version: 54.0.8(@babel/core@7.28.5)(@babel/runtime@7.28.4)(expo@54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-refresh@0.17.0)
       eas-cli:
         specifier: ^16.28.0
-        version: 16.28.0(@types/node@24.10.1)(typescript@5.9.3)
+        version: 16.28.0(@types/node@24.10.2)(typescript@5.9.3)
 
   apps/web:
     dependencies:
@@ -114,13 +114,13 @@ importers:
         version: 19.2.3(@types/react@19.2.7)
       '@vitejs/plugin-react':
         specifier: ^4.7.0
-        version: 4.7.0(vite@7.2.6(@types/node@24.10.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
+        version: 4.7.0(vite@7.2.6(@types/node@24.10.2)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vite:
         specifier: ^7.2.6
-        version: 7.2.6(@types/node@24.10.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
+        version: 7.2.6(@types/node@24.10.2)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
 
   packages/ui: {}
 
@@ -1471,6 +1471,9 @@ packages:
   '@types/node@24.10.1':
     resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
 
+  '@types/node@24.10.2':
+    resolution: {integrity: sha512-WOhQTZ4G8xZ1tjJTvKOpyEVSGgOTvJAfDK3FNFgELyaTpzhdgHVHeqW8V+UJvzF5BT+/B54T/1S2K6gd9c7bbA==}
+
   '@types/phoenix@1.6.6':
     resolution: {integrity: sha512-PIzZZlEppgrpoT2QgbnDU+MMzuR6BbCjllj0bM70lWoejMeNJAxCchxnv7J3XFkI8MpygtRpzXrIlmWUBclP5A==}
 
@@ -2092,8 +2095,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.266:
-    resolution: {integrity: sha512-kgWEglXvkEfMH7rxP5OSZZwnaDWT7J9EoZCujhnpLbfi0bbNtRkgdX2E3gt0Uer11c61qCYktB3hwkAS325sJg==}
+  electron-to-chromium@1.5.267:
+    resolution: {integrity: sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -2284,8 +2287,8 @@ packages:
     peerDependencies:
       expo: '*'
 
-  expo-updates@29.0.14:
-    resolution: {integrity: sha512-VgXtjczQ4A/r4Jy/XEj+jWimk0vSd+GdDsYfLzl3CG/9fyQ6NXDP20PgiGfeF+A9rfA4IU3VyWdNJFBPyPPIgg==}
+  expo-updates@29.0.15:
+    resolution: {integrity: sha512-6Qj+g56nnCksKKnEPQFm19dfWvYB5EggQNN3SaLbIj4LI40k/pjQwqYStEuwTU+Ow+PG0AqxIhQ3NvgVPEzLvg==}
     hasBin: true
     peerDependencies:
       expo: '*'
@@ -5486,18 +5489,18 @@ snapshots:
       base64-js: 1.5.1
       xmlbuilder: 15.1.1
 
-  '@expo/plugin-help@5.1.23(@types/node@24.10.1)(typescript@5.9.3)':
+  '@expo/plugin-help@5.1.23(@types/node@24.10.2)(typescript@5.9.3)':
     dependencies:
-      '@oclif/core': 2.16.0(@types/node@24.10.1)(typescript@5.9.3)
+      '@oclif/core': 2.16.0(@types/node@24.10.2)(typescript@5.9.3)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
       - '@types/node'
       - typescript
 
-  '@expo/plugin-warn-if-update-available@2.5.1(@types/node@24.10.1)(typescript@5.9.3)':
+  '@expo/plugin-warn-if-update-available@2.5.1(@types/node@24.10.2)(typescript@5.9.3)':
     dependencies:
-      '@oclif/core': 2.16.0(@types/node@24.10.1)(typescript@5.9.3)
+      '@oclif/core': 2.16.0(@types/node@24.10.2)(typescript@5.9.3)
       chalk: 4.1.2
       debug: 4.4.3(supports-color@8.1.1)
       ejs: 3.1.10
@@ -5645,14 +5648,14 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       jest-mock: 29.7.0
 
   '@jest/fake-timers@29.7.0':
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -5686,7 +5689,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -5762,7 +5765,7 @@ snapshots:
       widest-line: 3.1.0
       wrap-ansi: 7.0.0
 
-  '@oclif/core@2.16.0(@types/node@24.10.1)(typescript@5.9.3)':
+  '@oclif/core@2.16.0(@types/node@24.10.2)(typescript@5.9.3)':
     dependencies:
       '@types/cli-progress': 3.11.6
       ansi-escapes: 4.3.2
@@ -5787,7 +5790,7 @@ snapshots:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      ts-node: 10.9.2(@types/node@24.10.1)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@24.10.2)(typescript@5.9.3)
       tslib: 2.8.1
       widest-line: 3.1.0
       wordwrap: 1.0.0
@@ -5800,9 +5803,9 @@ snapshots:
 
   '@oclif/linewrap@1.0.0': {}
 
-  '@oclif/plugin-autocomplete@2.3.10(@types/node@24.10.1)(typescript@5.9.3)':
+  '@oclif/plugin-autocomplete@2.3.10(@types/node@24.10.2)(typescript@5.9.3)':
     dependencies:
-      '@oclif/core': 2.16.0(@types/node@24.10.1)(typescript@5.9.3)
+      '@oclif/core': 2.16.0(@types/node@24.10.2)(typescript@5.9.3)
       chalk: 4.1.2
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -6221,11 +6224,11 @@ snapshots:
 
   '@types/bunyan@1.8.11':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
 
   '@types/cli-progress@3.11.6':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
 
   '@types/estree@1.0.8': {}
 
@@ -6233,7 +6236,7 @@ snapshots:
 
   '@types/graceful-fs@4.1.9':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
@@ -6246,6 +6249,10 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/node@24.10.1':
+    dependencies:
+      undici-types: 7.16.0
+
+  '@types/node@24.10.2':
     dependencies:
       undici-types: 7.16.0
 
@@ -6299,7 +6306,7 @@ snapshots:
       '@urql/core': 5.2.0(graphql@16.8.1)
       wonka: 6.3.5
 
-  '@vitejs/plugin-react@4.7.0(vite@7.2.6(@types/node@24.10.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))':
+  '@vitejs/plugin-react@4.7.0(vite@7.2.6(@types/node@24.10.2)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.5)
@@ -6307,7 +6314,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 7.2.6(@types/node@24.10.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
+      vite: 7.2.6(@types/node@24.10.2)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -6623,7 +6630,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.9.5
       caniuse-lite: 1.0.30001759
-      electron-to-chromium: 1.5.266
+      electron-to-chromium: 1.5.267
       node-releases: 2.0.27
       update-browserslist-db: 1.2.2(browserslist@4.28.1)
 
@@ -6684,7 +6691,7 @@ snapshots:
 
   chrome-launcher@0.15.2:
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -6693,7 +6700,7 @@ snapshots:
 
   chromium-edge-launcher@0.2.0:
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -6896,7 +6903,7 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  eas-cli@16.28.0(@types/node@24.10.1)(typescript@5.9.3):
+  eas-cli@16.28.0(@types/node@24.10.2)(typescript@5.9.3):
     dependencies:
       '@expo/apple-utils': 2.1.12
       '@expo/code-signing-certificates': 0.0.5
@@ -6912,8 +6919,8 @@ snapshots:
       '@expo/package-manager': 1.7.0
       '@expo/pkcs12': 0.1.3
       '@expo/plist': 0.2.0
-      '@expo/plugin-help': 5.1.23(@types/node@24.10.1)(typescript@5.9.3)
-      '@expo/plugin-warn-if-update-available': 2.5.1(@types/node@24.10.1)(typescript@5.9.3)
+      '@expo/plugin-help': 5.1.23(@types/node@24.10.2)(typescript@5.9.3)
+      '@expo/plugin-warn-if-update-available': 2.5.1(@types/node@24.10.2)(typescript@5.9.3)
       '@expo/prebuild-config': 8.0.17
       '@expo/results': 1.0.0
       '@expo/rudder-sdk-node': 1.1.1
@@ -6921,7 +6928,7 @@ snapshots:
       '@expo/steps': 1.0.231
       '@expo/timeago.js': 1.0.0
       '@oclif/core': 1.26.2
-      '@oclif/plugin-autocomplete': 2.3.10(@types/node@24.10.1)(typescript@5.9.3)
+      '@oclif/plugin-autocomplete': 2.3.10(@types/node@24.10.2)(typescript@5.9.3)
       '@segment/ajv-human-errors': 2.15.0(ajv@8.11.0)
       '@urql/core': 4.0.11(graphql@16.8.1)
       '@urql/exchange-retry': 1.2.0(graphql@16.8.1)
@@ -7005,7 +7012,7 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-  electron-to-chromium@1.5.266: {}
+  electron-to-chromium@1.5.267: {}
 
   emoji-regex@8.0.0: {}
 
@@ -7206,7 +7213,7 @@ snapshots:
     dependencies:
       expo: 54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1)
 
-  expo-updates@29.0.14(expo@54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1):
+  expo-updates@29.0.15(expo@54.0.27(@babel/core@7.28.5)(graphql@16.8.1)(react-native-webview@13.15.0(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1))(react-native@0.81.4(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.1))(react@19.2.1):
     dependencies:
       '@expo/code-signing-certificates': 0.0.5
       '@expo/plist': 0.4.8
@@ -7680,7 +7687,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
@@ -7690,7 +7697,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@types/graceful-fs': 4.1.9
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -7717,7 +7724,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       jest-util: 29.7.0
 
   jest-regex-util@29.6.3: {}
@@ -7725,7 +7732,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -7742,7 +7749,7 @@ snapshots:
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
@@ -9249,14 +9256,14 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-node@10.9.2(@types/node@24.10.1)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@24.10.2)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -9352,7 +9359,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@7.2.6(@types/node@24.10.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2):
+  vite@7.2.6(@types/node@24.10.2)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -9361,7 +9368,7 @@ snapshots:
       rollup: 4.53.3
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 24.10.1
+      '@types/node': 24.10.2
       fsevents: 2.3.3
       lightningcss: 1.30.2
       terser: 5.44.1

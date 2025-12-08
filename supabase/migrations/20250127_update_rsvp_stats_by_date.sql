@@ -123,6 +123,8 @@ BEGIN
     WHERE ca.academy_id = p_academy_id
       AND ca.status = 'tentative'
       -- ✅ FILTRAR: Solo fechas futuras o NULL (clases sin fecha específica)
+      -- fecha_especifica IS NULL: Clases recurrentes sin fecha específica (siempre futuras)
+      -- fecha_especifica >= now_cdmx: Fechas de hoy o futuras (>= incluye hoy)
       AND (ca.fecha_especifica IS NULL OR ca.fecha_especifica >= now_cdmx)
     GROUP BY ca.class_id;
     RETURN;
@@ -159,6 +161,8 @@ BEGIN
     WHERE ca.academy_id = p_academy_id
       AND ca.status = 'tentative'
       -- ✅ FILTRAR: Solo fechas futuras o NULL (clases sin fecha específica)
+      -- fecha_especifica IS NULL: Clases recurrentes sin fecha específica (siempre futuras)
+      -- fecha_especifica >= now_cdmx: Fechas de hoy o futuras (>= incluye hoy)
       AND (ca.fecha_especifica IS NULL OR ca.fecha_especifica >= now_cdmx)
   )
   SELECT 
