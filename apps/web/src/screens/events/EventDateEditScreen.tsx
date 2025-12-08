@@ -52,17 +52,30 @@ export function EventDateEditScreen() {
 
   useEffect(() => {
     if (currentDate) {
-      setForm({
-        fecha: currentDate.fecha,
-        hora_inicio: currentDate.hora_inicio || "",
-        hora_fin: currentDate.hora_fin || "",
-        lugar: currentDate.lugar || "",
-        direccion: currentDate.direccion || "",
-        ciudad: currentDate.ciudad || "",
-        requisitos: currentDate.requisitos || "",
-        flyer_url: currentDate.flyer_url || "",
-        estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
+      setForm(prev => {
+        // Solo actualizar si hay cambios reales para evitar loops
+        const newFlyerUrl = currentDate.flyer_url || "";
+        const newForm = {
+          fecha: currentDate.fecha,
+          hora_inicio: currentDate.hora_inicio || "",
+          hora_fin: currentDate.hora_fin || "",
+          lugar: currentDate.lugar || "",
+          direccion: currentDate.direccion || "",
+          ciudad: currentDate.ciudad || "",
+          requisitos: currentDate.requisitos || "",
+          flyer_url: newFlyerUrl,
+          estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
+        };
+        
+        // Comparar flyer_url especialmente para detectar cambios
+        if (prev.flyer_url !== newFlyerUrl || 
+            prev.fecha !== newForm.fecha ||
+            prev.estado_publicacion !== newForm.estado_publicacion) {
+          return newForm;
+        }
+        return prev;
       });
+      
       // Preseleccionar ubicación si coincide con alguna guardada
       const match = orgLocations.find((loc) =>
         (loc.nombre || "") === (currentDate.lugar || "") &&
@@ -132,14 +145,14 @@ export function EventDateEditScreen() {
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
           requisitos: form.requisitos.trim() || null,
-          flyer_url: form.flyer_url.trim() || null,
+          flyer_url: form.flyer_url?.trim() || null,
           estado_publicacion: form.estado_publicacion
         } as any);
         console.log('[EventDateEditScreen] Date created successfully:', result);
         showToast('Fecha creada ✅', 'success');
       } else {
         console.log('[EventDateEditScreen] Updating date with id:', id);
-        await update.mutateAsync({
+        const updatePayload = {
           id: Number(id),
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
@@ -148,9 +161,28 @@ export function EventDateEditScreen() {
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
           requisitos: form.requisitos.trim() || null,
-          flyer_url: form.flyer_url.trim() || null,
+          flyer_url: form.flyer_url?.trim() || null,
           estado_publicacion: form.estado_publicacion
-        } as any);
+        } as any;
+        console.log('[EventDateEditScreen] Update payload:', updatePayload);
+        const updatedData = await update.mutateAsync(updatePayload);
+        console.log('[EventDateEditScreen] Date updated successfully:', updatedData);
+        
+        // Actualizar el estado local con los datos actualizados de la BD
+        if (updatedData) {
+          setForm({
+            fecha: updatedData.fecha,
+            hora_inicio: updatedData.hora_inicio || "",
+            hora_fin: updatedData.hora_fin || "",
+            lugar: updatedData.lugar || "",
+            direccion: updatedData.direccion || "",
+            ciudad: updatedData.ciudad || "",
+            requisitos: updatedData.requisitos || "",
+            flyer_url: updatedData.flyer_url || "",
+            estado_publicacion: (updatedData.estado_publicacion as 'borrador' | 'publicado')
+          });
+        }
+        
         showToast('Fecha actualizada ✅', 'success');
       }
       navigate('/profile/organizer/edit');

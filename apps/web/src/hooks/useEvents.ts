@@ -171,6 +171,7 @@ export function useUpdateDate() {
       return data as EventDate;
     },
     onSuccess: (data) => {
+      console.log('[useUpdateDate] Invalidating queries after update');
       // Claves antiguas
       qc.invalidateQueries({ queryKey: ["dates"] });
       qc.invalidateQueries({ queryKey: ["dates", data.parent_id] });
@@ -179,6 +180,9 @@ export function useUpdateDate() {
       // Claves nuevas/unificadas
       qc.invalidateQueries({ queryKey: ["event", "dates", data.parent_id] });
       qc.invalidateQueries({ queryKey: ["event", "date", data.id] });
+      
+      // Forzar refetch inmediato de la query específica para actualizar la UI
+      qc.refetchQueries({ queryKey: ["event", "date", data.id] });
     }
   });
 }

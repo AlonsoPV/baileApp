@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import { resizeImageIfNeeded } from "../../lib/imageResize";
 
@@ -13,6 +13,17 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  
+  // Agregar timestamp solo cuando cambia el valor para evitar caché del navegador
+  const imageUrlWithCacheBust = useMemo(() => {
+    if (!value) return null;
+    // Si la URL ya tiene query params, agregar el timestamp como otro param
+    // Si no, agregarlo como el primer query param
+    const separator = value.includes('?') ? '&' : '?';
+    // Usar un hash del valor para crear un timestamp estable que solo cambie cuando cambie la URL
+    const cacheKey = value.split('?')[0].split('#')[0].split('/').pop() || '';
+    return `${value}${separator}_t=${Date.now()}`;
+  }, [value]);
 
   const handlePick = () => inputRef.current?.click();
 
@@ -111,15 +122,24 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
             maxHeight: '420px'
           }}
         >
-          {value ? (
+          {value && imageUrlWithCacheBust ? (
             <img 
-              src={value} 
+              key={value}
+              src={imageUrlWithCacheBust}
               alt="Flyer" 
               style={{ 
                 height: '100%', 
                 width: '100%', 
                 objectFit: 'cover' 
-              }} 
+              }}
+              onError={(e) => {
+                console.error('[DateFlyerUploader] Error loading image:', imageUrlWithCacheBust);
+                // Si falla con cache bust, intentar sin él
+                const img = e.currentTarget;
+                if (img.src.includes('_t=')) {
+                  img.src = value;
+                }
+              }}
             />
           ) : (
             <div style={{ 
