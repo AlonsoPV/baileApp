@@ -153,21 +153,24 @@ async function fetchPage(params: QueryParams, page: number) {
     
     // Para eventos con dia_semana, el filtrado se hará post-query (necesitamos calcular la próxima fecha)
     // Para eventos sin dia_semana, filtrar por fecha normalmente
-    // Usamos una condición OR para incluir ambos casos
-    if (dateFrom) {
-      // Incluir eventos con dia_semana O eventos con fecha >= dateFrom
-      // Nota: Los eventos con dia_semana se filtrarán post-query
+    // Estrategia: Incluir eventos recurrentes siempre, filtrar eventos con fecha específica por rango
+    if (dateFrom && dateTo) {
+      // Si hay rango de fechas: incluir eventos recurrentes O eventos con fecha en el rango
+      // Para eventos sin dia_semana: necesitamos fecha >= dateFrom AND fecha <= dateTo
+      // En Supabase, múltiples .or() se combinan con AND, así que:
+      // (dia_semana.not.is.null OR fecha.gte.dateFrom) AND (dia_semana.not.is.null OR fecha.lte.dateTo)
+      // Para eventos sin dia_semana: fecha.gte.dateFrom AND fecha.lte.dateTo ✅
       query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+    } else if (dateFrom) {
+      // Solo dateFrom: eventos con dia_semana O eventos con fecha >= dateFrom
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+    } else if (dateTo) {
+      // Solo dateTo: eventos con dia_semana O eventos con fecha <= dateTo
+      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
     } else {
       // Para "todos", mostrar solo eventos futuros (>= hoy en CDMX) O eventos con dia_semana
       query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
-    }
-    
-    if (dateTo) {
-      // Para eventos con dia_semana, el filtrado se hará post-query
-      // Para eventos sin dia_semana, filtrar por fecha <= dateTo
-      // Nota: Esto puede excluir algunos eventos con dia_semana, pero los recuperaremos post-query
-      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
     }
     
     // filtrar por estilos/ritmos - a nivel de fecha y de parent
@@ -369,27 +372,50 @@ async function fetchPage(params: QueryParams, page: number) {
           expandedData.push(row);
         }
       } else {
-        // Para eventos sin dia_semana, usar la lógica original de filtrado
+        // Para eventos sin dia_semana, verificar que estén en el rango de fechas (si aplica)
         let shouldInclude = true;
         
         if (row?.fecha) {
           const fechaStr = String(row.fecha).split('T')[0];
           
-          // Si es hoy, verificar que la hora no haya pasado
-          if (fechaStr === todayStr) {
-            const horaStr = row.hora_inicio as string | null | undefined;
-            if (horaStr) {
-              const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
-              if (Number.isFinite(yy) && Number.isFinite(mm) && Number.isFinite(dd)) {
-                const [hhRaw, minRaw] = String(horaStr).split(':');
-                const hh = parseInt(hhRaw ?? '0', 10);
-                const min = parseInt(minRaw ?? '0', 10);
-                const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
-                
-                // Si la hora de inicio ya pasó en CDMX, no incluir el evento
-                if (eventDateTime.getTime() < nowCDMX.getTime()) {
-                  shouldInclude = false;
+          // Verificar rango de fechas si está disponible en params
+          if (params.dateFrom || params.dateTo) {
+            // ✅ CORRECCIÓN: Comparar strings YYYY-MM-DD directamente para evitar problemas de zona horaria
+            // Esto asegura que eventos del 7, 8, 9 y 10 de febrero se incluyan si el rango es 7-10
+            // fechaStr ya está en formato YYYY-MM-DD
+            
+            // Incluir eventos que estén dentro del rango (>= dateFrom Y <= dateTo)
+            // No importa la hora de inicio o fin, si el evento es de un día dentro del rango, se incluye
+            if (params.dateFrom && fechaStr < params.dateFrom) {
+              shouldInclude = false;
+            }
+            if (params.dateTo && fechaStr > params.dateTo) {
+              shouldInclude = false;
+            }
+          } else {
+            // Si no hay rango de fechas, verificar que sea futuro (solo si es hoy, verificar hora)
+            if (fechaStr === todayStr) {
+              const horaStr = row.hora_inicio as string | null | undefined;
+              if (horaStr) {
+                const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
+                if (Number.isFinite(yy) && Number.isFinite(mm) && Number.isFinite(dd)) {
+                  const [hhRaw, minRaw] = String(horaStr).split(':');
+                  const hh = parseInt(hhRaw ?? '0', 10);
+                  const min = parseInt(minRaw ?? '0', 10);
+                  const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
+                  
+                  // Si la hora de inicio ya pasó en CDMX, no incluir el evento
+                  if (eventDateTime.getTime() < nowCDMX.getTime()) {
+                    shouldInclude = false;
+                  }
                 }
+              }
+            } else {
+              // Si no es hoy, verificar que la fecha sea futura
+              const fechaDate = new Date(fechaStr + 'T12:00:00');
+              const todayDate = new Date(todayStr + 'T12:00:00');
+              if (fechaDate < todayDate) {
+                shouldInclude = false;
               }
             }
           }

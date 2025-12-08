@@ -42,15 +42,28 @@ const PERFIL_OPTIONS = [
 
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true, initialOpenDropdown = null, hideButtons = false }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(initialOpenDropdown || null);
+  // Estado temporal para fechas antes de aplicar
+  const [tempDateFrom, setTempDateFrom] = useState<string | undefined>(filters.dateFrom);
+  const [tempDateTo, setTempDateTo] = useState<string | undefined>(filters.dateTo);
   
   // Sincroniza con prop externa, sin depender de openDropdown
   React.useEffect(() => {
     if (initialOpenDropdown !== null) {
       setOpenDropdown(initialOpenDropdown);
     } else if (hideButtons) {
-      setOpenDropdown(null);
+      // Solo cerrar si hideButtons es true Y initialOpenDropdown es null
+      // Si initialOpenDropdown es 'fechas', mantenerlo abierto
+      if (initialOpenDropdown === null) {
+        setOpenDropdown(null);
+      }
     }
   }, [initialOpenDropdown, hideButtons]);
+
+  // Sincronizar fechas temporales con los filtros cuando cambian externamente
+  React.useEffect(() => {
+    setTempDateFrom(filters.dateFrom);
+    setTempDateTo(filters.dateTo);
+  }, [filters.dateFrom, filters.dateTo]);
 
   const [expandedRitmoGroup, setExpandedRitmoGroup] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
@@ -154,12 +167,25 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   }, [filters, onFiltersChange]);
 
   const handleDateChange = React.useCallback((type: 'desde' | 'hasta', value: string) => {
+    // Actualizar solo el estado temporal, no aplicar aún
     if (type === 'desde') {
-      onFiltersChange({ ...filters, dateFrom: value || undefined });
+      setTempDateFrom(value || undefined);
     } else {
-      onFiltersChange({ ...filters, dateTo: value || undefined });
+      setTempDateTo(value || undefined);
     }
-  }, [filters, onFiltersChange]);
+  }, []);
+
+  const handleApplyDateFilter = React.useCallback(() => {
+    // Cuando se aplica, limpiar el preset para evitar conflictos
+    const updates: any = {
+      datePreset: undefined, // Limpiar preset cuando se usa fecha manual
+      dateFrom: tempDateFrom,
+      dateTo: tempDateTo,
+    };
+    
+    onFiltersChange({ ...filters, ...updates });
+    setOpenDropdown(null); // Cerrar el dropdown después de aplicar
+  }, [filters, tempDateFrom, tempDateTo, onFiltersChange]);
 
   const clearFilters = React.useCallback(() => {
     onFiltersChange({
@@ -906,73 +932,144 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
                     maxWidth: '500px'
                   }}
                 >
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      marginBottom: '0.5rem'
-                    }}>
-                      📅 Desde
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.dateFrom || ''}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleDateChange('desde', e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        color: 'white',
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1.5rem'
+                  }}>
+                    <div>
+                      <label style={{
+                        display: 'block',
                         fontSize: '0.875rem',
-                        outline: 'none'
-                      }}
-                    />
+                        fontWeight: '600',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        marginBottom: '0.5rem'
+                      }}>
+                        📅 Desde
+                      </label>
+                      <input
+                        type="date"
+                        value={tempDateFrom || ''}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleDateChange('desde', e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          color: 'white',
+                          fontSize: '0.875rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        marginBottom: '0.5rem'
+                      }}>
+                        📅 Hasta
+                      </label>
+                      <input
+                        type="date"
+                        value={tempDateTo || ''}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleDateChange('hasta', e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          color: 'white',
+                          fontSize: '0.875rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      marginBottom: '0.5rem'
-                    }}>
-                      📅 Hasta
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.dateTo || ''}
-                      onChange={(e) => {
+                  
+                  {/* Botones de acción */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    justifyContent: 'flex-end',
+                    marginTop: '0.5rem'
+                  }}>
+                    <button
+                      onClick={(e) => {
                         e.stopPropagation();
-                        handleDateChange('hasta', e.target.value);
+                        // Limpiar fechas temporales y aplicar
+                        setTempDateFrom(undefined);
+                        setTempDateTo(undefined);
+                        handleApplyDateFilter();
                       }}
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
                       style={{
-                        width: '100%',
-                        padding: '0.75rem',
+                        padding: '0.5rem 1rem',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                         background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      }}
+                    >
+                      Limpiar
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApplyDateFilter();
+                      }}
+                      style={{
+                        padding: '0.5rem 1.5rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #ff4b8b, #ff9b45)',
                         color: 'white',
                         fontSize: '0.875rem',
-                        outline: 'none'
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 12px rgba(255, 75, 139, 0.3)'
                       }}
-                    />
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 75, 139, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 75, 139, 0.3)';
+                      }}
+                    >
+                      Aplicar
+                    </button>
                   </div>
                 </div>
               </DropdownPanel>

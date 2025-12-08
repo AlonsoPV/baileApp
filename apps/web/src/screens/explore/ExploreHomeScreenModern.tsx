@@ -1020,6 +1020,13 @@ export default function ExploreHomeScreen() {
   }, []);
 
   React.useEffect(() => {
+    // Solo aplicar preset si no hay fechaPreset undefined (fechas manuales)
+    // Si datePreset es undefined, significa que el usuario está usando fechas manuales
+    if (filters.datePreset === undefined) {
+      // No hacer nada, mantener las fechas manuales
+      return;
+    }
+    
     const preset = filters.datePreset || 'todos';
     const { from, to } = computePresetRange(preset);
     if (filters.dateFrom !== from || filters.dateTo !== to) {
@@ -1180,12 +1187,10 @@ export default function ExploreHomeScreen() {
       const fechaDate = parseYmdToDate(fecha?.fecha);
       if (!fechaDate || !todayBase) return true;
 
-      const fechaDateOnly = new Date(Date.UTC(
-        fechaDate.getUTCFullYear(),
-        fechaDate.getUTCMonth(),
-        fechaDate.getUTCDate(),
-        0, 0, 0
-      ));
+      // Extraer fecha en formato YYYY-MM-DD para comparación directa (evita problemas de zona horaria)
+      const fechaDateStr = fecha?.fecha ? String(fecha.fecha).split('T')[0] : null;
+      if (!fechaDateStr) return true; // Si no hay fecha, incluir
+
       const todayDateOnly = new Date(Date.UTC(
         todayBase.getUTCFullYear(),
         todayBase.getUTCMonth(),
@@ -1193,18 +1198,47 @@ export default function ExploreHomeScreen() {
         0, 0, 0
       ));
 
-      if (fecha._recurrence_index !== undefined) {
-        if (hasDateRange) {
-          if (dateFrom && fechaDateOnly < dateFrom) return false;
-          if (dateTo && fechaDateOnly > dateTo) return false;
+      // Si hay rango de fechas, verificar que la fecha del evento esté dentro del rango
+      if (hasDateRange) {
+        // ✅ CORRECCIÓN: Comparar strings YYYY-MM-DD directamente para evitar problemas de zona horaria
+        // Esto asegura que eventos del 7, 8, 9 y 10 de febrero se incluyan si el rango es 7-10
+        
+        // Para eventos recurrentes, verificar que la fecha calculada esté en el rango
+        if (fecha._recurrence_index !== undefined) {
+          // fechaDateStr ya está en formato YYYY-MM-DD
+          if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
+          if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
+          return true; // Si está en el rango, incluir
         }
+        
+        // Para eventos sin recurrencia, verificar que esté en el rango
+        // Incluir TODOS los eventos que ocurran en días dentro del rango
+        // No importa si terminan antes, si el evento es de un día dentro del rango, se incluye
+        if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
+        if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
+        // Si pasa ambas verificaciones, está en el rango, incluir
         return true;
       }
 
-      if (hasDateRange) {
-        if (dateFrom && fechaDateOnly < dateFrom) return false;
-        if (dateTo && fechaDateOnly > dateTo) return false;
+      // Si no hay rango de fechas, solo mostrar eventos futuros
+      if (fecha._recurrence_index !== undefined) {
+        // Eventos recurrentes siempre futuros si tienen _recurrence_index
+        return true;
       }
+      
+      // Comparar fechas para eventos futuros (usar fechaDateStr si está disponible)
+      if (fechaDateStr) {
+        const todayStr = getTodayCDMX();
+        return fechaDateStr >= todayStr;
+      }
+      
+      // Fallback a comparación de Date si no hay fechaDateStr
+      const fechaDateOnly = new Date(Date.UTC(
+        fechaDate.getUTCFullYear(),
+        fechaDate.getUTCMonth(),
+        fechaDate.getUTCDate(),
+        0, 0, 0
+      ));
       return fechaDateOnly >= todayDateOnly;
     });
 
