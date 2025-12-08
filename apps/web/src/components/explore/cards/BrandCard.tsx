@@ -54,6 +54,7 @@ export default function BrandCard({ item }: Props) {
           .brand-card-mobile[style*="background"] {
             background-size: contain !important;
             background-position: center center !important;
+            background-repeat: no-repeat !important;
           }
         }
       `}</style>
@@ -72,6 +73,7 @@ export default function BrandCard({ item }: Props) {
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',

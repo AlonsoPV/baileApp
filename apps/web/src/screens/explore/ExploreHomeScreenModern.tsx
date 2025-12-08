@@ -186,31 +186,47 @@ const CTACard = React.memo(({
   const logoUrl = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/LogoDondeBMx.webp';
 
   return (
-    <div
-      onClick={handleClick}
-      style={{
-        backgroundImage: `url(${logoUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        border: '2px solid rgba(240, 147, 251, 0.4)',
-        borderRadius: 16,
-        padding: 0,
-        overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
-        cursor: 'pointer',
-        position: 'relative',
-        minHeight: '350px',
-        height: '350px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: '1rem',
-        width: '100%'
-      }}
-    >
+    <>
+      <style>{`
+        .cta-card-mobile {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .cta-card-mobile {
+            aspect-ratio: 9 / 16 !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-width: calc((9 / 16) * 100vh);
+            margin: 0 auto;
+          }
+        }
+      `}</style>
+      <div
+        className="cta-card-mobile"
+        onClick={handleClick}
+        style={{
+          backgroundImage: `url(${logoUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          border: '2px solid rgba(240, 147, 251, 0.4)',
+          borderRadius: 16,
+          padding: 0,
+          overflow: 'hidden',
+          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
+          cursor: 'pointer',
+          position: 'relative',
+          minHeight: '350px',
+          height: '350px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '1rem',
+          width: '100%'
+        }}
+      >
       {/* Overlay oscuro para mejor contraste */}
       <div style={{
         position: 'absolute',
@@ -284,6 +300,7 @@ const CTACard = React.memo(({
         </div>
       </div>
     </div>
+    </>
   );
 });
 
