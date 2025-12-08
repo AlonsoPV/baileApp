@@ -70,19 +70,51 @@ export default function AddToCalendarWithStats({
     });
   }, []);
 
-  // Cargar número de interesados
+  // Cargar número de interesados (solo fechas futuras)
   useEffect(() => {
     const loadCount = async () => {
-      const { count, error } = await supabase
-        .from("eventos_interesados")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", eventIdStr);
-      if (!error && typeof count === "number") {
-        setCount(count);
+      if (isClass && classId) {
+        // Para clases: contar solo fechas futuras o NULL
+        const nowCDMX = new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" });
+        const todayCDMX = new Date(nowCDMX).toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        const { count, error } = await supabase
+          .from("clase_asistencias")
+          .select("*", { count: "exact", head: true })
+          .eq("class_id", classId)
+          .eq("status", "tentative")
+          .or(`fecha_especifica.is.null,fecha_especifica.gte.${todayCDMX}`);
+        
+        if (!error && typeof count === "number") {
+          setCount(count);
+        }
+      } else {
+        // Para eventos: usar la función RPC get_event_rsvp_stats que ya filtra por fecha
+        const eventDateIdNum = typeof eventId === 'number' ? eventId : parseInt(eventIdStr, 10);
+        
+        if (isNaN(eventDateIdNum)) {
+          setCount(0);
+          return;
+        }
+        
+        try {
+          const { data: stats, error } = await supabase
+            .rpc('get_event_rsvp_stats', { event_id: eventDateIdNum });
+          
+          if (!error && stats && Array.isArray(stats) && stats.length > 0) {
+            // La función retorna { interesado: number, total: number }
+            setCount(stats[0].interesado || 0);
+          } else {
+            setCount(0);
+          }
+        } catch (err) {
+          console.error('[AddToCalendarWithStats] Error obteniendo stats:', err);
+          setCount(0);
+        }
       }
     };
     loadCount();
-  }, [eventIdStr]);
+  }, [eventIdStr, isClass, classId]);
 
   // Verificar si el usuario ya dio clic
   useEffect(() => {

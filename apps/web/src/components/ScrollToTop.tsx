@@ -1,14 +1,22 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import AppRouter from './AppRouter';
 
 /**
  * Componente que hace scroll automático al top cuando cambia la ruta
+ * 
+ * Uso: Agregar dentro de BrowserRouter pero fuera de Routes
+ * 
+ * ```tsx
+ * <BrowserRouter>
+ *   <ScrollToTop />
+ *   <Routes>...</Routes>
+ * </BrowserRouter>
+ * ```
  */
-function ScrollToTop() {
+export default function ScrollToTop() {
   const { pathname } = useLocation();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Hacer scroll al top cuando cambia la ruta
     window.scrollTo({
       top: 0,
@@ -20,11 +28,3 @@ function ScrollToTop() {
   return null;
 }
 
-export default function App() {
-  return (
-    <>
-      <ScrollToTop />
-      <AppRouter />
-    </>
-  );
-}

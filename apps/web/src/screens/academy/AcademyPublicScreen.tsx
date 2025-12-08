@@ -27,6 +27,9 @@ import CompetitionGroupCard from "../../components/explore/cards/CompetitionGrou
 import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
 import { colors } from "../../theme/colors";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import { ProfileSkeleton } from "../../components/skeletons/ProfileSkeleton";
+import { RefreshingIndicator } from "../../components/loading/RefreshingIndicator";
+import { useSmartLoading } from "../../hooks/useSmartLoading";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -1294,7 +1297,9 @@ export default function AcademyPublicScreen() {
   const { academyId } = useParams();
   const navigate = useNavigate();
   const id = Number(academyId);
-  const { data: academy, isLoading } = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
+  const academyQuery = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
+  const { data: academy, isLoading, isFetching } = academyQuery;
+  const { isFirstLoad, isRefetching } = useSmartLoading(academyQuery);
   const { data: allTags } = useTags();
   const [copied, setCopied] = React.useState(false);
   
@@ -1353,17 +1358,12 @@ export default function AcademyPublicScreen() {
     return names;
   }, [allTags, academy]);
 
-  if (isLoading) {
+  // First load: mostrar skeleton
+  if (isFirstLoad) {
     return (
       <>
         <style>{STYLES}</style>
-        <div style={{ padding: '48px 24px', textAlign: 'center', color: colors.light }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <p style={{ marginBottom: '8px' }}>Estamos cargando la academia...</p>
-          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
-          </p>
-        </div>
+        <ProfileSkeleton variant="academy" />
       </>
     );
   }
@@ -1399,6 +1399,7 @@ export default function AcademyPublicScreen() {
 
   return (
     <>
+      <RefreshingIndicator isFetching={isRefetching} />
       <SeoHead
         section="academy"
         title={`${academyName} | Academia en Dónde Bailar`}

@@ -8,6 +8,10 @@ import { QueryClient } from '@tanstack/react-query';
  * - cacheTime: 5 minutos para mantener datos en cache mientras navega
  * - refetchOnMount: false para evitar refetches innecesarios al cambiar de pestañas
  * - refetchOnWindowFocus: false para evitar refetches al cambiar de ventana
+ * 
+ * Suspense:
+ * - suspense: false por defecto (activar solo en queries específicas)
+ * - Para activar Suspense en una query, usar: suspense: true en las opciones de la query
  */
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +24,8 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,     // No refetch al cambiar de ventana
       refetchOnReconnect: false,       // No refetch al reconectar internet
       refetchOnMount: false,           // No refetch al montar componente si hay datos en cache
+      // Suspense NO activado globalmente - activar solo en queries específicas
+      // suspense: false, // Por defecto, no usar Suspense (activar por query)
     },
     mutations: {
       retry: 1,                        // Solo 1 reintento para mutations

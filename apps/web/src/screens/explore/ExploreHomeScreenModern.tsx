@@ -19,6 +19,9 @@ import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
+import { EventsSection } from "../../components/sections/EventsSection";
+import { ClassesSection } from "../../components/sections/ClassesSection";
+import { AcademiesSection } from "../../components/sections/AcademiesSection";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -1920,67 +1923,32 @@ export default function ExploreHomeScreen() {
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
             <Section title="Las mejores academias de tu zona" toAll="/explore/list?type=academias">
-              {academiasLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
-              ) : (
-                <>
-                  <HorizontalSlider
-                    {...sliderProps}
-                    items={academiasDataWithCTA}
-                    renderItem={(item: any, idx: number) => {
-                      if (item?.__isCTA) {
-                        return (
-                          <motion.div
-                            key="cta-academias"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.3 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                            }}
-                          >
-                            <CTACard text="¿Tienes una academia? Crea tu perfil gratis por 3 meses." sectionType="academias" idx={idx} />
-                          </motion.div>
-                        );
-                      }
-                      return (
-                        <motion.div
-                          key={item.id ?? idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                          }}
-                        >
-                          <AcademyCard item={item} />
-                        </motion.div>
-                      );
-                    }}
-                  />
-                  {academiasLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={academiasLoadMore.handleLoadMore}
-                      disabled={academiasLoadMore.isFetching}
-                    >
-                      {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
-                    </button>
-                  )}
-                </>
+              <AcademiesSection
+                filters={filters}
+                q={qDeferred || undefined}
+                enabled={showAll || selectedType === 'academias'}
+                maxItems={12}
+              />
+              {/* Mantener botón de cargar más si es necesario */}
+              {academiasLoadMore.hasNextPage && (
+                <button
+                  className="load-more-btn"
+                  onClick={academiasLoadMore.handleLoadMore}
+                  disabled={academiasLoadMore.isFetching}
+                  style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'rgba(255,255,255,0.1)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
+                </button>
               )}
             </Section>
           )}
@@ -2250,6 +2218,190 @@ export default function ExploreHomeScreen() {
               )}
             </Section>
           )}
+
+          {/* Sección Comparte */}
+          <Section title="Comparte" toAll="">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: spacing[6],
+              }}
+            >
+              <div
+                className="panel"
+                style={{
+                  maxWidth: "500px",
+                  width: "100%",
+                  padding: spacing[8],
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: spacing[6],
+                  textAlign: "center",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Efecto de brillo animado */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-50%",
+                    left: "-50%",
+                    width: "200%",
+                    height: "200%",
+                    background: "radial-gradient(circle, rgba(240, 147, 251, 0.15) 0%, transparent 70%)",
+                    animation: "pulse 3s ease-in-out infinite",
+                    pointerEvents: "none",
+                  }}
+                />
+                
+                {/* Contenido */}
+                <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+                  {/* Icono y texto descriptivo */}
+                  <div style={{ marginBottom: spacing[6] }}>
+                    <div
+                      style={{
+                        fontSize: "3rem",
+                        marginBottom: spacing[3],
+                        filter: "drop-shadow(0 4px 8px rgba(240, 147, 251, 0.3))",
+                      }}
+                    >
+                      📱
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: "1.5rem",
+                        fontWeight: 700,
+                        margin: 0,
+                        marginBottom: spacing[2],
+                        background: "linear-gradient(135deg, #f093fb, #FFD166)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      Comparte Dónde Bailar
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "1rem",
+                        color: colors.gray[300],
+                        margin: 0,
+                        lineHeight: 1.6,
+                        opacity: 0.9,
+                      }}
+                    >
+                      Escanea el código QR y comparte la app con tus amigos bailarines
+                    </p>
+                  </div>
+
+                  {/* QR Code con diseño mejorado */}
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: spacing[4],
+                      background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))",
+                      borderRadius: "20px",
+                      border: "2px solid rgba(240, 147, 251, 0.3)",
+                      boxShadow: "0 8px 32px rgba(240, 147, 251, 0.2), inset 0 0 20px rgba(240, 147, 251, 0.1)",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {/* Efecto de borde brillante */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: "18px",
+                        padding: "2px",
+                        background: "linear-gradient(135deg, #f093fb, #f5576c, #FFD166, #f093fb)",
+                        WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                        WebkitMaskComposite: "xor",
+                        maskComposite: "exclude",
+                        opacity: 0.6,
+                        animation: "rotate 3s linear infinite",
+                      }}
+                    />
+                    
+                    <div
+                      style={{
+                        background: "#FFFFFF",
+                        borderRadius: "12px",
+                        padding: spacing[3],
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                    >
+                      <img
+                        src="https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/QRDondeBailar.png"
+                        alt="QR Code para compartir Dónde Bailar"
+                        style={{
+                          width: "220px",
+                          height: "220px",
+                          maxWidth: "100%",
+                          objectFit: "contain",
+                          display: "block",
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Texto adicional */}
+                  <p
+                    style={{
+                      fontSize: "0.875rem",
+                      color: colors.gray[400],
+                      margin: 0,
+                      marginTop: spacing[4],
+                      fontStyle: "italic",
+                    }}
+                  >
+                    ¡Únete a la comunidad de bailarines!
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Estilos CSS adicionales para animaciones */}
+            <style>{`
+              @keyframes pulse {
+                0%, 100% {
+                  opacity: 0.3;
+                  transform: scale(1);
+                }
+                50% {
+                  opacity: 0.6;
+                  transform: scale(1.1);
+                }
+              }
+              @keyframes rotate {
+                from {
+                  background-position: 0% 0%;
+                }
+                to {
+                  background-position: 200% 0%;
+                }
+              }
+              @media (max-width: 768px) {
+                .panel {
+                  padding: 1.5rem !important;
+                }
+              }
+            `}</style>
+          </Section>
 
           {noResultsAllTypes && (
             <div

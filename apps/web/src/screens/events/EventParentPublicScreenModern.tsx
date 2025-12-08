@@ -21,6 +21,12 @@ import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { fmtDateTime } from "../../utils/format";
 import EventParentRatingComponent from "../../components/events/EventParentRatingComponent";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { ProfileSkeleton } from "../../components/skeletons/ProfileSkeleton";
+import { RefreshingIndicator } from "../../components/loading/RefreshingIndicator";
+import { useSmartLoading } from "../../hooks/useSmartLoading";
+import { useEventParentSuspense } from "../../hooks/useEventParentSuspense";
+import { Suspense } from "react";
+import QueryErrorBoundaryWithReset from "../../components/errors/QueryErrorBoundary";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado
@@ -481,12 +487,15 @@ export default function EventParentPublicScreen() {
   const parentIdParam = params.parentId ?? params.id;
   const parentIdNum = parentIdParam ? parseInt(parentIdParam) : undefined;
 
-  const { data: parent, isLoading } = useEventParent(parentIdNum);
+  const parentQuery = useEventParent(parentIdNum);
+  const { data: parent, isLoading, isFetching } = parentQuery;
   const { data: dates } = useEventDatesByParent(parentIdNum);
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
   const { data: organizer } = useMyOrganizer();
   const [datePreset, setDatePreset] = React.useState<'todos' | 'hoy' | 'semana' | 'siguientes'>('todos');
+  
+  const { isFirstLoad, isRefetching } = useSmartLoading(parentQuery);
 
   // Próxima fecha (para info rápida en hero)
   const nextDate = React.useMemo(() => {
@@ -535,24 +544,9 @@ export default function EventParentPublicScreen() {
   // Dueño
   const isOwner = (organizer as any)?.id === parent?.organizer_id;
 
-  if (isLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: colors.gray[50],
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-          <p style={{ fontSize: typography.fontSize.lg }}>Cargando evento...</p>
-        </div>
-      </div>
-    );
+  // First load: mostrar skeleton
+  if (isFirstLoad) {
+    return <ProfileSkeleton variant="organizer" />;
   }
 
   if (!parent) {
@@ -704,6 +698,7 @@ export default function EventParentPublicScreen() {
 
   return (
     <>
+      <RefreshingIndicator isFetching={isRefetching} />
       <SeoHead
         section="event"
         title={`${parentName} | Social de baile`}

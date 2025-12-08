@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEventDate } from "../../hooks/useEventDate";
+import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
 import { useEventRSVP } from "../../hooks/useRSVP";
@@ -19,6 +20,8 @@ import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { FaWhatsapp } from "react-icons/fa";
+import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
+import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 
 const colors = {
   coral: '#FF3D57',
@@ -309,140 +312,17 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   );
 };
 
+/**
+ * Componente principal con Suspense
+ * Maneja la validación del dateId y envuelve el contenido con Suspense
+ */
 export default function EventDatePublicScreen() {
   const params = useParams<{ dateId?: string; id?: string }>();
   const dateIdParam = params.dateId ?? params.id;
-  const navigate = useNavigate();
   const dateIdNum = dateIdParam ? parseInt(dateIdParam) : undefined;
 
-  const { user } = useAuth();
-  const { data: date, isLoading } = useEventDate(dateIdNum);
-  const { data: parent } = useEventParent(date?.parent_id);
-  const { data: myOrganizer } = useMyOrganizer();
-  const { data: ritmos } = useTags('ritmo');
-  const { data: zonas } = useTags('zona');
-
-  // Evitar loops infinitos de "cargando" en caso de problemas de red o Supabase
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-
-  React.useEffect(() => {
-    if (isLoading) {
-      setLoadingTimedOut(false);
-      const timeoutId = setTimeout(() => {
-        setLoadingTimedOut(true);
-      }, 15000); // 15s de espera máxima
-      return () => clearTimeout(timeoutId);
-    }
-    // Si deja de estar cargando, resetear timeout
-    setLoadingTimedOut(false);
-  }, [isLoading, dateIdNum]);
-
-  // Verificar si el usuario es propietario
-  const isOwner = React.useMemo(() => {
-    if (!user || !myOrganizer || !parent) return false;
-
-    // Comparar user_id del organizador con user_id del parent
-    const organizerUserId = (myOrganizer as any).user_id;
-    const parentUserId = (parent as any).user_id;
-
-    return organizerUserId === parentUserId;
-  }, [user, myOrganizer, parent]);
-
-  // Hook de RSVP
-  const {
-    userStatus,
-    stats,
-    toggleInterested,
-    isUpdating
-  } = useEventRSVP(dateIdNum);
-
-  const interestedCount = (() => {
-    try {
-      const anyStats: any = stats as any;
-      // our RPC returns { interesado, total }
-      const val = anyStats?.interesado ?? anyStats?.interested ?? anyStats?.count ?? anyStats?.total ?? 0;
-      return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
-    } catch {
-      return 0;
-    }
-  })();
-
-  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
-  // Moved before early returns to ensure hooks are called in the same order on every render
-  const baseFlyerUrl = date?.flyer_url || undefined;
-  const flyerCacheKey =
-    ((date as any)?.updated_at as string | undefined) ||
-    (date?.created_at as string | undefined) ||
-    '';
-  const flyerUrlCacheBusted = React.useMemo(() => {
-    if (!baseFlyerUrl) return null;
-    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
-    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
-    const key = encodeURIComponent(flyerCacheKey || '');
-    return `${baseFlyerUrl}${separator}_t=${key}`;
-  }, [baseFlyerUrl, flyerCacheKey]);
-
-  if (isLoading && !loadingTimedOut) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <p>Cargando fecha...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback si la car ga tarda demasiado (casos de red inestable en WebView)
-  if (isLoading && loadingTimedOut) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: colors.light,
-      }}>
-        <div style={{ textAlign: 'center', maxWidth: 320, padding: '0 1.5rem' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⚠️</div>
-          <p style={{ marginBottom: '8px' }}>No se pudo cargar la fecha.</p>
-          <p style={{ marginBottom: '16px', opacity: 0.7, fontSize: '0.9rem' }}>
-            Revisa tu conexión a internet e inténtalo de nuevo.
-          </p>
-          <button
-            onClick={() => {
-              // Forzar recarga de la página actual
-              if (typeof window !== 'undefined') {
-                window.location.reload();
-              }
-            }}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 999,
-              border: 'none',
-              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-              color: colors.light,
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!date) {
+  // Validar que tenemos un dateId válido antes de usar Suspense
+  if (!dateIdNum || isNaN(dateIdNum)) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -459,25 +339,81 @@ export default function EventDatePublicScreen() {
           <p style={{ marginBottom: '24px', opacity: 0.7 }}>
             La fecha que buscas no existe o no está disponible
           </p>
-          <button
-            onClick={() => navigate('/explore')}
-            style={{
-              padding: '14px 28px',
-              borderRadius: '50px',
-              border: 'none',
-              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-              color: colors.light,
-              fontSize: '1rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-            }}
-          >
-            🔍 Explorar Eventos
-          </button>
         </div>
       </div>
     );
   }
+
+  return (
+    <QueryErrorBoundaryWithReset>
+      <Suspense fallback={<EventDateSkeleton />}>
+        <EventDateContent dateId={dateIdNum} dateIdParam={dateIdParam} />
+      </Suspense>
+    </QueryErrorBoundaryWithReset>
+  );
+}
+
+/**
+ * Componente de contenido que usa Suspense
+ * Este componente asume que los datos están disponibles (Suspense maneja el loading)
+ * Con Suspense, no necesitamos early returns de loading - el hook siempre retorna datos
+ */
+function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string | undefined }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Con Suspense, date siempre existe cuando se renderiza
+  const date = useEventDateSuspense(dateId);
+  
+  // Estas queries pueden ser opcionales (no usan Suspense)
+  const { data: parent } = useEventParent(date?.parent_id ?? undefined);
+  const { data: myOrganizer } = useMyOrganizer();
+  const { data: ritmos } = useTags('ritmo');
+  const { data: zonas } = useTags('zona');
+
+  // Verificar si el usuario es propietario
+  const isOwner = React.useMemo(() => {
+    if (!user || !myOrganizer || !parent) return false;
+
+    // Comparar user_id del organizador con user_id del parent
+    const organizerUserId = (myOrganizer as any).user_id;
+    const parentUserId = (parent as any)?.user_id;
+
+    return organizerUserId === parentUserId;
+  }, [user, myOrganizer, parent]);
+
+  // Hook de RSVP
+  const {
+    userStatus,
+    stats,
+    toggleInterested,
+    isUpdating
+  } = useEventRSVP(dateId);
+
+  const interestedCount = (() => {
+    try {
+      const anyStats: any = stats as any;
+      // our RPC returns { interesado, total }
+      const val = anyStats?.interesado ?? anyStats?.interested ?? anyStats?.count ?? anyStats?.total ?? 0;
+      return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
+    } catch {
+      return 0;
+    }
+  })();
+
+  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
+  const baseFlyerUrl = date.flyer_url || undefined;
+  const flyerCacheKey =
+    ((date as any)?.updated_at as string | undefined) ||
+    (date.created_at as string | undefined) ||
+    '';
+  const flyerUrlCacheBusted = React.useMemo(() => {
+    if (!baseFlyerUrl) return null;
+    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
+    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
+    const key = encodeURIComponent(flyerCacheKey || '');
+    return `${baseFlyerUrl}${separator}_t=${key}`;
+  }, [baseFlyerUrl, flyerCacheKey]);
 
   const getRitmoName = (id: number) => {
     return ritmos?.find(r => r.id === id)?.nombre || `Ritmo ${id}`;
@@ -522,11 +458,11 @@ export default function EventDatePublicScreen() {
   };
 
   const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
-  const formattedDate = formatDate(date.fecha || date.fecha_inicio || '');
+  const formattedDate = formatDate(date.fecha || (date as any).fecha_inicio || '');
   const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
   const hasLocation = !!(date.lugar || date.direccion || date.ciudad);
-  const ritmosList = Array.isArray(date.ritmos)
-    ? date.ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
+  const ritmosList = Array.isArray((date as any).ritmos)
+    ? (date as any).ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
     : '';
   const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
 
@@ -1155,10 +1091,10 @@ export default function EventDatePublicScreen() {
                   )}
 
                   {/* Ritmos (solo ritmos, zonas ya están arriba) */}
-                  {Array.isArray(date.ritmos) && date.ritmos.length > 0 && (
+                  {Array.isArray((date as any).ritmos) && (date as any).ritmos.length > 0 && (
                     <div style={{ marginTop: '.75rem' }}>
                       <RitmosChips
-                        selected={date.ritmos.map((id: number) => String(id))}
+                        selected={(date as any).ritmos.map((id: number) => String(id))}
                         onChange={() => { }}
                         readOnly
                       />
@@ -1173,7 +1109,7 @@ export default function EventDatePublicScreen() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(`/social/fecha/${dateIdNum}/edit`)}
+                        onClick={() => navigate(`/social/fecha/${dateId}/edit`)}
                         style={{
                           padding: '8px 16px',
                           borderRadius: 999,
