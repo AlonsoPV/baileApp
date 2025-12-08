@@ -2,18 +2,53 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { getMediaBySlot } from "../../../utils/mediaSlots";
 
 interface OrganizerCardProps {
   item: any;
 }
 
 export default function OrganizerCard({ item }: OrganizerCardProps) {
-  // Priorizar avatar_url como fondo, luego portada, luego media
-  const bannerUrl: string | undefined = normalizeAndOptimizeUrl(
-    item.avatar_url ||
-    item.portada_url ||
-    (Array.isArray(item.media) ? item.media.find((m: any) => m?.slot === 'avatar' || m?.slot === 'cover')?.url || item.media[0]?.url || item.media[0] : undefined)
-  );
+  // Priorizar foto 1 de avatar (slot 'p1'), luego slot 'avatar', luego avatar_url, luego portada, luego cover
+  const bannerUrl: string | undefined = (() => {
+    const mediaList = Array.isArray(item?.media) ? item.media : [];
+    
+    // 1. Prioridad: slot 'p1' (foto 1 de avatar)
+    const slotP1 = getMediaBySlot(mediaList as any, 'p1');
+    if (slotP1?.url) {
+      return normalizeAndOptimizeUrl(slotP1.url as string) as string;
+    }
+    
+    // 2. Slot 'avatar'
+    const slotAvatar = getMediaBySlot(mediaList as any, 'avatar');
+    if (slotAvatar?.url) {
+      return normalizeAndOptimizeUrl(slotAvatar.url as string) as string;
+    }
+    
+    // 3. avatar_url directo
+    if (item?.avatar_url) {
+      return normalizeAndOptimizeUrl(item.avatar_url);
+    }
+    
+    // 4. portada_url
+    if (item?.portada_url) {
+      return normalizeAndOptimizeUrl(item.portada_url);
+    }
+    
+    // 5. Slot 'cover'
+    const slotCover = getMediaBySlot(mediaList as any, 'cover');
+    if (slotCover?.url) {
+      return normalizeAndOptimizeUrl(slotCover.url as string) as string;
+    }
+    
+    // 6. Fallback: primer media
+    if (mediaList.length > 0) {
+      const first = mediaList[0];
+      return normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined));
+    }
+    
+    return undefined;
+  })();
 
   return (
     <>
