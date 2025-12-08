@@ -367,6 +367,21 @@ export default function EventDatePublicScreen() {
     }
   })();
 
+  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
+  // Moved before early returns to ensure hooks are called in the same order on every render
+  const baseFlyerUrl = date?.flyer_url || undefined;
+  const flyerCacheKey =
+    ((date as any)?.updated_at as string | undefined) ||
+    (date?.created_at as string | undefined) ||
+    '';
+  const flyerUrlCacheBusted = React.useMemo(() => {
+    if (!baseFlyerUrl) return null;
+    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
+    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
+    const key = encodeURIComponent(flyerCacheKey || '');
+    return `${baseFlyerUrl}${separator}_t=${key}`;
+  }, [baseFlyerUrl, flyerCacheKey]);
+
   if (isLoading && !loadingTimedOut) {
     return (
       <div style={{
@@ -514,20 +529,6 @@ export default function EventDatePublicScreen() {
     ? date.ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
     : '';
   const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
-
-  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
-  const baseFlyerUrl = date.flyer_url || undefined;
-  const flyerCacheKey =
-    ((date as any)?.updated_at as string | undefined) ||
-    (date.created_at as string | undefined) ||
-    '';
-  const flyerUrlCacheBusted = React.useMemo(() => {
-    if (!baseFlyerUrl) return null;
-    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
-    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
-    const key = encodeURIComponent(flyerCacheKey || '');
-    return `${baseFlyerUrl}${separator}_t=${key}`;
-  }, [baseFlyerUrl, flyerCacheKey]);
 
   const seoImage =
     baseFlyerUrl ||
