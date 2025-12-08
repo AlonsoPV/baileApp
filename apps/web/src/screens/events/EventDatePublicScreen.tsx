@@ -514,8 +514,23 @@ export default function EventDatePublicScreen() {
     ? date.ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
     : '';
   const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
+
+  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
+  const baseFlyerUrl = date.flyer_url || undefined;
+  const flyerCacheKey =
+    ((date as any)?.updated_at as string | undefined) ||
+    (date.created_at as string | undefined) ||
+    '';
+  const flyerUrlCacheBusted = React.useMemo(() => {
+    if (!baseFlyerUrl) return null;
+    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
+    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
+    const key = encodeURIComponent(flyerCacheKey || '');
+    return `${baseFlyerUrl}${separator}_t=${key}`;
+  }, [baseFlyerUrl, flyerCacheKey]);
+
   const seoImage =
-    date.flyer_url ||
+    baseFlyerUrl ||
     getMediaBySlot(date.media as any, 'p1')?.url ||
     getMediaBySlot(parent?.media as any, 'p1')?.url ||
     SEO_LOGO_URL;
@@ -2053,7 +2068,7 @@ export default function EventDatePublicScreen() {
                   alignItems: 'center'
                 }}>
                   <img
-                    src={date.flyer_url}
+                    src={flyerUrlCacheBusted || date.flyer_url}
                     alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
                     style={{
                       width: '100%',
@@ -2062,6 +2077,12 @@ export default function EventDatePublicScreen() {
                       boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)',
                       aspectRatio: '4 / 5',
                       objectFit: 'cover'
+                    }}
+                    onError={(e) => {
+                      // Si falla con cache-busting, intentar sin él
+                      if (flyerUrlCacheBusted && e.currentTarget.src.includes('_t=')) {
+                        e.currentTarget.src = date.flyer_url!;
+                      }
                     }}
                   />
                 </div>
