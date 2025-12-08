@@ -143,6 +143,14 @@ export function useCreateDate() {
       // Claves nuevas/unificadas usadas por hooks de eventos modernos
       qc.invalidateQueries({ queryKey: ["event", "dates", d.parent_id] });
       qc.invalidateQueries({ queryKey: ["event", "date", d.id] });
+
+      // Listas por organizador
+      if (d.organizer_id) {
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer", d.organizer_id] });
+        qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer", d.organizer_id] });
+      }
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
     }
   });
 }
@@ -181,6 +189,14 @@ export function useUpdateDate() {
       qc.invalidateQueries({ queryKey: ["event", "dates", data.parent_id] });
       qc.invalidateQueries({ queryKey: ["event", "date", data.id] });
       
+      // Listas por organizador
+      if (data.organizer_id) {
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer", data.organizer_id] });
+        qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer", data.organizer_id] });
+      }
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+
       // Forzar refetch inmediato de la query específica para actualizar la UI
       qc.refetchQueries({ queryKey: ["event", "date", data.id] });
     }

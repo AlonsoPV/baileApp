@@ -44,6 +44,7 @@ export function EventDateEditScreen() {
     lugar: "",
     direccion: "",
     ciudad: "",
+    referencias: "",
     requisitos: "",
     flyer_url: "",
     estado_publicacion: "borrador" as 'borrador' | 'publicado'
@@ -62,6 +63,7 @@ export function EventDateEditScreen() {
           lugar: currentDate.lugar || "",
           direccion: currentDate.direccion || "",
           ciudad: currentDate.ciudad || "",
+          referencias: currentDate.referencias || "",
           requisitos: currentDate.requisitos || "",
           flyer_url: newFlyerUrl,
           estado_publicacion: (currentDate.estado_publicacion as 'borrador' | 'publicado')
@@ -70,6 +72,7 @@ export function EventDateEditScreen() {
         // Comparar flyer_url especialmente para detectar cambios
         if (prev.flyer_url !== newFlyerUrl || 
             prev.fecha !== newForm.fecha ||
+            prev.referencias !== newForm.referencias ||
             prev.estado_publicacion !== newForm.estado_publicacion) {
           return newForm;
         }
@@ -135,15 +138,21 @@ export function EventDateEditScreen() {
 
     try {
       if (isNew) {
-        console.log('[EventDateEditScreen] Creating new date with parentId:', parentId);
+        if (!(org as any)?.id) {
+          showToast('No se encontró tu perfil de organizador', 'error');
+          return;
+        }
+
+        console.log('[EventDateEditScreen] Creating new date with organizerId:', (org as any)?.id);
         const result = await create.mutateAsync({
-          parent_id: parentId ? Number(parentId) : null,
+          organizer_id: (org as any)?.id ?? null,
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
           hora_fin: form.hora_fin || null,
           lugar: form.lugar.trim() || null,
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
+          referencias: form.referencias.trim() || null,
           requisitos: form.requisitos.trim() || null,
           flyer_url: form.flyer_url?.trim() || null,
           estado_publicacion: form.estado_publicacion
@@ -160,6 +169,7 @@ export function EventDateEditScreen() {
           lugar: form.lugar.trim() || null,
           direccion: form.direccion.trim() || null,
           ciudad: form.ciudad.trim() || null,
+          referencias: form.referencias.trim() || null,
           requisitos: form.requisitos.trim() || null,
           flyer_url: form.flyer_url?.trim() || null,
           estado_publicacion: form.estado_publicacion
@@ -177,6 +187,7 @@ export function EventDateEditScreen() {
             lugar: updatedData.lugar || "",
             direccion: updatedData.direccion || "",
             ciudad: updatedData.ciudad || "",
+            referencias: updatedData.referencias || "",
             requisitos: updatedData.requisitos || "",
             flyer_url: updatedData.flyer_url || "",
             estado_publicacion: (updatedData.estado_publicacion as 'borrador' | 'publicado')
@@ -448,8 +459,8 @@ export function EventDateEditScreen() {
             </label>
             <input
               type="text"
-              value={form.requisitos}
-              onChange={e => setForm({ ...form, requisitos: e.target.value })}
+              value={form.referencias}
+              onChange={e => setForm({ ...form, referencias: e.target.value })}
               placeholder="Ej. Entrada lateral, 2do piso"
               className="org-editor-input"
               style={{
