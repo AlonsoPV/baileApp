@@ -112,6 +112,21 @@ export default function ClassCard({ item }: Props) {
   const bg = normalizeAndOptimizeUrl(item.ownerCoverUrl as any);
   const { data: allTags } = useTags() as any;
 
+  // Cache-busting para la portada de la clase (owner cover)
+  const bgCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.ownerId as string | number | undefined) ||
+    (item.titulo as string | undefined) ||
+    '';
+
+  const bgWithCacheBust = React.useMemo(() => {
+    if (!bg) return undefined;
+    const separator = String(bg).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(bgCacheKey ?? ''));
+    return `${bg}${separator}_t=${key}`;
+  }, [bg, bgCacheKey]);
+
   const ritmoNames: string[] = React.useMemo(() => {
     try {
       const labelByCatalogId = new Map<string, string>();
@@ -157,10 +172,10 @@ export default function ClassCard({ item }: Props) {
           transition={{ duration: 0.15 }}
           style={{
             ...card,
-          backgroundImage: bg ? `url(${bg})` : undefined,
-          backgroundSize: bg ? 'cover' : undefined,
-          backgroundPosition: bg ? 'center' : undefined,
-          backgroundRepeat: bg ? 'no-repeat' : undefined
+          backgroundImage: bgWithCacheBust ? `url(${bgWithCacheBust})` : (bg ? `url(${bg})` : undefined),
+          backgroundSize: (bgWithCacheBust || bg) ? 'cover' : undefined,
+          backgroundPosition: (bgWithCacheBust || bg) ? 'center' : undefined,
+          backgroundRepeat: (bgWithCacheBust || bg) ? 'no-repeat' : undefined
         }}
       >
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />

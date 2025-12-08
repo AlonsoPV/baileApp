@@ -28,6 +28,21 @@ export default function AcademyCard({ item }: AcademyCardProps) {
       (mediaList[0] as any)?.path
     ) || null;
 
+  // Cache-busting para la portada de la academia
+  const avatarCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.id as string | number | undefined) ||
+    (item.nombre_publico as string | undefined) ||
+    '';
+
+  const primaryAvatarWithCacheBust = React.useMemo(() => {
+    if (!primaryAvatar) return null;
+    const separator = String(primaryAvatar).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(avatarCacheKey ?? ''));
+    return `${primaryAvatar}${separator}_t=${key}`;
+  }, [primaryAvatar, avatarCacheKey]);
+
   // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
   const ritmoNombres: string[] = (() => {
     try {
@@ -79,8 +94,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: primaryAvatar
-            ? `url(${primaryAvatar})`
+          background: (primaryAvatarWithCacheBust || primaryAvatar)
+            ? `url(${primaryAvatarWithCacheBust || primaryAvatar})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',

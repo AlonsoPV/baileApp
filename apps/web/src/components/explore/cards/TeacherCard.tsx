@@ -39,6 +39,21 @@ export default function TeacherCard({ item }: { item: any }) {
     
     return undefined;
   })();
+
+  // Cache-busting para la portada del maestro
+  const bannerCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.id as string | number | undefined) ||
+    (item.nombre_publico as string | undefined) ||
+    '';
+
+  const bannerUrlWithCacheBust = React.useMemo(() => {
+    if (!bannerUrl) return undefined;
+    const separator = String(bannerUrl).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(bannerCacheKey ?? ''));
+    return `${bannerUrl}${separator}_t=${key}`;
+  }, [bannerUrl, bannerCacheKey]);
   const ritmoNombres: string[] = (item.ritmos || [])
     .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
     .filter(Boolean);
@@ -71,8 +86,8 @@ export default function TeacherCard({ item }: { item: any }) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: bannerUrl
-            ? `url(${bannerUrl})`
+          background: (bannerUrlWithCacheBust || bannerUrl)
+            ? `url(${bannerUrlWithCacheBust || bannerUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',

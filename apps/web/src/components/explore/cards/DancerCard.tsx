@@ -67,6 +67,21 @@ export default function DancerCard({ item, to }: Props) {
     return undefined;
   })();
 
+  // Cache-busting para la portada del usuario (dancer)
+  const coverCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.id as string | undefined) ||
+    (item.display_name as string | undefined) ||
+    '';
+
+  const coverUrlWithCacheBust = React.useMemo(() => {
+    if (!coverUrl) return undefined;
+    const separator = String(coverUrl).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(coverCacheKey ?? ''));
+    return `${coverUrl}${separator}_t=${key}`;
+  }, [coverUrl, coverCacheKey]);
+
   const name = item.display_name || "Dancer";
   const bio = item.bio || "";
 
@@ -135,8 +150,8 @@ export default function DancerCard({ item, to }: Props) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: coverUrl
-            ? `url(${coverUrl})`
+          background: (coverUrlWithCacheBust || coverUrl)
+            ? `url(${coverUrlWithCacheBust || coverUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',

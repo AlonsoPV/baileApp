@@ -48,6 +48,23 @@ export default function EventCard({ item }: EventCardProps) {
     }
     return undefined;
   })();
+
+  // Cache-busting para el flyer, usando updated_at/created_at/id para forzar refresco cuando cambie en BD
+  const flyerCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    ((item as any)?.events_parent?.updated_at as string | undefined) ||
+    ((item as any)?.events_parent?.id as string | number | undefined) ||
+    (item._original_id as string | number | undefined) ||
+    (item.id as string | number | undefined) ||
+    '';
+
+  const flyerWithCacheBust = React.useMemo(() => {
+    if (!flyer) return undefined;
+    const separator = String(flyer).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(flyerCacheKey ?? ''));
+    return `${flyer}${separator}_t=${key}`;
+  }, [flyer, flyerCacheKey]);
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
   const horaFin = item.hora_fin || item.evento_hora_fin;
@@ -139,8 +156,8 @@ export default function EventCard({ item }: EventCardProps) {
           style={{
             position: 'relative',
             borderRadius: '1.25rem',
-            background: flyer
-              ? `url(${flyer})`
+            background: (flyerWithCacheBust || flyer)
+              ? `url(${flyerWithCacheBust || flyer})`
               : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
             // Usar cover para que la imagen llene toda la card, sin barras
             backgroundSize: 'cover',

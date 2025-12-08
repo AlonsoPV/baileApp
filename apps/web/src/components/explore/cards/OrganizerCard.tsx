@@ -50,6 +50,21 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     return undefined;
   })();
 
+  // Cache-busting para la imagen del organizador
+  const bannerCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.id as string | number | undefined) ||
+    (item.nombre_publico as string | undefined) ||
+    '';
+
+  const bannerUrlWithCacheBust = React.useMemo(() => {
+    if (!bannerUrl) return undefined;
+    const separator = String(bannerUrl).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(bannerCacheKey ?? ''));
+    return `${bannerUrl}${separator}_t=${key}`;
+  }, [bannerUrl, bannerCacheKey]);
+
   return (
     <>
       <style>{`
@@ -80,8 +95,8 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: bannerUrl
-            ? `url(${bannerUrl})`
+          background: (bannerUrlWithCacheBust || bannerUrl)
+            ? `url(${bannerUrlWithCacheBust || bannerUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',

@@ -22,6 +22,21 @@ export default function BrandCard({ item }: Props) {
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
     .filter(Boolean);
 
+  // Cache-busting para la portada de la marca
+  const coverCacheKey =
+    ((item as any)?.updated_at as string | undefined) ||
+    ((item as any)?.created_at as string | undefined) ||
+    (item.id as string | number | undefined) ||
+    (item.nombre_publico as string | undefined) ||
+    '';
+
+  const coverWithCacheBust = React.useMemo(() => {
+    if (!cover) return undefined;
+    const separator = String(cover).includes('?') ? '&' : '?';
+    const key = encodeURIComponent(String(coverCacheKey ?? ''));
+    return `${cover}${separator}_t=${key}`;
+  }, [cover, coverCacheKey]);
+
   return (
     <>
       <style>{`
@@ -52,8 +67,8 @@ export default function BrandCard({ item }: Props) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: cover
-            ? `url(${cover})`
+          background: (coverWithCacheBust || cover)
+            ? `url(${coverWithCacheBust || cover})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
