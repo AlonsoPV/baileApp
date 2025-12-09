@@ -8,6 +8,15 @@ import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
+
+  // Nombre robusto: aceptar múltiples campos antes de caer en el fallback
+  const displayName =
+    item.nombre_publico ||
+    item.teacher_name ||
+    item.nombre ||
+    item.name ||
+    "Maestr@";
+
   // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
   const bannerUrl: string | undefined = (() => {
     
@@ -128,7 +137,7 @@ export default function TeacherCard({ item }: { item: any }) {
             padding: '6px 10px',
             borderRadius: 10
           }}>
-            {item.nombre_publico || 'Maestr@'}
+            {displayName}
           </div>
           {item.bio && (
             <div style={{

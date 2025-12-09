@@ -15,7 +15,13 @@ interface AcademyCardProps {
 export default function AcademyCard({ item }: AcademyCardProps) {
   const { data: allTags } = useTags() as any;
   const id = item.id;
-  const nombre = item.nombre_publico || item.nombre || "Academia";
+  // Nombre robusto: aceptar múltiples campos antes de caer en el fallback
+  const nombre =
+    item.nombre_publico ||
+    item.academy_name ||
+    item.nombre ||
+    item.name ||
+    "Academia";
   const bio = item.bio || "";
   const mediaList = Array.isArray(item?.media) ? (item.media as MediaSlotItem[]) : [];
   const primaryAvatar =
