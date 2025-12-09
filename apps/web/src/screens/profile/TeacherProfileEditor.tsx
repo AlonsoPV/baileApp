@@ -72,7 +72,7 @@ const formatCurrency = (value?: number | string | null) => {
   }
 };
 
-// CSS constante a nivel de módulo para evitar reinserción en cada render
+// CSS constante a nivel de módulo para evitar r einserción en cada render
 const STYLES = `
         .academy-editor-container {
           min-height: 100vh;

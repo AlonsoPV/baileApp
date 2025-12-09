@@ -2810,7 +2810,7 @@ export default function AcademyProfileEditor() {
                 </>
               )}
 
-              {/* Grupos de Competencia */}
+              {/* Grupos de Competen cia */}
               {academyId && (
                 <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
                   <div className="teacher-invite-header competition-group-header">
