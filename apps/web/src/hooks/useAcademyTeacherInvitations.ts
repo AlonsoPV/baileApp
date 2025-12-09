@@ -178,7 +178,10 @@ export function useAcceptedTeachers(academyId?: number) {
         }
         
         const enriched = {
+          // Asegurar que el nombre esté siempre en teacher_name,
+          // mapeando desde teacher_nombre si es necesario
           ...t,
+          teacher_name: (t as any).teacher_name ?? (t as any).teacher_nombre,
           teacher_avatar: fullProfile?.avatar_url || avatarFromMedia || t.teacher_avatar || null,
           teacher_portada: fullProfile?.portada_url || portadaFromMedia || t.teacher_portada || null,
           teacher_media: fullProfile?.media || t.teacher_media || [],
@@ -271,7 +274,7 @@ export function useTeacherAcademies(teacherId?: number) {
       try {
         const { data: publicData, error: publicError } = await supabase
           .from('v_academies_public')
-          .select('id, avatar_url, portada_url, media')
+          .select('id, nombre_publico, avatar_url, portada_url, media')
           .in('id', academyIds);
         
         if (!publicError && publicData) {
@@ -282,7 +285,7 @@ export function useTeacherAcademies(teacherId?: number) {
           console.log('[useTeacherAcademies] Intentando desde profiles_academy directamente...');
           const { data: directData, error: directError } = await supabase
             .from('profiles_academy')
-            .select('id, avatar_url, portada_url, media')
+            .select('id, nombre_publico, avatar_url, portada_url, media')
             .in('id', academyIds);
           
           if (directError) {
@@ -336,7 +339,14 @@ export function useTeacherAcademies(teacherId?: number) {
         }
         
         const enriched = {
+          // Asegurar que el nombre esté siempre en academy_name,
+          // mapeando desde academy_nombre o nombre_publico si es necesario
           ...a,
+          academy_name:
+            (a as any).academy_name ??
+            (a as any).academy_nombre ??
+            fullProfile?.nombre_publico ??
+            null,
           academy_avatar: fullProfile?.avatar_url || avatarFromMedia || a.academy_avatar || null,
           academy_portada: fullProfile?.portada_url || portadaFromMedia || a.academy_portada || null,
           academy_media: fullProfile?.media || a.academy_media || [],

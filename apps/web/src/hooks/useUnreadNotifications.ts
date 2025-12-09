@@ -183,8 +183,9 @@ export function useUnreadNotifications(userId?: string) {
             } else if (status === 'CHANNEL_ERROR') {
               // Error en el canal - usar polling como fallback
               // Solo loggear una vez por tipo de error y solo en desarrollo
+              // Usar console.log en lugar de console.warn ya que el fallback funciona correctamente
               if (!isInProduction && !hasLoggedWarnings.current.has('CHANNEL_ERROR')) {
-                console.warn('[useUnreadNotifications] Realtime connection error - using polling fallback');
+                console.log('[useUnreadNotifications] Realtime connection error - using polling fallback (this is expected behavior)');
                 hasLoggedWarnings.current.add('CHANNEL_ERROR');
               }
               startPolling();
@@ -205,15 +206,16 @@ export function useUnreadNotifications(userId?: string) {
               } else {
                 // Después de MAX_RETRIES, dejar de intentar y usar solo polling
                 if (!isInProduction && !hasLoggedWarnings.current.has('CHANNEL_ERROR_MAX_RETRIES')) {
-                  console.warn('[useUnreadNotifications] Max retries reached for Realtime - using polling only');
+                  console.log('[useUnreadNotifications] Max retries reached for Realtime - using polling only (this is expected behavior)');
                   hasLoggedWarnings.current.add('CHANNEL_ERROR_MAX_RETRIES');
                 }
               }
             } else if (status === 'TIMED_OUT') {
               // Timeout - usar polling como fallback
               // Solo loggear una vez por tipo de error y solo en desarrollo
+              // Usar console.log en lugar de console.warn ya que el fallback funciona correctamente
               if (!isInProduction && !hasLoggedWarnings.current.has('TIMED_OUT')) {
-                console.warn('[useUnreadNotifications] Realtime timeout - using polling fallback');
+                console.log('[useUnreadNotifications] Realtime timeout - using polling fallback (this is expected behavior)');
                 hasLoggedWarnings.current.add('TIMED_OUT');
               }
               startPolling();
@@ -234,7 +236,7 @@ export function useUnreadNotifications(userId?: string) {
               } else {
                 // Después de MAX_RETRIES, dejar de intentar y usar solo polling
                 if (!isInProduction && !hasLoggedWarnings.current.has('TIMED_OUT_MAX_RETRIES')) {
-                  console.warn('[useUnreadNotifications] Max retries reached for Realtime - using polling only');
+                  console.log('[useUnreadNotifications] Max retries reached for Realtime - using polling only (this is expected behavior)');
                   hasLoggedWarnings.current.add('TIMED_OUT_MAX_RETRIES');
                 }
               }
@@ -272,8 +274,9 @@ export function useUnreadNotifications(userId?: string) {
       } catch (error) {
         // Si falla la suscripción, usar polling como fallback
         // Solo loggear en desarrollo y solo una vez
+        // Usar console.log en lugar de console.warn ya que el fallback funciona correctamente
         if (!isInProduction && !hasLoggedWarnings.current.has('SUBSCRIBE_ERROR')) {
-          console.warn('[useUnreadNotifications] Failed to subscribe to Realtime - using polling fallback', error);
+          console.log('[useUnreadNotifications] Failed to subscribe to Realtime - using polling fallback (this is expected behavior)', error);
           hasLoggedWarnings.current.add('SUBSCRIBE_ERROR');
         }
         startPolling();

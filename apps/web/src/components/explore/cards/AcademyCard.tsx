@@ -19,6 +19,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
   const nombre =
     item.nombre_publico ||
     item.academy_name ||
+    item.display_name ||
+    item.nombre_academia ||
     item.nombre ||
     item.name ||
     "Academia";

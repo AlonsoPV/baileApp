@@ -1169,19 +1169,49 @@ export default function TeacherProfileLive() {
                 <HorizontalSlider
                   items={academies}
                   renderItem={(academy: any) => {
+                    // Usar la misma lógica que AcademyPublicScreen.tsx para obtener la URL
+                    // Primero p1, luego cover - misma prioridad que "Logo de la academia"
+                    const academyMedia = Array.isArray(academy.academy_media) ? academy.academy_media : [];
+                    const p1Url = getMediaBySlot(academyMedia as unknown as MediaSlotItem[], 'p1')?.url;
+                    const coverUrl = getMediaBySlot(academyMedia as unknown as MediaSlotItem[], 'cover')?.url;
+                    
+                    // Construir media array con la misma prioridad que AcademyPublicScreen.tsx
+                    const media: any[] = [];
+                    if (p1Url) {
+                      media.push({ url: p1Url, type: 'image', slot: 'p1' });
+                    }
+                    if (coverUrl) {
+                      media.push({ url: coverUrl, type: 'image', slot: 'cover' });
+                    }
+                    
+                    // Si no hay media desde el array, usar las URLs directas como fallback
+                    if (media.length === 0) {
+                      if (academy.academy_avatar) {
+                        media.push({ url: academy.academy_avatar, type: 'image', slot: 'p1' });
+                      }
+                      if (academy.academy_portada) {
+                        media.push({ url: academy.academy_portada, type: 'image', slot: 'cover' });
+                      }
+                    }
+                    
+                    // Obtener la URL del avatar usando la misma lógica que AcademyPublicScreen.tsx
+                    const primaryAvatarUrl = p1Url || coverUrl || academy.academy_avatar || academy.academy_portada || null;
+                    
                     const academyData = {
                       id: academy.academy_id,
-                      nombre_publico: academy.academy_name,
+                      // Nombre robusto para la card (misma lógica que AcademyCard.tsx)
+                      nombre_publico:
+                        academy.academy_name ??
+                        academy.academy_nombre ??
+                        academy.nombre_publico ??
+                        academy.nombre_academia ??
+                        academy.display_name,
                       bio: academy.academy_bio || '',
-                      avatar_url: academy.academy_avatar || null,
+                      avatar_url: primaryAvatarUrl, // Misma URL que "Logo de la academia" en AcademyPublicScreen
                       portada_url: academy.academy_portada || null,
                       ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
                       zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-                      media: academy.academy_portada 
-                        ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
-                        : academy.academy_avatar 
-                        ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-                        : (Array.isArray(academy.academy_media) ? academy.academy_media : [])
+                      media
                     };
                     return (
                       <Suspense key={academy.academy_id} fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>

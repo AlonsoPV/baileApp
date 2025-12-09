@@ -280,7 +280,31 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
         </p>
         
         <div className={`photo-grid ${isMainPhoto ? 'photo-grid-main' : (verticalLayout ? 'photo-grid-vertical' : 'photo-grid-regular')}`}>
-          {slots.map((slot) => (
+          {slots.map((slot) => {
+            // Para foto principal, siempre usar el slot 'p1' específicamente
+            // NO usar fallback a otras fotos (p2, p3, etc.) para evitar mostrar la última foto disponible
+            const targetSlot = isMainPhoto ? 'p1' : slot;
+            const mediaItem = isMainPhoto 
+              ? getMediaBySlot(media, 'p1') // Solo buscar p1, sin fallback
+              : getMediaBySlot(media, slot);
+            
+            // Debug: verificar que estamos usando el slot correcto
+            if (isMainPhoto && process.env.NODE_ENV === 'development') {
+              const allMedia = Array.isArray(media) ? media : [];
+              const p1Item = allMedia.find((m: any) => m?.slot === 'p1');
+              const p2Item = allMedia.find((m: any) => m?.slot === 'p2');
+              const p3Item = allMedia.find((m: any) => m?.slot === 'p3');
+              if (!p1Item && (p2Item || p3Item)) {
+                console.warn('[PhotoManagementSection] ⚠️ isMainPhoto=true pero no se encontró slot p1. Media disponible:', {
+                  total: allMedia.length,
+                  slots: allMedia.map((m: any) => m?.slot),
+                  p2: p2Item ? 'existe' : 'no existe',
+                  p3: p3Item ? 'existe' : 'no existe'
+                });
+              }
+            }
+            
+            return (
             <div key={slot} className={`photo-item ${isMainPhoto ? 'photo-item-main' : ''} ${verticalLayout ? 'photo-item-vertical' : ''}`}>
               <h3 className={`photo-item-title ${isMainPhoto ? 'photo-item-title-main' : ''}`}>
                 {isMainPhoto ? '👤 Avatar / Foto Principal (p1)' : `📷 Foto ${slot.toUpperCase()}`}
@@ -292,20 +316,33 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                 </p>
               )}
               
-              <div className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''} ${verticalLayout ? 'photo-container-vertical' : ''}`}>
-              {getMediaBySlot(media, slot) ? (
+              <div 
+                className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''} ${verticalLayout ? 'photo-container-vertical' : ''}`}
+                style={isMainPhoto && mediaItem ? {
+                  backgroundImage: `url(${mediaItem.url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center top',
+                  backgroundRepeat: 'no-repeat'
+                } : {}}
+              >
+              {mediaItem ? (
+                isMainPhoto ? (
+                  // Para foto principal, la imagen se muestra como fondo del contenedor
+                  null
+                ) : (
                 <ImageWithFallback
-                  src={getMediaBySlot(media, slot)!.url}
-                  alt={isMainPhoto ? "Foto principal" : `Foto ${slot}`}
+                    src={mediaItem.url}
+                    alt={`Foto ${slot}`}
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: isMainPhoto ? 'center top' : 'center',
+                      objectFit: verticalLayout ? 'contain' : 'cover',
+                      objectPosition: 'center',
                     maxWidth: verticalLayout ? '100%' : 'none',
                     maxHeight: verticalLayout ? '100%' : 'none'
                   }}
                 />
+                )
               ) : (
                 <div style={{
                   width: '100%',
@@ -335,21 +372,21 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                   minWidth: '120px',
                   textAlign: 'center'
                 }}>
-                  {uploading[slot] ? '⏳ Subiendo...' : (isMainPhoto ? '📤 Subir Foto' : '📤 Subir')}
+                  {uploading[targetSlot] ? '⏳ Subiendo...' : (isMainPhoto ? '📤 Subir Foto' : '📤 Subir')}
                   <input
                     type="file"
                     accept="image/*"
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) uploadFile(file, slot, 'photo');
+                      if (file) uploadFile(file, targetSlot, 'photo');
                     }}
                   />
                 </label>
                 
-                {getMediaBySlot(media, slot) && (
+                {mediaItem && (
                   <button
-                    onClick={() => removeFile(slot)}
+                    onClick={() => removeFile(targetSlot)}
                     style={{
                       padding: '0.5rem 1rem',
                       background: '#f44336',
@@ -368,7 +405,8 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </>

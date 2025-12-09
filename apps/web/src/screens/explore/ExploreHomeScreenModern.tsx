@@ -1325,7 +1325,7 @@ export default function ExploreHomeScreen() {
     q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
-    pageSize: 48,
+    pageSize: 100, // Aumentar pageSize para cargar más usuarios por página
     enabled: shouldLoadUsuarios
   });
   const usuariosLoadMore = useLoadMoreOnDemand(shouldLoadUsuarios ? usuariosQuery : null);
@@ -1334,6 +1334,32 @@ export default function ExploreHomeScreen() {
     if (!shouldLoadUsuarios) return [];
     return flattenQueryData(usuariosQuery.data);
   }, [usuariosQuery.data, shouldLoadUsuarios]);
+
+  // Cargar automáticamente todas las páginas de usuarios para mostrar todos sin límite
+  const usuariosAutoLoadRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!shouldLoadUsuarios || !usuariosQuery.data) {
+      usuariosAutoLoadRef.current = false;
+      return;
+    }
+    
+    // Si hay más páginas y no se está cargando, cargar la siguiente página automáticamente
+    if (usuariosQuery.hasNextPage && !usuariosQuery.isFetchingNextPage && !usuariosQuery.isLoading && !usuariosAutoLoadRef.current) {
+      usuariosAutoLoadRef.current = true;
+      usuariosQuery.fetchNextPage()
+        .then(() => {
+          usuariosAutoLoadRef.current = false;
+        })
+        .catch((err) => {
+          usuariosAutoLoadRef.current = false;
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[ExploreHomeScreen] Error cargando más usuarios:', err);
+          }
+        });
+    } else if (!usuariosQuery.hasNextPage) {
+      usuariosAutoLoadRef.current = false;
+    }
+  }, [shouldLoadUsuarios, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.data, usuariosQuery.fetchNextPage]);
 
   const classesList = React.useMemo(() => {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -1506,13 +1532,50 @@ export default function ExploreHomeScreen() {
     };
 
     const filtered = merged.filter(matchesPresetAndRange);
+    
+    // Función helper para convertir hora HH:MM a minutos desde medianoche para comparación
+    const timeToMinutes = (timeStr?: string | null): number | null => {
+      if (!timeStr) return null;
+      const parts = String(timeStr).trim().split(':');
+      if (parts.length >= 2) {
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        if (Number.isFinite(hours) && Number.isFinite(minutes)) {
+          return hours * 60 + minutes;
+        }
+      }
+      return null;
+    };
+    
     const sorted = [...filtered].sort((a, b) => {
+      // Primero ordenar por fecha
       const dateA = nextOccurrence(a);
       const dateB = nextOccurrence(b);
-      if (!dateA && !dateB) return 0;
+      if (!dateA && !dateB) {
+        // Si ambas no tienen fecha, ordenar por hora
+        const timeA = timeToMinutes(a.inicio);
+        const timeB = timeToMinutes(b.inicio);
+        if (timeA === null && timeB === null) return 0;
+        if (timeA === null) return 1;
+        if (timeB === null) return -1;
+        return timeA - timeB;
+      }
       if (!dateA) return 1;
       if (!dateB) return -1;
-      return dateA.getTime() - dateB.getTime();
+      
+      const dateDiff = dateA.getTime() - dateB.getTime();
+      
+      // Si las fechas son iguales (mismo día), ordenar por hora de inicio
+      if (dateDiff === 0) {
+        const timeA = timeToMinutes(a.inicio);
+        const timeB = timeToMinutes(b.inicio);
+        if (timeA === null && timeB === null) return 0;
+        if (timeA === null) return 1; // Sin hora va al final
+        if (timeB === null) return -1; // Sin hora va al final
+        return timeA - timeB; // Ordenar por hora ascendente
+      }
+      
+      return dateDiff;
     });
     return sorted;
   }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred, todayYmd]);
@@ -2061,51 +2124,55 @@ export default function ExploreHomeScreen() {
               ) : (
                 <>
                   {validUsuarios.length > 0 ? (
-                    <HorizontalSlider
-                      {...sliderProps}
-                      items={validUsuarios}
-                      renderItem={(u: any, idx: number) => (
-                        <motion.div
-                          key={u.user_id ?? idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                          }}
-                        >
-                          <DancerCard item={{
-                            id: u.user_id,
-                            display_name: u.display_name,
-                            bio: u.bio,
-                            avatar_url: u.avatar_url,
-                            banner_url: u.banner_url,
-                            portada_url: u.portada_url,
-                            media: u.media,
-                            ritmos: u.ritmos,
-                            ritmosSeleccionados: u.ritmos_seleccionados,
-                            zonas: u.zonas
-                          }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                        </motion.div>
+                    <>
+                      <HorizontalSlider
+                        {...sliderProps}
+                        items={validUsuarios}
+                        renderItem={(u: any, idx: number) => (
+                          <motion.div
+                            key={u.user_id ?? idx}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05, duration: 0.3 }}
+                            whileHover={{ y: -4, scale: 1.02 }}
+                            onClickCapture={handlePreNavigate}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: 16,
+                              padding: 0,
+                              overflow: 'hidden',
+                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
+                            <DancerCard item={{
+                              id: u.user_id,
+                              display_name: u.display_name,
+                              bio: u.bio,
+                              avatar_url: u.avatar_url,
+                              banner_url: u.banner_url,
+                              portada_url: u.portada_url,
+                              media: u.media,
+                              ritmos: u.ritmos,
+                              ritmosSeleccionados: u.ritmos_seleccionados,
+                              zonas: u.zonas
+                            }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                          </motion.div>
+                        )}
+                      />
+                      {/* Mostrar indicador de carga mientras se cargan más usuarios automáticamente */}
+                      {usuariosQuery.isFetchingNextPage && (
+                        <div style={{ 
+                          textAlign: 'center', 
+                          padding: '1rem', 
+                          color: colors.gray[400],
+                          fontSize: '0.875rem'
+                        }}>
+                          Cargando más usuarios...
+                        </div>
                       )}
-                    />
+                    </>
                   ) : null}
-                  {usuariosLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={usuariosLoadMore.handleLoadMore}
-                      disabled={usuariosLoadMore.isFetching}
-                    >
-                      {usuariosLoadMore.isFetching ? 'Cargando...' : 'Cargar más usuarios'}
-                    </button>
-                  )}
                 </>
               )}
             </Section>

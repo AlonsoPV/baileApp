@@ -1918,20 +1918,44 @@ export default function AcademyPublicScreen() {
               <HorizontalSlider
                 items={acceptedTeachers}
                 renderItem={(t: any) => {
+                  // Usar la misma lógica que TeacherProfileLive.tsx para obtener la URL
+                  // Primero cover, luego p1 - misma prioridad que "Foto del maestro"
+                  const teacherMedia = Array.isArray(t.teacher_media) ? t.teacher_media : [];
+                  const coverUrl = getMediaBySlot(teacherMedia as unknown as MediaSlotItem[], 'cover')?.url;
+                  const p1Url = getMediaBySlot(teacherMedia as unknown as MediaSlotItem[], 'p1')?.url;
+                  
+                  // Construir media array con la misma prioridad que TeacherProfileLive.tsx
+                  const media: any[] = [];
+                  if (coverUrl) {
+                    media.push({ url: coverUrl, type: 'image', slot: 'cover' });
+                  }
+                  if (p1Url) {
+                    media.push({ url: p1Url, type: 'image', slot: 'p1' });
+                  }
+                  
+                  // Si no hay media desde el array, usar las URLs directas como fallback
+                  if (media.length === 0) {
+                    if (t.teacher_portada) {
+                      media.push({ url: t.teacher_portada, type: 'image', slot: 'cover' });
+                    }
+                    if (t.teacher_avatar) {
+                      media.push({ url: t.teacher_avatar, type: 'image', slot: 'p1' });
+                    }
+                  }
+                  
+                  // Obtener la URL del banner usando la misma lógica que TeacherProfileLive.tsx
+                  const bannerUrl = coverUrl || p1Url || t.teacher_portada || t.teacher_avatar || null;
+                  
                   const teacherData = {
                     id: t.teacher_id,
                     nombre_publico: t.teacher_name,
                     bio: t.teacher_bio || '',
                     avatar_url: t.teacher_avatar || null,
                     portada_url: t.teacher_portada || null,
-                    banner_url: t.teacher_portada || t.teacher_avatar || null,
+                    banner_url: bannerUrl, // Misma URL que "Foto del maestro" en TeacherProfileLive
                     ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
                     zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
-                    media: t.teacher_portada 
-                      ? [{ url: t.teacher_portada, type: 'image', slot: 'cover' }]
-                      : t.teacher_avatar 
-                      ? [{ url: t.teacher_avatar, type: 'image', slot: 'avatar' }]
-                      : (Array.isArray(t.teacher_media) ? t.teacher_media : [])
+                    media
                   };
                   return <TeacherCard key={t.teacher_id} item={teacherData} />;
                 }}
