@@ -111,6 +111,10 @@ export default function TeacherCard({ item }: { item: any }) {
         {!bannerUrl && (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
         )}
+        {/* Overlay para mejorar legibilidad del nombre cuando hay imagen */}
+        {bannerUrl && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        )}
         {/* Contenido principal: nombre/bio arriba de las chips */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{
