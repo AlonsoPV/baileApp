@@ -300,7 +300,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: isMainPhoto ? 'cover' : (verticalLayout ? 'contain' : 'cover'),
+                    objectFit: 'cover',
                     objectPosition: isMainPhoto ? 'center top' : 'center',
                     maxWidth: verticalLayout ? '100%' : 'none',
                     maxHeight: verticalLayout ? '100%' : 'none'
