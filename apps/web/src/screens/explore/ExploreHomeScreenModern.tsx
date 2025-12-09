@@ -1199,7 +1199,7 @@ export default function ExploreHomeScreen() {
       ));
 
       // Si hay rango de fechas, verificar que la fecha del evento esté dentro del rango
-      if (hasDateRange) {
+        if (hasDateRange) {
         // ✅ CORRECCIÓN: Comparar strings YYYY-MM-DD directamente para evitar problemas de zona horaria
         // Esto asegura que eventos del 7, 8, 9 y 10 de febrero se incluyan si el rango es 7-10
         
@@ -1964,11 +1964,11 @@ export default function ExploreHomeScreen() {
                 maxItems={12}
               />
               {/* Mantener botón de cargar más si es necesario */}
-              {academiasLoadMore.hasNextPage && (
-                <button
-                  className="load-more-btn"
-                  onClick={academiasLoadMore.handleLoadMore}
-                  disabled={academiasLoadMore.isFetching}
+                  {academiasLoadMore.hasNextPage && (
+                    <button
+                      className="load-more-btn"
+                      onClick={academiasLoadMore.handleLoadMore}
+                      disabled={academiasLoadMore.isFetching}
                   style={{
                     marginTop: '1rem',
                     padding: '0.75rem 1.5rem',
@@ -1980,9 +1980,9 @@ export default function ExploreHomeScreen() {
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
-                >
-                  {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
-                </button>
+                    >
+                      {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
+                    </button>
               )}
             </Section>
           )}

@@ -32,16 +32,19 @@ interface BioSectionProps {
 }
 
 export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
-  // Debug logs
+  // Debug logs solo en desarrollo
   useEffect(() => {
-    console.log('[BioSection] Bio:', bio);
-    console.log('[BioSection] Redes raw:', redes);
-    console.log('[BioSection] Redes type:', typeof redes);
-    console.log('[BioSection] Redes keys:', redes ? Object.keys(redes) : 'null');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[BioSection] Bio:', bio);
+      console.log('[BioSection] Redes raw:', redes);
+      console.log('[BioSection] Redes type:', typeof redes);
+      console.log('[BioSection] Redes keys:', redes ? Object.keys(redes) : 'null');
+    }
   }, [bio, redes]);
 
   // Normalizar redes sociales (pueden venir en diferentes formatos)
-  const rawLinks = redes || {};
+  // Asegurar que redes sea un objeto válido
+  const rawLinks = (redes && typeof redes === 'object' && !Array.isArray(redes)) ? redes : {};
   
   // Normalizar 'web' a 'website' para compatibilidad y evitar duplicados
   // Si existe website, usar solo website (excluir web)

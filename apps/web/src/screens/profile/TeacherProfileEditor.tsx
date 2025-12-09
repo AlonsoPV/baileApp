@@ -1058,20 +1058,28 @@ const CompetitionGroupItem = React.memo<{
 CompetitionGroupItem.displayName = 'CompetitionGroupItem';
 
 const AcademyItem = React.memo<{ academy: any }>(({ academy }) => {
-  const academyData = React.useMemo(() => ({
-    id: academy.academy_id,
-    nombre_publico: academy.academy_name,
-    bio: academy.academy_bio || '',
-    avatar_url: academy.academy_avatar || null,
-    portada_url: academy.academy_portada || null,
-    ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
-    zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
-    media: academy.academy_portada 
-      ? [{ url: academy.academy_portada, type: 'image', slot: 'cover' }]
-      : academy.academy_avatar 
-      ? [{ url: academy.academy_avatar, type: 'image', slot: 'avatar' }]
-      : []
-  }), [academy]);
+  const academyData = React.useMemo(() => {
+    const media: any[] = [];
+    // Priorizar avatar (p1) para que se muestre en la card
+    if (academy.academy_avatar) {
+      media.push({ url: academy.academy_avatar, type: 'image', slot: 'p1' });
+    }
+    // Luego portada (cover) si existe
+    if (academy.academy_portada) {
+      media.push({ url: academy.academy_portada, type: 'image', slot: 'cover' });
+    }
+    
+    return {
+      id: academy.academy_id,
+      nombre_publico: academy.academy_name,
+      bio: academy.academy_bio || '',
+      avatar_url: academy.academy_avatar || null,
+      portada_url: academy.academy_portada || null,
+      ritmos: Array.isArray(academy.academy_ritmos) ? academy.academy_ritmos : [],
+      zonas: Array.isArray(academy.academy_zonas) ? academy.academy_zonas : [],
+      media
+    };
+  }, [academy]);
   
   return (
     <React.Suspense fallback={<div role="status">Cargando...</div>}>

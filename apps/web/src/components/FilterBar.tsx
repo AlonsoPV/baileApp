@@ -54,7 +54,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
       // Solo cerrar si hideButtons es true Y initialOpenDropdown es null
       // Si initialOpenDropdown es 'fechas', mantenerlo abierto
       if (initialOpenDropdown === null) {
-        setOpenDropdown(null);
+      setOpenDropdown(null);
       }
     }
   }, [initialOpenDropdown, hideButtons]);
@@ -943,67 +943,67 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                     gridTemplateColumns: '1fr 1fr',
                     gap: '1.5rem'
                   }}>
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        marginBottom: '0.5rem'
-                      }}>
-                        📅 Desde
-                      </label>
-                      <input
-                        type="date"
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem'
+                    }}>
+                      📅 Desde
+                    </label>
+                    <input
+                      type="date"
                         value={tempDateFrom || ''}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleDateChange('desde', e.target.value);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: 'white',
-                          fontSize: '0.875rem',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{
-                        display: 'block',
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleDateChange('desde', e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'white',
                         fontSize: '0.875rem',
-                        fontWeight: '600',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        marginBottom: '0.5rem'
-                      }}>
-                        📅 Hasta
-                      </label>
-                      <input
-                        type="date"
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.5rem'
+                    }}>
+                      📅 Hasta
+                    </label>
+                    <input
+                      type="date"
                         value={tempDateTo || ''}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleDateChange('hasta', e.target.value);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: 'white',
-                          fontSize: '0.875rem',
-                          outline: 'none'
-                        }}
-                      />
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleDateChange('hasta', e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'white',
+                        fontSize: '0.875rem',
+                        outline: 'none'
+                      }}
+                    />
                     </div>
                   </div>
                   

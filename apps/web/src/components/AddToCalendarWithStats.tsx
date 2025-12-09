@@ -78,15 +78,15 @@ export default function AddToCalendarWithStats({
         const nowCDMX = new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" });
         const todayCDMX = new Date(nowCDMX).toISOString().split('T')[0]; // YYYY-MM-DD
         
-        const { count, error } = await supabase
+      const { count, error } = await supabase
           .from("clase_asistencias")
-          .select("*", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true })
           .eq("class_id", classId)
           .eq("status", "tentative")
           .or(`fecha_especifica.is.null,fecha_especifica.gte.${todayCDMX}`);
         
-        if (!error && typeof count === "number") {
-          setCount(count);
+      if (!error && typeof count === "number") {
+        setCount(count);
         }
       } else {
         // Para eventos: usar la función RPC get_event_rsvp_stats que ya filtra por fecha

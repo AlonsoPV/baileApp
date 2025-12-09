@@ -252,42 +252,43 @@ export function useMyTeacherRating(teacherId?: number) {
       if (!teacherId || !user?.id) return null;
 
       try {
+        // Usar maybeSingle() en lugar de single() para evitar error 406 cuando no hay filas
         const { data, error } = await supabase
           .from('teacher_ratings')
           .select('*')
           .eq('teacher_id', teacherId)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          // PGRST116 = No rows found (esperado)
+          // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
+          // Silenciar el error - puede ser que la tabla no exista aún
+          if (error.message?.includes('406') || error.code === '406' || (error as any)?.status === 406) {
+            return null;
+          }
+          
+          // PGRST116 = No rows found (esperado con maybeSingle, pero por si acaso)
           if (error.code === 'PGRST116') {
             return null;
           }
           
-          // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
-          // Silenciar el error - puede ser que la tabla no exista aún
-          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
-            return null;
-          }
-          
-          // Solo mostrar otros errores inesperados
-          if (error.code && !['PGRST116', '406'].includes(error.code)) {
-            console.error('[useMyTeacherRating] Error inesperado:', error);
+          // Solo mostrar otros errores inesperados en desarrollo
+          if (process.env.NODE_ENV === 'development' && error.code && !['PGRST116', '406'].includes(error.code)) {
+            console.warn('[useMyTeacherRating] Error inesperado:', error);
           }
           return null;
         }
 
-        return data as TeacherRating;
+        return data as TeacherRating | null;
       } catch (err: any) {
         // Capturar errores de red o otros errores inesperados
         // Silenciar errores 406 (tabla no existe o problema de RLS)
         if (err?.message?.includes('406') || err?.status === 406 || err?.code === '406') {
           return null;
         }
-        // Solo mostrar otros errores inesperados
-        if (err?.status && err.status !== 406 && err?.code !== '406') {
-          console.error('[useMyTeacherRating] Error inesperado:', err);
+        // Solo mostrar otros errores inesperados en desarrollo
+        if (process.env.NODE_ENV === 'development' && err?.status && err.status !== 406 && err?.code !== '406') {
+          console.warn('[useMyTeacherRating] Error inesperado:', err);
         }
         return null;
       }

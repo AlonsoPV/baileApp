@@ -33,10 +33,14 @@ export function useMyOrganizer() {
           return null;
         }
         // Para otros errores, lanzar para que React Query los maneje
-        console.error('[useMyOrganizer] Error inesperado al cargar perfil:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[useMyOrganizer] Error inesperado al cargar perfil:', error);
+        }
         throw error;
       }
-      console.log('[useMyOrganizer] Estado de aprobación obtenido:', data?.estado_aprobacion, 'Full data:', data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useMyOrganizer] Estado de aprobación obtenido:', data?.estado_aprobacion, 'Full data:', data);
+      }
       return data || null;
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch

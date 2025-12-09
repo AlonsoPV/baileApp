@@ -833,6 +833,10 @@ export default function AcademyProfileEditor() {
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
+  
+  // Estados para tracking de guardado por sección
+  const [sectionSaving, setSectionSaving] = React.useState<Record<string, boolean>>({});
+  const [sectionStatus, setSectionStatus] = React.useState<Record<string, { type: 'ok' | 'err'; text: string } | null>>({});
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
@@ -1018,6 +1022,97 @@ export default function AcademyProfileEditor() {
       }
     }
   }, [academy, (form as any)?.cronograma, (form as any)?.id, setField, upsert]);
+
+  // Funciones de guardado por sección
+  const handleSaveSection = useCallback(async (sectionName: string, sectionData: any) => {
+    if (!profileId) {
+      setSectionStatus(prev => ({
+        ...prev,
+        [sectionName]: { type: 'err', text: '💾 Guarda el perfil primero para activar el guardado por sección' }
+      }));
+      setTimeout(() => {
+        setSectionStatus(prev => ({ ...prev, [sectionName]: null }));
+      }, 3000);
+      return;
+    }
+
+    setSectionSaving(prev => ({ ...prev, [sectionName]: true }));
+    setSectionStatus(prev => ({ ...prev, [sectionName]: null }));
+
+    try {
+      const payload: any = { id: profileId, ...sectionData };
+      await upsert.mutateAsync(payload);
+      
+      // Refetch para actualizar el estado
+      await refetchAcademy();
+      
+      setSectionStatus(prev => ({
+        ...prev,
+        [sectionName]: { type: 'ok', text: '✅ Sección guardada exitosamente' }
+      }));
+      
+      setTimeout(() => {
+        setSectionStatus(prev => ({ ...prev, [sectionName]: null }));
+      }, 2500);
+    } catch (error: any) {
+      console.error(`[AcademyProfileEditor] Error guardando sección ${sectionName}:`, error);
+      setSectionStatus(prev => ({
+        ...prev,
+        [sectionName]: { type: 'err', text: `❌ Error: ${error?.message || 'Error desconocido'}` }
+      }));
+      setTimeout(() => {
+        setSectionStatus(prev => ({ ...prev, [sectionName]: null }));
+      }, 4000);
+    } finally {
+      setSectionSaving(prev => ({ ...prev, [sectionName]: false }));
+    }
+  }, [profileId, upsert, refetchAcademy]);
+
+  // Guardado específico por sección
+  const handleSavePersonalInfo = useCallback(async () => {
+    await handleSaveSection('personal', {
+      nombre_publico: form.nombre_publico,
+      bio: form.bio,
+      redes_sociales: form.redes_sociales
+    });
+  }, [form.nombre_publico, form.bio, form.redes_sociales, handleSaveSection]);
+
+  const handleSaveWhatsApp = useCallback(async () => {
+    await handleSaveSection('whatsapp', {
+      whatsapp_number: (form as any).whatsapp_number || null,
+      whatsapp_message_template: (form as any).whatsapp_message_template || 'me interesa la clase: {nombre}'
+    });
+  }, [(form as any).whatsapp_number, (form as any).whatsapp_message_template, handleSaveSection]);
+
+  const handleSaveRitmosZonas = useCallback(async () => {
+    const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
+    const validatedZonas = validateZonasAgainstCatalog((form as any).zonas || [], allTags);
+    
+    const payload: any = {
+      ritmos_seleccionados: selectedCatalogIds.length > 0 ? selectedCatalogIds : undefined,
+      zonas: validatedZonas
+    };
+    
+    await handleSaveSection('ritmos-zonas', payload);
+  }, [(form as any).ritmos_seleccionados, (form as any).zonas, allTags, handleSaveSection]);
+
+  const handleSaveFAQ = useCallback(async () => {
+    await handleSaveSection('faq', {
+      faq: (form as any).faq || []
+    });
+  }, [(form as any).faq, handleSaveSection]);
+
+  const handleSaveResenas = useCallback(async () => {
+    await handleSaveSection('resenas', {
+      reseñas: (form as any).reseñas || []
+    });
+  }, [(form as any).reseñas, handleSaveSection]);
+
+  const handleSaveCuentaBancaria = useCallback(async () => {
+    await handleSaveSection('cuenta-bancaria', {
+      cuenta_bancaria: (form as any).cuenta_bancaria || {}
+    });
+  }, [(form as any).cuenta_bancaria, handleSaveSection]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -1505,9 +1600,71 @@ export default function AcademyProfileEditor() {
 
               {/* Información Personal */}
               <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
-                <h2 className="editor-section-title">
-                  👤 Información Personal
-                </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 className="editor-section-title" style={{ margin: 0 }}>
+                    👤 Información Personal
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleSavePersonalInfo}
+                    disabled={sectionSaving.personal || !form.nombre_publico?.trim()}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(76, 173, 255, 0.4)',
+                      background: sectionSaving.personal 
+                        ? 'rgba(76, 173, 255, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(76, 173, 255, 0.2), rgba(124, 77, 255, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving.personal || !form.nombre_publico?.trim() ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving.personal || !form.nombre_publico?.trim() ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving.personal && form.nombre_publico?.trim()) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 173, 255, 0.3), rgba(124, 77, 255, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(76, 173, 255, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving.personal && form.nombre_publico?.trim()) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 173, 255, 0.2), rgba(124, 77, 255, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(76, 173, 255, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving.personal ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus.personal && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus.personal.type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus.personal.type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus.personal.text}
+                  </motion.div>
+                )}
 
                 <div style={{
                   display: 'grid',
@@ -1698,7 +1855,7 @@ export default function AcademyProfileEditor() {
 
               {/* Configuración de WhatsApp para Clases */}
               <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                   <div style={{ 
                     width: 48, 
                     height: 48, 
@@ -1714,14 +1871,77 @@ export default function AcademyProfileEditor() {
                     💬
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2 className="editor-section-title" style={{ marginBottom: '0.5rem', fontSize: '1.35rem' }}>
-                      WhatsApp para Clases
-                    </h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                      <h2 className="editor-section-title" style={{ margin: 0, fontSize: '1.35rem' }}>
+                        WhatsApp para Clases
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={handleSaveWhatsApp}
+                        disabled={sectionSaving.whatsapp}
+                        style={{
+                          padding: '0.625rem 1.25rem',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(37, 211, 102, 0.4)',
+                          background: sectionSaving.whatsapp 
+                            ? 'rgba(37, 211, 102, 0.2)' 
+                            : 'linear-gradient(135deg, rgba(37, 211, 102, 0.2), rgba(18, 140, 126, 0.2))',
+                          color: '#fff',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          cursor: sectionSaving.whatsapp ? 'not-allowed' : 'pointer',
+                          opacity: sectionSaving.whatsapp ? 0.6 : 1,
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          flexShrink: 0
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!sectionSaving.whatsapp) {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37, 211, 102, 0.3), rgba(18, 140, 126, 0.3))';
+                            e.currentTarget.style.borderColor = 'rgba(37, 211, 102, 0.6)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!sectionSaving.whatsapp) {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37, 211, 102, 0.2), rgba(18, 140, 126, 0.2))';
+                            e.currentTarget.style.borderColor = 'rgba(37, 211, 102, 0.4)';
+                          }
+                        }}
+                      >
+                        {sectionSaving.whatsapp ? '⏳ Guardando...' : '💾 Guardar sección'}
+                      </button>
+                    </div>
                     <p style={{ margin: 0, fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
                       Configura el contacto y mensaje que aparecerá en cada clase. Usa <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{clase}'}</code> para variables.
                     </p>
                   </div>
                 </div>
+                
+                {sectionStatus.whatsapp && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus.whatsapp.type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus.whatsapp.type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus.whatsapp.text}
+                  </motion.div>
+                )}
                 
                 <div className="whatsapp-section-grid">
                   {/* Número de WhatsApp */}
@@ -1785,9 +2005,74 @@ export default function AcademyProfileEditor() {
               {/* Estilos & Zonas - tarjeta mejorada */}
               <div className="org-editor__card academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.25rem 0.75rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }} />
+                  <button
+                    type="button"
+                    onClick={handleSaveRitmosZonas}
+                    disabled={sectionSaving['ritmos-zonas']}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(240, 147, 251, 0.4)',
+                      background: sectionSaving['ritmos-zonas'] 
+                        ? 'rgba(240, 147, 251, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving['ritmos-zonas'] ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving['ritmos-zonas'] ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexShrink: 0
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving['ritmos-zonas']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(245, 87, 108, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving['ritmos-zonas']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(240, 147, 251, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving['ritmos-zonas'] ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus['ritmos-zonas'] && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      margin: '0 1.25rem 1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus['ritmos-zonas'].type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus['ritmos-zonas'].type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus['ritmos-zonas'].text}
+                  </motion.div>
+                )}
 
                 {/* Contenedor de dos columnas: Ritmos y Zonas */}
-                <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
+                <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '0 1.25rem 1.25rem' }}>
                   {/* Columna 1: Ritmos */}
                   <div>
                     {/* Header Estilos */}
@@ -2292,6 +2577,16 @@ export default function AcademyProfileEditor() {
                       <div className="teachers-grid">
                         {acceptedTeachers.map((t: any) => {
                           // Mapear datos de la vista a formato de TeacherCard
+                          const media: any[] = [];
+                          // Priorizar avatar (p1) para que se muestre en la card
+                          if (t.teacher_avatar) {
+                            media.push({ url: t.teacher_avatar, type: 'image', slot: 'p1' });
+                          }
+                          // Luego portada (cover) si existe
+                          if (t.teacher_portada) {
+                            media.push({ url: t.teacher_portada, type: 'image', slot: 'cover' });
+                          }
+                          
                           const teacherData = {
                             id: t.teacher_id,
                             nombre_publico: t.teacher_name,
@@ -2301,11 +2596,7 @@ export default function AcademyProfileEditor() {
                             banner_url: t.teacher_portada || t.teacher_avatar || null,
                             ritmos: Array.isArray(t.teacher_ritmos) ? t.teacher_ritmos : [],
                             zonas: Array.isArray(t.teacher_zonas) ? t.teacher_zonas : [],
-                            media: t.teacher_portada
-                              ? [{ url: t.teacher_portada, type: 'image', slot: 'cover' }]
-                              : t.teacher_avatar
-                                ? [{ url: t.teacher_avatar, type: 'image', slot: 'avatar' }]
-                                : []
+                            media
                           };
                           return (
                             <div key={t.teacher_id} className="teacher-card-wrapper">
@@ -2670,18 +2961,143 @@ export default function AcademyProfileEditor() {
 
               {/* Información para Estudiantes */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-                  💬 Información para Estudiantes
-                </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                    💬 Información para Estudiantes
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleSaveFAQ}
+                    disabled={sectionSaving.faq}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(76, 173, 255, 0.4)',
+                      background: sectionSaving.faq 
+                        ? 'rgba(76, 173, 255, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(76, 173, 255, 0.2), rgba(124, 77, 255, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving.faq ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving.faq ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving.faq) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 173, 255, 0.3), rgba(124, 77, 255, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(76, 173, 255, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving.faq) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 173, 255, 0.2), rgba(124, 77, 255, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(76, 173, 255, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving.faq ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus.faq && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus.faq.type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus.faq.type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus.faq.text}
+                  </motion.div>
+                )}
 
                 <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
               </div>
 
               {/* Reseñas de Alumnos */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-                  ⭐ Reseñas de Alumnos
-                </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                    ⭐ Reseñas de Alumnos
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleSaveResenas}
+                    disabled={sectionSaving.resenas}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 193, 7, 0.4)',
+                      background: sectionSaving.resenas 
+                        ? 'rgba(255, 193, 7, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving.resenas ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving.resenas ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving.resenas) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 152, 0, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(255, 193, 7, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving.resenas) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(255, 193, 7, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving.resenas ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus.resenas && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus.resenas.type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus.resenas.type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus.resenas.text}
+                  </motion.div>
+                )}
+                
                 <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
                   Añade testimonios de alumnos que han tomado clases en tu academia
                 </p>
@@ -2693,6 +3109,72 @@ export default function AcademyProfileEditor() {
 
               {/* Cuenta Bancaria */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                    🏦 Cuenta Bancaria
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleSaveCuentaBancaria}
+                    disabled={sectionSaving['cuenta-bancaria']}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: sectionSaving['cuenta-bancaria'] 
+                        ? 'rgba(16, 185, 129, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving['cuenta-bancaria'] ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving['cuenta-bancaria'] ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving['cuenta-bancaria']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving['cuenta-bancaria']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving['cuenta-bancaria'] ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus['cuenta-bancaria'] && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus['cuenta-bancaria'].type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus['cuenta-bancaria'].type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus['cuenta-bancaria'].text}
+                  </motion.div>
+                )}
+                
                 <BankAccountEditor
                   value={(form as any).cuenta_bancaria || {}}
                   onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
