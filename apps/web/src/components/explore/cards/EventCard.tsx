@@ -159,8 +159,8 @@ export default function EventCard({ item }: EventCardProps) {
             background: (flyerWithCacheBust || flyer)
               ? `url(${flyerWithCacheBust || flyer})`
               : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-            // Usar cover para que la imagen llene toda la card, sin barras
-            backgroundSize: 'cover',
+            // Usar 100% 100% para que la imagen llene exactamente el contenedor (fill)
+            backgroundSize: '100% 100%',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             padding: '1.5rem',

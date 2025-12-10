@@ -40,11 +40,38 @@ const PERFIL_OPTIONS = [
   { value: 'usuarios', label: 'Bailarines', icon: '🧍' },
 ];
 
+// Hook para detectar tamaño de pantalla y aplicar padding responsive
+function useResponsivePadding() {
+  const [padding, setPadding] = React.useState<{ padding: string; maxWidth?: string }>({ padding: '0' });
+
+  React.useEffect(() => {
+    const updatePadding = () => {
+      const width = window.innerWidth;
+      if (width <= 430) {
+        setPadding({ padding: '0.5rem 0.125rem 0', maxWidth: '100%' });
+      } else if (width <= 480) {
+        setPadding({ padding: '0.5rem 0.25rem 0', maxWidth: '100%' });
+      } else if (width <= 768) {
+        setPadding({ padding: '0.75rem 0.5rem 0', maxWidth: '100%' });
+      } else {
+        setPadding({ padding: '0' });
+      }
+    };
+
+    updatePadding();
+    window.addEventListener('resize', updatePadding);
+    return () => window.removeEventListener('resize', updatePadding);
+  }, []);
+
+  return padding;
+}
+
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true, initialOpenDropdown = null, hideButtons = false }: FilterBarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(initialOpenDropdown || null);
   // Estado temporal para fechas antes de aplicar
   const [tempDateFrom, setTempDateFrom] = useState<string | undefined>(filters.dateFrom);
   const [tempDateTo, setTempDateTo] = useState<string | undefined>(filters.dateTo);
+  const responsivePadding = useResponsivePadding();
   
   // Sincroniza con prop externa, sin depender de openDropdown
   React.useEffect(() => {
@@ -217,10 +244,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           .filters-row {
             display: none !important;
           }
-          .filters-wrap {
-            padding: 0 !important;
-            max-width: 100% !important;
-          }
           .dropdown-panel {
             margin-top: 0 !important;
             margin-bottom: 0 !important;
@@ -232,9 +255,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           }
         ` : ''}
         @media (max-width: 768px) {
-          .filters-wrap { 
-            padding: 0.75rem 0.5rem 0 !important; 
-          }
           .filters-row { 
             flex-wrap: nowrap !important; 
             overflow-x: auto !important; 
@@ -356,9 +376,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           }
         }
         @media (max-width: 480px) {
-          .filters-wrap { 
-            padding: 0.5rem 0.25rem 0 !important; 
-          }
           .filters-row { 
             gap: 0.5rem !important; 
             padding: 0.5rem 0.25rem 0.75rem !important;
@@ -438,9 +455,6 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
           }
         }
         @media (max-width: 430px) {
-          .filters-wrap { 
-            padding: 0.5rem 0.125rem 0 !important; 
-          }
           .filters-row { 
             gap: 0.4rem !important; 
             padding: 0.4rem 0.125rem 0.6rem !important;
@@ -529,12 +543,12 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
         }}
       >
         <div style={{
-          maxWidth: '1280px',
+          maxWidth: hideButtons ? (responsivePadding.maxWidth || '1280px') : '1280px',
           margin: '0 auto',
-          padding: '0',
+          padding: hideButtons ? '0' : responsivePadding.padding,
           position: 'relative',
           zIndex: openDropdown ? 2001 : 'auto'
-        }} className="filters-wrap">
+        }}>
           {/* Barra Principal de Filtros */}
           {!hideButtons && (
           <div style={{

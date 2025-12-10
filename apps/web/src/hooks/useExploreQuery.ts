@@ -191,9 +191,11 @@ async function fetchPage(params: QueryParams, page: number) {
     // zonas específicas de la fecha (campo zona numérico)
     if (zonas?.length)   query = query.in("zona", zonas as any);
     
-    // búsqueda textual básica (lugar/ciudad/direccion)
+    // búsqueda textual: nombre del evento, lugar, ciudad, direccion
+    // Nota: events_parent.nombre se filtra post-query porque Supabase no permite ilike en relaciones anidadas
+    // Hacemos una query adicional para eventos que coincidan solo con events_parent.nombre
     if (q) {
-      query = query.or(`lugar.ilike.%${q}%,ciudad.ilike.%${q}%,direccion.ilike.%${q}%`);
+      query = query.or(`nombre.ilike.%${q}%,lugar.ilike.%${q}%,ciudad.ilike.%${q}%,direccion.ilike.%${q}%`);
     }
     
     // orden por fecha asc (próximos primero)
@@ -289,6 +291,107 @@ async function fetchPage(params: QueryParams, page: number) {
   }
 
   let finalData = data || [];
+
+  // Query adicional para eventos que coincidan solo con events_parent.nombre
+  // (no se puede hacer con ilike en relaciones anidadas en la query principal)
+  if (type === 'fechas' && q) {
+    try {
+      const todayCDMX = getTodayCDMX();
+      let parentQuery = supabase
+        .from("events_date")
+        .select(`
+          id,
+          parent_id,
+          nombre,
+          fecha,
+          dia_semana,
+          hora_inicio,
+          hora_fin,
+          lugar,
+          direccion,
+          ciudad,
+          zona,
+          estado_publicacion,
+          estilos,
+          ritmos_seleccionados,
+          media,
+          flyer_url,
+          created_at,
+          updated_at,
+          events_parent!inner(
+            id,
+            nombre,
+            descripcion,
+            estilos,
+            ritmos_seleccionados,
+            zonas,
+            media,
+            organizer_id
+          )
+        `)
+        .eq("estado_publicacion", "publicado")
+        .ilike("events_parent.nombre", `%${q}%`);
+      
+      // Aplicar los mismos filtros de fecha que la query principal
+      if (dateFrom && dateTo) {
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+      } else if (dateFrom) {
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+      } else if (dateTo) {
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+      } else {
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
+      }
+      
+      // Aplicar filtros de zonas
+      if (zonas?.length) {
+        parentQuery = parentQuery.in("zona", zonas as any);
+      }
+      
+      // Aplicar filtros de ritmos (simplificado - solo a nivel de fecha, no parent)
+      if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+        const parts: string[] = [];
+        if ((ritmos?.length || 0) > 0) {
+          const setTags = `{${(ritmos as number[]).join(',')}}`;
+          parts.push(`estilos.ov.${setTags}`);
+        }
+        if ((selectedCatalogIds?.length || 0) > 0) {
+          const setCat = `{${selectedCatalogIds.join(',')}}`;
+          parts.push(`ritmos_seleccionados.ov.${setCat}`);
+        }
+        if (parts.length > 0) {
+          parentQuery = parentQuery.or(parts.join(','));
+        }
+      }
+      
+      const { data: parentMatches } = await parentQuery.order("fecha", { ascending: true });
+      
+      if (parentMatches && parentMatches.length > 0) {
+        // Combinar resultados, evitando duplicados
+        const existingIds = new Set(finalData.map((r: any) => r.id));
+        const newMatches = parentMatches.filter((r: any) => !existingIds.has(r.id));
+        finalData = [...finalData, ...newMatches];
+      }
+    } catch (error) {
+      console.warn('[useExploreQuery] Error en query adicional para events_parent.nombre:', error);
+      // Continuar con los resultados de la query principal
+    }
+  }
+
+  // Filtro post-query para asegurar que todos los resultados coincidan con la búsqueda
+  if (type === 'fechas' && q && finalData.length > 0) {
+    const searchLower = q.toLowerCase();
+    finalData = finalData.filter((row: any) => {
+      const nombreMatch = row?.nombre?.toLowerCase().includes(searchLower);
+      const lugarMatch = row?.lugar?.toLowerCase().includes(searchLower);
+      const ciudadMatch = row?.ciudad?.toLowerCase().includes(searchLower);
+      const direccionMatch = row?.direccion?.toLowerCase().includes(searchLower);
+      const parentNombreMatch = row?.events_parent?.nombre?.toLowerCase().includes(searchLower);
+      
+      return nombreMatch || lugarMatch || ciudadMatch || direccionMatch || parentNombreMatch;
+    });
+  }
 
   // Filtro adicional para eventos con dia_semana y por hora para eventos de HOY (CDMX):
   if (type === 'fechas' && finalData.length > 0) {

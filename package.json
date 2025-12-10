@@ -23,7 +23,9 @@
     "submit:ios": "eas submit --platform ios --profile production",
     "update": "eas update --branch main --message \"OTA\"",
     "update:android": "eas update --branch main --message \"OTA\" --platform android",
-    "update:ios": "eas update --branch main --message \"OTA\" --platform ios"
+    "update:ios": "eas update --branch main --message \"OTA\" --platform ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.8.12",

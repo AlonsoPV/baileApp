@@ -19,6 +19,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
+import HorizontalSlider from "../../components/explore/HorizontalSlider";
 
 const STYLES = `
   .profile-container {
@@ -673,7 +674,7 @@ export const UserProfileLive: React.FC = () => {
   const carouselPhotos = React.useMemo(() => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(safeMedia as any, slot))
-      .filter(item => item && item.kind === 'photo')
+      .filter(item => item && item.kind === 'photo' && item.url && item.url.trim() !== '')
       .map(item => item!.url);
   }, [safeMedia]);
 
@@ -1288,121 +1289,125 @@ export const UserProfileLive: React.FC = () => {
             )}
           </motion.section>
 
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="section-content glass-card-container"
-          >
-            <div className="question-section">
-              <div style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                {getMediaBySlot(safeMedia as any, 'p2') ? (
-                  <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p2')!.url}
-                    alt="Foto personal"
-                    style={{
+          {(getMediaBySlot(safeMedia as any, 'p2') || profile?.respuestas?.dato_curioso) && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="section-content glass-card-container"
+            >
+              <div className="question-section">
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'center',
+                  transition: 'transform 0.3s ease',
+                }}>
+                  {getMediaBySlot(safeMedia as any, 'p2') ? (
+                    <ImageWithFallback
+                      src={getMediaBySlot(safeMedia as any, 'p2')!.url}
+                      alt="Foto personal"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.875rem'
+                    }}>
+                      📷 Sin foto
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
                   <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
+                    padding: '1.25rem',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    fontSize: '1.05rem',
+                    lineHeight: '1.7',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontWeight: '400'
                   }}>
-                    📷 Sin foto
+                    {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
                   </div>
-                )}
-              </div>
-
-              <div>
-                <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                  {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
                 </div>
               </div>
-            </div>
-          </motion.section>
+            </motion.section>
+          )}
 
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="section-content glass-card-container"
-          >
-            <div className="question-section">
-              <div>
-                <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                  {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+          {(getMediaBySlot(safeMedia as any, 'p3') || profile?.respuestas?.gusta_bailar) && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="section-content glass-card-container"
+            >
+              <div className="question-section">
+                <div>
+                  <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
+                  <div style={{
+                    padding: '1.25rem',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    fontSize: '1.05rem',
+                    lineHeight: '1.7',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontWeight: '400'
+                  }}>
+                    {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+                  </div>
                 </div>
-              </div>
 
-              <div style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                {getMediaBySlot(safeMedia as any, 'p3') ? (
-                  <ImageWithFallback
-                    src={getMediaBySlot(safeMedia as any, 'p3')!.url}
-                    alt="Foto de baile"
-                    style={{
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'center',
+                  transition: 'transform 0.3s ease',
+                }}>
+                  {getMediaBySlot(safeMedia as any, 'p3') ? (
+                    <ImageWithFallback
+                      src={getMediaBySlot(safeMedia as any, 'p3')!.url}
+                      alt="Foto de baile"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
-                  }}>
-                    📷 Sin foto
-                  </div>
-                )}
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.875rem'
+                    }}>
+                      📷 Sin foto
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.section>
+            </motion.section>
+          )}
 
           <motion.section
             id="user-profile-interested-events"
@@ -1440,17 +1445,26 @@ export const UserProfileLive: React.FC = () => {
             </div>
 
             {availableRsvpEvents.length > 0 ? (
-              <div className="events-grid">
-                {availableRsvpEvents.map((rsvp: any, index: number) => {
+              <HorizontalSlider
+                items={availableRsvpEvents.filter((rsvp: any) => rsvp.events_date)}
+                renderItem={(rsvp: any, index: number) => {
                   const evento = rsvp.events_date;
                   if (!evento) return null;
                   return (
-                    <motion.div key={rsvp.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}>
+                    <motion.div
+                      key={rsvp.id || evento.id || index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.06 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                    >
                       <EventCard item={evento} />
                     </motion.div>
                   );
-                })}
-              </div>
+                }}
+                gap={20}
+                autoColumns="minmax(320px, 400px)"
+              />
             ) : (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -1507,133 +1521,104 @@ export const UserProfileLive: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="glass-card-container"
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1.25rem',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
+              className="section-content glass-card-container"
             >
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(255, 209, 102, 0.6), rgba(240, 147, 251, 0.6))',
-                borderRadius: '20px 20px 0 0'
-              }} />
-              
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                marginBottom: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-              }}>
+              <div className="question-section">
+                <div>
+                  <h3 className="section-title">🎥 Video principal</h3>
+                  {/* <div style={{
+                    padding: '1.25rem',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    fontSize: '1.05rem',
+                    lineHeight: '1.7',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontWeight: '400'
+                  }}>
+                    Muestra tu mejor video para que la comunidad te conozca en acción.
+                  </div> */}
+                </div>
+
                 <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                  width: '100%',
+                  height: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  flexShrink: 0
+                  justifyContent: 'center'
                 }}>
-                  🎥
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                    Video Principal
-                  </h3>
-                  <p style={{
-                    margin: '0.15rem 0 0 0',
-                    fontSize: '0.75rem',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    fontWeight: 400,
-                    lineHeight: 1.2
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '480px',
+                    margin: '0 auto',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                    border: '2px solid rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                    padding: '3px'
                   }}>
-                    Contenido multimedia destacado
-                  </p>
-                </div>
-              </div>
-
-              <div style={{
-                position: 'relative',
-                width: '100%',
-                maxWidth: '480px',
-                margin: '0 auto',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
-                border: '2px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-                padding: '3px'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  inset: '3px',
-                  borderRadius: '13px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
-                  pointerEvents: 'none',
-                  zIndex: 1
-                }} />
-                
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  borderRadius: '13px',
-                  overflow: 'hidden',
-                  background: '#000',
-                  zIndex: 2
-                }}>
-                  <video
-                    src={getMediaBySlot(safeMedia as any, 'v1')!.url}
-                    controls
-                    style={{
+                    <div style={{
+                      position: 'absolute',
+                      inset: '3px',
+                      borderRadius: '13px',
+                      background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                      pointerEvents: 'none',
+                      zIndex: 1
+                    }} />
+                    
+                    <div style={{
+                      position: 'relative',
                       width: '100%',
-                      height: 'auto',
-                      aspectRatio: '4 / 5',
-                      display: 'block',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                    }}
-                  />
-                </div>
+                      borderRadius: '13px',
+                      overflow: 'hidden',
+                      background: '#000',
+                      zIndex: 2
+                    }}>
+                      <video
+                        src={getMediaBySlot(safeMedia as any, 'v1')!.url}
+                        controls
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          aspectRatio: '4 / 5',
+                          display: 'block',
+                          objectFit: 'contain',
+                          objectPosition: 'center',
+                        }}
+                      />
+                    </div>
 
-                <div style={{
-                  position: 'absolute',
-                  top: '5px',
-                  left: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
-                <div style={{
-                  position: 'absolute',
-                  bottom: '5px',
-                  right: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
+                    <div style={{
+                      position: 'absolute',
+                      top: '5px',
+                      left: '5px',
+                      width: '40px',
+                      height: '40px',
+                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                      borderRadius: '50%',
+                      pointerEvents: 'none',
+                      zIndex: 3
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '5px',
+                      right: '5px',
+                      width: '40px',
+                      height: '40px',
+                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                      borderRadius: '50%',
+                      pointerEvents: 'none',
+                      zIndex: 3
+                    }} />
+                  </div>
+                </div>
               </div>
             </motion.section>
           )}
 
-          {carouselPhotos.length > 0 && (
+          {carouselPhotos && carouselPhotos.length > 0 && carouselPhotos.some(url => url && url.trim() !== '') && (
             <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"

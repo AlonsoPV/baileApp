@@ -15,6 +15,7 @@ import { useFollowStatus } from "../../hooks/useFollowStatus";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
+import HorizontalSlider from "../../components/explore/HorizontalSlider";
 
 const STYLES = `
   .profile-container {
@@ -675,7 +676,68 @@ export const UserProfileLive: React.FC = () => {
     };
   }, []);
 
-  const safeMedia = profile?.media || [];
+  const safeMedia = React.useMemo(() => {
+    const viewMedia = (profile as any)?.media;
+
+    // Debug: verificar datos del perfil (vista pública)
+    if (process.env.NODE_ENV === 'development' && profile) {
+      console.log('[UserPublicScreen] Profile data (from view):', {
+        hasMedia: !!(profile as any).media,
+        mediaLength: Array.isArray(viewMedia) ? viewMedia.length : 0,
+        mediaSample: Array.isArray(viewMedia) ? viewMedia.slice(0, 3) : viewMedia,
+        mediaType: Array.isArray(viewMedia) ? 'array' : typeof viewMedia,
+        hasRespuestas: !!(profile as any).respuestas,
+        respuestas: (profile as any).respuestas,
+      });
+    }
+
+    return Array.isArray(viewMedia) ? viewMedia : [];
+  }, [profile]);
+
+  const profileUserId = profile?.user_id || profile?.id;
+
+  // Cargar media y respuestas desde la tabla base para asegurar que el perfil público tenga
+  // la misma galería y secciones de preguntas que el perfil privado.
+  const { data: profileFromTable } = useQuery({
+    queryKey: ['user-public-profile-fields', profileUserId],
+    enabled: !!profileUserId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles_user')
+        .select('media,respuestas')
+        .eq('user_id', profileUserId)
+        .maybeSingle();
+      if (error) {
+        console.error('[UserPublicScreen] Error fetching profile fields from profiles_user:', error);
+        throw error;
+      }
+      return data || {};
+    },
+  });
+
+  const mediaFromTable = React.useMemo(() => {
+    const raw = (profileFromTable as any)?.media;
+    return Array.isArray(raw) ? raw : [];
+  }, [profileFromTable]);
+
+  const respuestasFromTable = React.useMemo(() => {
+    return (profileFromTable as any)?.respuestas || null;
+  }, [profileFromTable]);
+
+  const effectiveMedia = React.useMemo(() => {
+    if (Array.isArray(mediaFromTable) && mediaFromTable.length > 0) {
+      return mediaFromTable;
+    }
+    return safeMedia;
+  }, [mediaFromTable, safeMedia]);
+
+  const effectiveRespuestas = React.useMemo(() => {
+    const fromView = (profile as any)?.respuestas;
+    if (fromView && typeof fromView === 'object') {
+      return fromView;
+    }
+    return respuestasFromTable;
+  }, [profile, respuestasFromTable]);
 
   const toSupabasePublicUrl = React.useCallback((maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;
@@ -695,22 +757,24 @@ export const UserProfileLive: React.FC = () => {
   }, []);
 
   const avatarUrl = React.useMemo(() => {
-    const p1 = getMediaBySlot(safeMedia as any, 'p1');
+    const p1 = getMediaBySlot(effectiveMedia as any, 'p1');
     if (p1?.url) return p1.url;
     if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
-    const avatar = getMediaBySlot(safeMedia as any, 'avatar');
+    const avatar = getMediaBySlot(effectiveMedia as any, 'avatar');
     if (avatar?.url) return avatar.url;
     return undefined;
-  }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
+  }, [effectiveMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
   const carouselPhotos = React.useMemo(() => {
+    if (!effectiveMedia || !Array.isArray(effectiveMedia) || effectiveMedia.length === 0) {
+      return [];
+    }
     return PHOTO_SLOTS
-      .map(slot => getMediaBySlot(safeMedia as any, slot))
-      .filter(item => item && item.kind === 'photo')
+      .map(slot => getMediaBySlot(effectiveMedia as any, slot))
+      .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '')
       .map(item => item!.url);
-  }, [safeMedia]);
+  }, [effectiveMedia]);
 
-  const profileUserId = profile?.user_id || profile?.id;
   const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
   const { isFollowing, toggleFollow, loading: followLoading } = useFollowStatus(profileUserId);
   const isOwnProfile = session?.user?.id && profileUserId === session.user.id;
@@ -1228,83 +1292,104 @@ export const UserProfileLive: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="glass-card-container"
-            style={{ textAlign: 'left', marginTop: '1.25rem' }}
+            style={{ 
+              textAlign: 'left', 
+              marginTop: '1.25rem',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
           >
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
-                marginBottom: '1.25rem'
+                gap: '1.25rem',
+                marginBottom: '1.5rem'
               }}
             >
-              <h3 className="section-title" style={{ marginBottom: 0 }}>Comunidad</h3>
-              <div
-                style={{
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <h3 className="section-title" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
+                  👥 Comunidad
+                </h3>
+                <div style={{
                   display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem'
-                }}
-              >
-                {communityCards.map((card) => {
-                  const active = networkTab === card.id;
-                  return (
-                    <button
-                      key={card.id}
-                      onClick={() => setNetworkTab(card.id)}
-                      style={{
-                        position: 'relative',
-                        border: active ? '1px solid transparent' : '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 999,
-                        padding: '0.6rem 1.5rem',
-                        background: active ? card.accent : 'rgba(255,255,255,0.04)',
-                        color: '#fff',
-                        textAlign: 'center',
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: '0.6rem',
-                        cursor: 'pointer',
-                        boxShadow: active
-                          ? '0 14px 32px rgba(68,55,155,0.45)'
-                          : '0 10px 20px rgba(0,0,0,0.25)',
-                        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border 0.18s ease',
-                        fontWeight: 700,
-                        fontSize: '0.95rem',
-                        letterSpacing: 0.2,
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                      }}
-                    >
-                      <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: active ? 0.95 : 0.75 }}>
-                        {card.label}:
-                      </span>
-                      <span style={{ fontSize: '1.2rem' }}>
-                        {card.value.toLocaleString('es-MX')}
-                      </span>
-                    </button>
-                  );
-                })}
+                  gap: '0.5rem',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '0.4rem',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  {communityCards.map((card) => {
+                    const active = networkTab === card.id;
+                    return (
+                      <button
+                        key={card.id}
+                        onClick={() => setNetworkTab(card.id)}
+                        style={{
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '0.6rem 1.2rem',
+                          background: active ? card.accent : 'transparent',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '0.875rem',
+                          letterSpacing: 0.2,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: active
+                            ? '0 4px 12px rgba(68,55,155,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                            : 'none',
+                          transform: active ? 'scale(1.02)' : 'scale(1)',
+                          opacity: active ? 1 : 0.7,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.opacity = '0.85';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.opacity = '0.7';
+                          }
+                        }}
+                      >
+                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: active ? 0.95 : 0.75 }}>
+                          {card.label}:
+                        </span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+                          {card.value.toLocaleString('es-MX')}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             {networkIsEmpty ? (
               <div
                 style={{
-                  padding: '1.5rem',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '16px',
-                  border: '1px dashed rgba(255,255,255,0.15)',
+                  padding: '2rem 1.5rem',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
+                  borderRadius: '20px',
+                  border: '2px dashed rgba(255,255,255,0.2)',
                   textAlign: 'center',
-                  color: 'rgba(255,255,255,0.7)'
+                  color: 'rgba(255,255,255,0.8)'
                 }}
               >
-                {networkTab === 'following'
-                  ? `${profile.display_name || 'Este usuario'} aún no sigue a nadie.`
-                  : `${profile.display_name || 'Este usuario'} todavía no tiene seguidores.`}
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem', opacity: 0.8 }}>
+                  {networkTab === 'following' ? '🔍' : '👋'}
+                </div>
+                <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
+                  {networkTab === 'following'
+                    ? `${profile.display_name || 'Este usuario'} aún no sigue a nadie.`
+                    : `${profile.display_name || 'Este usuario'} todavía no tiene seguidores.`}
+                </p>
               </div>
             ) : (
               <div style={{ position: 'relative' }}>
@@ -1312,11 +1397,12 @@ export const UserProfileLive: React.FC = () => {
                   className="community-scroll"
                   style={{
                     display: 'flex',
-                    gap: '0.9rem',
+                    gap: '1rem',
                     overflowX: 'auto',
-                    paddingBottom: '0.5rem',
+                    padding: '0.5rem 0.25rem 1rem 0.25rem',
                     scrollSnapType: 'x mandatory',
-                    WebkitOverflowScrolling: 'touch'
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'thin'
                   }}
                 >
                   {networkList.map((person) => (
@@ -1328,76 +1414,117 @@ export const UserProfileLive: React.FC = () => {
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.75rem',
-                        padding: '1rem 1.25rem',
-                        minWidth: '230px',
-                        borderRadius: '22px',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                        background: 'linear-gradient(135deg, rgba(18,18,28,0.95), rgba(8,8,16,0.92))',
+                        gap: '1rem',
+                        padding: '1.25rem',
+                        minWidth: '240px',
+                        maxWidth: '240px',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        background: 'linear-gradient(135deg, rgba(30,30,40,0.98), rgba(20,20,30,0.95))',
                         cursor: 'pointer',
-                        boxShadow: '0 18px 32px rgba(0,0,0,0.45)',
-                        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         scrollSnapAlign: 'start'
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 22px 36px rgba(0,0,0,0.5)';
+                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 32px rgba(0,0,0,0.45)';
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
                       }}
                     >
                       <span
                         aria-hidden
                         style={{
                           position: 'absolute',
-                          inset: '-20% -30%',
+                          inset: '-25% -35%',
                           background: networkTab === 'followers'
-                            ? 'linear-gradient(140deg, rgba(252,165,165,0.2), rgba(196,181,253,0.12))'
-                            : 'linear-gradient(140deg, rgba(110,231,183,0.22), rgba(147,197,253,0.15))',
-                          opacity: 0.9,
-                          pointerEvents: 'none'
+                            ? 'radial-gradient(circle, rgba(236,72,153,0.15), transparent 70%)'
+                            : 'radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)',
+                          opacity: 0.6,
+                          pointerEvents: 'none',
+                          transition: 'opacity 0.3s ease'
                         }}
                       />
-                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div
                           style={{
-                            width: 54,
-                            height: 54,
+                            position: 'relative',
+                            width: 64,
+                            height: 64,
+                            minWidth: 64,
+                            minHeight: 64,
+                            flexShrink: 0,
                             borderRadius: '50%',
-                            padding: 2,
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))'
+                            padding: '3px',
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1))',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                            boxSizing: 'border-box'
                           }}
                         >
-                          <ImageWithFallback
-                            src={person.avatar_url || ''}
-                            alt={person.display_name || 'Perfil'}
+                          <div
                             style={{
                               width: '100%',
                               height: '100%',
                               borderRadius: '50%',
-                              objectFit: 'cover',
-                              objectPosition: 'center top',
-                              border: '2px solid rgba(0,0,0,0.4)'
+                              overflow: 'hidden',
+                              backgroundColor: 'rgba(0,0,0,0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
                             }}
-                          />
+                          >
+                            <ImageWithFallback
+                              src={person.avatar_url || ''}
+                              alt={person.display_name || 'Perfil'}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                objectPosition: 'center',
+                                display: 'block'
+                              }}
+                            />
+                          </div>
                         </div>
-                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                        <div style={{ 
+                          textAlign: 'left', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '0.4rem',
+                          flex: 1,
+                          minWidth: 0
+                        }}>
+                          <div style={{ 
+                            fontWeight: 800, 
+                            color: '#fff', 
+                            fontSize: '1.05rem',
+                            lineHeight: 1.2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
                             {person.display_name || 'Bailarín'}
                           </div>
                           <span
                             style={{
                               alignSelf: 'flex-start',
-                              padding: '0.2rem 0.65rem',
+                              padding: '0.25rem 0.7rem',
                               borderRadius: 999,
-                              fontSize: '0.72rem',
-                              letterSpacing: 0.3,
+                              fontSize: '0.7rem',
+                              letterSpacing: 0.4,
                               textTransform: 'uppercase',
-                              background: 'rgba(0,0,0,0.35)',
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              color: 'rgba(255,255,255,0.8)'
+                              background: networkTab === 'followers'
+                                ? 'linear-gradient(135deg, rgba(236,72,153,0.25), rgba(168,85,247,0.25))'
+                                : 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(147,51,234,0.25))',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              color: 'rgba(255,255,255,0.95)',
+                              fontWeight: 600,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                             }}
                           >
                             {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
@@ -1411,30 +1538,57 @@ export const UserProfileLive: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          paddingTop: '0.6rem',
-                          borderTop: '1px solid rgba(255,255,255,0.08)'
+                          paddingTop: '0.75rem',
+                          borderTop: '1px solid rgba(255,255,255,0.1)',
+                          marginTop: '0.25rem'
                         }}
                       >
-                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
+                        <span style={{ 
+                          color: 'rgba(255,255,255,0.85)', 
+                          fontSize: '0.85rem', 
+                          fontWeight: 600,
+                          letterSpacing: 0.2
+                        }}>
                           Ver perfil
                         </span>
-                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
+                        <span style={{ 
+                          color: '#fff', 
+                          fontSize: '1.3rem', 
+                          fontWeight: 700,
+                          transition: 'transform 0.2s ease'
+                        }}>→</span>
                       </div>
                     </button>
                   ))}
                 </div>
-                <div aria-hidden style={{ pointerEvents: 'none' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to right, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
-                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 24, background: 'linear-gradient(to left, rgba(18,18,18,1), rgba(18,18,18,0))' }} />
+                <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ 
+                    width: 32, 
+                    height: '100%', 
+                    background: 'linear-gradient(to right, rgba(18,18,18,0.95), rgba(18,18,18,0))',
+                    pointerEvents: 'none'
+                  }} />
+                  <div style={{ 
+                    width: 32, 
+                    height: '100%', 
+                    background: 'linear-gradient(to left, rgba(18,18,18,0.95), rgba(18,18,18,0))',
+                    pointerEvents: 'none'
+                  }} />
                 </div>
               </div>
             )}
           </motion.section>
 
           {(() => {
-            const fotoP2 = getMediaBySlot(safeMedia as any, 'p2');
-            const datoCurioso = profile?.respuestas?.dato_curioso?.trim();
-            const hasSection1Content = fotoP2 || datoCurioso;
+            const fotoP2 = getMediaBySlot(effectiveMedia as any, 'p2');
+            const datoCurioso = (effectiveRespuestas as any)?.dato_curioso;
+            const datoCuriosoTrimmed = typeof datoCurioso === 'string' ? datoCurioso.trim() : '';
+            const hasSection1Content = (fotoP2?.url) || (datoCuriosoTrimmed && datoCuriosoTrimmed.length > 0);
+            
+            // Debug: verificar qué datos tenemos
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[UserPublicScreen] Sección 1 - fotoP2:', fotoP2, 'datoCurioso:', datoCurioso, 'hasContent:', hasSection1Content);
+            }
             
             if (!hasSection1Content) return null;
             
@@ -1491,7 +1645,7 @@ export const UserProfileLive: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.95)',
                   fontWeight: '400'
                 }}>
-                      {datoCurioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+                      {datoCuriosoTrimmed || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
                 </div>
               </div>
             </div>
@@ -1500,9 +1654,15 @@ export const UserProfileLive: React.FC = () => {
           })()}
 
           {(() => {
-            const fotoP3 = getMediaBySlot(safeMedia as any, 'p3');
-            const gustaBailar = profile?.respuestas?.gusta_bailar?.trim();
-            const hasSection2Content = fotoP3 || gustaBailar;
+            const fotoP3 = getMediaBySlot(effectiveMedia as any, 'p3');
+            const gustaBailar = (effectiveRespuestas as any)?.gusta_bailar;
+            const gustaBailarTrimmed = typeof gustaBailar === 'string' ? gustaBailar.trim() : '';
+            const hasSection2Content = (fotoP3?.url) || (gustaBailarTrimmed && gustaBailarTrimmed.length > 0);
+            
+            // Debug: verificar qué datos tenemos
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[UserPublicScreen] Sección 2 - fotoP3:', fotoP3, 'gustaBailar:', gustaBailar, 'hasContent:', hasSection2Content);
+            }
             
             if (!hasSection2Content) return null;
             
@@ -1526,7 +1686,7 @@ export const UserProfileLive: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.95)',
                   fontWeight: '400'
                 }}>
-                      {gustaBailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+                      {gustaBailarTrimmed || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
                 </div>
               </div>
 
@@ -1603,17 +1763,22 @@ export const UserProfileLive: React.FC = () => {
             </div>
 
             {availableRsvpEvents.length > 0 ? (
-              <div className="events-grid">
-                {availableRsvpEvents.map((rsvp: any, index: number) => {
-                  const evento = rsvp.events_date;
-                  if (!evento) return null;
-                  return (
-                    <motion.div key={rsvp.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}>
-                      <EventCard item={evento} />
-                    </motion.div>
-                  );
-                })}
-              </div>
+              <HorizontalSlider
+                items={availableRsvpEvents.map((rsvp: any) => rsvp.events_date).filter(Boolean)}
+                renderItem={(evento: any, index: number) => (
+                  <motion.div
+                    key={evento.id || index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.06 }}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                  >
+                    <EventCard item={evento} />
+                  </motion.div>
+                )}
+                gap={20}
+                autoColumns="minmax(320px, 400px)"
+              />
             ) : (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -1665,138 +1830,126 @@ export const UserProfileLive: React.FC = () => {
             )}
           </motion.section>
 
-          {getMediaBySlot(safeMedia as any, 'v1') && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="glass-card-container"
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1.25rem',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, rgba(240, 147, 251, 0.6), rgba(255, 209, 102, 0.6), rgba(240, 147, 251, 0.6))',
-                borderRadius: '20px 20px 0 0'
-              }} />
-              
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                marginBottom: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-              }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
+          {(() => {
+            if (!effectiveMedia || !Array.isArray(effectiveMedia) || effectiveMedia.length === 0) {
+              return null;
+            }
+            
+            const videoV1 = getMediaBySlot(effectiveMedia as any, 'v1');
+            
+            // Debug: verificar qué datos tenemos
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[UserPublicScreen] Video - videoV1:', videoV1, 'effectiveMedia length:', effectiveMedia.length);
+            }
+            
+            if (!videoV1 || !videoV1.url || typeof videoV1.url !== 'string' || videoV1.url.trim() === '') {
+              return null;
+            }
+            
+            return (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="section-content glass-card-container"
+          >
+            <div className="question-section">
+              <div>
+                <h3 className="section-title">🎥 Video principal</h3>
+                {/* <div style={{
+                  padding: '1.25rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  flexShrink: 0
+                  fontSize: '1.05rem',
+                  lineHeight: '1.7',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontWeight: '400'
                 }}>
-                  🎥
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                    Video Principal
-                  </h3>
-                  <p style={{
-                    margin: '0.15rem 0 0 0',
-                    fontSize: '0.75rem',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    fontWeight: 400,
-                    lineHeight: 1.2
-                  }}>
-                    Contenido multimedia destacado
-                  </p>
-                </div>
+                  Aquí puedes ver el video principal público de este perfil.
+                </div> */}
               </div>
 
               <div style={{
-                position: 'relative',
                 width: '100%',
-                maxWidth: '480px',
-                margin: '0 auto',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
-                border: '2px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-                padding: '3px'
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
-                <div style={{
-                  position: 'absolute',
-                  inset: '3px',
-                  borderRadius: '13px',
-                  background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
-                  pointerEvents: 'none',
-                  zIndex: 1
-                }} />
-                
                 <div style={{
                   position: 'relative',
                   width: '100%',
-                  borderRadius: '13px',
+                  maxWidth: '480px',
+                  margin: '0 auto',
+                  borderRadius: '16px',
                   overflow: 'hidden',
-                  background: '#000',
-                  zIndex: 2
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2))',
+                  border: '2px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                  padding: '3px'
                 }}>
-                  <video
-                    src={getMediaBySlot(safeMedia as any, 'v1')!.url}
-                    controls
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '4 / 5',
-                      display: 'block',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                    }}
-                  />
+                  <div style={{
+                    position: 'absolute',
+                    inset: '3px',
+                    borderRadius: '13px',
+                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(255, 209, 102, 0.1))',
+                    pointerEvents: 'none',
+                    zIndex: 1
+                  }} />
+                  
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    borderRadius: '13px',
+                    overflow: 'hidden',
+                    background: '#000',
+                    zIndex: 2
+                  }}>
+                    <video
+                      src={videoV1.url}
+                      controls
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        aspectRatio: '4 / 5',
+                        display: 'block',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{
+                    position: 'absolute',
+                    top: '5px',
+                    left: '5px',
+                    width: '40px',
+                    height: '40px',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                    borderRadius: '50%',
+                    pointerEvents: 'none',
+                    zIndex: 3
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '5px',
+                    right: '5px',
+                    width: '40px',
+                    height: '40px',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
+                    borderRadius: '50%',
+                    pointerEvents: 'none',
+                    zIndex: 3
+                  }} />
                 </div>
-
-                <div style={{
-                  position: 'absolute',
-                  top: '5px',
-                  left: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
-                <div style={{
-                  position: 'absolute',
-                  bottom: '5px',
-                  right: '5px',
-                  width: '40px',
-                  height: '40px',
-                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%)',
-                  borderRadius: '50%',
-                  pointerEvents: 'none',
-                  zIndex: 3
-                }} />
               </div>
-            </motion.section>
-          )}
+            </div>
+          </motion.section>
+            );
+          })()}
 
-          {carouselPhotos.length > 0 && (
+          {carouselPhotos && Array.isArray(carouselPhotos) && carouselPhotos.length > 0 && (
             <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"

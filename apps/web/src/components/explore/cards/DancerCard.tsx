@@ -153,7 +153,7 @@ export default function DancerCard({ item, to }: Props) {
           background: (coverUrlWithCacheBust || coverUrl)
             ? `url(${coverUrlWithCacheBust || coverUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: 'cover',
+          backgroundSize: '100% 100%',
           backgroundPosition: 'center top',
           padding: '1.5rem',
           cursor: 'pointer',

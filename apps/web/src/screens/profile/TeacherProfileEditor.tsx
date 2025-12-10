@@ -1447,8 +1447,9 @@ export default function TeacherProfileEditor() {
 
   // Clases desde useLiveClasses para tabs (solo si ya existe perfil)
   const teacherNumericId = React.useMemo(() => (teacher as any)?.id as number | undefined, [teacher]);
+  // Siempre pasar un objeto para mantener consistencia en el número de hooks
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
-    teacherNumericId ? { teacherId: teacherNumericId } : undefined
+    teacherNumericId ? { teacherId: teacherNumericId } : { teacherId: undefined }
   );
 
   const handleSave = React.useCallback(async () => {

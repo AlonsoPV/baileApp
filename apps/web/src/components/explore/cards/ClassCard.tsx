@@ -173,7 +173,7 @@ export default function ClassCard({ item }: Props) {
           style={{
             ...card,
           backgroundImage: bgWithCacheBust ? `url(${bgWithCacheBust})` : (bg ? `url(${bg})` : undefined),
-          backgroundSize: (bgWithCacheBust || bg) ? 'cover' : undefined,
+          backgroundSize: (bgWithCacheBust || bg) ? '100% 100%' : undefined,
           backgroundPosition: (bgWithCacheBust || bg) ? 'center' : undefined,
           backgroundRepeat: (bgWithCacheBust || bg) ? 'no-repeat' : undefined
         }}

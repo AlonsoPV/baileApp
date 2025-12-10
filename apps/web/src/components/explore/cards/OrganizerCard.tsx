@@ -98,7 +98,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           background: (bannerUrlWithCacheBust || bannerUrl)
             ? `url(${bannerUrlWithCacheBust || bannerUrl})`
             : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: 'cover',
+          backgroundSize: '100% 100%',
           backgroundPosition: 'center',
           padding: '1.5rem',
           cursor: 'pointer',

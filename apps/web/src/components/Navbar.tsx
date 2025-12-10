@@ -99,7 +99,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             gap: 0.5rem !important;
           }
           .nav-brand-title {
-            font-size: 1.65rem !important;
+            font-size: 1.15rem !important;
             letter-spacing: 1.3px !important;
           }
           .nav-brand-tagline {

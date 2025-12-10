@@ -310,6 +310,16 @@ const CTACard = React.memo(({
 CTACard.displayName = 'CTACard';
 
 const STYLES = `
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   .explore-container { 
     min-height: 100vh; 
     background: #0b0d10; 
@@ -395,6 +405,23 @@ const STYLES = `
     }
   }
   :root {
+    --panel: hsl(235 28% 16% / .65);
+    --panel-2: hsl(235 28% 18% / .65);
+    --stroke: hsl(235 35% 70% / .14);
+    --text: hsl(0 0% 98%);
+    --muted: hsl(235 10% 78%);
+    --chip: hsl(235 26% 22% / .7);
+    --chip-stroke: hsl(235 35% 60% / .25);
+    --accent: hsl(265 78% 67%);
+    --accent-2: hsl(200 75% 60%);
+    --active-a: hsl(12 80% 58%);
+    --active-b: hsl(330 70% 60%);
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --shadow-1: 0 10px 26px hsl(0 0% 0% / .28);
+    --gap-1: .35rem;
+    --gap-2: .55rem;
+    --gap-3: .8rem;
     --fp-bg: #15181f;
     --fp-bg-soft: #101119;
     --fp-border: #262a36;
@@ -409,18 +436,22 @@ const STYLES = `
     --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
   }
   .filters-panel {
-    max-width: 100%;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    backdrop-filter: blur(10px);
+    color: var(--text);
+    padding: clamp(8px, 1.6vw, 12px);
+    max-width: 960px;
     margin: 0 auto;
-    padding: 16px 18px 18px;
-    border-radius: var(--fp-radius-lg);
-    border: 1px solid #20232e;
-    background: radial-gradient(circle at top left,#262a34 0,#14171f 45%,#090b10 100%);
-    box-shadow: var(--fp-shadow);
+    display: grid;
+    gap: var(--gap-2);
     font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
-    color: var(--fp-text);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  }
+  .fxc__row2 {
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
   @media (min-width: 769px) {
     .filters-panel {
@@ -468,131 +499,242 @@ const STYLES = `
     border-color: #4b5568;
     transform: translateY(-0.5px);
   }
-  .filters-box {
-    border-radius: var(--fp-radius);
-    background: var(--fp-bg-soft);
-    border: 1px solid var(--fp-border);
-    padding: 10px 10px 12px;
+  /* Row 1: Título + estado + búsqueda colapsada */
+  .fxc__row1 {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--gap-3);
   }
-  .filters-box__header {
+  @media (max-width: 700px) {
+    .fxc__row1 {
+      grid-template-columns: 1fr;
+    }
+  }
+  .fxc__head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
+    gap: var(--gap-2);
+    min-width: 0;
   }
-  .filters-box__title {
+  .fxc__title {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
+    gap: 0.4rem;
+    font-weight: 900;
+    font-size: clamp(0.9rem, 1.6vw, 1rem);
+    margin: 0;
   }
-  .filters-box__icon {
-    font-size: 16px;
+  .fxc__state {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.78rem;
+    border: 1px solid var(--stroke);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: hsl(235 25% 22% / .4);
+    white-space: nowrap;
   }
-  .filters-box__badge {
-    font-size: 11px;
-    color: var(--fp-muted);
-    border-radius: var(--fp-pill);
-    border: 1px solid var(--fp-border-soft);
-    padding: 3px 8px;
-    background: #141722;
-  }
-  .filters-chips {
+  /* Lupa colapsada: icono que expande input al enfocar */
+  .search-c {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 0.4rem;
+    background: hsl(235 22% 22% / .55);
+    border: 1px solid var(--stroke);
+    border-radius: 999px;
+    padding: 0.35rem 0.5rem;
+    height: 34px;
+    max-width: 320px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .search-c:focus-within {
+    box-shadow: 0 0 0 2px hsl(200 75% 60% / .35);
+  }
+  .search-c__icon {
+    font-size: 1rem;
+    opacity: 0.95;
+  }
+  .search-c__input {
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--text);
+    width: 0;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.9rem;
+    caret-color: var(--accent);
+    transition: width 0.18s ease;
+  }
+  .search-c:focus-within .search-c__input {
+    width: 180px;
+  }
+  @media (max-width: 700px) {
+    .search-c__input {
+      width: 0;
+    }
+    .search-c:focus-within .search-c__input {
+      width: 140px;
+    }
+  }
+  .search-c__input::placeholder {
+    color: hsl(235 10% 74%);
+  }
+  /* Row 2: 3 chips en UNA fila (si desborda, scroll horizontal) */
+  .fxc__row2 {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-2);
     overflow-x: auto;
-    padding: 4px 2px 2px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: #4b5563 transparent;
+    scrollbar-color: hsl(235 20% 28% / .6) transparent;
+    padding-bottom: 0.1rem;
+    white-space: nowrap;
   }
-  .filters-chips::-webkit-scrollbar {
+  .fxc__row2::-webkit-scrollbar {
     height: 6px;
   }
-  .filters-chips::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 10px;
-  }
-  .chip {
-    position: relative;
-    flex: 0 0 auto;
-    border-radius: var(--fp-pill);
-    border: 1px solid var(--fp-border-soft);
-    background: #181b26;
-    color: var(--fp-text);
-    font-size: 12px;
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
-    font-weight: 600;
-  }
-  .chip__icon {
-    font-size: 14px;
-  }
-  .chip__badge {
-    min-width: 18px;
-    height: 18px;
+  .fxc__row2::-webkit-scrollbar-thumb {
+    background: hsl(235 20% 28% / .6);
     border-radius: 999px;
-    background: #ec4899;
-    color: white;
+  }
+  .segment {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    background: hsl(235 25% 21% / .55);
+    border: 1px solid var(--stroke);
+    border-radius: 999px;
+  }
+  .seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.85rem;
+    transition: background-color 0.15s ease, transform 0.12s ease;
+    cursor: pointer;
+  }
+  .seg:hover {
+    transform: translateY(-1px);
+  }
+  .seg:active {
+    transform: translateY(0);
+  }
+  .seg:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .seg[aria-pressed="true"],
+  .seg.seg--active {
+    background: hsl(260 45% 45% / .35);
+    border-color: hsl(260 60% 65% / .35);
+  }
+  .q.q--active {
+    background: linear-gradient(135deg, var(--active-a), var(--active-b));
+    border-color: transparent;
+    box-shadow: 0 6px 14px hsl(330 80% 40% / .28);
+  }
+  /* Rangos rápidos MÁS CHICOS en una fila (scroll en móvil) */
+  .quick-row {
+    display: flex;
+    align-items: stretch;
+    gap: var(--gap-2);
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: 0.15rem;
+    margin-top: 0;
+  }
+  .quick-row::-webkit-scrollbar {
+    height: 6px;
+  }
+  .quick-row::-webkit-scrollbar-thumb {
+    background: hsl(235 20% 28% / .6);
+    border-radius: 999px;
+  }
+  .q {
+    scroll-snap-align: start;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 0 5px;
-  }
-  .chip__label {
+    gap: 0.4rem;
+    height: 32px;
+    flex: 0 0 auto;
+    min-width: fit-content;
+    padding: 0.25rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--chip-stroke);
+    background: hsl(235 22% 20% / .55);
+    color: var(--text);
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    font-size: 0.85rem;
+    text-decoration: none;
     white-space: nowrap;
+    transition: background-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 10px hsl(0 0% 0% / .18);
+    cursor: pointer;
   }
-  .chip--filter:hover {
-    background: #1f2330;
-    border-color: #4b5563;
+  .q:hover {
     transform: translateY(-1px);
   }
-  .chip--filter.chip--active {
-    background: #1f2330;
-    border-color: #4b5563;
-    box-shadow: 0 0 0 1px rgba(255,75,139,0.4);
+  .q:active {
+    transform: translateY(0);
   }
-  .chip--danger {
-    background: rgba(239,68,68,.14);
-    border-color: #f97373;
-    color: #fecaca;
-  }
-  .chip--danger:hover {
-    background: rgba(239,68,68,.22);
-    box-shadow: 0 0 0 1px rgba(248,113,113,.6);
-  }
-  .filters-tabs {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .tab {
-    flex: 1;
-    border-radius: var(--fp-pill);
-    border: 1px solid var(--fp-border-soft);
-    background: #141722;
-    color: var(--fp-text);
-    font-size: 13px;
-    padding: 9px 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background var(--fp-speed), border-color var(--fp-speed), transform var(--fp-speed), box-shadow var(--fp-speed);
-  }
-  .tab:hover {
-    background: #1b2130;
-    transform: translateY(-0.5px);
-  }
-  .tab--active {
-    background: var(--fp-grad);
+  .q[aria-pressed="true"] {
+    background: linear-gradient(135deg, var(--active-a), var(--active-b));
     border-color: transparent;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+    box-shadow: 0 6px 14px hsl(330 80% 40% / .28);
+  }
+  .q:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+  .q .label {
+    white-space: nowrap;
+  }
+  .q .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid hsl(235 35% 50% / .4);
+    background: linear-gradient(135deg, hsl(265 78% 67% / .25), hsl(200 75% 60% / .25));
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: var(--text);
+    box-shadow: 0 2px 6px hsl(0 0% 0% / .2);
+    margin-left: 0.4rem;
+  }
+  .q[aria-pressed="true"] .badge {
+    background: linear-gradient(135deg, hsl(12 80% 58% / .4), hsl(330 70% 60% / .4));
+    border-color: hsl(330 70% 60% / .5);
+    box-shadow: 0 2px 8px hsl(330 80% 40% / .3);
+  }
+  .tab-icon,
+  .tab-label,
+  .tab-badge {
+    display: inline-block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .seg, .q {
+      transition: none;
+    }
   }
   .load-more-btn {
     margin-top: 1.5rem;
@@ -617,6 +759,16 @@ const STYLES = `
   .load-more-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .filters-tabs {
+      gap: 6px;
+    }
+    .tab {
+      font-size: 12px;
+      padding: 8px 10px;
+      min-height: 34px;
+    }
   }
   @media (max-width: 768px) {
     .filters-panel {
@@ -648,62 +800,69 @@ const STYLES = `
       touch-action: manipulation !important;
       -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
     }
-    .filters-box {
-      padding: 10px 10px 12px !important;
-      border-radius: 14px !important;
+    .fxc__row1 {
+      gap: var(--gap-2) !important;
     }
-    .filters-box__header {
-      margin-bottom: 10px !important;
+    .fxc__title {
+      font-size: 0.9rem !important;
     }
-    .filters-box__title {
-      font-size: 12px !important;
-      font-weight: 700 !important;
+    .fxc__state {
+      font-size: 0.7rem !important;
+      padding: 0.15rem 0.4rem !important;
     }
-    .filters-box__icon {
-      font-size: 16px !important;
+    .fxc__row2 {
+      gap: var(--gap-1) !important;
+      padding-bottom: 0.15rem !important;
     }
-    .filters-box__badge {
-      font-size: 10px !important;
-      padding: 3px 7px !important;
-      min-height: 18px !important;
+    .segment {
+      gap: 0.2rem !important;
+      padding: 0.15rem !important;
     }
-    .filters-chips {
-      gap: 6px !important;
-      padding: 6px 4px 4px !important;
-      -webkit-overflow-scrolling: touch !important;
-      scroll-behavior: smooth !important;
-      scrollbar-width: thin !important;
-      scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
-    }
-    .filters-chips::-webkit-scrollbar {
-      height: 4px !important;
-    }
-    .filters-chips::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2) !important;
-      border-radius: 4px !important;
-    }
-    .chip {
-      font-size: 11px !important;
-      padding: 8px 12px !important;
-      min-height: 36px !important;
-      gap: 6px !important;
+    .seg {
+      font-size: 0.8rem !important;
+      padding: 0.3rem 0.5rem !important;
       touch-action: manipulation !important;
       -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
-      white-space: nowrap !important;
     }
-    .chip__icon {
-      font-size: 13px !important;
+    .search-c {
+      height: 32px !important;
+      max-width: 280px !important;
     }
-    .chip__badge {
+    .search-c__input {
+      font-size: 0.85rem !important;
+    }
+    .search-c:focus-within .search-c__input {
+      width: 120px !important;
+    }
+    .quick-row {
+      gap: var(--gap-1) !important;
+    }
+    .q {
+      height: 30px !important;
+      min-width: fit-content !important;
+      font-size: 0.8rem !important;
+      padding: 0.2rem 0.6rem !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    .q .badge {
       min-width: 16px !important;
       height: 16px !important;
-      font-size: 9px !important;
-      font-weight: 700 !important;
+      font-size: 0.65rem !important;
     }
-    .tab {
-      font-size: 12px !important;
-      padding: 8px 6px !important;
-      min-height: 36px !important;
+    /* Estilos para la fila de búsqueda expandida en mobile */
+    .filters-search-expanded {
+      margin-top: 6px !important;
+      padding: 6px 0 !important;
+    }
+    .filters-search-expanded input {
+      font-size: 13px !important;
+      padding: 10px 12px 10px 38px !important;
+    }
+    .filters-search-expanded button {
+      font-size: 11px !important;
+      padding: 10px 14px !important;
+      min-height: 40px !important;
       touch-action: manipulation !important;
       -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
     }
@@ -793,10 +952,40 @@ const STYLES = `
       height: 15px !important;
       font-size: 8px !important;
     }
+    .filters-search-expanded {
+      margin-top: 5px !important;
+      padding: 5px 0 !important;
+    }
+    .filters-search-expanded input {
+      font-size: 12px !important;
+      padding: 9px 12px 9px 36px !important;
+    }
+    .filters-search-expanded button {
+      font-size: 10px !important;
+      padding: 9px 12px !important;
+      min-height: 38px !important;
+    }
+    .filters-tabs {
+      padding: 3px 0 7px 0 !important;
+      margin: 0 -1px !important;
+      gap: 5px !important;
+      padding-left: 1px !important;
+      padding-right: 1px !important;
+    }
+    .filters-tabs::-webkit-scrollbar {
+      height: 5px !important;
+    }
     .tab {
       font-size: 11px !important;
-      padding: 7px 5px !important;
-      min-height: 34px !important;
+      padding: 10px 14px !important;
+      min-height: 40px !important;
+      min-width: fit-content !important;
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+      position: relative !important;
+      z-index: 1 !important;
+      pointer-events: auto !important;
+      border-radius: 18px !important;
     }
     .cards-grid {
       gap: 1rem !important;
@@ -860,32 +1049,62 @@ const STYLES = `
       padding: 4px 9px !important;
       min-height: 28px !important;
     }
-    .filters-box {
-      padding: 7px 7px 9px !important;
+    .fxc__title {
+      font-size: 0.8rem !important;
     }
-    .filters-box__title {
-      font-size: 10px !important;
+    .fxc__state {
+      font-size: 0.6rem !important;
     }
-    .filters-box__icon {
-      font-size: 14px !important;
+    .seg {
+      font-size: 0.7rem !important;
+      padding: 0.2rem 0.35rem !important;
     }
-    .chip {
-      font-size: 9px !important;
-      padding: 6px 10px !important;
-      min-height: 32px !important;
+    .search-c {
+      height: 28px !important;
+      max-width: 200px !important;
     }
-    .chip__icon {
+    .search-c:focus-within .search-c__input {
+      width: 80px !important;
+    }
+    .q {
+      height: 26px !important;
+      min-width: fit-content !important;
+      font-size: 0.7rem !important;
+      padding: 0.15rem 0.45rem !important;
+    }
+    .q .badge {
+      min-width: 12px !important;
+      height: 12px !important;
+      font-size: 0.55rem !important;
+    }
+    .filters-search-expanded {
+      margin-top: 4px !important;
+      padding: 4px 0 !important;
+    }
+    .filters-search-expanded input {
       font-size: 11px !important;
+      padding: 8px 10px 8px 34px !important;
     }
-    .chip__badge {
-      min-width: 14px !important;
-      height: 14px !important;
-      font-size: 8px !important;
+    .filters-search-expanded button {
+      font-size: 9px !important;
+      padding: 8px 10px !important;
+      min-height: 36px !important;
+    }
+    .filters-tabs {
+      padding: 2px 0 6px 0 !important;
+      gap: 4px !important;
+    }
+    .filters-tabs::-webkit-scrollbar {
+      height: 4px !important;
     }
     .tab {
       font-size: 10px !important;
-      padding: 6px 4px !important;
-      min-height: 32px !important;
+      padding: 9px 12px !important;
+      min-height: 36px !important;
+      min-width: fit-content !important;
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+      border-radius: 16px !important;
     }
     .panel {
       margin: 0.5rem 0 !important;
@@ -1643,6 +1862,45 @@ export default function ExploreHomeScreen() {
     set(newFilters);
   };
 
+  // Calcular contadores para cada preset de fecha
+  const getDatePresetCount = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
+    const todayYmd = getTodayCDMX();
+    const todayDate = new Date(todayYmd + 'T12:00:00');
+    
+    if (preset === 'todos') {
+      return filteredFechas.length;
+    }
+    
+    if (preset === 'hoy') {
+      return filteredFechas.filter((f: any) => {
+        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
+        return fechaStr === todayYmd;
+      }).length;
+    }
+    
+    if (preset === 'semana') {
+      const weekEnd = addDays(todayDate, 6);
+      const weekEndStr = weekEnd.toISOString().slice(0, 10);
+      return filteredFechas.filter((f: any) => {
+        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
+        if (!fechaStr) return false;
+        return fechaStr >= todayYmd && fechaStr <= weekEndStr;
+      }).length;
+    }
+    
+    if (preset === 'siguientes') {
+      const weekEnd = addDays(todayDate, 6);
+      const weekEndStr = weekEnd.toISOString().slice(0, 10);
+      return filteredFechas.filter((f: any) => {
+        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
+        if (!fechaStr) return false;
+        return fechaStr > weekEndStr;
+      }).length;
+    }
+    
+    return 0;
+  }, [filteredFechas]);
+
   const renderDatePresetButtons = (mobile = false) => (
     <>
       {([
@@ -1652,14 +1910,19 @@ export default function ExploreHomeScreen() {
         { id: 'siguientes', label: 'Siguientes' },
       ] as const).map((p) => {
         const active = (filters.datePreset || 'todos') === p.id;
+        const count = getDatePresetCount(p.id);
         return (
           <button
             key={p.id}
             onClick={() => applyDatePreset(p.id)}
-            className={active ? 'tab tab--active' : 'tab'}
+            className={`q ${active ? 'q--active' : ''}`}
             disabled={isPending}
+            aria-pressed={active}
           >
-            {p.label}
+            <span className="label">{p.label}</span>
+            {count > 0 && (
+              <span className="badge" aria-hidden="true">{count}</span>
+            )}
           </button>
         );
       })}
@@ -1711,13 +1974,18 @@ export default function ExploreHomeScreen() {
               </motion.div>
             )}
 
-            <div className="filters-box">
-              <header className="filters-box__header">
-                <div className="filters-box__title">
-                  <span className="filters-box__icon">🎛️</span>
-                  <span>Filtros</span>
+            {/* Row 1: Título + estado + búsqueda colapsada */}
+            <div className="fxc__row1">
+              <div className="fxc__head">
+                <h2 className="fxc__title" id="fxc-title">
+                  <span aria-hidden="true">🧩</span> Filtros
+                </h2>
+                <span className="fxc__state" aria-live="polite">
+                  {activeFiltersCount > 0
+                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
+                    : 'Sin filtros'}
+                </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {!usingFavoriteFilters && user && preferences && (
                     (preferences.ritmos && preferences.ritmos.length > 0) ||
                     (preferences.zonas && preferences.zonas.length > 0) ||
@@ -1756,108 +2024,234 @@ export default function ExploreHomeScreen() {
                         <span>Activar favoritos</span>
                       </button>
                     )}
-                  <span className="filters-box__badge">
-                    {activeFiltersCount > 0
-                      ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
-                      : 'Sin filtros activos'}
-                  </span>
                 </div>
-              </header>
 
-              <div className="filters-chips">
+            {/* Row 2: 3 chips en una fila */}
+            <div className="fxc__row2" role="toolbar" aria-label="Controles">
+              <nav className="segment" aria-label="Tipo de filtro">
                 <button
-                  className={`chip chip--filter ${openFilterDropdown === 'ritmos' ? 'chip--active' : ''}`}
+                  className={`seg ${openFilterDropdown === 'ritmos' ? 'seg--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'ritmos' ? null : 'ritmos')}
+                  aria-pressed={openFilterDropdown === 'ritmos'}
+                  role="button"
                 >
-                  <span className="chip__icon">🎵</span>
+                  🎵 Ritmos
                   {stableRitmos.length > 0 && (
-                    <span className="chip__badge">{stableRitmos.length}</span>
+                    <span style={{
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--chip-stroke)',
+                      background: 'hsl(235 25% 24% / .9)',
+                      fontSize: '0.68rem',
+                      fontWeight: 900
+                    }}>{stableRitmos.length}</span>
                   )}
-                  <span className="chip__label">Ritmos</span>
                 </button>
                 <button
-                  className={`chip chip--filter ${openFilterDropdown === 'zonas' ? 'chip--active' : ''}`}
+                  className={`seg ${openFilterDropdown === 'zonas' ? 'seg--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'zonas' ? null : 'zonas')}
+                  aria-pressed={openFilterDropdown === 'zonas'}
+                  role="button"
                 >
-                  <span className="chip__icon">📍</span>
+                  📍 Zona
                   {stableZonas.length > 0 && (
-                    <span className="chip__badge">{stableZonas.length}</span>
+                    <span style={{
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--chip-stroke)',
+                      background: 'hsl(235 25% 24% / .9)',
+                      fontSize: '0.68rem',
+                      fontWeight: 900
+                    }}>{stableZonas.length}</span>
                   )}
-                  <span className="chip__label">Zona</span>
                 </button>
                 <button
-                  className={`chip chip--filter ${openFilterDropdown === 'fechas' ? 'chip--active' : ''}`}
+                  className={`seg ${openFilterDropdown === 'fechas' ? 'seg--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'fechas' ? null : 'fechas')}
+                  aria-pressed={openFilterDropdown === 'fechas'}
+                  role="button"
                 >
-                  <span className="chip__icon">📅</span>
+                  🗓️ Fechas
                   {(filters.dateFrom || filters.dateTo) && (
-                    <span className="chip__badge">1</span>
+                    <span style={{
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--chip-stroke)',
+                      background: 'hsl(235 25% 24% / .9)',
+                      fontSize: '0.68rem',
+                      fontWeight: 900
+                    }}>1</span>
                   )}
-                  <span className="chip__label">Fechas</span>
                 </button>
-                {isSearchExpanded ? (
+                <button
+                  className={`seg ${isSearchExpanded || filters.q ? 'seg--active' : ''}`}
+                  onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                  aria-pressed={isSearchExpanded}
+                  role="button"
+                  style={{
+                    border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : undefined,
+                    background: filters.q ? 'rgba(240, 147, 251, 0.12)' : undefined
+                  }}
+                >
+                  🔎 Buscar
+                  {filters.q && (
+                    <span style={{
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--chip-stroke)',
+                      background: '#f093fb',
+                      fontSize: '0.68rem',
+                      fontWeight: 900
+                    }}>1</span>
+                  )}
+                </button>
+                {activeFiltersCount > 0 && (
+                  <button
+                    className="seg"
+                    onClick={() => {
+                      handleFilterChange({
+                        ...filters,
+                        type: 'all',
+                        q: '',
+                        ritmos: [],
+                        zonas: [],
+                        datePreset: 'todos',
+                        dateFrom: undefined,
+                        dateTo: undefined
+                      });
+                      setUsingFavoriteFilters(false);
+                      setOpenFilterDropdown(null);
+                      setIsSearchExpanded(false);
+                    }}
+                    style={{
+                      background: 'rgba(239,68,68,.14)',
+                      borderColor: '#f97373',
+                      color: '#fecaca'
+                    }}
+                    role="button"
+                  >
+                    🗑️ Limpiar ({activeFiltersCount})
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            <div style={{ marginTop: '4px', position: 'relative' }}>
+              <FilterBar
+                filters={filters}
+                onFiltersChange={(newFilters) => {
+                  handleFilterChange(newFilters);
+                }}
+                showTypeFilter={false}
+                initialOpenDropdown={openFilterDropdown}
+                hideButtons={true}
+              />
+            </div>
+
+            {/* Fila de búsqueda expandida */}
+            {isSearchExpanded && (
+              <div className="filters-search-expanded" style={{
+                marginTop: '4px',
+                padding: '8px 0',
+                animation: 'fadeIn 0.2s ease-in'
+              }}>
                   <div style={{
                     position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
-                    flex: '1 1 auto',
-                    minWidth: '200px',
-                    maxWidth: '400px'
+                  width: '100%',
+                  gap: '8px'
                   }}>
                     <span style={{
                       position: 'absolute',
-                      left: '12px',
-                      fontSize: '14px',
+                    left: '14px',
+                    fontSize: '16px',
                       pointerEvents: 'none',
-                      zIndex: 1
+                    zIndex: 1,
+                    color: 'rgba(255, 255, 255, 0.7)'
                     }}>
                       🔍
                     </span>
                     <input
                       type="text"
-                      placeholder="Buscar..."
+                    placeholder="Buscar eventos, clases, maestros..."
                       value={filters.q || ''}
                       onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
                       style={{
                         width: '100%',
-                        padding: '8px 12px 8px 36px',
+                      padding: '10px 14px 10px 42px',
                         borderRadius: '999px',
-                        border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : '1px solid var(--fp-border-soft)',
-                        background: filters.q ? 'rgba(240, 147, 251, 0.12)' : '#181b26',
+                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.6)' : '1px solid var(--fp-border-soft)',
+                      background: filters.q ? 'rgba(240, 147, 251, 0.15)' : '#181b26',
                         color: 'var(--fp-text)',
-                        fontSize: '12px',
+                      fontSize: '13px',
                         outline: 'none',
                         transition: 'all 0.3s ease',
-                        boxShadow: filters.q ? '0 0 0 3px rgba(240, 147, 251, 0.2), 0 4px 16px rgba(240, 147, 251, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                      boxShadow: filters.q 
+                        ? '0 0 0 3px rgba(240, 147, 251, 0.25), 0 4px 16px rgba(240, 147, 251, 0.25)' 
+                        : '0 2px 8px rgba(0, 0, 0, 0.2)',
+                      fontFamily: 'inherit'
                       }}
                       autoFocus
                     />
                     {filters.q && (
                       <button
-                        onClick={() => handleFilterChange({ ...filters, q: '' })}
+                      onClick={() => {
+                        handleFilterChange({ ...filters, q: '' });
+                      }}
+                      className="filters-search-clear-btn"
                         style={{
-                          position: 'absolute',
-                          right: '8px',
-                          fontSize: '12px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'rgba(255,255,255,0.7)',
+                        padding: '10px 16px',
+                        borderRadius: '999px',
+                        border: '1px solid var(--fp-border-soft)',
+                        background: '#181b26',
+                        color: 'var(--fp-text)',
                           cursor: 'pointer',
-                          padding: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                        justifyContent: 'center',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0,
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = '#1b2130';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = '#4b5563';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = '#181b26';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fp-border-soft)';
                         }}
                         aria-label="Limpiar búsqueda"
                       >
-                        ✖
+                      Limpiar
                       </button>
                     )}
                     <button
                       onClick={() => setIsSearchExpanded(false)}
+                    className="filters-search-close-btn"
                       style={{
-                        marginLeft: '6px',
-                        padding: '8px 12px',
+                      padding: '10px 16px',
                         borderRadius: '999px',
                         border: '1px solid var(--fp-border-soft)',
                         background: '#181b26',
@@ -1868,67 +2262,32 @@ export default function ExploreHomeScreen() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0,
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = '#1b2130';
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = '#4b5563';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = '#181b26';
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fp-border-soft)';
                       }}
                       aria-label="Colapsar búsqueda"
                     >
                       ✖
                     </button>
                   </div>
-                ) : (
-                  <button
-                    className="chip chip--filter"
-                    onClick={() => setIsSearchExpanded(true)}
-                    style={{
-                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : undefined,
-                      background: filters.q ? 'rgba(240, 147, 251, 0.12)' : undefined
-                    }}
-                  >
-                    <span className="chip__icon">🔍</span>
-                    {filters.q && (
-                      <span className="chip__badge" style={{ background: '#f093fb' }}>1</span>
-                    )}
-                    <span className="chip__label">{filters.q || 'Buscar'}</span>
-                  </button>
-                )}
-                {activeFiltersCount > 0 && (
-                  <button className="chip chip--danger" onClick={() => {
-                    handleFilterChange({
-                      ...filters,
-                      type: 'all',
-                      q: '',
-                      ritmos: [],
-                      zonas: [],
-                      datePreset: 'todos',
-                      dateFrom: undefined,
-                      dateTo: undefined
-                    });
-                    setUsingFavoriteFilters(false);
-                    setOpenFilterDropdown(null);
-                    setIsSearchExpanded(false);
-                  }}>
-                    <span className="chip__icon">🗑️</span>
-                    <span className="chip__label">Limpiar ({activeFiltersCount})</span>
-                  </button>
-                )}
               </div>
+            )}
 
-              <div style={{ marginTop: '8px', position: 'relative' }}>
-                <FilterBar
-                  filters={filters}
-                  onFiltersChange={(newFilters) => {
-                    handleFilterChange(newFilters);
-                  }}
-                  showTypeFilter={false}
-                  initialOpenDropdown={openFilterDropdown}
-                  hideButtons={true}
-                />
-              </div>
-            </div>
-
-            <div className="filters-tabs">
+            {/* Rangos rápidos: UNA fila + tamaño reducido */}
+            <nav className="quick-row" aria-label="Rangos rápidos">
               {renderDatePresetButtons(false)}
-            </div>
+            </nav>
           </section>
 
           {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
