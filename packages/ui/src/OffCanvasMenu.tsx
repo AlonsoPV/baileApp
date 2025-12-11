@@ -71,6 +71,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
 
       {/* Menu Panel */}
       <div
+        className="offcanvas-menu-panel"
         style={{
           position: "absolute",
           top: 0,
@@ -87,6 +88,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
       >
         {/* Header with gradient */}
         <div
+          className="offcanvas-menu-header"
           style={{
             background: "linear-gradient(135deg, #E53935 0%, #FB8C00 100%)",
             padding: "1.5rem",
@@ -96,6 +98,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
         >
           {/* Botón de Logout en esquina superior derecha */}
           <button
+            className="offcanvas-menu-logout-btn"
             onClick={() => {
               const logoutItem = menuItems.find(item => item.id === 'logout');
               if (logoutItem) {
@@ -118,7 +121,9 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
               cursor: "pointer",
               fontSize: "1.1rem",
               transition: "all 0.2s",
-              color: "#FFF"
+              color: "#FFF",
+              minWidth: "44px",
+              minHeight: "44px"
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
@@ -133,6 +138,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
 
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <div
+              className="offcanvas-menu-avatar"
               style={{
                 width: "64px",
                 height: "64px",
@@ -183,10 +189,11 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
         </div>
 
         {/* Menu Items */}
-        <div style={{ flex: 1, padding: "1rem 0", overflowY: "auto" }}>
+        <div className="offcanvas-menu-items" style={{ flex: 1, padding: "1rem 0", overflowY: "auto" }}>
           {menuItems.map((item) => (
             <button
               key={item.id}
+              className="offcanvas-menu-item"
               onClick={() => {
                 if (!item.disabled) {
                   item.onClick();
@@ -209,6 +216,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
                 transition: "all 0.2s ease",
                 textAlign: "left",
                 opacity: item.disabled ? 0.6 : 1,
+                minHeight: "48px"
               }}
               onMouseEnter={(e) => {
                 if (!item.disabled) {
@@ -241,6 +249,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
 
         {/* Footer */}
         <div
+          className="offcanvas-menu-footer"
           style={{
             padding: "1rem 1.5rem",
             borderTop: "1px solid #2A2F3A",
@@ -315,7 +324,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
         </div>
       </div>
 
-      {/* CSS Animations */}
+      {/* CSS Animations and Responsive Styles */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -325,6 +334,176 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
         @keyframes slideInLeft {
           from { transform: translateX(-100%); }
           to { transform: translateX(0); }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+          .offcanvas-menu-panel {
+            width: 85vw !important;
+            max-width: 320px !important;
+          }
+          
+          .offcanvas-menu-header {
+            padding: 1.25rem 1rem !important;
+          }
+          
+          .offcanvas-menu-avatar {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 1.25rem !important;
+          }
+          
+          .offcanvas-menu-logout-btn {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 44px !important;
+            min-height: 44px !important;
+            top: 0.75rem !important;
+            right: 0.75rem !important;
+            font-size: 1rem !important;
+          }
+          
+          .offcanvas-menu-items {
+            padding: 0.75rem 0 !important;
+          }
+          
+          .offcanvas-menu-item {
+            padding: 0.875rem 1.25rem !important;
+            font-size: 0.95rem !important;
+            min-height: 52px !important;
+            gap: 0.875rem !important;
+          }
+          
+          .offcanvas-menu-item span:first-child {
+            font-size: 1.15rem !important;
+          }
+          
+          .offcanvas-menu-footer {
+            padding: 0.875rem 1.25rem !important;
+          }
+          
+          .offcanvas-menu-footer button {
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.5rem !important;
+            min-height: 40px !important;
+          }
+          
+          .offcanvas-menu-footer > div:last-child {
+            font-size: 0.65rem !important;
+            margin-top: 0.5rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .offcanvas-menu-panel {
+            width: 90vw !important;
+            max-width: 300px !important;
+          }
+          
+          .offcanvas-menu-header {
+            padding: 1rem 0.875rem !important;
+          }
+          
+          .offcanvas-menu-header > div {
+            gap: 0.875rem !important;
+          }
+          
+          .offcanvas-menu-avatar {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.15rem !important;
+          }
+          
+          .offcanvas-menu-header > div > div:last-child > div:first-child {
+            font-size: 1rem !important;
+          }
+          
+          .offcanvas-menu-header > div > div:last-child > div:last-child {
+            font-size: 0.75rem !important;
+          }
+          
+          .offcanvas-menu-logout-btn {
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 44px !important;
+            min-height: 44px !important;
+            top: 0.625rem !important;
+            right: 0.625rem !important;
+            font-size: 0.95rem !important;
+          }
+          
+          .offcanvas-menu-item {
+            padding: 1rem 1rem !important;
+            font-size: 0.9rem !important;
+            min-height: 56px !important;
+            gap: 0.75rem !important;
+          }
+          
+          .offcanvas-menu-item span:first-child {
+            font-size: 1.1rem !important;
+          }
+          
+          .offcanvas-menu-footer {
+            padding: 0.75rem 1rem !important;
+          }
+          
+          .offcanvas-menu-footer > div:first-child {
+            gap: 1rem !important;
+            margin-bottom: 0.625rem !important;
+          }
+          
+          .offcanvas-menu-footer button {
+            font-size: 0.7rem !important;
+            padding: 0.4rem 0.5rem !important;
+            min-height: 44px !important;
+          }
+          
+          .offcanvas-menu-footer > div:last-child {
+            font-size: 0.625rem !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .offcanvas-menu-panel {
+            width: 95vw !important;
+            max-width: 280px !important;
+          }
+          
+          .offcanvas-menu-header {
+            padding: 0.875rem 0.75rem !important;
+          }
+          
+          .offcanvas-menu-avatar {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1rem !important;
+          }
+          
+          .offcanvas-menu-item {
+            padding: 0.875rem 0.875rem !important;
+            font-size: 0.875rem !important;
+          }
+          
+          .offcanvas-menu-footer {
+            padding: 0.625rem 0.875rem !important;
+          }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+          .offcanvas-menu-item {
+            min-height: 56px !important;
+          }
+          
+          .offcanvas-menu-logout-btn {
+            min-width: 48px !important;
+            min-height: 48px !important;
+          }
+          
+          .offcanvas-menu-footer button {
+            min-height: 48px !important;
+            padding: 0.5rem 0.75rem !important;
+          }
         }
       `}</style>
     </div>

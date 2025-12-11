@@ -57,7 +57,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
   const goToPhoto = (i: number) => setCurrentIndex(i);
   return (
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: borderRadius['2xl'], overflow: 'hidden', border: `2px solid ${colors.glass.medium}`, background: colors.dark[400], boxShadow: colors.shadows.glass }}>
+      <div style={{ position: 'relative', height: '350px', borderRadius: borderRadius['2xl'], overflow: 'hidden', border: `2px solid ${colors.glass.medium}`, background: colors.dark[400], boxShadow: colors.shadows.glass }}>
         <motion.div key={currentIndex} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
           <ImageWithFallback src={photos[currentIndex]} alt={`Foto ${currentIndex + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', cursor: 'pointer' }} onClick={() => setIsFullscreen(true)} />
         </motion.div>

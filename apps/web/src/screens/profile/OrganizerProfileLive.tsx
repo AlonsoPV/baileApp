@@ -859,7 +859,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{
         position: 'relative',
-        aspectRatio: '16/9',
+        height: '350px',
         borderRadius: borderRadius['2xl'],
         overflow: 'hidden',
         border: `2px solid ${colors.glass.medium}`,

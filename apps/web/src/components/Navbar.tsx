@@ -457,13 +457,15 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               <img
                 src={avatarUrl}
                 alt="Avatar"
-                loading="lazy"
+                loading="eager"
+                fetchPriority="high"
                 decoding="async"
                 style={{
                   width: '100%',
                   height: '100%',
                   borderRadius: '50%',
                   objectFit: 'cover',
+                  objectPosition: 'center',
                 }}
               />
             ) : (

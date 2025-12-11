@@ -78,16 +78,19 @@ const STYLES = `
   }
   .carousel-main {
     position: relative;
-    aspect-ratio: 4 / 5;
+    height: 350px;
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(0, 0, 0, 0.2);
-    max-height: 480px;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .carousel-main img {
+    object-fit: contain !important;
+    object-position: center !important;
   }
   .carousel-thumbnails {
     display: flex;
@@ -236,8 +239,11 @@ const STYLES = `
       padding: 0 1rem !important;
     }
     .carousel-main {
-      max-height: 400px !important;
-      aspect-ratio: 3 / 4 !important;
+      height: 350px !important;
+    }
+    .carousel-main img {
+      object-fit: contain !important;
+      object-position: center !important;
     }
     .carousel-thumbnails {
       gap: 0.25rem !important;
@@ -288,6 +294,13 @@ const STYLES = `
       margin-bottom: 1rem !important;
       border-radius: 16px !important;
     }
+    .question-section video {
+      min-height: 350px !important;
+      object-fit: contain !important;
+    }
+    .question-section > div:last-child {
+      min-height: 350px !important;
+    }
   }
   
   @media (max-width: 480px) {
@@ -302,7 +315,11 @@ const STYLES = `
       font-size: 4rem !important;
     }
     .carousel-main {
-      max-height: 350px !important;
+      height: 350px !important;
+    }
+    .carousel-main img {
+      object-fit: contain !important;
+      object-position: center !important;
     }
     .carousel-thumbnail {
       width: 45px !important;
@@ -1586,6 +1603,7 @@ export const UserProfileLive: React.FC = () => {
                           display: 'block',
                           objectFit: 'contain',
                           objectPosition: 'center',
+                          minHeight: '350px'
                         }}
                       />
                     </div>

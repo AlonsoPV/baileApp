@@ -30,14 +30,12 @@ interface FilterBarProps {
 
 const PERFIL_OPTIONS = [
   { value: 'all', label: 'Todos', icon: '✨' },
-  { value: 'fechas', label: 'Fechas', icon: '📆' },
-  { value: 'sociales', label: 'Sociales', icon: '🎉' },
+  { value: 'fechas', label: 'Sociales', icon: '📆' },
   { value: 'clases', label: 'Clases', icon: '🎓' },
-  { value: 'organizadores', label: 'Organizadores', icon: '👤' },
   { value: 'academias', label: 'Academias', icon: '🏫' },
   { value: 'maestros', label: 'Maestros', icon: '🎓' },
+  { value: 'usuarios', label: 'Con quien bailar', icon: '🧍' },
   { value: 'marcas', label: 'Marcas', icon: '🏷️' },
-  { value: 'usuarios', label: 'Bailarines', icon: '🧍' },
 ];
 
 // Hook para detectar tamaño de pantalla y aplicar padding responsive
@@ -177,6 +175,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
   const handleTypeChange = React.useCallback((type: string) => {
     onFiltersChange({ ...filters, type: type as any });
+    setOpenDropdown(null); // Cerrar dropdown después de seleccionar
   }, [filters, onFiltersChange]);
 
   const handleRitmoToggle = React.useCallback((ritmoId: number) => {
@@ -560,7 +559,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {/* Botón Tipos */}
             {showTypeFilter && (
               <FilterButton
-                label="Tipos"
+                label="¿Qué buscas?"
                 icon="👥"
                 isOpen={openDropdown === 'tipos'}
                 onClick={() => toggleDropdown('tipos')}

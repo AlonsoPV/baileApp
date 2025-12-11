@@ -376,7 +376,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }
       <style>{`
         .photo-gallery-main {
           position: relative;
-          aspect-ratio: 16/9;
+          height: 350px;
           border-radius: 20px;
           overflow: hidden;
           border: 2px solid rgba(255, 255, 255, 0.15);

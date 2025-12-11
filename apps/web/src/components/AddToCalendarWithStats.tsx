@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
 import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
+import { useAuth } from "@/contexts/AuthProvider";
 
 type AddToCalendarProps = {
   eventId: string | number;
@@ -51,24 +52,17 @@ export default function AddToCalendarWithStats({
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [count, setCount] = useState<number>(0);
-  const [user, setUser] = useState<any>(null);
   const [alreadyAdded, setAlreadyAdded] = useState(false);
   const [loading, setLoading] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const routerLocation = useLocation();
+  const { user } = useAuth();
 
   const eventIdStr = String(eventId);
 
   // Determinar si es una clase (tiene classId, academyId o teacherId)
   const isClass = !!(classId || academyId || teacherId);
-
-  // Cargar usuario actual
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user || null);
-    });
-  }, []);
 
   // Cargar número de interesados (solo fechas futuras)
   useEffect(() => {
@@ -144,8 +138,12 @@ export default function AddToCalendarWithStats({
     });
 
     if (!user?.id) {
-      alert("Inicia sesión para añadir al calendario 🙌");
+      // Si no hay usuario en el contexto de autenticación,
+      // en lugar de ejecutar la acción original, mandamos al flujo de login
       setOpen(false);
+      navigate("/auth/login", {
+        state: { from: routerLocation.pathname + routerLocation.search },
+      });
       return;
     }
 

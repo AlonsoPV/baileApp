@@ -25,23 +25,21 @@ const colors = {
 };
 
 const typeLabels: Record<string, string> = {
-  fechas: 'Fechas',
-  sociales: 'Sociales',
-  organizadores: 'Organizadores',
+  fechas: 'Sociales',
+  clases: 'Clases',
   academias: 'Academias',
   maestros: 'Maestros',
+  usuarios: 'Con quien bailar',
   marcas: 'Marcas',
-  usuarios: 'Bailarines',
 };
 
 const typeIcons: Record<string, string> = {
   fechas: '📆',
-  sociales: '🎉',
-  organizadores: '👤',
+  clases: '🎓',
   academias: '🏫',
   maestros: '🎓',
-  marcas: '🏷️',
   usuarios: '🧍',
+  marcas: '🏷️',
 };
 
 export default function ExploreListScreen() {

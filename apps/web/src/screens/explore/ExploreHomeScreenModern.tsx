@@ -1347,12 +1347,13 @@ export default function ExploreHomeScreen() {
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
+    if (filters.type !== 'all') count += 1;
     if (filters.q) count += 1;
     count += stableRitmos.length;
     count += stableZonas.length;
     if (filters.dateFrom || filters.dateTo) count += 1;
     return count;
-  }, [filters.q, stableRitmos.length, stableZonas.length, filters.dateFrom, filters.dateTo]);
+  }, [filters.type, filters.q, stableRitmos.length, stableZonas.length, filters.dateFrom, filters.dateTo]);
 
   const handlePreNavigate = React.useCallback(() => {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
@@ -2026,9 +2027,31 @@ export default function ExploreHomeScreen() {
                     )}
                 </div>
 
-            {/* Row 2: 3 chips en una fila */}
+            {/* Row 2: 4 chips en una fila */}
             <div className="fxc__row2" role="toolbar" aria-label="Controles">
               <nav className="segment" aria-label="Tipo de filtro">
+                <button
+                  className={`seg ${openFilterDropdown === 'tipos' ? 'seg--active' : ''}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'tipos' ? null : 'tipos')}
+                  aria-pressed={openFilterDropdown === 'tipos'}
+                  role="button"
+                >
+                  👥 ¿Qué buscas?
+                  {filters.type !== 'all' && (
+                    <span style={{
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--chip-stroke)',
+                      background: 'hsl(235 25% 24% / .9)',
+                      fontSize: '0.68rem',
+                      fontWeight: 900
+                    }}>1</span>
+                  )}
+                </button>
                 <button
                   className={`seg ${openFilterDropdown === 'ritmos' ? 'seg--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'ritmos' ? null : 'ritmos')}
@@ -2158,7 +2181,7 @@ export default function ExploreHomeScreen() {
                 onFiltersChange={(newFilters) => {
                   handleFilterChange(newFilters);
                 }}
-                showTypeFilter={false}
+                showTypeFilter={true}
                 initialOpenDropdown={openFilterDropdown}
                 hideButtons={true}
               />

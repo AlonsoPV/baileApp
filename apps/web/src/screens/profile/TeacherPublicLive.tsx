@@ -152,7 +152,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
         {/* Imagen principal */}
         <div style={{
           position: 'relative',
-          aspectRatio: '16/9',
+          height: '350px',
           borderRadius: '16px',
           overflow: 'hidden',
           border: '2px solid rgba(255, 255, 255, 0.2)',

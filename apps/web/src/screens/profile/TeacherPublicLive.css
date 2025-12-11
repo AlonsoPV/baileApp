@@ -60,6 +60,9 @@
   font-weight: 700;
   color: white;
 }
+.teacher-banner-avatar img {
+  object-position: center top !important;
+}
 .teacher-banner-avatar-fallback {
   font-size: 6rem;
 }
