@@ -8,15 +8,14 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "workspacePath": "ios/baileApp.xcworkspace"
+      
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "buildConfiguration": "Release",
-        "workspacePath": "ios/baileApp.xcworkspace"
+        "buildConfiguration": "Release"
       }
     },
     "production": {
@@ -28,8 +27,7 @@
         }
       },
       "ios": {
-        "image": "latest",
-        "workspacePath": "ios/baileApp.xcworkspace"
+        "image": "latest"
       }
     }
   },
