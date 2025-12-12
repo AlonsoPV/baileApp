@@ -3,6 +3,8 @@
     "name": "baileapp-mobile",
     "slug": "baileapp-mobile",
     "version": "1.0.0",
+"runtimeVersion": "1.0.0",
+
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +19,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "name": "baileApp"
     },
     "android": {
       "adaptiveIcon": {
