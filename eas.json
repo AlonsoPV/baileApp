@@ -1,30 +1,35 @@
 {
   "cli": {
-    "version": ">= 13.0.0",
+    "version": ">= 16.0.0",
     "appVersionSource": "remote"
   },
   "build": {
-    "development": {
+    "developmentClient": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "workspacePath": "ios/baileApp.xcworkspace"
+      }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "workspacePath": "ios/baileApp.xcworkspace"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
-        "image": "latest"
+        "image": "latest",
+        "env": {
+          "YARN_IGNORE_ENGINES": "1"
+        }
       },
       "ios": {
-        "image": "latest"
-      },
-      "env": {
-        "YARN_IGNORE_ENGINES": "1"
+        "image": "latest",
+        "workspacePath": "ios/baileApp.xcworkspace"
       }
     }
   },
@@ -34,8 +39,9 @@
         "serviceAccountKeyPath": "./google-service-account.json"
       },
       "ios": {
-        "appleId": "tu@correo.com"
+        "appleId": "alpeva96@gmail.com"
       }
     }
   }
 }
+
