@@ -5,7 +5,7 @@ const config: ExpoConfig = {
   slug: "donde-bailar-mx",
   version: "1.0.0",
 
-  // ✅ para bare workflow / evitar el error
+  // ✅ para bare workflow / evitar e l error
   // (este archivo tiene prioridad sobre app.json)
   runtimeVersion: "1.0.0",
 
