@@ -1,36 +1,39 @@
-import { ConfigContext, ExpoConfig } from "expo/config";
+import type { ExpoConfig } from "expo/config";
 
-const APP_NAME = "Donde Bailar MX";
-const APP_SLUG = "donde-bailar-mx";
-const SCHEME = "dondebailarmx";
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
-  ...config,
-  name: APP_NAME,
-  slug: APP_SLUG,
-  scheme: SCHEME,
+const config: ExpoConfig = {
+  name: "Donde Bailar MX TESTTESTTESTTEST",
+  slug: "donde-bailar-mx",
   version: "1.0.0",
+
+  // ✅ para bare workflow / evitar el error
+  // (este archivo tiene prioridad sobre app.json)
+  runtimeVersion: "1.0.0",
+
+  scheme: "dondebailarmx",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
+
   splash: {
     image: "./assets/splash-icon.png",
     resizeMode: "contain",
     backgroundColor: "#000000",
   },
+
   web: {
     bundler: "metro",
     favicon: "./assets/favicon.png",
   },
+
   ios: {
-    bundleIdentifier: "com.tuorg.dondebailarmx",
     supportsTablet: true,
+    bundleIdentifier: "com.tuorg.dondebailarmx",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
     },
-    // Si en el futuro sirves contenido HTTP no seguro, añade excepciones ATS aquí.
   },
+
   android: {
     package: "com.tuorg.dondebailarmx",
     adaptiveIcon: {
@@ -51,19 +54,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
   },
+
   extra: {
     EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
     EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     eas: {
-      // Copiado del output de `eas init`
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },
   },
+
   updates: {
     url: "https://u.expo.dev/8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
+    fallbackToCacheTimeout: 0,
   },
-  runtimeVersion: {
-    policy: "appVersion",
-  },
-});
+};
+
+export default config;
 

@@ -390,16 +390,25 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     isUpdating
   } = useEventRSVP(dateId);
 
-  const interestedCount = (() => {
-    try {
-      const anyStats: any = stats as any;
-      // our RPC returns { interesado, total }
-      const val = anyStats?.interesado ?? anyStats?.interested ?? anyStats?.count ?? anyStats?.total ?? 0;
-      return typeof val === 'number' ? val : parseInt(String(val || 0), 10) || 0;
-    } catch {
+  // Calcular contador de interesados de forma robusta
+  // La función RPC get_event_rsvp_stats retorna { interesado: number, total: number }
+  // Este contador se actualiza automáticamente cuando el usuario cambia su RSVP
+  // gracias a la invalidación de queries en useEventRSVP
+  const interestedCount = React.useMemo(() => {
+    // Si stats aún no está cargado, retornar 0 (se actualizará cuando cargue)
+    if (!stats) return 0;
+    
+    // stats es de tipo RSVPStats: { interesado: number, total: number }
+    const count = stats.interesado;
+    
+    // Validar que sea un número válido y no negativo
+    if (typeof count !== 'number' || isNaN(count) || count < 0) {
+      console.warn('[EventDatePublicScreen] Invalid interestedCount from stats:', stats);
       return 0;
     }
-  })();
+    
+    return count;
+  }, [stats]);
 
   // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
   const baseFlyerUrl = date.flyer_url || undefined;

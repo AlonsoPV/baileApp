@@ -330,13 +330,14 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         });
       }
       
-      // Obtener nombres de zonas
+      // Obtener nombres de zonas (FILTRAR SOLO TIPO 'zona' para evitar mezclar con ritmos)
       const zonaInfoMap = new Map<number, string>();
       if (zonaTagIds.length > 0) {
         const { data: zonaTags } = await supabase
           .from("tags")
           .select("id, nombre")
-          .in("id", zonaTagIds);
+          .in("id", zonaTagIds)
+          .eq("tipo", "zona");  // 🔧 FIX: Filtrar solo tags de tipo 'zona' para evitar mezclar con ritmos
         
         (zonaTags || []).forEach((tag: any) => {
           zonaInfoMap.set(tag.id, tag.nombre);

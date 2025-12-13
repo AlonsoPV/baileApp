@@ -273,7 +273,8 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         const { data: zonaTags } = await supabase
           .from("tags")
           .select("id, nombre")
-          .in("id", Array.from(allZonaIds));
+          .in("id", Array.from(allZonaIds))
+          .eq("tipo", "zona");  // 🔧 FIX: Filtrar solo tags de tipo 'zona' para evitar mezclar con ritmos
 
         (zonaTags || []).forEach((tag: any) => {
           zonaInfoMap.set(tag.id, tag.nombre);

@@ -131,10 +131,12 @@ export default function RSVPButtons({
         )}
       </motion.button>
 
-      {typeof interestedCount === 'number' && (
+      {/* Contador de interesados - se muestra siempre que sea un número válido (incluyendo 0) */}
+      {typeof interestedCount === 'number' && interestedCount >= 0 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div
             aria-live="polite"
+            aria-atomic="true"
             style={{
               padding: '.5rem .85rem',
               borderRadius: 999,
@@ -143,7 +145,8 @@ export default function RSVPButtons({
               background: 'linear-gradient(135deg, rgba(30,136,229,.28), rgba(0,188,212,.28))',
               border: '1px solid rgba(30,136,229,.45)',
               color: '#fff',
-              boxShadow: '0 8px 22px rgba(30,136,229,.30)'
+              boxShadow: '0 8px 22px rgba(30,136,229,.30)',
+              transition: 'all 0.2s ease'
             }}
           >
             👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
