@@ -25,37 +25,167 @@ type ClaseItem = {
 
 interface Props {
   item: ClaseItem;
+  /** En sliders/grids, hace que el card llene la altura del item para igualar alturas con CTA cards */
+  fillHeight?: boolean;
 }
 
-const card: React.CSSProperties = {
+const cardBase: React.CSSProperties = {
   position: 'relative',
-  borderRadius: '1.25rem',
-  background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-  padding: '1.5rem',
-  cursor: 'pointer',
+  border: '1px solid rgba(255, 255, 255, 0.10)',
+  borderRadius: 'clamp(18px, 4vw, 22px)',
   overflow: 'hidden',
-  border: '1px solid rgba(240, 147, 251, 0.2)',
-  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  minHeight: '350px',
-  height: '350px',
-  justifyContent: 'flex-end',
+  background: 'rgba(255, 255, 255, 0.03)',
+  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
+  cursor: 'pointer',
+  color: '#EAF0FF',
   display: 'flex',
   flexDirection: 'column',
-  color: '#fff'
+  // Evitar que el card se estire a la altura del row del grid (esto genera espacios enormes)
+  // Queremos altura proporcional al contenido (poster + sheet + CTA)
+  height: 'auto',
+  alignSelf: 'start',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 };
 
-const chip: React.CSSProperties = {
-  display: 'inline-flex',
+const posterWrap: React.CSSProperties = {
+  position: 'relative',
+  padding: 0,
+  background: 'radial-gradient(900px 400px at 50% 0%, rgba(255,79,123,.14), transparent 60%), radial-gradient(700px 380px at 60% 100%, rgba(249,115,22,.12), transparent 55%), rgba(255,255,255,.02)'
+};
+
+const badgeRow: React.CSSProperties = {
+  position: 'absolute',
+  top: 'clamp(10px, 2.5vw, 14px)',
+  left: 'clamp(10px, 2.5vw, 14px)',
+  display: 'flex',
+  gap: 'clamp(6px, 1.5vw, 8px)',
+  zIndex: 3
+};
+
+const badge: React.CSSProperties = {
+  fontSize: 'clamp(10px, 2vw, 11px)',
+  fontWeight: 800,
+  padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 10px)',
+  borderRadius: '999px',
+  border: '1px solid rgba(255,255,255,.14)',
+  background: 'rgba(14,18,30,.55)',
+  backdropFilter: 'blur(10px)',
+  letterSpacing: '.2px',
+  color: '#EAF0FF'
+};
+
+const posterFrame: React.CSSProperties = {
+  borderRadius: '18px 18px 0 0',
+  overflow: 'hidden',
+  border: 'none',
+  background: 'rgba(0,0,0,.22)',
+  aspectRatio: '16 / 11',
+  position: 'relative',
+  flexShrink: 0
+};
+
+const sheet: React.CSSProperties = {
+  padding: 'clamp(12px, 2.5vw, 14px)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'clamp(8px, 2vw, 10px)',
+  flex: 1,
+  minHeight: 0
+};
+
+const topLine: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  gap: '10px'
+};
+
+const titleBox: React.CSSProperties = {
+  minWidth: 0,
+  flex: 1
+};
+
+const title: React.CSSProperties = {
+  margin: 0,
+  fontSize: 'clamp(14px, 2.5vw, 16px)',
+  fontWeight: 900,
+  letterSpacing: '.2px',
+  lineHeight: 1.15,
+  color: '#EAF0FF',
+  wordBreak: 'break-word',
+  overflowWrap: 'break-word'
+};
+
+const subtitle: React.CSSProperties = {
+  margin: 'clamp(4px, 1vw, 6px) 0 0',
+  fontSize: 'clamp(11px, 2vw, 12px)',
+  color: 'rgba(234,240,255,.65)',
+  display: 'flex',
+  gap: 'clamp(6px, 1.5vw, 8px)',
   alignItems: 'center',
-  gap: 6,
-  fontSize: 12,
-  fontWeight: 700,
-  color: 'rgba(255,255,255,0.92)',
-  border: '1px solid rgb(255 255 255 / 48%)',
-  background: 'rgb(25 25 25 / 89%)',
-  padding: 8,
-  borderRadius: 999
+  overflowWrap: 'break-word',
+  lineHeight: 1.4
+};
+
+const metaRow: React.CSSProperties = {
+  display: 'flex',
+  gap: 'clamp(6px, 1.5vw, 8px)',
+  flexWrap: 'wrap',
+  alignItems: 'center'
+};
+
+const meta: React.CSSProperties = {
+  fontSize: 'clamp(11px, 2vw, 12px)',
+  color: 'rgba(234,240,255,.86)',
+  background: 'rgba(255,255,255,.06)',
+  border: '1px solid rgba(255,255,255,.10)',
+  padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 10px)',
+  borderRadius: '999px',
+  display: 'inline-flex',
+  gap: 'clamp(6px, 1.5vw, 8px)',
+  alignItems: 'center',
+  whiteSpace: 'nowrap'
+};
+
+const actions: React.CSSProperties = {
+  display: 'flex',
+  gap: 'clamp(8px, 2vw, 10px)',
+  alignItems: 'stretch',
+  marginTop: 'auto',
+  paddingTop: 'clamp(4px, 1vw, 6px)'
+};
+
+const cta: React.CSSProperties = {
+  flex: 1,
+  border: 'none',
+  cursor: 'pointer',
+  padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 14px)',
+  borderRadius: 'clamp(14px, 3vw, 16px)',
+  fontWeight: 900,
+  color: '#111',
+  background: 'linear-gradient(135deg, #FFD1DD, #FFC38F)',
+  fontSize: 'clamp(13px, 2.5vw, 14px)',
+  minHeight: '44px',
+  touchAction: 'manipulation'
+};
+
+const iconBtn: React.CSSProperties = {
+  width: 'clamp(42px, 8vw, 46px)',
+  height: 'clamp(42px, 8vw, 46px)',
+  minWidth: '44px',
+  minHeight: '44px',
+  borderRadius: 'clamp(14px, 3vw, 16px)',
+  border: '1px solid rgba(255,255,255,.14)',
+  background: 'rgba(255,255,255,.06)',
+  color: '#EAF0FF',
+  display: 'grid',
+  placeItems: 'center',
+  cursor: 'pointer',
+  fontWeight: 900,
+  fontSize: 'clamp(16px, 3.5vw, 18px)',
+  touchAction: 'manipulation',
+  flexShrink: 0,
+  alignSelf: 'stretch'
 };
 
 const fmtDate = (s?: string) => {
@@ -68,7 +198,15 @@ const fmtDate = (s?: string) => {
   }
 };
 
-export default function ClassCard({ item }: Props) {
+export default function ClassCard({ item, fillHeight = false }: Props) {
+  const cardStyle = React.useMemo<React.CSSProperties>(() => {
+    if (!fillHeight) return cardBase;
+    return {
+      ...cardBase,
+      height: '100%',
+      alignSelf: 'stretch',
+    };
+  }, [fillHeight]);
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
@@ -127,6 +265,23 @@ export default function ClassCard({ item }: Props) {
     return `${bg}${separator}_t=${key}`;
   }, [bg, bgCacheKey]);
 
+  // Extraer solo el nombre del lugar (similar a EventCard que usa `lugar`)
+  // Si ubicacion contiene información adicional (dirección, ciudad, etc.), extraer solo el nombre
+  const lugarNombre = React.useMemo(() => {
+    if (!item.ubicacion) return '';
+    const ubicacion = String(item.ubicacion).trim();
+    // Si contiene separadores comunes, tomar solo la primera parte (el nombre)
+    // Ejemplos: "Lugar, Dirección" -> "Lugar", "Lugar · Ciudad" -> "Lugar"
+    const separadores = [',', '·', '-', '|'];
+    for (const sep of separadores) {
+      if (ubicacion.includes(sep)) {
+        return ubicacion.split(sep)[0].trim();
+      }
+    }
+    // Si no tiene separadores, devolver tal cual (ya es solo el nombre)
+    return ubicacion;
+  }, [item.ubicacion]);
+
   const ritmoNames: string[] = React.useMemo(() => {
     try {
       const labelByCatalogId = new Map<string, string>();
@@ -146,121 +301,324 @@ export default function ClassCard({ item }: Props) {
     return [] as string[];
   }, [item, allTags]);
 
+  // Determinar si es hoy
+  const isToday = React.useMemo(() => {
+    if (!item.fecha) return false;
+    try {
+      const today = new Date();
+      const eventDate = new Date(item.fecha);
+      return today.toDateString() === eventDate.toDateString();
+    } catch {
+      return false;
+    }
+  }, [item.fecha]);
+
+  // Formatear fecha para meta
+  const formattedDate = React.useMemo(() => {
+    if (isSemanal) {
+      if (typeof item.diaSemana === 'number') {
+        return ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][item.diaSemana] || '';
+      }
+      return item.diasSemana?.map(d => d.slice(0, 3).toLowerCase()).join(', ') || '';
+    }
+    if (item.fecha) {
+      try {
+        const d = new Date(item.fecha);
+        const day = d.getDate();
+        const month = d.toLocaleDateString('es-ES', { month: 'short' });
+        return `${day} ${month}`;
+      } catch {
+        return fmtDate(item.fecha);
+      }
+    }
+    return '';
+  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal]);
+
+  // Construir URL completa para compartir
+  const shareUrl = React.useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}${href}`;
+  }, [href]);
+
+  // Handler para compartir
+  const handleShare = React.useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const title = item.titulo || 'Clase';
+      const text = `Mira esta clase: ${title}`;
+      const navAny = navigator as any;
+      
+      // Intentar Web Share API (móvil)
+      if (navAny?.share && typeof navAny.share === 'function') {
+        try {
+          await navAny.share({ 
+            title, 
+            text, 
+            url: shareUrl 
+          });
+          return;
+        } catch (shareError: any) {
+          // Si el usuario cancela, no hacer nada
+          if (shareError?.name === 'AbortError' || shareError?.message?.includes('cancel')) {
+            return;
+          }
+        }
+      }
+      
+      // Fallback: copiar al portapapeles
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          // Mostrar feedback visual
+          const btn = e.currentTarget as HTMLElement;
+          const originalText = btn.textContent;
+          if (btn) {
+            btn.textContent = '✓';
+            setTimeout(() => {
+              if (btn) btn.textContent = originalText;
+            }, 1000);
+          }
+        } catch (clipError) {
+          console.error('Error al copiar:', clipError);
+        }
+      } else {
+        // Fallback antiguo para navegadores sin Clipboard API
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = shareUrl;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (successful) {
+            const btn = e.currentTarget as HTMLElement;
+            const originalText = btn.textContent;
+            if (btn) {
+              btn.textContent = '✓';
+              setTimeout(() => {
+                if (btn) btn.textContent = originalText;
+              }, 1000);
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Error en fallback de copiar:', fallbackError);
+        }
+      }
+    } catch (error) {
+      console.error('Error al compartir:', error);
+    }
+  }, [shareUrl, item.titulo]);
+
   return (
     <>
       <style>{`
-        .class-card-mobile {
-          width: 100%;
+        .class-card-poster-frame {
+          position: relative;
         }
+        .class-card-poster-frame::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: ${bgWithCacheBust || bg ? `url(${bgWithCacheBust || bg})` : 'none'};
+          background-size: cover;
+          background-position: center;
+          filter: blur(16px) saturate(1.1);
+          transform: scale(1.1);
+          opacity: 0.45;
+          z-index: 1;
+        }
+        .class-card-poster-frame img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          /* Importante: evitar que reglas globales pongan cover en mobile */
+          object-fit: contain !important;
+          object-position: center;
+          z-index: 2;
+          filter: drop-shadow(0 16px 28px rgba(0,0,0,.50));
+          padding: 12px;
+        }
+        .class-card-v2 {
+          /* Evitar stretch vertical por grid; la altura la define el contenido */
+          height: auto;
+          display: flex;
+          flex-direction: column;
+          align-self: start;
+        }
+        
+        /* Responsive: Tablet y Desktop */
+        @media (min-width: 769px) {
+          .class-card-v2 {
+            max-width: 100%;
+          }
+          .class-card-poster-frame {
+            aspect-ratio: 16 / 11;
+          }
+          .class-card-poster-frame img {
+            padding: 12px;
+          }
+        }
+        
+        /* Responsive: Mobile (max-width: 768px) */
         @media (max-width: 768px) {
-          .class-card-mobile {
-            aspect-ratio: 9 / 16 !important;
-            height: auto !important;
-            min-height: auto !important;
-            max-width: calc((9 / 16) * 100vh);
-            margin: 0 auto;
+          .class-card-v2 {
+            max-width: 100%;
+            border-radius: clamp(16px, 4vw, 18px);
+          }
+          .class-card-poster-frame {
+            aspect-ratio: 16 / 10;
+            border-radius: clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px) 0 0;
+          }
+          .class-card-poster-frame img {
+            padding: clamp(8px, 2vw, 10px);
+          }
+        }
+        
+        /* Responsive: Mobile pequeño (max-width: 480px) */
+        @media (max-width: 480px) {
+          .class-card-v2 {
+            border-radius: clamp(14px, 3.5vw, 16px);
+          }
+          .class-card-poster-frame {
+            aspect-ratio: 16 / 9;
+            border-radius: clamp(12px, 3vw, 14px) clamp(12px, 3vw, 14px) 0 0;
+          }
+          .class-card-poster-frame img {
+            padding: clamp(6px, 1.5vw, 8px);
+          }
+        }
+        
+        /* Responsive: Mobile muy pequeño (max-width: 430px) */
+        @media (max-width: 430px) {
+          .class-card-v2 {
+            border-radius: clamp(12px, 3vw, 14px);
+          }
+          .class-card-poster-frame {
+            aspect-ratio: 4 / 3;
+            border-radius: clamp(10px, 2.5vw, 12px) clamp(10px, 2.5vw, 12px) 0 0;
+          }
+          .class-card-poster-frame img {
+            padding: clamp(4px, 1vw, 6px);
+          }
+        }
+        
+        /* Asegurar que el sheet ocupe el espacio restante */
+        .class-card-sheet {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+        
+        /* Mejorar distribución de elementos en mobile */
+        @media (max-width: 768px) {
+          .class-card-sheet {
+            padding: clamp(10px, 2vw, 12px);
+            gap: clamp(6px, 1.5vw, 8px);
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .class-card-sheet {
+            padding: clamp(8px, 1.8vw, 10px);
+            gap: clamp(5px, 1.2vw, 6px);
           }
         }
       `}</style>
       <LiveLink to={href} asCard={false}>
-        <motion.div
-          className="class-card-mobile"
+        <motion.article
+          className="class-card-v2"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
+          whileHover={{ scale: 1.02, y: -4, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
           transition={{ duration: 0.15 }}
-          style={{
-            ...card,
-          backgroundImage: bgWithCacheBust ? `url(${bgWithCacheBust})` : (bg ? `url(${bg})` : undefined),
-          backgroundSize: (bgWithCacheBust || bg) ? '100% 100%' : undefined,
-          backgroundPosition: (bgWithCacheBust || bg) ? 'center' : undefined,
-          backgroundRepeat: (bgWithCacheBust || bg) ? 'no-repeat' : undefined
-        }}
-      >
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-      {/* Overlay como en EventCard: solo si no hay background */}
-      {!bg && (
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-      )}
+          style={cardStyle}
+        >
+          {/* Poster Wrap */}
+          <div style={posterWrap}>
+            {/* Badge Row */}
+            {isToday && (
+              <div style={badgeRow}>
+                <div style={{ ...badge, border: 'none', background: 'linear-gradient(135deg, #FF4F7B, #F97316)', color: '#111' }}>
+                  HOY
+                </div>
+              </div>
+            )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem', position: 'relative', zIndex: 1 }}>
-      {/*   <div style={{
-          width: '64px', height: '64px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.5rem', fontWeight: 700, color: '#fff',
-          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.1)'
-        }}>📚</div> */}
-        <h3 style={{
-          margin: 0,
-          fontSize: '1.375rem',
-          fontWeight: 700,
-          lineHeight: 1.2
-        }}>
-          <span style={{
-            display: 'inline-block',
-            maxWidth: '100%',
-            color: '#fff',
-            textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',
-            wordBreak: 'break-word',
-            lineHeight: 1.2
-          }}>
-            {item.titulo || 'Clase'}
-          </span>
-        </h3>
-      </div>
+            {/* Poster Frame */}
+            <div className="class-card-poster-frame" style={posterFrame}>
+              {(bgWithCacheBust || bg) && (
+                <img 
+                  src={bgWithCacheBust || bg || ''} 
+                  alt={item.titulo || 'Clase'}
+                />
+              )}
+            </div>
+          </div>
 
-        {item.ownerName && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
-        )}
+          {/* Sheet - Info */}
+          <div style={sheet} className="class-card-sheet">
+            {/* Top Line */}
+            <div style={topLine}>
+              <div style={titleBox}>
+                <h3 style={title}>
+                  {item.titulo || 'Clase'}
+                </h3>
+                {lugarNombre && (
+                  <p style={subtitle}>
+                    📍 {lugarNombre}
+                  </p>
+                )}
+              </div>
+            </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, position: 'relative', zIndex: 1 }}>
-        {ritmoNames.length > 0 && (
-          <>
-            {ritmoNames.slice(0, 3).map((name, i) => (
-              <span key={`r-${i}`} style={chip}>🎵 {name}</span>
-            ))}
-          </>
-        )}
-        {isSemanal ? (
-          <span style={chip}>🗓️ {
-            typeof item.diaSemana === 'number' 
-              ? ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][item.diaSemana] || item.diasSemana!.join(', ')
-              : item.diasSemana!.join(', ')
-          }</span>
-        ) : (
-          item.fecha && <span style={chip}>🗓️ {fmtDate(item.fecha)}</span>
-        )}
-        {(item.inicio || item.fin) && (
-          <span style={chip}>🕒 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</span>
-        )}
-      </div>
+            {/* Meta Row */}
+            <div style={metaRow}>
+              {formattedDate && (
+                <div style={meta}>
+                  🗓️ {formattedDate}
+                </div>
+              )}
+              {(item.inicio || item.fin) && (
+                <div style={meta}>
+                  🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}
+                </div>
+              )}
+              {ritmoNames.length > 0 && (
+                <div style={meta}>
+                  🎵 {ritmoNames.slice(0, 2).join(', ')}
+                </div>
+              )}
+            </div>
 
-      {item.ubicacion && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-          <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.9)', maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            📍 {item.ubicacion}
-          </span>
-        </div>
-      )}
-
-      {/* CTA subtle */}
-     {/*  <div style={{ display: 'inline', alignItems: 'center', gap: 8, marginTop: 10, position: 'relative', zIndex: 1 }}>
-        <div style={{
-          padding: '8px 12px',
-          borderRadius: 12,
-          background: 'rgba(240, 147, 251, 0.1)',
-          color: '#fff',
-          margin: '10px 0',
-          textAlign: 'center',
-          fontSize: 13,
-          fontWeight: 700,
-          border: '1px solid rgba(255,255,255,0.08)'
-        }}>Más Información →</div>
-      </div> */}
-      <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+            {/* Actions */}
+            <div style={actions}>
+              <button style={cta} onClick={(e) => {
+                e.preventDefault();
+                window.location.href = href;
+              }}>
+                Ver detalles
+              </button>
+              <button 
+                style={iconBtn}
+                onClick={handleShare}
+                aria-label="Compartir"
+                title="Compartir"
+              >
+                📤
+              </button>
+            </div>
+          </div>
+        </motion.article>
       </LiveLink>
     </>
   );

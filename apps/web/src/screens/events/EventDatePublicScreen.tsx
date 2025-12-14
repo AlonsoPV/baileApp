@@ -1050,38 +1050,38 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       {/* Botón WhatsApp (solo ejecuta la acción si el usuario ha iniciado sesión) */}
                       {date.telefono_contacto && (
                         <RequireLogin>
-                          <motion.a
-                            href={buildWhatsAppUrl(
-                              (date as any).telefono_contacto,
-                              (date as any).mensaje_contacto ?? null,
-                              date.nombre || (parent as any)?.nombre || null
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            whileHover={{ scale: 1.02, y: -1 }}
-                            whileTap={{ scale: 0.98 }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '.55rem',
-                              padding: '.8rem 1.2rem',
-                              borderRadius: 999,
-                              border: '1px solid rgba(37, 211, 102, 0.5)',
-                              color: '#fff',
-                              background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                              boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
-                              fontWeight: 800,
-                              fontSize: '.95rem',
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              width: '100%',
-                            }}
-                          >
-                            <FaWhatsapp size={18} />
-                            <span>Consultar por WhatsApp</span>
-                          </motion.a>
+                        <motion.a
+                          href={buildWhatsAppUrl(
+                            (date as any).telefono_contacto,
+                            (date as any).mensaje_contacto ?? null,
+                            date.nombre || (parent as any)?.nombre || null
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.02, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '.55rem',
+                            padding: '.8rem 1.2rem',
+                            borderRadius: 999,
+                            border: '1px solid rgba(37, 211, 102, 0.5)',
+                            color: '#fff',
+                            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                            boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
+                            fontWeight: 800,
+                            fontSize: '.95rem',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            width: '100%',
+                          }}
+                        >
+                          <FaWhatsapp size={18} />
+                          <span>Consultar por WhatsApp</span>
+                        </motion.a>
                         </RequireLogin>
                       )}
 

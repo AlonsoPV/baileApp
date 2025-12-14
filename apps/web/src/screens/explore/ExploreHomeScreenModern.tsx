@@ -133,7 +133,7 @@ const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; i
         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
       }}
     >
-      <ClassCard item={clase} />
+      <ClassCard item={clase} fillHeight />
     </motion.div>
   );
 });
@@ -191,16 +191,19 @@ const CTACard = React.memo(({
   return (
     <>
       <style>{`
+        /* En escritorio, igualar ALTURA con las ClassCard (que ahora usan fillHeight en el slider).
+           En mobile mantenemos la proporción 4/5 para que se vea consistente. */
         .cta-card-mobile {
           width: 100%;
+          height: 100%;
+          align-self: stretch;
         }
         @media (max-width: 768px) {
           .cta-card-mobile {
-            aspect-ratio: 9 / 16 !important;
-            height: auto !important;
-            min-height: auto !important;
-            max-width: calc((9 / 16) * 100vh);
-            margin: 0 auto;
+            /* Mantener proporción en mobile */
+            aspect-ratio: 4 / 5 !important;
+            max-width: 100%;
+            margin: 0;
           }
         }
       `}</style>
@@ -219,8 +222,6 @@ const CTACard = React.memo(({
           boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
           cursor: 'pointer',
           position: 'relative',
-          minHeight: '350px',
-          height: '350px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -230,78 +231,78 @@ const CTACard = React.memo(({
           width: '100%'
         }}
       >
-      {/* Overlay oscuro para mejor contraste */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
-        zIndex: 1
-      }} />
-
-      {/* Contenido */}
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: '1rem',
-        height: '100%',
-        width: '100%'
-      }}>
-        {/* Badge "Únete" */}
+        {/* Overlay oscuro para mejor contraste */}
         <div style={{
           position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-          color: 'white',
-          padding: '0.4rem 0.8rem',
-          borderRadius: '999px',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
-          border: '2px solid rgba(255, 255, 255, 0.3)'
-        }}>
-          Únete
-        </div>
+          inset: 0,
+          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
+          zIndex: 1
+        }} />
 
-        {/* Icono */}
+        {/* Contenido */}
         <div style={{
-          fontSize: '3rem',
-          marginBottom: '0.5rem'
+          position: 'relative',
+          zIndex: 2,
+          padding: '1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '1rem',
+          height: '100%',
+          width: '100%'
         }}>
-          {sectionType === 'clases' ? '🎓' :
-            sectionType === 'academias' ? '🏫' :
-              sectionType === 'maestros' ? '👨‍🏫' :
-                sectionType === 'organizadores' ? '📅' :
-                  '🏷️'}
-        </div>
+          {/* Badge "Únete" */}
+          <div style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+            color: 'white',
+            padding: '0.4rem 0.8rem',
+            borderRadius: '999px',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
+            border: '2px solid rgba(255, 255, 255, 0.3)'
+          }}>
+            Únete
+          </div>
 
-        {/* Texto */}
-        <p style={{
-          color: '#fff',
-          fontSize: '1.1rem',
-          fontWeight: 600,
-          margin: 0,
-          lineHeight: 1.4,
-          maxWidth: '90%'
-        }}>
-          {text}
-        </p>
+          {/* Icono */}
+          <div style={{
+            fontSize: '3rem',
+            marginBottom: '0.5rem'
+          }}>
+            {sectionType === 'clases' ? '🎓' :
+              sectionType === 'academias' ? '🏫' :
+                sectionType === 'maestros' ? '👨‍🏫' :
+                  sectionType === 'organizadores' ? '📅' :
+                    '🏷️'}
+          </div>
 
-        {/* Flecha indicativa */}
-        <div style={{
-          marginTop: '0.5rem',
-          fontSize: '1.5rem',
-          opacity: 0.8
-        }}>
-          →
+          {/* Texto */}
+          <p style={{
+            color: '#fff',
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            margin: 0,
+            lineHeight: 1.4,
+            maxWidth: '90%'
+          }}>
+            {text}
+          </p>
+
+          {/* Flecha indicativa */}
+          <div style={{
+            marginTop: '0.5rem',
+            fontSize: '1.5rem',
+            opacity: 0.8
+          }}>
+            →
+          </div>
         </div>
-      </div>
     </div>
     </>
   );

@@ -136,164 +136,247 @@ export default function EventCard({ item }: EventCardProps) {
         .event-card-mobile {
           width: 100%;
         }
+
+        /* Fuente única de proporción/altura:
+           - La altura real la define ".media" (aspect-ratio).
+           - ".event-card-mobile" solo controla ancho/márgenes (evita reglas compitiendo). */
+        
+        /* Responsive: Mobile */
         @media (max-width: 768px) {
           .event-card-mobile {
-            aspect-ratio: 9 / 16 !important;
-            height: auto !important;
-            min-height: auto !important;
-            max-width: calc((9 / 16) * 100vh);
+            /* Evitar cards gigantes (por vh) en pantallas altas y también evitar que quede muy angosta */
+            max-width: min(420px, calc((9 / 16) * 100vh));
             margin: 0 auto;
           }
+          .card { --card-ar: 9 / 16; }
+        }
+        
+        /* Responsive: Mobile pequeño */
+        @media (max-width: 480px) {
+          .event-card-mobile {
+            max-width: 100%;
+          }
+          /* Menos padding para que no se tape el póster en pantallas pequeñas */
+          .content {
+            padding: 10px 10px max(8px, env(safe-area-inset-bottom));
+          }
+        }
+        /* CARD */
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .card {
+          border-radius: 22px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          background: rgba(255, 255, 255, 0.03);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+          position: relative;
+          cursor: pointer;
+          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar */
+          --card-ar: 4 / 5;
+        }
+        /* 👇 área media con imagen COMPLETA */
+        .media {
+          position: relative;
+          aspect-ratio: var(--card-ar); /* single source of truth */
+          background: rgba(255, 255, 255, 0.04);
+        }
+        /* fondo "relleno" usando la misma imagen, con blur */
+        .media::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: var(--img);
+          background-size: cover;
+          background-position: center;
+          filter: blur(18px) saturate(1.1);
+          transform: scale(1.08);
+          opacity: 0.55;
+        }
+        /* capa para oscurecer un poco (mejor legibilidad) */
+        .media::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.82) 100%);
+        }
+        /* la imagen REAL completa */
+        .media img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;        /* ✅ cover para llenar el espacio */
+          object-position: center;  /* ✅ centrada */
+          filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+          z-index: 1;
+        }
+        .badges {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          z-index: 2;
+        }
+        .badge {
+          font-size: 11px;
+          font-weight: 800;
+          padding: 8px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(17, 21, 32, 0.55);
+          backdrop-filter: blur(8px);
+        }
+        .badge.hot {
+          border: none;
+          background: linear-gradient(135deg, var(--brand1), var(--brand2));
+        }
+        .content {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 14px 14px max(12px, env(safe-area-inset-bottom));
+          z-index: 2;
+        }
+        .event-title {
+          margin: 0 0 clamp(5px, 1vw, 8px);
+          font-size: clamp(14px, 2.2vw, 18px);
+          font-weight: 900;
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
+          word-break: break-word;
+          line-height: 1.3;
+        }
+        .meta {
+          display: flex;
+          gap: clamp(6px, 1vw, 8px);
+          flex-wrap: wrap;
+          margin-bottom: clamp(8px, 1vw, 10px);
+        }
+        .meta .tag {
+          font-size: clamp(10px, 1.6vw, 13px);
+          color: rgba(234, 240, 255, 0.85);
+          background: rgba(17, 21, 32, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          padding: clamp(5px, 1vw, 9px) clamp(7px, 1.2vw, 12px);
+          border-radius: 999px;
+          display: inline-flex;
+          gap: 8px;
+          align-items: center;
+          white-space: nowrap;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          backdrop-filter: blur(8px);
+        }
+        .card-actions {
+          display: flex;
+          gap: clamp(8px, 1vw, 10px);
+          align-items: center;
+        }
+        .cta {
+          flex: 1;
+          border: none;
+          cursor: pointer;
+          padding: clamp(10px, 1.6vw, 16px) clamp(14px, 2vw, 24px);
+          border-radius: 16px;
+          font-weight: 900;
+          font-size: clamp(12px, 1.9vw, 15px);
+          color: #111;
+          background: linear-gradient(135deg, #FFD1DD, #FFC38F);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(255, 209, 221, 0.3), 0 2px 8px rgba(255, 195, 143, 0.2);
+          letter-spacing: 0.3px;
+        }
+        .cta::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        .cta:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(255, 209, 221, 0.4), 0 4px 12px rgba(255, 195, 143, 0.3);
+        }
+        .cta:hover::before {
+          opacity: 1;
+        }
+        .cta:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 8px rgba(255, 209, 221, 0.3), 0 1px 4px rgba(255, 195, 143, 0.2);
+        }
+        .ghost {
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.06);
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+          color: var(--text, rgba(255, 255, 255, 0.85));
+          transition: all 0.2s;
+        }
+        .ghost:hover {
+          background: rgba(255, 255, 255, 0.12);
         }
       `}</style>
       <LiveLink to={linkTo} asCard={false}>
-        <motion.div
-          className="event-card-mobile"
+        <motion.article
+          className="card event-card-mobile"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
-          style={{
-            position: 'relative',
-            borderRadius: '1.25rem',
-            background: (flyerWithCacheBust || flyer)
-              ? `url(${flyerWithCacheBust || flyer})`
-              : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-            // Usar 100% 100% para que la imagen llene exactamente el contenedor (fill)
-            backgroundSize: '100% 100%',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            padding: '1.5rem',
-            cursor: 'pointer',
-            overflow: 'hidden',
-            border: '1px solid rgba(240, 147, 251, 0.2)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            minHeight: '350px',
-            height: '350px',
-            justifyContent: 'flex-end',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
         >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        {/* Overlay global solo si NO hay flyer */}
-        {!flyer && (
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-        )}
-
-        {/* Contenido */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Botón de calendario en esquina superior derecha */}
-     {/*    <div 
+          <div 
+            className="media" 
           style={{ 
-            position: 'absolute', 
-            top: '12px', 
-            right: '-12px', 
-            zIndex: 10 
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AddToCalendarWithStats
-            eventId={eventId}
-            title={nombre}
-            description={undefined}
-            location={lugar || ciudad || direccion}
-            start={(() => {
-              try {
-                if (!fecha) return new Date();
-                // Asegurar formato ISO (YYYY-MM-DD)
-                const fechaStr = fecha.includes('T') ? fecha.split('T')[0] : fecha;
-                const hora = (horaInicio || '20:00').split(':').slice(0, 2).join(':');
-                const fechaCompleta = `${fechaStr}T${hora}:00`;
-                const parsed = new Date(fechaCompleta);
-                return isNaN(parsed.getTime()) ? new Date() : parsed;
-              } catch (err) {
-                console.error('[EventCard] Error parsing start date:', err);
-                return new Date();
-              }
-            })()}
-            end={(() => {
-              try {
-                if (!fecha) {
-                  const defaultEnd = new Date();
-                  defaultEnd.setHours(defaultEnd.getHours() + 2);
-                  return defaultEnd;
-                }
-                // Asegurar formato ISO (YYYY-MM-DD)
-                const fechaStr = fecha.includes('T') ? fecha.split('T')[0] : fecha;
-                const hora = (horaFin || horaInicio || '23:59').split(':').slice(0, 2).join(':');
-                const fechaCompleta = `${fechaStr}T${hora}:00`;
-                const parsed = new Date(fechaCompleta);
-                if (isNaN(parsed.getTime())) {
-                  const defaultEnd = new Date();
-                  defaultEnd.setHours(defaultEnd.getHours() + 2);
-                  return defaultEnd;
-                }
-                return parsed;
-              } catch (err) {
-                console.error('[EventCard] Error parsing end date:', err);
-                const defaultEnd = new Date();
-                defaultEnd.setHours(defaultEnd.getHours() + 2);
-                return defaultEnd;
-              }
-            })()}
-            showAsIcon={true}
-          />
-        </div> */}
-
-        {/* Sin avatar: el flyer queda como fondo del card */}
-
-        <div style={{
-          fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-          display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
-        }}>
-
-          <span style={{
-            flex: 1,
-            maxWidth: '100%',
-            color: '#fff',
-            textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',
-            wordBreak: 'break-word',
-            lineHeight: 1.3
-          }}>
-            {nombre}
-          </span>
+              '--img': (flyerWithCacheBust || flyer) ? `url(${flyerWithCacheBust || flyer})` : undefined,
+              '--overlay-opacity': flyer ? 0 : 1
+            } as React.CSSProperties}
+          >
+            {(flyerWithCacheBust || flyer) && (
+              <img
+                src={flyerWithCacheBust || flyer}
+                alt={`Poster del evento ${nombre}`}
+              />
+            )}
         </div>
+
+          <div className="content">
+            <h3 className="event-title">{nombre}</h3>
 
         {item.ownerName && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1 }}>por <strong style={{ color: '#fff' }}>{item.ownerName}</strong></div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>
+                por <strong style={{ color: '#fff' }}>{item.ownerName}</strong>
+              </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="meta">
+              <div>
             {fecha && (
-              <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
-                📅 {fmtDate(fecha)}
-              </span>
+                  <div className="tag">📅 {fmtDate(fecha)}</div>
             )}
             {horaInicio && (
-              <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
-                🕒 {formatHHMM(horaInicio)}
-              </span>
+                  <div className="tag">🕗 {formatHHMM(horaInicio)}</div>
+                )}
+                {lugar && (
+                  <div className="tag">📍 {lugar}</div>
             )}
           </div>
-
-          {lugar && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: 8, borderRadius: 999, fontSize: 13, color: 'rgba(255,255,255,0.9)', maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                📍 {lugar}
-              </span>
-            </div>
-          )}
         </div>
 
-       {/*  {direccion && (
-          <div style={{ fontSize: 12, marginTop: 6, padding: 8, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 10, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }} title={direccion}>
-            📍 {direccion}
-          </div>
-        )}
- */}
         {organizador && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>👤</div>
@@ -306,27 +389,13 @@ export default function EventCard({ item }: EventCardProps) {
           </div>
         )}
 
-        {/* CTA */}
-{/*         <div style={{ display: 'inline', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
-          
-          <div style={{
-            padding: '8px 12px',
-            borderRadius: 12,
-            background: 'rgba(240, 147, 251, 0.1)',
-            color: '#fff',
-            margin: '10px 0',
-            textAlign: 'center',
-            fontSize: 13,
-            fontWeight: 700,
-            border: '1px solid rgba(255,255,255,0.08)'
-          }}>Ver más →</div>
-        </div> */}
-
-        {/* Cierre del contenedor de contenido sobre el overlay */}
+            <div className="card-actions">
+              <button className="cta">Ver detalles</button>
+            </div>
         </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+        </motion.article>
       </LiveLink>
     </>
   );

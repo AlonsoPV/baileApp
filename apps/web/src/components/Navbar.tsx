@@ -1,10 +1,9 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { borderRadius } from '../theme/colors';
 import { SEO_ICON_URL } from '@/lib/seoConfig';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
@@ -53,33 +52,167 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
       role="navigation"
       aria-label="Barra de navegación"
       style={{
-        background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
-        padding: '1rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        height: '64px',
-        paddingTop: 'calc(1rem + max(env(safe-area-inset-top), 0px))',
       }}
     >
       <style>{`
         .nav-root {
           box-sizing: border-box;
-          height: 64px;
+          min-height: 64px;
+          height: auto;
+          padding-left: 1rem;
+          padding-right: 1rem;
+          padding-bottom: 0.75rem;
+          padding-top: calc(0.75rem + max(env(safe-area-inset-top), 0px));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, rgba(229, 57, 53, 0.78) 0%, rgba(251, 140, 0, 0.72) 100%);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+          backdrop-filter: blur(14px) saturate(140%);
+          -webkit-backdrop-filter: blur(14px) saturate(140%);
+        }
+
+        .nav-root::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.18), transparent 55%),
+                      radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.14), transparent 45%);
+          pointer-events: none;
+        }
+
+        .nav-inner {
+          width: 100%;
+          max-width: 1200px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Brand truncation + stable layout */
+        .nav-center-brand {
+          max-width: 640px;
+          min-width: 0;
+        }
+
+        .nav-center-brand > div {
+          min-width: 0;
+        }
+
+        .nav-brand-title {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+
+        .nav-brand-tagline {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
         }
 
         .nav-icon {
-          transition: background 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          background: rgba(0, 0, 0, 0.12);
+          color: #fff;
+          text-decoration: none;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
         }
 
         .nav-icon:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(255, 255, 255, 0.35);
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+        }
+
+        .nav-icon:active {
+          transform: translateY(0px) scale(0.98);
+        }
+
+        .nav-icon.active {
+          background: rgba(255, 255, 255, 0.22);
+          border-color: rgba(255, 255, 255, 0.55);
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18), 0 16px 34px rgba(0,0,0,0.24);
+        }
+
+        .nav-icon:focus-visible,
+        .nav-profile-button:focus-visible,
+        .nav-login-button:focus-visible,
+        .nav-hamburger:focus-visible,
+        .nav-center-brand:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.28), 0 0 0 7px rgba(0,0,0,0.18);
+        }
+
+        .nav-hamburger {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.25);
+          background: rgba(0,0,0,0.12);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          padding: 0;
+        }
+
+        .nav-hamburger:hover {
+          background: rgba(255,255,255,0.18);
+          border-color: rgba(255,255,255,0.35);
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+        }
+
+        .nav-hamburger:active {
+          transform: translateY(0px) scale(0.98);
+        }
+
+        .nav-hamburger-bars {
+          width: 18px;
+          height: 14px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+
+        .nav-hamburger-bar {
+          height: 2px;
+          background: rgba(255,255,255,0.95);
+          border-radius: 999px;
+          transition: transform 0.16s ease, opacity 0.16s ease, width 0.16s ease;
+          width: 100%;
+        }
+
+        .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(1) {
+          transform: translateY(6px) rotate(45deg);
+        }
+        .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(2) {
+          opacity: 0;
+        }
+        .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(3) {
+          transform: translateY(-6px) rotate(-45deg);
         }
 
         /* Escritorio: > 1024px */
@@ -92,8 +225,10 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         /* iPad: 768px - 1024px */
         @media (min-width: 768px) and (max-width: 1024px) {
           .nav-root {
-            padding: 0.9rem 1.25rem !important;
-            padding-top: calc(0.9rem + max(env(safe-area-inset-top), 0px)) !important;
+            padding-left: 0.9rem !important;
+            padding-right: 0.9rem !important;
+            padding-bottom: 0.65rem !important;
+            padding-top: calc(0.65rem + max(env(safe-area-inset-top), 0px)) !important;
           }
           .nav-center-brand {
             gap: 0.5rem !important;
@@ -110,11 +245,12 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             height: 48px !important;
           }
           .nav-icons { 
-            gap: 0.5rem !important; 
+            gap: 0.5rem !important;
           }
           .nav-icon { 
             font-size: 1.15rem !important; 
-            padding: 0.45rem !important; 
+            width: 40px !important;
+            height: 40px !important;
           }
           .nav-profile-button {
             width: 42px !important;
@@ -126,80 +262,102 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             padding: 0.45rem 0.9rem !important;
             font-size: 0.88rem !important;
           }
+          .nav-hamburger {
+            width: 40px !important;
+            height: 40px !important;
+          }
         }
 
         @media (max-width: 768px) {
+          .nav-inner {
+            gap: 0.5rem !important;
+          }
           .nav-root {
-            padding: .85rem .7rem !important;
-            padding-top: calc(.85rem + max(env(safe-area-inset-top), 0px)) !important;
-            padding-bottom: .85rem !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.28) !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+            padding-bottom: 0.6rem !important;
+            padding-top: calc(0.6rem + max(env(safe-area-inset-top), 0px)) !important;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.20) !important;
             min-height: 64px !important;
             height: auto !important;
           }
           .nav-left { 
             display: flex !important; 
-            flex: 0 0 auto !important;
+            flex: 1 1 0% !important;
           }
           .nav-center {
             flex: 1 1 auto !important;
           }
           .nav-center-brand {
             gap: 0.45rem !important;
+            max-width: 420px !important;
           }
           .nav-brand-title {
             font-size: 1rem !important;
             letter-spacing: 1.2px !important;
           }
           .nav-brand-tagline {
-            font-size: 0.7rem !important;
+            display: none !important;
           }
           .nav-icons { 
             gap: .3rem !important; 
-            flex: 0 0 auto !important;
+            flex: 1 1 0% !important;
           }
           .nav-icon { 
             font-size: 1.1rem !important; 
-            padding: .4rem !important; 
+            width: 38px !important;
+            height: 38px !important;
           }
           .nav-logo-img {
-            width: 40px !important;
-            height: 30px !important;
+            width: 38px !important;
+            height: 38px !important;
+          }
+          .nav-hamburger {
+            width: 38px !important;
+            height: 38px !important;
           }
         }
 
         @media (max-width: 480px) {
           .nav-root {
-            padding: .5rem .6rem !important;
-            padding-top: calc(.5rem + max(env(safe-area-inset-top), 0px)) !important;
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+            padding-bottom: 0.55rem !important;
+            padding-top: calc(0.55rem + max(env(safe-area-inset-top), 0px)) !important;
           }
           .nav-brand-tagline {
             display: none !important;
+          }
+          .nav-center-brand {
+            max-width: 320px !important;
           }
         }
 
         @media (max-width: 430px) {
           .nav-root {
-            padding: 0.8rem 0.5rem !important;
-            padding-top: calc(0.8rem + max(env(safe-area-inset-top), 0px)) !important;
-            padding-bottom: 0.8rem !important;
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
+            padding-bottom: 0.55rem !important;
+            padding-top: calc(0.55rem + max(env(safe-area-inset-top), 0px)) !important;
             min-height: 60px !important;
             height: auto !important;
           }
           .nav-brand-title {
-            font-size: 0.75rem !important;
-            letter-spacing: 0.8px !important;
+            font-size: 0.9rem !important;
+            letter-spacing: 1px !important;
           }
           .nav-logo-img {
-            width: 35px !important;
-            height: 35px !important;
+            width: 34px !important;
+            height: 34px !important;
           }
           .nav-center-brand {
             gap: 0.35rem !important;
+            max-width: 260px !important;
           }
           .nav-icon {
             font-size: 1rem !important;
-            padding: 0.35rem !important;
+            width: 34px !important;
+            height: 34px !important;
           }
           .nav-profile-button {
             width: 36px !important;
@@ -223,6 +381,38 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           .nav-icons {
             gap: 0.25rem !important;
           }
+          .nav-hamburger {
+            width: 34px !important;
+            height: 34px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .nav-center-brand {
+            max-width: 220px !important;
+          }
+          .nav-brand-title {
+            font-size: 0.85rem !important;
+            letter-spacing: 0.9px !important;
+          }
+          .nav-icon {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          .nav-profile-button {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            min-height: 34px !important;
+          }
+          .nav-hamburger {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          .nav-logo-img {
+            width: 32px !important;
+            height: 32px !important;
+          }
         }
 
         .nav-profile-button {
@@ -235,15 +425,16 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           min-width: 40px;
           min-height: 40px;
           border-radius: 50%;
-          border: 1px solid rgba(255,255,255,0.35);
-          background: rgba(0,0,0,0.15);
+          border: 1px solid rgba(255,255,255,0.28);
+          background: rgba(0,0,0,0.12);
           color: #fff;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
           overflow: hidden;
           box-sizing: border-box;
           flex-shrink: 0;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
         }
         
         .nav-profile-button img {
@@ -259,6 +450,13 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         .nav-profile-button:hover {
           background: rgba(255,255,255,0.18);
+          border-color: rgba(255,255,255,0.38);
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+        }
+
+        .nav-profile-button:active {
+          transform: translateY(0px) scale(0.98);
         }
 
         .nav-profile-button .badge-dot {
@@ -277,20 +475,27 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           align-items: center;
           justify-content: center;
           padding: 0.5rem 1rem;
-          border-radius: 20px;
-          border: 1px solid rgba(255,255,255,0.35);
-          background: #9B3B15;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.28);
+          background: rgba(0,0,0,0.16);
           color: #fff;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
           text-decoration: none;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
         }
 
         .nav-login-button:hover {
-          background: #B84A1A;
-          border-color: rgba(255,255,255,0.5);
+          background: rgba(255,255,255,0.18);
+          border-color: rgba(255,255,255,0.38);
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+        }
+
+        .nav-login-button:active {
+          transform: translateY(0px) scale(0.98);
         }
 
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -319,170 +524,161 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           .nav-root,
           .nav-icon,
           .nav-profile-button,
-          .nav-login-button {
+          .nav-login-button,
+          .nav-hamburger {
             transition: none !important;
           }
         }
       `}</style>
-      <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        {/* Hamburger Button (only when logged in) */}
-        {user && onMenuToggle && (
-          <button
-            type="button"
-            onClick={onMenuToggle}
-            aria-label="Abrir menú"
-            aria-expanded={isMenuOpen ?? false}
-            aria-controls="app-drawer"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-            }}
-          >
-            <div style={{ width: '24px', height: '3px', backgroundColor: '#FFF', borderRadius: '2px' }} />
-            <div style={{ width: '24px', height: '3px', backgroundColor: '#FFF', borderRadius: '2px' }} />
-            <div style={{ width: '24px', height: '3px', backgroundColor: '#FFF', borderRadius: '2px' }} />
-          </button>
-        )}
+      <div className="nav-inner">
+        <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+          {/* Hamburger Button (only when logged in) */}
+          {user && onMenuToggle && (
+            <button
+              type="button"
+              className="nav-hamburger"
+              data-open={isMenuOpen ? 'true' : 'false'}
+              onClick={onMenuToggle}
+              aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={isMenuOpen ?? false}
+              aria-controls="app-drawer"
+            >
+              <span className="nav-hamburger-bars" aria-hidden="true">
+                <span className="nav-hamburger-bar" />
+                <span className="nav-hamburger-bar" />
+                <span className="nav-hamburger-bar" />
+              </span>
+            </button>
+          )}
+        </div>
 
-      </div>
-
-      {/* Logo + Nombre centrado */}
-      <div
-        className="nav-center"
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <Link
-          to="/"
-          className="nav-center-brand"
+        {/* Logo + Nombre centrado */}
+        <div
+          className="nav-center"
           style={{
-            textDecoration: 'none',
-            color: '#FFF',
-            fontSize: '1.1rem',
-            fontWeight: 800,
+            flex: 1,
             display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            pointerEvents: 'auto',
+            justifyContent: 'center',
+            pointerEvents: 'none',
           }}
         >
-          <img
-            src={SEO_ICON_URL}
-            alt="Logo Dónde Bailar"
-            className="nav-logo-img"
-            loading="eager"
-            decoding="async"
+          <Link
+            to="/"
+            className="nav-center-brand"
             style={{
-              width: 55,
-              height: 55,
-              /* borderRadius: '999px', */
-             /*  objectFit: 'cover',  */
-           /*    boxShadow: '0 4px 10px rgba(0,0,0,0.45)', */
-          /*     border: '2px solid rgba(255,255,255,0.9)',
-              background: 'rgba(0,0,0,0.35)', */
-            }}
-          />
-          <div
-            style={{
+              textDecoration: 'none',
+              color: '#FFF',
+              fontSize: '1.1rem',
+              fontWeight: 900,
               display: 'flex',
-              flexDirection: 'column',
-              lineHeight: 1.1,
+              alignItems: 'center',
+              gap: '0.6rem',
+              pointerEvents: 'auto',
             }}
           >
-            <span
-              className="nav-brand-title"
+            <img
+              src={SEO_ICON_URL}
+              alt="Logo Dónde Bailar"
+              className="nav-logo-img"
+              loading="eager"
+              decoding="async"
               style={{
-                textTransform: 'uppercase',
-                letterSpacing: 1.4,
-                fontSize: '2rem',
+                width: 52,
+                height: 52,
+                filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.22))',
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                lineHeight: 1.05,
               }}
             >
-              Dónde Bailar MX
-            </span>
-            <span
-              className="nav-brand-tagline"
-              style={{
-                fontSize: '0.78rem',
-                opacity: 0.9,
-              }}
-            >
-              Encuentra tu ritmo y tu espacio
-            </span>
-          </div>
-        </Link>
-      </div>
-
-      {/* Nav Icons - Solo Admin Trending para Superadmins */}
-      <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end', flex: 1 }}>
-        <Link
-          to="/explore"
-          aria-label="Inicio"
-          title="Inicio"
-          className="nav-icon"
-          style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-        >
-          🏠
-        </Link>
-
-        {/* Admin trending: solo superadmin */}
-        {isAdmin && (
-          <Link
-            to="/admin/trending"
-            aria-label="Trending Admin"
-            title="Trending Admin"
-            className="nav-icon"
-            style={{ color: '#FFF', textDecoration: 'none', fontSize: '1.1rem', padding: '0.5rem', borderRadius: borderRadius.full }}
-          >
-            ⚙️
-          </Link>
-        )}
-
-        {user ? (
-          <button
-            type="button"
-            className="nav-profile-button"
-            aria-label={profileAriaLabel}
-            onClick={handleAvatarClick}
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Avatar"
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
+              <span
+                className="nav-brand-title"
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  objectPosition: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1.4,
+                  fontSize: '1.6rem',
                 }}
-              />
-            ) : (
-              <span>{profileInitial}</span>
-            )}
-            {hasUnread && <span className="badge-dot" aria-hidden="true" />}
-          </button>
-        ) : (
-          <Link
-            to={routes.auth.login}
-            className="nav-login-button"
-            aria-label="Iniciar sesión"
-            title="Iniciar sesión"
-          >
-            Iniciar sesión
+              >
+                Dónde Bailar MX
+              </span>
+              <span
+                className="nav-brand-tagline"
+                style={{
+                  fontSize: '0.78rem',
+                  opacity: 0.92,
+                }}
+              >
+                Encuentra tu ritmo y tu espacio
+              </span>
+            </div>
           </Link>
-        )}
+        </div>
+
+        {/* Nav Icons - Solo Admin Trending para Superadmins */}
+        <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: 'flex-end', flex: 1 }}>
+          <NavLink
+            to="/explore"
+            aria-label="Inicio"
+            title="Inicio"
+            className={({ isActive }) => `nav-icon${isActive ? ' active' : ''}`}
+          >
+            🏠
+          </NavLink>
+
+          {/* Admin trending: solo superadmin */}
+          {isAdmin && (
+            <NavLink
+              to="/admin/trending"
+              aria-label="Trending Admin"
+              title="Trending Admin"
+              className={({ isActive }) => `nav-icon${isActive ? ' active' : ''}`}
+            >
+              ⚙️
+            </NavLink>
+          )}
+
+          {user ? (
+            <button
+              type="button"
+              className="nav-profile-button"
+              aria-label={profileAriaLabel}
+              onClick={handleAvatarClick}
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                  }}
+                />
+              ) : (
+                <span>{profileInitial}</span>
+              )}
+              {hasUnread && <span className="badge-dot" aria-hidden="true" />}
+            </button>
+          ) : (
+            <Link
+              to={routes.auth.login}
+              className="nav-login-button"
+              aria-label="Iniciar sesión"
+              title="Iniciar sesión"
+            >
+              Iniciar sesión
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

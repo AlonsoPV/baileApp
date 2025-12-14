@@ -4231,11 +4231,12 @@ export default function OrganizerProfileEditor() {
                 const independentDates = (allOrganizerDates || []).filter((d: any) => !d.parent_id);
                 
                 // Clasificar fechas independientes en disponibles y pasadas
-                const today = React.useMemo(() => {
+                // NOTA: No usar useMemo aquí porque estamos dentro de una IIFE (viola reglas de hooks)
+                const today = (() => {
                   const d = new Date();
                   d.setHours(0, 0, 0, 0);
                   return d;
-                }, []);
+                })();
                 
                 const parseLocalYmd = (value?: string | null) => {
                   if (!value) return null as Date | null;

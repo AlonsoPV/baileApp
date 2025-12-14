@@ -139,47 +139,11 @@ export default function BrandProfileLive() {
     }
   }, [isLoading, brand, navigate]);
 
-  if (isLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        color: colors.gray[50]
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-          <p style={{ fontSize: typography.fontSize.lg }}>Cargando marca…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!brand) {
-    return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
-        color: colors.gray[50], padding: spacing[8]
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-            Estamos cargando tu perfil...
-          </h2>
-          <p style={{ opacity: 0.7, marginBottom: spacing[2] }}>
-            Redirigiendo a edición para crear tu perfil de marca
-          </p>
-          <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Memoizar media
+  // ✅ TODOS LOS HOOKS DEBEN ESTAR ANTES DE LOS RETURNS CONDICIONALES
+  // Memoizar media (usar brand?.media de forma segura)
   const media = useMemo(() => {
-    const arr = Array.isArray(brand?.media)
+    if (!brand) return [];
+    const arr = Array.isArray(brand.media)
       ? brand.media.map((m) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
       : [];
     return arr as string[];
@@ -191,7 +155,8 @@ export default function BrandProfileLive() {
 
   // Memoizar productos normalizados
   const productos = useMemo(() => {
-    const list = Array.isArray(brand?.productos) ? brand.productos : [];
+    if (!brand) return [];
+    const list = Array.isArray(brand.productos) ? brand.productos : [];
     return list.map((p) => ({
       id: p.id ?? `p-${p.titulo ?? 'producto'}-${p.price ?? p.precio ?? '0'}`,
       name: p.titulo || 'Producto',
@@ -261,6 +226,46 @@ export default function BrandProfileLive() {
       web: rs.web ? safeExternalUrl(rs.web) : undefined,
     };
   }, [brand?.redes_sociales]);
+
+  // ✅ AHORA SÍ PUEDEN IR LOS RETURNS CONDICIONALES
+  if (isLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        color: colors.gray[50]
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
+          <p style={{ fontSize: typography.fontSize.lg }}>Cargando marca…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!brand) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+        color: colors.gray[50], padding: spacing[8]
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
+            Estamos cargando tu perfil...
+          </h2>
+          <p style={{ opacity: 0.7, marginBottom: spacing[2] }}>
+            Redirigiendo a edición para crear tu perfil de marca
+          </p>
+          <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
+            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <>
