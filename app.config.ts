@@ -1,7 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "Donde Bailar MX TESTTESTTESTTEST",
+  name: "Donde Bailar MX",
   slug: "donde-bailar-mx",
   version: "1.0.0",
 
