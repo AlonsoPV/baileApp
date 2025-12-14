@@ -24,5 +24,6 @@
     "**/dist",
     "apps/**/*",
     "supabase/functions/**/*"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
