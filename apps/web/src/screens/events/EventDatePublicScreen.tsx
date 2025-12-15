@@ -394,21 +394,23 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   // La función RPC get_event_rsvp_stats retorna { interesado: number, total: number }
   // Este contador se actualiza automáticamente cuando el usuario cambia su RSVP
   // gracias a la invalidación de queries en useEventRSVP
-  const interestedCount = React.useMemo(() => {
-    // Si stats aún no está cargado, retornar 0 (se actualizará cuando cargue)
-    if (!stats) return 0;
-    
-    // stats es de tipo RSVPStats: { interesado: number, total: number }
-    const count = stats.interesado;
-    
-    // Validar que sea un número válido y no negativo
-    if (typeof count !== 'number' || isNaN(count) || count < 0) {
-      console.warn('[EventDatePublicScreen] Invalid interestedCount from stats:', stats);
-      return 0;
-    }
-    
-    return count;
-  }, [stats]);
+  // COMENTADO: Contador deshabilitado temporalmente
+  // const interestedCount = React.useMemo(() => {
+  //   // Si stats aún no está cargado, retornar 0 (se actualizará cuando cargue)
+  //   if (!stats) return 0;
+  //   
+  //   // stats es de tipo RSVPStats: { interesado: number, total: number }
+  //   const count = stats.interesado;
+  //   
+  //   // Validar que sea un número válido y no negativo
+  //   if (typeof count !== 'number' || isNaN(count) || count < 0) {
+  //     console.warn('[EventDatePublicScreen] Invalid interestedCount from stats:', stats);
+  //     return 0;
+  //   }
+  //   
+  //   return count;
+  // }, [stats]);
+  const interestedCount = undefined; // Contador comentado
 
   // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
   const baseFlyerUrl = date.flyer_url || undefined;
@@ -757,185 +759,622 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       transform: translateY(-2px);
       box-shadow:0 10px 26px rgba(240,147,251,.28);
     }
-    /* Event Cards - Nuevo diseño */
+    /* Event Cards - Diseño mejorado y más visual */
     .event-section-dance {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 20px;
       max-width: 100%;
     }
+    
     .event-card {
-      border-radius: 22px;
-      border: 1px solid rgba(38, 34, 58, 0.8);
-      background: radial-gradient(circle at top, rgba(36, 28, 58, 0.95) 0%, rgba(18, 13, 34, 0.95) 50%, rgba(7, 5, 19, 0.95) 100%);
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
-      padding: 10px 14px 12px;
-      transition: all 0.16s ease;
+      border-radius: 24px;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.08) 0%, 
+        rgba(255, 255, 255, 0.04) 50%, 
+        rgba(255, 255, 255, 0.02) 100%);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 20px 20px 18px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
     }
+    
+    .event-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, 
+        rgba(240, 147, 251, 0.6) 0%, 
+        rgba(30, 136, 229, 0.6) 50%, 
+        rgba(255, 209, 102, 0.6) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
     .event-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.8);
+      transform: translateY(-4px);
+      box-shadow: 
+        0 28px 80px rgba(0, 0, 0, 0.6),
+        0 12px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.2);
     }
+    
+    .event-card:hover::before {
+      opacity: 1;
+    }
+    
+    .event-card--schedule {
+      background: linear-gradient(135deg, 
+        rgba(30, 136, 229, 0.12) 0%, 
+        rgba(0, 188, 212, 0.08) 50%, 
+        rgba(255, 255, 255, 0.04) 100%);
+      border-color: rgba(30, 136, 229, 0.25);
+    }
+    
+    .event-card--schedule::before {
+      background: linear-gradient(90deg, 
+        rgba(30, 136, 229, 0.8) 0%, 
+        rgba(0, 188, 212, 0.8) 100%);
+    }
+    
     .event-card--cost {
-      background: radial-gradient(circle at top, rgba(43, 25, 55, 0.95) 0%, rgba(18, 11, 33, 0.95) 45%, rgba(7, 5, 19, 0.95) 100%);
+      background: linear-gradient(135deg, 
+        rgba(255, 209, 102, 0.12) 0%, 
+        rgba(255, 159, 67, 0.08) 50%, 
+        rgba(255, 255, 255, 0.04) 100%);
+      border-color: rgba(255, 209, 102, 0.25);
     }
+    
+    .event-card--cost::before {
+      background: linear-gradient(90deg, 
+        rgba(255, 209, 102, 0.8) 0%, 
+        rgba(255, 159, 67, 0.8) 100%);
+    }
+    
     .event-card__header {
-      padding-bottom: 8px;
+      padding-bottom: 16px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
+    
     .event-card__title {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
     }
+    
     .event-card__icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.35);
-      font-size: 14px;
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.08) 100%);
+      font-size: 24px;
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
     }
+    
+    .event-card--schedule .event-card__icon {
+      background: linear-gradient(135deg, 
+        rgba(30, 136, 229, 0.3) 0%, 
+        rgba(0, 188, 212, 0.2) 100%);
+      border-color: rgba(30, 136, 229, 0.4);
+    }
+    
+    .event-card--cost .event-card__icon {
+      background: linear-gradient(135deg, 
+        rgba(255, 209, 102, 0.3) 0%, 
+        rgba(255, 159, 67, 0.2) 100%);
+      border-color: rgba(255, 209, 102, 0.4);
+    }
+    
     .event-card__title span:first-of-type + div > span {
-      font-size: 15px;
-      font-weight: 700;
-      color: #f7f5ff;
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
     }
+    
+    .event-card__title span:first-of-type + div > p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    
     .event-card__body {
-      border-radius: 18px;
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(19, 15, 37, 0.95));
-      border: 1px solid rgba(38, 34, 58, 0.8);
-      padding: 8px 10px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 14px;
+      backdrop-filter: blur(10px);
     }
+    
     .event-card__body--cost {
-      background: linear-gradient(145deg, rgba(23, 18, 40, 0.95), rgba(16, 10, 31, 0.95));
+      background: rgba(0, 0, 0, 0.25);
     }
-    /* Event Rows - Cronograma */
+    
+    /* Event Rows - Cronograma mejorado */
     .event-row {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
-      padding: 8px 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      transition: all 0.16s ease;
+      gap: 12px;
+      padding: 12px 10px;
+      border-radius: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
+    
+    .event-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, 
+        rgba(30, 136, 229, 0.6) 0%, 
+        rgba(0, 188, 212, 0.6) 100%);
+      border-radius: 0 3px 3px 0;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    
     .event-row:last-child {
       border-bottom: none;
     }
+    
     .event-row:hover {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 12px;
+      background: linear-gradient(90deg, 
+        rgba(30, 136, 229, 0.1) 0%, 
+        rgba(0, 188, 212, 0.05) 100%);
+      border-color: rgba(30, 136, 229, 0.2);
+      transform: translateX(4px);
     }
+    
+    .event-row:hover::before {
+      opacity: 1;
+    }
+    
     .event-row__left {
       display: flex;
       align-items: flex-start;
-      gap: 8px;
+      gap: 12px;
       flex: 1;
+      min-width: 0;
     }
+    
     .event-row__info {
       display: flex;
       flex-direction: column;
       flex: 1;
+      min-width: 0;
+      gap: 4px;
     }
+    
     .event-row__title {
       margin: 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: #f7f5ff;
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
     }
+    
     .event-row__subtitle {
-      margin: 1px 0 0;
-      font-size: 11px;
-      color: rgba(166, 162, 194, 0.8);
+      margin: 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.4;
+      font-weight: 500;
     }
+    
     .event-row__right {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 3px;
+      gap: 4px;
+      flex-shrink: 0;
     }
+    
     .event-row__time {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      color: #f7f5ff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, 
+        rgba(30, 136, 229, 0.25) 0%, 
+        rgba(0, 188, 212, 0.2) 100%);
+      border: 1px solid rgba(30, 136, 229, 0.4);
+      color: #d4f0ff;
       white-space: nowrap;
+      box-shadow: 
+        0 4px 12px rgba(30, 136, 229, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      letter-spacing: 0.02em;
     }
-    /* Cost Rows */
+    
+    /* Cost Rows mejorados */
     .cost-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 7px 2px;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      transition: all 0.16s ease;
+      gap: 12px;
+      padding: 12px 10px;
+      border-radius: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
+    
+    .cost-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, 
+        rgba(255, 209, 102, 0.6) 0%, 
+        rgba(255, 159, 67, 0.6) 100%);
+      border-radius: 0 3px 3px 0;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    
     .cost-row:last-child {
       border-bottom: none;
     }
+    
     .cost-row:hover {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 12px;
+      background: linear-gradient(90deg, 
+        rgba(255, 209, 102, 0.1) 0%, 
+        rgba(255, 159, 67, 0.05) 100%);
+      border-color: rgba(255, 209, 102, 0.2);
+      transform: translateX(4px);
     }
+    
+    .cost-row:hover::before {
+      opacity: 1;
+    }
+    
     .cost-row__label {
-      color: #f7f5ff;
-      font-weight: 500;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
     }
+    
     .cost-row__pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(59, 53, 83, 0.8);
-      background: rgba(29, 22, 48, 0.9);
-      padding: 4px 10px;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+      gap: 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+      padding: 6px 14px;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
     }
+    
     .cost-row__pill-tag {
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: rgba(166, 162, 194, 0.8);
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 700;
     }
+    
     .cost-row__pill-price {
-      font-weight: 700;
-      color: #facc6b;
+      font-weight: 800;
+      color: #FFE6A8;
+      font-size: 14px;
+      letter-spacing: -0.01em;
     }
+    
     .cost-row__pill--highlight {
-      background: linear-gradient(120deg, #fb7185, #f97316);
+      background: linear-gradient(135deg, #fb7185 0%, #f97316 100%);
       border-color: transparent;
+      box-shadow: 
+        0 6px 20px rgba(251, 113, 133, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
+    
     .cost-row__pill--highlight .cost-row__pill-tag {
-      color: #0f0a14;
+      color: #ffffff;
     }
+    
     .cost-row__pill--highlight .cost-row__pill-price {
-      color: #111827;
+      color: #ffffff;
     }
+    
     .cost-row--free .cost-row__label {
-      font-weight: 600;
-    }
-    .cost-row__pill--free {
-      background: rgba(34, 197, 94, 0.15);
-      border-color: #4ade80;
-      color: #4ade80;
       font-weight: 700;
-      padding: 4px 12px;
     }
-    /* Responsive */
+    
+    .cost-row__pill--free {
+      background: linear-gradient(135deg, 
+        rgba(34, 197, 94, 0.25) 0%, 
+        rgba(16, 185, 129, 0.2) 100%);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #bbf7d0;
+      font-weight: 800;
+      padding: 6px 16px;
+      box-shadow: 
+        0 4px 12px rgba(34, 197, 94, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    
+    /* Responsive mejorado - Diseño adaptativo progresivo */
+    @media (max-width: 1024px) {
+      .event-section-dance {
+        gap: clamp(16px, 2vw, 20px);
+      }
+      
+      .event-card {
+        padding: clamp(16px, 2vw, 20px) clamp(16px, 2vw, 20px) clamp(14px, 1.5vw, 18px);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .event-section-dance {
+        gap: clamp(14px, 2.5vw, 16px);
+      }
+      
+      .event-card {
+        padding: clamp(14px, 2vw, 16px) clamp(14px, 2vw, 16px) clamp(12px, 1.5vw, 14px);
+        border-radius: clamp(18px, 3vw, 20px);
+      }
+      
+      .event-card__header {
+        padding-bottom: clamp(12px, 2vw, 16px);
+        margin-bottom: clamp(10px, 1.5vw, 12px);
+      }
+      
+      .event-card__icon {
+        width: clamp(38px, 6vw, 42px);
+        height: clamp(38px, 6vw, 42px);
+        font-size: clamp(18px, 3vw, 20px);
+        border-radius: clamp(10px, 1.5vw, 12px);
+      }
+      
+      .event-card__title {
+        gap: clamp(10px, 1.5vw, 14px);
+      }
+      
+      .event-card__title span:first-of-type + div > span {
+        font-size: clamp(15px, 2.5vw, 16px);
+      }
+      
+      .event-card__title span:first-of-type + div > p {
+        font-size: clamp(11px, 1.8vw, 12px);
+        margin-top: clamp(4px, 0.8vw, 6px);
+      }
+      
+      .event-card__body {
+        padding: clamp(10px, 1.5vw, 12px) clamp(10px, 1.5vw, 12px);
+        border-radius: clamp(12px, 2vw, 14px);
+      }
+      
+      .event-row {
+        padding: clamp(10px, 1.5vw, 12px) clamp(8px, 1.2vw, 10px);
+        gap: clamp(8px, 1.2vw, 12px);
+        border-radius: clamp(10px, 1.5vw, 12px);
+      }
+      
+      .event-row__title {
+        font-size: clamp(13px, 2vw, 14px);
+        line-height: 1.3;
+      }
+      
+      .event-row__subtitle {
+        font-size: clamp(11px, 1.8vw, 12px);
+        line-height: 1.4;
+      }
+      
+      .event-row__time {
+        font-size: clamp(11px, 1.8vw, 12px);
+        padding: clamp(5px, 0.8vw, 6px) clamp(10px, 1.5vw, 12px);
+        border-radius: clamp(16px, 2.5vw, 20px);
+      }
+      
+      .cost-row {
+        padding: clamp(10px, 1.5vw, 12px) clamp(8px, 1.2vw, 10px);
+        gap: clamp(8px, 1.2vw, 12px);
+        border-radius: clamp(10px, 1.5vw, 12px);
+      }
+      
+      .cost-row__label {
+        font-size: clamp(13px, 2vw, 14px);
+      }
+      
+      .cost-row__pill {
+        padding: clamp(5px, 0.8vw, 6px) clamp(10px, 1.5vw, 14px);
+        gap: clamp(6px, 1vw, 8px);
+        border-radius: clamp(16px, 2.5vw, 20px);
+      }
+      
+      .cost-row__pill-tag {
+        font-size: clamp(9px, 1.5vw, 10px);
+      }
+      
+      .cost-row__pill-price {
+        font-size: clamp(12px, 2vw, 14px);
+      }
+    }
+    
     @media (max-width: 640px) {
+      .event-section-dance {
+        gap: clamp(12px, 2vw, 14px);
+      }
+      
+      .event-card {
+        padding: clamp(12px, 2vw, 14px) clamp(12px, 2vw, 14px) clamp(10px, 1.5vw, 12px);
+        border-radius: clamp(16px, 2.5vw, 18px);
+      }
+      
       .event-row {
         flex-direction: column;
         align-items: flex-start;
+        gap: clamp(6px, 1vw, 8px);
+        padding: clamp(10px, 1.5vw, 12px) clamp(8px, 1.2vw, 10px);
       }
+      
       .event-row__right {
         align-items: flex-start;
+        width: 100%;
+      }
+      
+      .event-row__time {
+        align-self: flex-start;
+        font-size: clamp(11px, 1.8vw, 13px);
+      }
+      
+      .cost-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: clamp(6px, 1vw, 8px);
+        padding: clamp(10px, 1.5vw, 12px) clamp(8px, 1.2vw, 10px);
+      }
+      
+      .cost-row__pill {
+        align-self: flex-start;
+        padding: clamp(5px, 0.8vw, 6px) clamp(12px, 2vw, 16px);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .event-section-dance {
+        gap: clamp(10px, 2vw, 12px);
+      }
+      
+      .event-card {
+        padding: clamp(12px, 2.5vw, 14px) clamp(12px, 2.5vw, 14px) clamp(10px, 2vw, 12px);
+        border-radius: clamp(14px, 3vw, 18px);
+      }
+      
+      .event-card__header {
+        padding-bottom: clamp(10px, 2vw, 12px);
+        margin-bottom: clamp(8px, 1.5vw, 10px);
+      }
+      
+      .event-card__icon {
+        width: clamp(36px, 8vw, 40px);
+        height: clamp(36px, 8vw, 40px);
+        font-size: clamp(16px, 3.5vw, 18px);
+        border-radius: clamp(10px, 2vw, 12px);
+      }
+      
+      .event-card__title {
+        gap: clamp(10px, 2vw, 12px);
+        flex-wrap: wrap;
+      }
+      
+      .event-card__title span:first-of-type + div > span {
+        font-size: clamp(14px, 3vw, 15px);
+      }
+      
+      .event-card__title span:first-of-type + div > p {
+        font-size: clamp(10px, 2vw, 11px);
+      }
+      
+      .event-card__body {
+        padding: clamp(8px, 1.5vw, 10px);
+        border-radius: clamp(10px, 2vw, 12px);
+      }
+      
+      .event-row {
+        padding: clamp(8px, 1.5vw, 10px) clamp(6px, 1.2vw, 8px);
+        gap: clamp(6px, 1vw, 8px);
+      }
+      
+      .event-row__title {
+        font-size: clamp(12px, 2.5vw, 13px);
+      }
+      
+      .event-row__subtitle {
+        font-size: clamp(10px, 2vw, 11px);
+      }
+      
+      .event-row__time {
+        font-size: clamp(10px, 2vw, 11px);
+        padding: clamp(4px, 0.8vw, 5px) clamp(8px, 1.5vw, 10px);
+      }
+      
+      .cost-row {
+        padding: clamp(8px, 1.5vw, 10px) clamp(6px, 1.2vw, 8px);
+        gap: clamp(6px, 1vw, 8px);
+      }
+      
+      .cost-row__label {
+        font-size: clamp(12px, 2.5vw, 13px);
+      }
+      
+      .cost-row__pill {
+        padding: clamp(4px, 0.8vw, 5px) clamp(10px, 2vw, 12px);
+        gap: clamp(5px, 1vw, 6px);
+      }
+      
+      .cost-row__pill-tag {
+        font-size: clamp(8px, 1.5vw, 9px);
+      }
+      
+      .cost-row__pill-price {
+        font-size: clamp(11px, 2.5vw, 12px);
+      }
+    }
+    
+    @media (max-width: 430px) {
+      .event-section-dance {
+        gap: clamp(8px, 2vw, 10px);
+      }
+      
+      .event-card {
+        padding: clamp(10px, 2.5vw, 12px) clamp(10px, 2.5vw, 12px) clamp(8px, 2vw, 10px);
+        border-radius: clamp(12px, 3vw, 16px);
+      }
+      
+      .event-card__icon {
+        width: clamp(32px, 8vw, 36px);
+        height: clamp(32px, 8vw, 36px);
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+      
+      .event-card__title span:first-of-type + div > span {
+        font-size: clamp(13px, 3.5vw, 14px);
+      }
+      
+      .event-row {
+        padding: clamp(8px, 2vw, 10px) clamp(6px, 1.5vw, 8px);
+      }
+      
+      .cost-row {
+        padding: clamp(8px, 2vw, 10px) clamp(6px, 1.5vw, 8px);
       }
     }
   `}</style>
@@ -1143,13 +1582,18 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
                   <div className="event-section-dance">
                     {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
-                      <article className="event-card event-card--schedule">
+                      <motion.article 
+                        className="event-card event-card--schedule"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                      >
                         <header className="event-card__header">
                           <div className="event-card__title">
                             <span className="event-card__icon">🗓️</span>
                             <div>
                               <span>Cronograma</span>
-                              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(166,162,194,0.8)', fontWeight: 500 }}>
+                              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
                                 Horarios y actividades clave de la noche
                               </p>
                             </div>
@@ -1157,7 +1601,13 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         </header>
                         <div className="event-card__body">
                           {date.cronograma.slice(0, 4).map((it: any, i: number) => (
-                            <div key={i} className="event-row">
+                            <motion.div 
+                              key={i} 
+                              className="event-row"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: 0.2 + i * 0.05 }}
+                            >
                               <div className="event-row__left">
                                 <div className="event-row__info">
                                   <p className="event-row__title">{it.titulo || it.tipo}</p>
@@ -1165,12 +1615,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                                     <p className="event-row__subtitle">por {it.instructor}</p>
                                   )}
                                   {(it.realizadoPor || it.realizado_por) && (
-                                    <p className="event-row__subtitle" style={{ marginTop: '0.25rem' }}>
+                                    <p className="event-row__subtitle">
                                       Se llevará a cabo por: {it.realizadoPor || it.realizado_por}
                                     </p>
                                   )}
                                   {it.nivel && (
-                                    <p className="event-row__subtitle" style={{ marginTop: '0.25rem' }}>
+                                    <p className="event-row__subtitle">
                                       Nivel: {it.nivel}
                                     </p>
                                   )}
@@ -1181,20 +1631,25 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                                   ⏱️ {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
                                 </span>
                               </div>
-                            </div>
+                            </motion.div>
                           ))}
                         </div>
-                      </article>
+                      </motion.article>
                     )}
 
                     {Array.isArray(date.costos) && date.costos.length > 0 && (
-                      <article className="event-card event-card--cost">
+                      <motion.article 
+                        className="event-card event-card--cost"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                      >
                         <header className="event-card__header">
                           <div className="event-card__title">
                             <span className="event-card__icon">💰</span>
                             <div>
                               <span>Costos</span>
-                              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(166,162,194,0.8)', fontWeight: 500 }}>
+                              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
                                 Revisa preventas y precios en puerta antes de llegar
                               </p>
                             </div>
@@ -1215,10 +1670,16 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                               : c.precio;
 
                             return (
-                              <div key={i} className={`cost-row ${isFree ? 'cost-row--free' : ''}`}>
+                              <motion.div 
+                                key={i} 
+                                className={`cost-row ${isFree ? 'cost-row--free' : ''}`}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+                              >
                                 <span className="cost-row__label">{c.nombre || c.tipo}</span>
                                 {isFree ? (
-                                  <span className="cost-row__pill cost-row__pill--free">Gratis</span>
+                                  <span className="cost-row__pill cost-row__pill--free">✨ Gratis</span>
                                 ) : (
                                   <span className={`cost-row__pill ${isHighlight ? 'cost-row__pill--highlight' : ''}`}>
                                     <span className="cost-row__pill-tag">
@@ -1231,14 +1692,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                                     </span>
                                   </span>
                                 )}
-                              </div>
+                              </motion.div>
                             );
                           })}
                         </div>
-                        <p style={{ margin: '0.5rem 0 0', fontSize: 11, color: 'rgba(166,162,194,0.9)', textAlign: 'right' }}>
+                        <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'right', fontStyle: 'italic' }}>
                           *Los precios pueden cambiar sin previo aviso. Verifica en la puerta del evento.
                         </p>
-                      </article>
+                      </motion.article>
                     )}
                   </div>
                 </div>
@@ -1465,7 +1926,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       currentStatus={userStatus}
                       onStatusChange={toggleInterested}
                       disabled={isUpdating}
-                      interestedCount={interestedCount}
+                      // interestedCount={interestedCount} - Contador comentado
+                      interestedCount={undefined}
                     />
                   </RequireLogin>
 
