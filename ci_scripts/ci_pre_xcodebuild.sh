@@ -5,6 +5,9 @@ echo "==> Xcode Cloud pre-xcodebuild diagnostics"
 
 cd "$(dirname "$0")/.."
 
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 echo "==> Repo root: $(pwd)"
 echo "==> Xcode: $(xcodebuild -version | tr '\n' ' ')" || true
 
@@ -24,18 +27,22 @@ echo "==> Schemes in workspace:"
 xcodebuild -list -workspace ios/baileApp.xcworkspace || true
 
 echo "==> Check CocoaPods artifacts"
-if [ -d "ios/Pods/Pods.xcodeproj" ]; then
-  echo "Pods.xcodeproj exists ✅"
-else
-  echo "Pods.xcodeproj missing — running pod install"
-  pushd ios >/dev/null
-  pod install --repo-update
-  popd >/dev/null
+echo "Running pod install (forces Podfile.lock/Manifest.lock sync for this CI run)"
+pushd ios >/dev/null
+pod install
+popd >/dev/null
 
-  if [ ! -d "ios/Pods/Pods.xcodeproj" ]; then
-    echo "ERROR: Pods.xcodeproj still missing after pod install."
-    exit 1
-  fi
+if [ ! -d "ios/Pods/Pods.xcodeproj" ]; then
+  echo "ERROR: Pods.xcodeproj missing after pod install."
+  exit 1
+fi
+
+if [ -f "ios/Pods/Manifest.lock" ]; then
+  cp ios/Pods/Manifest.lock ios/Podfile.lock
+  echo "Podfile.lock synced from Pods/Manifest.lock"
+else
+  echo "ERROR: ios/Pods/Manifest.lock missing after pod install."
+  exit 1
 fi
 
 echo "==> Build settings (filtered)"
