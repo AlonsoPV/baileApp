@@ -1,8 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-# Wrapper: keep compatibility no matter whether Xcode Cloud looks in repo root
-# or under `ci_scripts/`.
-exec "$(dirname "$0")/ci_scripts/ci_post_clone.sh"
+echo "==> Node & pnpm"
+node -v || true
+corepack enable || true
 
+echo "==> Install JS deps"
+pnpm install --no-frozen-lockfile
 
+echo "==> Install CocoaPods"
+cd ios
+
+# Limpieza defensiva
+rm -rf Pods
+rm -f Podfile.lock || true
+
+# Vuelve a generar lock + Pods consistentes
+pod repo update
+pod install --verbose
+
+echo "==> Done"
