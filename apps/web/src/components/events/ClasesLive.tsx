@@ -473,45 +473,47 @@ export default function ClasesLive({
                 )}
               </div>
 
-              {/* Botón WhatsApp */}
+              {/* Botón WhatsApp (solo logueados) */}
               {whatsappNumber && (it as any)?.titulo && (
-                <div style={{ marginTop: '1rem' }}>
-                  <a
-                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, (it as any).titulo) || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                      color: '#fff',
-                      borderRadius: '12px',
-                      textDecoration: 'none',
-                      fontWeight: 600,
-                      fontSize: '0.95rem',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = '';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-                    }}
-                  >
-                    <FaWhatsapp size={20} />
-                    <span>Consultar por WhatsApp</span>
-                  </a>
-                </div>
+                <RequireLogin fallback={null}>
+                  <div style={{ marginTop: '1rem' }}>
+                    <a
+                      href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, (it as any).titulo) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                        color: '#fff',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = '';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
+                      }}
+                    >
+                      <FaWhatsapp size={20} />
+                      <span>Consultar por WhatsApp</span>
+                    </a>
+                  </div>
+                </RequireLogin>
               )}
             </div>
           </motion.div>

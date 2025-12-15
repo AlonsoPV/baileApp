@@ -4,6 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 type Props = { item: any };
 
@@ -39,95 +40,50 @@ export default function BrandCard({ item }: Props) {
 
   return (
     <>
-      <style>{`
-        .brand-card-mobile {
-          width: 100%;
-        }
-        @media (max-width: 768px) {
-          .brand-card-mobile {
-            aspect-ratio: 9 / 16 !important;
-            height: auto !important;
-            min-height: auto !important;
-            max-width: calc((9 / 16) * 100vh);
-            margin: 0 auto;
-          }
-          .brand-card-mobile[style*="background"] {
-            background-size: contain !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-          }
-        }
-      `}</style>
+      <style>{EXPLORE_CARD_STYLES}</style>
       <LiveLink to={urls.brandLive(id)} asCard={false}>
-        <motion.div
-          className="brand-card-mobile"
+        <motion.article
+          className="explore-card explore-card-mobile"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
-          style={{
-          position: 'relative',
-          borderRadius: '1.25rem',
-          background: (coverWithCacheBust || cover)
-            ? `url(${coverWithCacheBust || cover})`
-            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          padding: '1.5rem',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          border: '1px solid rgba(240, 147, 251, 0.2)',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '350px',
-          height: '350px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end'
-        }}
-      >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        {/* Overlay solo si NO hay imagen */}
-        {!cover && (
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-        )}
-        {/* Título y meta, alineado con EventCard */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            fontSize: '1.375rem', fontWeight: 700, letterSpacing: 0.2, marginBottom: 10,
-            display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.3
-          }}>
-            <span style={{
-              flex: 1,
-              color: '#fff',
-              textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',
-              wordBreak: 'break-word',
-              lineHeight: 1.3
-            }}>
-              {nombre}
-            </span>
+        >
+          <div
+            className="explore-card-media"
+            style={{
+              '--img': (coverWithCacheBust || cover) ? `url(${coverWithCacheBust || cover})` : undefined,
+            } as React.CSSProperties}
+          >
+            {(coverWithCacheBust || cover) && (
+              <img
+                src={coverWithCacheBust || cover}
+                alt={`Imagen de ${nombre}`}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
           </div>
-          {bio && (
-            <div style={{ fontSize: 12, marginBottom: 10, color: 'rgba(255,255,255,0.78)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
-              {bio}
+
+          <div className="explore-card-content">
+            <h3 className="explore-card-title">{nombre}</h3>
+            {bio && <p className="explore-card-subtitle">{bio}</p>}
+
+            <div className="explore-card-meta">
+              <div className="explore-card-tag">🏷️ Marca</div>
+              {zonaNombres.slice(0, 1).map((z: string, i: number) => (
+                <div key={`z-${i}`} className="explore-card-tag">📍 {z}</div>
+              ))}
+              {ritmoNombres.slice(0, 1).map((r: string, i: number) => (
+                <div key={`r-${i}`} className="explore-card-tag">🎵 {r}</div>
+              ))}
             </div>
-          )}
-        </div>
 
-        {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {ritmoNombres.slice(0,3).map((name: string, i: number) => (
-              <span key={`r-${i}`} style={{ fontSize: 12, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
-            ))}
-            {zonaNombres.slice(0,2).map((name: string, i: number) => (
-              <span key={`z-${i}`} style={{ fontSize: 12, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
-            ))}
+            <div className="explore-card-actions">
+              <div className="explore-card-cta">Ver perfil</div>
+            </div>
           </div>
-        )}
-
-        <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+        </motion.article>
       </LiveLink>
     </>
   );

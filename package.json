@@ -13,8 +13,8 @@
     "dev:web": "pnpm --filter @baileapp/web dev",
     "build:web": "pnpm --filter @baileapp/web build",
     "preview:web": "pnpm --filter @baileapp/web preview",
-    "build:dev:android": "eas build --profile development --platform android",
-    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:dev:android": "eas build --profile developmentClient --platform android",
+    "build:dev:ios": "eas build --profile developmentClient --platform ios",
     "build:preview:android": "eas build --profile preview --platform android",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:prod:android": "eas build --profile production --platform android",
@@ -47,6 +47,6 @@
   },
   "devDependencies": {
     "babel-preset-expo": "^54.0.8",
-    "eas-cli": "^0.0.0"
+    "eas-cli": "^16.28.0"
   }
 }

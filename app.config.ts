@@ -31,6 +31,10 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
+      // ✅ Configuración de Expo Updates (se genera automáticamente desde updates.url y runtimeVersion)
+      // EXUpdatesURL se genera desde updates.url
+      // EXUpdatesRuntimeVersion se genera desde runtimeVersion
+      // EXUpdatesEnabled se genera automáticamente como true
     },
   },
 

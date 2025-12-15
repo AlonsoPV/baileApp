@@ -5,6 +5,7 @@ import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
@@ -71,101 +72,50 @@ export default function TeacherCard({ item }: { item: any }) {
     .filter(Boolean);
   return (
     <>
-      <style>{`
-        .teacher-card-mobile {
-          width: 100%;
-        }
-        @media (max-width: 768px) {
-          .teacher-card-mobile {
-            aspect-ratio: 9 / 16 !important;
-            height: auto !important;
-            min-height: auto !important;
-            max-width: calc((9 / 16) * 100vh);
-            margin: 0 auto;
-          }
-        }
-      `}</style>
+      <style>{EXPLORE_CARD_STYLES}</style>
       <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
-        <motion.div
-          className="teacher-card-mobile"
+        <motion.article
+          className="explore-card explore-card-mobile"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
-          style={{
-          position: 'relative',
-          borderRadius: '1.25rem',
-          background: (bannerUrlWithCacheBust || bannerUrl)
-            ? `url(${bannerUrlWithCacheBust || bannerUrl})`
-            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat',
-          padding: '1.5rem',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          border: '1px solid rgba(240, 147, 251, 0.2)',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(240, 147, 251, 0.1)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          minHeight: '350px',
-          height: '350px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end'
-        }}
-      >
-        {/* Top gradient bar */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        {/* Overlay global solo si NO hay banner */}
-        {!bannerUrl && (
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-        )}
-        {/* Overlay para mejorar legibilidad del nombre cuando hay imagen */}
-        {bannerUrl && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 100%)', zIndex: 0, pointerEvents: 'none' }} />
-        )}
-        {/* Contenido principal: nombre/bio arriba de las chips */}
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{
-            fontSize: '1.05rem',
-            fontWeight: 800,
-            lineHeight: 1.3,
-            color: '#fff',
-            textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',    
-            marginBottom: 2,
-            wordBreak: 'break-word',
-            padding: '6px 10px',
-            borderRadius: 10
-          }}>
-            {displayName}
+        >
+          <div
+            className="explore-card-media"
+            style={{
+              '--img': (bannerUrlWithCacheBust || bannerUrl) ? `url(${bannerUrlWithCacheBust || bannerUrl})` : undefined,
+            } as React.CSSProperties}
+          >
+            {(bannerUrlWithCacheBust || bannerUrl) && (
+              <img
+                src={bannerUrlWithCacheBust || bannerUrl}
+                alt={`Imagen de ${displayName}`}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
           </div>
-          {item.bio && (
-            <div style={{
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.82)',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              lineHeight: 1.4
-            }}>
-              {item.bio}
-            </div>
-          )}
-        </div>
 
-        {(ritmoNombres.length > 0 || zonaNombres.length > 0) && (
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-            {ritmoNombres.slice(0, 3).map((name: string, i: number) => (
-              <span key={`r-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>🎵 {name}</span>
-            ))}
-            {zonaNombres.slice(0, 2).map((name: string, i: number) => (
-              <span key={`z-${i}`} style={{ fontSize: 11, color: 'rgba(255,255,255,0.92)', background: 'rgb(25 25 25 / 89%)', border: '1px solid rgb(255 255 255 / 48%)', padding: 8, borderRadius: 999 }}>📍 {name}</span>
-            ))}
+          <div className="explore-card-content">
+            <h3 className="explore-card-title">{displayName}</h3>
+            {item.bio && <p className="explore-card-subtitle">{item.bio}</p>}
+
+            <div className="explore-card-meta">
+              <div className="explore-card-tag">🎓 Maestro</div>
+              {zonaNombres.slice(0, 1).map((z: string, i: number) => (
+                <div key={`z-${i}`} className="explore-card-tag">📍 {z}</div>
+              ))}
+              {ritmoNombres.slice(0, 1).map((r: string, i: number) => (
+                <div key={`r-${i}`} className="explore-card-tag">🎵 {r}</div>
+              ))}
+            </div>
+
+            <div className="explore-card-actions">
+              <div className="explore-card-cta">Ver perfil</div>
+            </div>
           </div>
-        )}
-        <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+        </motion.article>
       </LiveLink>
     </>
   );

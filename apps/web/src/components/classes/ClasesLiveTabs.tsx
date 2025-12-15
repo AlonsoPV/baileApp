@@ -6,6 +6,7 @@ import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import AddToCalendarWithStats from "@/components/AddToCalendarWithStats";
 import ShareButton from "@/components/events/ShareButton";
+import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useTags } from "@/hooks/useTags";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -1156,42 +1157,44 @@ export default function ClasesLiveTabs({
                               </button>
                             )}
 
-                            {/* Botón WhatsApp (desktop - primera ubicación) */}
+                            {/* Botón WhatsApp (desktop - solo logueados) */}
                             {whatsappNumber && titulo && (
-                              <a
-                                href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || '#'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '0.5rem',
-                                  padding: '0.7rem 1.1rem',
-                                  background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                                  color: '#fff',
-                                  borderRadius: '999px',
-                                  textDecoration: 'none',
-                                  fontWeight: 700,
-                                  fontSize: '0.95rem',
-                                  transition: 'all 0.3s ease',
-                                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(-2px)';
-                                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = '';
-                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-                                }}
-                              >
-                                <FaWhatsapp size={18} />
-                                <span>WhatsApp</span>
-                              </a>
+                              <RequireLogin fallback={null}>
+                                <a
+                                  href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || '#'}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.7rem 1.1rem',
+                                    background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                                    color: '#fff',
+                                    borderRadius: '999px',
+                                    textDecoration: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '0.95rem',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = '';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
+                                  }}
+                                >
+                                  <FaWhatsapp size={18} />
+                                  <span>WhatsApp</span>
+                                </a>
+                              </RequireLogin>
                             )}
                           </>
                         );
