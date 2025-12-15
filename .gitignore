@@ -43,7 +43,9 @@ build/
 *.tsbuildinfo
 
 # generated native folders
-/ios
+# NOTE: We commit `ios/` because Xcode Cloud needs a workspace present at clone time.
+# If you switch back to fully managed workflow (EAS-only), you can re-add `/ios`.
+# /ios
 /android
 
 # Jekyll
