@@ -29,6 +29,7 @@ xcodebuild -list -workspace ios/baileApp.xcworkspace || true
 echo "==> Check CocoaPods artifacts"
 echo "Running pod install (forces Podfile.lock/Manifest.lock sync for this CI run)"
 pushd ios >/dev/null
+which pod || sudo gem install cocoapods -N
 pod install
 popd >/dev/null
 
@@ -36,6 +37,17 @@ if [ ! -d "ios/Pods/Pods.xcodeproj" ]; then
   echo "ERROR: Pods.xcodeproj missing after pod install."
   exit 1
 fi
+
+XC="ios/Pods/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"
+if [ ! -f "$XC" ]; then
+  echo "ERROR: Missing $XC"
+  echo "== Debug: listing ios/Pods/Target Support Files =="
+  ls -la "ios/Pods/Target Support Files" || true
+  echo "== Debug: listing ios/Pods/Target Support Files/Pods-DondeBailarMX =="
+  ls -la "ios/Pods/Target Support Files/Pods-DondeBailarMX" || true
+  exit 1
+fi
+echo "OK: Found $XC"
 
 if [ -f "ios/Pods/Manifest.lock" ]; then
   cp ios/Pods/Manifest.lock ios/Podfile.lock
