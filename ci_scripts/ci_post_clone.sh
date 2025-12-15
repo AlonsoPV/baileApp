@@ -24,6 +24,19 @@ pushd ios >/dev/null
 pod install --repo-update
 popd >/dev/null
 
+echo "==> Replace ios/baileApp.xcworkspace with the Pods-generated workspace"
+# Xcode Cloud resolves packages very early (before scripts), so we commit a minimal
+# workspace at ios/baileApp.xcworkspace. After `pod install`, we overwrite it with
+# the CocoaPods workspace so `xcodebuild archive` builds Pods correctly.
+if [ -d "ios/DondeBailarMX.xcworkspace" ]; then
+  rm -rf ios/baileApp.xcworkspace
+  cp -R ios/DondeBailarMX.xcworkspace ios/baileApp.xcworkspace
+  echo "Workspace updated: ios/baileApp.xcworkspace (from DondeBailarMX.xcworkspace)"
+else
+  echo "WARN: ios/DondeBailarMX.xcworkspace not found after pod install."
+  echo "      Archive may fail if CocoaPods integration is required."
+fi
+
 echo "==> Done"
 
 
