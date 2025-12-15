@@ -1,22 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "==> Node & pnpm"
-node -v || true
+echo "==> Enable corepack"
 corepack enable || true
 
 echo "==> Install JS deps"
 pnpm install --no-frozen-lockfile
 
-echo "==> Install CocoaPods"
+echo "==> CocoaPods install"
 cd ios
 
-# Limpieza defensiva
-rm -rf Pods
-rm -f Podfile.lock || true
+# Si CocoaPods no está, instálalo (Xcode Cloud normalmente lo trae, pero por si acaso)
+which pod || sudo gem install cocoapods -N
 
-# Vuelve a generar lock + Pods consistentes
 pod repo update
 pod install --verbose
 
-echo "==> Done"
+echo "==> Pods ready"
+ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true
