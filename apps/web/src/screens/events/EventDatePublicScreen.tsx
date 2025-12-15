@@ -1922,11 +1922,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
                   {/* Botones RSVP */}
                   <RequireLogin>
+                    {/* Contador de RSVP comentado - interestedCount={interestedCount} */}
                     <RSVPButtons
                       currentStatus={userStatus}
                       onStatusChange={toggleInterested}
                       disabled={isUpdating}
-                      // interestedCount={interestedCount} - Contador comentado
                       interestedCount={undefined}
                     />
                   </RequireLogin>
