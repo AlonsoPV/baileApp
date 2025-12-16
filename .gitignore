@@ -42,6 +42,12 @@ build/
 # typescript
 *.tsbuildinfo
 
+# CocoaPods (iOS)
+# - Never commit Pods/ (generated)
+# - Always commit Podfile.lock (pins native deps)
+ios/Pods/
+!ios/Podfile.lock
+
 # generated native folders
 # NOTE: We commit `ios/` because Xcode Cloud needs a workspace present at clone time.
 # If you switch back to fully managed workflow (EAS-only), you can re-add `/ios`.

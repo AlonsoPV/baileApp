@@ -29,7 +29,12 @@ xcodebuild -list -workspace ios/baileApp.xcworkspace || true
 echo "==> Check CocoaPods artifacts"
 echo "Running pod install (forces Podfile.lock/Manifest.lock sync for this CI run)"
 pushd ios >/dev/null
-which pod || sudo gem install cocoapods -N
+if ! command -v pod >/dev/null 2>&1; then
+  echo "CocoaPods (pod) not found; installing via 'gem install --user-install'"
+  gem install cocoapods -N --user-install
+  USER_GEM_DIR="$(ruby -r rubygems -e 'print Gem.user_dir')"
+  export PATH="$USER_GEM_DIR/bin:$PATH"
+fi
 pod install
 popd >/dev/null
 
@@ -50,8 +55,13 @@ fi
 echo "OK: Found $XC"
 
 if [ -f "ios/Pods/Manifest.lock" ]; then
-  cp ios/Pods/Manifest.lock ios/Podfile.lock
-  echo "Podfile.lock synced from Pods/Manifest.lock"
+  # Podfile.lock is the committed source of truth; Manifest.lock should match after pod install.
+  if ! diff -q ios/Podfile.lock ios/Pods/Manifest.lock >/dev/null; then
+    echo "ERROR: CocoaPods sandbox is out of sync with ios/Podfile.lock."
+    echo "Run 'cd ios && pod install' and commit the updated ios/Podfile.lock."
+    exit 1
+  fi
+  echo "OK: ios/Podfile.lock matches ios/Pods/Manifest.lock"
 else
   echo "ERROR: ios/Pods/Manifest.lock missing after pod install."
   exit 1
