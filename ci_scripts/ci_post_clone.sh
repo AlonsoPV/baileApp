@@ -1,32 +1,18 @@
-#!/bin/zsh
+#!/bin/bash
 set -euo pipefail
 
-echo "==> Xcode Cloud: post-clone start"
-cd "${CI_WORKSPACE:-$(pwd)}"
+echo "==> CI post-clone start"
+echo "PWD: $(pwd)"
+ls -la
 
-echo "==> Enable corepack"
+# 1) Node + deps
 corepack enable || true
-
-echo "==> Install pnpm (if needed)"
-if ! command -v pnpm >/dev/null 2>&1; then
-  npm i -g pnpm
-fi
-
-echo "==> Install JS deps"
+pnpm -v || true
 pnpm install --no-frozen-lockfile
 
-echo "==> Install CocoaPods"
+# 2) Pods
 cd ios
-
-# Use gem without sudo (avoids CI permission issues)
-export GEM_HOME="$HOME/.gem"
-export PATH="$GEM_HOME/bin:$PATH"
-command -v pod >/dev/null 2>&1 || gem install cocoapods -N --user-install || true
-
-echo "==> pod install"
 pod repo update
-pod install --repo-update
+pod install --verbose
 
-echo "==> Verify xcconfig exists"
-ls -la "Pods/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"
-echo "==> Xcode Cloud: post-clone done"
+echo "==> CI post-clone done"
