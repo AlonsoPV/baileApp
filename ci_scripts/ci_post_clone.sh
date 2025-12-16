@@ -11,8 +11,7 @@ pnpm -v || true
 pnpm install --no-frozen-lockfile
 
 # 2) Pods
-cd ios
-pod repo update
-pod install --verbose
+echo "==> Ensuring CocoaPods artifacts"
+bash ci_scripts/ensure_pods.sh
 
 echo "==> CI post-clone done"

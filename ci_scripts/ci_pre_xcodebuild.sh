@@ -27,16 +27,8 @@ echo "==> Schemes in workspace:"
 xcodebuild -list -workspace ios/baileApp.xcworkspace || true
 
 echo "==> Check CocoaPods artifacts"
-echo "Running pod install (forces Podfile.lock/Manifest.lock sync for this CI run)"
-pushd ios >/dev/null
-if ! command -v pod >/dev/null 2>&1; then
-  echo "CocoaPods (pod) not found; installing via 'gem install --user-install'"
-  gem install cocoapods -N --user-install
-  USER_GEM_DIR="$(ruby -r rubygems -e 'print Gem.user_dir')"
-  export PATH="$USER_GEM_DIR/bin:$PATH"
-fi
-pod install
-popd >/dev/null
+echo "Ensuring pods are installed (ci_scripts/ensure_pods.sh)"
+bash ci_scripts/ensure_pods.sh
 
 if [ ! -d "ios/Pods/Pods.xcodeproj" ]; then
   echo "ERROR: Pods.xcodeproj missing after pod install."
