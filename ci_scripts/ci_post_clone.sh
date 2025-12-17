@@ -1,21 +1,23 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "==> CI POST CLONE (running)"
-
-# Xcode Cloud usually checks out to $CI_WORKSPACE (often /Volumes/workspace/repository).
-# Make this script resilient to being invoked from a different working directory.
-cd "${CI_WORKSPACE:-/Volumes/workspace/repository}" 2>/dev/null || cd "$(dirname "$0")/.." || pwd
-
-echo "==> Repo root: $(pwd)"
-
-# 1) Node + deps
+echo "== Install JS deps =="
 corepack enable || true
-pnpm -v || true
-pnpm install --no-frozen-lockfile
+pnpm --version
+pnpm install --frozen-lockfile
 
-# 2) Pods
-echo "==> Ensuring CocoaPods artifacts"
-bash ci_scripts/ensure_pods.sh
+echo "== Install iOS Pods =="
+cd ios
+pod install --repo-update
 
-echo "==> CI POST CLONE (done)"
+echo "== Verify Pods xcconfig =="
+XC="Pods/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"
+if [ ! -f "$XC" ]; then
+  echo "ERROR: Missing $XC"
+  echo "== Debug: listing Pods/Target Support Files =="
+  ls -la "Pods/Target Support Files" || true
+  echo "== Debug: listing Pods-DondeBailarMX dir =="
+  ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true
+  exit 1
+fi
+echo "OK: Found $XC"
