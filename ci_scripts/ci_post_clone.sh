@@ -1,23 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+
 echo "== Install JS deps =="
 corepack enable || true
-pnpm --version
+pnpm --version || true
 pnpm install --frozen-lockfile
 
 echo "== Install iOS Pods =="
-cd ios
-pod install --repo-update
-
-echo "== Verify Pods xcconfig =="
-XC="Pods/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"
-if [ ! -f "$XC" ]; then
-  echo "ERROR: Missing $XC"
-  echo "== Debug: listing Pods/Target Support Files =="
-  ls -la "Pods/Target Support Files" || true
-  echo "== Debug: listing Pods-DondeBailarMX dir =="
-  ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true
-  exit 1
-fi
-echo "OK: Found $XC"
+bash ci_scripts/ensure_pods.sh
