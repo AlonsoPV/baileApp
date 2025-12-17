@@ -2,13 +2,13 @@ import { StatusBar } from "expo-status-bar";
 import { RootNavigator } from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useOTAUpdates } from "./src/hooks/useOTAUpdates";
+// import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   // Verificar y descargar actualizaciones OTA automáticamente
-  useOTAUpdates();
+  // useOTAUpdates(); // Temporarily disabled to prevent crash
 
   return (
     <SafeAreaProvider>
