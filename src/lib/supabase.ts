@@ -1,23 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 
+// Read from extra (set in app.config.ts) - this works in Xcode Cloud
+const extra = (Constants.expoConfig?.extra as any) || {};
 const supabaseUrl =
-  (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_URL ??
+  extra.supabaseUrl ?? 
+  extra.EXPO_PUBLIC_SUPABASE_URL ?? 
   process.env.EXPO_PUBLIC_SUPABASE_URL;
 
 const supabaseAnonKey =
-  (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+  extra.supabaseAnonKey ?? 
+  extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 const missingEnvMsg =
-  "[Supabase] ❌ Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY. " +
-  "Set them in EAS env or app.config.ts extra.";
+  "[Supabase] ❌ Missing Supabase configuration (supabaseUrl / supabaseAnonKey). " +
+  "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in Xcode Cloud environment variables or EAS.";
 
-// ✅ Paso 3 — proteger el arranque: NO crashear al importar el módulo
-// En su lugar, loguear el error y fallar de forma explícita cuando se intente usar el cliente.
+// ✅ Protect startup: Don't crash on import, fail explicitly when client is used
 export const supabase = (() => {
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error(missingEnvMsg);
+    console.error("[Supabase] supabaseUrl:", supabaseUrl ? "✓" : "✗");
+    console.error("[Supabase] supabaseAnonKey:", supabaseAnonKey ? "✓" : "✗");
 
     return new Proxy(
       {},

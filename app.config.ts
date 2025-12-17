@@ -60,6 +60,10 @@ const config: ExpoConfig = {
   },
 
   extra: {
+    // Supabase config - read from env vars (set in Xcode Cloud or EAS)
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    // Keep EXPO_PUBLIC_* for backwards compatibility
     EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
     EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     eas: {
@@ -68,6 +72,7 @@ const config: ExpoConfig = {
   },
 
   updates: {
+    enabled: false, // Temporarily disabled to prevent crashes
     url: "https://u.expo.dev/8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     fallbackToCacheTimeout: 0,
   },
