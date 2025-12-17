@@ -28,6 +28,7 @@ xcodebuild -list -workspace ios/baileApp.xcworkspace || true
 
 echo "==> Check CocoaPods artifacts"
 echo "Running ensure_pods.sh (pod install + xcconfig verification)"
+bash ci_scripts/ensure_node.sh
 bash ci_scripts/ensure_pods.sh
 
 if [ -f "ios/Pods/Manifest.lock" ]; then

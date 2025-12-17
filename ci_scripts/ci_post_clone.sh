@@ -5,6 +5,9 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 echo "== Install JS deps =="
+chmod +x ci_scripts/ensure_node.sh || true
+bash ci_scripts/ensure_node.sh
+
 echo "Node: $(command -v node || echo 'not found')"
 node -v || true
 echo "npm:  $(command -v npm || echo 'not found')"
