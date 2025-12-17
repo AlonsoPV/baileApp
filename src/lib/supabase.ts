@@ -70,9 +70,33 @@ function getSupabase() {
   return supabaseClient;
 }
 
+// ✅ Enhanced Proxy that handles all property access patterns (methods, properties, etc.)
 export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
   get(_target, prop) {
-    return getSupabase()[prop as keyof ReturnType<typeof createClient>];
+    const client = getSupabase();
+    const value = client[prop as keyof typeof client];
+    
+    // If it's a function, bind it to the client to preserve 'this' context
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    
+    return value;
+  },
+  // Handle 'in' operator checks
+  has(_target, prop) {
+    const client = getSupabase();
+    return prop in client;
+  },
+  // Handle Object.keys() and similar operations
+  ownKeys(_target) {
+    const client = getSupabase();
+    return Reflect.ownKeys(client);
+  },
+  // Handle property descriptors
+  getOwnPropertyDescriptor(_target, prop) {
+    const client = getSupabase();
+    return Reflect.getOwnPropertyDescriptor(client, prop);
   },
 });
 
