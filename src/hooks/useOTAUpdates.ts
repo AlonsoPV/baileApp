@@ -22,6 +22,12 @@ export function useOTAUpdates() {
           return;
         }
 
+        // Verificar si Expo Updates está disponible y habilitado
+        if (!Updates.isEnabled) {
+          console.log('[OTA Updates] Expo Updates no está habilitado');
+          return;
+        }
+
         // Verificar si hay actualizaciones disponibles
         const update = await Updates.checkForUpdateAsync();
         
