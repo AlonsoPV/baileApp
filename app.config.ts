@@ -1,12 +1,18 @@
 import type { ExpoConfig } from "expo/config";
 
+// Safe access to process.env for TypeScript
+const getEnvVar = (key: string): string | undefined => {
+  // @ts-ignore - process.env is available at build time
+  return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+};
+
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
   slug: "donde-bailar-mx",
   version: "1.0.0",
 
   // ✅ para bare workflow / evita r e l error
-  // (este archivo tiene prioridad sobre app.json)
+  // (este archivo tiene prioridad sobre app. json)
   runtimeVersion: "1.0.0",
 
   scheme: "dondebailarmx",
@@ -61,11 +67,11 @@ const config: ExpoConfig = {
 
   extra: {
     // Supabase config - read from env vars (set in Xcode Cloud or EAS)
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    supabaseUrl: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
+    supabaseAnonKey: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     // Keep EXPO_PUBLIC_* for backwards compatibility
-    EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    EXPO_PUBLIC_SUPABASE_URL: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

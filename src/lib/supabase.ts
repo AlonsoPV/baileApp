@@ -3,21 +3,27 @@ import Constants from "expo-constants";
 
 // Read from extra (set in app.config.ts) - this works in Xcode Cloud
 const extra = (Constants.expoConfig?.extra as any) || {};
+// Safe access to process.env
+const getEnvVar = (key: string): string | undefined => {
+  // @ts-ignore - process.env is available at runtime
+  return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+};
+
 const supabaseUrl =
   extra.supabaseUrl ?? 
   extra.EXPO_PUBLIC_SUPABASE_URL ?? 
-  process.env.EXPO_PUBLIC_SUPABASE_URL;
+  getEnvVar('EXPO_PUBLIC_SUPABASE_URL');
 
 const supabaseAnonKey =
   extra.supabaseAnonKey ?? 
   extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY');
 
 const missingEnvMsg =
   "[Supabase] ❌ Missing Supabase configuration (supabaseUrl / supabaseAnonKey). " +
   "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in Xcode Cloud environment variables or EAS.";
 
-// ✅ Protect startup: Don't crash on import, fail explicitly when client is used
+// ✅ Protect startup: Don't crash on import, fail explicitly when client is u sed
 export const supabase = (() => {
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error(missingEnvMsg);
