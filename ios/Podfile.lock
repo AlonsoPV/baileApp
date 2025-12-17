@@ -31,177 +31,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (6.0.20):
-    - EXManifests
-    - expo-dev-launcher
-    - expo-dev-menu
-    - expo-dev-menu-interface
-    - EXUpdatesInterface
-  - expo-dev-launcher (6.0.20):
-    - EXManifests
-    - expo-dev-launcher/Main (= 6.0.20)
-    - expo-dev-menu
-    - expo-dev-menu-interface
-    - ExpoModulesCore
-    - EXUpdatesInterface
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-jsinspector
-    - React-NativeModulesApple
-    - React-RCTAppDelegate
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactAppDependencyProvider
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - expo-dev-launcher/Main (6.0.20):
-    - EXManifests
-    - expo-dev-launcher/Unsafe
-    - expo-dev-menu
-    - expo-dev-menu-interface
-    - ExpoModulesCore
-    - EXUpdatesInterface
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-jsinspector
-    - React-NativeModulesApple
-    - React-RCTAppDelegate
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactAppDependencyProvider
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - expo-dev-launcher/Unsafe (6.0.20):
-    - EXManifests
-    - expo-dev-menu
-    - expo-dev-menu-interface
-    - ExpoModulesCore
-    - EXUpdatesInterface
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-jsinspector
-    - React-NativeModulesApple
-    - React-RCTAppDelegate
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactAppDependencyProvider
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - expo-dev-menu (7.0.18):
-    - expo-dev-menu/Main (= 7.0.18)
-    - expo-dev-menu/ReactNativeCompatibles (= 7.0.18)
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - expo-dev-menu-interface (2.0.0)
-  - expo-dev-menu/Main (7.0.18):
-    - EXManifests
-    - expo-dev-menu-interface
-    - ExpoModulesCore
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-jsinspector
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - expo-dev-menu/ReactNativeCompatibles (7.0.18):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - ExpoAsset (12.0.11):
     - ExpoModulesCore
   - ExpoFileSystem (19.0.20):
@@ -2044,10 +1873,6 @@ DEPENDENCIES:
   - "EXJSONUtils (from `../node_modules/.pnpm/expo-json-utils@0.15.0/node_modules/expo-json-utils/ios`)"
   - "EXManifests (from `../node_modules/.pnpm/expo-manifests@1.0.10_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webvi_869a9dcbac9e8b55def2a8f24f558103/node_modules/expo-manifests/ios`)"
   - "Expo (from `../node_modules/.pnpm/expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webview@13.15.0_react-nativ_5eff3003ff93fbe296b829135620b485/node_modules/expo`)"
-  - "expo-dev-client (from `../node_modules/.pnpm/expo-dev-client@6.0.20_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webv_8f912f9d6f54a19a6faf84974ef2e4f6/node_modules/expo-dev-client/ios`)"
-  - "expo-dev-launcher (from `../node_modules/.pnpm/expo-dev-launcher@6.0.20_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-we_8967a14b692f9ddabfeb0ad1e7ce9f64/node_modules/expo-dev-launcher`)"
-  - "expo-dev-menu (from `../node_modules/.pnpm/expo-dev-menu@7.0.18_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webvie_30f460ed60da0c415f0037bf2186d0b7/node_modules/expo-dev-menu`)"
-  - "expo-dev-menu-interface (from `../node_modules/.pnpm/expo-dev-menu-interface@2.0.0_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-nati_f5d9de2fb55c20292c1958b6a2a6982b/node_modules/expo-dev-menu-interface/ios`)"
   - "ExpoAsset (from `../node_modules/.pnpm/expo-asset@12.0.11_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webview@_be282f541b221e303586ee93740db25b/node_modules/expo-asset/ios`)"
   - "ExpoFileSystem (from `../node_modules/.pnpm/expo-file-system@19.0.20_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-we_97c1df29243a093224f59e9dea8713b4/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../node_modules/.pnpm/expo-font@14.0.10_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webview@1_2d6450ca54d9782808b697be072f6546/node_modules/expo-font/ios`)"
@@ -2143,14 +1968,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/.pnpm/expo-manifests@1.0.10_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webvi_869a9dcbac9e8b55def2a8f24f558103/node_modules/expo-manifests/ios"
   Expo:
     :path: "../node_modules/.pnpm/expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webview@13.15.0_react-nativ_5eff3003ff93fbe296b829135620b485/node_modules/expo"
-  expo-dev-client:
-    :path: "../node_modules/.pnpm/expo-dev-client@6.0.20_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webv_8f912f9d6f54a19a6faf84974ef2e4f6/node_modules/expo-dev-client/ios"
-  expo-dev-launcher:
-    :path: "../node_modules/.pnpm/expo-dev-launcher@6.0.20_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-we_8967a14b692f9ddabfeb0ad1e7ce9f64/node_modules/expo-dev-launcher"
-  expo-dev-menu:
-    :path: "../node_modules/.pnpm/expo-dev-menu@7.0.18_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webvie_30f460ed60da0c415f0037bf2186d0b7/node_modules/expo-dev-menu"
-  expo-dev-menu-interface:
-    :path: "../node_modules/.pnpm/expo-dev-menu-interface@2.0.0_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-nati_f5d9de2fb55c20292c1958b6a2a6982b/node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
     :path: "../node_modules/.pnpm/expo-asset@12.0.11_expo@54.0.28_@babel+core@7.28.5_graphql@16.8.1_react-native-webview@_be282f541b221e303586ee93740db25b/node_modules/expo-asset/ios"
   ExpoFileSystem:
@@ -2315,17 +2132,13 @@ SPEC CHECKSUMS:
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: a8d97683e5c7a3b026ffbd58559c64dc655b747b
   Expo: e502d1f8830a34019d835f182fdce94fdba458c2
-  expo-dev-client: 425ee077d6754a98cfe3a2e2410d29b440b24c9d
-  expo-dev-launcher: a4f4cdef064ab1fb8621e5b8c7c457cd6e9568c3
-  expo-dev-menu: 05b18812110c175814c6af0d09dd658abcc5e00d
-  expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 23a958e97d3d340919fe6774db35d563241e6c03
   ExpoFileSystem: 3592defb5faa3c5866a2900eae87ceec8cc0489f
   ExpoFont: 35ac6191ed86bbf56b3ebd2d9154eda9fad5b509
   ExpoKeepAwake: 55f75eca6499bb9e4231ebad6f3e9cb8f99c0296
   ExpoModulesCore: ded694f230d03c59d919efe243911622fa169834
   EXStructuredHeaders: c951e77f2d936f88637421e9588c976da5827368
-  EXUpdates: f20abbc8a9f4e150656fe88126d52f52d4e7793f
+  EXUpdates: 28bf14af4317c217b738a26bbef1f70978437451
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
