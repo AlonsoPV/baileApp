@@ -1,3 +1,25 @@
+// ✅ EARLY LOGGER: Debe estar ANTES de cualquier import grande
+// Esto captura errores fatales en TestFlight antes de que se pierdan
+// @ts-ignore - __DEV__ is a React Native global
+if (typeof __DEV__ !== "undefined" && !__DEV__) {
+  try {
+    const originalHandler = (global as any).ErrorUtils?.getGlobalHandler?.();
+    (global as any).ErrorUtils?.setGlobalHandler?.((error: any, isFatal?: boolean) => {
+      console.log("[GlobalErrorHandler]", { 
+        message: String(error?.message ?? error), 
+        isFatal, 
+        stack: error?.stack,
+        name: error?.name,
+        toString: String(error)
+      });
+      originalHandler?.(error, isFatal);
+    });
+  } catch (e) {
+    // Si falla el setup del logger, al menos loguear que falló
+    console.error("[EarlyLogger] Failed to setup early logger:", e);
+  }
+}
+
 import { StatusBar } from "expo-status-bar";
 import { RootNavigator } from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

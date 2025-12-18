@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 
 /**
@@ -9,6 +9,8 @@ import Constants from "expo-constants";
  * ❌ process.env[key] (NO funciona en runtime)
  * 
  * En TestFlight, el acceso dinámico devuelve undefined y causa crash fatal.
+ * 
+ * REGLA: supabase debe ser null o un cliente válido. Nunca Proxy que lanza.
  */
 
 function readExtra() {
@@ -24,24 +26,25 @@ function readExtra() {
 
 const extra = readExtra();
 
-// ✅ OJO: acceso estático para que Metro inlinee EXPO_PUBLIC_*
+// ⚠️ acceso estático (no dinámico) para que Metro inlinee
 // Esto es crítico: Metro necesita ver la referencia literal a la variable
 const ENV_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const ENV_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 const supabaseUrl =
-  (extra.supabaseUrl as string | undefined) ||
-  (extra.EXPO_PUBLIC_SUPABASE_URL as string | undefined) ||
+  extra.supabaseUrl ||
+  extra.EXPO_PUBLIC_SUPABASE_URL ||
   ENV_URL;
 
 const supabaseAnonKey =
-  (extra.supabaseAnonKey as string | undefined) ||
-  (extra.EXPO_PUBLIC_SUPABASE_ANON_KEY as string | undefined) ||
+  extra.supabaseAnonKey ||
+  extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
   ENV_KEY;
 
 // ✅ En producción NO queremos crashear la app por config faltante
 // Retornamos null en lugar de un Proxy que puede fallar
-export const supabase =
+// Tipo explícito: SupabaseClient | null
+export const supabase: SupabaseClient | null =
   supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey)
     : null;
