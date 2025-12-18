@@ -10,39 +10,16 @@
         try {
           const originalHandler = global.ErrorUtils.getGlobalHandler();
           global.ErrorUtils.setGlobalHandler((error, isFatal) => {
-            // Log completo del error ANTES de que se pierda
-            try {
-              console.log("[EarlyGlobalErrorHandler] ===== FATAL ERROR CAPTURED =====");
-              console.log("[EarlyGlobalErrorHandler] Message:", String(error && error.message ? error.message : (error ? String(error) : "Unknown error")));
-              console.log("[EarlyGlobalErrorHandler] Name:", String(error && error.name ? error.name : "Unknown"));
-              console.log("[EarlyGlobalErrorHandler] Is Fatal:", isFatal);
-              console.log("[EarlyGlobalErrorHandler] Stack:", String(error && error.stack ? error.stack : "No stack"));
-              console.log("[EarlyGlobalErrorHandler] ToString:", String(error ? error.toString() : "No toString"));
-              
-              // Intentar serializar el error de forma segura
-              try {
-                const errorProps = {};
-                if (error && typeof error === "object") {
-                  const props = Object.getOwnPropertyNames(error);
-                  props.forEach(prop => {
-                    try {
-                      const value = error[prop];
-                      errorProps[prop] = typeof value === "string" ? value : String(value);
-                    } catch (e) {
-                      errorProps[prop] = "[Cannot stringify]";
-                    }
-                  });
-                }
-                console.log("[EarlyGlobalErrorHandler] Error properties:", JSON.stringify(errorProps, null, 2));
-              } catch (e) {
-                console.log("[EarlyGlobalErrorHandler] Could not serialize error properties");
-              }
-              
-              console.log("[EarlyGlobalErrorHandler] ================================");
-            } catch (logError) {
-              // Si incluso el logging falla, intentar al menos algo básico
-              console.error("[EarlyGlobalErrorHandler] Error in logging:", logError);
-              console.error("[EarlyGlobalErrorHandler] Original error:", error);
+            // Log mínimo viable del error ANTES de que se pierda
+            // Formato simple para que aparezca en logs de TestFlight/Xcode
+            console.log("[GlobalError]", String(error?.message ?? error ?? "Unknown error"), "fatal?", !!isFatal);
+            
+            // Log adicional si está disponible
+            if (error?.stack) {
+              console.log("[GlobalError] Stack:", error.stack);
+            }
+            if (error?.name) {
+              console.log("[GlobalError] Name:", error.name);
             }
             
             // Llamar al handler original para que también lo procese
@@ -50,7 +27,7 @@
               try {
                 originalHandler(error, isFatal);
               } catch (e) {
-                console.error("[EarlyGlobalErrorHandler] Original handler failed:", e);
+                console.error("[GlobalError] Original handler failed:", e);
               }
             }
           });
