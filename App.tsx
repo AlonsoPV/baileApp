@@ -10,9 +10,12 @@ import { assertEnv, ENV } from "./src/lib/env";
 import { envReport } from "./src/lib/envReport";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
 import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
+import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
+markPerformance("app_config_start");
 const envReportResult = envReport();
+markPerformance("env_report_generated");
 
 const queryClient = new QueryClient();
 
@@ -147,8 +150,16 @@ function AppContent() {
   const [lastCrash, setLastCrash] = React.useState<CrashRecord | null>(null);
 
   React.useEffect(() => {
+    markPerformance("app_content_mounted");
     // Load last fatal crash from disk so we can debug without Xcode Device Logs.
-    readLastCrash().then(setLastCrash).catch(() => {});
+    readLastCrash()
+      .then((crash) => {
+        markPerformance("crash_record_loaded");
+        setLastCrash(crash);
+      })
+      .catch(() => {
+        markPerformance("crash_record_skipped");
+      });
   }, []);
 
   if (lastCrash) {
@@ -197,6 +208,10 @@ function AppContent() {
         (Constants as any)?.manifest?.extra?.showConfigDebug ??
         (Constants as any)?.manifest2?.extra?.showConfigDebug
     );
+
+  React.useEffect(() => {
+    markPerformance("providers_rendered");
+  }, []);
 
   return (
     <SafeAreaProvider>

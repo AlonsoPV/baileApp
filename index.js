@@ -71,10 +71,17 @@
 
 import { registerRootComponent } from "expo";
 import { installGlobalErrorHandler } from "./src/lib/errorHandler";
+import { initPerformanceTracking, markPerformance } from "./src/lib/performance";
 import App from "./App";
+
+// ✅ Initialize performance tracking as early as possible
+initPerformanceTracking();
 
 // ✅ Install global error handler BEFORE registering the app
 // This prevents SIGABRT crashes from unhandled JavaScript exceptions
 installGlobalErrorHandler();
+markPerformance("error_handler_installed");
 
+markPerformance("app_imported");
 registerRootComponent(App);
+markPerformance("app_registered");

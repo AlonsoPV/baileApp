@@ -111,6 +111,10 @@ export function useTeacherPublic(id: number) {
   return useQuery({
     queryKey: ['teacher','public', id],
     enabled: typeof id === 'number' && !Number.isNaN(id) && id > 0,
+    staleTime: 1000 * 60 * 2, // 2 minutos - datos públicos cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async (): Promise<TeacherProfile|null> => {
       const { data, error } = await supabase
         .from(TABLE)

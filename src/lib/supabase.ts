@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 import { ENV } from "./env";
+import { markPerformance } from "./performance";
 
 /**
  * ✅ FIX CRÍTICO: Acceso estático a process.env para que Metro pueda inlinear
@@ -64,13 +65,17 @@ try {
   // Tipo explícito: SupabaseClient | null
   if (supabaseUrl && supabaseAnonKey) {
     try {
+      markPerformance("supabase_init_start");
       supabase = createClient(supabaseUrl, supabaseAnonKey);
+      markPerformance("supabase_init_complete");
     } catch (e) {
       console.error("[Supabase] Error creating client:", e);
       supabase = null;
+      markPerformance("supabase_init_failed");
     }
   } else {
     supabase = null;
+    markPerformance("supabase_init_skipped");
   }
 } catch (e) {
   console.error("[Supabase] Critical error during initialization:", e);

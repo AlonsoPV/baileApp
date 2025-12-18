@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthStack } from "./AuthStack";
 import { MainTabs } from "./MainTabs";
 import WebAppScreen from "../screens/WebAppScreen";
+import { markPerformance, logPerformanceReport } from "../lib/performance";
 
 const Stack = createNativeStackNavigator();
 
@@ -37,8 +38,10 @@ function RootStack() {
 export function RootNavigator() {
   const navigationRef = useRef<NavigationContainerRef<any> | null>(null);
   const [routesLength, setRoutesLength] = useState(0);
+  const [navigationReady, setNavigationReady] = useState(false);
 
   useEffect(() => {
+    markPerformance("root_navigator_mounted");
     if (Platform.OS !== "android") return;
 
     const onBackPress = () => {
@@ -56,10 +59,23 @@ export function RootNavigator() {
     return () => subscription.remove();
   }, [routesLength]);
 
+  useEffect(() => {
+    if (navigationReady) {
+      markPerformance("navigation_ready");
+      // Log full performance report when navigation is ready (app is fully loaded)
+      setTimeout(() => {
+        logPerformanceReport();
+      }, 100); // Small delay to ensure all marks are recorded
+    }
+  }, [navigationReady]);
+
   return (
     <NavigationContainer
       ref={(ref) => {
         navigationRef.current = ref;
+      }}
+      onReady={() => {
+        setNavigationReady(true);
       }}
       onStateChange={(state) => {
         setRoutesLength(state?.routes?.length ?? 0);

@@ -218,6 +218,10 @@ export function useCompetitionGroupsByAcademy(academyId?: number) {
   return useQuery({
     queryKey: ['competition-groups-by-academy', academyId],
     enabled: !!academyId,
+    staleTime: 1000 * 60 * 2, // 2 minutos - grupos cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       if (!academyId) return [];
 
@@ -291,6 +295,10 @@ export function useCompetitionGroupsByTeacher(teacherUserId?: string) {
   return useQuery({
     queryKey: ['competition-groups-by-teacher', teacherUserId],
     enabled: !!teacherUserId,
+    staleTime: 1000 * 60 * 2, // 2 minutos - grupos cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       if (!teacherUserId) return [];
 

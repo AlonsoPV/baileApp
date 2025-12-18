@@ -279,6 +279,10 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
   return useQuery({
     queryKey: ["live-classes", opts?.academyId, opts?.teacherId],
     enabled: !!(opts?.academyId || opts?.teacherId),
+    staleTime: 1000 * 60 * 2, // 2 minutos - clases cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async (): Promise<Clase[]> => {
       let cronograma: any[] = [];
       let ubicaciones: any[] = [];
