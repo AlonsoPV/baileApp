@@ -1,46 +1,71 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$REPO_ROOT"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT_DIR"
 
-echo "== Node & pnpm =="
-chmod +x ci_scripts/ensure_node.sh || true
-bash ci_scripts/ensure_node.sh
+echo "==> Xcode Cloud CI post-clone"
+echo "PWD: $(pwd)"
 
-echo "Node: $(command -v node || echo 'not found')"
-node -v || true
-echo "npm:  $(command -v npm || echo 'not found')"
-npm -v || true
-
-if command -v corepack >/dev/null 2>&1; then
-  corepack enable || true
-else
-  echo "corepack not found; will attempt to install pnpm without corepack"
-fi
-
-if ! command -v pnpm >/dev/null 2>&1; then
-  if command -v npm >/dev/null 2>&1; then
-    echo "pnpm not found; installing pnpm (user prefix)"
-    npm config set prefix "$HOME/.npm-global"
-    export PATH="$HOME/.npm-global/bin:$PATH"
-    npm install -g pnpm
-  else
-    echo "ERROR: pnpm not found and npm not available to install it."
+# -----------------------------
+# 1) Node (garantizar que exista)
+# -----------------------------
+if ! command -v node >/dev/null 2>&1; then
+  echo "==> Node not found. Installing via Homebrew..."
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "ERROR: brew not found; cannot install Node automatically."
     exit 1
   fi
+  brew update
+  brew install node@20
+  export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
 fi
 
-echo "== Install JS deps =="
-pnpm install --frozen-lockfile
+echo "==> Node: $(node -v)"
 
-echo "== Generate native iOS from app.config.ts (prebuild) =="
-# Prebuild sincroniza extra, plugins, etc. al proyecto iOS nativo
-# --no-install porque luego haremos pod install
-# This is CRITICAL: prebuild reads app.config.ts and injects extra into the native project
-npx expo prebuild --platform ios --no-install
+# -----------------------------
+# 2) pnpm (corepack)
+# -----------------------------
+echo "==> Enable corepack"
+corepack enable || true
 
-echo "== Install iOS Pods =="
-bash ci_scripts/ensure_pods.sh
+# Si corepack no deja pnpm listo, lo activamos explícitamente
+corepack prepare pnpm@10.25.0 --activate || true
 
-echo "== Done =="
+echo "==> pnpm: $(pnpm -v)"
+
+# -----------------------------
+# 3) Instalar deps JS
+# -----------------------------
+echo "==> Install JS deps"
+pnpm install --no-frozen-lockfile
+
+# -----------------------------
+# 4) Expo prebuild (IMPORTANTE)
+#    Esto genera/actualiza iOS config usando app.config.ts + ENV vars.
+# -----------------------------
+echo "==> Expo prebuild (ios)"
+# Nota: esto NO corre el simulador; solo genera/ajusta carpeta ios y config
+pnpm exec expo prebuild --platform ios --no-install
+
+# -----------------------------
+# 5) CocoaPods
+# -----------------------------
+echo "==> CocoaPods install"
+cd ios
+
+# CocoaPods (sin perder tiempo con repo update)
+if ! command -v pod >/dev/null 2>&1; then
+  echo "==> CocoaPods not found. Installing..."
+  sudo gem install cocoapods -N
+fi
+
+echo "==> pod: $(pod --version)"
+
+# Recomendación: NO usar "pod repo update" (demasiado lento)
+pod install --repo-update --verbose
+
+echo "==> Pods ready"
+ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true
+
+echo "==> Done"
