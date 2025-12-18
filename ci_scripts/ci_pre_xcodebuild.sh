@@ -14,17 +14,33 @@ echo "==> Xcode: $(xcodebuild -version | tr '\n' ' ')" || true
 echo "==> ios/ listing"
 ls -la ios || true
 
-if [ ! -d "ios/baileApp.xcworkspace" ]; then
-  echo "ERROR: ios/baileApp.xcworkspace is missing before xcodebuild."
+# Detectar el nombre del workspace (puede ser DondeBailarMX.xcworkspace o baileApp.xcworkspace)
+WORKSPACE_NAME=""
+if [ -d "ios/DondeBailarMX.xcworkspace" ]; then
+  WORKSPACE_NAME="DondeBailarMX.xcworkspace"
+elif [ -d "ios/baileApp.xcworkspace" ]; then
+  WORKSPACE_NAME="baileApp.xcworkspace"
+else
+  echo "ERROR: No se encontró workspace en ios/"
+  echo "Buscando workspaces disponibles:"
+  find ios -name "*.xcworkspace" -type d 2>/dev/null || echo "No se encontraron workspaces"
   exit 1
 fi
 
-echo "==> Workspace exists: ios/baileApp.xcworkspace"
+WORKSPACE_PATH="ios/$WORKSPACE_NAME"
+echo "==> Workspace encontrado: $WORKSPACE_PATH"
+
+if [ ! -d "$WORKSPACE_PATH" ]; then
+  echo "ERROR: $WORKSPACE_PATH is missing before xcodebuild."
+  exit 1
+fi
+
+echo "==> Workspace exists: $WORKSPACE_PATH"
 echo "==> Workspace contents (first 80 lines):"
-sed -n '1,80p' ios/baileApp.xcworkspace/contents.xcworkspacedata || true
+sed -n '1,80p' "$WORKSPACE_PATH/contents.xcworkspacedata" || true
 
 echo "==> Schemes in workspace:"
-xcodebuild -list -workspace ios/baileApp.xcworkspace || true
+xcodebuild -list -workspace "$WORKSPACE_PATH" || true
 
 echo "==> Check CocoaPods artifacts"
 echo "Running ensure_pods.sh (pod install + xcconfig verification)"
@@ -41,7 +57,7 @@ fi
 
 echo "==> Build settings (filtered)"
 # This does not build; it helps surface signing/team/bundle-id mismatches in logs.
-xcodebuild -showBuildSettings -workspace ios/baileApp.xcworkspace -scheme DondeBailarMX 2>/dev/null | \
+xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | \
   egrep "PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|CODE_SIGN_ENTITLEMENTS|PROVISIONING_PROFILE|PROVISIONING_PROFILE_SPECIFIER|MARKETING_VERSION|CURRENT_PROJECT_VERSION" || true
 
 echo "==> Pre-xcodebuild done"
