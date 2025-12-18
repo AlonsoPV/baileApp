@@ -28,15 +28,32 @@ if ! command -v node >/dev/null 2>&1; then
   NODE_PATH="$BREW_PREFIX/opt/node@20/bin"
   export PATH="$NODE_PATH:$PATH"
   
-  # Verificar que Node esté disponible después de agregarlo al PATH
+  # Verificar que Node y npm estén disponibles después de agregarlo al PATH
   if ! command -v node >/dev/null 2>&1; then
     echo "ERROR: Node installed but not found in PATH. Tried: $NODE_PATH"
+    ls -la "$NODE_PATH" || echo "Directory does not exist: $NODE_PATH"
+    exit 1
+  fi
+  
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "ERROR: npm not found in PATH after Node installation."
     exit 1
   fi
 fi
 
+# Asegurar que Node y npm estén en el PATH (por si acaso)
+if command -v brew >/dev/null 2>&1; then
+  BREW_PREFIX=$(brew --prefix)
+  NODE_PATH="$BREW_PREFIX/opt/node@20/bin"
+  if [ -d "$NODE_PATH" ]; then
+    export PATH="$NODE_PATH:$PATH"
+  fi
+fi
+
 echo "==> Node: $(node -v)"
+echo "==> npm: $(npm -v)"
 echo "==> Node path: $(which node)"
+echo "==> npm path: $(which npm)"
 
 # -----------------------------
 # 2) pnpm (corepack)
