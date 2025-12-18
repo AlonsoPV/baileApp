@@ -94,6 +94,10 @@ export function useAcceptedTeachers(academyId?: number) {
   return useQuery({
     queryKey: ['accepted-teachers', academyId],
     enabled: !!academyId,
+    staleTime: 1000 * 60 * 2, // 2 minutos - maestros aceptados cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async (): Promise<AcceptedTeacher[]> => {
       if (!academyId) return [];
 

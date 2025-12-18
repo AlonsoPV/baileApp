@@ -30,6 +30,10 @@ export function useAcademyPublic(id: number) {
   return useQuery({
     queryKey: ['academy','public', id],
     enabled: typeof id === 'number' && !Number.isNaN(id) && id > 0,
+    staleTime: 1000 * 60 * 2, // 2 minutos - datos públicos cambian poco
+    gcTime: 1000 * 60 * 10, // 10 minutos en cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async (): Promise<AcademyProfile|null> => {
       const { data, error } = await supabase
         .from('v_academies_public')
@@ -41,19 +45,8 @@ export function useAcademyPublic(id: number) {
 
       let result: any = { ...data };
       
-      // Obtener promociones si no están en la vista
-      if (typeof result.promociones === 'undefined') {
-        const { data: promosData, error: promosError } = await supabase
-          .from('profiles_academy')
-          .select('promociones')
-          .eq('id', id)
-          .maybeSingle();
-        if (!promosError && promosData && typeof promosData.promociones !== 'undefined') {
-          result.promociones = promosData.promociones;
-        }
-      }
-      
-      // Obtener extras (respuestas, WhatsApp, Stripe) si no están en la vista
+      // ✅ Optimización: Hacer una sola query para obtener todos los extras faltantes
+      const needsPromociones = typeof result.promociones === 'undefined';
       const needsRespuestas = typeof result.respuestas === 'undefined';
       const needsWhatsapp =
         typeof result.whatsapp_number === 'undefined' ||
@@ -64,14 +57,18 @@ export function useAcademyPublic(id: number) {
         typeof (result as any).stripe_charges_enabled === 'undefined' ||
         typeof (result as any).stripe_payouts_enabled === 'undefined';
 
-      if (needsRespuestas || needsWhatsapp || needsStripe) {
+      if (needsPromociones || needsRespuestas || needsWhatsapp || needsStripe) {
+        // Una sola query para todos los extras
         const { data: extraData, error: extraError } = await supabase
           .from('profiles_academy')
-          .select('respuestas, whatsapp_number, whatsapp_message_template, stripe_account_id, stripe_onboarding_status, stripe_charges_enabled, stripe_payouts_enabled')
+          .select('promociones, respuestas, whatsapp_number, whatsapp_message_template, stripe_account_id, stripe_onboarding_status, stripe_charges_enabled, stripe_payouts_enabled')
           .eq('id', id)
           .maybeSingle();
 
         if (!extraError && extraData) {
+          if (needsPromociones && typeof extraData.promociones !== 'undefined') {
+            result.promociones = extraData.promociones;
+          }
           if (needsRespuestas && typeof extraData.respuestas !== 'undefined') {
             result.respuestas = extraData.respuestas;
           }
