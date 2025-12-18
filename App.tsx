@@ -25,14 +25,21 @@ import { RootNavigator } from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
-import { Text, View, StyleSheet } from "react-native";
+import React from "react";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
-import { assertEnv } from "./src/lib/env";
+import { assertEnv, ENV } from "./src/lib/env";
+import { envReport } from "./src/lib/envReport";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
+import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
+
+// ✅ Generate ENV report at startup (logs to console for debugging)
+const envReportResult = envReport();
 
 const queryClient = new QueryClient();
 
 // ✅ Validar ENV al inicio (antes de renderizar)
+// Uses ENV (from Constants.expoConfig.extra) which is reliable in bare RN
 const { url, key } = assertEnv();
 
 // ✅ Fallback screen cuando falta configuración
@@ -73,6 +80,46 @@ function ConfigDebug() {
 }
 
 const styles = StyleSheet.create({
+  crashContainer: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#000",
+  },
+  crashTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  crashSubtitle: {
+    color: "#bbb",
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  crashBox: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  crashMono: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: "monospace",
+  },
+  crashButton: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  crashButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
   fallbackContainer: {
     flex: 1,
     justifyContent: "center",
@@ -119,9 +166,44 @@ const styles = StyleSheet.create({
 });
 
 function AppContent() {
+  const [lastCrash, setLastCrash] = React.useState<CrashRecord | null>(null);
+
+  React.useEffect(() => {
+    // Load last fatal crash from disk so we can debug without Xcode Device Logs.
+    readLastCrash().then(setLastCrash).catch(() => {});
+  }, []);
+
+  if (lastCrash) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.crashContainer}>
+          <Text style={styles.crashTitle}>🧯 Último error fatal (debug)</Text>
+          <Text style={styles.crashSubtitle}>
+            Copia y pégame esto (message + stack) para ubicar la causa exacta.
+          </Text>
+          <ScrollView style={styles.crashBox} contentContainerStyle={{ padding: 12 }}>
+            <Text style={styles.crashMono}>{JSON.stringify(lastCrash, null, 2)}</Text>
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.crashButton}
+            onPress={() => {
+              clearLastCrash()
+                .then(() => setLastCrash(null))
+                .catch(() => setLastCrash(null));
+            }}
+          >
+            <Text style={styles.crashButtonText}>Borrar y continuar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   // ✅ Guardrail: Si falta config, mostrar pantalla de fallback en lugar de crashear
+  // This prevents cascade crashes from missing env vars
   if (!url || !key) {
     console.error("[App] Missing required environment variables. Showing fallback screen.");
+    console.error("[App] ENV report:", JSON.stringify(envReportResult, null, 2));
     return <ConfigMissingScreen />;
   }
 

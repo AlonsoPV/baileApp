@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
+import { ENV } from "./env";
 
 /**
  * ✅ FIX CRÍTICO: Acceso estático a process.env para que Metro pueda inlinear
@@ -44,12 +45,16 @@ try {
   ENV_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
   ENV_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+  // ✅ Use ENV (from Constants.expoConfig.extra) as primary source
+  // This is reliable in bare RN, process.env may be undefined in runtime
   supabaseUrl =
+    ENV.supabaseUrl ||
     extra.supabaseUrl ||
     extra.EXPO_PUBLIC_SUPABASE_URL ||
     ENV_URL;
 
   supabaseAnonKey =
+    ENV.supabaseAnonKey ||
     extra.supabaseAnonKey ||
     extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
     ENV_KEY;

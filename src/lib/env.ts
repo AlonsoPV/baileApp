@@ -3,12 +3,18 @@
  * 
  * This module provides utilities to validate and log environment variables
  * at app startup, helping debug configuration issues in TestFlight builds.
+ * 
+ * ✅ RECOMENDACIÓN: En bare RN + Expo SDK, confía en Constants.expoConfig.extra
+ * NO uses process.env.EXPO_PUBLIC_* en runtime (solo funciona en build-time).
  */
 
 import Constants from "expo-constants";
 
 /**
  * Read extra config from Constants (defensive)
+ * 
+ * In bare RN, app.config.ts generates extra that is available via Constants.expoConfig.extra
+ * This is the reliable source for runtime environment variables.
  */
 function readExtra() {
   const expoExtra = (Constants.expoConfig?.extra as any) ?? {};
@@ -20,30 +26,34 @@ function readExtra() {
 }
 
 /**
+ * Centralized environment configuration
+ * 
+ * ✅ Use this instead of process.env.EXPO_PUBLIC_* in runtime
+ * This reads from Constants.expoConfig.extra which is reliable in bare RN.
+ */
+export const ENV = (() => {
+  const extra = readExtra();
+  return {
+    supabaseUrl: extra.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? null,
+    supabaseAnonKey: extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey ?? null,
+  };
+})();
+
+/**
  * Assert and log environment variables
  * 
  * This function validates that required environment variables are present
  * and logs detailed information for debugging in TestFlight.
  * 
- * @returns Object with url and key (may be undefined if missing)
+ * ✅ Uses ENV (from Constants.expoConfig.extra) which is reliable in bare RN
+ * 
+ * @returns Object with url and key (may be null if missing)
  */
 export function assertEnv() {
-  const extra = readExtra();
-
-  // Try multiple sources in order of priority
-  const url =
-    extra.supabaseUrl ??
-    extra.EXPO_PUBLIC_SUPABASE_URL ??
-    process.env.EXPO_PUBLIC_SUPABASE_URL;
-
-  const key =
-    extra.supabaseAnonKey ??
-    extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const { supabaseUrl: url, supabaseAnonKey: key } = ENV;
 
   // Log detailed information for debugging
   console.log("[ENV] ===== Environment Validation =====");
-  console.log("[ENV] extra keys:", Object.keys(extra));
   console.log("[ENV] supabaseUrl?", !!url, url ? "(present)" : "(missing)");
   console.log("[ENV] anonKey?", !!key, key ? "(present)" : "(missing)");
   
@@ -51,8 +61,6 @@ export function assertEnv() {
   console.log("[ENV] Constants.expoConfig?.extra exists:", !!Constants.expoConfig?.extra);
   console.log("[ENV] Constants.manifest?.extra exists:", !!(Constants as any).manifest?.extra);
   console.log("[ENV] Constants.manifest2?.extra exists:", !!(Constants as any).manifest2?.extra);
-  console.log("[ENV] process.env.EXPO_PUBLIC_SUPABASE_URL exists:", !!process.env.EXPO_PUBLIC_SUPABASE_URL);
-  console.log("[ENV] process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY exists:", !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
   console.log("[ENV] ====================================");
 
   return { url, key };
