@@ -146,6 +146,20 @@ echo "==> Setting up environment variables"
 export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-}"
 export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
 
+# ✅ Debug (safe): confirmar presencia sin exponer secretos completos
+echo "==> ENV CHECK (Xcode Cloud)"
+if [ -n "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+  echo "EXPO_PUBLIC_SUPABASE_URL: present (len=${#EXPO_PUBLIC_SUPABASE_URL})"
+else
+  echo "EXPO_PUBLIC_SUPABASE_URL: MISSING"
+fi
+if [ -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+  echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: present (len=${#EXPO_PUBLIC_SUPABASE_ANON_KEY})"
+  echo "EXPO_PUBLIC_SUPABASE_ANON_KEY prefix: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:12}..."
+else
+  echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: MISSING"
+fi
+
 # Verificar si las variables están configuradas (solo warning, no fallar)
 if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
   echo "⚠️  WARNING: EXPO_PUBLIC_SUPABASE_URL not set. Configure it in Xcode Cloud environment variables."

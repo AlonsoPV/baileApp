@@ -25,7 +25,7 @@
           try {
             // Lazy require so missing module doesn't crash during import.
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const FileSystem = require("expo-file-system");
+            const FileSystem = require("expo-file-system/legacy");
             const uri = `${FileSystem.documentDirectory ?? ""}last_fatal_error.json`;
             const rec = {
               ts: new Date().toISOString(),

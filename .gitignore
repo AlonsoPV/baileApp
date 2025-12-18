@@ -34,6 +34,7 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+config/local.env
 google-service-account.json
 
 # generic build artifacts

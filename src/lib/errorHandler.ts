@@ -8,7 +8,8 @@
  * not async errors or errors in event handlers.
  */
 
-import { ErrorUtils } from "react-native";
+// NOTE: In React Native, ErrorUtils is a global (not a reliable named import).
+// Using a named import can be undefined in some runtimes.
 
 type ErrorHandler = (error: Error, isFatal?: boolean) => void;
 
@@ -119,6 +120,13 @@ export function installGlobalErrorHandler() {
   }
 
   try {
+    const anyGlobal: any = global;
+    const ErrorUtils = anyGlobal?.ErrorUtils;
+    if (!ErrorUtils?.getGlobalHandler || !ErrorUtils?.setGlobalHandler) {
+      console.error("[GlobalErrorHandler] ErrorUtils is not available in this runtime");
+      return;
+    }
+
     // Store the original handler
     originalErrorHandler = ErrorUtils.getGlobalHandler();
 
@@ -149,6 +157,14 @@ export function uninstallGlobalErrorHandler() {
   }
 
   try {
+    const anyGlobal: any = global;
+    const ErrorUtils = anyGlobal?.ErrorUtils;
+    if (!ErrorUtils?.setGlobalHandler) {
+      originalErrorHandler = null;
+      isHandlerInstalled = false;
+      return;
+    }
+
     if (originalErrorHandler) {
       ErrorUtils.setGlobalHandler(originalErrorHandler);
       originalErrorHandler = null;
