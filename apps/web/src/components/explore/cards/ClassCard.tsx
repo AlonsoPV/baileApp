@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
-import { urls } from '../../../lib/urls';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
@@ -29,165 +28,6 @@ interface Props {
   fillHeight?: boolean;
 }
 
-const cardBase: React.CSSProperties = {
-  position: 'relative',
-  border: '1px solid rgba(255, 255, 255, 0.10)',
-  borderRadius: 'clamp(18px, 4vw, 22px)',
-  overflow: 'hidden',
-  background: 'rgba(255, 255, 255, 0.03)',
-  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
-  cursor: 'pointer',
-  color: '#EAF0FF',
-  display: 'flex',
-  flexDirection: 'column',
-  // Evitar que el card se estire a la altura del row del grid (esto genera espacios enormes)
-  // Queremos altura proporcional al contenido (poster + sheet + CTA)
-  height: 'auto',
-  alignSelf: 'start',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-};
-
-const posterWrap: React.CSSProperties = {
-  position: 'relative',
-  padding: 0,
-  background: 'radial-gradient(900px 400px at 50% 0%, rgba(255,79,123,.14), transparent 60%), radial-gradient(700px 380px at 60% 100%, rgba(249,115,22,.12), transparent 55%), rgba(255,255,255,.02)'
-};
-
-const badgeRow: React.CSSProperties = {
-  position: 'absolute',
-  top: 'clamp(10px, 2.5vw, 14px)',
-  left: 'clamp(10px, 2.5vw, 14px)',
-  display: 'flex',
-  gap: 'clamp(6px, 1.5vw, 8px)',
-  zIndex: 3
-};
-
-const badge: React.CSSProperties = {
-  fontSize: 'clamp(10px, 2vw, 11px)',
-  fontWeight: 800,
-  padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 10px)',
-  borderRadius: '999px',
-  border: '1px solid rgba(255,255,255,.14)',
-  background: 'rgba(14,18,30,.55)',
-  backdropFilter: 'blur(10px)',
-  letterSpacing: '.2px',
-  color: '#EAF0FF'
-};
-
-const posterFrame: React.CSSProperties = {
-  borderRadius: '18px 18px 0 0',
-  overflow: 'hidden',
-  border: 'none',
-  background: 'rgba(0,0,0,.22)',
-  aspectRatio: '16 / 11',
-  position: 'relative',
-  flexShrink: 0
-};
-
-const sheet: React.CSSProperties = {
-  padding: 'clamp(12px, 2.5vw, 14px)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'clamp(8px, 2vw, 10px)',
-  flex: 1,
-  minHeight: 0
-};
-
-const topLine: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  gap: '10px'
-};
-
-const titleBox: React.CSSProperties = {
-  minWidth: 0,
-  flex: 1
-};
-
-const title: React.CSSProperties = {
-  margin: 0,
-  fontSize: 'clamp(14px, 2.5vw, 16px)',
-  fontWeight: 900,
-  letterSpacing: '.2px',
-  lineHeight: 1.15,
-  color: '#EAF0FF',
-  wordBreak: 'break-word',
-  overflowWrap: 'break-word'
-};
-
-const subtitle: React.CSSProperties = {
-  margin: 'clamp(4px, 1vw, 6px) 0 0',
-  fontSize: 'clamp(11px, 2vw, 12px)',
-  color: 'rgba(234,240,255,.65)',
-  display: 'flex',
-  gap: 'clamp(6px, 1.5vw, 8px)',
-  alignItems: 'center',
-  overflowWrap: 'break-word',
-  lineHeight: 1.4
-};
-
-const metaRow: React.CSSProperties = {
-  display: 'flex',
-  gap: 'clamp(6px, 1.5vw, 8px)',
-  flexWrap: 'wrap',
-  alignItems: 'center'
-};
-
-const meta: React.CSSProperties = {
-  fontSize: 'clamp(11px, 2vw, 12px)',
-  color: 'rgba(234,240,255,.86)',
-  background: 'rgba(255,255,255,.06)',
-  border: '1px solid rgba(255,255,255,.10)',
-  padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 10px)',
-  borderRadius: '999px',
-  display: 'inline-flex',
-  gap: 'clamp(6px, 1.5vw, 8px)',
-  alignItems: 'center',
-  whiteSpace: 'nowrap'
-};
-
-const actions: React.CSSProperties = {
-  display: 'flex',
-  gap: 'clamp(8px, 2vw, 10px)',
-  alignItems: 'stretch',
-  marginTop: 'auto',
-  paddingTop: 'clamp(4px, 1vw, 6px)'
-};
-
-const cta: React.CSSProperties = {
-  flex: 1,
-  border: 'none',
-  cursor: 'pointer',
-  padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 14px)',
-  borderRadius: 'clamp(14px, 3vw, 16px)',
-  fontWeight: 900,
-  color: '#111',
-  background: 'linear-gradient(135deg, #FFD1DD, #FFC38F)',
-  fontSize: 'clamp(13px, 2.5vw, 14px)',
-  minHeight: '44px',
-  touchAction: 'manipulation'
-};
-
-const iconBtn: React.CSSProperties = {
-  width: 'clamp(42px, 8vw, 46px)',
-  height: 'clamp(42px, 8vw, 46px)',
-  minWidth: '44px',
-  minHeight: '44px',
-  borderRadius: 'clamp(14px, 3vw, 16px)',
-  border: '1px solid rgba(255,255,255,.14)',
-  background: 'rgba(255,255,255,.06)',
-  color: '#EAF0FF',
-  display: 'grid',
-  placeItems: 'center',
-  cursor: 'pointer',
-  fontWeight: 900,
-  fontSize: 'clamp(16px, 3.5vw, 18px)',
-  touchAction: 'manipulation',
-  flexShrink: 0,
-  alignSelf: 'stretch'
-};
-
 const fmtDate = (s?: string) => {
   if (!s) return '';
   try {
@@ -199,14 +39,6 @@ const fmtDate = (s?: string) => {
 };
 
 export default function ClassCard({ item, fillHeight = false }: Props) {
-  const cardStyle = React.useMemo<React.CSSProperties>(() => {
-    if (!fillHeight) return cardBase;
-    return {
-      ...cardBase,
-      height: '100%',
-      alignSelf: 'stretch',
-    };
-  }, [fillHeight]);
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
@@ -334,288 +166,263 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
     return '';
   }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal]);
 
-  // Construir URL completa para compartir
-  const shareUrl = React.useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}${href}`;
-  }, [href]);
-
-  // Handler para compartir
-  const handleShare = React.useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    try {
-      const title = item.titulo || 'Clase';
-      const text = `Mira esta clase: ${title}`;
-      const navAny = navigator as any;
-      
-      // Intentar Web Share API (móvil)
-      if (navAny?.share && typeof navAny.share === 'function') {
-        try {
-          await navAny.share({ 
-            title, 
-            text, 
-            url: shareUrl 
-          });
-          return;
-        } catch (shareError: any) {
-          // Si el usuario cancela, no hacer nada
-          if (shareError?.name === 'AbortError' || shareError?.message?.includes('cancel')) {
-            return;
-          }
-        }
-      }
-      
-      // Fallback: copiar al portapapeles
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          // Mostrar feedback visual
-          const btn = e.currentTarget as HTMLElement;
-          const originalText = btn.textContent;
-          if (btn) {
-            btn.textContent = '✓';
-            setTimeout(() => {
-              if (btn) btn.textContent = originalText;
-            }, 1000);
-          }
-        } catch (clipError) {
-          console.error('Error al copiar:', clipError);
-        }
-      } else {
-        // Fallback antiguo para navegadores sin Clipboard API
-        try {
-          const textArea = document.createElement('textarea');
-          textArea.value = shareUrl;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          const successful = document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
-          if (successful) {
-            const btn = e.currentTarget as HTMLElement;
-            const originalText = btn.textContent;
-            if (btn) {
-              btn.textContent = '✓';
-              setTimeout(() => {
-                if (btn) btn.textContent = originalText;
-              }, 1000);
-            }
-          }
-        } catch (fallbackError) {
-          console.error('Error en fallback de copiar:', fallbackError);
-        }
-      }
-    } catch (error) {
-      console.error('Error al compartir:', error);
-    }
-  }, [shareUrl, item.titulo]);
-
   return (
     <>
       <style>{`
-        .class-card-poster-frame {
-          position: relative;
+        .class-card-mobile {
+          width: 100%;
         }
-        .class-card-poster-frame::before {
+
+        /* Fuente única de proporción/altura:
+           - La altura real la define ".media" (aspect-ratio).
+           - ".class-card-mobile" solo controla ancho/márgenes (evita reglas compitiendo). */
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+          .class-card-mobile {
+            /* Evitar cards gigantes (por vh) en pantallas altas y también evitar que quede muy angosta */
+            max-width: min(420px, calc((9 / 16) * 100vh));
+            margin: 0 auto;
+          }
+          .class-card {
+            --card-ar: 9 / 16;
+          }
+        }
+
+        /* Responsive: Mobile pequeño */
+        @media (max-width: 480px) {
+          .class-card-mobile {
+            max-width: 100%;
+          }
+          /* Menos padding para que no se tape el póster en pantallas pequeñas */
+          .class-card-content {
+            padding: 10px 10px max(8px, env(safe-area-inset-bottom));
+          }
+        }
+
+        /* CARD */
+        .class-card {
+          border-radius: 22px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          background: rgba(255, 255, 255, 0.03);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+          position: relative;
+          cursor: pointer;
+          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar */
+          --card-ar: 4 / 5;
+        }
+
+        /* 👇 área media con imagen COMPLETA */
+        .class-card-media {
+          position: relative;
+          aspect-ratio: var(--card-ar); /* single source of truth */
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* fondo "relleno" usando la misma imagen, con blur */
+        .class-card-media::before {
           content: "";
           position: absolute;
           inset: 0;
-          background-image: ${bgWithCacheBust || bg ? `url(${bgWithCacheBust || bg})` : 'none'};
+          background-image: var(--img);
           background-size: cover;
           background-position: center;
-          filter: blur(16px) saturate(1.1);
-          transform: scale(1.1);
-          opacity: 0.45;
-          z-index: 1;
+          filter: blur(18px) saturate(1.1);
+          transform: scale(1.08);
+          opacity: 0.55;
         }
-        .class-card-poster-frame img {
+
+        /* capa para oscurecer un poco (mejor legibilidad) */
+        .class-card-media::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.82) 100%);
+        }
+
+        /* la imagen REAL completa */
+        .class-card-media img {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
-          /* Importante: evitar que reglas globales pongan cover en mobile */
-          object-fit: contain !important;
-          object-position: center;
+          object-fit: cover;        /* ✅ cover para llenar el espacio */
+          object-position: center;  /* ✅ centrada */
+          filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+          z-index: 1;
+        }
+
+        .class-card-badges {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
           z-index: 2;
-          filter: drop-shadow(0 16px 28px rgba(0,0,0,.50));
-          padding: 12px;
         }
-        .class-card-v2 {
-          /* Evitar stretch vertical por grid; la altura la define el contenido */
-          height: auto;
+
+        .class-card-badge {
+          font-size: 11px;
+          font-weight: 800;
+          padding: 8px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(17, 21, 32, 0.55);
+          backdrop-filter: blur(8px);
+        }
+
+        .class-card-badge.hot {
+          border: none;
+          background: linear-gradient(135deg, var(--brand1), var(--brand2));
+        }
+
+        .class-card-content {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 14px 14px max(12px, env(safe-area-inset-bottom));
+          z-index: 2;
+        }
+
+        .class-card-title {
+          margin: 0 0 clamp(5px, 1vw, 8px);
+          font-size: clamp(14px, 2.2vw, 18px);
+          font-weight: 900;
+          color: #fff;
+          text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
+          word-break: break-word;
+          line-height: 1.3;
+        }
+
+        .class-card-meta {
           display: flex;
-          flex-direction: column;
-          align-self: start;
+          gap: clamp(6px, 1vw, 8px);
+          flex-wrap: wrap;
+          margin-bottom: clamp(8px, 1vw, 10px);
         }
-        
-        /* Responsive: Tablet y Desktop */
-        @media (min-width: 769px) {
-          .class-card-v2 {
-            max-width: 100%;
-          }
-          .class-card-poster-frame {
-            aspect-ratio: 16 / 11;
-          }
-          .class-card-poster-frame img {
-            padding: 12px;
-          }
+
+        .class-card-meta .tag {
+          font-size: clamp(10px, 1.6vw, 13px);
+          color: rgba(234, 240, 255, 0.85);
+          background: rgba(17, 21, 32, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          padding: clamp(5px, 1vw, 9px) clamp(7px, 1.2vw, 12px);
+          border-radius: 999px;
+          display: inline-flex;
+          gap: 8px;
+          align-items: center;
+          white-space: nowrap;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          backdrop-filter: blur(8px);
         }
-        
-        /* Responsive: Mobile (max-width: 768px) */
-        @media (max-width: 768px) {
-          .class-card-v2 {
-            max-width: 100%;
-            border-radius: clamp(16px, 4vw, 18px);
-          }
-          .class-card-poster-frame {
-            aspect-ratio: 16 / 10;
-            border-radius: clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px) 0 0;
-          }
-          .class-card-poster-frame img {
-            padding: clamp(8px, 2vw, 10px);
-          }
+
+        .class-card-actions {
+          display: flex;
+          gap: clamp(8px, 1vw, 10px);
+          align-items: center;
         }
-        
-        /* Responsive: Mobile pequeño (max-width: 480px) */
-        @media (max-width: 480px) {
-          .class-card-v2 {
-            border-radius: clamp(14px, 3.5vw, 16px);
-          }
-          .class-card-poster-frame {
-            aspect-ratio: 16 / 9;
-            border-radius: clamp(12px, 3vw, 14px) clamp(12px, 3vw, 14px) 0 0;
-          }
-          .class-card-poster-frame img {
-            padding: clamp(6px, 1.5vw, 8px);
-          }
-        }
-        
-        /* Responsive: Mobile muy pequeño (max-width: 430px) */
-        @media (max-width: 430px) {
-          .class-card-v2 {
-            border-radius: clamp(12px, 3vw, 14px);
-          }
-          .class-card-poster-frame {
-            aspect-ratio: 4 / 3;
-            border-radius: clamp(10px, 2.5vw, 12px) clamp(10px, 2.5vw, 12px) 0 0;
-          }
-          .class-card-poster-frame img {
-            padding: clamp(4px, 1vw, 6px);
-          }
-        }
-        
-        /* Asegurar que el sheet ocupe el espacio restante */
-        .class-card-sheet {
+
+        .class-card-cta {
           flex: 1;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;
+          border: none;
+          cursor: pointer;
+          padding: clamp(10px, 1.6vw, 16px) clamp(14px, 2vw, 24px);
+          border-radius: 16px;
+          font-weight: 900;
+          font-size: clamp(12px, 1.9vw, 15px);
+          color: #111;
+          background: linear-gradient(135deg, #FFD1DD, #FFC38F);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(255, 209, 221, 0.3), 0 2px 8px rgba(255, 195, 143, 0.2);
+          letter-spacing: 0.3px;
+          touch-action: manipulation;
         }
-        
-        /* Mejorar distribución de elementos en mobile */
-        @media (max-width: 768px) {
-          .class-card-sheet {
-            padding: clamp(10px, 2vw, 12px);
-            gap: clamp(6px, 1.5vw, 8px);
-          }
+
+        .class-card-cta::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+          opacity: 0;
+          transition: opacity 0.3s;
         }
-        
-        @media (max-width: 480px) {
-          .class-card-sheet {
-            padding: clamp(8px, 1.8vw, 10px);
-            gap: clamp(5px, 1.2vw, 6px);
-          }
+
+        .class-card-cta:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(255, 209, 221, 0.4), 0 4px 12px rgba(255, 195, 143, 0.3);
+        }
+
+        .class-card-cta:hover::before {
+          opacity: 1;
+        }
+
+        .class-card-cta:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 8px rgba(255, 209, 221, 0.3), 0 1px 4px rgba(255, 195, 143, 0.2);
         }
       `}</style>
       <LiveLink to={href} asCard={false}>
         <motion.article
-          className="class-card-v2"
+          className="class-card class-card-mobile"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.02, y: -4, transition: { duration: 0.2 } }}
+          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.15 }}
-          style={cardStyle}
+          style={fillHeight ? ({ height: '100%', alignSelf: 'stretch' } as React.CSSProperties) : undefined}
         >
-          {/* Poster Wrap */}
-          <div style={posterWrap}>
-            {/* Badge Row */}
+          <div
+            className="class-card-media"
+            style={{
+              '--img': (bgWithCacheBust || bg) ? `url(${bgWithCacheBust || bg})` : undefined,
+            } as React.CSSProperties}
+          >
+            {(bgWithCacheBust || bg) && (
+              <img
+                src={bgWithCacheBust || bg}
+                alt={item.titulo || 'Clase'}
+              />
+            )}
+
             {isToday && (
-              <div style={badgeRow}>
-                <div style={{ ...badge, border: 'none', background: 'linear-gradient(135deg, #FF4F7B, #F97316)', color: '#111' }}>
-                  HOY
-                </div>
+              <div className="class-card-badges">
+                <div className="class-card-badge hot">HOY</div>
+              </div>
+            )}
+          </div>
+
+          <div className="class-card-content">
+            <h3 className="class-card-title">{item.titulo || 'Clase'}</h3>
+
+            {item.ownerName && (
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>
+                por <strong style={{ color: '#fff' }}>{item.ownerName}</strong>
               </div>
             )}
 
-            {/* Poster Frame */}
-            <div className="class-card-poster-frame" style={posterFrame}>
-              {(bgWithCacheBust || bg) && (
-                <img 
-                  src={bgWithCacheBust || bg || ''} 
-                  alt={item.titulo || 'Clase'}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Sheet - Info */}
-          <div style={sheet} className="class-card-sheet">
-            {/* Top Line */}
-            <div style={topLine}>
-              <div style={titleBox}>
-                <h3 style={title}>
-                  {item.titulo || 'Clase'}
-                </h3>
-                {lugarNombre && (
-                  <p style={subtitle}>
-                    📍 {lugarNombre}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Meta Row */}
-            <div style={metaRow}>
+            <div className="class-card-meta">
               {formattedDate && (
-                <div style={meta}>
-                  🗓️ {formattedDate}
-                </div>
+                <div className="tag">🗓️ {formattedDate}</div>
               )}
               {(item.inicio || item.fin) && (
-                <div style={meta}>
-                  🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}
-                </div>
+                <div className="tag">🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
+              )}
+              {lugarNombre && (
+                <div className="tag">📍 {lugarNombre}</div>
               )}
               {ritmoNames.length > 0 && (
-                <div style={meta}>
-                  🎵 {ritmoNames.slice(0, 2).join(', ')}
-                </div>
+                <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>
               )}
             </div>
 
-            {/* Actions */}
-            <div style={actions}>
-              <button style={cta} onClick={(e) => {
-                e.preventDefault();
-                window.location.href = href;
-              }}>
-                Ver detalles
-              </button>
-              <button 
-                style={iconBtn}
-                onClick={handleShare}
-                aria-label="Compartir"
-                title="Compartir"
-              >
-                📤
-              </button>
+            <div className="class-card-actions">
+              <button className="class-card-cta">Ver detalles</button>
             </div>
           </div>
         </motion.article>

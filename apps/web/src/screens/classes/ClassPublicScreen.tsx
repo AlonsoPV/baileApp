@@ -480,8 +480,18 @@ export default function ClassPublicScreen() {
 
   const locationLabel = (() => {
     if (!ubicacion) return undefined;
-    const parts = [ubicacion.nombre, ubicacion.ciudad].filter(Boolean);
-    return parts.length ? parts.join(' · ') : undefined;
+    // ✅ Requisito: en esta pantalla, la ubicación solo muestra el nombre (sin ciudad ni separadores)
+    let name = '';
+    if (typeof (ubicacion as any)?.nombre === 'string') {
+      name = String((ubicacion as any).nombre).trim();
+      // Si el nombre contiene "·" o " - ", extraer solo la primera parte (el nombre real)
+      if (name.includes('·')) {
+        name = name.split('·')[0].trim();
+      } else if (name.includes(' - ')) {
+        name = name.split(' - ')[0].trim();
+      }
+    }
+    return name || undefined;
   })();
 
   // Ritmos de la clase: preferir los IDs numéricos más nuevos (ritmoIds),

@@ -284,36 +284,73 @@ export default function EventCard({ item }: EventCardProps) {
           flex: 1;
           border: none;
           cursor: pointer;
-          padding: clamp(10px, 1.6vw, 16px) clamp(14px, 2vw, 24px);
-          border-radius: 16px;
+          padding: clamp(12px, 1.8vw, 18px) clamp(16px, 2.2vw, 28px);
+          border-radius: 18px;
           font-weight: 900;
           font-size: clamp(12px, 1.9vw, 15px);
           color: #111;
-          background: linear-gradient(135deg, #FFD1DD, #FFC38F);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: linear-gradient(135deg, #FFD1DD 0%, #FFC38F 50%, #FFE5A0 100%);
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
-          box-shadow: 0 4px 16px rgba(255, 209, 221, 0.3), 0 2px 8px rgba(255, 195, 143, 0.2);
-          letter-spacing: 0.3px;
+          box-shadow: 
+            0 6px 20px rgba(255, 209, 221, 0.4),
+            0 3px 10px rgba(255, 195, 143, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+          letter-spacing: 0.4px;
+          text-transform: uppercase;
+          font-size: clamp(11px, 1.7vw, 14px);
+          touch-action: manipulation;
         }
         .cta::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
           opacity: 0;
-          transition: opacity 0.3s;
+          transition: opacity 0.35s ease;
+        }
+        .cta::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+          opacity: 0;
+          transform: scale(0);
+          transition: transform 0.6s ease, opacity 0.6s ease;
         }
         .cta:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(255, 209, 221, 0.4), 0 4px 12px rgba(255, 195, 143, 0.3);
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 
+            0 12px 32px rgba(255, 209, 221, 0.5),
+            0 6px 16px rgba(255, 195, 143, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            0 0 0 2px rgba(255, 255, 255, 0.1);
+          background: linear-gradient(135deg, #FFE0E8 0%, #FFD4A5 50%, #FFEBB3 100%);
         }
         .cta:hover::before {
           opacity: 1;
         }
+        .cta:hover::after {
+          opacity: 1;
+          transform: scale(1);
+        }
         .cta:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 8px rgba(255, 209, 221, 0.3), 0 1px 4px rgba(255, 195, 143, 0.2);
+          transform: translateY(-1px) scale(0.98);
+          box-shadow: 
+            0 4px 12px rgba(255, 209, 221, 0.4),
+            0 2px 6px rgba(255, 195, 143, 0.3),
+            inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .cta:focus-visible {
+          outline: none;
+          box-shadow: 
+            0 6px 20px rgba(255, 209, 221, 0.4),
+            0 3px 10px rgba(255, 195, 143, 0.3),
+            0 0 0 4px rgba(255, 209, 221, 0.5);
         }
         .ghost {
           width: 46px;

@@ -29,6 +29,7 @@ export function useAcademyMy() {
 export function useAcademyPublic(id: number) {
   return useQuery({
     queryKey: ['academy','public', id],
+    enabled: typeof id === 'number' && !Number.isNaN(id) && id > 0,
     queryFn: async (): Promise<AcademyProfile|null> => {
       const { data, error } = await supabase
         .from('v_academies_public')

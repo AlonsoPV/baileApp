@@ -231,78 +231,78 @@ const CTACard = React.memo(({
           width: '100%'
         }}
       >
-        {/* Overlay oscuro para mejor contraste */}
+      {/* Overlay oscuro para mejor contraste */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
+        zIndex: 1
+      }} />
+
+      {/* Contenido */}
+      <div style={{
+        position: 'relative',
+        zIndex: 2,
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        gap: '1rem',
+        height: '100%',
+        width: '100%'
+      }}>
+        {/* Badge "Únete" */}
         <div style={{
           position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
-          zIndex: 1
-        }} />
-
-        {/* Contenido */}
-        <div style={{
-          position: 'relative',
-          zIndex: 2,
-          padding: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: '1rem',
-          height: '100%',
-          width: '100%'
+          top: '1rem',
+          right: '1rem',
+          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+          color: 'white',
+          padding: '0.4rem 0.8rem',
+          borderRadius: '999px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
+          border: '2px solid rgba(255, 255, 255, 0.3)'
         }}>
-          {/* Badge "Únete" */}
-          <div style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-            color: 'white',
-            padding: '0.4rem 0.8rem',
-            borderRadius: '999px',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
-          }}>
-            Únete
-          </div>
-
-          {/* Icono */}
-          <div style={{
-            fontSize: '3rem',
-            marginBottom: '0.5rem'
-          }}>
-            {sectionType === 'clases' ? '🎓' :
-              sectionType === 'academias' ? '🏫' :
-                sectionType === 'maestros' ? '👨‍🏫' :
-                  sectionType === 'organizadores' ? '📅' :
-                    '🏷️'}
-          </div>
-
-          {/* Texto */}
-          <p style={{
-            color: '#fff',
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            margin: 0,
-            lineHeight: 1.4,
-            maxWidth: '90%'
-          }}>
-            {text}
-          </p>
-
-          {/* Flecha indicativa */}
-          <div style={{
-            marginTop: '0.5rem',
-            fontSize: '1.5rem',
-            opacity: 0.8
-          }}>
-            →
-          </div>
+          Únete
         </div>
+
+        {/* Icono */}
+        <div style={{
+          fontSize: '3rem',
+          marginBottom: '0.5rem'
+        }}>
+          {sectionType === 'clases' ? '🎓' :
+            sectionType === 'academias' ? '🏫' :
+              sectionType === 'maestros' ? '👨‍🏫' :
+                sectionType === 'organizadores' ? '📅' :
+                  '🏷️'}
+        </div>
+
+        {/* Texto */}
+        <p style={{
+          color: '#fff',
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          margin: 0,
+          lineHeight: 1.4,
+          maxWidth: '90%'
+        }}>
+          {text}
+        </p>
+
+        {/* Flecha indicativa */}
+        <div style={{
+          marginTop: '0.5rem',
+          fontSize: '1.5rem',
+          opacity: 0.8
+        }}>
+          →
+        </div>
+      </div>
     </div>
     </>
   );

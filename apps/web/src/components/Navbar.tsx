@@ -366,12 +366,15 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             min-height: 36px !important;
           }
           .nav-profile-button img {
+            position: absolute !important;
+            inset: 0 !important;
             width: 100% !important;
             height: 100% !important;
             min-width: 100% !important;
             min-height: 100% !important;
             object-fit: cover !important;
             object-position: center !important;
+            box-sizing: border-box !important;
           }
           .nav-login-button {
             padding: 0.35rem 0.7rem !important;
@@ -438,6 +441,8 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         }
         
         .nav-profile-button img {
+          position: absolute !important;
+          inset: 0 !important;
           width: 100% !important;
           height: 100% !important;
           min-width: 100% !important;
@@ -446,6 +451,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           object-position: center !important;
           display: block !important;
           border-radius: 50% !important;
+          box-sizing: border-box !important;
         }
 
         .nav-profile-button:hover {
@@ -655,13 +661,6 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                  }}
                 />
               ) : (
                 <span>{profileInitial}</span>
