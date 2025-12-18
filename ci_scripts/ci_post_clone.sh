@@ -10,43 +10,35 @@ echo "PWD: $(pwd)"
 # -----------------------------
 # 1) Node (garantizar que exista)
 # -----------------------------
+# Usar ensure_node.sh que tiene fallback a descarga directa si Homebrew falla
+# Este script intenta: 1) Homebrew, 2) Descarga directa desde nodejs.org
+echo "==> Ensuring Node.js is available"
+if [ -f "ci_scripts/ensure_node.sh" ]; then
+  bash ci_scripts/ensure_node.sh
+else
+  echo "ERROR: ensure_node.sh not found"
+  exit 1
+fi
+
+# Verificar que Node esté disponible después de ensure_node.sh
 if ! command -v node >/dev/null 2>&1; then
-  echo "==> Node not found. Installing via Homebrew..."
-  if ! command -v brew >/dev/null 2>&1; then
-    echo "ERROR: brew not found; cannot install Node automatically."
-    exit 1
-  fi
-  
-  # Detectar ubicación de Homebrew (puede ser /opt/homebrew o /usr/local)
-  BREW_PREFIX=$(brew --prefix)
-  echo "==> Homebrew prefix: $BREW_PREFIX"
-  
-  brew update
-  brew install node@20
-  
-  # node@20 es "keg-only", necesitamos agregarlo al PATH explícitamente
-  NODE_PATH="$BREW_PREFIX/opt/node@20/bin"
-  export PATH="$NODE_PATH:$PATH"
-  
-  # Verificar que Node y npm estén disponibles después de agregarlo al PATH
-  if ! command -v node >/dev/null 2>&1; then
-    echo "ERROR: Node installed but not found in PATH. Tried: $NODE_PATH"
-    ls -la "$NODE_PATH" || echo "Directory does not exist: $NODE_PATH"
-    exit 1
-  fi
-  
-  if ! command -v npm >/dev/null 2>&1; then
-    echo "ERROR: npm not found in PATH after Node installation."
-    exit 1
-  fi
+  echo "ERROR: Node.js installation failed or not found in PATH"
+  echo "PATH=$PATH"
+  exit 1
 fi
 
 # Asegurar que Node y npm estén en el PATH (por si acaso)
+# ensure_node.sh ya exporta PATH, pero verificamos por seguridad
 if command -v brew >/dev/null 2>&1; then
   BREW_PREFIX=$(brew --prefix)
   NODE_PATH="$BREW_PREFIX/opt/node@20/bin"
   if [ -d "$NODE_PATH" ]; then
     export PATH="$NODE_PATH:$PATH"
+  fi
+  # También verificar node (sin @20) que puede estar en /opt/homebrew/bin
+  NODE_PATH_GENERIC="$BREW_PREFIX/bin"
+  if [ -d "$NODE_PATH_GENERIC" ] && [ -f "$NODE_PATH_GENERIC/node" ]; then
+    export PATH="$NODE_PATH_GENERIC:$PATH"
   fi
 fi
 
