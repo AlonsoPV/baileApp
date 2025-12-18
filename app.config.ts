@@ -57,18 +57,22 @@ try {
   });
 
   const chosenPath = hasLocal ? localEnvPath : defaultEnvPath;
+  const fileExists = hasLocal || hasDefault;
 
   // Load into LOCAL_ENV first (reliable)
-  if (hasLocal || hasDefault) {
+  if (fileExists) {
     loadLocalEnvFile(chosenPath);
   }
 
   // Also try dotenv.config to support tooling that expects process.env to be populated.
-  const result = dotenv.config({ path: chosenPath, override: true });
+  // ✅ Only call dotenv.config if the file actually exists (prevents ENOENT errors in Xcode Cloud)
+  const result = fileExists
+    ? dotenv.config({ path: chosenPath, override: true })
+    : { error: null, parsed: {} };
 
   // eslint-disable-next-line no-console
   console.log("[app.config] dotenv loaded:", {
-    used: hasLocal ? "config/local.env" : hasDefault ? ".env" : "(none found)",
+    used: hasLocal ? "config/local.env" : hasDefault ? ".env" : "(none found - using Xcode Cloud env vars)",
     error: result.error ? String(result.error) : null,
   });
 
