@@ -73,7 +73,29 @@ echo "==> Install JS deps"
 pnpm install --no-frozen-lockfile
 
 # -----------------------------
-# 4) Expo prebuild (IMPORTANTE)
+# 4) Variables de entorno (IMPORTANTE)
+#    Exportar variables de entorno necesarias para app.config.ts
+#    Estas deben estar configuradas en Xcode Cloud environment variables
+# -----------------------------
+echo "==> Setting up environment variables"
+
+# Variables de entorno requeridas por app.config.ts
+# Si no están disponibles, usar valores por defecto vacíos para permitir el build
+# (las variables reales deben estar configuradas en Xcode Cloud)
+export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-}"
+export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
+
+# Verificar si las variables están configuradas (solo warning, no fallar)
+if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+  echo "⚠️  WARNING: EXPO_PUBLIC_SUPABASE_URL not set. Configure it in Xcode Cloud environment variables."
+fi
+
+if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+  echo "⚠️  WARNING: EXPO_PUBLIC_SUPABASE_ANON_KEY not set. Configure it in Xcode Cloud environment variables."
+fi
+
+# -----------------------------
+# 5) Expo prebuild (IMPORTANTE)
 #    Esto genera/actualiza iOS config usando app.config.ts + ENV vars.
 # -----------------------------
 echo "==> Expo prebuild (ios)"
@@ -81,7 +103,7 @@ echo "==> Expo prebuild (ios)"
 pnpm exec expo prebuild --platform ios --no-install
 
 # -----------------------------
-# 5) CocoaPods
+# 6) CocoaPods
 # -----------------------------
 echo "==> CocoaPods install"
 cd ios
