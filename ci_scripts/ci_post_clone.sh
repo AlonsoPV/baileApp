@@ -48,15 +48,84 @@ echo "==> Node path: $(which node)"
 echo "==> npm path: $(which npm)"
 
 # -----------------------------
-# 2) pnpm (corepack)
+# 2) pnpm (corepack o npm fallback)
 # -----------------------------
-echo "==> Enable corepack"
-corepack enable || true
+echo "==> Setting up pnpm"
 
-# Si corepack no deja pnpm listo, lo activamos explícitamente
-corepack prepare pnpm@10.25.0 --activate || true
+# Estrategia: Intentar corepack primero, luego npm como fallback
+PNPM_INSTALLED=false
+
+# Buscar corepack en ubicaciones comunes
+COREPACK_PATH=""
+NODE_DIR="$(dirname "$(which node)")"
+
+# 1. Verificar si corepack está en PATH
+if command -v corepack >/dev/null 2>&1; then
+  COREPACK_PATH="$(command -v corepack)"
+  echo "==> corepack found in PATH: $COREPACK_PATH"
+# 2. Verificar en el mismo directorio que node
+elif [ -f "$NODE_DIR/corepack" ]; then
+  COREPACK_PATH="$NODE_DIR/corepack"
+  echo "==> corepack found at: $COREPACK_PATH"
+  export PATH="$NODE_DIR:$PATH"
+# 3. Verificar ubicaciones comunes de Homebrew
+elif [ -f "/usr/local/bin/corepack" ]; then
+  COREPACK_PATH="/usr/local/bin/corepack"
+  echo "==> corepack found at: $COREPACK_PATH"
+  export PATH="/usr/local/bin:$PATH"
+elif [ -f "/opt/homebrew/bin/corepack" ]; then
+  COREPACK_PATH="/opt/homebrew/bin/corepack"
+  echo "==> corepack found at: $COREPACK_PATH"
+  export PATH="/opt/homebrew/bin:$PATH"
+fi
+
+# Intentar usar corepack si está disponible
+if [ -n "$COREPACK_PATH" ] && [ -f "$COREPACK_PATH" ]; then
+  echo "==> Attempting to enable corepack and prepare pnpm..."
+  if "$COREPACK_PATH" enable 2>&1; then
+    echo "==> corepack enabled"
+    if "$COREPACK_PATH" prepare pnpm@10.25.0 --activate 2>&1; then
+      echo "==> pnpm prepared via corepack"
+      # Verificar que pnpm esté disponible
+      if command -v pnpm >/dev/null 2>&1; then
+        PNPM_INSTALLED=true
+        echo "==> ✅ pnpm available via corepack: $(which pnpm)"
+      fi
+    fi
+  fi
+fi
+
+# Fallback: instalar pnpm vía npm si corepack no funcionó
+if [ "$PNPM_INSTALLED" = false ]; then
+  echo "⚠️  corepack not available or failed, installing pnpm via npm..."
+  if npm install -g pnpm@10.25.0 2>&1; then
+    # Asegurar que el directorio de npm global esté en PATH
+    NPM_GLOBAL_BIN="$(npm config get prefix)/bin"
+    if [ -d "$NPM_GLOBAL_BIN" ]; then
+      export PATH="$NPM_GLOBAL_BIN:$PATH"
+    fi
+    # Verificar que pnpm esté disponible
+    if command -v pnpm >/dev/null 2>&1; then
+      PNPM_INSTALLED=true
+      echo "==> ✅ pnpm installed via npm: $(which pnpm)"
+    fi
+  fi
+fi
+
+# Verificación final
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "ERROR: pnpm not found after setup attempts"
+  echo "PATH=$PATH"
+  echo "Node directory: $NODE_DIR"
+  echo "Checking for pnpm in common locations:"
+  which -a pnpm 2>/dev/null || echo "pnpm not found in PATH"
+  ls -la "$NODE_DIR/pnpm" 2>/dev/null || echo "pnpm not in node directory"
+  ls -la "$(npm config get prefix)/bin/pnpm" 2>/dev/null || echo "pnpm not in npm global bin"
+  exit 1
+fi
 
 echo "==> pnpm: $(pnpm -v)"
+echo "==> pnpm path: $(which pnpm)"
 
 # -----------------------------
 # 3) Instalar deps JS
