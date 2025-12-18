@@ -1,9 +1,10 @@
 import type { ExpoConfig } from "expo/config";
 
-// ✅ Fail-fast: throw if required env vars are missing (prevents broken builds)
+// ✅ NUNCA throw en producción - siempre retornar valor por defecto
 // ⚠️ Durante el build de Xcode Cloud, las variables pueden no estar disponibles inmediatamente
-// Por eso permitimos valores por defecto durante el build, pero fallamos en runtime si faltan
-const required = (key: string, defaultValue?: string): string => {
+// En runtime (TestFlight), nunca debemos crashear por falta de env vars
+// Las variables se inyectarán desde Xcode Cloud environment variables o EAS
+const required = (key: string, defaultValue: string = ''): string => {
   // @ts-ignore - process.env is available at build time
   const value = typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
   
@@ -12,27 +13,13 @@ const required = (key: string, defaultValue?: string): string => {
     return value;
   }
   
-  // Si hay un valor por defecto, usarlo (útil durante builds de Xcode Cloud)
-  if (defaultValue !== undefined) {
-    // Solo mostrar warning si no estamos en un contexto silencioso
-    if (typeof console !== 'undefined' && console.warn) {
-      console.warn(`[app.config] Using default/empty value for ${key} (should be set in Xcode Cloud environment variables or EAS)`);
-    }
-    return defaultValue;
+  // ✅ SIEMPRE retornar defaultValue si no hay valor
+  // NUNCA throw en producción - esto previene crashes en TestFlight
+  // Solo mostrar warning si no estamos en un contexto silencioso
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn(`[app.config] Using default/empty value for ${key} (should be set in Xcode Cloud environment variables or EAS)`);
   }
-  
-  // Detectar si estamos en un contexto de build donde las variables deberían estar disponibles
-  // Durante expo prebuild, las variables pueden no estar disponibles aún
-  const isPrebuildContext = process.env.EXPO_PREBUILD === '1' || 
-                            process.argv?.some(arg => arg.includes('prebuild'));
-  
-  // Si estamos en prebuild y no hay valor, permitir continuar (las variables se inyectarán después)
-  if (isPrebuildContext) {
-    return '';
-  }
-  
-  // En otros contextos, fallar si falta la variable
-  throw new Error(`[app.config] Missing required env var: ${key}. Set it in Xcode Cloud environment variables or EAS.`);
+  return defaultValue;
 };
 
 const config: ExpoConfig = {

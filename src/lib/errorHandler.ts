@@ -22,12 +22,33 @@ let isHandlerInstalled = false;
  * This handler prevents that by catching all errors and logging them instead.
  */
 function handleError(error: Error, isFatal: boolean = false) {
-  // Log the error with full context
-  console.error("[GlobalErrorHandler] Unhandled error:", error);
-  console.error("[GlobalErrorHandler] Error name:", error.name);
-  console.error("[GlobalErrorHandler] Error message:", error.message);
-  console.error("[GlobalErrorHandler] Error stack:", error.stack);
-  console.error("[GlobalErrorHandler] Is fatal:", isFatal);
+  // Log the error with full context - CRÍTICO para debugging en TestFlight
+  console.log("[GlobalErrorHandler] ===== ERROR HANDLER TRIGGERED =====");
+  console.log("[GlobalErrorHandler] Unhandled error:", error);
+  console.log("[GlobalErrorHandler] Error name:", error?.name ?? "Unknown");
+  console.log("[GlobalErrorHandler] Error message:", String(error?.message ?? error ?? "Unknown error"));
+  console.log("[GlobalErrorHandler] Error stack:", error?.stack ?? "No stack");
+  console.log("[GlobalErrorHandler] Is fatal:", isFatal);
+  console.log("[GlobalErrorHandler] ToString:", String(error ?? "No toString"));
+  
+  // Intentar obtener todas las propiedades del error
+  try {
+    const errorProps = {};
+    if (error) {
+      Object.getOwnPropertyNames(error).forEach(prop => {
+        try {
+          errorProps[prop] = String(error[prop]);
+        } catch (e) {
+          errorProps[prop] = "[Cannot stringify]";
+        }
+      });
+    }
+    console.log("[GlobalErrorHandler] Error properties:", JSON.stringify(errorProps, null, 2));
+  } catch (e) {
+    console.log("[GlobalErrorHandler] Could not serialize error properties:", e);
+  }
+  
+  console.log("[GlobalErrorHandler] =====================================");
 
   // Always log to help with debugging, even in production
   try {

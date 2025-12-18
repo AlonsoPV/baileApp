@@ -14,40 +14,68 @@ import Constants from "expo-constants";
  */
 
 function readExtra() {
-  // expoConfig a veces no existe en prod; manifest/manifest2 depende del SDK
-  const anyConst = Constants as any;
-  return (
-    Constants.expoConfig?.extra ??
-    anyConst.manifest?.extra ??
-    anyConst.manifest2?.extra ??
-    {}
-  );
+  try {
+    // expoConfig a veces no existe en prod; manifest/manifest2 depende del SDK
+    const anyConst = Constants as any;
+    return (
+      Constants.expoConfig?.extra ??
+      anyConst.manifest?.extra ??
+      anyConst.manifest2?.extra ??
+      {}
+    );
+  } catch (e) {
+    console.warn("[Supabase] Error reading Constants.extra:", e);
+    return {};
+  }
 }
 
-const extra = readExtra();
+let extra: any = {};
+let ENV_URL: string | undefined;
+let ENV_KEY: string | undefined;
+let supabaseUrl: string | undefined;
+let supabaseAnonKey: string | undefined;
+let supabase: SupabaseClient | null = null;
 
-// ⚠️ acceso estático (no dinámico) para que Metro inlinee
-// Esto es crítico: Metro necesita ver la referencia literal a la variable
-const ENV_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const ENV_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+try {
+  extra = readExtra();
 
-const supabaseUrl =
-  extra.supabaseUrl ||
-  extra.EXPO_PUBLIC_SUPABASE_URL ||
-  ENV_URL;
+  // ⚠️ acceso estático (no dinámico) para que Metro inlinee
+  // Esto es crítico: Metro necesita ver la referencia literal a la variable
+  ENV_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  ENV_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabaseAnonKey =
-  extra.supabaseAnonKey ||
-  extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-  ENV_KEY;
+  supabaseUrl =
+    extra.supabaseUrl ||
+    extra.EXPO_PUBLIC_SUPABASE_URL ||
+    ENV_URL;
 
-// ✅ En producción NO queremos crashear la app por config faltante
-// Retornamos null en lugar de un Proxy que puede fallar
-// Tipo explícito: SupabaseClient | null
-export const supabase: SupabaseClient | null =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
+  supabaseAnonKey =
+    extra.supabaseAnonKey ||
+    extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+    ENV_KEY;
+
+  // ✅ En producción NO queremos crashear la app por config faltante
+  // Retornamos null en lugar de un Proxy que puede fallar
+  // Tipo explícito: SupabaseClient | null
+  if (supabaseUrl && supabaseAnonKey) {
+    try {
+      supabase = createClient(supabaseUrl, supabaseAnonKey);
+    } catch (e) {
+      console.error("[Supabase] Error creating client:", e);
+      supabase = null;
+    }
+  } else {
+    supabase = null;
+  }
+} catch (e) {
+  console.error("[Supabase] Critical error during initialization:", e);
+  // Asegurar que supabase sea null en caso de error
+  supabase = null;
+  supabaseUrl = undefined;
+  supabaseAnonKey = undefined;
+}
+
+export { supabase };
 
 // Helper para obtener URL pública de buckets (si supabase está disponible)
 export function getBucketPublicUrl(bucket: string, path: string): string | null {
