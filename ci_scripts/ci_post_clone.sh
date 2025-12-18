@@ -16,12 +16,27 @@ if ! command -v node >/dev/null 2>&1; then
     echo "ERROR: brew not found; cannot install Node automatically."
     exit 1
   fi
+  
+  # Detectar ubicación de Homebrew (puede ser /opt/homebrew o /usr/local)
+  BREW_PREFIX=$(brew --prefix)
+  echo "==> Homebrew prefix: $BREW_PREFIX"
+  
   brew update
   brew install node@20
-  export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+  
+  # node@20 es "keg-only", necesitamos agregarlo al PATH explícitamente
+  NODE_PATH="$BREW_PREFIX/opt/node@20/bin"
+  export PATH="$NODE_PATH:$PATH"
+  
+  # Verificar que Node esté disponible después de agregarlo al PATH
+  if ! command -v node >/dev/null 2>&1; then
+    echo "ERROR: Node installed but not found in PATH. Tried: $NODE_PATH"
+    exit 1
+  fi
 fi
 
 echo "==> Node: $(node -v)"
+echo "==> Node path: $(which node)"
 
 # -----------------------------
 # 2) pnpm (corepack)
