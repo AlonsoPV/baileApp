@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { Text, View, StyleSheet } from "react-native";
+import { ErrorBoundary } from "./src/components/ErrorBoundary";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
 
 const queryClient = new QueryClient();
@@ -49,11 +50,23 @@ function AppContent() {
   // Verificar y descargar actualizaciones OTA automáticamente
   // useOTAUpdates(); // Temporarily disabled to prevent crash
 
+  // Only show the debug overlay when explicitly enabled.
+  // @ts-ignore - __DEV__ is a React Native global
+  const shouldShowDebug =
+    (typeof __DEV__ !== "undefined" && __DEV__) ||
+    Boolean(
+      (Constants.expoConfig as any)?.extra?.showConfigDebug ??
+        (Constants as any)?.manifest?.extra?.showConfigDebug ??
+        (Constants as any)?.manifest2?.extra?.showConfigDebug
+    );
+
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <ConfigDebug />
-        <RootNavigator />
+        {shouldShowDebug ? <ConfigDebug /> : null}
+        <ErrorBoundary title="Error al iniciar la app">
+          <RootNavigator />
+        </ErrorBoundary>
         <StatusBar style="auto" />
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
-import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
@@ -17,14 +16,62 @@ const WEB_APP_URL = "https://dondebailar.com.mx";
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
-  const webviewRef = React.useRef<WebView | null>(null);
+  const [webViewImportError, setWebViewImportError] = React.useState<string | null>(null);
+  const [webViewModule, setWebViewModule] = React.useState<any>(null);
+  const webviewRef = React.useRef<any>(null);
   const insets = useSafeAreaInsets();
+
+  const loadWebViewModule = React.useCallback(() => {
+    try {
+      // Lazy require so a missing native module does not hard-crash during import.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require("react-native-webview");
+      setWebViewImportError(null);
+      setWebViewModule(mod);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[WebAppScreen] Failed to load react-native-webview:", e);
+      setWebViewImportError(msg);
+      setWebViewModule(null);
+      setLoading(false);
+      setHasError(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadWebViewModule();
+  }, [loadWebViewModule]);
 
   const handleReload = () => {
     setHasError(false);
     setLoading(true);
+    if (webViewImportError || !webViewModule) {
+      loadWebViewModule();
+      return;
+    }
     webviewRef.current?.reload();
   };
+
+  if (webViewImportError) {
+    return (
+      <View style={[styles.container, { paddingTop: Platform.OS === "ios" ? insets.top + 4 : 0 }]}>
+        <View style={styles.errorOverlay}>
+          <Text style={styles.errorTitle}>WebView no disponible</Text>
+          <Text style={styles.errorText}>
+            Esta versión de la app no pudo cargar el módulo nativo de WebView.
+          </Text>
+          <Text style={[styles.errorText, { fontFamily: "monospace", fontSize: 12 }]}>
+            {webViewImportError}
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={handleReload}>
+            <Text style={styles.buttonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const WebView = webViewModule?.WebView;
 
   return (
     <View
@@ -35,102 +82,102 @@ export default function WebAppScreen() {
         },
       ]}
     >
-      <WebView
-        ref={webviewRef}
-        source={{ uri: WEB_APP_URL }}
-        style={styles.webview}
-        originWhitelist={["*"]}
-        // Mostrar loader inicial
-        startInLoadingState
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
-        onError={(e) => {
-          console.log("WebView error:", e.nativeEvent);
-          setLoading(false);
-          setHasError(true);
-        }}
-        onHttpError={(e) => {
-          console.log(
-            "HTTP error:",
-            e.nativeEvent.statusCode,
-            e.nativeEvent.description
-          );
-        }}
-        // Permitir JS y almacenamiento para que la web funcione igual que en el navegador
-        javaScriptEnabled
-        domStorageEnabled
-        // Habilitar cookies compartidas para mejor funcionamiento de autenticación (Supabase, Google, etc.)
-        sharedCookiesEnabled
-        thirdPartyCookiesEnabled
-        // Deshabilitar caché para evitar problemas con actualizaciones
-        cacheEnabled={false}
-        // En Android: permitir contenido mixto (por si hay recursos http)
-        mixedContentMode="always"
-        // Evitar que target="_blank" intente abrir una nueva "ventana" nativa
-        setSupportMultipleWindows={false}
-        // Inyectar JavaScript para forzar que window.open abra en la misma pestaña
-        injectedJavaScript={`
-          (function() {
-            // Forzar que window.open abra en la misma pestaña
-            window.open = function(url) {
-              window.location.href = url;
-            };
-          })();
-        `}
-        // Control de navegación:
-        // - Dentro del WebView: sólo nuestro dominio
-        // - Fuera: redes, maps, calendarios (Apple Calendar), etc. con Linking
-        onShouldStartLoadWithRequest={(request) => {
-          const url = request.url;
+      {WebView ? (
+        <WebView
+          ref={webviewRef}
+          source={{ uri: WEB_APP_URL }}
+          style={styles.webview}
+          originWhitelist={["*"]}
+          // Mostrar loader inicial
+          startInLoadingState
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+          onError={(e: any) => {
+            console.log("WebView error:", e?.nativeEvent);
+            setLoading(false);
+            setHasError(true);
+          }}
+          onHttpError={(e: any) => {
+            console.log("HTTP error:", e?.nativeEvent?.statusCode, e?.nativeEvent?.description);
+          }}
+          // Permitir JS y almacenamiento para que la web funcione igual que en el navegador
+          javaScriptEnabled
+          domStorageEnabled
+          // Habilitar cookies compartidas para mejor funcionamiento de autenticación (Supabase, Google, etc.)
+          sharedCookiesEnabled
+          thirdPartyCookiesEnabled
+          // Deshabilitar caché para evitar problemas con actualizaciones
+          cacheEnabled={false}
+          // En Android: permitir contenido mixto (por si hay recursos http)
+          mixedContentMode="always"
+          // Evitar que target="_blank" intente abrir una nueva "ventana" nativa
+          setSupportMultipleWindows={false}
+          // Inyectar JavaScript para forzar que window.open abra en la misma pestaña
+          injectedJavaScript={`
+            (function() {
+              // Forzar que window.open abra en la misma pestaña
+              window.open = function(url) {
+                window.location.href = url;
+              };
+            })();
+          `}
+          // Control de navegación:
+          // - Dentro del WebView: sólo nuestro dominio
+          // - Fuera: redes, maps, calendarios (Apple Calendar), etc. con Linking
+          onShouldStartLoadWithRequest={(request: any) => {
+            const url = request.url;
 
-          const isSameDomain =
-            url.startsWith("https://dondebailar.com.mx") ||
-            url.startsWith("https://www.dondebailar.com.mx");
+            const isSameDomain =
+              url.startsWith("https://dondebailar.com.mx") ||
+              url.startsWith("https://www.dondebailar.com.mx");
 
-          // Detectar enlaces de calendario (.ics o protocolos webcal/calshow)
-          const isCalendarLink =
-            url.endsWith(".ics") ||
-            url.startsWith("webcal:") ||
-            url.startsWith("calshow:");
+            // Detectar enlaces de calendario (.ics o protocolos webcal/calshow)
+            const isCalendarLink =
+              url.endsWith(".ics") || url.startsWith("webcal:") || url.startsWith("calshow:");
 
-          // Para calendario, siempre pedimos al sistema que lo maneje (Apple Calendar)
-          if (isCalendarLink) {
-            Linking.openURL(url).catch((err) => {
-              console.warn("No se pudo abrir el calendario:", err);
-            });
+            // Para calendario, siempre pedimos al sistema que lo maneje (Apple Calendar)
+            if (isCalendarLink) {
+              Linking.openURL(url).catch((err) => {
+                console.warn("No se pudo abrir el calendario:", err);
+              });
+              return false;
+            }
+
+            if (isSameDomain) {
+              return true;
+            }
+
+            // Protocolos y enlaces externos (redes sociales, maps, mail, tel, etc.)
+            const isExternalSupportedProtocol =
+              url.startsWith("http://") ||
+              url.startsWith("https://") ||
+              url.startsWith("mailto:") ||
+              url.startsWith("tel:") ||
+              url.startsWith("geo:") ||
+              url.startsWith("whatsapp:") ||
+              url.startsWith("maps:") ||
+              url.startsWith("sms:");
+
+            if (isExternalSupportedProtocol) {
+              Linking.openURL(url).catch((err) => {
+                console.warn("No se pudo abrir la URL externa:", err);
+              });
+              return false;
+            }
+
+            // Cualquier otra cosa la bloqueamos por seguridad
             return false;
-          }
-
-          if (isSameDomain) {
-            return true;
-          }
-
-          // Protocolos y enlaces externos (redes sociales, maps, mail, tel, etc.)
-          const isExternalSupportedProtocol =
-            url.startsWith("http://") ||
-            url.startsWith("https://") ||
-            url.startsWith("mailto:") ||
-            url.startsWith("tel:") ||
-            url.startsWith("geo:") ||
-            url.startsWith("whatsapp:") ||
-            url.startsWith("maps:") ||
-            url.startsWith("sms:");
-
-          if (isExternalSupportedProtocol) {
-            Linking.openURL(url).catch((err) => {
-              console.warn("No se pudo abrir la URL externa:", err);
-            });
-            return false;
-          }
-
-          // Cualquier otra cosa la bloqueamos por seguridad
-          return false;
-        }}
-        // Mejores gestos de navegación en iOS
-        allowsBackForwardNavigationGestures
-        // Evitar problemas con teclado en algunos dispositivos
-        automaticallyAdjustContentInsets={false}
-      />
+          }}
+          // Mejores gestos de navegación en iOS
+          allowsBackForwardNavigationGestures
+          // Evitar problemas con teclado en algunos dispositivos
+          automaticallyAdjustContentInsets={false}
+        />
+      ) : (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color="#f093fb" />
+        </View>
+      )}
 
       {loading && !hasError && (
         <View style={styles.loaderOverlay}>
