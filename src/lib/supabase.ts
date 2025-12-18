@@ -1,39 +1,36 @@
 import { createClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 
-// Safe access to process.env
-const getEnvVar = (key: string): string | undefined => {
-  // @ts-ignore - process.env is available at runtime
-  return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
-};
+// ✅ Read from all possible sources (expoConfig, manifest, manifest2)
+// This handles different Expo runtimes (SDK 54, standalone, TestFlight, etc.)
+function getExtra(): any {
+  // expoConfig (SDK moderno / Expo Go / Dev builds)
+  const expoConfigExtra = (Constants.expoConfig as any)?.extra;
+  
+  // manifest / manifest2 (standalone / TestFlight / diferentes runtimes)
+  const manifestExtra =
+    (Constants as any)?.manifest?.extra ??
+    (Constants as any)?.manifest2?.extra;
+  
+  return expoConfigExtra ?? manifestExtra ?? {};
+}
 
-// Lazy evaluation: only access Constants.expoConfig when supabase is actually used
+// Lazy evaluation: only access Constants when supabase is actually used
 // This prevents crashes during module import before React Native is initialized
-// ✅ Read from Constants.expoConfig.extra (set by expo prebuild from app.config.ts)
 function getSupabaseConfig() {
-  try {
-    const extra = (Constants.expoConfig?.extra as any) || {};
-    
-    // Priority: extra.supabaseUrl > extra.EXPO_PUBLIC_SUPABASE_URL > process.env
-    const supabaseUrl =
-      extra.supabaseUrl ??
-      extra.EXPO_PUBLIC_SUPABASE_URL ??
-      getEnvVar('EXPO_PUBLIC_SUPABASE_URL');
-    
-    const supabaseAnonKey =
-      extra.supabaseAnonKey ??
-      extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-      getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY');
-    
-    return { supabaseUrl, supabaseAnonKey };
-  } catch (error) {
-    console.warn('[Supabase] Error reading config from Constants.expoConfig:', error);
-    // Fallback to process.env if Constants fails
-    return {
-      supabaseUrl: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
-      supabaseAnonKey: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
-    };
-  }
+  const extra = getExtra();
+  
+  // Priority: extra.supabaseUrl > extra.EXPO_PUBLIC_SUPABASE_URL
+  // NO process.env fallback in runtime iOS (doesn't exist as expected)
+  const supabaseUrl =
+    extra.supabaseUrl ??
+    extra.EXPO_PUBLIC_SUPABASE_URL;
+  
+  const supabaseAnonKey =
+    extra.supabaseAnonKey ??
+    extra.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  
+  return { supabaseUrl, supabaseAnonKey };
 }
 
 const missingEnvMsg =
@@ -43,6 +40,29 @@ const missingEnvMsg =
 // ✅ Lazy initialization: Don't access Constants.expoConfig until supabase is actually used
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 let supabaseProxy: any = null;
+
+// ✅ Null client that returns rejected promises instead of throwing
+// This prevents SIGABRT crashes in production/TestFlight
+function createNullClient() {
+  const errorResponse = { data: null, error: { message: missingEnvMsg, code: 'CONFIG_MISSING' } };
+  
+  return {
+    from: () => ({
+      select: async () => errorResponse,
+      insert: async () => errorResponse,
+      update: async () => errorResponse,
+      delete: async () => errorResponse,
+      upsert: async () => errorResponse,
+    }),
+    auth: {
+      signInWithPassword: async () => ({ data: null, error: { message: missingEnvMsg } }),
+      signUp: async () => ({ data: null, error: { message: missingEnvMsg } }),
+      signOut: async () => ({ error: { message: missingEnvMsg } }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+      getUser: async () => ({ data: { user: null }, error: { message: missingEnvMsg } }),
+    },
+  } as any;
+}
 
 function getSupabase() {
   if (supabaseClient) {
@@ -59,23 +79,22 @@ function getSupabase() {
     console.error(missingEnvMsg);
     console.error("[Supabase] supabaseUrl:", config.supabaseUrl ? "✓" : "✗");
     console.error("[Supabase] supabaseAnonKey:", config.supabaseAnonKey ? "✓" : "✗");
-    console.error("[Supabase] Constants.expoConfig?.extra:", Constants.expoConfig?.extra ? "exists" : "missing");
     
-    // Throw immediately in development to catch config issues early
-    // In production, return proxy that throws on use
+    const extra = getExtra();
+    console.error("[Supabase] Constants.expoConfig?.extra:", (Constants.expoConfig as any)?.extra ? "exists" : "missing");
+    console.error("[Supabase] Constants.manifest?.extra:", (Constants as any)?.manifest?.extra ? "exists" : "missing");
+    console.error("[Supabase] Constants.manifest2?.extra:", (Constants as any)?.manifest2?.extra ? "exists" : "missing");
+    console.error("[Supabase] getExtra() result:", extra);
+    
+    // In development: throw to catch config issues early
     // @ts-ignore - __DEV__ is a React Native global
     if (typeof __DEV__ !== 'undefined' && __DEV__) {
       throw new Error(missingEnvMsg);
     }
 
-    supabaseProxy = new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(missingEnvMsg);
-        },
-      }
-    ) as any;
+    // In production: return null client that doesn't crash
+    // UI can handle the error gracefully
+    supabaseProxy = createNullClient();
     return supabaseProxy;
   }
 

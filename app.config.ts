@@ -1,9 +1,13 @@
 import type { ExpoConfig } from "expo/config";
 
-// Safe access to process.env for TypeScript
-const getEnvVar = (key: string): string | undefined => {
+// ✅ Fail-fast: throw if required env vars are missing (prevents broken builds)
+const required = (key: string): string => {
   // @ts-ignore - process.env is available at build time
-  return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+  const value = typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+  if (!value) {
+    throw new Error(`[app.config] Missing required env var: ${key}. Set it in Xcode Cloud environment variables or EAS.`);
+  }
+  return value;
 };
 
 const config: ExpoConfig = {
@@ -66,12 +70,12 @@ const config: ExpoConfig = {
   },
 
   extra: {
-    // Supabase config - read from env vars (set in Xcode Cloud or EAS)
-    supabaseUrl: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
-    supabaseAnonKey: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+    // Supabase config - fail-fast if missing (prevents broken builds)
+    supabaseUrl: required('EXPO_PUBLIC_SUPABASE_URL'),
+    supabaseAnonKey: required('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     // Keep EXPO_PUBLIC_* for backwards compatibility
-    EXPO_PUBLIC_SUPABASE_URL: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+    EXPO_PUBLIC_SUPABASE_URL: required('EXPO_PUBLIC_SUPABASE_URL'),
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: required('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

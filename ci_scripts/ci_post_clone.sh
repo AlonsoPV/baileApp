@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo "== Install JS deps =="
+echo "== Node & pnpm =="
 chmod +x ci_scripts/ensure_node.sh || true
 bash ci_scripts/ensure_node.sh
 
@@ -31,12 +31,16 @@ if ! command -v pnpm >/dev/null 2>&1; then
   fi
 fi
 
+echo "== Install JS deps =="
 pnpm install --frozen-lockfile
 
 echo "== Generate native iOS from app.config.ts (prebuild) =="
 # Prebuild sincroniza extra, plugins, etc. al proyecto iOS nativo
 # --no-install porque luego haremos pod install
+# This is CRITICAL: prebuild reads app.config.ts and injects extra into the native project
 npx expo prebuild --platform ios --no-install
 
 echo "== Install iOS Pods =="
 bash ci_scripts/ensure_pods.sh
+
+echo "== Done =="
