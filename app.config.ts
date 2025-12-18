@@ -96,7 +96,7 @@ const config: ExpoConfig = {
 
   extra: {
     // Supabase config - durante el build, permitir valores vacíos si no están disponibles
-    // Las variables se inyectarán en runtime desde las variables de entorno de Xcode Cloud
+    // Las variables se inyectarán en  runtime desde las variables de entorno de Xcode Cloud
     supabaseUrl: required('EXPO_PUBLIC_SUPABASE_URL', ''),
     supabaseAnonKey: required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
     // Keep EXPO_PUBLIC_* for backwards compatibility

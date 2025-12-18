@@ -26,6 +26,38 @@ Necesitas actualizar la configuración del workflow en Xcode Cloud para que apun
    - ✅ `ios/DondeBailarMX.xcworkspace`
 8. Guarda los cambios
 
+### Paso 1.5 (MUY IMPORTANTE): Asegurar que los scripts sean **ejecutables**
+
+Xcode Cloud suele marcar “script not found” si el archivo existe pero **no tiene permiso de ejecución**.
+
+En tu Mac, desde la raíz del repo:
+
+```bash
+cd /Users/user940827/baileApp
+
+# Opción recomendada (chmod)
+chmod +x ci_scripts/*.sh .xcodecloud/workflows/*.sh
+
+# Verifica que git detecte el cambio de permisos
+git status
+
+# Commit + push
+git add ci_scripts .xcodecloud/workflows
+git commit -m "Make Xcode Cloud scripts executable"
+git push origin main
+```
+
+Si por alguna razón `chmod` no se refleja en git, usa:
+
+```bash
+git update-index --chmod=+x ci_scripts/ci_post_clone.sh
+git update-index --chmod=+x ci_scripts/ci_pre_xcodebuild.sh
+git update-index --chmod=+x ci_scripts/ci_post_xcodebuild.sh
+git update-index --chmod=+x .xcodecloud/workflows/ci_post_clone.sh
+git update-index --chmod=+x .xcodecloud/workflows/ci_pre_xcodebuild.sh
+git update-index --chmod=+x .xcodecloud/workflows/ci_post_xcodebuild.sh
+```
+
 ### Paso 2: Verificar Scripts de CI
 
 Los scripts de CI ya están actualizados para detectar automáticamente el workspace correcto. El script `ci_pre_xcodebuild.sh` ahora:
@@ -39,7 +71,16 @@ El script post-clone está en la ubicación correcta:
 - `.xcodecloud/workflows/ci_post_clone.sh` ✅
 - Este script delega a `ci_scripts/ci_post_clone.sh` ✅
 
-**Nota:** Si Xcode Cloud sigue buscando el script en `ci_scripts/ci_post_clone.sh` directamente, asegúrate de que la configuración del workflow apunte a `.xcodecloud/workflows/ci_post_clone.sh`.
+**Nota:** Si Xcode Cloud sigue buscando el script en `ci_scripts/ci_post_clone.sh` directamente, no pasa nada (ya existe).  
+Pero la **Opción 3 (recomendada)** es apuntar el workflow a `.xcodecloud/workflows/*.sh` (wrappers).
+
+### Paso 3.5 (OPCIÓN 3): Apuntar los hooks del workflow a `.xcodecloud/workflows`
+
+En la UI de Xcode Cloud (Workflow):
+
+- **Post-Clone**: `.xcodecloud/workflows/ci_post_clone.sh`
+- **Pre-Xcodebuild**: `.xcodecloud/workflows/ci_pre_xcodebuild.sh`
+- **Post-Xcodebuild**: `.xcodecloud/workflows/ci_post_xcodebuild.sh`
 
 ### Paso 4: Ejecutar Nuevo Build
 
