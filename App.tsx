@@ -48,7 +48,7 @@ function ConfigDebug() {
 
   return (
     <View style={styles.debugContainer}>
-      <Text style={styles.debugText}>🔍 Config Debug (remove after testing)</Text>
+      <Text style={styles.debugText}>🔍 Config Debug</Text>
       <Text style={styles.debugText}>extra exists: {extra ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>supabaseUrl: {extra?.supabaseUrl ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>anonKey: {extra?.supabaseAnonKey ? "YES" : "NO"}</Text>
