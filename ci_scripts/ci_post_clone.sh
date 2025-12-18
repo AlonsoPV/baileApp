@@ -33,5 +33,10 @@ fi
 
 pnpm install --frozen-lockfile
 
+echo "== Generate native iOS from app.config.ts (prebuild) =="
+# Prebuild sincroniza extra, plugins, etc. al proyecto iOS nativo
+# --no-install porque luego haremos pod install
+npx expo prebuild --platform ios --no-install
+
 echo "== Install iOS Pods =="
 bash ci_scripts/ensure_pods.sh

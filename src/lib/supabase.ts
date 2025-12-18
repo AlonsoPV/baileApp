@@ -9,21 +9,26 @@ const getEnvVar = (key: string): string | undefined => {
 
 // Lazy evaluation: only access Constants.expoConfig when supabase is actually used
 // This prevents crashes during module import before React Native is initialized
+// ✅ Read from Constants.expoConfig.extra (set by expo prebuild from app.config.ts)
 function getSupabaseConfig() {
   try {
     const extra = (Constants.expoConfig?.extra as any) || {};
-    return {
-      supabaseUrl:
-        extra.supabaseUrl ??
-        extra.EXPO_PUBLIC_SUPABASE_URL ??
-        getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
-      supabaseAnonKey:
-        extra.supabaseAnonKey ??
-        extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-        getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
-    };
+    
+    // Priority: extra.supabaseUrl > extra.EXPO_PUBLIC_SUPABASE_URL > process.env
+    const supabaseUrl =
+      extra.supabaseUrl ??
+      extra.EXPO_PUBLIC_SUPABASE_URL ??
+      getEnvVar('EXPO_PUBLIC_SUPABASE_URL');
+    
+    const supabaseAnonKey =
+      extra.supabaseAnonKey ??
+      extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+      getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+    
+    return { supabaseUrl, supabaseAnonKey };
   } catch (error) {
-    console.warn('[Supabase] Error reading config:', error);
+    console.warn('[Supabase] Error reading config from Constants.expoConfig:', error);
+    // Fallback to process.env if Constants fails
     return {
       supabaseUrl: getEnvVar('EXPO_PUBLIC_SUPABASE_URL'),
       supabaseAnonKey: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
@@ -54,6 +59,14 @@ function getSupabase() {
     console.error(missingEnvMsg);
     console.error("[Supabase] supabaseUrl:", config.supabaseUrl ? "✓" : "✗");
     console.error("[Supabase] supabaseAnonKey:", config.supabaseAnonKey ? "✓" : "✗");
+    console.error("[Supabase] Constants.expoConfig?.extra:", Constants.expoConfig?.extra ? "exists" : "missing");
+    
+    // Throw immediately in development to catch config issues early
+    // In production, return proxy that throws on use
+    // @ts-ignore - __DEV__ is a React Native global
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      throw new Error(missingEnvMsg);
+    }
 
     supabaseProxy = new Proxy(
       {},
