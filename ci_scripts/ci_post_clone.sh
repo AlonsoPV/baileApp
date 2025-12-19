@@ -191,8 +191,34 @@ fi
 
 echo "==> pod: $(pod --version)"
 
-# Recomendación: NO usar "pod repo update" (demasiado lento)
-pod install --repo-update --verbose
+# ✅ Configurar CocoaPods para usar repositorio git como fallback si CDN falla
+# Esto evita problemas cuando jsdelivr.net no está disponible en Xcode Cloud
+if ! pod repo list | grep -q "master"; then
+  echo "==> Adding CocoaPods master repo (git fallback)"
+  pod repo add master https://github.com/CocoaPods/Specs.git || true
+fi
+
+# ✅ Intentar pod install con retry si falla por problemas de red
+echo "==> Installing CocoaPods dependencies"
+MAX_RETRIES=3
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if pod install --repo-update --verbose; then
+    echo "==> ✅ Pod install successful"
+    break
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+      echo "==> ⚠️  Pod install failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+      sleep 5
+      # Intentar usar repositorio git en lugar de CDN
+      pod repo update master || true
+    else
+      echo "==> ❌ Pod install failed after $MAX_RETRIES attempts"
+      exit 1
+    fi
+  fi
+done
 
 echo "==> Pods ready"
 ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true

@@ -23,6 +23,10 @@ prepare_react_native_project!
 target 'DondeBailarMX' do
   use_expo_modules!
 
+  # ✅ Fix: Especificar SocketRocket directamente para evitar problemas de CDN en Xcode Cloud
+  # SocketRocket es una dependencia de React Native y puede fallar al descargar desde jsdelivr
+  pod 'SocketRocket', '~> 0.7.1'
+
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
   else
