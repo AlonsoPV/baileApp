@@ -517,6 +517,7 @@ const STYLES = `
     align-items: center;
     gap: var(--gap-2);
     min-width: 0;
+    flex: 1;
   }
   .fxc__title {
     display: flex;
@@ -739,27 +740,49 @@ const STYLES = `
   }
   .load-more-btn {
     margin-top: 1.5rem;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--fp-text);
+    padding: 0.875rem 1.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(240, 147, 251, 0.35);
+    background: rgba(240, 147, 251, 0.1);
+    color: #fff;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.15);
+    letter-spacing: 0.3px;
+  }
+  .load-more-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 195, 143, 0.15));
+    opacity: 0;
+    transition: opacity 0.25s ease;
   }
   .load-more-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(240, 147, 251, 0.18);
+    border-color: rgba(240, 147, 251, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(240, 147, 251, 0.3);
+  }
+  .load-more-btn:hover::before {
+    opacity: 1;
+  }
+  .load-more-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.2);
   }
   .load-more-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
   }
   @media (min-width: 769px) and (max-width: 1024px) {
     .filters-tabs {
@@ -1126,7 +1149,7 @@ const STYLES = `
   }
 `;
 
-function Section({ title, toAll, children }: { title: string; toAll: string; children: React.ReactNode }) {
+function Section({ title, toAll, children, count }: { title: string; toAll: string; children: React.ReactNode; count?: number }) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -1156,9 +1179,31 @@ function Section({ title, toAll, children }: { title: string; toAll: string; chi
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            lineHeight: 1.2
+            lineHeight: 1.2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
             {title}
+            {typeof count === 'number' && count > 0 && (
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                padding: '0 8px',
+                borderRadius: '999px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                color: '#fff',
+                marginLeft: '0.25rem'
+              }}>
+                {count}
+              </span>
+            )}
           </h2>
           <div className="section-title-underline" style={{
             width: 60,
@@ -1249,10 +1294,11 @@ export default function ExploreHomeScreen() {
     
     const preset = filters.datePreset || 'todos';
     const { from, to } = computePresetRange(preset);
+    // Solo actualizar si las fechas realmente cambiaron para evitar loops infinitos
     if (filters.dateFrom !== from || filters.dateTo !== to) {
       set({ dateFrom: from, dateTo: to });
     }
-  }, [filters.datePreset, computePresetRange, set, filters.dateFrom, filters.dateTo]);
+  }, [filters.datePreset, filters.dateFrom, filters.dateTo, computePresetRange, set]);
 
   React.useEffect(() => {
     if (!user || prefsLoading || hasAppliedDefaults) return;
@@ -1340,11 +1386,11 @@ export default function ExploreHomeScreen() {
     if (filters.datePreset === preset) return;
 
     startTransition(() => {
-      set({ datePreset: preset });
       const { from, to } = computePresetRange(preset);
+      // Actualizar todo en una sola llamada para evitar renders duplicados
       set({ datePreset: preset, dateFrom: from, dateTo: to });
     });
-  }, [filters.datePreset, computePresetRange, set]);
+  }, [filters.datePreset, computePresetRange, set, startTransition]);
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
@@ -1920,10 +1966,13 @@ export default function ExploreHomeScreen() {
             className={`q ${active ? 'q--active' : ''}`}
             disabled={isPending}
             aria-pressed={active}
+            title={count > 0 ? `${count} evento${count !== 1 ? 's' : ''}` : undefined}
           >
             <span className="label">{p.label}</span>
             {count > 0 && (
-              <span className="badge" aria-hidden="true">{count}</span>
+              <span className="badge" aria-label={`${count} eventos`}>
+                {count}
+              </span>
             )}
           </button>
         );
@@ -1987,6 +2036,53 @@ export default function ExploreHomeScreen() {
                     ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
                     : 'Sin filtros'}
                 </span>
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleFilterChange({
+                        ...filters,
+                        type: 'all',
+                        q: '',
+                        ritmos: [],
+                        zonas: [],
+                        datePreset: 'todos',
+                        dateFrom: undefined,
+                        dateTo: undefined
+                      });
+                      setUsingFavoriteFilters(false);
+                      setOpenFilterDropdown(null);
+                      setIsSearchExpanded(false);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.35rem 0.7rem',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      background: 'rgba(239,68,68,.14)',
+                      color: '#fecaca',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
+                      marginLeft: 'auto'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.2)';
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = '#f97373';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.14)';
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)';
+                    }}
+                    aria-label="Limpiar todos los filtros"
+                  >
+                    🗑️ Limpiar
+                  </button>
+                )}
                 </div>
                   {!usingFavoriteFilters && user && preferences && (
                     (preferences.ritmos && preferences.ritmos.length > 0) ||
@@ -2315,7 +2411,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
-            <Section title="Lo que viene en la escena" toAll="/explore/list?type=fechas">
+            <Section title="Lo que viene en la escena" toAll="/explore/list?type=fechas" count={filteredFechas.length}>
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -2346,7 +2442,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
-            <Section title="Clases recomendadas para ti" toAll="/explore/list?type=clases">
+            <Section title="Clases recomendadas para ti" toAll="/explore/list?type=clases" count={classesList.length}>
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
@@ -2402,7 +2498,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
-            <Section title="Las mejores academias de tu zona" toAll="/explore/list?type=academias">
+            <Section title="Las mejores academias de tu zona" toAll="/explore/list?type=academias" count={academiasData.length}>
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
@@ -2434,7 +2530,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title="Maestros destacados" toAll="/explore/list?type=teacher">
+            <Section title="Maestros destacados" toAll="/explore/list?type=teacher" count={maestrosData.length}>
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -2501,7 +2597,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
-            <Section title={`Parejas de baile cerca de ti${validUsuarios.length ? ` · ${validUsuarios.length}` : ''}`} toAll="/explore/list?type=usuarios">
+            <Section title="Parejas de baile cerca de ti" toAll="/explore/list?type=usuarios" count={validUsuarios.length}>
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -2562,7 +2658,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
-            <Section title="Productores de eventos" toAll="/explore/list?type=organizadores">
+            <Section title="Productores de eventos" toAll="/explore/list?type=organizadores" count={organizadoresData.length}>
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -2637,7 +2733,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
-            <Section title="Marcas especializadas en baile" toAll="/explore/list?type=marcas">
+            <Section title="Marcas especializadas en baile" toAll="/explore/list?type=marcas" count={marcasData.length}>
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (

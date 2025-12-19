@@ -11,6 +11,16 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Optimizaciones de scroll para móvil */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* Prevenir scroll horizontal no deseado */
+  overflow-x: hidden;
+  /* Mejorar rendimiento de scroll */
+  will-change: scroll-position;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -19,6 +29,18 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  /* Optimizaciones de scroll para móvil */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* Aceleración de hardware para scroll fluido */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Prevenir scroll horizontal */
+  overflow-x: hidden;
+  /* Mejorar rendimiento */
+  will-change: scroll-position;
+  /* Touch actions optimizadas */
+  touch-action: pan-y;
 }
 
 button {
@@ -48,4 +70,86 @@ button {
 
 .safe-bottom-with-padding {
   padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+}
+
+/* Optimizaciones de scroll para elementos con overflow */
+* {
+  /* Mejorar rendimiento de scroll en todos los elementos */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scroll horizontal optimizado (para sliders, filtros, etc.) */
+[style*="overflow-x: auto"],
+[style*="overflow-x: scroll"],
+.horizontal-scroll,
+.horizontal-slider {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  /* Aceleración de hardware */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: scroll-position;
+  /* Touch actions */
+  touch-action: pan-x;
+}
+
+/* Scroll vertical optimizado */
+[style*="overflow-y: auto"],
+[style*="overflow-y: scroll"],
+.vertical-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  /* Aceleración de hardware */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: scroll-position;
+  /* Touch actions */
+  touch-action: pan-y;
+}
+
+/* Optimizaciones específicas para móvil */
+@media (max-width: 768px) {
+  html, body {
+    /* Scroll más fluido en móvil */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    /* Reducir latencia de scroll */
+    overscroll-behavior: contain;
+  }
+
+  /* Mejorar scroll en contenedores con overflow */
+  [style*="overflow"],
+  [class*="scroll"] {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    /* Reducir repaint durante scroll */
+    will-change: scroll-position;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+  /* Optimizar scroll en listas y grids */
+  ul, ol, div[role="list"] {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevenir scroll bounce no deseado en iOS */
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Optimizaciones adicionales para pantallas pequeñas */
+@media (max-width: 480px) {
+  html, body {
+    /* Scroll aún más optimizado en pantallas pequeñas */
+    -webkit-overflow-scrolling: touch;
+    /* Reducir inercia de scroll para mejor control */
+    overscroll-behavior: contain;
+  }
 }

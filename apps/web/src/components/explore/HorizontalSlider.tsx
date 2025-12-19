@@ -45,6 +45,7 @@ export default function HorizontalSlider<T>({
       {/* Viewport central */}
       <div
         ref={viewportRef}
+        className="horizontal-scroll"
         style={{
           position: "relative",
           overflowX: "auto",
@@ -52,7 +53,16 @@ export default function HorizontalSlider<T>({
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
-          padding: "0.5rem 0"
+          padding: "0.5rem 0",
+          // Optimizaciones de scroll para móvil
+          WebkitOverflowScrolling: "touch",
+          scrollBehavior: "smooth",
+          overscrollBehaviorX: "contain",
+          // Aceleración de hardware
+          transform: "translateZ(0)",
+          willChange: "scroll-position",
+          // Touch actions
+          touchAction: "pan-x"
         }}
       >
         {/* Oculta scrollbar nativo en webkit */}
@@ -106,35 +116,39 @@ export default function HorizontalSlider<T>({
           <motion.button
             type="button"
             aria-label="Anterior"
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ scale: 1.05, x: -2 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => scrollByAmount(-1)}
             disabled={!canScroll}
             style={{
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(240, 147, 251, 0.3)",
+              background: "rgba(240, 147, 251, 0.08)",
               color: "#fff",
               display: "grid",
               placeItems: "center",
               cursor: canScroll ? "pointer" : "not-allowed",
               opacity: canScroll ? 1 : 0.4,
-              backdropFilter: "blur(8px)",
-              fontSize: "1.25rem",
+              backdropFilter: "blur(10px)",
+              fontSize: "1.1rem",
               fontWeight: 700,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              boxShadow: "0 2px 8px rgba(240, 147, 251, 0.15)"
             }}
             onMouseEnter={(e) => {
               if (canScroll) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(240, 147, 251, 0.25)";
               }
             }}
             onMouseLeave={(e) => {
               if (canScroll) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(240, 147, 251, 0.15)";
               }
             }}
           >
@@ -144,35 +158,39 @@ export default function HorizontalSlider<T>({
           <motion.button
             type="button"
             aria-label="Siguiente"
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ scale: 1.05, x: 2 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => scrollByAmount(1)}
             disabled={!canScroll}
             style={{
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(240, 147, 251, 0.3)",
+              background: "rgba(240, 147, 251, 0.08)",
               color: "#fff",
               display: "grid",
               placeItems: "center",
               cursor: canScroll ? "pointer" : "not-allowed",
               opacity: canScroll ? 1 : 0.4,
-              backdropFilter: "blur(8px)",
-              fontSize: "1.25rem",
+              backdropFilter: "blur(10px)",
+              fontSize: "1.1rem",
               fontWeight: 700,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              boxShadow: "0 2px 8px rgba(240, 147, 251, 0.15)"
             }}
             onMouseEnter={(e) => {
               if (canScroll) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(240, 147, 251, 0.25)";
               }
             }}
             onMouseLeave={(e) => {
               if (canScroll) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(240, 147, 251, 0.15)";
               }
             }}
           >

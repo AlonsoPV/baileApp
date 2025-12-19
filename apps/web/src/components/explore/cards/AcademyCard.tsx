@@ -98,6 +98,10 @@ export default function AcademyCard({ item }: AcademyCardProps) {
                 alt={`Imagen de ${nombre}`}
                 loading="lazy"
                 decoding="async"
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
               />
             )}
           </div>

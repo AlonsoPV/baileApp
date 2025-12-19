@@ -187,6 +187,11 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           .class-card {
             --card-ar: 9 / 16;
           }
+          img, [style*="objectFit"] {
+            max-width: 100% !important;
+            /* height: auto !important; */
+            /* object-fit: contain !important; */
+          }
         }
 
         /* Responsive: Mobile pequeño */
@@ -387,6 +392,10 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
               <img
                 src={bgWithCacheBust || bg}
                 alt={item.titulo || 'Clase'}
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
               />
             )}
 
