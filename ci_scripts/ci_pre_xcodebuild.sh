@@ -44,8 +44,28 @@ xcodebuild -list -workspace "$WORKSPACE_PATH" || true
 
 echo "==> Check CocoaPods artifacts"
 echo "Running ensure_pods.sh (pod install + xcconfig verification)"
-bash ci_scripts/ensure_node.sh
-bash ci_scripts/ensure_pods.sh
+
+# Asegurar que los scripts sean ejecutables y existan
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ENSURE_NODE="$REPO_ROOT/ci_scripts/ensure_node.sh"
+ENSURE_PODS="$REPO_ROOT/ci_scripts/ensure_pods.sh"
+
+if [ ! -f "$ENSURE_NODE" ]; then
+  echo "ERROR: ensure_node.sh not found at $ENSURE_NODE"
+  exit 1
+fi
+
+if [ ! -f "$ENSURE_PODS" ]; then
+  echo "ERROR: ensure_pods.sh not found at $ENSURE_PODS"
+  exit 1
+fi
+
+# Hacer los scripts ejecutables (por si acaso)
+chmod +x "$ENSURE_NODE" "$ENSURE_PODS" || true
+
+# Ejecutar los scripts usando su shebang
+"$ENSURE_NODE"
+"$ENSURE_PODS"
 
 if [ -f "ios/Pods/Manifest.lock" ]; then
   cp ios/Pods/Manifest.lock ios/Podfile.lock
