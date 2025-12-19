@@ -138,11 +138,11 @@ const required = (key: string, defaultValue: string = ''): string => {
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
   slug: "donde-bailar-mx",
-  version: "1.0.0",
+  version: "1.0.1",
 
   // ✅ para bare workflow / evita r e l error
   // (este archivo tiene prioridad sobre app. json)
-  runtimeVersion: "1.0.0",
+  runtimeVersion: "1.0.1",
 
   scheme: "dondebailarmx",
   orientation: "portrait",
