@@ -311,7 +311,13 @@ export async function getRoundResults(trendingId: number, roundNumber: number) {
     p_trending_id: trendingId,
     p_round_number: roundNumber,
   });
-  if (error) throw error;
+  // Si la función no existe (PGRST202), retornar array vacío silenciosamente
+  if (error) {
+    if (error.code === 'PGRST202') {
+      return [];
+    }
+    throw error;
+  }
   return (data ?? []) as {
     candidate_id: number;
     user_id: string;
@@ -329,7 +335,13 @@ export async function getFinalWinners(trendingId: number) {
   const { data, error } = await supabase.rpc("rpc_trending_get_final_winners", {
     p_trending_id: trendingId,
   });
-  if (error) throw error;
+  // Si la función no existe (PGRST202), retornar array vacío silenciosamente
+  if (error) {
+    if (error.code === 'PGRST202') {
+      return [];
+    }
+    throw error;
+  }
   return (data ?? []) as {
     candidate_id: number;
     user_id: string;
@@ -340,7 +352,7 @@ export async function getFinalWinners(trendingId: number) {
     ritmo_slug: string | null;
     final_round_number: number;
     final_votes: number;
-    position: number;
+    final_position: number;
   }[];
 }
 

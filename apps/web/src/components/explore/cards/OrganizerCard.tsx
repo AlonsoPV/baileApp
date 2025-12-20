@@ -95,18 +95,18 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
                 decoding="async"
               />
             )}
+
+            <div className="explore-card-actions">
+              <div className="explore-card-cta">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div className="explore-card-content">
             <h3 className="explore-card-title">{item?.nombre_publico || 'Organizador'}</h3>
-
-            <div className="explore-card-meta">
-              <div className="explore-card-tag">🎉 Organizador</div>
-            </div>
-
-            <div className="explore-card-actions">
-              <div className="explore-card-cta">Ver perfil</div>
-            </div>
           </div>
         </motion.article>
       </LiveLink>

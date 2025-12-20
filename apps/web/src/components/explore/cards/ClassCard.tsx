@@ -4,6 +4,8 @@ import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
+import { getLocaleFromI18n } from '../../../utils/locale';
+import { useTranslation } from 'react-i18next';
 
 type ClaseItem = {
   titulo?: string;
@@ -28,17 +30,8 @@ interface Props {
   fillHeight?: boolean;
 }
 
-const fmtDate = (s?: string) => {
-  if (!s) return '';
-  try {
-    const d = new Date(s);
-    return d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: 'short' });
-  } catch {
-    return s;
-  }
-};
-
 export default function ClassCard({ item, fillHeight = false }: Props) {
+  const { t } = useTranslation();
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
@@ -147,24 +140,64 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
 
   // Formatear fecha para meta
   const formattedDate = React.useMemo(() => {
+    const locale = getLocaleFromI18n();
     if (isSemanal) {
       if (typeof item.diaSemana === 'number') {
-        return ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][item.diaSemana] || '';
+        const dayNames = [
+          t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+          t('thursday'), t('friday'), t('saturday')
+        ];
+        const shortDayNames = dayNames.map(d => d.slice(0, 3).toLowerCase());
+        return shortDayNames[item.diaSemana] || '';
       }
-      return item.diasSemana?.map(d => d.slice(0, 3).toLowerCase()).join(', ') || '';
+      // Si hay múltiples días, formatear cada uno
+      if (Array.isArray(item.diasSemana) && item.diasSemana.length > 0) {
+        const dayNames = [
+          t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+          t('thursday'), t('friday'), t('saturday')
+        ];
+        const dayMap: Record<string, number> = {
+          'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
+          'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6
+        };
+        return item.diasSemana
+          .map(d => {
+            const normalized = String(d).toLowerCase().trim();
+            const dayIndex = dayMap[normalized];
+            if (dayIndex !== undefined) {
+              return dayNames[dayIndex].slice(0, 3).toLowerCase();
+            }
+            return d.slice(0, 3).toLowerCase();
+          })
+          .join(', ') || '';
+      }
+      return '';
     }
     if (item.fecha) {
       try {
         const d = new Date(item.fecha);
         const day = d.getDate();
-        const month = d.toLocaleDateString('es-ES', { month: 'short' });
+        const month = d.toLocaleDateString(locale, { month: 'short' });
         return `${day} ${month}`;
       } catch {
-        return fmtDate(item.fecha);
+        // Fallback usando fmtDate
+        try {
+          const datePart = item.fecha.split('T')[0];
+          const [y, m, day] = datePart.split('-').map((v) => parseInt(v, 10));
+          if (y && m && day) {
+            const localDate = new Date(y, m - 1, day);
+            return localDate.toLocaleDateString(locale, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            });
+          }
+        } catch {}
+        return item.fecha;
       }
     }
     return '';
-  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal]);
+  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t]);
 
   return (
     <>
@@ -327,50 +360,50 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
         }
 
         .class-card-actions {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 3;
           display: flex;
-          gap: clamp(8px, 1vw, 10px);
           align-items: center;
+          justify-content: center;
         }
 
         .class-card-cta {
-          flex: 1;
-          border: none;
-          cursor: pointer;
-          padding: clamp(10px, 1.6vw, 16px) clamp(14px, 2vw, 24px);
-          border-radius: 16px;
-          font-weight: 900;
-          font-size: clamp(12px, 1.9vw, 15px);
-          color: #111;
-          background: linear-gradient(135deg, #FFD1DD, #FFC38F);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(8px);
+          border: 1.5px solid rgba(255, 255, 255, 0.3);
           position: relative;
-          overflow: hidden;
-          box-shadow: 0 4px 16px rgba(255, 209, 221, 0.3), 0 2px 8px rgba(255, 195, 143, 0.2);
-          letter-spacing: 0.3px;
-          touch-action: manipulation;
+          user-select: none;
+          pointer-events: none;
+          transition: all 0.2s ease;
         }
 
-        .class-card-cta::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-          opacity: 0;
-          transition: opacity 0.3s;
+        .class-card-cta svg {
+          width: 18px;
+          height: 18px;
+          stroke: rgba(255, 255, 255, 0.9);
+          fill: none;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          transition: stroke 0.2s ease;
         }
 
-        .class-card-cta:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(255, 209, 221, 0.4), 0 4px 12px rgba(255, 195, 143, 0.3);
+        .class-card:hover .class-card-cta {
+          background: rgba(0, 0, 0, 0.5);
+          border-color: rgba(255, 255, 255, 0.5);
+          transform: scale(1.1);
         }
 
-        .class-card-cta:hover::before {
-          opacity: 1;
-        }
-
-        .class-card-cta:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 8px rgba(255, 209, 221, 0.3), 0 1px 4px rgba(255, 195, 143, 0.2);
+        .class-card:hover .class-card-cta svg {
+          stroke: rgba(255, 255, 255, 1);
         }
       `}</style>
       <LiveLink to={href} asCard={false}>
@@ -404,6 +437,14 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
                 <div className="class-card-badge hot">HOY</div>
               </div>
             )}
+
+            <div className="class-card-actions">
+              <div className="class-card-cta">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div className="class-card-content">
@@ -428,10 +469,6 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
               {ritmoNames.length > 0 && (
                 <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>
               )}
-            </div>
-
-            <div className="class-card-actions">
-              <button className="class-card-cta">Ver detalles</button>
             </div>
           </div>
         </motion.article>

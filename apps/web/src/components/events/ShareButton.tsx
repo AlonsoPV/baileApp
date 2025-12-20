@@ -1,6 +1,7 @@
 import React from "react";
 import * as ReactDOM from "react-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const colors = {
   coral: '#FF3D57',
@@ -28,6 +29,7 @@ export default function ShareButton({
   className,
   children
 }: ShareButtonProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
@@ -48,8 +50,8 @@ export default function ShareButton({
       try {
         await (navigator as any).share({
           url: safeUrl,
-          title: title || 'Compartir evento',
-          text: text || '¡Mira este evento!'
+          title: title || t('share_event'),
+          text: text || t('check_out_event')
         });
         return;
       } catch (error: any) {
@@ -63,7 +65,7 @@ export default function ShareButton({
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(safeUrl);
-      alert('Enlace copiado al portapapeles');
+      alert(t('link_copied'));
       setOpen(false);
     } catch {
       try {
@@ -75,7 +77,7 @@ export default function ShareButton({
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        alert('Enlace copiado al portapapeles');
+        alert(t('link_copied'));
         setOpen(false);
       } catch {}
     }
@@ -112,7 +114,7 @@ export default function ShareButton({
       {children || (
         <>
           <span>📤</span>
-          <span>Compartir</span>
+          <span>{t('share')}</span>
         </>
       )}
       {open && typeof document !== 'undefined' && ReactDOM.createPortal(
@@ -133,9 +135,9 @@ export default function ShareButton({
                 boxShadow: '0 12px 40px rgba(0,0,0,0.45)'
               }}
             >
-              <div style={{ fontWeight: 800, marginBottom: 12 }}>Compartir</div>
+              <div style={{ fontWeight: 800, marginBottom: 12 }}>{t('share')}</div>
               <div style={{ display: 'grid', gap: 8 }}>
-                <button onClick={copyLink} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Copiar enlace</button>
+                <button onClick={copyLink} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>{t('copy_link')}</button>
                 <button onClick={() => openWin(`https://api.whatsapp.com/send?text=${encodeURIComponent((title || '') + ' ' + safeUrl)}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>WhatsApp</button>
                 <button onClick={() => openWin(`https://twitter.com/intent/tweet?url=${encodeURIComponent(safeUrl)}&text=${encodeURIComponent(title || '')}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Twitter / X</button>
                 <button onClick={() => openWin(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(safeUrl)}`)} style={{ padding: 10, borderRadius: 10, border: '1px solid #2a2f36', background: 'transparent', color: '#93c5fd', cursor: 'pointer' }}>Facebook</button>

@@ -1,5 +1,6 @@
 import React, { useState, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useEventDate } from "../../hooks/useEventDate";
 import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
@@ -22,6 +23,7 @@ import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { FaWhatsapp } from "react-icons/fa";
 import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
+import { getLocaleFromI18n } from "../../utils/locale";
 
 const colors = {
   coral: '#FF3D57',
@@ -67,6 +69,7 @@ function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventN
 
 // Componente de Carrusel (copiado del OrganizerProfileLive)
 const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -142,6 +145,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           <>
             <button
               onClick={prevPhoto}
+              aria-label={t('previous')}
               style={{
                 position: 'absolute',
                 left: '1rem',
@@ -173,6 +177,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
             </button>
             <button
               onClick={nextPhoto}
+              aria-label={t('next')}
               style={{
                 position: 'absolute',
                 right: '1rem',
@@ -317,6 +322,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
  * Maneja la validación del dateId y envuelve el contenido con Suspense
  */
 export default function EventDatePublicScreen() {
+  const { t } = useTranslation();
   const params = useParams<{ dateId?: string; id?: string }>();
   const dateIdParam = params.dateId ?? params.id;
   const dateIdNum = dateIdParam ? parseInt(dateIdParam) : undefined;
@@ -334,10 +340,10 @@ export default function EventDatePublicScreen() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-            Fecha no encontrada
+            {t('event_not_found_title')}
           </h2>
           <p style={{ marginBottom: '24px', opacity: 0.7 }}>
-            La fecha que buscas no existe o no está disponible
+            {t('event_not_found_description')}
           </p>
         </div>
       </div>
@@ -361,6 +367,7 @@ export default function EventDatePublicScreen() {
 function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string | undefined }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   
   // Con Suspense, date siempre existe cuando se renderiza
   const date = useEventDateSuspense(dateId);
@@ -451,7 +458,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
     })();
 
-    return safeDate.toLocaleDateString('es-ES', {
+    // ✅ Usar locale según el idioma actual
+    const locale = getLocaleFromI18n();
+    return safeDate.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -1396,7 +1405,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         cursor: 'pointer'
                       }}
                     >
-                      ← Volver a inicio
+                      {t('back_to_home')}
                     </button>
                   </div>
 
@@ -1481,7 +1490,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           }}
                         >
                           <span>📍</span>
-                          <span>Ver en Maps</span>
+                          <span>{t('view_on_maps')}</span>
                           <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
                         </motion.a>
                       )}
@@ -1519,7 +1528,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           }}
                         >
                           <FaWhatsapp size={18} />
-                          <span>Consultar por WhatsApp</span>
+                          <span>{t('consult_whatsapp')}</span>
                         </motion.a>
                         </RequireLogin>
                       )}
@@ -1528,7 +1537,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       <ShareButton
                         url={typeof window !== 'undefined' ? window.location.href : dateUrl}
                         title={dateName}
-                        text={`Checa este evento: ${dateName}`}
+                        text={t('check_this_event', { name: dateName })}
                         style={{
                           width: '100%',
                           justifyContent: 'center',
@@ -1575,7 +1584,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           boxShadow: '0 4px 12px rgba(30,136,229,0.2)'
                         }}
                       >
-                        ✏️ Editar
+                        ✏️ {t('edit')}
                       </motion.button>
                     )}
                   </div>
@@ -1592,9 +1601,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           <div className="event-card__title">
                             <span className="event-card__icon">🗓️</span>
                             <div>
-                              <span>Cronograma</span>
+                              <span>{t('schedule')}</span>
                               <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-                                Horarios y actividades clave de la noche
+                                {t('schedule_description')}
                               </p>
                             </div>
                           </div>
@@ -1612,22 +1621,22 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                                 <div className="event-row__info">
                                   <p className="event-row__title">{it.titulo || it.tipo}</p>
                                   {it.instructor && (
-                                    <p className="event-row__subtitle">por {it.instructor}</p>
+                                    <p className="event-row__subtitle">{t('by')} {it.instructor}</p>
                                   )}
                                   {(it.realizadoPor || it.realizado_por) && (
                                     <p className="event-row__subtitle">
-                                      Se llevará a cabo por: {it.realizadoPor || it.realizado_por}
+                                      {t('conducted_by')} {it.realizadoPor || it.realizado_por}
                                     </p>
                                   )}
                                   {it.nivel && (
                                     <p className="event-row__subtitle">
-                                      Nivel: {it.nivel}
+                                      {t('level')} {it.nivel}
                                     </p>
                                   )}
                                 </div>
                               </div>
                               <div className="event-row__right">
-                                <span className="event-row__time" aria-label="Horario">
+                                <span className="event-row__time" aria-label={t('schedule_time')}>
                                   ⏱️ {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
                                 </span>
                               </div>
@@ -1648,9 +1657,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           <div className="event-card__title">
                             <span className="event-card__icon">💰</span>
                             <div>
-                              <span>Costos</span>
+                              <span>{t('costs')}</span>
                               <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-                                Revisa preventas y precios en puerta antes de llegar
+                                {t('costs_description')}
                               </p>
                             </div>
                           </div>
@@ -1679,16 +1688,16 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                               >
                                 <span className="cost-row__label">{c.nombre || c.tipo}</span>
                                 {isFree ? (
-                                  <span className="cost-row__pill cost-row__pill--free">✨ Gratis</span>
+                                  <span className="cost-row__pill cost-row__pill--free">✨ {t('free')}</span>
                                 ) : (
                                   <span className={`cost-row__pill ${isHighlight ? 'cost-row__pill--highlight' : ''}`}>
                                     <span className="cost-row__pill-tag">
-                                      {c.tipo === 'preventa' || c.tipo === 'online' ? 'Online' : c.tipo === 'taquilla' || c.tipo === 'puerta' ? 'En puerta' : c.tipo || 'General'}
+                                      {c.tipo === 'preventa' || c.tipo === 'online' ? t('price_online') : c.tipo === 'taquilla' || c.tipo === 'puerta' ? t('price_at_door') : c.tipo || t('price_general')}
                                     </span>
                                     <span className="cost-row__pill-price">
                                       {typeof formattedPrice === 'string'
                                         ? formattedPrice
-                                        : `$${String(formattedPrice ?? '').toLocaleString()}`}
+                                        : `$${String(formattedPrice ?? '').toLocaleString(getLocaleFromI18n())}`}
                                     </span>
                                   </span>
                                 )}
@@ -1697,7 +1706,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           })}
                         </div>
                         <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'right', fontStyle: 'italic' }}>
-                          *Los precios pueden cambiar sin previo aviso. Verifica en la puerta del evento.
+                          {t('price_disclaimer')}
                         </p>
                       </motion.article>
                     )}
@@ -1917,7 +1926,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               <div className="card" aria-label="Confirmar asistencia">
                 <div style={{ display: 'grid', gap: '.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.75rem' }}>
-                    <h3 className="headline">🎯 Asistencia</h3>
+                    <h3 className="headline">{t('attendance')}</h3>
                   </div>
 
                   {/* Botones RSVP */}
@@ -1937,7 +1946,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
                     {/* Estado actual del usuario */}
                     <div className="subtle" aria-live="polite">
-                      {userStatus === 'interesado' ? '✅ Este evento es de tu interés' : 'Marca "Me interesa" para añadirlo a tus eventos'}
+                      {userStatus === 'interesado' ? t('event_of_interest') : t('mark_interested_prompt')}
                     </div>
                   </div>
                 </div>
@@ -1945,9 +1954,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
               {/* Fila 2: Agregar a calendario (solo si interesado) */}
               {userStatus === 'interesado' && (
-                <div className="card" aria-label="Agregar evento a calendario">
+                <div className="card" aria-label={t('add_to_calendar')}>
                   <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
-                    <h3 className="headline">🗓️ Calendario</h3>
+                    <h3 className="headline">{t('calendar')}</h3>
 
 
                     <div className="cta-row">
@@ -2317,7 +2326,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   `}</style>
 
             <h3 className="ubicacion-requisitos-title" style={{ margin: 0, marginBottom: '.9rem', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>
-              📍 Ubicación y requisitos
+              {t('location_and_requirements')}
             </h3>
 
             <div className="ur-col">
@@ -2330,7 +2339,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         <div className="loc-chip">
                           <span className="loc-chip-icon">🏷️</span>
                           <div className="loc-chip-content">
-                            <b>Lugar</b>
+                            <b>{t('place')}</b>
                             <span className="muted">{date.lugar}</span>
                           </div>
                         </div>
@@ -2339,7 +2348,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         <div className="loc-chip">
                           <span className="loc-chip-icon">🧭</span>
                           <div className="loc-chip-content">
-                            <b>Dirección</b>
+                            <b>{t('address')}</b>
                             <span className="muted">{date.direccion}</span>
                           </div>
                         </div>
@@ -2348,7 +2357,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         <div className="loc-chip">
                           <span className="loc-chip-icon">🏙️</span>
                           <div className="loc-chip-content">
-                            <b>Ciudad</b>
+                            <b>{t('city')}</b>
                             <span className="muted">{date.ciudad}</span>
                           </div>
                         </div>
@@ -2357,7 +2366,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         <div className="loc-chip">
                           <span className="loc-chip-icon">📌</span>
                           <div className="loc-chip-content">
-                            <b>Referencias</b>
+                            <b>{t('references')}</b>
                             <span className="muted">{date.referencias}</span>
                           </div>
                         </div>
@@ -2374,7 +2383,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           target="_blank" rel="noopener noreferrer"
                           aria-label="Abrir ubicación en Google Maps (nueva pestaña)"
                         >
-                          <span className="pin">📍</span> Ver en Maps <span aria-hidden>↗</span>
+                          <span className="pin">📍</span> {t('view_on_maps')} <span aria-hidden>↗</span>
                         </a>
                       )}
                       {date.direccion && (
@@ -2387,20 +2396,20 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           }}
                           aria-label="Copiar dirección al portapapeles"
                         >
-                          📋 Copiar dirección
+                          {t('copy_address')}
                         </button>
                       )}
                     </div>
                   </>
                 ) : (
-                  <div className="muted">Sin información de ubicación.</div>
+                  <div className="muted">{t('no_location_info')}</div>
                 )}
               </div>
 
               {/* Fila 2: Requisitos */}
               {date.requisitos && (
                 <div className="card req" aria-label="Requisitos">
-                  <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>📋 Requisitos</div>
+                  <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>{t('requirements')}</div>
                   <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)', fontWeight: 500 }}>
                     {date.requisitos}
                   </p>
@@ -2459,7 +2468,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       margin: 0,
                       lineHeight: 1.2
                     }}>
-                      Flyer del Evento
+                      {t('event_flyer')}
                     </h3>
                     <p style={{
                       fontSize: '0.9rem',
@@ -2467,7 +2476,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       margin: 0,
                       fontWeight: '500'
                     }}>
-                      Promocional de la fecha
+                      {t('promotional_date')}
                     </p>
                   </div>
                 </div>
@@ -2560,7 +2569,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         margin: 0,
                         lineHeight: 1.2
                       }}>
-                        Galería de Fotos
+                        {t('photo_gallery')}
                       </h3>
                       <p style={{
                         fontSize: '0.9rem',
@@ -2568,7 +2577,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         margin: 0,
                         fontWeight: '500'
                       }}>
-                        Fotos de la fecha
+                        {t('photo_gallery')}
                       </p>
                     </div>
                     <div style={{
@@ -2582,7 +2591,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       boxShadow: '0 4px 16px rgba(229, 57, 53, 0.2)',
                       backdropFilter: 'blur(10px)'
                     }}>
-                      {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                      {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
                     </div>
                   </div>
 
@@ -2650,7 +2659,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         margin: 0,
                         lineHeight: 1.2
                       }}>
-                        Videos de la Fecha
+                        {t('date_videos')}
                       </h3>
                       <p style={{
                         fontSize: '0.9rem',
@@ -2658,7 +2667,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         margin: 0,
                         fontWeight: '500'
                       }}>
-                        Videos promocionales y demostraciones
+                        {t('promotional_videos')}
                       </p>
                     </div>
                     <div style={{
@@ -2672,7 +2681,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       boxShadow: '0 4px 16px rgba(30, 136, 229, 0.2)',
                       backdropFilter: 'blur(10px)'
                     }}>
-                      {videos.length} video{videos.length !== 1 ? 's' : ''}
+                      {videos.length} {videos.length !== 1 ? t('videos') : t('video')}
                     </div>
                   </div>
 

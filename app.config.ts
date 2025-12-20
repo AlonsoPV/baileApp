@@ -208,7 +208,9 @@ const config: ExpoConfig = {
   },
 
   updates: {
-    enabled: false, // Temporarily disabled to prevent crashes
+    enabled: true, // ✅ Habilitado - Nota: Requiere plan de Expo con límites adecuados
+    // ⚠️ Si alcanzas el límite del plan gratuito, las actualizaciones OTA no funcionarán
+    // En ese caso, usa builds completos: pnpm build:prod:ios → pnpm submit:ios
     url: "https://u.expo.dev/8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     fallbackToCacheTimeout: 0,
   },

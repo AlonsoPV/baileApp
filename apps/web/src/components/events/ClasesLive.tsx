@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AddToCalendarWithStats from '../../components/AddToCalendarWithStats';
 import RequireLogin from '@/components/auth/RequireLogin';
 import { FaWhatsapp } from 'react-icons/fa';
+import { getLocaleFromI18n } from '../../utils/locale';
 
 type CronoItem = {
   tipo?: 'clase' | 'paquete' | 'coreografia' | 'show' | 'otro' | string;
@@ -94,6 +96,8 @@ export default function ClasesLive({
   whatsappMessageTemplate
 }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const locale = getLocaleFromI18n();
   const costoIndex = useMemo(() => {
     const map = new Map<string, CostoItem[]>();
     for (const c of costos) {
@@ -373,19 +377,27 @@ export default function ClasesLive({
                         const [year, month, day] = fechaOnly.split('-').map(Number);
                         const d = new Date(year, month - 1, day);
                         const dayNum = d.getDate();
-                        const monthStr = d.toLocaleDateString('es-MX', { month: 'short' });
+                        const monthStr = d.toLocaleDateString(locale, { month: 'short' });
                         return `${dayNum} ${monthStr}`;
                       } catch {
                         return (it as any).fecha;
                       }
                     })() : (() => {
-                      // Mapear ID de día a nombre
-                      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                      // Mapear ID de día a nombre usando traducciones
+                      const dayNames = [
+                        t('sunday'),
+                        t('monday'),
+                        t('tuesday'),
+                        t('wednesday'),
+                        t('thursday'),
+                        t('friday'),
+                        t('saturday')
+                      ];
                       const diaId = Number((it as any)?.diaSemana);
                       if (!isNaN(diaId) && diaId >= 0 && diaId <= 6) {
-                        return dias[diaId];
+                        return dayNames[diaId];
                       }
-                      return (it as any)?.diaSemana || 'Día no especificado';
+                      return (it as any)?.diaSemana || t('date');
                     })()}
                   </span>
                 )}

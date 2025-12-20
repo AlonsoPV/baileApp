@@ -7,6 +7,8 @@ import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { SEO_ICON_URL } from '@/lib/seoConfig';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
+import { LanguageSwitcher } from './settings/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -16,6 +18,7 @@ interface NavbarProps {
 export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: isAdmin } = useIsAdmin();
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
   const { profile } = useUserProfile();
@@ -96,6 +99,8 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           gap: 0.75rem;
           position: relative;
           z-index: 1;
+          min-width: 0;
+          overflow: hidden;
         }
 
         /* Brand truncation + stable layout */
@@ -271,6 +276,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         @media (max-width: 768px) {
           .nav-inner {
             gap: 0.5rem !important;
+            overflow: hidden !important;
           }
           .nav-root {
             padding-left: 0.75rem !important;
@@ -283,14 +289,18 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           }
           .nav-left { 
             display: flex !important; 
-            flex: 1 1 0% !important;
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
           }
           .nav-center {
             flex: 1 1 auto !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
           }
           .nav-center-brand {
             gap: 0.45rem !important;
-            max-width: 420px !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
           }
           .nav-brand-title {
             font-size: 1rem !important;
@@ -301,20 +311,25 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           }
           .nav-icons { 
             gap: .3rem !important; 
-            flex: 1 1 0% !important;
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+            flex-shrink: 0 !important;
           }
           .nav-icon { 
             font-size: 1.1rem !important; 
             width: 38px !important;
             height: 38px !important;
+            flex-shrink: 0 !important;
           }
           .nav-logo-img {
             width: 38px !important;
             height: 38px !important;
+            flex-shrink: 0 !important;
           }
           .nav-hamburger {
             width: 38px !important;
             height: 38px !important;
+            flex-shrink: 0 !important;
           }
         }
 
@@ -329,7 +344,10 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             display: none !important;
           }
           .nav-center-brand {
-            max-width: 320px !important;
+            max-width: 100% !important;
+          }
+          .nav-icons {
+            gap: 0.25rem !important;
           }
         }
 
@@ -352,7 +370,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           }
           .nav-center-brand {
             gap: 0.35rem !important;
-            max-width: 260px !important;
+            max-width: 100% !important;
           }
           .nav-icon {
             font-size: 1rem !important;
@@ -392,7 +410,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
 
         @media (max-width: 360px) {
           .nav-center-brand {
-            max-width: 220px !important;
+            max-width: 100% !important;
           }
           .nav-brand-title {
             font-size: 0.85rem !important;
@@ -537,7 +555,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         }
       `}</style>
       <div className="nav-inner">
-        <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+        <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '0 0 auto', minWidth: 0 }}>
           {/* Hamburger Button (only when logged in) */}
           {user && onMenuToggle && (
             <button
@@ -562,10 +580,12 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         <div
           className="nav-center"
           style={{
-            flex: 1,
+            flex: '1 1 auto',
             display: 'flex',
             justifyContent: 'center',
             pointerEvents: 'none',
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
           <Link
@@ -618,34 +638,16 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
                   opacity: 0.92,
                 }}
               >
-                Encuentra tu ritmo y tu espacio
+                {t('nav_tagline')}
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Nav Icons - Solo Admin Trending para Superadmins */}
-        <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: 'flex-end', flex: 1 }}>
-          <NavLink
-            to="/explore"
-            aria-label="Inicio"
-            title="Inicio"
-            className={({ isActive }) => `nav-icon${isActive ? ' active' : ''}`}
-          >
-            🏠
-          </NavLink>
-
-          {/* Admin trending: solo superadmin */}
-          {isAdmin && (
-            <NavLink
-              to="/admin/trending"
-              aria-label="Trending Admin"
-              title="Trending Admin"
-              className={({ isActive }) => `nav-icon${isActive ? ' active' : ''}`}
-            >
-              ⚙️
-            </NavLink>
-          )}
+        {/* Nav Icons */}
+        <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: 'flex-end', flex: 1, minWidth: 0 }}>
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {user ? (
             <button
@@ -671,10 +673,10 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             <Link
               to={routes.auth.login}
               className="nav-login-button"
-              aria-label="Iniciar sesión"
-              title="Iniciar sesión"
+              aria-label={t('login')}
+              title={t('login')}
             >
-              Iniciar sesión
+              {t('login')}
             </Link>
           )}
         </div>

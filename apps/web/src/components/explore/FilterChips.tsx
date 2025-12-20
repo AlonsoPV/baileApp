@@ -1,17 +1,19 @@
 import React from "react";
 import { useExploreFilters, ExploreType } from "../../state/exploreFilters";
 import { useTags } from "../../hooks/useTags";
+import { useTranslation } from "react-i18next";
 
 const TYPES: { key: ExploreType; label: string }[] = [
-  { key: "eventos", label: "Eventos" },
-  { key: "organizadores", label: "Organizadores" },
-  { key: "maestros", label: "Maestros" },
-  { key: "academias", label: "Academias" },
-  { key: "marcas", label: "Marcas" },
-  { key: "usuarios", label: "Usuarios" },
+  { key: "eventos", label: "events" },
+  { key: "organizadores", label: "organizers" },
+  { key: "maestros", label: "teachers" },
+  { key: "academias", label: "academies" },
+  { key: "marcas", label: "brands" },
+  { key: "usuarios", label: "users" },
 ];
 
 export default function FilterChips() {
+  const { t } = useTranslation();
   const { filters, set, reset } = useExploreFilters();
   const { ritmos } = useTags("ritmo");
   const { zonas }  = useTags("zona");
@@ -49,7 +51,7 @@ export default function FilterChips() {
               transition: 'all 0.2s'
             }}
           >
-            {t.label}
+            {t(t.label)}
           </button>
         ))}
       </div>
@@ -67,7 +69,7 @@ export default function FilterChips() {
             fontSize: '0.9rem',
             outline: 'none'
           }}
-          placeholder="Buscar por nombre, lugar, ciudad..."
+          placeholder={t('search_placeholder_filters')}
           defaultValue={filters.q}
           onBlur={(e) => set({ q: e.target.value })}
           onKeyDown={(e) => e.key === 'Enter' && set({ q: e.currentTarget.value })}
@@ -84,7 +86,7 @@ export default function FilterChips() {
             cursor: 'pointer'
           }}
         >
-          Limpiar
+          {t('clear')}
         </button>
       </div>
 
@@ -92,7 +94,7 @@ export default function FilterChips() {
       {ritmos.length > 0 && (
         <div style={{ marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.875rem', marginBottom: '0.25rem', opacity: 0.8 }}>
-            Ritmos
+            {t('rhythms')}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {ritmos.map(r => (
@@ -126,7 +128,7 @@ export default function FilterChips() {
       {zonas.length > 0 && (
         <div>
           <div style={{ fontSize: '0.875rem', marginBottom: '0.25rem', opacity: 0.8 }}>
-            Zonas
+            {t('zones')}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {zonas.map(z => (
@@ -166,7 +168,7 @@ export default function FilterChips() {
         }}>
           <div>
             <div style={{ fontSize: '0.875rem', marginBottom: '0.25rem', opacity: 0.8 }}>
-              Desde
+              {t('from')}
             </div>
             <input
               type="date"
@@ -185,7 +187,7 @@ export default function FilterChips() {
           </div>
           <div>
             <div style={{ fontSize: '0.875rem', marginBottom: '0.25rem', opacity: 0.8 }}>
-              Hasta
+              {t('to')}
             </div>
             <input
               type="date"

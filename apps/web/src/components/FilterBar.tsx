@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useTags } from "../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
@@ -28,15 +29,7 @@ interface FilterBarProps {
   hideButtons?: boolean;
 }
 
-const PERFIL_OPTIONS = [
-  { value: 'all', label: 'Todos', icon: '✨' },
-  { value: 'fechas', label: 'Sociales', icon: '📆' },
-  { value: 'clases', label: 'Clases', icon: '🎓' },
-  { value: 'academias', label: 'Academias', icon: '🏫' },
-  { value: 'maestros', label: 'Maestros', icon: '🎓' },
-  { value: 'usuarios', label: 'Con quien bailar', icon: '🧍' },
-  { value: 'marcas', label: 'Marcas', icon: '🏷️' },
-];
+// PERFIL_OPTIONS se traduce dentro del componente (depende de t()).
 
 // Hook para detectar tamaño de pantalla y aplicar padding responsive
 function useResponsivePadding() {
@@ -65,6 +58,7 @@ function useResponsivePadding() {
 }
 
 export default function FilterBar({ filters, onFiltersChange, className = '', showTypeFilter = true, initialOpenDropdown = null, hideButtons = false }: FilterBarProps) {
+  const { t } = useTranslation();
   const [openDropdown, setOpenDropdown] = useState<string | null>(initialOpenDropdown || null);
   // Estado temporal para fechas antes de aplicar
   const [tempDateFrom, setTempDateFrom] = useState<string | undefined>(filters.dateFrom);
@@ -145,6 +139,20 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
     if (filters.dateFrom || filters.dateTo) count++;
     return count;
   }, [filters, showTypeFilter]);
+
+  const perfilOptions = React.useMemo(
+    () => ([
+      { value: 'all', label: t('all'), icon: '✨' },
+      // En este UI se refiere a fechas/eventos sociales
+      { value: 'fechas', label: t('events'), icon: '📆' },
+      { value: 'clases', label: t('classes'), icon: '🎓' },
+      { value: 'academias', label: t('academies'), icon: '🏫' },
+      { value: 'maestros', label: t('teachers'), icon: '🎓' },
+      { value: 'usuarios', label: t('users'), icon: '🧍' },
+      { value: 'marcas', label: t('brands'), icon: '🏷️' },
+    ]),
+    [t]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -559,7 +567,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
             {/* Botón Tipos */}
             {showTypeFilter && (
               <FilterButton
-                label="¿Qué buscas?"
+                label={t('what_are_you_looking_for')}
                 icon="👥"
                 isOpen={openDropdown === 'tipos'}
                 onClick={() => toggleDropdown('tipos')}
@@ -570,37 +578,37 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
 
             {/* Botón Ritmos */}
             <FilterButton
-              label="Ritmos"
+              label={t('rhythms')}
               icon="🎵"
               isOpen={openDropdown === 'ritmos'}
               onClick={() => toggleDropdown('ritmos')}
               activeCount={filters.ritmos.length}
               iconOnly
-              ariaLabel="Filtrar por ritmos"
+              ariaLabel={t('rhythms')}
               ariaControlsId="dropdown-ritmos"
             />
 
             {/* Botón Zonas */}
             <FilterButton
-              label="Zonas"
+              label={t('zones')}
               icon="📍"
               isOpen={openDropdown === 'zonas'}
               onClick={() => toggleDropdown('zonas')}
               activeCount={filters.zonas.length}
               iconOnly
-              ariaLabel="Filtrar por zonas"
+              ariaLabel={t('zones')}
               ariaControlsId="dropdown-zonas"
             />
 
             {/* Botón Fechas */}
             <FilterButton
-              label="Fechas"
+              label={t('dates')}
               icon="📅"
               isOpen={openDropdown === 'fechas'}
               onClick={() => toggleDropdown('fechas')}
               activeCount={filters.dateFrom || filters.dateTo ? 1 : 0}
               iconOnly
-              ariaLabel="Filtrar por fechas"
+              ariaLabel={t('dates')}
               ariaControlsId="dropdown-fechas"
             />
 
@@ -633,7 +641,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                 }}
               >
                 <span>🗑️</span>
-                <span>Limpiar ({activeFilterCount})</span>
+                <span>{t('clear')} ({activeFilterCount})</span>
               </motion.button>
             )}
 
@@ -657,7 +665,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                   </span>
                   <input
                     type="text"
-                    placeholder="Buscar fechas, academias, maestros..."
+                    placeholder={t('search_placeholder_explore')}
                     value={filters.q}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     style={{
@@ -684,7 +692,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                       color: 'rgba(255,255,255,0.7)',
                       cursor: 'pointer'
                     }}
-                    aria-label="Cerrar búsqueda"
+                    aria-label={t('collapse_search')}
                   >
                     ✖
                   </button>
@@ -707,7 +715,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                     color: 'white',
                     cursor: 'pointer'
                   }}
-                  aria-label="Abrir búsqueda"
+                  aria-label={t('search_action')}
                 >
                   <span>🔍</span>
                 </motion.button>
@@ -728,7 +736,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                   flexWrap: 'wrap',
                   gap: '0.75rem'
                 }}>
-                  {PERFIL_OPTIONS.map((option) => (
+                  {perfilOptions.map((option) => (
                     <Chip
                       key={option.value}
                       label={option.label.replace(/^.+ /, '')} // Remove emoji from label
@@ -1053,7 +1061,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                         e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
                       }}
                     >
-                      Limpiar
+                      {t('clear')}
                     </button>
                     <button
                       onClick={(e) => {
@@ -1081,7 +1089,7 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 75, 139, 0.3)';
                       }}
                     >
-                      Aplicar
+                      {t('apply')}
                     </button>
                   </div>
                 </div>

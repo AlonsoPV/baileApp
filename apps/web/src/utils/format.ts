@@ -1,7 +1,18 @@
-export const fmtDate = (iso: string) => {
+export const fmtDate = (iso: string, locale?: string) => {
   if (!iso) return '';
 
   try {
+    // Si no se proporciona locale, usar el de i18n
+    if (!locale) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { getLocaleFromI18n } = require('./locale');
+        locale = getLocaleFromI18n();
+      } catch {
+        locale = 'es-ES';
+      }
+    }
+
     // Asegurar que usamos solo la parte de fecha (YYYY-MM-DD)
     const datePart = iso.split('T')[0];
     const [y, m, d] = datePart.split('-').map((v) => parseInt(v, 10));
@@ -13,7 +24,7 @@ export const fmtDate = (iso: string) => {
     // Crear fecha en hora local (NO como UTC) para evitar que se recorra un día
     const localDate = new Date(y, m - 1, d);
 
-    return localDate.toLocaleDateString('es-MX', {
+    return localDate.toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',

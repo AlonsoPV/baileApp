@@ -1,91 +1,95 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useTranslation } from 'react-i18next';
 
 export default function RolesInfoScreen() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t } = useTranslation();
 
   const roles = [
     {
       id: 'usuario',
-      name: 'Usuario / Bailarín',
+      name: t('role_user_dancer'),
       icon: '👤',
-      tag: 'Para quienes quieren descubrir dónde bailar',
+      tag: t('role_user_tag'),
       highlight: false,
       isFree: true,
       color: '#22c55e',
       gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
       bgGradient: 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08))',
       features: [
-        'Crear y personalizar tu perfil.',
-        'Marcar eventos como interesados.',
-        'Participar en challenges y trendings.',
-        'Conectar con otros bailarines.'
+        t('role_user_feature_1'),
+        t('role_user_feature_2'),
+        t('role_user_feature_3'),
+        t('role_user_feature_4')
       ]
     },
     {
       id: 'teacher',
-      name: 'Maestro',
+      name: t('teacher'),
       icon: '👨‍🏫',
-      tag: 'Para instructores que quieren crecer',
+      tag: t('role_teacher_tag'),
       highlight: true,
       color: '#fb7185',
       gradient: 'linear-gradient(135deg, #fb7185, #f43f5e)',
       bgGradient: 'linear-gradient(135deg, rgba(251,113,133,0.15), rgba(244,63,94,0.08))',
       features: [
-        'Publicar tus clases y horarios.',
-        'Mostrar tu trayectoria y estilos que impartes.',
-        'Conectar con academias y organizadores.',
-        'Compartir contenido educativo.',
-        'Ver métricas de asistencia por fechas en tus clases.'
+        t('role_teacher_feature_1'),
+        t('role_teacher_feature_2'),
+        t('role_teacher_feature_3'),
+        t('role_teacher_feature_4'),
+        t('role_teacher_feature_5')
       ]
     },
     {
       id: 'academy',
-      name: 'Academia',
+      name: t('academy'),
       icon: '🏛️',
-      tag: 'Para academias con múltiples clases',
+      tag: t('role_academy_tag'),
       highlight: true,
       color: '#38bdf8',
       gradient: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
       bgGradient: 'linear-gradient(135deg, rgba(56,189,248,0.15), rgba(14,165,233,0.08))',
       features: [
-        'Publicar clases, ritmos y horarios.',
-        'Mostrar ubicación, contacto, redes, paquetes y costos.',
-        'Crear eventos y talleres de academia.',
-        'Destacar maestros que forman parte de tu academia.',
-        'Ver métricas de asistencia por fechas en clases y eventos.'
+        t('role_academy_feature_1'),
+        t('role_academy_feature_2'),
+        t('role_academy_feature_3'),
+        t('role_academy_feature_4'),
+        t('role_academy_feature_5')
       ]
     },
     {
       id: 'brand',
-      name: 'Marca',
+      name: t('brand'),
       icon: '🏷️',
-      tag: 'Para proyectos de ropa, calzado y accesorios de baile',
+      tag: t('role_brand_tag'),
       highlight: false,
       color: '#facc15',
       gradient: 'linear-gradient(135deg, #facc15, #eab308)',
       bgGradient: 'linear-gradient(135deg, rgba(250,204,21,0.15), rgba(234,179,8,0.08))',
       features: [
-        'Mostrar un catálogo de productos para la comunidad de baile.',
-        'Compartir guías de tallas y detalles por producto.',
-        'Lanzar cupones y descuentos para usuarios de la plataforma.'
+        t('role_brand_feature_1'),
+        t('role_brand_feature_2'),
+        t('role_brand_feature_3')
       ]
     },
     {
       id: 'organizer',
-      name: 'Organizador',
+      name: t('organizer'),
       icon: '🎪',
-      tag: 'Perfecto para sociales, congresos y festivales',
+      tag: t('role_organizer_tag'),
       highlight: true,
       color: '#a855f7',
       gradient: 'linear-gradient(135deg, #a855f7, #9333ea)',
       bgGradient: 'linear-gradient(135deg, rgba(168,85,247,0.15), rgba(147,51,234,0.08))',
       features: [
-        'Crear eventos públicos y sociales dentro de la plataforma.',
-        'Gestionar fechas, horarios y sedes.',
-        'Ver estadísticas de asistencia y métricas por fechas.',
-        'Invitar maestros y academias a tus eventos.'
+        t('role_organizer_feature_1'),
+        t('role_organizer_feature_2'),
+        t('role_organizer_feature_3'),
+        t('role_organizer_feature_4')
       ]
     }
   ];
@@ -232,14 +236,14 @@ export default function RolesInfoScreen() {
                   fontWeight: 600,
                   marginBottom: '2px'
                 }}>
-                  DONDE BAILAR MX
+                  {t('where_dance')}
                 </div>
                 <div style={{
                   fontSize: '12px',
                   color: 'rgba(255,255,255,0.5)',
                   fontWeight: 500
                 }}>
-                  Sistema de Roles
+                  {t('roles_system')}
                 </div>
               </div>
             </div>
@@ -266,7 +270,7 @@ export default function RolesInfoScreen() {
                 boxShadow: '0 0 8px rgba(245, 87, 108, 0.8)',
                 animation: 'pulse 2s infinite'
               }}></span>
-              ROLES EN LA COMUNIDAD
+              {t('roles_in_community')}
             </div>
           </motion.div>
 
@@ -289,7 +293,7 @@ export default function RolesInfoScreen() {
               backgroundClip: 'text',
               lineHeight: 1.2
             }}>
-              Únete a la comunidad Donde Bailar MX
+              {t('join_community_title')}
             </h1>
             <p className="roles-subtitle" style={{
               color: 'rgba(255,255,255,0.8)',
@@ -298,8 +302,7 @@ export default function RolesInfoScreen() {
               marginBottom: '1.5rem',
               lineHeight: 1.7
             }}>
-              Centralizamos <span style={{ color: '#f5576c', fontWeight: '700' }}>clases, academias, maestros, eventos y marcas</span> de baile
-              para que sea más fácil encontrar dónde bailar y para que quienes organizan o enseñan puedan crecer su proyecto.
+              {t('join_community_description_part1')} <span style={{ color: '#f5576c', fontWeight: '700' }}>{t('join_community_description_part2')}</span> {t('join_community_description_part3')}
             </p>
           </motion.div>
 
@@ -350,10 +353,10 @@ export default function RolesInfoScreen() {
                 marginBottom: '6px',
                 border: '1px solid rgba(239,68,68,0.4)'
               }}>
-                Lanzamiento
+                {t('launch')}
               </div>
               <div style={{ fontWeight: 600, color: '#fbbf24', marginBottom: '8px' }}>
-                Primeros 3 meses con acceso completo a todos los roles. Te apoyamos con la creación de tu perfil.
+                {t('launch_promo_text')}
               </div>
               <div style={{ 
                 fontSize: '0.9rem', 
@@ -364,7 +367,7 @@ export default function RolesInfoScreen() {
                 gap: '6px'
               }}>
                 <span>💚</span>
-                <span>El rol de Usuario / Bailarín es <strong>siempre gratis</strong> para todos.</span>
+                <span>{t('free_role_always_free')}</span>
               </div>
             </div>
           </motion.div>
@@ -391,7 +394,7 @@ export default function RolesInfoScreen() {
               flex: 1,
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)'
             }} />
-            <span>Roles disponibles</span>
+            <span>{t('available_roles')}</span>
             <div style={{
               height: '2px',
               flex: 1,
@@ -491,7 +494,7 @@ export default function RolesInfoScreen() {
                         fontWeight: 600,
                         marginTop: '4px'
                       }}>
-                        ⭐ Destacado
+                        ⭐ {t('featured')}
                       </div>
                     )}
                     {(role as any).isFree && (
@@ -508,7 +511,7 @@ export default function RolesInfoScreen() {
                         marginLeft: role.highlight ? '6px' : '0',
                         boxShadow: '0 0 12px rgba(34,197,94,0.3)'
                       }}>
-                        💚 Siempre Gratis
+                        💚 {t('always_free')}
                       </div>
                     )}
                   </div>
@@ -546,7 +549,7 @@ export default function RolesInfoScreen() {
                     background: role.color,
                     boxShadow: `0 0 8px ${role.color}`
                   }}></span>
-                  Puedes:
+                  {t('you_can')}:
                 </div>
 
                 <ul style={{
@@ -583,109 +586,206 @@ export default function RolesInfoScreen() {
                     </motion.li>
                   ))}
                 </ul>
+
+                {/* Botones según estado de autenticación */}
+                {user && role.id !== 'usuario' && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/app/roles/request?role=${role.id}`);
+                    }}
+                    style={{
+                      width: '100%',
+                      marginTop: '1.5rem',
+                      padding: '0.875rem 1.5rem',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: role.gradient,
+                      color: '#ffffff',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      boxShadow: `0 6px 20px ${role.color}40`,
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = `0 8px 24px ${role.color}60`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = `0 6px 20px ${role.color}40`;
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>📝</span>
+                    <span>{t('request')}</span>
+                  </motion.button>
+                )}
+
+                {!user && role.id === 'usuario' && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginTop: '1.5rem'
+                  }}>
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 + index * 0.1 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/auth/login');
+                      }}
+                      style={{
+                        padding: '0.875rem 1.5rem',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: role.gradient,
+                        color: '#ffffff',
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        boxShadow: `0 6px 20px ${role.color}40`,
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = `0 8px 24px ${role.color}60`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = `0 6px 20px ${role.color}40`;
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>🚀</span>
+                    <span>{t('join')}</span>
+                  </motion.button>
+                  </div>
+                )}
               </motion.section>
             ))}
           </div>
 
-          {/* CTA Banner */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            style={{
-              marginTop: '2rem',
-              padding: '2rem',
-              borderRadius: '24px',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.15))',
-              border: '1px solid rgba(59,130,246,0.3)',
-              boxShadow: '0 12px 40px rgba(59,130,246,0.2)',
-              backdropFilter: 'blur(10px)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: 'linear-gradient(90deg, #3B82F6, #2563EB)',
-              opacity: 0.9
-            }} />
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              marginBottom: '1rem'
-            }}>
-              <div style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.75rem',
-                boxShadow: '0 8px 24px rgba(59,130,246,0.4)',
-                flexShrink: 0
-              }}>
-                🎉
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 800,
-                  color: '#fff',
-                  margin: '0 0 0.5rem',
-                  lineHeight: 1.2
-                }}>
-                  ¿Te gustaría ser parte de la comunidad?
-                </h3>
-                <p style={{
-                  fontSize: '1rem',
-                  color: 'rgba(255,255,255,0.9)',
-                  margin: 0,
-                  lineHeight: 1.6
-                }}>
-                  Podemos ayudarte a crear tu perfil y dejar todo listo para el lanzamiento.
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/app/roles/request"
+          {/* CTA Banner - Solo visible si el usuario NO está logueado */}
+          {!user && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
               style={{
-                padding: '1rem 2rem',
-                borderRadius: '16px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #f5576c, #f093fb)',
-                color: '#ffffff',
-                fontSize: '1rem',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                boxShadow: '0 8px 24px rgba(245, 87, 108, 0.4)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 12px 32px rgba(245, 87, 108, 0.5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(245, 87, 108, 0.4)';
+                marginTop: '2rem',
+                padding: '2rem',
+                borderRadius: '24px',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(37,99,235,0.15))',
+                border: '1px solid rgba(59,130,246,0.3)',
+                boxShadow: '0 12px 40px rgba(59,130,246,0.2)',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <span>🚀</span>
-              <span>Unirme a la comunidad</span>
-            </Link>
-          </motion.section>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #3B82F6, #2563EB)',
+                opacity: 0.9
+              }} />
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '1rem'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.75rem',
+                  boxShadow: '0 8px 24px rgba(59,130,246,0.4)',
+                  flexShrink: 0
+                }}>
+                  🎉
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 800,
+                    color: '#fff',
+                    margin: '0 0 0.5rem',
+                    lineHeight: 1.2
+                  }}>
+                    {t('would_you_like_to_join_community')}
+                  </h3>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.9)',
+                    margin: 0,
+                    lineHeight: 1.6
+                  }}>
+                    {t('we_can_help_create_profile')}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/app/roles/request"
+                style={{
+                  padding: '1rem 2rem',
+                  borderRadius: '16px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #f5576c, #f093fb)',
+                  color: '#ffffff',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: '0 8px 24px rgba(245, 87, 108, 0.4)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(245, 87, 108, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(245, 87, 108, 0.4)';
+                }}
+              >
+                <span>🚀</span>
+                <span>{t('join_community')}</span>
+              </Link>
+            </motion.section>
+          )}
 
           {/* Contact Note */}
           <motion.div
@@ -709,7 +809,7 @@ export default function RolesInfoScreen() {
               margin: 0,
               lineHeight: 1.6
             }}>
-              ¿Tienes dudas sobre qué rol activar primero?
+              {t('have_questions_about_role')}
               <a
                 href="mailto:alpeva96@gmail.com?subject=Contacto%20Donde%20Bailar%20MX"
                 style={{
@@ -729,7 +829,7 @@ export default function RolesInfoScreen() {
                   e.currentTarget.style.color = '#f5576c';
                 }}
               >
-                Escríbenos y te ayudamos a definirlo.
+                {t('write_us_we_help')}
               </a>
             </p>
 
@@ -793,7 +893,7 @@ export default function RolesInfoScreen() {
               whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.12)' }}
               whileTap={{ scale: 0.95 }}
             >
-              ← Volver
+              ← {t('back')}
             </motion.button>
           </div>
         </div>

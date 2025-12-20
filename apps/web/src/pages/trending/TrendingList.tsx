@@ -1,12 +1,16 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { listTrendings } from "@/lib/trending";
+import { useIsAdmin } from "@/hooks/useRoleRequests";
+import { useTranslation } from "react-i18next";
 import "@/styles/event-public.css";
 
 export default function TrendingList() {
   const [rows, setRows] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const navigate = useNavigate();
+  const { data: isAdmin } = useIsAdmin();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     (async () => {
@@ -76,16 +80,54 @@ export default function TrendingList() {
           font-weight: 400;
         }
         
+        .trending-admin-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          background: rgba(0, 0, 0, 0.2);
+          color: #fff;
+          text-decoration: none;
+          font-size: 1.1rem;
+          transition: all 0.16s ease;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          flex-shrink: 0;
+        }
+
+        .trending-admin-btn:hover {
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(255, 255, 255, 0.35);
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+        }
+
+        .trending-admin-btn:active {
+          transform: translateY(0px) scale(0.98);
+        }
+
         @media (max-width: 768px) {
           .cc-page { padding-top: 64px; }
           .trending-hero { padding: 2rem 1.5rem !important; }
           .trending-title { font-size: 2rem !important; }
+          .trending-admin-btn {
+            width: 38px;
+            height: 38px;
+            font-size: 1rem;
+          }
         }
         
         @media (max-width: 480px) {
           .trending-hero { padding: 1.5rem 1rem !important; }
           .trending-title { font-size: 1.75rem !important; }
           .trending-subtitle { font-size: 0.95rem !important; }
+          .trending-admin-btn {
+            width: 34px;
+            height: 34px;
+            font-size: 0.9rem;
+          }
         }
         .trending-card {
           position: relative;
@@ -242,9 +284,21 @@ export default function TrendingList() {
               📈
             </div>
             
-            <h1 className="trending-title">Trending</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              <h1 className="trending-title" style={{ margin: 0 }}>{t('trending')}</h1>
+              {isAdmin && (
+                <Link
+                  to="/admin/trending"
+                  className="trending-admin-btn"
+                  aria-label={t('trending_admin')}
+                  title={t('trending_admin')}
+                >
+                  ⚙️
+                </Link>
+              )}
+            </div>
             <p className="trending-subtitle">
-              Vota por tus favoritos en las categorías activas
+              {t('trending_subtitle')}
             </p>
           </div>
         </section>
@@ -259,7 +313,7 @@ export default function TrendingList() {
             boxShadow: '0 16px 48px rgba(0,0,0,.5)'
           }}>
             <div style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '1rem' }}>⏳</div>
-            <div style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'rgba(255,255,255,.85)' }}>Cargando...</div>
+            <div style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'rgba(255,255,255,.85)' }}>{t('loading')}</div>
           </div>
         ) : rows.length === 0 ? (
           <div style={{
@@ -272,7 +326,7 @@ export default function TrendingList() {
           }}>
             <div style={{ fontSize: 'clamp(3rem, 8vw, 4rem)', marginBottom: '1rem' }}>🎯</div>
             <div style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', color: 'rgba(255,255,255,.85)' }}>
-              No hay trendings activos en este momento
+              {t('no_active_trendings')}
             </div>
           </div>
         ) : (
@@ -320,7 +374,7 @@ export default function TrendingList() {
                       boxShadow: '0 4px 12px rgba(0,0,0,.3)',
                       color: '#fff'
                     }}>
-                      {r.status}
+                      {r.status === 'open' ? t('open') : r.status === 'closed' ? t('closed') : r.status}
                     </span>
                   </div>
                   
@@ -403,7 +457,7 @@ export default function TrendingList() {
                       e.currentTarget.style.boxShadow = '0 8px 20px rgba(229,57,53,.4)';
                     }}
                   >
-                    {r.status === 'closed' ? 'Ver →' : 'Ver y Votar →'}
+                    {r.status === 'closed' ? `${t('view')} →` : `${t('view_and_vote')} →`}
                   </button>
                 </div>
               </article>

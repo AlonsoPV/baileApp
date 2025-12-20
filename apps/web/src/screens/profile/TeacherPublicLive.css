@@ -223,7 +223,6 @@
   border-radius: 18px;
   background: radial-gradient(circle at top, #0b3b74, #0b1220);
   border: 1px solid rgba(56, 189, 248, 0.7);
-  box-shadow: 0 12px 35px rgba(56, 189, 248, 0.45);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -232,7 +231,6 @@
 .promo-price-box--destacado {
   background: radial-gradient(circle at top, #f97316, #b45309);
   border-color: rgba(251, 191, 36, 0.9);
-  box-shadow: 0 14px 40px rgba(251, 146, 60, 0.65);
 }
 .promo-price {
   font-size: 1.1rem;

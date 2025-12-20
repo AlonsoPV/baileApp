@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   FaInstagram, 
   FaFacebookF, 
@@ -32,6 +33,7 @@ interface BioSectionProps {
 }
 
 export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
+  const { t } = useTranslation();
   // Debug logs solo en desarrollo
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -322,7 +324,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
         <div className="bio-header">
           <h3 className="bio-title">
             <span>📝</span>
-            <span>Sobre mí</span>
+            <span>{t('about_me')}</span>
           </h3>
 
           {/* Iconos de Redes Sociales */}

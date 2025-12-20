@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
@@ -16,6 +17,7 @@ import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups"
 import { colors } from "../../theme/colors";
 import "./TeacherPublicLive.css";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import { getLocaleFromI18n } from "../../utils/locale";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -169,7 +171,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
           }}>
             <ImageWithFallback
               src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1}`}
+              alt={t('see_photo', { index: currentIndex + 1 })}
               style={{
                 width: '100%',
                 height: '100%',
@@ -202,7 +204,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
               <button
                 onClick={prevPhoto}
                 disabled={photos.length <= 1}
-                aria-label="Foto anterior"
+                aria-label={t('previous_photo')}
                 style={{
                   position: 'absolute',
                   left: '1rem',
@@ -228,7 +230,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
               <button
                 onClick={nextPhoto}
                 disabled={photos.length <= 1}
-                aria-label="Foto siguiente"
+                aria-label={t('next_photo')}
                 style={{
                   position: 'absolute',
                   right: '1rem',
@@ -281,7 +283,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
             >
               <ImageWithFallback
                 src={photo}
-                alt={`Miniatura ${index + 1}`}
+                alt={t('thumbnail', { index: index + 1 })}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -320,7 +322,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
           }}>
             <ImageWithFallback
               src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              alt={t('see_photo_fullscreen', { index: currentIndex + 1 })}
               style={{
                 width: '100%',
                 height: '100%',
@@ -334,13 +336,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos }: { ph
   );
 });
 
-const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
-  promocion: { icon: '✨', label: 'Promoción' },
-  paquete: { icon: '🧾', label: 'Paquete' },
-  descuento: { icon: '💸', label: 'Descuento' },
-  membresia: { icon: '🎟️', label: 'Membresía' },
-  otro: { icon: '💡', label: 'Otros' },
-};
+// promotionTypeMeta se define dentro del componente para usar t()
 
 const promotionTypeStyles: Record<string, { background: string; border: string; color: string }> = {
   promocion: { background: 'rgba(240,147,251,0.16)', border: '1px solid rgba(240,147,251,0.28)', color: '#f3c6ff' },
@@ -365,49 +361,57 @@ const formatCurrency = (value?: number | string | null) => {
   }
 };
 
-const formatPriceLabel = (value: any): string | null => {
-  // Si no hay precio (null, undefined, vacío), no mostrar nada
-  if (value === undefined || value === null || value === '') return null;
-  
-  // Convertir a número
-  const numeric = typeof value === 'number' ? value : Number(value);
-  
-  // Si no es un número válido, no mostrar
-  if (Number.isNaN(numeric)) return null;
-  
-  // Si es cero, mostrar "Gratis"
-  if (numeric === 0) return 'Gratis';
-  
-  // Si tiene valor, formatear como moneda
-  return formatCurrency(numeric);
-};
+// formatPriceLabel se define dentro del componente para usar t()
 
-const formatDateOrDay = (fecha?: string, diaSemana?: number | null) => {
-  if (fecha) {
-    try {
-      // Parsear fecha como hora local para evitar problemas de zona horaria
-      const plain = String(fecha).split('T')[0];
-      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-        const safe = new Date(year, month - 1, day);
-        return safe.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-      }
-    } catch (e) {
-      console.error('[TeacherPublicLive] Error formatting date:', e);
-    }
-  }
-  if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
-    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return dayNames[diaSemana];
-  }
-  return null;
-};
+// formatDateOrDay se define dentro del componente para usar t() y getLocaleFromI18n()
 
 export default function TeacherProfileLive() {
   const { teacherId } = useParams<{ teacherId: string }>();
   const navigate = useNavigate();
   const { data: allTags } = useTags();
+  const { t } = useTranslation();
+  const locale = getLocaleFromI18n();
   const [copied, setCopied] = React.useState(false);
+  
+  // formatDateOrDay dentro del componente para usar t() y locale
+  const formatDateOrDay = React.useCallback((fecha?: string, diaSemana?: number | null) => {
+    if (fecha) {
+      try {
+        // Parsear fecha como hora local para evitar problemas de zona horaria
+        const plain = String(fecha).split('T')[0];
+        const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
+        if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+          const safe = new Date(year, month - 1, day);
+          return safe.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      } catch (e) {
+        console.error('[TeacherPublicLive] Error formatting date:', e);
+      }
+    }
+    if (typeof diaSemana === 'number' && diaSemana >= 0 && diaSemana <= 6) {
+      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
+      return dayNames[diaSemana];
+    }
+    return null;
+  }, [t, locale]);
+  
+  // formatPriceLabel dentro del componente para usar t()
+  const formatPriceLabel = React.useCallback((value: any): string | null => {
+    if (value === undefined || value === null || value === '') return null;
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numeric)) return null;
+    if (numeric === 0) return t('free');
+    return formatCurrency(numeric);
+  }, [t]);
+  
+  // promotionTypeMeta dentro del componente para usar t()
+  const promotionTypeMeta = React.useMemo(() => ({
+    promocion: { icon: '✨', label: t('promotion') },
+    paquete: { icon: '🧾', label: t('package') },
+    descuento: { icon: '💸', label: t('discount') },
+    membresia: { icon: '🎟️', label: t('membership') },
+    otro: { icon: '💡', label: t('other') },
+  }), [t]);
 
   // Fetch public teacher profile
   const { data: teacher, isLoading } = useQuery({
@@ -458,8 +462,8 @@ export default function TeacherProfileLive() {
     [teacher],
   );
   const whatsappMessageTemplate = useMemo(
-    () => (teacher as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}',
-    [(teacher as any)?.whatsapp_message_template],
+    () => (teacher as any)?.whatsapp_message_template || t('me_interested_class', { name: '{nombre}' }),
+    [(teacher as any)?.whatsapp_message_template, t],
   );
   
   // Memoizar promociones
@@ -524,7 +528,7 @@ export default function TeacherProfileLive() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando maestro...</p>
+        <p>{t('loading_teacher')}</p>
       </div>
     );
   }
@@ -536,31 +540,31 @@ export default function TeacherProfileLive() {
         textAlign: 'center',
         color: colors.light,
       }}>
-        <div style={{ maxWidth: 360, margin: '0 auto' }}>
-          <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
-          <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil del maestro.</p>
-          <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
-            Revisa tu conexión a internet e inténtalo de nuevo.
-          </p>
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.reload();
-              }
-            }}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 999,
-              border: 'none',
-              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-              color: colors.light,
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Reintentar
-          </button>
+          <div style={{ maxWidth: 360, margin: '0 auto' }}>
+            <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
+            <p style={{ marginBottom: 8 }}>{t('could_not_load_teacher')}</p>
+            <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
+              {t('check_connection')}
+            </p>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 999,
+                border: 'none',
+                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                color: colors.light,
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {t('retry')}
+            </button>
         </div>
       </div>
     );
@@ -574,13 +578,13 @@ export default function TeacherProfileLive() {
         color: colors.light,
       }}>
         <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-          No tienes perfil de maestro
+          {t('no_teacher_profile')}
         </h2>
         <p style={{ marginBottom: '24px', opacity: 0.7 }}>
-          Crea uno para dar clases
+          {t('create_one_to_teach')}
         </p>
         <p style={{ marginBottom: '16px', opacity: 0.8, fontSize: '0.95rem' }}>
-          Para crear tu rol ve a edición y guarda tu nombre.
+          {t('to_create_role')}
         </p>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -598,7 +602,7 @@ export default function TeacherProfileLive() {
             boxShadow: '0 8px 24px rgba(30,136,229,0.5)',
           }}
         >
-          🎓 Crear Perfil Maestro
+          {t('create_teacher_profile')}
         </motion.button>
       </div>
     );
@@ -627,7 +631,7 @@ export default function TeacherProfileLive() {
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
+            aria-label={t('back_to_start')}
             style={{
               position: 'absolute',
               top: '1rem',
@@ -669,7 +673,7 @@ export default function TeacherProfileLive() {
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+                {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>{t('copied')}</div>}
           <div className="teacher-banner-grid">
             <div style={{
               display: 'flex',
@@ -682,7 +686,7 @@ export default function TeacherProfileLive() {
                 {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
                   <img
                     src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
-                    alt="Foto del maestro"
+                    alt={t('personal_photo')}
                     loading="lazy"
                     decoding="async"
                     style={{
@@ -740,17 +744,17 @@ export default function TeacherProfileLive() {
                       fontSize: '.75rem',
                       fontWeight: 900
                     }}>✓</div>
-                    <span>Verificado</span>
+                    <span>{t('verified')}</span>
                   </div>
                 )}
                 <button
-                  aria-label="Compartir perfil"
-                  title="Compartir"
+                  aria-label={t('share_profile')}
+                  title={t('share')}
                   onClick={() => {
                     try {
                       const url = typeof window !== 'undefined' ? window.location.href : '';
-                      const title = (teacher as PublicTeacher)?.nombre_publico || 'Maestro';
-                      const text = `Mira el perfil de ${title}`;
+                      const title = (teacher as PublicTeacher)?.nombre_publico || t('teacher');
+                      const text = t('check_teacher_profile', { name: title });
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
                         navAny.share({ title, text, url }).catch(() => {});
@@ -774,7 +778,7 @@ export default function TeacherProfileLive() {
                     fontWeight: 700
                   }}
                 >
-                  📤 Compartir
+                  📤 {t('share')}
                 </button>
               </div>
             </div>
@@ -813,7 +817,7 @@ export default function TeacherProfileLive() {
                 margin: '0 0 1.5rem 0',
                 lineHeight: 1.4
               }}>
-                Maestro
+                {t('teacher')}
               </p>
 
               {/* Chips de Ritmos y Zonas dentro del banner */}
@@ -965,7 +969,7 @@ export default function TeacherProfileLive() {
                 🎓
               </div>
               <div>
-                <h3 className="section-title" style={{ margin: 0 }}>Mis clases</h3>
+                <h3 className="section-title" style={{ margin: 0 }}>{t('my_classes')}</h3>
                 <p style={{
                   fontSize: '0.9rem',
                   opacity: 0.8,
@@ -973,7 +977,7 @@ export default function TeacherProfileLive() {
                   fontWeight: '500',
                   color: 'rgba(255, 255, 255, 0.9)'
                 }}>
-                  Horarios, costos y ubicaciones
+                  {t('schedule_costs_locations')}
                 </p>
               </div>
             </div>
@@ -982,14 +986,14 @@ export default function TeacherProfileLive() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               {classesLoading ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                  Cargando clases...
+                  {t('loading_classes')}
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
-                <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
+                <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>{t('loading')}</div>}>
                   <ClasesLiveTabs
                     classes={classesFromTables}
                     title=""
-                    subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                    subtitle={t('filter_by_day')}
                     sourceType="teacher"
                     sourceId={teacherIdNum}
                     isClickable={true}
@@ -1030,13 +1034,13 @@ export default function TeacherProfileLive() {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="promo-section"
             >
-              <header className="promo-header">
-                <div className="promo-icon">💸</div>
-                <div>
-                  <h3>Promociones y Paquetes</h3>
-                  <p>Ofertas especiales y descuentos disponibles</p>
-                </div>
-              </header>
+                  <header className="promo-header">
+                    <div className="promo-icon">💸</div>
+                    <div>
+                      <h3>{t('promotions_packages')}</h3>
+                      <p>{t('special_offers')}</p>
+                    </div>
+                  </header>
 
               <div className="promo-list">
                 {promotions.map((promo: any, index: number) => {
@@ -1047,7 +1051,7 @@ export default function TeacherProfileLive() {
                   
                   // Formatear el precio: extraer número y formatear con comas
                   let priceNumber: string | null = null;
-                  if (priceLabel && priceLabel !== 'Gratis') {
+                  if (priceLabel && priceLabel !== t('free')) {
                     const numeric = typeof promo?.precio === 'number' ? promo.precio : Number(promo?.precio);
                     if (!Number.isNaN(numeric) && numeric > 0) {
                       priceNumber = numeric.toLocaleString('en-US');
@@ -1066,7 +1070,7 @@ export default function TeacherProfileLive() {
                         <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        <h3>{promo?.nombre || 'Promoción'}</h3>
+                        <h3>{promo?.nombre || t('promotion')}</h3>
                         {promo?.descripcion && (
                           <p className="promo-desc">{promo.descripcion}</p>
                         )}
@@ -1104,8 +1108,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Grupos de entrenamiento y competencia</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('competition_groups')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('training_competition')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -1161,8 +1165,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)' }}>🎓</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Doy clases en</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('teach_at')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('academies_where_collaborate')}</p>
                 </div>
               </div>
               <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
@@ -1246,8 +1250,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Información para Estudiantes</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('info_for_students')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('frequently_asked_questions_short')}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1282,8 +1286,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)' }}>⭐</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Qué dicen sus alumnos</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Testimonios de estudiantes</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('what_students_say')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('student_testimonials')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -1391,7 +1395,7 @@ export default function TeacherProfileLive() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                    Video Principal
+                    {t('main_video')}
                   </h3>
                   <p style={{
                     margin: '0.15rem 0 0 0',
@@ -1400,7 +1404,7 @@ export default function TeacherProfileLive() {
                     fontWeight: 400,
                     lineHeight: 1.2
                   }}>
-                    Contenido multimedia destacado
+                    {t('multimedia_highlighted')}
                   </p>
                 </div>
               </div>
@@ -1498,7 +1502,7 @@ export default function TeacherProfileLive() {
                 marginBottom: '1.5rem'
               }}>
                 <h3 className="section-title">
-                  📷 Galería de Fotos
+                  📷 {t('photo_gallery')}
                 </h3>
                 <div style={{
                   padding: '0.5rem 1rem',
@@ -1508,7 +1512,7 @@ export default function TeacherProfileLive() {
                   fontWeight: '600',
                   color: colors.light
                 }}>
-                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                  {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
                 </div>
               </div>
 

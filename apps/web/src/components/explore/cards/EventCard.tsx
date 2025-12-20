@@ -276,81 +276,49 @@ export default function EventCard({ item }: EventCardProps) {
           backdrop-filter: blur(8px);
         }
         .card-actions {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 3;
           display: flex;
-          gap: clamp(8px, 1vw, 10px);
           align-items: center;
+          justify-content: center;
         }
         .cta {
-          flex: 1;
-          border: none;
-          cursor: pointer;
-          padding: clamp(12px, 1.8vw, 18px) clamp(16px, 2.2vw, 28px);
-          border-radius: 18px;
-          font-weight: 900;
-          font-size: clamp(12px, 1.9vw, 15px);
-          color: #111;
-          background: linear-gradient(135deg, #FFD1DD 0%, #FFC38F 50%, #FFE5A0 100%);
-          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(8px);
+          border: 1.5px solid rgba(255, 255, 255, 0.3);
           position: relative;
-          overflow: hidden;
-          box-shadow: 
-            0 6px 20px rgba(255, 209, 221, 0.4),
-            0 3px 10px rgba(255, 195, 143, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-          letter-spacing: 0.4px;
-          text-transform: uppercase;
-          font-size: clamp(11px, 1.7vw, 14px);
-          touch-action: manipulation;
+          user-select: none;
+          pointer-events: none;
+          transition: all 0.2s ease;
         }
-        .cta::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.35s ease;
+
+        .cta svg {
+          width: 18px;
+          height: 18px;
+          stroke: rgba(255, 255, 255, 0.9);
+          fill: none;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          transition: stroke 0.2s ease;
         }
-        .cta::after {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
-          opacity: 0;
-          transform: scale(0);
-          transition: transform 0.6s ease, opacity 0.6s ease;
+
+        .card:hover .cta {
+          background: rgba(0, 0, 0, 0.5);
+          border-color: rgba(255, 255, 255, 0.5);
+          transform: scale(1.1);
         }
-        .cta:hover {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 
-            0 12px 32px rgba(255, 209, 221, 0.5),
-            0 6px 16px rgba(255, 195, 143, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4),
-            0 0 0 2px rgba(255, 255, 255, 0.1);
-          background: linear-gradient(135deg, #FFE0E8 0%, #FFD4A5 50%, #FFEBB3 100%);
-        }
-        .cta:hover::before {
-          opacity: 1;
-        }
-        .cta:hover::after {
-          opacity: 1;
-          transform: scale(1);
-        }
-        .cta:active {
-          transform: translateY(-1px) scale(0.98);
-          box-shadow: 
-            0 4px 12px rgba(255, 209, 221, 0.4),
-            0 2px 6px rgba(255, 195, 143, 0.3),
-            inset 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .cta:focus-visible {
-          outline: none;
-          box-shadow: 
-            0 6px 20px rgba(255, 209, 221, 0.4),
-            0 3px 10px rgba(255, 195, 143, 0.3),
-            0 0 0 4px rgba(255, 209, 221, 0.5);
+
+        .card:hover .cta svg {
+          stroke: rgba(255, 255, 255, 1);
         }
         .ghost {
           width: 46px;
@@ -389,6 +357,14 @@ export default function EventCard({ item }: EventCardProps) {
                 alt={`Poster del evento ${nombre}`}
               />
             )}
+
+            <div className="card-actions">
+              <div className="cta">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
         </div>
 
           <div className="content">
@@ -425,10 +401,6 @@ export default function EventCard({ item }: EventCardProps) {
             </div>
           </div>
         )}
-
-            <div className="card-actions">
-              <button className="cta">Ver detalles</button>
-            </div>
         </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />

@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const colors = {
   coral: '#FF3D57',
@@ -29,6 +30,7 @@ export default function RSVPButtons({
   disabled = false,
   interestedCount
 }: RSVPButtonsProps) {
+  const { t } = useTranslation();
   const isInterested = currentStatus === 'interesado';
 
   return (
@@ -100,7 +102,7 @@ export default function RSVPButtons({
           position: 'relative',
           zIndex: 2
         }}>
-          {isInterested ? 'Me interesa' : 'Me interesa'}
+          {t('interested')}
         </span>
         
         {/* Indicador de estado */}
@@ -149,7 +151,7 @@ export default function RSVPButtons({
               transition: 'all 0.2s ease'
             }}
           >
-            👥 {interestedCount} interesado{interestedCount !== 1 ? 's' : ''}
+            👥 {interestedCount} {interestedCount !== 1 ? t('interested_plural') : t('interested_singular')}
           </div>
         </div>
       )}

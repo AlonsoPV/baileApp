@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from '../Navbar';
 import AppBootstrap from '@/providers/AppBootstrap';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -20,6 +21,7 @@ export default function AppShell() {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const { data: isSuperAdmin } = useIsAdmin();
+  const { t } = useTranslation();
 
   const defaultProfileInfo = getDefaultProfileInfo();
 
@@ -150,8 +152,7 @@ export default function AppShell() {
             height: 20px;
           }
           .join-cta-button {
-            font-size: 0.8125rem;
-            padding: 0.5rem 1rem;
+            display: none;
           }
         }
         @media (max-width: 768px) {
@@ -239,6 +240,9 @@ export default function AppShell() {
             transparent 100%);
           opacity: 0.3;
         }
+        .join-cta-button {
+          display: none !important;
+        }
         @media (max-width: 768px) {
           .app-footer {
             padding: 1rem 0.75rem;
@@ -262,9 +266,7 @@ export default function AppShell() {
             flex-shrink: 0;
           }
           .join-cta-button {
-            font-size: 0.75rem;
-            padding: 0.5rem 0.9rem;
-            white-space: nowrap;
+            display: none;
           }
         }
         @media (max-width: 480px) {
@@ -290,9 +292,7 @@ export default function AppShell() {
             width: 1px;
           }
           .join-cta-button {
-            font-size: 0.7rem;
-            padding: 0.45rem 0.75rem;
-            white-space: nowrap;
+            display: none;
           }
         }
 
@@ -340,15 +340,7 @@ export default function AppShell() {
             width: 1px !important;
           }
           .join-cta-button {
-            font-size: 0.65rem !important;
-            padding: 0.35rem 0.6rem !important;
-            border-radius: 12px !important;
-            white-space: nowrap !important;
-            flex-shrink: 0;
-          }
-          .join-cta-button span {
-            font-size: 0.65rem !important;
-            white-space: nowrap !important;
+            display: none !important;
           }
         }
         
@@ -369,11 +361,7 @@ export default function AppShell() {
             max-width: 100px !important;
           }
           .join-cta-button {
-            font-size: 0.6rem !important;
-            padding: 0.3rem 0.5rem !important;
-          }
-          .join-cta-button span {
-            font-size: 0.6rem !important;
+            display: none !important;
           }
         }
       `}</style>
@@ -391,12 +379,12 @@ export default function AppShell() {
             <div className="footer-separator" />
             <Link to="/aviso-de-privacidad" className="app-footer-link">
               <span>🔒</span>
-              <span>Legal</span>
+              <span>{t('legal')}</span>
             </Link>
             <div className="footer-separator" />
             <Link to="/app/roles/info" className="app-footer-link">
               <span>🎭</span>
-              <span className="footer-link-text">Roles en la comunidad</span>
+              <span className="footer-link-text">{t('roles_in_community_short')}</span>
             </Link>
           </div>
         </footer>

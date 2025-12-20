@@ -30,6 +30,8 @@ import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { ProfileSkeleton } from "../../components/skeletons/ProfileSkeleton";
 import { RefreshingIndicator } from "../../components/loading/RefreshingIndicator";
 import { useSmartLoading } from "../../hooks/useSmartLoading";
+import { useTranslation } from "react-i18next";
+import { getLocaleFromI18n } from "../../utils/locale";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -69,66 +71,12 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   );
 };
 
-// Componente para texto expandible
-const ExpandableText: React.FC<{ text: string; maxLength?: number }> = ({ text, maxLength = 450 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate = text.length > maxLength;
-  const displayText = shouldTruncate && !isExpanded 
-    ? text.substring(0, maxLength) + '...'
-    : text;
-
-  return (
-    <div style={{
-      padding: '1.5rem',
-      background: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      backdropFilter: 'blur(5px)'
-    }}>
-      <p style={{
-        fontSize: '1.1rem',
-        lineHeight: 1.8,
-        color: 'rgba(255, 255, 255, 0.95)',
-        margin: 0,
-        marginBottom: shouldTruncate ? '1rem' : 0,
-        fontWeight: 400
-      }}>
-        {displayText}
-      </p>
-      {shouldTruncate && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          style={{
-            padding: '0.5rem 1rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            color: '#fff',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            alignSelf: 'flex-start'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-          }}
-        >
-          {isExpanded ? 'Ver menos' : 'Ver más'}
-        </button>
-      )}
-    </div>
-  );
-};
+// Componente para texto expandible (se define dentro del componente para usar t())
 
 // Componente Carousel para videos
 const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ videos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { t } = useTranslation();
 
   if (videos.length === 0) return null;
 
@@ -324,7 +272,7 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
               <button
                 onClick={(e) => { e.stopPropagation(); prevVideo(); }}
                 className="video-gallery-nav-btn video-gallery-nav-btn--prev"
-                aria-label="Video anterior"
+                aria-label={t('previous_video')}
                 disabled={videos.length <= 1}
               >
                 ‹
@@ -332,7 +280,7 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
               <button
                 onClick={(e) => { e.stopPropagation(); nextVideo(); }}
                 className="video-gallery-nav-btn video-gallery-nav-btn--next"
-                aria-label="Video siguiente"
+                aria-label={t('next_video')}
                 disabled={videos.length <= 1}
               >
                 ›
@@ -349,7 +297,7 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
                 key={index}
                 onClick={() => goToVideo(index)}
                 className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-                aria-label={`Ver video ${index + 1}`}
+                aria-label={t('see_photo', { index: index + 1 })}
               >
                 <video src={video} muted />
               </button>
@@ -365,6 +313,7 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
 const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { t } = useTranslation();
   if (photos.length === 0) return null;
 
   const nextPhoto = useCallback(() => setCurrentIndex((prev) => (prev + 1) % photos.length), [photos.length]);
@@ -584,7 +533,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }
         <div className="photo-gallery-main">
           <ImageWithFallback
             src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
+            alt={t('see_photo', { index: currentIndex + 1 })}
             className="photo-gallery-image"
             onClick={() => setIsFullscreen(true)}
           />
@@ -608,9 +557,9 @@ const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }
                 key={index}
                 onClick={() => goToPhoto(index)}
                 className={`photo-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-                aria-label={`Ver foto ${index + 1}`}
+                aria-label={t('see_photo', { index: index + 1 })}
               >
-                <ImageWithFallback src={photo} alt={`Miniatura ${index + 1}`} />
+                <ImageWithFallback src={photo} alt={t('thumbnail', { index: index + 1 })} />
               </button>
             ))}
           </div>
@@ -622,12 +571,12 @@ const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }
           <button
             className="photo-gallery-fullscreen-close"
             onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
-            aria-label="Cerrar"
+            aria-label={t('close_fullscreen')}
           >
             ✕
           </button>
           <div className="photo-gallery-fullscreen-content" onClick={(e) => e.stopPropagation()}>
-            <ImageWithFallback src={photos[currentIndex]} alt={`Foto ${currentIndex + 1} - Pantalla completa`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <ImageWithFallback src={photos[currentIndex]} alt={t('see_photo_fullscreen', { index: currentIndex + 1 })} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
         </div>
       )}
@@ -635,13 +584,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }
   );
 });
 
-const promotionTypeMeta: Record<string, { icon: string; label: string }> = {
-  promocion: { icon: '✨', label: 'Promoción' },
-  paquete: { icon: '🧾', label: 'Paquete' },
-  descuento: { icon: '💸', label: 'Descuento' },
-  membresia: { icon: '🎟️', label: 'Membresía' },
-  otro: { icon: '💡', label: 'Otros' },
-};
+// promotionTypeMeta se define dentro del componente para usar t()
 
 const formatCurrency = (value?: number | string | null) => {
   const numeric = typeof value === 'string' ? Number(value) : value;
@@ -658,22 +601,7 @@ const formatCurrency = (value?: number | string | null) => {
   }
 };
 
-const formatPriceLabel = (value: any): string | null => {
-  // Si no hay precio (null, undefined, vacío), no mostrar nada
-  if (value === undefined || value === null || value === '') return null;
-  
-  // Convertir a número
-  const numeric = typeof value === 'number' ? value : Number(value);
-  
-  // Si no es un número válido, no mostrar
-  if (Number.isNaN(numeric)) return null;
-  
-  // Si es cero, mostrar "Gratis"
-  if (numeric === 0) return 'Gratis';
-  
-  // Si tiene valor, formatear como moneda
-  return formatCurrency(numeric);
-};
+// formatPriceLabel se define dentro del componente para usar t()
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
@@ -879,7 +807,6 @@ const STYLES = `
     border-radius: 18px;
     background: radial-gradient(circle at top, #0b3b74, #0b1220);
     border: 1px solid rgba(56, 189, 248, 0.7);
-    box-shadow: 0 12px 35px rgba(56, 189, 248, 0.45);
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -888,7 +815,6 @@ const STYLES = `
   .promo-price-box--destacado {
     background: radial-gradient(circle at top, #f97316, #b45309);
     border-color: rgba(251, 191, 36, 0.9);
-    box-shadow: 0 14px 40px rgba(251, 146, 60, 0.65);
   }
   .promo-price {
     font-size: 1.1rem;
@@ -1296,12 +1222,89 @@ const STYLES = `
 export default function AcademyPublicScreen() {
   const { academyId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const locale = getLocaleFromI18n();
   const id = Number(academyId);
   const academyQuery = useAcademyPublic(!Number.isNaN(id) ? id : (undefined as any));
   const { data: academy, isLoading, isFetching } = academyQuery;
   const { isFirstLoad, isRefetching } = useSmartLoading(academyQuery);
   const { data: allTags } = useTags();
   const [copied, setCopied] = React.useState(false);
+  
+  // promotionTypeMeta dentro del componente para usar t()
+  const promotionTypeMeta = React.useMemo(() => ({
+    promocion: { icon: '✨', label: t('promotion') },
+    paquete: { icon: '🧾', label: t('package') },
+    descuento: { icon: '💸', label: t('discount') },
+    membresia: { icon: '🎟️', label: t('membership') },
+    otro: { icon: '💡', label: t('other') },
+  }), [t]);
+  
+  // formatPriceLabel dentro del componente para usar t()
+  const formatPriceLabel = React.useCallback((value: any): string | null => {
+    if (value === undefined || value === null || value === '') return null;
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numeric)) return null;
+    if (numeric === 0) return t('free');
+    return formatCurrency(numeric);
+  }, [t]);
+  
+  // ExpandableText dentro del componente para usar t()
+  const ExpandableText: React.FC<{ text: string; maxLength?: number }> = ({ text, maxLength = 450 }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const shouldTruncate = text.length > maxLength;
+    const displayText = shouldTruncate && !isExpanded 
+      ? text.substring(0, maxLength) + '...'
+      : text;
+
+    return (
+      <div style={{
+        padding: '1.5rem',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '16px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(5px)'
+      }}>
+        <p style={{
+          fontSize: '1.1rem',
+          lineHeight: 1.8,
+          color: 'rgba(255, 255, 255, 0.95)',
+          margin: 0,
+          marginBottom: shouldTruncate ? '1rem' : 0,
+          fontWeight: 400
+        }}>
+          {displayText}
+        </p>
+        {shouldTruncate && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              color: '#fff',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              alignSelf: 'flex-start'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }}
+          >
+            {isExpanded ? t('see_less') : t('see_more')}
+          </button>
+        )}
+      </div>
+    );
+  };
   
   // Obtener maestros aceptados
   const { data: acceptedTeachers } = useAcceptedTeachers(id);
@@ -1373,8 +1376,8 @@ export default function AcademyPublicScreen() {
       <>
         <style>{STYLES}</style>
         <div style={{ padding: '48px 24px', textAlign: 'center', color: colors.light }}>
-          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Academia no disponible</h2>
-          <p style={{ marginBottom: '24px', opacity: 0.7 }}>Esta academia no existe o no está aprobada</p>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>{t('academy_not_available')}</h2>
+          <p style={{ marginBottom: '24px', opacity: 0.7 }}>{t('academy_not_exists')}</p>
         </div>
       </>
     );
@@ -1384,25 +1387,29 @@ export default function AcademyPublicScreen() {
     (academy as any)?.display_name ||
     (academy as any)?.nombre ||
     (academy as any)?.nombre_academia ||
-    'Academia de baile';
+    t('dance_academy');
   const highlightedRitmos = getRitmoNombres.slice(0, 3).join(', ');
   const cityName =
     (academy as any)?.ciudad ||
     (academy as any)?.zonas_nombres?.[0] ||
     (academy as any)?.zonas?.[0] ||
-    'México';
+    t('mexico');
   const shareImage = primaryAvatarUrl || carouselPhotos[0] || SEO_LOGO_URL;
   const academyUrl = `${SEO_BASE_URL}/academia/${academyId}`;
   const academyDescription =
     (academy as any)?.bio ||
-    `Conoce ${academyName}, academia de baile en ${cityName} con clases de ${highlightedRitmos || 'salsa, bachata y ritmos urbanos'}.`;
+    t('know_academy', { 
+      name: academyName, 
+      city: cityName, 
+      rhythms: highlightedRitmos || t('default_rhythms') 
+    });
 
   return (
     <>
       <RefreshingIndicator isFetching={isRefetching} />
       <SeoHead
         section="academy"
-        title={`${academyName} | Academia en Dónde Bailar`}
+        title={`${academyName} | ${t('academy_in_where_dance')}`}
         description={academyDescription}
         image={shareImage}
         url={academyUrl}
@@ -1432,7 +1439,7 @@ export default function AcademyPublicScreen() {
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
+            aria-label={t('back_to_start')}
             style={{
               position: 'absolute',
               top: '1rem',
@@ -1474,14 +1481,14 @@ export default function AcademyPublicScreen() {
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>{t('copied')}</div>}
           <div className="academy-banner-grid">
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
               <div className="academy-banner-avatar">
                 {primaryAvatarUrl ? (
                   <img
                     src={primaryAvatarUrl}
-                    alt="Logo de la academia"
+                    alt={t('dance_academy')}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
@@ -1526,17 +1533,17 @@ export default function AcademyPublicScreen() {
                       fontSize: '.75rem',
                       fontWeight: 900
                     }}>✓</div>
-                    <span>Verificado</span>
+                    <span>{t('verified')}</span>
                   </div>
                 )}
                 <button
-                  aria-label="Compartir perfil"
-                  title="Compartir"
+                  aria-label={t('share_profile')}
+                  title={t('share')}
                   onClick={() => {
                     try {
                       const url = typeof window !== 'undefined' ? window.location.href : '';
-                      const title = (academy as any)?.nombre_publico || 'Academia';
-                      const text = `Mira el perfil de ${title}`;
+                      const title = (academy as any)?.nombre_publico || t('academy');
+                      const text = t('check_academy_profile', { name: title });
                       const navAny = (navigator as any);
                       if (navAny && typeof navAny.share === 'function') {
                         navAny.share({ title, text, url }).catch(() => {});
@@ -1560,7 +1567,7 @@ export default function AcademyPublicScreen() {
                     fontWeight: 700
                   }}
                 >
-                  📤 Compartir
+                  📤 {t('share')}
                 </button>
               </div>
             </div>
@@ -1574,7 +1581,7 @@ export default function AcademyPublicScreen() {
               </h1>
 
               <p style={{ fontSize: '1.25rem', color: 'rgba(255, 255, 255, 0.9)', margin: '0 0 1.5rem 0', lineHeight: 1.4 }}>
-                Academia de Baile
+                {t('dance_academy')}
               </p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -1630,10 +1637,10 @@ export default function AcademyPublicScreen() {
               <div className="academy-section-icon">🎓</div>
               <div className="academy-section-title-wrapper">
                 <h2 className="academy-section-title">
-                  Nuestras clases
+                  {t('our_classes')}
                 </h2>
                 <p className="academy-section-subtitle">
-                  Horarios, costos y ubicaciones
+                  {t('schedule_costs_locations')}
                 </p>
               </div>
             </div>
@@ -1641,19 +1648,19 @@ export default function AcademyPublicScreen() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               {classesLoading ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-                  Cargando clases...
+                  {t('loading_classes')}
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
                 <>
                   <ClasesLiveTabs
                     classes={classesFromTables}
                     title=""
-                    subtitle="Filtra por día — solo verás los días que sí tienen clases"
+                    subtitle={t('filter_by_day')}
                     sourceType="academy"
                     sourceId={(academy as any)?.id}
                     isClickable={true}
                     whatsappNumber={(academy as any)?.whatsapp_number}
-                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
+                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || t('me_interested_class', { name: '{nombre}' })}
                     stripeAccountId={(academy as any)?.stripe_account_id}
                     stripeChargesEnabled={(academy as any)?.stripe_charges_enabled}
                     creatorName={(academy as any)?.nombre_publico || (academy as any)?.display_name}
@@ -1681,7 +1688,7 @@ export default function AcademyPublicScreen() {
                     sourceId={(academy as any)?.id}
                     isClickable={true}
                     whatsappNumber={(academy as any)?.whatsapp_number}
-                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || 'Hola, me interesa la clase: {nombre}'}
+                    whatsappMessageTemplate={(academy as any)?.whatsapp_message_template || t('me_interested_class', { name: '{nombre}' })}
                   />
                 </>
               )}
@@ -1700,8 +1707,8 @@ export default function AcademyPublicScreen() {
               <header className="promo-header">
                 <div className="promo-icon">💸</div>
                 <div>
-                  <h2>Promociones y Paquetes</h2>
-                  <p>Ofertas especiales y descuentos disponibles</p>
+                  <h2>{t('promotions_packages')}</h2>
+                  <p>{t('special_offers')}</p>
                 </div>
               </header>
 
@@ -1714,7 +1721,7 @@ export default function AcademyPublicScreen() {
                   
                   // Formatear el precio: extraer número y formatear con comas
                   let priceNumber: string | null = null;
-                  if (priceLabel && priceLabel !== 'Gratis') {
+                  if (priceLabel && priceLabel !== t('free')) {
                     const numeric = typeof promo?.precio === 'number' ? promo.precio : Number(promo?.precio);
                     if (!Number.isNaN(numeric) && numeric > 0) {
                       priceNumber = numeric.toLocaleString('en-US');
@@ -1733,7 +1740,7 @@ export default function AcademyPublicScreen() {
                         <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        <h3>{promo?.nombre || 'Promoción'}</h3>
+                        <h3>{promo?.nombre || t('promotion')}</h3>
                         {promo?.descripcion && (
                           <p className="promo-desc">{promo.descripcion}</p>
                         )}
@@ -1771,8 +1778,8 @@ export default function AcademyPublicScreen() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Grupos de Competencia</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>Grupos de entrenamiento y competencia</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('competition_groups')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>{t('training_competition')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -1816,8 +1823,8 @@ export default function AcademyPublicScreen() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)'
                 }}>❓</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Información para Estudiantes</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>Preguntas frecuentes</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('info_for_students')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>{t('frequently_asked_questions_short')}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1854,8 +1861,8 @@ export default function AcademyPublicScreen() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)' }}>⭐</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Qué dicen nuestros alumnos</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>Testimonios de estudiantes</p>
+                  <h3 className="section-title" style={{ margin: 0 }}>{t('what_our_students_say')}</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: 500 }}>{t('student_testimonials')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -1911,8 +1918,8 @@ export default function AcademyPublicScreen() {
               <div className="teachers-invited-header">
                 <div className="teachers-invited-icon">🎭</div>
                 <div>
-                  <h3 className="teachers-invited-title">Maestros Invitados</h3>
-                  <p className="teachers-invited-subtitle">Maestros que colaboran con la academia</p>
+                  <h3 className="teachers-invited-title">{t('invited_teachers')}</h3>
+                  <p className="teachers-invited-subtitle">{t('teachers_collaborate')}</p>
                 </div>
               </div>
               <HorizontalSlider
@@ -2202,7 +2209,7 @@ export default function AcademyPublicScreen() {
                       color: '#fff',
                       textShadow: '0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2)'
                     }}>
-                      Un poco más de nosotros
+                      {t('more_about_us')}
                     </h2>
                     <p style={{
                       fontSize: '0.95rem',
@@ -2211,7 +2218,7 @@ export default function AcademyPublicScreen() {
                       color: 'rgba(255, 255, 255, 0.9)',
                       fontWeight: 500
                     }}>
-                      Conoce más sobre nuestra academia
+                      {t('learn_more_academy')}
                     </p>
                   </div>
                 </div>
@@ -2230,7 +2237,7 @@ export default function AcademyPublicScreen() {
                       }}>
                         <img
                           src={fotoAbout.url}
-                          alt="Foto sobre nosotros"
+                          alt={t('photo_about_us')}
                         />
                       </div>
                       {verMasLink && (
@@ -2265,7 +2272,7 @@ export default function AcademyPublicScreen() {
                             e.currentTarget.style.boxShadow = '0 8px 24px rgba(30,136,229,0.3)';
                           }}
                         >
-                          <span>Conoce más</span>
+                          <span>{t('learn_more')}</span>
                           <span style={{ fontSize: '1.2rem' }}>→</span>
                         </a>
                       )}
@@ -2380,7 +2387,7 @@ export default function AcademyPublicScreen() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                      Videos
+                      {t('videos_section')}
                     </h3>
                     <p style={{
                       margin: '0.15rem 0 0 0',
@@ -2389,7 +2396,7 @@ export default function AcademyPublicScreen() {
                       fontWeight: 400,
                       lineHeight: 1.2
                     }}>
-                      {videos.length === 1 ? 'Video promocional' : 'Contenido multimedia destacado'}
+                      {videos.length === 1 ? t('promotional_video') : t('multimedia_highlighted')}
                     </p>
                   </div>
                 </div>
@@ -2401,7 +2408,7 @@ export default function AcademyPublicScreen() {
                   fontWeight: '600',
                   color: colors.light
                 }}>
-                  {videos.length} video{videos.length !== 1 ? 's' : ''}
+                  {videos.length} {videos.length !== 1 ? t('videos') : t('video')}
                 </div>
               </div>
 
@@ -2430,7 +2437,7 @@ export default function AcademyPublicScreen() {
                 marginBottom: '1.5rem'
               }}>
                 <h3 className="section-title">
-                  📷 Galería de Fotos
+                  📷 {t('photo_gallery')}
                 </h3>
                 <div style={{
                   padding: '0.5rem 1rem',
@@ -2440,7 +2447,7 @@ export default function AcademyPublicScreen() {
                   fontWeight: '600',
                   color: colors.light
                 }}>
-                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                  {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
                 </div>
               </div>
 

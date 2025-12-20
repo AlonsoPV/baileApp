@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
 import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
@@ -58,6 +59,7 @@ export default function AddToCalendarWithStats({
   const navigate = useNavigate();
   const routerLocation = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const eventIdStr = String(eventId);
 
@@ -282,7 +284,7 @@ export default function AddToCalendarWithStats({
       window.open(href, "_blank");
     } catch (err) {
 
-      alert("Error al añadir al calendario. Intenta nuevamente.");
+      alert(t('error_adding_calendar'));
     } finally {
       setLoading(false);
     }
@@ -518,10 +520,10 @@ export default function AddToCalendarWithStats({
           justifyContent: "center",
           fontSize: showAsIcon ? "20px" : "inherit",
         }}
-        title="Inicia sesión para añadir al calendario"
-        aria-label="Inicia sesión para añadir al calendario"
+        title={t('login_to_add_calendar')}
+        aria-label={t('login_to_add_calendar')}
       >
-        {showAsIcon ? "🔒" : "🔒 Inicia sesión"}
+        {showAsIcon ? "🔒" : `🔒 ${t('login')}`}
       </button>
     );
   }
@@ -554,7 +556,7 @@ export default function AddToCalendarWithStats({
               ? '0 6px 16px rgba(76,175,80,0.25)'
               : '0 6px 16px rgba(0,0,0,0.25)',
           }}
-          title={added ? "✅ Añadido al calendario" : "📅 Añadir a calendario"}
+          title={added ? t('added_calendar_tooltip') : t('add_calendar_tooltip')}
         >
           {added ? "✅" : loading ? "⏳" : "📅"}
         </motion.button>
@@ -635,13 +637,13 @@ export default function AddToCalendarWithStats({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MenuItem
-                    label="Google Calendar"
+                    label={t('google_calendar')}
                     onClick={() => handleAdd(googleUrl)}
                     icon="📅"
                   />
                   {icsBlobUrl && (
                     <MenuItem
-                      label="Apple Calendar (.ics)"
+                      label={t('apple_calendar')}
                       onClick={() => handleAdd(icsBlobUrl)}
                       icon="📱"
                     />
@@ -679,7 +681,7 @@ export default function AddToCalendarWithStats({
           backdropFilter: "blur(8px)",
           opacity: loading ? 0.7 : 1,
         }}
-        aria-label={added ? "Evento añadido al calendario" : "Añadir evento al calendario"}
+        aria-label={added ? t('event_added_calendar') : t('add_event_calendar')}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span
@@ -700,7 +702,7 @@ export default function AddToCalendarWithStats({
           >
             📅
           </span>
-          <span>{added ? "Añadido" : loading ? "Cargando..." : "Añadir a calendario"}</span>
+          <span>{added ? t('added_to_calendar') : loading ? t('adding_to_calendar') : t('add_to_calendar_button')}</span>
         </span>
       </motion.button>
 
@@ -790,9 +792,9 @@ export default function AddToCalendarWithStats({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <MenuItem label="Google Calendar" onClick={() => handleAdd(googleUrl)} icon="📅" />
+                <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
                 {icsBlobUrl && (
-                  <MenuItem label="Apple Calendar (.ics)" onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                  <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
                 )}
               </motion.div>
             )}

@@ -16,6 +16,7 @@ import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import { useTranslation } from "react-i18next";
 
 const STYLES = `
   .profile-container {
@@ -604,6 +605,7 @@ export const UserProfileLive: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { data: allTags } = useTags();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
@@ -816,13 +818,13 @@ export const UserProfileLive: React.FC = () => {
   }> = [
     {
       id: "following",
-      label: "Siguiendo",
+      label: t('following'),
       value: counts.following ?? 0,
       accent: "linear-gradient(120deg, rgba(94,234,212,0.65), rgba(59,130,246,0.65))",
     },
     {
       id: "followers",
-      label: "Seguidores",
+      label: t('followers'),
       value: counts.followers ?? 0,
       accent: "linear-gradient(120deg, rgba(251,113,133,0.7), rgba(168,85,247,0.7))",
     },
@@ -840,9 +842,9 @@ export const UserProfileLive: React.FC = () => {
           <div>
             <div style={{ fontSize: '2rem', marginBottom: 16 }}>⏳</div>
             <div style={{ textAlign: 'center', maxWidth: '400px', padding: '0 16px' }}>
-              <p style={{ marginBottom: '8px' }}>Estamos cargando el perfil...</p>
+              <p style={{ marginBottom: '8px' }}>{t('loading_profile')}</p>
               <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                Si tarda mucho, intenta refrescar la página para una carga más rápida.
+                {t('refresh_page_for_faster_load')}
               </p>
             </div>
           </div>
@@ -858,9 +860,9 @@ export const UserProfileLive: React.FC = () => {
         <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ maxWidth: 360 }}>
             <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚠️</div>
-            <p style={{ marginBottom: 8 }}>No se pudo cargar el perfil.</p>
+            <p style={{ marginBottom: 8 }}>{t('could_not_load_profile')}</p>
             <p style={{ marginBottom: 16, opacity: 0.75, fontSize: '0.9rem' }}>
-              Revisa tu conexión a internet e inténtalo de nuevo.
+              {t('check_connection')}
             </p>
             <button
               onClick={() => {
@@ -879,7 +881,7 @@ export const UserProfileLive: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              Reintentar
+              {t('retry')}
             </button>
           </div>
         </div>
@@ -894,7 +896,7 @@ export const UserProfileLive: React.FC = () => {
         <div style={{ padding: 24, textAlign: 'center', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div>
             <div style={{ fontSize: '2rem', marginBottom: 16 }}>❌</div>
-            <p>Perfil no encontrado</p>
+            <p>{t('profile_not_found')}</p>
           </div>
         </div>
       </>
@@ -904,8 +906,8 @@ export const UserProfileLive: React.FC = () => {
   const handleShareProfile = async () => {
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
-      const title = profile?.display_name || 'Perfil';
-      const text = `Mira el perfil de ${profile?.display_name || 'usuario'}`;
+      const title = profile?.display_name || t('profile');
+      const text = t('check_teacher_profile', { name: profile?.display_name || t('user') });
       const navAny = (navigator as any);
       
       if (navAny && typeof navAny.share === 'function') {
@@ -935,7 +937,7 @@ export const UserProfileLive: React.FC = () => {
       }
     } catch (error) {
       console.error('Error al compartir:', error);
-      alert('No se pudo copiar el enlace. Intenta copiar la URL manualmente desde la barra de direcciones.');
+      alert(t('could_not_copy_link'));
     }
   };
 
@@ -990,7 +992,7 @@ export const UserProfileLive: React.FC = () => {
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
+            aria-label={t('back_to_start')}
             style={{
               position: 'absolute',
               top: '1rem',
@@ -1068,7 +1070,7 @@ export const UserProfileLive: React.FC = () => {
                 {avatarUrl ? (
                   <ImageWithFallback
                     src={avatarUrl}
-                    alt="Avatar"
+                    alt={t('avatar')}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1096,8 +1098,8 @@ export const UserProfileLive: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  aria-label="Compartir perfil"
-                  title="Compartir"
+                  aria-label={t('share_profile')}
+                  title={t('share')}
                   onClick={handleShareProfile}
                   style={{
                     display: 'inline-flex',
@@ -1125,7 +1127,7 @@ export const UserProfileLive: React.FC = () => {
                   }}
                 >
                   <span style={{ fontSize: '1rem' }}>📤</span>
-                  <span>Compartir</span>
+                  <span>{t('share')}</span>
                 </motion.button>
                 {copied && (
                   <motion.div
@@ -1157,7 +1159,7 @@ export const UserProfileLive: React.FC = () => {
                     }}
                   >
                     <span>✓</span>
-                    <span>Copiado</span>
+                    <span>{t('copied')}</span>
                   </motion.div>
                 )}
               </div>
@@ -1189,7 +1191,7 @@ export const UserProfileLive: React.FC = () => {
                   textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
                 }}
               >
-                {profile?.display_name || 'Usuario'}
+                {profile?.display_name || t('user')}
               </h1>
 
               <div
@@ -1260,7 +1262,7 @@ export const UserProfileLive: React.FC = () => {
                       opacity: followLoading ? 0.7 : 1
                     }}
                   >
-                    {isFollowing ? 'Siguiendo' : 'Seguir'}
+                    {isFollowing ? t('following') : t('follow')}
                   </button>
                 )}
               </div>
@@ -1411,8 +1413,8 @@ export const UserProfileLive: React.FC = () => {
                 </div>
                 <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
                   {networkTab === 'following'
-                    ? `${profile.display_name || 'Este usuario'} aún no sigue a nadie.`
-                    : `${profile.display_name || 'Este usuario'} todavía no tiene seguidores.`}
+                    ? t('no_following_yet', { name: profile.display_name || t('this_user') })
+                    : t('no_followers_yet', { name: profile.display_name || t('this_user') })}
                 </p>
               </div>
             ) : (
@@ -1504,7 +1506,7 @@ export const UserProfileLive: React.FC = () => {
                           >
                             <ImageWithFallback
                               src={person.avatar_url || ''}
-                              alt={person.display_name || 'Perfil'}
+                              alt={person.display_name || t('profile')}
                               style={{
                                 width: '100%',
                                 height: '100%',
@@ -1532,7 +1534,7 @@ export const UserProfileLive: React.FC = () => {
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap'
                           }}>
-                            {person.display_name || 'Bailarín'}
+                            {person.display_name || t('dancer')}
                           </div>
                           <span
                             style={{
@@ -1551,7 +1553,7 @@ export const UserProfileLive: React.FC = () => {
                               boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                             }}
                           >
-                            {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
+                            {networkTab === 'followers' ? t('follows_you') : t('you_follow')}
                           </span>
                         </div>
                       </div>
@@ -1573,7 +1575,7 @@ export const UserProfileLive: React.FC = () => {
                           fontWeight: 600,
                           letterSpacing: 0.2
                         }}>
-                          Ver perfil
+                          {t('view_profile')}
                         </span>
                         <span style={{ 
                           color: '#fff', 
@@ -1634,7 +1636,7 @@ export const UserProfileLive: React.FC = () => {
                     {fotoP2 ? (
                   <ImageWithFallback
                         src={fotoP2.url}
-                    alt="Foto personal"
+                    alt={t('personal_photo')}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1652,13 +1654,13 @@ export const UserProfileLive: React.FC = () => {
                     color: 'rgba(255, 255, 255, 0.5)',
                     fontSize: '0.875rem'
                   }}>
-                    📷 Sin foto
+                    {t('no_photo')}
                   </div>
                 )}
               </div>
 
               <div>
-              <h3 className="section-title">💡 Dime un dato curioso de ti</h3>
+              <h3 className="section-title">{t('curious_fact_title')}</h3>
                 <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -1669,7 +1671,7 @@ export const UserProfileLive: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.95)',
                   fontWeight: '400'
                 }}>
-                      {datoCuriosoTrimmed || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+                      {datoCuriosoTrimmed || t('no_curious_fact')}
                 </div>
               </div>
             </div>
@@ -1699,7 +1701,7 @@ export const UserProfileLive: React.FC = () => {
           >
             <div className="question-section">
               <div>
-              <h3 className="section-title">¿Qué es lo que más te gusta bailar?</h3>
+              <h3 className="section-title">{t('what_you_like_to_dance_title')}</h3>
                 <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -1710,7 +1712,7 @@ export const UserProfileLive: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.95)',
                   fontWeight: '400'
                 }}>
-                      {gustaBailarTrimmed || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+                      {gustaBailarTrimmed || t('no_dance_style')}
                 </div>
               </div>
 
@@ -1724,7 +1726,7 @@ export const UserProfileLive: React.FC = () => {
                     {fotoP3 ? (
                   <ImageWithFallback
                         src={fotoP3.url}
-                    alt="Foto de baile"
+                    alt={t('dance_photo')}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1742,7 +1744,7 @@ export const UserProfileLive: React.FC = () => {
                     color: 'rgba(255, 255, 255, 0.5)',
                     fontSize: '0.875rem'
                   }}>
-                    📷 Sin foto
+                    {t('no_photo')}
                   </div>
                 )}
               </div>
@@ -1769,7 +1771,7 @@ export const UserProfileLive: React.FC = () => {
               gap: '0.75rem'
             }}>
               <h3 className="section-title" style={{ margin: 0 }}>
-                ✨ Eventos de Interés
+                {t('interested_events_title')}
               </h3>
               {availableRsvpEvents.length > 0 && (
                 <div style={{
@@ -1781,7 +1783,9 @@ export const UserProfileLive: React.FC = () => {
                   color: colors.light,
                   whiteSpace: 'nowrap'
                 }}>
-                  {availableRsvpEvents.length} evento{availableRsvpEvents.length !== 1 ? 's' : ''}
+                  {availableRsvpEvents.length === 1 
+                    ? t('event_count', { count: availableRsvpEvents.length })
+                    : t('event_count_plural', { count: availableRsvpEvents.length })}
                 </div>
               )}
             </div>
@@ -1822,7 +1826,7 @@ export const UserProfileLive: React.FC = () => {
                   marginBottom: '0.5rem',
                   color: colors.light
                 }}>
-                  Sin eventos de interés por ahora
+                  {t('no_interested_events_yet')}
                 </h4>
                 <p style={{
                   fontSize: '0.875rem',
@@ -1830,7 +1834,7 @@ export const UserProfileLive: React.FC = () => {
                   marginBottom: '1.5rem',
                   color: colors.light
                 }}>
-                  Explora eventos y marca los que te interesen para verlos aquí
+                  {t('explore_events_prompt')}
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -1848,7 +1852,7 @@ export const UserProfileLive: React.FC = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  🔍 Explorar Eventos
+                  🔍 {t('explore_events')}
                 </motion.button>
               </motion.div>
             )}
@@ -1879,7 +1883,7 @@ export const UserProfileLive: React.FC = () => {
           >
             <div className="question-section">
               <div>
-                <h3 className="section-title">🎥 Video principal</h3>
+                <h3 className="section-title">🎥 {t('main_video')}</h3>
                 {/* <div style={{
                   padding: '1.25rem',
                   background: 'rgba(255, 255, 255, 0.08)',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import ClasesLive from '@/components/events/ClasesLive';
 import TeacherCard from '@/components/explore/cards/TeacherCard';
 import AcademyCard from '@/components/explore/cards/AcademyCard';
@@ -18,6 +19,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
+import { getLocaleFromI18n } from '@/utils/locale';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -25,7 +27,8 @@ type SourceType = 'teacher' | 'academy';
 function buildClassWhatsAppUrl(
   phone?: string | null,
   messageTemplate?: string | null,
-  className?: string
+  className?: string,
+  helloFromDb?: string
 ): string | undefined {
   if (!phone) return undefined;
   
@@ -40,13 +43,14 @@ function buildClassWhatsAppUrl(
       .replace(/\{clase\}/g, className);
   } else if (className) {
     // Mensaje por defecto si no hay template
-    message = `me interesa la clase: ${className}`;
+    message = t('me_interested_class', { name: className });
   }
 
   // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
+  const defaultHello = helloFromDb || t('hello_from_db');
   const fullMessage = message.trim() 
-    ? `Hola vengo de Donde Bailar MX, ${message.trim()}`
-    : 'Hola vengo de Donde Bailar MX';
+    ? `${defaultHello}, ${message.trim()}`
+    : defaultHello;
 
   const encoded = encodeURIComponent(fullMessage);
   return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
@@ -59,6 +63,8 @@ export default function ClassPublicScreen() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const createCheckout = useCreateCheckoutSession();
+  const { t } = useTranslation();
+  const locale = getLocaleFromI18n();
 
   // Permitir /clase?type=teacher&id=123 o /clase/:type/:id
   const sourceType = (params as any)?.type || (sp.get('type') as SourceType) || 'teacher';
@@ -78,20 +84,20 @@ export default function ClassPublicScreen() {
   const profile: any = isTeacher ? teacherQ.data : academyQ.data;
 
   if (!rawId || Number.isNaN(idNum)) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>Falta id</div>;
+    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('missing_id')}</div>;
   }
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>Cargando…</div>;
+    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('loading')}</div>;
   }
 
   if (!profile) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>Clase no encontrada</div>;
+    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('class_not_found')}</div>;
   }
 
   const creatorName = profile?.nombre_publico || profile?.display_name || '—';
   const creatorLink = isTeacher ? urls.teacherLive(profile?.id) : urls.academyLive(profile?.id);
-  const creatorTypeLabel = isTeacher ? 'Maestro' : 'Academia';
+  const creatorTypeLabel = isTeacher ? t('teacher') : t('academy');
 
   // Usar cronograma como fuente principal, con horarios como fallback para compatibilidad
   const cronograma = profile?.cronograma || profile?.horarios || [];
@@ -204,7 +210,7 @@ export default function ClassPublicScreen() {
     || (selectedClass?.titulo)
     || (selectedClass?.clase)
     || (selectedClass?.estilo)
-    || 'Clase';
+    || t('class');
 
   // Configuración WhatsApp para clases (solo academias tienen WhatsApp configurado)
   const whatsappNumber = !isTeacher ? ((profile as any)?.whatsapp_number || null) : null;
@@ -231,16 +237,16 @@ export default function ClassPublicScreen() {
 
   const handlePayClick = async () => {
     if (!user) {
-      showToast('Debes iniciar sesión para pagar', 'error');
+      showToast(t('must_login_to_pay'), 'error');
       navigate('/auth/login');
       return;
     }
     if (!profile?.stripe_account_id) {
-      showToast('Esta academia/maestro todavía no tiene Stripe listo para cobrar.', 'error');
+      showToast(t('stripe_not_ready'), 'error');
       return;
     }
     if (!classPrice || classPrice <= 0) {
-      showToast('Esta clase no tiene un precio válido para pago.', 'error');
+      showToast(t('no_valid_price'), 'error');
       return;
     }
 
@@ -277,14 +283,14 @@ export default function ClassPublicScreen() {
 
       await createCheckout.mutateAsync({
         price: classPrice,
-        description: `Clase: ${classTitle} con ${creatorName}`,
+        description: t('class_with_creator', { title: classTitle, creator: creatorName }),
         connectedAccountId: profile.stripe_account_id,
         origin: 'clase',
         bookingId,
       });
     } catch (error: any) {
       console.error('[ClassPublicScreen] Error al procesar pago:', error);
-      showToast(error?.message || 'Error al iniciar el pago', 'error');
+      showToast(error?.message || t('error_starting_payment'), 'error');
     }
   };
 
@@ -308,9 +314,9 @@ export default function ClassPublicScreen() {
         if (typeof precio === 'number') {
           console.log('[ClassPublicScreen] ✅ Costo encontrado directamente en el item del cronograma:', { costoEnClase });
           if (precio === 0) {
-            return 'Gratis';
+            return t('free');
           }
-          return new Intl.NumberFormat('en-US', {
+          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
@@ -446,9 +452,9 @@ export default function ClassPublicScreen() {
         const precio = match?.precio;
         if (typeof precio === 'number') {
           if (precio === 0) {
-            return 'Gratis';
+            return t('free');
           }
-          return new Intl.NumberFormat('en-US', {
+          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
@@ -461,7 +467,7 @@ export default function ClassPublicScreen() {
           const min = Math.min(...(nums as number[]));
           console.log('[ClassPublicScreen] 💰 Usando precio mínimo:', min);
           if (min === 0) {
-            return 'Gratis';
+            return t('free');
           }
           return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -501,7 +507,7 @@ export default function ClassPublicScreen() {
     (selectedClass?.ritmos && Array.isArray(selectedClass.ritmos) && selectedClass.ritmos) ||
     [];
   const ritmosLabel = Array.isArray(ritmosRaw) ? ritmosRaw.slice(0, 3).join(', ') : '';
-  const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || 'México';
+  const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || t('mexico');
   const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
   const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
   const mediaList = (profile as any)?.media || [];
@@ -527,7 +533,7 @@ export default function ClassPublicScreen() {
           locationName,
           ritmosLabel,
           'clases de baile',
-          'Dónde Bailar',
+          t('where_dance'),
         ].filter(Boolean) as string[]}
       />
       <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0', position: 'relative' }}>
@@ -559,7 +565,7 @@ export default function ClassPublicScreen() {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
             }}
           >
-            ← Volver {fromParam === '/me/compras' ? 'a Compras' : 'a RSVPs'}
+            {fromParam === '/me/compras' ? t('back_to_purchases') : t('back_to_rsvps')}
           </button>
         </div>
       )}
@@ -999,9 +1005,9 @@ export default function ClassPublicScreen() {
                     fontSize: '0.9rem',
                     boxShadow: '0 8px 20px rgba(240,147,251,.25)'
                   }}
-                >
-                  ← Volver
-                </motion.button>
+                  >
+                    {t('back')}
+                  </motion.button>
               </div>
               
               <h1 className="class-title" style={{ textAlign: 'left' }}>
@@ -1022,7 +1028,7 @@ export default function ClassPublicScreen() {
                       // Crear fecha en hora local (no UTC) para evitar mostrar día anterior
                       return new Date(year, month - 1, day);
                     })();
-                    const fechaStr = fechaDate.toLocaleDateString('es-ES', { 
+                    const fechaStr = fechaDate.toLocaleDateString(locale, { 
                       weekday: 'short', 
                       day: 'numeric', 
                       month: 'short' 
@@ -1036,8 +1042,8 @@ export default function ClassPublicScreen() {
                     // Si hay un parámetro de día específico en la URL, mostrar solo ese día
                     const diaNum = Number(diaParam);
                     if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                      const dayName = dayNames[diaNum] || 'Día no especificado';
+                      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
+                      const dayName = dayNames[diaNum] || t('day_not_specified');
                       return (
                         <span className="chip chip-date">
                           📅 {dayName}
@@ -1048,8 +1054,8 @@ export default function ClassPublicScreen() {
                     // Si hay un parámetro de día específico en la URL, mostrar solo ese día
                     const diaNum = Number(diaParam);
                     if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                      const dayName = dayNames[diaNum] || 'Día no especificado';
+                      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
+                      const dayName = dayNames[diaNum] || t('day_not_specified');
                       return (
                         <span className="chip chip-date">
                           📅 {dayName}
@@ -1058,8 +1064,8 @@ export default function ClassPublicScreen() {
                     }
                   } else if (selectedClass?.diaSemana !== undefined && selectedClass?.diaSemana !== null) {
                     // Día de la semana
-                    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                    const dayName = dayNames[selectedClass.diaSemana] || 'Día no especificado';
+                    const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
+                    const dayName = dayNames[selectedClass.diaSemana] || t('day_not_specified');
                     return (
                       <span className="chip chip-date">
                         📅 {dayName}
@@ -1067,15 +1073,15 @@ export default function ClassPublicScreen() {
                     );
                   } else if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
                     // Múltiples días - convertir números/strings a nombres de días
-                    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
                     const dayNameMap: Record<string, string> = {
-                      'domingo': 'Domingo', 'dom': 'Domingo',
-                      'lunes': 'Lunes', 'lun': 'Lunes',
-                      'martes': 'Martes', 'mar': 'Martes',
-                      'miércoles': 'Miércoles', 'miercoles': 'Miércoles', 'mié': 'Miércoles', 'mie': 'Miércoles',
-                      'jueves': 'Jueves', 'jue': 'Jueves',
-                      'viernes': 'Viernes', 'vie': 'Viernes',
-                      'sábado': 'Sábado', 'sabado': 'Sábado', 'sáb': 'Sábado', 'sab': 'Sábado',
+                      'domingo': t('sunday'), 'dom': t('sunday'),
+                      'lunes': t('monday'), 'lun': t('monday'),
+                      'martes': t('tuesday'), 'mar': t('tuesday'),
+                      'miércoles': t('wednesday'), 'miercoles': t('wednesday'), 'mié': t('wednesday'), 'mie': t('wednesday'),
+                      'jueves': t('thursday'), 'jue': t('thursday'),
+                      'viernes': t('friday'), 'vie': t('friday'),
+                      'sábado': t('saturday'), 'sabado': t('saturday'), 'sáb': t('saturday'), 'sab': t('saturday'),
                     };
                     const diasLegibles = selectedClass.diasSemana.map((d: string | number) => {
                       if (typeof d === 'number' && d >= 0 && d <= 6) {
@@ -1140,7 +1146,7 @@ export default function ClassPublicScreen() {
                     }}
                   >
                     <span>📍</span>
-                    <span>Ver en Maps</span>
+                    <span>{t('view_on_maps')}</span>
                     <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
                   </motion.a>
                 )}
@@ -1148,7 +1154,7 @@ export default function ClassPublicScreen() {
                 {/* Botón WhatsApp (solo para academias con WhatsApp configurado y usuarios logueados) */}
                 {user && whatsappNumber && (
                   <motion.a
-                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle) || '#'}
+                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle, t('hello_from_db')) || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05, y: -2 }}
@@ -1171,7 +1177,7 @@ export default function ClassPublicScreen() {
                     }}
                   >
                     <FaWhatsapp size={18} />
-                    <span>Consultar por WhatsApp</span>
+                    <span>{t('consult_whatsapp')}</span>
                   </motion.a>
                 )}
 
@@ -1202,8 +1208,8 @@ export default function ClassPublicScreen() {
                     <span>💳</span>
                     <span>
                       {createCheckout.isPending
-                        ? 'Procesando...'
-                        : `Pagar ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
+                        ? t('processing')
+                        : `${t('pay')} ${new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', { style: 'currency', currency: 'MXN' }).format(
                             classPrice,
                           )}`}
                     </span>

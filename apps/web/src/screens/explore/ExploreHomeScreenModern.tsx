@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useExploreFilters } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
 import EventCard from "../../components/explore/cards/EventCard";
@@ -182,6 +183,7 @@ const CTACard = React.memo(({
   sectionType: 'clases' | 'academias' | 'maestros' | 'organizadores' | 'marcas';
   idx: number;
 }) => {
+  const { t } = useTranslation();
   const handleClick = React.useCallback(() => {
     window.location.href = 'https://dondebailar.com.mx/app/roles/info';
   }, []);
@@ -267,7 +269,7 @@ const CTACard = React.memo(({
           boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
           border: '2px solid rgba(255, 255, 255, 0.3)'
         }}>
-          Únete
+          {t('join')}
         </div>
 
         {/* Icono */}
@@ -1222,6 +1224,7 @@ function Section({ title, toAll, children, count }: { title: string; toAll: stri
 export default function ExploreHomeScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { filters, set } = useExploreFilters();
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
@@ -1910,55 +1913,15 @@ export default function ExploreHomeScreen() {
     set(newFilters);
   };
 
-  // Calcular contadores para cada preset de fecha
-  const getDatePresetCount = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    const todayYmd = getTodayCDMX();
-    const todayDate = new Date(todayYmd + 'T12:00:00');
-    
-    if (preset === 'todos') {
-      return filteredFechas.length;
-    }
-    
-    if (preset === 'hoy') {
-      return filteredFechas.filter((f: any) => {
-        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
-        return fechaStr === todayYmd;
-      }).length;
-    }
-    
-    if (preset === 'semana') {
-      const weekEnd = addDays(todayDate, 6);
-      const weekEndStr = weekEnd.toISOString().slice(0, 10);
-      return filteredFechas.filter((f: any) => {
-        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
-        if (!fechaStr) return false;
-        return fechaStr >= todayYmd && fechaStr <= weekEndStr;
-      }).length;
-    }
-    
-    if (preset === 'siguientes') {
-      const weekEnd = addDays(todayDate, 6);
-      const weekEndStr = weekEnd.toISOString().slice(0, 10);
-      return filteredFechas.filter((f: any) => {
-        const fechaStr = f?.fecha ? String(f.fecha).split('T')[0] : null;
-        if (!fechaStr) return false;
-        return fechaStr > weekEndStr;
-      }).length;
-    }
-    
-    return 0;
-  }, [filteredFechas]);
-
   const renderDatePresetButtons = (mobile = false) => (
     <>
       {([
-        { id: 'todos', label: 'Todos' },
-        { id: 'hoy', label: 'Hoy' },
-        { id: 'semana', label: 'Esta semana' },
-        { id: 'siguientes', label: 'Siguientes' },
+        { id: 'todos', label: t('all') },
+        { id: 'hoy', label: t('today') },
+        { id: 'semana', label: t('this_week') },
+        { id: 'siguientes', label: t('next_week') },
       ] as const).map((p) => {
         const active = (filters.datePreset || 'todos') === p.id;
-        const count = getDatePresetCount(p.id);
         return (
           <button
             key={p.id}
@@ -1966,14 +1929,8 @@ export default function ExploreHomeScreen() {
             className={`q ${active ? 'q--active' : ''}`}
             disabled={isPending}
             aria-pressed={active}
-            title={count > 0 ? `${count} evento${count !== 1 ? 's' : ''}` : undefined}
           >
             <span className="label">{p.label}</span>
-            {count > 0 && (
-              <span className="badge" aria-label={`${count} eventos`}>
-                {count}
-              </span>
-            )}
           </button>
         );
       })}
@@ -1997,14 +1954,14 @@ export default function ExploreHomeScreen() {
                 <div className="filters-fav__left">
                   <span className="filters-fav__icon">⭐</span>
                   <div>
-                    <p className="filters-fav__title">Usando tus filtros favoritos</p>
+                    <p className="filters-fav__title">{t('using_favorites')}</p>
                     <p style={{
                       margin: '0.25rem 0 0 0',
                       fontSize: '0.75rem',
                       color: 'rgba(255, 255, 255, 0.65)',
                       fontWeight: 400
                     }}>
-                      Configúralos en tu{' '}
+                      {t('configure_in_profile')}{' '}
                       <Link
                         to="/profile"
                         style={{
@@ -2014,13 +1971,13 @@ export default function ExploreHomeScreen() {
                           fontWeight: 500
                         }}
                       >
-                        perfil
+                        {t('profile')}
                       </Link>
                     </p>
                   </div>
                 </div>
                 <button className="filters-fav__btn" type="button" onClick={resetToFavoriteFilters}>
-                  <span>🔁 Restablecer favoritos</span>
+                  <span>{t('reset_favorites')}</span>
                 </button>
               </motion.div>
             )}
@@ -2029,12 +1986,14 @@ export default function ExploreHomeScreen() {
             <div className="fxc__row1">
               <div className="fxc__head">
                 <h2 className="fxc__title" id="fxc-title">
-                  <span aria-hidden="true">🧩</span> Filtros
+                  <span aria-hidden="true">🧩</span> {t('filters')}
                 </h2>
                 <span className="fxc__state" aria-live="polite">
                   {activeFiltersCount > 0
-                    ? `${activeFiltersCount} filtro${activeFiltersCount !== 1 ? 's' : ''} activos`
-                    : 'Sin filtros'}
+                    ? (activeFiltersCount === 1
+                      ? t('active_filters', { count: activeFiltersCount })
+                      : t('active_filters_plural', { count: activeFiltersCount }))
+                    : t('no_filters')}
                 </span>
                 {activeFiltersCount > 0 && (
                   <button
@@ -2078,9 +2037,9 @@ export default function ExploreHomeScreen() {
                       (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.14)';
                       (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)';
                     }}
-                    aria-label="Limpiar todos los filtros"
+                    aria-label={t('clear_all_filters')}
                   >
-                    🗑️ Limpiar
+                    🗑️ {t('clear')}
                   </button>
                 )}
                 </div>
@@ -2119,21 +2078,21 @@ export default function ExploreHomeScreen() {
                         }}
                       >
                         <span style={{ fontSize: '0.75rem' }}>⭐</span>
-                        <span>Activar favoritos</span>
+                        <span>{t('activate_favorites')}</span>
                       </button>
                     )}
                 </div>
 
             {/* Row 2: 4 chips en una fila */}
-            <div className="fxc__row2" role="toolbar" aria-label="Controles">
-              <nav className="segment" aria-label="Tipo de filtro">
+            <div className="fxc__row2" role="toolbar" aria-label={t('controls')}>
+              <nav className="segment" aria-label={t('filter_type_aria')}>
                 <button
                   className={`seg ${openFilterDropdown === 'tipos' ? 'seg--active' : ''}`}
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === 'tipos' ? null : 'tipos')}
                   aria-pressed={openFilterDropdown === 'tipos'}
                   role="button"
                 >
-                  👥 ¿Qué buscas?
+                  👥 {t('what_are_you_looking_for')}
                   {filters.type !== 'all' && (
                     <span style={{
                       display: 'inline-grid',
@@ -2155,7 +2114,7 @@ export default function ExploreHomeScreen() {
                   aria-pressed={openFilterDropdown === 'ritmos'}
                   role="button"
                 >
-                  🎵 Ritmos
+                  🎵 {t('rhythms')}
                   {stableRitmos.length > 0 && (
                     <span style={{
                       display: 'inline-grid',
@@ -2177,7 +2136,7 @@ export default function ExploreHomeScreen() {
                   aria-pressed={openFilterDropdown === 'zonas'}
                   role="button"
                 >
-                  📍 Zona
+                  📍 {t('zones')}
                   {stableZonas.length > 0 && (
                     <span style={{
                       display: 'inline-grid',
@@ -2199,7 +2158,7 @@ export default function ExploreHomeScreen() {
                   aria-pressed={openFilterDropdown === 'fechas'}
                   role="button"
                 >
-                  🗓️ Fechas
+                  🗓️ {t('dates')}
                   {(filters.dateFrom || filters.dateTo) && (
                     <span style={{
                       display: 'inline-grid',
@@ -2225,7 +2184,7 @@ export default function ExploreHomeScreen() {
                     background: filters.q ? 'rgba(240, 147, 251, 0.12)' : undefined
                   }}
                 >
-                  🔎 Buscar
+                  🔎 {t('search_action')}
                   {filters.q && (
                     <span style={{
                       display: 'inline-grid',
@@ -2266,7 +2225,7 @@ export default function ExploreHomeScreen() {
                     }}
                     role="button"
                   >
-                    🗑️ Limpiar ({activeFiltersCount})
+                    🗑️ {t('clear')} ({activeFiltersCount})
                   </button>
                 )}
               </nav>
@@ -2310,7 +2269,7 @@ export default function ExploreHomeScreen() {
                     </span>
                     <input
                       type="text"
-                    placeholder="Buscar eventos, clases, maestros..."
+                    placeholder={t('search_placeholder_expanded')}
                       value={filters.q || ''}
                       onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
                       style={{
@@ -2364,7 +2323,7 @@ export default function ExploreHomeScreen() {
                         }}
                         aria-label="Limpiar búsqueda"
                       >
-                      Limpiar
+                      {t('clear')}
                       </button>
                     )}
                     <button
@@ -2396,7 +2355,7 @@ export default function ExploreHomeScreen() {
                       (e.currentTarget as HTMLButtonElement).style.background = '#181b26';
                       (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fp-border-soft)';
                       }}
-                      aria-label="Colapsar búsqueda"
+                      aria-label={t('collapse_search')}
                     >
                       ✖
                     </button>
@@ -2411,9 +2370,9 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
-            <Section title="Lo que viene en la escena" toAll="/explore/list?type=fechas" count={filteredFechas.length}>
+            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length}>
               {fechasLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
                 <>
                   {filteredFechas.length > 0 ? (
@@ -2425,7 +2384,7 @@ export default function ExploreHomeScreen() {
                       )}
                     />
                   ) : (
-                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   )}
                   {fechasLoadMore.hasNextPage && (
                     <button
@@ -2433,7 +2392,7 @@ export default function ExploreHomeScreen() {
                       onClick={fechasLoadMore.handleLoadMore}
                       disabled={fechasLoadMore.isFetching}
                     >
-                      {fechasLoadMore.isFetching ? 'Cargando...' : 'Cargar más fechas'}
+                      {fechasLoadMore.isFetching ? t('loading_dots') : t('load_more_dates')}
                     </button>
                   )}
                 </>
@@ -2442,10 +2401,10 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
-            <Section title="Clases recomendadas para ti" toAll="/explore/list?type=clases" count={classesList.length}>
+            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length}>
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
-                if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>;
+                if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
 
                 return (
                   <>
@@ -2470,7 +2429,7 @@ export default function ExploreHomeScreen() {
                                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                               }}
                             >
-                              <CTACard text="¿Eres maestro o academia? Publica tus clases aquí." sectionType="clases" idx={idx} />
+                              <CTACard text={t('cta_classes')} sectionType="clases" idx={idx} />
                             </motion.div>
                           );
                         }
@@ -2488,7 +2447,7 @@ export default function ExploreHomeScreen() {
                         }}
                         disabled={academiasLoadMore.isFetching || maestrosLoadMore.isFetching}
                       >
-                        {(academiasLoadMore.isFetching || maestrosLoadMore.isFetching) ? 'Cargando...' : 'Cargar más clases'}
+                        {(academiasLoadMore.isFetching || maestrosLoadMore.isFetching) ? t('loading_dots') : t('load_more_classes')}
                       </button>
                     )}
                   </>
@@ -2498,7 +2457,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
-            <Section title="Las mejores academias de tu zona" toAll="/explore/list?type=academias" count={academiasData.length}>
+            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length}>
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
@@ -2523,16 +2482,16 @@ export default function ExploreHomeScreen() {
                     transition: 'all 0.2s',
                   }}
                     >
-                      {academiasLoadMore.isFetching ? 'Cargando...' : 'Cargar más academias'}
+                      {academiasLoadMore.isFetching ? t('loading_dots') : t('load_more_academies')}
                     </button>
               )}
             </Section>
           )}
 
           {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title="Maestros destacados" toAll="/explore/list?type=teacher" count={maestrosData.length}>
+            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=teacher" count={maestrosData.length}>
               {maestrosLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
                 <>
                   <HorizontalSlider
@@ -2556,7 +2515,7 @@ export default function ExploreHomeScreen() {
                               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                             }}
                           >
-                            <CTACard text="¿Eres maestro? Comparte tus clases y muestra tu trayectoria." sectionType="maestros" idx={idx} />
+                            <CTACard text={t('cta_teachers')} sectionType="maestros" idx={idx} />
                           </motion.div>
                         );
                       }
@@ -2588,7 +2547,7 @@ export default function ExploreHomeScreen() {
                       onClick={maestrosLoadMore.handleLoadMore}
                       disabled={maestrosLoadMore.isFetching}
                     >
-                      {maestrosLoadMore.isFetching ? 'Cargando...' : 'Cargar más maestros'}
+                      {maestrosLoadMore.isFetching ? t('loading_dots') : t('load_more_teachers')}
                     </button>
                   )}
                 </>
@@ -2597,7 +2556,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
-            <Section title="Parejas de baile cerca de ti" toAll="/explore/list?type=usuarios" count={validUsuarios.length}>
+            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length}>
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -2647,7 +2606,7 @@ export default function ExploreHomeScreen() {
                           color: colors.gray[400],
                           fontSize: '0.875rem'
                         }}>
-                          Cargando más usuarios...
+                          {t('loading_more_users')}
                         </div>
                       )}
                     </>
@@ -2658,12 +2617,12 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
-            <Section title="Productores de eventos" toAll="/explore/list?type=organizadores" count={organizadoresData.length}>
+            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length}>
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="card-skeleton">
-                      Cargando…
+                      {t('loading')}
                     </div>
                   ))}
                 </div>
@@ -2690,7 +2649,7 @@ export default function ExploreHomeScreen() {
                               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                             }}
                           >
-                            <CTACard text="¿Organizas eventos? Publícalos aquí y recibe más asistentes." sectionType="organizadores" idx={idx} />
+                            <CTACard text={t('cta_organizers')} sectionType="organizadores" idx={idx} />
                           </motion.div>
                         );
                       }
@@ -2722,20 +2681,20 @@ export default function ExploreHomeScreen() {
                       onClick={organizadoresLoadMore.handleLoadMore}
                       disabled={organizadoresLoadMore.isFetching}
                     >
-                      {organizadoresLoadMore.isFetching ? 'Cargando...' : 'Cargar más organizadores'}
+                      {organizadoresLoadMore.isFetching ? t('loading_dots') : t('load_more_organizers')}
                     </button>
                   )}
                 </>
               ) : (
-                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>Sin resultados</div>
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
               )}
             </Section>
           )}
 
           {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
-            <Section title="Marcas especializadas en baile" toAll="/explore/list?type=marcas" count={marcasData.length}>
+            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length}>
               {marcasLoading ? (
-                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
+                <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
                 <>
                   <HorizontalSlider
@@ -2759,7 +2718,7 @@ export default function ExploreHomeScreen() {
                               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
                             }}
                           >
-                            <CTACard text="¿Tienes una marca de baile? Llega a más bailarines desde aquí." sectionType="marcas" idx={idx} />
+                            <CTACard text={t('cta_brands')} sectionType="marcas" idx={idx} />
                           </motion.div>
                         );
                       }
@@ -2791,7 +2750,7 @@ export default function ExploreHomeScreen() {
                       onClick={marcasLoadMore.handleLoadMore}
                       disabled={marcasLoadMore.isFetching}
                     >
-                      {marcasLoadMore.isFetching ? 'Cargando...' : 'Cargar más marcas'}
+                      {marcasLoadMore.isFetching ? t('loading_dots') : t('load_more_brands')}
                     </button>
                   )}
                 </>
@@ -2800,7 +2759,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {/* Sección Comparte */}
-          <Section title="Comparte" toAll="">
+          <Section title={t('share_section')} toAll="">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2866,7 +2825,7 @@ export default function ExploreHomeScreen() {
                         backgroundClip: "text",
                       }}
                     >
-                      Comparte Dónde Bailar
+                      {t('share_db_title')}
                     </h3>
                     <p
                       style={{
@@ -2877,7 +2836,7 @@ export default function ExploreHomeScreen() {
                         opacity: 0.9,
                       }}
                     >
-                      Escanea el código QR y comparte la app con tus amigos bailarines
+                      {t('share_db_body')}
                     </p>
                   </div>
 
@@ -2949,7 +2908,7 @@ export default function ExploreHomeScreen() {
                       fontStyle: "italic",
                     }}
                   >
-                    ¡Únete a la comunidad de bailarines!
+                    {t('join_community')}
                   </p>
                 </div>
               </div>
@@ -2999,10 +2958,10 @@ export default function ExploreHomeScreen() {
               }}
             >
               <h3 style={{ margin: 0, marginBottom: spacing[3], fontSize: '1.1rem', fontWeight: 700 }}>
-                No encontramos resultados con estos filtros
+                {t('no_results_with_filters_title')}
               </h3>
               <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.85 }}>
-                Intenta ajustar los filtros o cambiar de zona/ritmo.
+                {t('no_results_with_filters_body')}
               </p>
             </div>
           )}

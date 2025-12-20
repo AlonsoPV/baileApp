@@ -8,6 +8,8 @@ import { AuthProvider } from './contexts/AuthProvider';
 import { ToastProvider } from './components/Toast';
 import App from './App';
 import './index.css';
+// ✅ Inicializar i18n ANTES de renderizar la app
+import './i18n';
 
 // Normalizar URLs con dobles barras ANTES de que React Router las procese
 if (window.location.pathname.includes('//')) {

@@ -125,39 +125,51 @@ export const EXPLORE_CARD_STYLES = `
   }
 
   .explore-card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
     display: flex;
-    gap: clamp(8px, 1vw, 10px);
     align-items: center;
+    justify-content: center;
   }
 
-  /* CTA is visual only (whole card is a link) */
+  /* CTA is visual only (whole card is a link) - botón minimalista en esquina superior derecha del media */
   .explore-card-cta {
-    flex: 1;
-    padding: clamp(10px, 1.6vw, 16px) clamp(14px, 2vw, 24px);
-    border-radius: 16px;
-    font-weight: 900;
-    font-size: clamp(12px, 1.9vw, 15px);
-    color: #111;
-    background: linear-gradient(135deg, #FFD1DD, #FFC38F);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(255, 209, 221, 0.3), 0 2px 8px rgba(255, 195, 143, 0.2);
-    letter-spacing: 0.3px;
     user-select: none;
     pointer-events: none;
+    transition: all 0.2s ease;
   }
 
-  .explore-card-cta::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-    opacity: 0;
-    transition: opacity 0.3s;
+  .explore-card-cta svg {
+    width: 18px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.9);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s ease;
   }
 
-  .explore-card:hover .explore-card-cta::before {
-    opacity: 1;
+  .explore-card:hover .explore-card-cta {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+  }
+
+  .explore-card:hover .explore-card-cta svg {
+    stroke: rgba(255, 255, 255, 1);
   }
 `;
 
