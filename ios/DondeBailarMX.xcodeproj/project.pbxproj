@@ -146,7 +146,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */,
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* Copy Hermes dSYM */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */,
 			);
 			buildRules = (
 			);
@@ -320,22 +320,21 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DondeBailarMX/expo-configure-project.sh\"\n";
 		};
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* Copy Hermes dSYM */ = {
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework.dSYM",
-				"${PODS_ROOT}/hermes-engine/Pre-built/hermes.framework.dSYM",
+				"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes",
 			);
-			name = "Copy Hermes dSYM";
+			name = "Generate Hermes dSYM";
 			outputPaths = (
 				"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Copy Hermes dSYM to archive for symbolication\n# This ensures crash reports from Hermes can be symbolicated\n\nHERMES_DSYM_SOURCE=\"\"\n\n# Try to find the Hermes dSYM in common locations\nif [ -d \"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework.dSYM\" ]; then\n  HERMES_DSYM_SOURCE=\"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework.dSYM\"\nelif [ -d \"${PODS_ROOT}/hermes-engine/Pre-built/hermes.framework.dSYM\" ]; then\n  HERMES_DSYM_SOURCE=\"${PODS_ROOT}/hermes-engine/Pre-built/hermes.framework.dSYM\"\nfi\n\nif [ -n \"$HERMES_DSYM_SOURCE\" ] && [ -d \"$HERMES_DSYM_SOURCE\" ]; then\n  echo \"[Hermes dSYM] Found at: $HERMES_DSYM_SOURCE\"\n  \n  # Ensure the dSYM folder exists\n  mkdir -p \"${DWARF_DSYM_FOLDER_PATH}\"\n  \n  # Copy the dSYM to the archive\n  if [ -d \"${DWARF_DSYM_FOLDER_PATH}\" ]; then\n    cp -R \"$HERMES_DSYM_SOURCE\" \"${DWARF_DSYM_FOLDER_PATH}/\"\n    echo \"[Hermes dSYM] Copied to: ${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM\"\n  else\n    echo \"[Hermes dSYM] Warning: DWARF_DSYM_FOLDER_PATH not set, skipping copy\"\n  fi\nelse\n  echo \"[Hermes dSYM] Warning: Hermes dSYM not found, skipping copy\"\nfi\n";
+			shellScript = "set -euo pipefail\n\n# Generate Hermes dSYM to archive for symbolication\n# This ensures crash reports from Hermes can be symbolicated\n\n# Path of the Hermes binary that was linked into your app\nHERMES_BIN=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes\"\n\n# Where Xcode expects the dSYM for this build configuration\nHERMES_DSYM=\"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM\"\n\n# Only run dsymutil if the binary exists and the dSYM isn't there yet\nif [ -f \"$HERMES_BIN\" ] && [ ! -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] Generating dSYM for Hermes from: $HERMES_BIN\"\n  \n  # Ensure the dSYM folder exists\n  mkdir -p \"${DWARF_DSYM_FOLDER_PATH}\"\n  \n  # Generate the dSYM using dsymutil\n  /usr/bin/dsymutil \"$HERMES_BIN\" -o \"$HERMES_DSYM\"\n  \n  if [ -d \"$HERMES_DSYM\" ]; then\n    echo \"[Hermes dSYM] Successfully generated at: $HERMES_DSYM\"\n  else\n    echo \"[Hermes dSYM] Warning: dSYM generation may have failed\"\n  fi\nelif [ -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] dSYM already exists at: $HERMES_DSYM\"\nelif [ ! -f \"$HERMES_BIN\" ]; then\n  echo \"[Hermes dSYM] Warning: Hermes binary not found at: $HERMES_BIN\"\nelse\n  echo \"[Hermes dSYM] Warning: DWARF_DSYM_FOLDER_PATH not set, skipping generation\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
