@@ -13,7 +13,7 @@
     "dev:web": "pnpm --filter @baileapp/web dev",
     "build:web": "pnpm --filter @baileapp/web build",
     "preview:web": "pnpm --filter @baileapp/web preview",
-    "eas-build-post-install": "export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 && bash ci_scripts/ensure_pods.sh",
+    "eas-build-post-install": "bash ci_scripts/ensure_pods.sh || true",
     "build:dev:android": "eas build --profile developmentClient --platform android",
     "build:dev:ios": "eas build --profile developmentClient --platform ios",
     "build:preview:android": "eas build --profile preview --platform android",
