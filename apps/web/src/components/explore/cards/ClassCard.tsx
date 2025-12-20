@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 type ClaseItem = {
   titulo?: string;
-  fecha?: string; // YYYY-MM-DD si específica
+  fecha?: string; // YYYY-MM-DD si espec ífica
   diasSemana?: string[]; // si semanal
   diaSemana?: number; // día específico (0-6) para clases expandidas con múltiples días
   inicio?: string; // HH:MM
