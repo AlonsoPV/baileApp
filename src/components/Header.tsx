@@ -5,8 +5,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   colors,
@@ -33,10 +33,7 @@ interface HeaderProps {
 export function Header({ title, onMenuPress, rightAction }: HeaderProps) {
   return (
     <>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.primary[600]}
-      />
+      <StatusBar style="light" />
 
       {/* SafeAreaView se encarga de no pisar la status bar */}
       <SafeAreaView style={styles.safeArea} edges={['top']}>

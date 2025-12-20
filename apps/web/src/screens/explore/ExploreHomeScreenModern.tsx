@@ -84,18 +84,28 @@ function useLoadMoreOnDemand(query: InfiniteQueryLike<any, unknown> | null) {
   return { handleLoadMore, hasNextPage: query?.hasNextPage ?? false, isFetching: query?.isFetchingNextPage ?? false };
 }
 
+/**
+ * FechaItem - Componente memoizado optimizado para scroll fluido
+ * 
+ * Optimizaciones:
+ * - Memoización con comparación personalizada para evitar re-renders innecesarios
+ * - Reducción de animaciones en mobile (solo primeras 10 cards en desktop)
+ * - CSS contain para limitar repaints
+ * - Aceleración de hardware con translateZ(0)
+ * - Comparación por ID y recurrence_index para estabilidad
+ */
 const FechaItem = React.memo(({ fechaEvento, idx, handlePreNavigate }: { fechaEvento: any; idx: number; handlePreNavigate: () => void }) => {
   const uniqueKey = fechaEvento._recurrence_index !== undefined
     ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
     : (fechaEvento.id ?? `fecha_${idx}`);
 
+  // Reducir animaciones en mobile para mejor rendimiento
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const shouldAnimate = !isMobile && idx < 10; // Solo animar primeras 10 cards
+
   return (
-    <motion.div
+    <div
       key={uniqueKey}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: idx * 0.05, duration: 0.3 }}
-      whileHover={{ y: -4, scale: 1.02 }}
       onClickCapture={handlePreNavigate}
       style={{
         background: 'rgba(255,255,255,0.04)',
@@ -103,27 +113,62 @@ const FechaItem = React.memo(({ fechaEvento, idx, handlePreNavigate }: { fechaEv
         borderRadius: 16,
         padding: 0,
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+        // Optimizaciones de rendimiento
+        transform: 'translateZ(0)',
+        willChange: 'auto',
+        contain: 'layout style paint',
+        // Mejorar rendimiento en mobile
+        WebkitTransform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
       }}
     >
-      <EventCard item={fechaEvento} />
-    </motion.div>
+      {shouldAnimate ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05, duration: 0.3 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <EventCard item={fechaEvento} />
+        </motion.div>
+      ) : (
+        <EventCard item={fechaEvento} />
+      )}
+    </div>
   );
+}, (prevProps, nextProps) => {
+  // Comparación personalizada para evitar re-renders innecesarios
+  return prevProps.fechaEvento?.id === nextProps.fechaEvento?.id &&
+         prevProps.fechaEvento?._recurrence_index === nextProps.fechaEvento?._recurrence_index &&
+         prevProps.idx === nextProps.idx;
 });
 
 FechaItem.displayName = 'FechaItem';
 
+/**
+ * ClaseItem - Componente memoizado optimizado para scroll fluido
+ * 
+ * Optimizaciones:
+ * - Memoización con comparación personalizada por ownerType/ownerId/titulo
+ * - Reducción de animaciones en mobile (solo primeras 10 cards en desktop)
+ * - CSS contain para limitar repaints
+ * - Aceleración de hardware con translateZ(0)
+ * - Comparación estable por clave única del item
+ */
 const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; idx: number; handlePreNavigate: () => void }) => {
   const stableKey =
     `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
 
+  // Reducir animaciones en mobile para mejor rendimiento
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const shouldAnimate = !isMobile && idx < 10; // Solo animar primeras 10 cards
+
   return (
-    <motion.div
+    <div
       key={stableKey}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: idx * 0.05, duration: 0.3 }}
-      whileHover={{ y: -4, scale: 1.02 }}
       onClickCapture={handlePreNavigate}
       style={{
         background: 'rgba(255,255,255,0.04)',
@@ -131,12 +176,37 @@ const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; i
         borderRadius: 16,
         padding: 0,
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+        // Optimizaciones de rendimiento
+        transform: 'translateZ(0)',
+        willChange: 'auto',
+        contain: 'layout style paint',
+        // Mejorar rendimiento en mobile
+        WebkitTransform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
       }}
     >
-      <ClassCard item={clase} fillHeight />
-    </motion.div>
+      {shouldAnimate ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05, duration: 0.3 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <ClassCard item={clase} fillHeight />
+        </motion.div>
+      ) : (
+        <ClassCard item={clase} fillHeight />
+      )}
+    </div>
   );
+}, (prevProps, nextProps) => {
+  // Comparación personalizada para evitar re-renders innecesarios
+  const prevKey = `${prevProps.clase.ownerType || 'owner'}-${prevProps.clase.ownerId ?? 'unknown'}-${prevProps.clase.titulo ?? 'class'}`;
+  const nextKey = `${nextProps.clase.ownerType || 'owner'}-${nextProps.clase.ownerId ?? 'unknown'}-${nextProps.clase.titulo ?? 'class'}`;
+  return prevKey === nextKey && prevProps.idx === nextProps.idx;
 });
 
 ClaseItem.displayName = 'ClaseItem';
@@ -447,7 +517,7 @@ const STYLES = `
     color: var(--text);
     padding: clamp(8px, 1.6vw, 12px);
     max-width: 960px;
-    margin: 0 auto;
+    margin: 1.5px auto;
     display: grid;
     gap: var(--gap-2);
     font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
@@ -1407,10 +1477,57 @@ export default function ExploreHomeScreen() {
     return count;
   }, [filters.type, filters.q, stableRitmos.length, stableZonas.length, filters.dateFrom, filters.dateTo]);
 
+  // Memoizar handlePreNavigate para evitar re-renders de cards
   const handlePreNavigate = React.useCallback(() => {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
+
+  // Memoizar renderItem functions para evitar recrearlas en cada render
+  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
+    return (
+      <FechaItem 
+        key={fechaEvento._recurrence_index !== undefined 
+          ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}` 
+          : (fechaEvento.id ?? `fecha_${idx}`)} 
+        fechaEvento={fechaEvento} 
+        idx={idx} 
+        handlePreNavigate={handlePreNavigate} 
+      />
+    );
+  }, [handlePreNavigate]);
+
+  const renderClaseItem = React.useCallback((item: any, idx: number) => {
+    if (item?.__isCTA) {
+      return (
+        <motion.div
+          key="cta-clases"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05, duration: 0.3 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 16,
+            padding: 0,
+            overflow: 'hidden',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          <CTACard text={t('cta_classes')} sectionType="clases" idx={idx} />
+        </motion.div>
+      );
+    }
+    return (
+      <ClaseItem 
+        key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} 
+        clase={item} 
+        idx={idx} 
+        handlePreNavigate={handlePreNavigate} 
+      />
+    );
+  }, [handlePreNavigate, t]);
 
   const shouldLoadFechas = showAll || selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
@@ -2381,9 +2498,7 @@ export default function ExploreHomeScreen() {
                     <HorizontalSlider
                       {...sliderProps}
                       items={filteredFechas}
-                      renderItem={(fechaEvento: any, idx: number) => (
-                        <FechaItem key={fechaEvento._recurrence_index !== undefined ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}` : (fechaEvento.id ?? `fecha_${idx}`)} fechaEvento={fechaEvento} idx={idx} handlePreNavigate={handlePreNavigate} />
-                      )}
+                      renderItem={renderFechaItem}
                     />
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -2413,32 +2528,7 @@ export default function ExploreHomeScreen() {
                     <HorizontalSlider
                       {...sliderProps}
                       items={classesListWithCTA}
-                      renderItem={(item: any, idx: number) => {
-                        if (item?.__isCTA) {
-                          return (
-                            <motion.div
-                              key="cta-clases"
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.05, duration: 0.3 }}
-                              whileHover={{ y: -4, scale: 1.02 }}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 16,
-                                padding: 0,
-                                overflow: 'hidden',
-                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-                              }}
-                            >
-                              <CTACard text={t('cta_classes')} sectionType="clases" idx={idx} />
-                            </motion.div>
-                          );
-                        }
-                        return (
-                          <ClaseItem key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} clase={item} idx={idx} handlePreNavigate={handlePreNavigate} />
-                        );
-                      }}
+                      renderItem={renderClaseItem}
                     />
                     {(academiasLoadMore.hasNextPage || maestrosLoadMore.hasNextPage) && (
                       <button

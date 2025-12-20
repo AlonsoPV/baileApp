@@ -1,5 +1,15 @@
 // components/explore/HorizontalSlider.tsx
-import React, { useRef, useMemo } from "react";
+/**
+ * HorizontalSlider optimizado para scroll fluido en mobile
+ * 
+ * Optimizaciones implementadas:
+ * - Detección de scroll activo para desactivar animaciones pesadas
+ * - Aceleración de hardware con translateZ(0) y will-change
+ * - CSS contain para limitar repaints durante scroll
+ * - Reducción de scroll-behavior durante scroll activo
+ * - Optimizaciones específicas para mobile (touch-action, overscroll-behavior)
+ */
+import React, { useRef, useMemo, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 
 type Props<T = any> = {
@@ -22,15 +32,40 @@ export default function HorizontalSlider<T>({
   autoColumns
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
 
-  const scrollByAmount = (dir: 1 | -1) => {
+  // Detectar cuando el scroll está activo para desactivar animaciones pesadas
+  const handleScroll = useCallback(() => {
+    setIsScrolling(true);
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [handleScroll]);
+
+  const scrollByAmount = useCallback((dir: 1 | -1) => {
     const el = viewportRef.current;
     if (!el) return;
     const amount = el.clientWidth * scrollStep * dir;
     el.scrollBy({ left: amount, behavior: "smooth" });
-  };
+  }, [scrollStep]);
 
   return (
     <div
@@ -45,7 +80,7 @@ export default function HorizontalSlider<T>({
       {/* Viewport central */}
       <div
         ref={viewportRef}
-        className="horizontal-scroll"
+        className={`horizontal-scroll ${isScrolling ? 'scrolling' : ''}`}
         style={{
           position: "relative",
           overflowX: "auto",
@@ -56,13 +91,17 @@ export default function HorizontalSlider<T>({
           padding: "0.5rem 0",
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
-          scrollBehavior: "smooth",
+          scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
           // Aceleración de hardware
           transform: "translateZ(0)",
-          willChange: "scroll-position",
+          willChange: isScrolling ? "scroll-position" : "auto",
           // Touch actions
-          touchAction: "pan-x"
+          touchAction: "pan-x",
+          // Mejorar rendimiento en mobile
+          WebkitTransform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden"
         }}
       >
         {/* Oculta scrollbar nativo en webkit */}
@@ -81,7 +120,14 @@ export default function HorizontalSlider<T>({
               : autoColumns === null
               ? {}
               : { gridAutoColumns: autoColumns as any }),
-            gap
+            gap,
+            // Optimizaciones de rendimiento durante scroll
+            willChange: isScrolling ? "transform" : "auto",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            perspective: "1000px",
+            WebkitPerspective: "1000px"
           }}
         >
           <style>{`
@@ -96,6 +142,18 @@ export default function HorizontalSlider<T>({
               .horizontal-slider-grid {
                 grid-auto-columns: calc(100vw - 100px) !important;
               }
+            }
+            
+            /* Optimizaciones de rendimiento para cards durante scroll */
+            .horizontal-slider-grid > * {
+              contain: layout style paint;
+              transform: translateZ(0);
+              will-change: auto;
+            }
+            
+            /* Reducir animaciones durante scroll activo */
+            .horizontal-scroll.scrolling .horizontal-slider-grid > * {
+              transition: none !important;
             }
           `}</style>
           {items?.map((it, idx) => renderItem(it, idx))}

@@ -65,7 +65,7 @@ export const EXPLORE_CARD_STYLES = `
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    object-position: center center;
     filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
     z-index: 1;
   }

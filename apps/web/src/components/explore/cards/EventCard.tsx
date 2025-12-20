@@ -209,8 +209,8 @@ export default function EventCard({ item }: EventCardProps) {
           inset: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;        /* ✅ cover para llenar el espacio */
-          object-position: center;  /* ✅ centrada */
+          object-fit: cover;
+          object-position: center center;
           filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
           z-index: 1;
         }
@@ -355,6 +355,19 @@ export default function EventCard({ item }: EventCardProps) {
               <img
                 src={flyerWithCacheBust || flyer}
                 alt={`Poster del evento ${nombre}`}
+                loading="lazy"
+                decoding="async"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center center',
+                  // Optimizaciones de rendimiento
+                  transform: 'translateZ(0)',
+                  willChange: 'auto',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden'
+                }}
               />
             )}
 

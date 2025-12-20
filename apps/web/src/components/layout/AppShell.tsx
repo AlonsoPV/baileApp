@@ -190,7 +190,7 @@ export default function AppShell() {
           flex-wrap: nowrap;
           position: relative;
           z-index: 1;
-          padding: 0 0.5rem;
+          padding: 0;
         }
         
         .app-footer-content > * {
@@ -251,7 +251,7 @@ export default function AppShell() {
             gap: 0.75rem;
             flex-wrap: nowrap;
             justify-content: center;
-            padding: 0 0.25rem;
+            padding: 0;
           }
           .app-footer-link {
             font-size: 0.75rem;
@@ -275,7 +275,7 @@ export default function AppShell() {
           }
           .app-footer-content {
             gap: 0.5rem;
-            padding: 0 0.25rem;
+            padding: 0;
           }
           .app-footer-link {
             font-size: 0.7rem;
@@ -304,9 +304,9 @@ export default function AppShell() {
           .app-footer-content {
             gap: 0.35rem !important;
             flex-wrap: nowrap !important;
-            justify-content: space-between !important;
+            justify-content: center !important;
             width: 100% !important;
-            padding: 0 0.2rem !important;
+            padding: 0 !important;
           }
           .app-footer-content > * {
             flex: 0 1 auto;
@@ -351,7 +351,7 @@ export default function AppShell() {
           }
           .app-footer-content {
             gap: 0.25rem !important;
-            padding: 0 0.15rem !important;
+            padding: 0 !important;
           }
           .app-footer-link {
             font-size: 0.6rem !important;

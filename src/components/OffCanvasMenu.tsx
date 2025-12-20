@@ -8,8 +8,8 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, borderRadius, typography, layout, shadows } from '../theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -78,7 +78,8 @@ export function OffCanvasMenu({
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>
-      <StatusBar backgroundColor={visible ? 'rgba(0,0,0,0.5)' : 'transparent'} />
+      {/* StatusBar: usar estilo light cuando el menú está visible (overlay oscuro) */}
+      {visible && <StatusBar style="light" />}
       
       {/* Overlay */}
       <TouchableWithoutFeedback onPress={onClose}>

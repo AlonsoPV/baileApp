@@ -145,7 +145,7 @@ const config: ExpoConfig = {
   runtimeVersion: "1.0.1",
 
   scheme: "dondebailarmx",
-  orientation: "portrait",
+  orientation: "default", // Permite todas las orientaciones para compatibilidad con pantallas grandes (Android 16+)
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
   newArchEnabled: false, // ⚠️ Deshabilitado temporalmente debido a crash en TurboModules (iOS 18.1)

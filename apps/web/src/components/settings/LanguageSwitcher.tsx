@@ -113,7 +113,7 @@ function LanguageSwitcher() {
           align-items: center;
           gap: 6px;
           padding: 6px 10px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          border: none;
           border-radius: 10px;
           background: transparent;
           color: #ffffff;
@@ -129,7 +129,6 @@ function LanguageSwitcher() {
 
         .lang-switcher__button:hover {
           background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.45);
           transform: translateY(-1px);
         }
 
@@ -139,7 +138,6 @@ function LanguageSwitcher() {
 
         .lang-switcher__button[aria-expanded="true"] {
           background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.5);
         }
 
         .lang-switcher__button-icon {
