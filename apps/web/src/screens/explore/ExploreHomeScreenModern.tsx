@@ -400,8 +400,17 @@ const STYLES = `
     width: 100%;
     overflow-x: hidden;
     padding-top: 0;
-    padding-bottom: env(safe-area-inset-bottom); 
-
+    padding-bottom: env(safe-area-inset-bottom);
+    /* Optimizaciones de scroll vertical */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    /* Aceleración de hardware para scroll fluido */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: auto;
+    /* Mejorar rendimiento en mobile */
+    backfaceVisibility: hidden;
+    -webkit-backfaceVisibility: hidden;
   }
   .filters { padding: ${spacing[6]}; }
   .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
@@ -410,6 +419,10 @@ const STYLES = `
     grid-template-columns: 1fr; 
     gap: 1.5rem;
     padding: 1rem 0;
+    /* Optimizaciones de rendimiento */
+    contain: layout style;
+    transform: translateZ(0);
+    will-change: auto;
   }
   @media (min-width: 768px) {
     .cards-grid { 
@@ -424,6 +437,9 @@ const STYLES = `
     padding: 0 ${spacing[6]} ${spacing[10]};
     width: 100%;
     box-sizing: border-box;
+    /* Optimizaciones de scroll */
+    transform: translateZ(0);
+    will-change: auto;
   }
   .panel { 
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
@@ -434,6 +450,12 @@ const STYLES = `
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    /* Optimizaciones de rendimiento */
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: auto;
+    backfaceVisibility: hidden;
+    -webkit-backfaceVisibility: hidden;
   }
   .panel::before {
     content: '';
@@ -448,6 +470,10 @@ const STYLES = `
   .section-container {
     margin-bottom: 4rem;
     position: relative;
+    /* Optimizaciones de rendimiento durante scroll */
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: auto;
   }
   .section-header {
     margin-bottom: 2rem;

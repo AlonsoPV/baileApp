@@ -94,6 +94,18 @@ export default function AppShell() {
           min-height: calc(100vh - 200px);
           /* Asegurar padding-bottom suficiente para que el footer no tape contenido */
           padding-bottom: calc(2rem);
+          /* Optimizaciones de scroll vertical */
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: contain;
+          /* Aceleración de hardware para scroll fluido */
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+          will-change: auto;
+          /* Mejorar rendimiento en mobile */
+          backfaceVisibility: hidden;
+          -webkit-backfaceVisibility: hidden;
+          /* Contenido optimizado para scroll */
+          contain: layout style;
         }
         @media (max-width: 768px) {
           .app-shell-content {

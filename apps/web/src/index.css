@@ -17,8 +17,11 @@ html {
   scroll-behavior: smooth;
   /* Prevenir scroll horizontal no deseado */
   overflow-x: hidden;
-  /* Mejorar rendimiento de scroll */
-  will-change: scroll-position;
+  /* Mejorar rendimiento de scroll - solo activar durante scroll activo */
+  will-change: auto;
+  /* Aceleración de hardware */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 body {
@@ -37,10 +40,15 @@ body {
   -webkit-transform: translateZ(0);
   /* Prevenir scroll horizontal */
   overflow-x: hidden;
-  /* Mejorar rendimiento */
-  will-change: scroll-position;
+  /* Mejorar rendimiento - solo durante scroll activo */
+  will-change: auto;
   /* Touch actions optimizadas */
   touch-action: pan-y;
+  /* Reducir repaints durante scroll */
+  backfaceVisibility: hidden;
+  -webkit-backfaceVisibility: hidden;
+  /* Contenido optimizado */
+  contain: layout style;
 }
 
 button {
@@ -126,21 +134,35 @@ button {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
-    /* Reducir repaint durante scroll */
-    will-change: scroll-position;
+    /* Aceleración de hardware - solo durante scroll activo */
+    will-change: auto;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    /* Reducir repaints */
+    backfaceVisibility: hidden;
+    -webkit-backfaceVisibility: hidden;
   }
 
   /* Optimizar scroll en listas y grids */
   ul, ol, div[role="list"] {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    /* Aceleración de hardware */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    contain: layout style;
   }
 
   /* Prevenir scroll bounce no deseado en iOS */
   body {
     overscroll-behavior-y: contain;
+  }
+  
+  /* Reducir animaciones durante scroll en mobile para mejor rendimiento */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      scroll-behavior: auto !important;
+    }
   }
 }
 
