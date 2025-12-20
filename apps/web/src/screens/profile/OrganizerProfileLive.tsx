@@ -19,6 +19,7 @@ import RequireLogin from "@/components/auth/RequireLogin";
 import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
@@ -782,10 +783,14 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
   return (
     <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
       <div className="video-gallery-main">
-        <video
+        <VideoPlayerWithPiP
           src={videos[currentIndex]}
-          controls
           className="video-gallery-video"
+          controls
+          preload="metadata"
+          controlsList="nodownload noplaybackrate"
+          aspectRatio="16 / 9"
+          aria-label={`Video ${currentIndex + 1} de ${videos.length}`}
         />
 
         <div className="video-gallery-counter">

@@ -32,6 +32,7 @@ import { RefreshingIndicator } from "../../components/loading/RefreshingIndicato
 import { useSmartLoading } from "../../hooks/useSmartLoading";
 import { useTranslation } from "react-i18next";
 import { getLocaleFromI18n } from "../../utils/locale";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -77,6 +78,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
 const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ videos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { t } = useTranslation();
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   if (videos.length === 0) return null;
 
@@ -255,10 +257,14 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
       <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
         {/* Video principal */}
         <div className="video-gallery-main">
-          <video
+          <VideoPlayerWithPiP
             src={videos[currentIndex]}
-            controls
             className="video-gallery-video"
+            controls
+            preload="metadata"
+            controlsList="nodownload noplaybackrate"
+            aspectRatio="16 / 9"
+            aria-label={t('promotional_video')}
           />
 
           {/* Contador */}

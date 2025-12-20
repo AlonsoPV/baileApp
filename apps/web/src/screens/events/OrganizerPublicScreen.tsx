@@ -22,6 +22,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
@@ -1304,17 +1305,18 @@ export function OrganizerPublicScreen() {
                   background: '#000',
                   zIndex: 2
                 }}>
-                  <video
+                  <VideoPlayerWithPiP
                     src={getMediaBySlot(media as any, 'v1')!.url}
                     controls
+                    preload="metadata"
+                    controlsList="nodownload noplaybackrate"
+                    aspectRatio="4 / 5"
                     style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '4 / 5',
                       display: 'block',
                       objectFit: 'contain',
                       objectPosition: 'center',
                     }}
+                    aria-label="Video promocional"
                   />
                 </div>
 

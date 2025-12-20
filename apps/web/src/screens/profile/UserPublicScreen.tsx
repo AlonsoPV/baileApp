@@ -17,6 +17,7 @@ import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 const STYLES = `
   .profile-container {
@@ -1934,18 +1935,19 @@ export const UserProfileLive: React.FC = () => {
                     background: '#000',
                     zIndex: 2
                   }}>
-                    <video
+                    <VideoPlayerWithPiP
                     src={videoV1.url}
                     controls
+                    preload="metadata"
+                    controlsList="nodownload noplaybackrate"
+                    aspectRatio="4 / 5"
                     style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '4 / 5',
                       display: 'block',
                       objectFit: 'contain',
                       objectPosition: 'center',
                       minHeight: '350px'
                     }}
+                    aria-label={t('main_video')}
                   />
                   </div>
 

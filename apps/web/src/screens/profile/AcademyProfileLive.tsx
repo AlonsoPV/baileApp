@@ -23,6 +23,7 @@ import { colors } from "../../theme/colors";
 import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
 import { useAuth } from "@/contexts/AuthProvider";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 // Lazy load heavy components
 const ClasesLive = lazy(() => import('../../components/events/ClasesLive'));
@@ -157,12 +158,13 @@ const VideoCarouselComponent = React.memo(function VideoCarouselComponent({ vide
       <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
         {/* Video principal */}
         <div className="video-gallery-main">
-          <video
+          <VideoPlayerWithPiP
             src={videos[currentIndex]}
-            controls
             className="video-gallery-video"
+            controls
             preload="metadata"
             controlsList="nodownload noplaybackrate"
+            aspectRatio="16 / 9"
             aria-label={`Video ${currentIndex + 1} de ${videos.length}`}
           />
 

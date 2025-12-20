@@ -2903,7 +2903,7 @@ export default function ExploreHomeScreen() {
                         filter: "drop-shadow(0 4px 8px rgba(240, 147, 251, 0.3))",
                       }}
                     >
-                      📱
+                      📱📱📱📱
                     </div>
                     <h3
                       style={{

@@ -24,6 +24,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 import { getLocaleFromI18n } from "../../utils/locale";
+import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 const colors = {
   coral: '#FF3D57',
@@ -2715,14 +2716,18 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           boxShadow: '0 8px 32px rgba(30, 136, 229, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2)'
                         }}
                       >
-                        <video
+                        <VideoPlayerWithPiP
                           src={video}
                           controls
+                          preload="metadata"
+                          controlsList="nodownload noplaybackrate"
+                          aspectRatio="16 / 9"
                           style={{
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover'
                           }}
+                          aria-label={`${t('promotional_video')} ${index + 1}`}
                         />
                         <div style={{
                           position: 'absolute',
