@@ -222,8 +222,10 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           }
           img, [style*="objectFit"] {
             max-width: 100% !important;
-            /* height: auto !important; */
-            /* object-fit: contain !important; */
+            object-fit: cover !important;
+            border-radius: 30px;
+            height: 100% !important;
+            padding: 10px;
           }
         }
 

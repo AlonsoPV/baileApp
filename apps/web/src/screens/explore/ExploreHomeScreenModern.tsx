@@ -722,6 +722,7 @@ const STYLES = `
   .quick-row {
     display: flex;
     align-items: stretch;
+    justify-content: space-evenly;
     gap: var(--gap-2);
     width: 100%;
     overflow-x: auto;

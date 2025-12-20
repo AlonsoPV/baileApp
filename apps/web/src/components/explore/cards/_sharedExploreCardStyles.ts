@@ -12,6 +12,11 @@ export const EXPLORE_CARD_STYLES = `
       margin: 0 auto;
     }
     .explore-card { --card-ar: 9 / 16; }
+    img, [style*="objectFit"] {
+      max-width: 100% !important;
+      /* height: auto !important; */
+      object-fit: cover !important;
+    }
   }
 
   /* Responsive: Small mobile */

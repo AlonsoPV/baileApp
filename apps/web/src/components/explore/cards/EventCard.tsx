@@ -149,6 +149,11 @@ export default function EventCard({ item }: EventCardProps) {
             margin: 0 auto;
           }
           .card { --card-ar: 9 / 16; }
+          img, [style*="objectFit"] {
+            max-width: 100% !important;
+            /* height: auto !important; */
+            object-fit: cover !important;
+          }
         }
         
         /* Responsive: Mobile pequeño */
