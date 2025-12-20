@@ -115,10 +115,8 @@ function LanguageSwitcher() {
           padding: 6px 10px;
           border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 10px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          color: #1a1a1a;
+          background: transparent;
+          color: #ffffff;
           font-weight: 700;
           font-size: 11px;
           text-transform: uppercase;
@@ -126,36 +124,22 @@ function LanguageSwitcher() {
           cursor: pointer;
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: nowrap;
-          box-shadow: 
-            0 4px 12px rgba(0, 0, 0, 0.08),
-            0 2px 4px rgba(0, 0, 0, 0.04),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+          box-shadow: none;
         }
 
         .lang-switcher__button:hover {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.98) 100%);
+          background: rgba(255, 255, 255, 0.1);
           border-color: rgba(255, 255, 255, 0.45);
           transform: translateY(-1px);
-          box-shadow: 
-            0 8px 20px rgba(0, 0, 0, 0.12),
-            0 4px 8px rgba(0, 0, 0, 0.06),
-            inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
         .lang-switcher__button:active {
           transform: translateY(0) scale(0.98);
-          box-shadow: 
-            0 2px 8px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
 
         .lang-switcher__button[aria-expanded="true"] {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.98) 100%);
+          background: rgba(255, 255, 255, 0.15);
           border-color: rgba(255, 255, 255, 0.5);
-          box-shadow: 
-            0 8px 24px rgba(0, 0, 0, 0.15),
-            0 4px 12px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
         .lang-switcher__button-icon {
@@ -317,13 +301,18 @@ function LanguageSwitcher() {
         /* Responsive */
         @media (max-width: 768px) {
           .lang-switcher__button {
-            padding: 6px 10px;
-            font-size: 11px;
-            gap: 6px;
+            padding: 4px 8px;
+            font-size: 10px;
+            gap: 4px;
+            border-radius: 8px;
           }
 
           .lang-switcher__flag {
-            font-size: 16px;
+            font-size: 14px;
+          }
+
+          .lang-switcher__button-icon {
+            font-size: 7px;
           }
 
           .lang-switcher__dropdown {
@@ -343,17 +332,32 @@ function LanguageSwitcher() {
 
         @media (max-width: 480px) {
           .lang-switcher__button {
-            padding: 5px 8px;
-            font-size: 10px;
-            gap: 5px;
+            padding: 3px 6px;
+            font-size: 9px;
+            gap: 3px;
+            border-radius: 6px;
           }
 
           .lang-switcher__flag {
-            font-size: 14px;
+            font-size: 12px;
+          }
+
+          .lang-switcher__button-icon {
+            font-size: 6px;
           }
 
           .lang-switcher__dropdown {
-            min-width: 150px;
+            min-width: 140px;
+          }
+
+          .lang-switcher__option {
+            padding: 8px 12px;
+            font-size: 10px;
+            gap: 8px;
+          }
+
+          .lang-switcher__option-flag {
+            font-size: 16px;
           }
         }
       `}</style>
