@@ -29,6 +29,7 @@
       "autoIncrement": true,
       "android": {
         "image": "latest",
+        "node": "20.18.0",
         "env": {
           "YARN_IGNORE_ENGINES": "1"
         }

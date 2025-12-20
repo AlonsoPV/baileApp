@@ -3,12 +3,13 @@ set -euo pipefail
 
 # Ensures CocoaPods artifacts exist for iOS builds (CI + local automation).
 # This script is intentionally self-contained so different CI systems can call it.
+# For Android builds, this script will exit successfully without doing anything.
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 if [[ ! -d "ios" || ! -f "ios/Podfile" ]]; then
-  echo "==> No ios/Podfile found; skipping CocoaPods"
+  echo "==> No ios/Podfile found; skipping CocoaPods (this is expected for Android builds)"
   exit 0
 fi
 
