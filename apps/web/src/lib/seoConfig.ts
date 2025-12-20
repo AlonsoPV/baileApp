@@ -1,8 +1,8 @@
 const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://baile-app-1lfl.vercel.app';
 
-// Usar el mismo icono que TestFlight (desde /public/favicon.png)
-const ICON_URL = `${BASE_URL}/favicon.png`;
-const LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/logo.png';
+// Usar el mismo icono que TestFlight (desde Supabase Storage)
+const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icono%20(2).png';
+const LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icono%20(2).png';
 
 const DEFAULT_KEYWORDS = [
   'clases de baile',
