@@ -75,5 +75,11 @@
 	<string>Automatic</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceso a la cámara para tomar fotos de perfil y eventos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceso a tu galería para seleccionar fotos de perfil y eventos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Permite guardar fotos en tu galería cuando lo desees.</string>
 </dict>
 </plist>

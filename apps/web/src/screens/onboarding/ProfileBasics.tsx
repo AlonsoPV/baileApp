@@ -94,10 +94,11 @@ export function ProfileBasics() {
     try {
       const file = e.target.files?.[0];
       
-      // Si no hay archivo (usuario canceló), limpiar y salir
+      // Si no hay archivo (usuario canceló), limpiar y salir silenciosamente
       if (!file) {
         // Limpiar el input para permitir seleccionar el mismo archivo nuevamente
         e.target.value = '';
+        // No mostrar error si el usuario simplemente canceló
         return;
       }
 
@@ -249,7 +250,12 @@ export function ProfileBasics() {
           console.log('[ProfileBasics] Subiendo avatar:', { fileName, contentType, size: fileToUpload.size });
         }
 
-        const { error: uploadError } = await supabase.storage
+        // Verificar conexión antes de intentar subir
+        if (!navigator.onLine) {
+          throw new Error('No hay conexión a internet. Por favor verifica tu conexión e intenta de nuevo.');
+        }
+
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('media')
           .upload(fileName, fileToUpload, { 
             upsert: true,
@@ -258,7 +264,25 @@ export function ProfileBasics() {
 
         if (uploadError) {
           console.error('[ProfileBasics] Error de upload:', uploadError);
-          throw new Error(`Error al subir la imagen: ${uploadError.message}`);
+          
+          // Mensajes de error más específicos según el tipo de error
+          let errorMessage = 'Error al subir la imagen';
+          if (uploadError.message?.includes('JWT') || uploadError.message?.includes('token')) {
+            errorMessage = 'Error de autenticación. Por favor inicia sesión nuevamente.';
+          } else if (uploadError.message?.includes('network') || uploadError.message?.includes('fetch')) {
+            errorMessage = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+          } else if (uploadError.message?.includes('size') || uploadError.message?.includes('large')) {
+            errorMessage = 'La imagen es demasiado grande. Por favor selecciona una imagen más pequeña.';
+          } else {
+            errorMessage = `Error al subir la imagen: ${uploadError.message || 'Error desconocido'}`;
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        // Validar que el upload fue exitoso
+        if (!uploadData) {
+          throw new Error('Error al subir la imagen. No se recibió confirmación del servidor.');
         }
 
         // Usa helper centralizado (cache-control consistente)
@@ -301,6 +325,11 @@ export function ProfileBasics() {
         console.log('[ProfileBasics] Avatar URL:', normalizedUpdates.avatar_url);
       }
 
+      // Verificar conexión antes de actualizar perfil
+      if (!navigator.onLine) {
+        throw new Error('No hay conexión a internet. Por favor verifica tu conexión e intenta de nuevo.');
+      }
+
       try {
         await updateProfileFields(updates);
         
@@ -317,29 +346,41 @@ export function ProfileBasics() {
         if (updateError?.message) {
           errorMessage = updateError.message;
         } else if (updateError?.code) {
-          errorMessage = `Error de base de datos (${updateError.code})`;
+          // Mensajes específicos por código de error
+          if (updateError.code === 'PGRST301' || updateError.code === '23505') {
+            errorMessage = 'Este nombre ya está en uso. Por favor elige otro.';
+          } else if (updateError.code === 'PGRST116' || updateError.code === '23503') {
+            errorMessage = 'Error de validación. Por favor verifica los datos e intenta de nuevo.';
+          } else if (updateError.code === 'PGRST204' || updateError.code === '23502') {
+            errorMessage = 'Faltan datos requeridos. Por favor completa todos los campos obligatorios.';
+          } else {
+            errorMessage = `Error de base de datos (${updateError.code}). Por favor intenta de nuevo.`;
+          }
+        } else if (updateError?.name === 'NetworkError' || updateError?.message?.includes('network')) {
+          errorMessage = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
         }
         
         throw new Error(errorMessage);
       }
-    } catch (err: any) {
+      } catch (err: any) {
       console.error('[ProfileBasics] Error completo en handleSubmit:', err);
       
       // Mensaje de error más amigable para el usuario
       let userFriendlyMessage = 'Error al guardar el perfil. Por favor intenta de nuevo.';
       
       if (err?.message) {
-        // Si el error ya tiene un mensaje claro, usarlo
-        if (err.message.includes('subir') || err.message.includes('upload')) {
-          userFriendlyMessage = 'Error al subir la imagen. Verifica tu conexión e intenta de nuevo.';
-        } else if (err.message.includes('nombre') || err.message.includes('name')) {
-          userFriendlyMessage = err.message;
-        } else if (err.message.includes('foto') || err.message.includes('avatar')) {
-          userFriendlyMessage = err.message;
-        } else if (err.message.includes('base de datos') || err.message.includes('database')) {
-          userFriendlyMessage = 'Error de conexión. Por favor intenta de nuevo en un momento.';
+        // Si el error ya tiene un mensaje claro, usarlo directamente
+        userFriendlyMessage = err.message;
+      } else if (err?.name === 'NetworkError' || err?.message?.includes('network') || err?.message?.includes('fetch')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+      } else if (err?.code) {
+        // Manejar códigos de error específicos
+        if (err.code === 'PGRST301' || err.code === '23505') {
+          userFriendlyMessage = 'Este nombre ya está en uso. Por favor elige otro.';
+        } else if (err.code === 'PGRST116' || err.code === '23503') {
+          userFriendlyMessage = 'Error de validación. Por favor verifica los datos e intenta de nuevo.';
         } else {
-          userFriendlyMessage = err.message;
+          userFriendlyMessage = `Error (${err.code}). Por favor intenta de nuevo.`;
         }
       }
       
